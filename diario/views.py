@@ -3,5 +3,5 @@ from django.shortcuts import render
 
 
 def home(request):
-    return HttpResponse('<html><title>Finanzas Personales - Movimientos diarios</title></html>')
+    return render(request, 'diario/home.html')
 

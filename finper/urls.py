@@ -16,9 +16,9 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
-from diario import views
+from diario import views as diario_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', views.home, name='casa'),
+    path('', diario_views.home, name='casa'),
 ]
