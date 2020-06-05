@@ -20,8 +20,7 @@ class TestVisitanteNuevo(FunctionalTest):
         for index, header in enumerate(
                 ['Fecha', 'Concepto', 'Detalle', 'Entrada', 'Salida', 'Total']
         ):
-            print(index, header)
-            self.assertEqual(header, headers[index])
+            self.assertEqual(header, headers[index].text)
 
         # Debajo del encabezado, las celdas de la tabla están ocupadas por
         # campos de un formulario.
