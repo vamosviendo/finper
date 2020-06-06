@@ -16,11 +16,17 @@
       <th>Total</th>
     </tr>
     <tr>
-      <td><input id="id_input_fecha"/></td>
-      <td><input id="id_input_concepto"/></td>
-      <td><input id="id_input_detalle"/></td>
-      <td><input id="id_input_entrada"/></td>
-      <td><input id="id_input_salida"/></td>
+      <td>
+        <input type="text" id="id_input_fecha" value="{% now 'd-m-Y' %}" />
+      </td>
+      <td>
+        <input type="text" id="id_input_concepto" placeholder="Concepto" />
+      </td>
+      <td>
+        <input type="text" id="id_input_detalle" placeholder="Detalle" />
+      </td>
+      <td><input type="" id="id_input_entrada"/></td>
+      <td><input type="number" id="id_input_salida"/></td>
       <td><span id="id_span_total"></span></td>
     </tr>
   </table>

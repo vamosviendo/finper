@@ -38,11 +38,12 @@ class TestVisitanteNuevo(FunctionalTest):
         # (Comprobar valores por defecto, placeholders y que no haya
         # ningún campo que no cumpla alguna de estas dos opciones).
         print('Fecha por defecto:', fecha.get_attribute('value'))
-        self.assertEqual(date.today(), fecha.get_attribute('value'))
+        self.assertEqual(
+            date.today().strftime("%d-%m-%Y"),
+            fecha.get_attribute('value')
+        )
         self.assertEqual('Concepto', concepto.get_attribute('placeholder'))
         self.assertEqual('Detalle', detalle.get_attribute('placeholder'))
-        self.assertEqual('Entrada', entrada.get_attribute('value'))
-        self.assertEqual('Salida', salida.get_attribute('value'))
 
         # Ingreso un movimiento con fecha, concepto, detalle, entrada y salida.
         # La columna total se completa automáticamente con el cálculo del
@@ -78,6 +79,8 @@ class TestVisitanteNuevo(FunctionalTest):
         total = celdas[5].find_element_by_id('id_span_total').text
 
 
+
+        # Validación y mensajes de error.
 
         # Al costado del total, un botón de Agregar Cuenta
 
