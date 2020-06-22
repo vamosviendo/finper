@@ -8,12 +8,12 @@
   <h1>Finanzas Personales - Movimientos diarios</h1>
   <table id="id_table_movs">
     <tr>
-      <th>Fecha</th>
-      <th>Concepto</th>
-      <th>Detalle</th>
-      <th>Entrada</th>
-      <th>Salida</th>
-      <th>Total</th>
+      <th>{{ form.fecha.label_tag }}</th>
+      <th>{{ form.concepto.label_tag }}</th>
+      <th>{{ form.detalle.label_tag }}</th>
+      <th>{{ form.entrada.label_tag }}</th>
+      <th>{{ form.salida.label_tag }}</th>
+      <th>Total:</th>
     </tr>
     <tr>
       <td>{{ form.fecha }}</td>

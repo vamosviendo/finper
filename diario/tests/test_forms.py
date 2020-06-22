@@ -14,12 +14,14 @@ class FormMovimientoTest(TestCase):
         self.assertIn('input type="number" name="entrada"', form.as_p())
         self.assertIn('input type="number" name="salida"', form.as_p())
 
-    def test_la_id_de_los_campos_comienza_con_id_input(self):
+    def test_atributos_de_campos(self):
         form = FormMovimiento()
-        formlist = form.as_plist()
-        self.assertIn('id_input_fecha', formlist[0])
-        self.assertIn('id_input_concepto', formlist[1])
-        self.assertIn('id_input_entrada', formlist[3])
+        formlist = form.as_pdict()
+        self.assertIn('id_input_fecha', formlist['fecha'])
+        self.assertIn('id_input_concepto', formlist['concepto'])
+        self.assertIn('id_input_entrada', formlist['entrada'])
+        self.assertIn('placeholder="Concepto"', formlist['concepto'])
+        self.assertIn('placeholder="Detalle"', formlist['detalle'])
 
     def test_muestra_fecha_de_hoy_por_defecto(self):
         form = FormMovimiento()
@@ -28,4 +30,3 @@ class FormMovimientoTest(TestCase):
             f'<input type="text" name="fecha" required id="id_input_fecha" value="{cadena_fecha}"/>',
             form.as_p()
         )
-

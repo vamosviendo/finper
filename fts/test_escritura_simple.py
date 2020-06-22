@@ -17,9 +17,14 @@ class TestVisitanteNuevo(FunctionalTest):
         # Fecha, concepto, detalle, entrada, salida, total
         tablamovs = self.browser.find_element_by_id('id_table_movs')
         headers = tablamovs.find_elements_by_tag_name('th')
-        for index, header in enumerate(
-                ['Fecha', 'Concepto', 'Detalle', 'Entrada', 'Salida', 'Total']
-        ):
+        for index, header in enumerate([
+            'Fecha:',
+            'Concepto:',
+            'Detalle:',
+            'Entrada:',
+            'Salida:',
+            'Total:',
+        ]):
             self.assertEqual(header, headers[index].text)
 
         # Debajo del encabezado, las celdas de la tabla están ocupadas por
@@ -55,6 +60,7 @@ class TestVisitanteNuevo(FunctionalTest):
 
         # Los datos ingresados pasan a formar parte del texto de la página,
         # y el formulario se desplaza una columna hacia abajo.
+        ###
         fecha = celdas[0].find_element_by_id('id_span_fecha').text
         concepto = celdas[1].find_element_by_id('id_span_concepto').text
         detalle = celdas[2].find_element_by_id('id_span_detalle').text
