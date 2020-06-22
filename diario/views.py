@@ -1,6 +1,9 @@
 from django.shortcuts import render
 
+from diario.forms import FormMovimiento
+
 
 def home(request):
-    return render(request, 'diario/home.html')
+    form = FormMovimiento()
+    return render(request, 'diario/home.html', context={'form': form})
 

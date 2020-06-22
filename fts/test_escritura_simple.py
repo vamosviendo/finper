@@ -37,7 +37,6 @@ class TestVisitanteNuevo(FunctionalTest):
         # Los que no, tienen un placeholder.
         # (Comprobar valores por defecto, placeholders y que no haya
         # ningún campo que no cumpla alguna de estas dos opciones).
-        print('Fecha por defecto:', fecha.get_attribute('value'))
         self.assertEqual(
             date.today().strftime("%d-%m-%Y"),
             fecha.get_attribute('value')
@@ -45,18 +44,14 @@ class TestVisitanteNuevo(FunctionalTest):
         self.assertEqual('Concepto', concepto.get_attribute('placeholder'))
         self.assertEqual('Detalle', detalle.get_attribute('placeholder'))
 
-        # Ingreso un movimiento con fecha, concepto, detalle, entrada y salida.
+        # Ingreso un movimiento con fecha, concepto, detalle, entrada y
+        # salida.
         # La columna total se completa automáticamente con el cálculo del
         # saldo anterior.
-        fecha.send_keys(Keys.TAB)
         concepto.send_keys('Supermercado')
-        concepto.send_keys(Keys.TAB)
         detalle.send_keys('Arroz')
-        detalle.send_keys(Keys.TAB)
-        entrada.send_keys(Keys.TAB)
         salida.send_keys('250')
         salida.send_keys(Keys.ENTER)
-        self.assertEqual(total, '250.00')
 
         # Los datos ingresados pasan a formar parte del texto de la página,
         # y el formulario se desplaza una columna hacia abajo.
@@ -70,6 +65,10 @@ class TestVisitanteNuevo(FunctionalTest):
         self.assertEqual(detalle, 'Arroz')
         self.assertIsNone(entrada)
         self.assertEqual(salida, '250.00')
+
+        # La columna "Total" se completa con el cálculo de la diferencia
+        # entre entrada y salida.
+        self.assertEqual(total, '250.00')
         celdas = filas[2].find_elements_by_tag_name('td')
         fecha = celdas[0].find_element_by_id('id_input_fecha')
         concepto = celdas[1].find_element_by_id('id_input_concepto')
