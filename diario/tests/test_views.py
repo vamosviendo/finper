@@ -1,6 +1,10 @@
+from datetime import date
+
 from django.test import TestCase
+from django.urls import reverse
 
 from diario.forms import FormMovimiento
+from diario.models import Movimiento
 
 
 class HomeTest(TestCase):
@@ -12,16 +16,38 @@ class HomeTest(TestCase):
     def test_usa_form_movimiento(self):
         response = self.client.get('/')
         self.assertIsInstance(response.context['form'], FormMovimiento)
-        pass
+
+    def test_puede_guardar_un_movimiento(self):
+        self.client.post(
+            '/',
+            data={'fecha': date(2020, 6, 20),
+                  'concepto': 'Movimiento de entrada',
+                  'detalle': 'Detalle de entrada',
+                  'entrada': 1050.00}
+        )
+        self.client.post(
+            '/',
+            data={'fecha': date.today(),
+                  'concepto': 'Movimiento de salida',
+                  'detalle': 'Detalle de salida',
+                  'salida': 2000.00}
+        )
+        self.assertEqual(Movimiento.objects.count(), 2)
+        mov1 = Movimiento.objects.get(id=1)
+        mov2 = Movimiento.objects.get(id=2)
+        self.assertEqual(mov1.fecha, date(2020, 6, 20))
+        self.assertEqual(mov2.fecha, date.today())
+        self.assertEqual(mov1.concepto, 'Movimiento de entrada')
+        self.assertEqual(mov2.concepto, 'Movimiento de salida')
+        self.assertEqual(mov1.detalle, 'Detalle de entrada')
+        self.assertEqual(mov2.detalle, 'Detalle de salida')
+        self.assertEqual(mov1.entrada, 1050)
+        self.assertEqual(mov2.salida, 2000)
 
     def test_calcula_total_movimiento(self):
         pass
 
     def test_muestra_total_movimiento(self):
-        pass
-
-    def test_puede_guardar_un_movimiento(self):
-        # (puede guardar un request.POST)
         pass
 
     def test_POST_redirige_a_home(self):

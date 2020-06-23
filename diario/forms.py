@@ -14,8 +14,8 @@ class FormMovimiento(forms.Form):
     detalle = forms.CharField(
         widget=forms.TextInput(attrs={'placeholder': 'Detalle'})
     )
-    entrada = forms.DecimalField()
-    salida = forms.DecimalField()
+    entrada = forms.DecimalField(required=False)
+    salida = forms.DecimalField(required=False)
 
     def as_plist(self):
         return self.as_p().split('\n')
@@ -23,7 +23,6 @@ class FormMovimiento(forms.Form):
     def as_pdict(self):
         values = self.as_plist()
         keys = list(self.fields.keys())
-        print(keys)
         dicc = {}
         for index, value in enumerate(values):
             dicc[keys[index]] = value

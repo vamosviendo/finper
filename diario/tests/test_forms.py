@@ -30,3 +30,28 @@ class FormMovimientoTest(TestCase):
             f'<input type="text" name="fecha" required id="id_input_fecha" value="{cadena_fecha}"/>',
             form.as_p()
         )
+
+    def test_permite_entrada_vacia(self):
+        form = FormMovimiento(
+            data={
+                'fecha': date.today(),
+                'concepto': 'Movimiento de salida',
+                'detalle': 'Detalle de salida',
+                'salida': 258
+            }
+        )
+        self.assertTrue(form.is_valid())
+
+    def test_permite_salida_vacia(self):
+        form = FormMovimiento(
+            data={
+                'fecha': date.today(),
+                'concepto': 'Movimiento de entrada',
+                'detalle': 'Detalle de entrada',
+                'entrada': 258
+            }
+        )
+        self.assertTrue(form.is_valid())
+
+    def test_no_permite_entrada_y_salida_ambas_vacias(self):
+        self.fail('escribir esto ahora?')
