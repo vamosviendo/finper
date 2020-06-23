@@ -31,6 +31,17 @@ class FormMovimientoTest(TestCase):
             form.as_p()
         )
 
+    def test_permite_detalle_vacio(self):
+        form = FormMovimiento(
+            data={
+                'fecha': date.today(),
+                'concepto': 'Movimiento de salida',
+                'salida': 258,
+                'entrada': 258
+            }
+        )
+        self.assertTrue(form.is_valid())
+
     def test_permite_entrada_vacia(self):
         form = FormMovimiento(
             data={
@@ -54,4 +65,4 @@ class FormMovimientoTest(TestCase):
         self.assertTrue(form.is_valid())
 
     def test_no_permite_entrada_y_salida_ambas_vacias(self):
-        self.fail('escribir esto ahora?')
+        pass

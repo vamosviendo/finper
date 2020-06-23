@@ -1,10 +1,12 @@
+from datetime import date
+
 from django.db import models
 
 
 class Movimiento(models.Model):
     fecha = models.DateField()
-    concepto = models.TextField()
-    detalle = models.TextField()
+    concepto = models.CharField(max_length=30)
+    detalle = models.CharField(max_length=30, null=True, blank=True)
     entrada = models.DecimalField(
         max_digits=12,
         decimal_places=2,
@@ -17,3 +19,12 @@ class Movimiento(models.Model):
         null=True,
         blank=True
     )
+
+    @classmethod
+    def crear(cls, concepto='', fecha=date.today(),
+               detalle='', entrada=None, salida=None):
+        mov = cls(concepto=concepto, fecha=fecha, detalle=detalle,
+                  entrada=entrada, salida=salida)
+        mov.full_clean()
+        mov.save()
+        return mov

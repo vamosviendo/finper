@@ -44,6 +44,33 @@ class HomeTest(TestCase):
         self.assertEqual(mov1.entrada, 1050)
         self.assertEqual(mov2.salida, 2000)
 
+    def test_pasa_movimientos_a_home_con_get(self):
+        Movimiento.objects.create(
+            fecha=date.today(),
+            concepto='Concepto 1',
+            detalle='Detalle 1',
+            entrada=100
+        )
+        Movimiento.objects.create(
+            fecha=date.today(),
+            concepto='Concepto 2',
+            detalle='Detalle 1',
+            entrada=100
+        )
+        Movimiento.objects.create(
+            fecha=date.today(),
+            concepto='Concepto 2',
+            entrada=100,
+            salida=100
+        )
+        response = self.client.get('/')
+
+        for mov in Movimiento.objects.all():
+            self.assertContains(response, mov)
+
+    def test_pasa_movimientos_a_home_con_post(self):
+        self.fail('Escribir también este')
+
     def test_calcula_total_movimiento(self):
         pass
 
@@ -51,9 +78,6 @@ class HomeTest(TestCase):
         pass
 
     def test_POST_redirige_a_home(self):
-        pass
-
-    def test_muestra_movimientos_anteriores(self):
         pass
 
     def test_entrada_invalida_no_guarda_movimiento(self):

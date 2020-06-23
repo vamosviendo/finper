@@ -12,7 +12,8 @@ class FormMovimiento(forms.Form):
         widget=forms.TextInput(attrs={'placeholder': 'Concepto'})
     )
     detalle = forms.CharField(
-        widget=forms.TextInput(attrs={'placeholder': 'Detalle'})
+        widget=forms.TextInput(attrs={'placeholder': 'Detalle'}),
+        required=False
     )
     entrada = forms.DecimalField(required=False)
     salida = forms.DecimalField(required=False)
