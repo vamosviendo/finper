@@ -1,1 +1,5 @@
 - [x] Tests para lenguaje y zona horaria en settings.py
+- [] TODO Test movimiento sin entrada ni salida da error, es rechazado, no se
+        guarda
+- [] TODO Form refactor hacer a FormMovimiento un form basado en el modelo
+        Movimiento
