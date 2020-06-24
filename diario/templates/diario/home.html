@@ -21,7 +21,7 @@
       <td id="id_td_concepto">{{ mov.concepto }}</td>
       <td id="id_td_detalle">{{ mov.detalle|default_if_none:'' }}</td>
       <td id="id_td_entrada">{{ mov.entrada|default_if_none:'' }}</td>
-      <td id="id_td_salida">{{ mov.salida.default_if_none:'' }}</td>
+      <td id="id_td_salida">{{ mov.salida|default_if_none:'' }}</td>
       <td id="id_td_total"></td>
     </tr>
   {% endfor %}
@@ -32,7 +32,13 @@
         <td>{{ form.detalle }}</td>
         <td>{{ form.entrada }}</td>
         <td>{{ form.salida }}</td>
-        <td><span id="id_span_total"><input id='id_submit' type="submit"></span></td>
+        <td>
+          <span id="id_span_total">
+            <button id="id_btn_submit" type="submit" style="visibility: hidden">
+              Ok
+            </button>
+          </span>
+        </td>
         {% csrf_token %}
       </form>
     </tr>

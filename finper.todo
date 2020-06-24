@@ -1,7 +1,7 @@
 - [x] Tests para lenguaje y zona horaria en settings.py
 - [] TODO Plantilla - Reemplazar submit por total
-- [] TODO Arreglar carajos con formato de fecha (mediante UTs)
-- [] TODO Arreglar entrada: 'None' is not None.
+- [x] Arreglar carajos con formato de fecha (mediante UTs)
+- [x] Arreglar entrada: 'None' is not None.
 - [] TODO Form refactor: hacer a FormMovimiento un form basado en el modelo
         Movimiento. Reemplazar en view Movimiento.crear por form.save()
 - [] TODO Refactoring: Reemplazar Movimiento.objects.create() por
