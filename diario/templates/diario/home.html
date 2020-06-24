@@ -17,11 +17,11 @@
     </tr>
   {% for mov in movs %}
     <tr>
-      <td id="id_td_fecha">{{ mov.fecha }}</td>
+      <td id="id_td_fecha">{{ mov.fecha|date:'d-m-Y' }}</td>
       <td id="id_td_concepto">{{ mov.concepto }}</td>
-      <td id="id_td_detalle">{{ mov.detalle }}</td>
-      <td id="id_td_entrada">{{ mov.entrada }}</td>
-      <td id="id_td_salida">{{ mov.salida }}</td>
+      <td id="id_td_detalle">{{ mov.detalle|default_if_none:'' }}</td>
+      <td id="id_td_entrada">{{ mov.entrada|default_if_none:'' }}</td>
+      <td id="id_td_salida">{{ mov.salida.default_if_none:'' }}</td>
       <td id="id_td_total"></td>
     </tr>
   {% endfor %}
@@ -32,7 +32,7 @@
         <td>{{ form.detalle }}</td>
         <td>{{ form.entrada }}</td>
         <td>{{ form.salida }}</td>
-        <td><span id="id_span_total"><input type="submit"></span></td>
+        <td><span id="id_span_total"><input id='id_submit' type="submit"></span></td>
         {% csrf_token %}
       </form>
     </tr>

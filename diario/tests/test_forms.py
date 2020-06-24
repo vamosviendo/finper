@@ -64,5 +64,18 @@ class FormMovimientoTest(TestCase):
         )
         self.assertTrue(form.is_valid())
 
+    def test_permite_fecha_en_formato_argentina(self):
+        form = FormMovimiento(
+            data ={
+                'fecha': date.today().strftime('%d-%m-%Y'),
+                'concepto': 'Movimiento de entrada',
+                'detalle': 'Detalle de entrada',
+                'entrada': 258,
+                'salida': 258,
+            })
+        print(form.data['fecha'])
+        print(form.errors)
+        self.assertTrue(form.is_valid())
+
     def test_no_permite_entrada_y_salida_ambas_vacias(self):
         pass

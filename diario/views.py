@@ -21,11 +21,6 @@ def home(request):
                 entrada=entrada,
                 salida=salida
             )
-            return render(
-                request,
-                'diario/home.html',
-                context={'form': form, 'movs': Movimiento.objects.all()}
-            )
     return render(
         request,
         'diario/home.html',

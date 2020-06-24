@@ -93,6 +93,18 @@ class HomeTest(TestCase):
         for mov in Movimiento.objects.all():
             self.assertContains(response, mov.concepto)
 
+    def test_pasa_fecha_en_formato_apropiado(self):
+        response = self.client.post(
+            '/',
+            data={'fecha': date.today(),
+                  'concepto': 'Movimiento de entrada',
+                  'detalle': 'Detalle de entrada',
+                  'entrada': 1050.00,
+                  'salida': 1050.00,
+                  }
+        )
+        self.assertIn(date.today().strftime('%d-%m-%Y').encode(), response.content)
+
     def test_calcula_total_movimiento(self):
         pass
 

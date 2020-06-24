@@ -1,4 +1,9 @@
 - [x] Tests para lenguaje y zona horaria en settings.py
+- [] TODO Plantilla - Reemplazar submit por total
+- [] TODO Arreglar carajos con formato de fecha (mediante UTs)
+- [] TODO Arreglar entrada: 'None' is not None.
+- [] TODO Form refactor: hacer a FormMovimiento un form basado en el modelo
+        Movimiento. Reemplazar en view Movimiento.crear por form.save()
 - [] TODO Refactoring: Reemplazar Movimiento.objects.create() por
         Movimiento.crear()
 - [] TODO Test: movimiento sin entrada ni salida da error, es rechazado, no se
@@ -8,8 +13,6 @@
 - [] TODO Test permite movimientos con el mismo concepto y con el mismo detalle
         (unique=False).
 - [] TODO Test: guarda fecha de hoy por defecto.
-- [] TODO Form refactor: hacer a FormMovimiento un form basado en el modelo
-        Movimiento
 - [] TODO Models: Cambio de implementación: un solo campo de importe y un campo
         de "sentido" (entrada, salida o transacción). DEBEN CAMBIAR UTs.
         (Posteriormente, se cambiará este último campo por dos campos, uno

@@ -56,24 +56,24 @@ class TestVisitanteNuevo(FunctionalTest):
         concepto.send_keys('Supermercado')
         detalle.send_keys('Arroz')
         salida.send_keys('250')
-        salida.send_keys(Keys.ENTER)
+        celdas[5].find_element_by_id('id_submit').click()
 
         # Los datos ingresados pasan a formar parte del texto de la página,
         # y el formulario se desplaza una columna hacia abajo.
-        ###
-        fecha = tablamovs.find_element_by_id('id_td_fecha').text
-        concepto = tablamovs.find_element_by_id('id_td_concepto').text
-        detalle = tablamovs.find_element_by_id('id_td_detalle').text
-        entrada = tablamovs.find_element_by_id('id_td_entrada').text
-        salida = tablamovs.find_element_by_id('id_td_salida').text
-        self.assertEqual(fecha, date.today())
+        fecha = self.browser.find_element_by_id('id_td_fecha').text
+        concepto = self.browser.find_element_by_id('id_td_concepto').text
+        detalle = self.browser.find_element_by_id('id_td_detalle').text
+        entrada = self.browser.find_element_by_id('id_td_entrada').text
+        salida = self.browser.find_element_by_id('id_td_salida').text
+        self.assertEqual(fecha, date.today().strftime('%d-%m-%Y'))
         self.assertEqual(concepto, 'Supermercado')
         self.assertEqual(detalle, 'Arroz')
-        self.assertIsNone(entrada)
+        self.assertEqual(entrada, '')
         self.assertEqual(salida, '250.00')
 
         # La columna "Total" se completa con el cálculo de la diferencia
         # entre entrada y salida.
+        ###
         self.assertEqual(total, '250.00')
         celdas = filas[2].find_elements_by_tag_name('td')
         fecha = celdas[0].find_element_by_id('id_input_fecha')
