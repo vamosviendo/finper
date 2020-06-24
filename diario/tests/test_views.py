@@ -54,22 +54,44 @@ class HomeTest(TestCase):
         Movimiento.objects.create(
             fecha=date.today(),
             concepto='Concepto 2',
-            detalle='Detalle 1',
+            detalle='Detalle 2',
             entrada=100
         )
         Movimiento.objects.create(
             fecha=date.today(),
-            concepto='Concepto 2',
+            concepto='Concepto 3',
             entrada=100,
             salida=100
         )
         response = self.client.get('/')
 
         for mov in Movimiento.objects.all():
-            self.assertContains(response, mov)
+            self.assertContains(response, mov.concepto)
 
     def test_pasa_movimientos_a_home_con_post(self):
-        self.fail('Escribir también este')
+        Movimiento.objects.create(
+            fecha=date.today(),
+            concepto='Concepto 1',
+            detalle='Detalle 1',
+            entrada=100
+        )
+        Movimiento.objects.create(
+            fecha=date.today(),
+            concepto='Concepto 2',
+            detalle='Detalle 2',
+            entrada=100
+        )
+        response = self.client.post(
+            '/',
+            data={'fecha': date(2020, 6, 20),
+                  'concepto': 'Movimiento de entrada',
+                  'detalle': 'Detalle de entrada',
+                  'entrada': 1050.00,
+                  'salida': 1050.00,
+                  }
+        )
+        for mov in Movimiento.objects.all():
+            self.assertContains(response, mov.concepto)
 
     def test_calcula_total_movimiento(self):
         pass

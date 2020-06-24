@@ -14,13 +14,21 @@ def home(request):
             detalle = form.cleaned_data['detalle']
             entrada = form.cleaned_data['entrada']
             salida = form.cleaned_data['salida']
-            Movimiento.objects.create(
+            Movimiento.crear(
                 fecha=fecha,
                 concepto=concepto,
                 detalle =detalle,
                 entrada=entrada,
                 salida=salida
             )
-            return redirect('/')
-    return render(request, 'diario/home.html', context={'form': form})
+            return render(
+                request,
+                'diario/home.html',
+                context={'form': form, 'movs': Movimiento.objects.all()}
+            )
+    return render(
+        request,
+        'diario/home.html',
+        context={'form': form, 'movs': Movimiento.objects.all()}
+    )
 

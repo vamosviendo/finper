@@ -15,13 +15,26 @@
       <th>{{ form.salida.label_tag }}</th>
       <th>Total:</th>
     </tr>
+  {% for mov in movs %}
     <tr>
-      <td>{{ form.fecha }}</td>
-      <td>{{ form.concepto }}</td>
-      <td>{{ form.detalle }}</td>
-      <td>{{ form.entrada }}</td>
-      <td>{{ form.salida }}</td>
-      <td><span id="id_span_total"></span></td>
+      <td id="id_td_fecha">{{ mov.fecha }}</td>
+      <td id="id_td_concepto">{{ mov.concepto }}</td>
+      <td id="id_td_detalle">{{ mov.detalle }}</td>
+      <td id="id_td_entrada">{{ mov.entrada }}</td>
+      <td id="id_td_salida">{{ mov.salida }}</td>
+      <td id="id_td_total"></td>
+    </tr>
+  {% endfor %}
+    <tr>
+      <form method="POST">
+        <td>{{ form.fecha }}</td>
+        <td>{{ form.concepto }}</td>
+        <td>{{ form.detalle }}</td>
+        <td>{{ form.entrada }}</td>
+        <td>{{ form.salida }}</td>
+        <td><span id="id_span_total"><input type="submit"></span></td>
+        {% csrf_token %}
+      </form>
     </tr>
   </table>
   

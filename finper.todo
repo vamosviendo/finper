@@ -1,5 +1,19 @@
 - [x] Tests para lenguaje y zona horaria en settings.py
-- [] TODO Test movimiento sin entrada ni salida da error, es rechazado, no se
-        guarda
-- [] TODO Form refactor hacer a FormMovimiento un form basado en el modelo
+- [] TODO Refactoring: Reemplazar Movimiento.objects.create() por
+        Movimiento.crear()
+- [] TODO Test: movimiento sin entrada ni salida da error, es rechazado, no se
+        guarda. (Empezar por FT comprobando mensaje de error si se intenta
+        ingresar movimiento sin importe de entrada ni salida. Derivar de ahí
+        UTs).
+- [] TODO Test permite movimientos con el mismo concepto y con el mismo detalle
+        (unique=False).
+- [] TODO Test: guarda fecha de hoy por defecto.
+- [] TODO Form refactor: hacer a FormMovimiento un form basado en el modelo
         Movimiento
+- [] TODO Models: Cambio de implementación: un solo campo de importe y un campo
+        de "sentido" (entrada, salida o transacción). DEBEN CAMBIAR UTs.
+        (Posteriormente, se cambiará este último campo por dos campos, uno
+        de cuenta de entrada y uno de cuenta de salida.)
+- [] TODO diario.tests.test_models. ¿Hacer sólo dos tests, uno para campos
+        requeridos y uno para campos optativos (y uno más para entrada o
+        salida requeridas)?

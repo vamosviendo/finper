@@ -61,11 +61,11 @@ class TestVisitanteNuevo(FunctionalTest):
         # Los datos ingresados pasan a formar parte del texto de la página,
         # y el formulario se desplaza una columna hacia abajo.
         ###
-        fecha = celdas[0].find_element_by_id('id_span_fecha').text
-        concepto = celdas[1].find_element_by_id('id_span_concepto').text
-        detalle = celdas[2].find_element_by_id('id_span_detalle').text
-        entrada = celdas[3].find_element_by_id('id_span_entrada').text
-        salida = celdas[4].find_element_by_id('id_span_salida').text
+        fecha = tablamovs.find_element_by_id('id_td_fecha').text
+        concepto = tablamovs.find_element_by_id('id_td_concepto').text
+        detalle = tablamovs.find_element_by_id('id_td_detalle').text
+        entrada = tablamovs.find_element_by_id('id_td_entrada').text
+        salida = tablamovs.find_element_by_id('id_td_salida').text
         self.assertEqual(fecha, date.today())
         self.assertEqual(concepto, 'Supermercado')
         self.assertEqual(detalle, 'Arroz')

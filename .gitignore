@@ -4,3 +4,4 @@ vfinper
 __pycache__
 *.pyc
 .idea
+db.backup
