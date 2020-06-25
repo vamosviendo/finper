@@ -73,8 +73,6 @@ class FormMovimientoTest(TestCase):
                 'entrada': 258,
                 'salida': 258,
             })
-        print(form.data['fecha'])
-        print(form.errors)
         self.assertTrue(form.is_valid())
 
     def test_no_permite_entrada_y_salida_ambas_vacias(self):

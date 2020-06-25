@@ -45,19 +45,19 @@ class HomeTest(TestCase):
         self.assertEqual(mov2.salida, 2000)
 
     def test_pasa_movimientos_a_home_con_get(self):
-        Movimiento.objects.create(
+        Movimiento.crear(
             fecha=date.today(),
             concepto='Concepto 1',
             detalle='Detalle 1',
             entrada=100
         )
-        Movimiento.objects.create(
+        Movimiento.crear(
             fecha=date.today(),
             concepto='Concepto 2',
             detalle='Detalle 2',
             entrada=100
         )
-        Movimiento.objects.create(
+        Movimiento.crear(
             fecha=date.today(),
             concepto='Concepto 3',
             entrada=100,
@@ -69,13 +69,13 @@ class HomeTest(TestCase):
             self.assertContains(response, mov.concepto)
 
     def test_pasa_movimientos_a_home_con_post(self):
-        Movimiento.objects.create(
+        Movimiento.crear(
             fecha=date.today(),
             concepto='Concepto 1',
             detalle='Detalle 1',
             entrada=100
         )
-        Movimiento.objects.create(
+        Movimiento.crear(
             fecha=date.today(),
             concepto='Concepto 2',
             detalle='Detalle 2',
