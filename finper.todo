@@ -4,15 +4,15 @@
 - [x] Arreglar entrada: 'None' is not None.
 - [] TODO Form refactor: hacer a FormMovimiento un form basado en el modelo
         Movimiento. Reemplazar en view Movimiento.crear por form.save()
-- [] TODO Refactoring: Reemplazar Movimiento.objects.create() por
+- [x] Refactoring: Reemplazar Movimiento.objects.create() por
         Movimiento.crear()
 - [] TODO Test: movimiento sin entrada ni salida da error, es rechazado, no se
         guarda. (Empezar por FT comprobando mensaje de error si se intenta
         ingresar movimiento sin importe de entrada ni salida. Derivar de ahí
         UTs).
-- [] TODO Test permite movimientos con el mismo concepto y con el mismo detalle
-        (unique=False).
-- [] TODO Test: guarda fecha de hoy por defecto.
+- [] TODO Test permite movimientos con el mismo concepto y con el mismo
+        detalle (unique=False).
+- [] TODO Test Models: guarda fecha de hoy por defecto.
 - [] TODO Models: Cambio de implementación: un solo campo de importe y un campo
         de "sentido" (entrada, salida o transacción). DEBEN CAMBIAR UTs.
         (Posteriormente, se cambiará este último campo por dos campos, uno

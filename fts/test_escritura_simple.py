@@ -8,7 +8,6 @@ class TestVisitanteNuevo(FunctionalTest):
 
     def test_muestra_tabla_con_form_de_entrada(self):
         # Entro a la página web. El título es "Finanzas personales"
-        self.browser.get(self.live_server_url)
         self.assertIn('Finanzas Personales', self.browser.title)
         encabezado = self.browser.find_element_by_tag_name('h1').text
         self.assertIn('Finanzas Personales', encabezado)
@@ -56,12 +55,13 @@ class TestVisitanteNuevo(FunctionalTest):
         concepto.send_keys('Supermercado')
         detalle.send_keys('Arroz')
         salida.send_keys('250')
+        salida.send_keys(Keys.ENTER)
         # Lo ideal sería que esto funcionara con .send_keys(Keys_ENTER) para
         # replicar el comportamiento de un botón submit oculto, pero no le
         # encontré la vuelta para que funcione (si bien funciona ingresándo
         # los datos manuelmente), así que por ahora no me quedó otra que usar
         # un .click()
-        self.browser.find_element_by_id('id_btn_submit').click()
+        # self.browser.find_element_by_id('id_btn_submit').click()
 
         # Los datos ingresados pasan a formar parte del texto de la página,
         # y el formulario se desplaza una columna hacia abajo.
