@@ -44,6 +44,7 @@ class HomeTest(TestCase):
         self.assertEqual(mov2.salida, 2000)
 
     def test_pasa_movimientos_a_home_con_get(self):
+
         Movimiento.crear(
             fecha=date.today(),
             concepto='Concepto 1',
@@ -93,14 +94,13 @@ class HomeTest(TestCase):
             self.assertContains(response, mov.concepto)
 
     def test_limpia_form_despues_de_submit(self):
-        form = FormMovimiento(
+        response = self.client.post(
+            '/',
             data={'fecha': date(2020, 6, 20),
                   'concepto': 'Sueldo',
                   'detalle': 'Detalle sueldo',
                   'entrada': 1050.00}
         )
-
-        response = self.client.post('/', form.data)
         formasp = response.context['form'].as_p()
 
         self.assertNotIn('Sueldo', formasp)

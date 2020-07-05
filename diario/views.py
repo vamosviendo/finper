@@ -5,7 +5,6 @@ from diario.models import Movimiento
 
 
 def home(request):
-    form = FormMovimiento()
     if request.method == 'POST':
         form = FormMovimiento(data=request.POST)
         if form.is_valid():
@@ -21,7 +20,7 @@ def home(request):
                 entrada=entrada,
                 salida=salida
             )
-        form = FormMovimiento()
+    form = FormMovimiento()
     return render(
         request,
         'diario/home.html',

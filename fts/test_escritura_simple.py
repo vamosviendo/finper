@@ -94,7 +94,6 @@ class TestVisitanteNuevo(FunctionalTest):
             date.today().strftime("%d-%m-%Y"),
             fecha.get_attribute('value')
         )
-        ###
         self.assertEqual('Concepto', concepto.get_attribute('placeholder'))
         self.assertEqual('Detalle', detalle.get_attribute('placeholder'))
         self.assertEqual(concepto.get_attribute('value'), '')
@@ -104,6 +103,7 @@ class TestVisitanteNuevo(FunctionalTest):
 
         # La columna "Total" de la entrada anteriorse completa con el cálculo
         # de la diferencia entre entrada y salida.
+        ###
         self.assertEqual(total, '250.00')
 
 
