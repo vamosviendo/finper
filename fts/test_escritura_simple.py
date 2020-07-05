@@ -99,8 +99,8 @@ class TestVisitanteNuevo(FunctionalTest):
         self.assertEqual('Detalle', detalle.get_attribute('placeholder'))
         self.assertEqual(concepto.get_attribute('value'), '')
         self.assertEqual(detalle.get_attribute('value'), '')
-        self.assertEqual(entrada.get_attribute('value'), 0)
-        self.assertEqual(salida.get_attribute('value'), 0)
+        self.assertEqual(entrada.get_attribute('value'), '')
+        self.assertEqual(salida.get_attribute('value'), '')
 
         # La columna "Total" de la entrada anteriorse completa con el cálculo
         # de la diferencia entre entrada y salida.

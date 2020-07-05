@@ -21,6 +21,7 @@ def home(request):
                 entrada=entrada,
                 salida=salida
             )
+        form = FormMovimiento()
     return render(
         request,
         'diario/home.html',

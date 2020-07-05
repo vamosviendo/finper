@@ -1,7 +1,6 @@
 from datetime import date
 
 from django.test import TestCase
-from django.urls import reverse
 
 from diario.forms import FormMovimiento
 from diario.models import Movimiento
@@ -92,6 +91,21 @@ class HomeTest(TestCase):
         )
         for mov in Movimiento.objects.all():
             self.assertContains(response, mov.concepto)
+
+    def test_limpia_form_despues_de_submit(self):
+        form = FormMovimiento(
+            data={'fecha': date(2020, 6, 20),
+                  'concepto': 'Sueldo',
+                  'detalle': 'Detalle sueldo',
+                  'entrada': 1050.00}
+        )
+
+        response = self.client.post('/', form.data)
+        formasp = response.context['form'].as_p()
+
+        self.assertNotIn('Sueldo', formasp)
+        self.assertNotIn('Detalle sueldo', formasp)
+        self.assertNotIn('1050.0', formasp)
 
     def test_pasa_fecha_en_formato_apropiado(self):
         response = self.client.post(

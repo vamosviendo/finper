@@ -1,8 +1,8 @@
 - [x] Tests para lenguaje y zona horaria en settings.py
-- [] TODO Plantilla - Reemplazar submit por total
 - [x] Arreglar carajos con formato de fecha (mediante UTs)
 - [x] Arreglar entrada: 'None' is not None.
-- [] TODO Borrar campos al hacer submit ([x] FTs - [] UTs - [] Implementación)
+- [x] Borrar campos al hacer submit ([x] FTs - [x] UTs - [x] Implementación)
+- [] TODO View refactoring: emprolijar diario.views.home
 - [] TODO FTs refactoring: reescribir test_escritura_simple
 - [] TODO Form refactor: hacer a FormMovimiento un form basado en el modelo
         Movimiento. Reemplazar en view Movimiento.crear por form.save()
