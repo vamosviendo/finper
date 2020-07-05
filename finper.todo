@@ -2,6 +2,8 @@
 - [] TODO Plantilla - Reemplazar submit por total
 - [x] Arreglar carajos con formato de fecha (mediante UTs)
 - [x] Arreglar entrada: 'None' is not None.
+- [] TODO Borrar campos al hacer submit ([x] FTs - [] UTs - [] Implementación)
+- [] TODO FTs refactoring: reescribir test_escritura_simple
 - [] TODO Form refactor: hacer a FormMovimiento un form basado en el modelo
         Movimiento. Reemplazar en view Movimiento.crear por form.save()
 - [x] Refactoring: Reemplazar Movimiento.objects.create() por
@@ -20,3 +22,7 @@
 - [] TODO diario.tests.test_models. ¿Hacer sólo dos tests, uno para campos
         requeridos y uno para campos optativos (y uno más para entrada o
         salida requeridas)?
+
+PLANTILLA:
+- [x] ver cómo hacer submit del formulario sin botón, simplemente dando enter.
+        Spoiler: es con atributo hidden

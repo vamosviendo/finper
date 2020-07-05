@@ -19,7 +19,6 @@ class SettingsTest(TestCase):
 
     def test_static_files_settings(self):
         static_root = os.path.join(settings.BASE_DIR, 'static')
-        print(static_root)
         self.assertEqual(settings.STATIC_ROOT, static_root)
 
         # python manage.py collectstatic
