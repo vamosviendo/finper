@@ -59,27 +59,29 @@ class TestVisitanteNuevo(FunctionalTest):
         # Lo ideal sería que esto funcionara con .send_keys(Keys_ENTER) para
         # replicar el comportamiento de un botón submit oculto, pero no le
         # encontré la vuelta para que funcione (si bien funciona ingresándo
-        # los datos manuelmente), así que por ahora no me quedó otra que usar
+        # los datos manualmente), así que por ahora no me quedó otra que usar
         # un .click()
-        # self.browser.find_element_by_id('id_btn_submit').click()
+        self.browser.find_element_by_id('id_btn_submit').click()
 
         # Los datos ingresados pasan a formar parte del texto de la página,
         # y el formulario se desplaza una columna hacia abajo.
-        fecha = self.browser.find_element_by_id('id_td_fecha').text
-        concepto = self.browser.find_element_by_id('id_td_concepto').text
-        detalle = self.browser.find_element_by_id('id_td_detalle').text
-        entrada = self.browser.find_element_by_id('id_td_entrada').text
-        salida = self.browser.find_element_by_id('id_td_salida').text
+        tablamovs = self.espera(
+            lambda: self.browser.find_element_by_id('id_table_movs')
+        )
+        fecha = tablamovs.find_element_by_id('id_td_fecha').text
+        concepto = tablamovs.find_element_by_id('id_td_concepto').text
+        detalle = tablamovs.find_element_by_id('id_td_detalle').text
+        entrada = tablamovs.find_element_by_id('id_td_entrada').text
+        salida = tablamovs.find_element_by_id('id_td_salida').text
         self.assertEqual(fecha, date.today().strftime('%d-%m-%Y'))
         self.assertEqual(concepto, 'Supermercado')
         self.assertEqual(detalle, 'Arroz')
         self.assertEqual(entrada, '')
         self.assertEqual(salida, '250.00')
 
-        # La columna "Total" se completa con el cálculo de la diferencia
-        # entre entrada y salida.
-        ###
-        self.assertEqual(total, '250.00')
+        # Los campos del formulario se limpian y está listo para una nueva entrada
+
+        filas = tablamovs.find_elements_by_tag_name('tr')
         celdas = filas[2].find_elements_by_tag_name('td')
         fecha = celdas[0].find_element_by_id('id_input_fecha')
         concepto = celdas[1].find_element_by_id('id_input_concepto')
@@ -87,6 +89,22 @@ class TestVisitanteNuevo(FunctionalTest):
         entrada = celdas[3].find_element_by_id('id_input_entrada')
         salida = celdas[4].find_element_by_id('id_input_salida')
         total = celdas[5].find_element_by_id('id_span_total').text
+
+        self.assertEqual(
+            date.today().strftime("%d-%m-%Y"),
+            fecha.get_attribute('value')
+        )
+        ###
+        self.assertEqual('Concepto', concepto.get_attribute('placeholder'))
+        self.assertEqual('Detalle', detalle.get_attribute('placeholder'))
+        self.assertEqual(concepto.get_attribute('value'), '')
+        self.assertEqual(detalle.get_attribute('value'), '')
+        self.assertEqual(entrada.get_attribute('value'), 0)
+        self.assertEqual(salida.get_attribute('value'), 0)
+
+        # La columna "Total" de la entrada anteriorse completa con el cálculo
+        # de la diferencia entre entrada y salida.
+        self.assertEqual(total, '250.00')
 
 
 
