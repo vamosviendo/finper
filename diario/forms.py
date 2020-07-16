@@ -1,22 +1,21 @@
 from datetime import date
 from django import forms
 
+from .models import Movimiento
 
-class FormMovimiento(forms.Form):
+
+class FormMovimiento(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(auto_id='id_input_%s', *args, **kwargs)
+        self.fields['fecha'].widget.attrs['value'] = \
+            date.today().strftime('%d-%m-%Y')
+        self.fields['concepto'].widget.attrs['placeholder'] = 'Concepto'
+        self.fields['detalle'].widget.attrs['placeholder'] = 'Detalle'
 
-    fecha = forms.DateField(initial=date.today().strftime('%d-%m-%Y'))
-    concepto = forms.CharField(
-        widget=forms.TextInput(attrs={'placeholder': 'Concepto'})
-    )
-    detalle = forms.CharField(
-        widget=forms.TextInput(attrs={'placeholder': 'Detalle'}),
-        required=False
-    )
-    entrada = forms.DecimalField(required=False)
-    salida = forms.DecimalField(required=False)
+    class Meta:
+        model = Movimiento
+        fields = '__all__'
 
     def as_plist(self):
         return self.as_p().split('\n')

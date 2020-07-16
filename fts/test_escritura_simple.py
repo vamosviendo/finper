@@ -1,5 +1,4 @@
 from datetime import date
-from selenium.webdriver.common.keys import Keys
 
 from .base import FunctionalTest
 

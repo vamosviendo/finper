@@ -27,7 +27,7 @@ class FormMovimientoTest(TestCase):
         form = FormMovimiento()
         cadena_fecha = date.today().strftime('%d-%m-%Y')
         self.assertInHTML(
-            f'<input type="text" name="fecha" required id="id_input_fecha" value="{cadena_fecha}"/>',
+            f'<input type="text" name="fecha" value="{cadena_fecha}" required id="id_input_fecha"/>',
             form.as_p()
         )
 

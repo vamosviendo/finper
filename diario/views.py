@@ -8,18 +8,7 @@ def home(request):
     if request.method == 'POST':
         form = FormMovimiento(data=request.POST)
         if form.is_valid():
-            fecha = form.cleaned_data['fecha']
-            concepto = form.cleaned_data['concepto']
-            detalle = form.cleaned_data['detalle']
-            entrada = form.cleaned_data['entrada']
-            salida = form.cleaned_data['salida']
-            Movimiento.crear(
-                fecha=fecha,
-                concepto=concepto,
-                detalle =detalle,
-                entrada=entrada,
-                salida=salida
-            )
+            form.save()
             return redirect('/')
     form = FormMovimiento()
     return render(
