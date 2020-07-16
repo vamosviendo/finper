@@ -5,6 +5,8 @@ from django.test import TestCase
 
 from diario.models import Movimiento
 
+from .include import crear_entrada, crear_salida
+
 
 class ModelMovimientoTest(TestCase):
 
@@ -18,38 +20,51 @@ class ModelMovimientoTest(TestCase):
         self.assertEqual(Movimiento.objects.count(), 1)
 
     def test_no_guarda_movimiento_sin_concepto(self):
-        with self.assertRaises(ValidationError) as concepto_blanco:
-            mov = Movimiento.crear(
+        with self.assertRaises(ValidationError) as concepto_en_blanco:
+            mov = Movimiento(
                 fecha=date.today(),
                 detalle='Movimiento de salida',
                 entrada=250,
                 salida=250
             )
+            mov.full_clean()
+            mov.save()
 
+        self.assertEqual(Movimiento.objects.count(), 0)
         self.assertIn(
             'Este campo no puede estar en blanco.',
-            concepto_blanco.exception.message_dict['concepto']
+            concepto_en_blanco.exception.message_dict['concepto']
         )
 
     def test_no_guarda_movimiento_sin_fecha(self):
-        pass
+        with self.assertRaises(ValidationError) as fecha_en_blanco:
+            mov = Movimiento(
+                detalle='Detalle de movimiento',
+                concepto='Movimiento de salida',
+                entrada=250,
+                salida=250
+            )
+            mov.full_clean()
+            mov.save()
+            self.assertEqual(Movimiento.objects.count(), 0)
+            self.assertIn(
+                'Este campo no puede ser nulo',
+                fecha_en_blanco.exception.message_dict['fecha']
+            )
 
     def test_guarda_movimiento_con_salida_vacia(self):
-        mov = Movimiento(
-            fecha=date.today(),
-            concepto='Movimiento de entrada',
-            detalle='Detalle de entrada',
-            entrada=250
-        )
-        mov.save()
+        crear_entrada()
         self.assertEqual(Movimiento.objects.count(), 1)
 
     def test_guarda_movimiento_con_entrada_vacia(self):
-        mov = Movimiento(
-            fecha=date.today(),
+        crear_salida()
+        self.assertEqual(Movimiento.objects.count(), 1)
+
+    def test_crear_guarda_fecha_de_hoy_por_defecto(self):
+        mov = Movimiento.crear(
+            detalle='Detalle de movimiento',
             concepto='Movimiento de salida',
-            detalle='Detalle de salida',
+            entrada=250,
             salida=250
         )
-        mov.save()
-        self.assertEqual(Movimiento.objects.count(), 1)
+        self.assertEqual(mov.fecha, date.today())

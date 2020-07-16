@@ -22,7 +22,7 @@ class Movimiento(models.Model):
 
     @classmethod
     def crear(cls, concepto='', fecha=date.today(),
-               detalle='', entrada=None, salida=None):
+              detalle='', entrada=None, salida=None):
         mov = cls(concepto=concepto, fecha=fecha, detalle=detalle,
                   entrada=entrada, salida=salida)
         mov.full_clean()

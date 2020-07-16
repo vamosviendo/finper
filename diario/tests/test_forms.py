@@ -16,12 +16,12 @@ class FormMovimientoTest(TestCase):
 
     def test_atributos_de_campos(self):
         form = FormMovimiento()
-        formlist = form.as_pdict()
-        self.assertIn('id_input_fecha', formlist['fecha'])
-        self.assertIn('id_input_concepto', formlist['concepto'])
-        self.assertIn('id_input_entrada', formlist['entrada'])
-        self.assertIn('placeholder="Concepto"', formlist['concepto'])
-        self.assertIn('placeholder="Detalle"', formlist['detalle'])
+        formp = form.as_p()
+        self.assertIn('id_input_fecha', formp)
+        self.assertIn('id_input_concepto', formp)
+        self.assertIn('id_input_entrada', formp)
+        self.assertIn('placeholder="Concepto"', formp)
+        self.assertIn('placeholder="Detalle"', formp)
 
     def test_muestra_fecha_de_hoy_por_defecto(self):
         form = FormMovimiento()

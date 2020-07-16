@@ -5,6 +5,8 @@ from django.test import TestCase
 from diario.forms import FormMovimiento
 from diario.models import Movimiento
 
+from .include import crear_entrada, crear_salida, crear_traspaso
+
 
 class HomeTest(TestCase):
 
@@ -56,47 +58,21 @@ class HomeTest(TestCase):
         self.assertRedirects(response, '/')
 
     def test_pasa_movimientos_a_home_con_get(self):
-
-        Movimiento.crear(
-            fecha=date.today(),
-            concepto='Concepto 1',
-            detalle='Detalle 1',
-            entrada=100
-        )
-        Movimiento.crear(
-            fecha=date.today(),
-            concepto='Concepto 2',
-            detalle='Detalle 2',
-            entrada=100
-        )
-        Movimiento.crear(
-            fecha=date.today(),
-            concepto='Concepto 3',
-            entrada=100,
-            salida=100
-        )
+        crear_entrada()
+        crear_salida()
+        crear_traspaso()
         response = self.client.get('/')
         for mov in Movimiento.objects.all():
             self.assertContains(response, mov.concepto)
 
     def test_pasa_movimientos_a_home_con_post(self):
-        Movimiento.crear(
-            fecha=date.today(),
-            concepto='Concepto 1',
-            detalle='Detalle 1',
-            entrada=100
-        )
-        Movimiento.crear(
-            fecha=date.today(),
-            concepto='Concepto 2',
-            detalle='Detalle 2',
-            entrada=100
-        )
+        crear_entrada()
+        crear_salida()
         response = self.client.post(
             '/',
             data={'fecha': date(2020, 6, 20),
-                  'concepto': 'Movimiento de entrada',
-                  'detalle': 'Detalle de entrada',
+                  'concepto': 'Movimiento 3',
+                  'detalle': 'Detalle 3',
                   'entrada': 1050.00,
                   'salida': 1050.00,
                   },

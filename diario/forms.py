@@ -16,14 +16,3 @@ class FormMovimiento(forms.ModelForm):
     class Meta:
         model = Movimiento
         fields = '__all__'
-
-    def as_plist(self):
-        return self.as_p().split('\n')
-
-    def as_pdict(self):
-        values = self.as_plist()
-        keys = list(self.fields.keys())
-        dicc = {}
-        for index, value in enumerate(values):
-            dicc[keys[index]] = value
-        return dicc
