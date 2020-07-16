@@ -20,6 +20,7 @@ def home(request):
                 entrada=entrada,
                 salida=salida
             )
+            return redirect('/')
     form = FormMovimiento()
     return render(
         request,

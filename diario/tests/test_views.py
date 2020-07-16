@@ -43,6 +43,18 @@ class HomeTest(TestCase):
         self.assertEqual(mov1.entrada, 1050)
         self.assertEqual(mov2.salida, 2000)
 
+    def test_post_redirige_a_home(self):
+        response = self.client.post(
+            '/',
+            data={'fecha': date(2020, 6, 20),
+                  'concepto': 'Movimiento de entrada',
+                  'detalle': 'Detalle de entrada',
+                  'entrada': 1050.00,
+                  'salida': 1050.00,
+                  }
+        )
+        self.assertRedirects(response, '/')
+
     def test_pasa_movimientos_a_home_con_get(self):
 
         Movimiento.crear(
@@ -64,7 +76,6 @@ class HomeTest(TestCase):
             salida=100
         )
         response = self.client.get('/')
-
         for mov in Movimiento.objects.all():
             self.assertContains(response, mov.concepto)
 
@@ -88,7 +99,8 @@ class HomeTest(TestCase):
                   'detalle': 'Detalle de entrada',
                   'entrada': 1050.00,
                   'salida': 1050.00,
-                  }
+                  },
+            follow=True
         )
         for mov in Movimiento.objects.all():
             self.assertContains(response, mov.concepto)
@@ -99,7 +111,8 @@ class HomeTest(TestCase):
             data={'fecha': date(2020, 6, 20),
                   'concepto': 'Sueldo',
                   'detalle': 'Detalle sueldo',
-                  'entrada': 1050.00}
+                  'entrada': 1050.00},
+            follow=True
         )
         formasp = response.context['form'].as_p()
 
@@ -115,36 +128,37 @@ class HomeTest(TestCase):
                   'detalle': 'Detalle de entrada',
                   'entrada': 1050.00,
                   'salida': 1050.00,
-                  }
+                  },
+            follow=True
         )
         self.assertIn(date.today().strftime('%d-%m-%Y').encode(), response.content)
 
-    def test_calcula_total_movimiento(self):
-        pass
-
-    def test_muestra_total_movimiento(self):
-        pass
-
-    def test_POST_redirige_a_home(self):
-        pass
-
-    def test_entrada_invalida_no_guarda_movimiento(self):
-        pass
-
-    def test_entrada_invalida_muestra_plantilla_home(self):
-        pass
-
-    def test_entrada_invalida_pasa_form_a_plantilla(self):
-        pass
-
-    def test_entrada_invalida_muestra_mensajes_de_error(self):
-        pass
-
-    def test_distintos_tipos_de_error(self):
-        pass
-
-    def test_muestra_movimientos_anteriores(self):
-        pass
-
-    def test_calcula_total_acumulado(self):
-        pass
+    # def test_calcula_total_movimiento(self):
+    #     pass
+    #
+    # def test_muestra_total_movimiento(self):
+    #     pass
+    #
+    # def test_POST_redirige_a_home(self):
+    #     pass
+    #
+    # def test_entrada_invalida_no_guarda_movimiento(self):
+    #     pass
+    #
+    # def test_entrada_invalida_muestra_plantilla_home(self):
+    #     pass
+    #
+    # def test_entrada_invalida_pasa_form_a_plantilla(self):
+    #     pass
+    #
+    # def test_entrada_invalida_muestra_mensajes_de_error(self):
+    #     pass
+    #
+    # def test_distintos_tipos_de_error(self):
+    #     pass
+    #
+    # def test_muestra_movimientos_anteriores(self):
+    #     pass
+    #
+    # def test_calcula_total_acumulado(self):
+    #     pass
