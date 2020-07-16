@@ -6,14 +6,18 @@ from selenium.common.exceptions import WebDriverException
 from django.test import LiveServerTestCase
 
 
-def esperar(condicion, tiempo=2):
+MAX_WAIT = 2
+
+
+def esperar(condicion):
+
     def condicion_modificada(*args, **kwargs):
         arranque = time.time()
         while True:
             try:
                 return condicion(*args, **kwargs)
             except (AssertionError, WebDriverException) as noesperomas:
-                if time.time() - arranque > tiempo:
+                if time.time() - arranque > MAX_WAIT:
                     raise noesperomas
                 time.sleep(0.2)
 

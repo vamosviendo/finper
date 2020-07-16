@@ -55,24 +55,18 @@ class TestVisitanteNuevo(FunctionalTest):
         concepto.send_keys('Supermercado')
         detalle.send_keys('Arroz')
         salida.send_keys('250')
-        salida.send_keys(Keys.ENTER)
-        # Lo ideal sería que esto funcionara con .send_keys(Keys_ENTER) para
-        # replicar el comportamiento de un botón submit oculto, pero no le
-        # encontré la vuelta para que funcione (si bien funciona ingresándo
-        # los datos manualmente), así que por ahora no me quedó otra que usar
-        # un .click()
         self.browser.find_element_by_id('id_btn_submit').click()
 
         # Los datos ingresados pasan a formar parte del texto de la página,
-        # y el formulario se desplaza una columna hacia abajo.
+        # y el formulario se desplaza un renglón hacia abajo.
         tablamovs = self.espera(
             lambda: self.browser.find_element_by_id('id_table_movs')
         )
-        fecha = tablamovs.find_element_by_id('id_td_fecha').text
-        concepto = tablamovs.find_element_by_id('id_td_concepto').text
-        detalle = tablamovs.find_element_by_id('id_td_detalle').text
-        entrada = tablamovs.find_element_by_id('id_td_entrada').text
-        salida = tablamovs.find_element_by_id('id_td_salida').text
+        fecha = self.browser.find_element_by_id('id_td_fecha_01').text
+        concepto = tablamovs.find_element_by_id('id_td_concepto_01').text
+        detalle = tablamovs.find_element_by_id('id_td_detalle_01').text
+        entrada = tablamovs.find_element_by_id('id_td_entrada_01').text
+        salida = tablamovs.find_element_by_id('id_td_salida_01').text
         self.assertEqual(fecha, date.today().strftime('%d-%m-%Y'))
         self.assertEqual(concepto, 'Supermercado')
         self.assertEqual(detalle, 'Arroz')
