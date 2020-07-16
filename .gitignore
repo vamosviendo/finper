@@ -7,3 +7,4 @@ __pycache__
 db.backup
 static
 !diario/static
+finper.todo
