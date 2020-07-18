@@ -5,7 +5,6 @@ from selenium.common.exceptions import WebDriverException
 
 from django.test import LiveServerTestCase
 
-
 MAX_WAIT = 2
 
 
@@ -36,3 +35,9 @@ class FunctionalTest(LiveServerTestCase):
     @esperar
     def espera(self, funcion):
         return funcion()
+
+    @esperar
+    def esperar_movimiento_en_tabla(self, concepto):
+        tabla = self.browser.find_element_by_id('id_table_movs')
+        celdas = tabla.find_elements_by_tag_name('td')
+        self.assertIn(concepto, [celda.text for celda in celdas])

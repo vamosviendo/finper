@@ -59,6 +59,11 @@
         {% csrf_token %}
       </tr>
     </table>
+    {% if errores %}
+      <div class="form-group has-error">
+        <div class="help-block">{{ errores }}</div>
+      </div>
+    {% endif %}
   </form>
 
 </body>

@@ -75,5 +75,20 @@ class FormMovimientoTest(TestCase):
             })
         self.assertTrue(form.is_valid())
 
+    def test_no_permite_concepto_vacio(self):
+        form = FormMovimiento(
+            data={
+                'fecha': date.today().strftime('%d-%m-%Y'),
+                'entrada': 5000
+            }
+        )
+        self.assertFalse(form.is_valid())
+
     def test_no_permite_entrada_y_salida_ambas_vacias(self):
-        pass
+        form = FormMovimiento(
+            data={
+                'fecha': date.today().strftime('%d-%m-%Y'),
+                'concepto': 'Movimiento sin importe'
+            }
+        )
+        self.assertFalse(form.is_valid())

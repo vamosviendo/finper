@@ -11,6 +11,7 @@ def crear_entrada():
         entrada=250
     )
 
+
 def crear_salida():
     return Movimiento.crear(
             fecha=date.today(),
@@ -18,6 +19,7 @@ def crear_salida():
             detalle='Detalle de salida',
             salida=250
         )
+
 
 def crear_traspaso():
     return Movimiento.crear(
