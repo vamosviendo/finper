@@ -135,7 +135,6 @@ class HomeTest(TestCase):
             concepto='Movimiento nulo',
             detalle='Detalle nulo'
         )
-        print(response.content)
         self.assertContains(response,
                             'Entrada y salida no pueden ser ambos nulos')
 

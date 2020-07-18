@@ -13,7 +13,7 @@
 <body>
 
   <h1>Finanzas Personales - Movimientos diarios</h1>
-  <form method="POST">
+  <form method="POST" novalidate>
     <table id="id_table_movs">
       <tr>
         <th>{{ form.fecha.label_tag }}</th>
@@ -59,9 +59,12 @@
         {% csrf_token %}
       </tr>
     </table>
-    {% if errores %}
+    {% if erroresnodecampo or erroresdecampo %}
       <div class="form-group has-error">
-        <div class="help-block">{{ errores }}</div>
+        <div class="help-block">{{ erroresdecampo }}</div>
+        {% for error in erroresnodecampo %}
+        <div class="help-block">{{ error }}</div>
+        {% endfor %}
       </div>
     {% endif %}
   </form>

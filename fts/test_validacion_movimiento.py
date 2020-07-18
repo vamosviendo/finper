@@ -31,6 +31,7 @@ class TestValidarMovimiento(FunctionalTest):
         self.assertIn('Entrada y salida no pueden ser ambos nulos', errores.text)
 
         # Completo alguno de los dos campos y el error desaparece
+        # TODO ver si se puede resolver esto con self.assertFormError()
         self.browser.find_element_by_id('id_input_entrada').send_keys('5000')
         self.espera(lambda: self.browser.find_element_by_css_selector(
             '#id_input:valid'
