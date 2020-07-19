@@ -1,5 +1,7 @@
 from datetime import date
+
 from django import forms
+from django.core.exceptions import ValidationError
 
 from .models import Movimiento
 
@@ -16,3 +18,8 @@ class FormMovimiento(forms.ModelForm):
     class Meta:
         model = Movimiento
         fields = '__all__'
+
+    def clean(self):
+        datos_limpios = super().clean()
+        if datos_limpios['entrada'] is None and datos_limpios['salida'] is None:
+            raise ValidationError('Entrada y salida no pueden ser ambos nulos.')
