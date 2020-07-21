@@ -92,3 +92,12 @@ class FormMovimientoTest(TestCase):
             }
         )
         self.assertFalse(form.is_valid())
+
+    def test_guarda_valor_campo_concepto_correcto_ante_form_no_valido(self):
+        form = FormMovimiento(
+            data={
+                'fecha': date.today().strftime('%d-%m-%Y'),
+                'concepto': 'Movimiento sin importe'
+            }
+        )
+        self.assertEqual('Movimiento sin importe', form['concepto'].value())

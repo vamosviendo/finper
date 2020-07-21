@@ -5,7 +5,8 @@ from diario.models import Movimiento
 
 
 def home(request):
-    erroresnodecampo = erroresdecampo = None
+
+    errores = False
 
     if request.method == 'POST':
         form = FormMovimiento(data=request.POST)
@@ -13,18 +14,17 @@ def home(request):
             form.save()
             return redirect('/')
         else:
-            erroresnodecampo = form.non_field_errors()
-            erroresdecampo = form.errors
-    form = FormMovimiento()
+            errores = True
+
+    if not errores:
+        form = FormMovimiento()
 
     return render(
         request,
         'diario/home.html',
         context={
             'form': form,
-            'erroresdecampo': erroresdecampo,
-            'erroresnodecampo': erroresnodecampo,
-            'movs': Movimiento.objects.all()
+            'movs': Movimiento.objects.all(),
         }
     )
 

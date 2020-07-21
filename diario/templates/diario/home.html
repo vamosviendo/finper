@@ -47,8 +47,8 @@
         <td>{{ form.fecha }}</td>
         <td>
           {{ form.concepto }}
-          {% if erroresdecampo.concepto %}
-          <br>{{ erroresdecampo.concepto }}
+          {% if form.errors.concepto %}
+          <br>{{ form.errors.concepto }}
           {% endif %}
         </td>
         <td>{{ form.detalle }}</td>
@@ -64,9 +64,9 @@
         {% csrf_token %}
       </tr>
     </table>
-    {% if erroresnodecampo %}
+    {% if form.non_field_errors %}
       <div class="form-group has-error">
-        {% for error in erroresnodecampo %}
+        {% for error in form.non_field_errors %}
         <div class="help-block">{{ error }}</div>
         {% endfor %}
       </div>

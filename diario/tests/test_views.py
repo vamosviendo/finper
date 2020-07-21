@@ -112,6 +112,12 @@ class HomeTest(TestCase):
         self.assertNotIn('Detalle sueldo', formasp)
         self.assertNotIn('1050.0', formasp)
 
+    def test_pasa_total_acumulado_a_home_con_post(self):
+        response = self.post_movimiento_entrada(follow=True)
+        self.assertEqual(response.context['total'], '1050')
+        response = self.post_movimiento_salida()
+        self.assertEqual(response.context['total'], '-950')
+
     def test_pasa_fecha_en_formato_apropiado(self):
         response = self.post_movimiento_traspaso(follow=True)
         self.assertIn(date.today().strftime('%d-%m-%Y').encode(), response.content)
@@ -137,6 +143,14 @@ class HomeTest(TestCase):
         )
         self.assertContains(response,
                             'Entrada y salida no pueden ser ambos nulos')
+
+    def test_mantiene_valor_de_campo_correcto_con_entrada_y_salida_vacias(self):
+        response = self.post_movimiento(
+            date.today(),
+            concepto='Movimiento nulo',
+            detalle='Detalle nulo'
+        )
+        self.assertEqual(response.context['form'].data['concepto'], 'Movimiento nulo')
 
     # def test_calcula_total_movimiento(self):
     #     pass
