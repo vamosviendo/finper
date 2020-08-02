@@ -8,7 +8,8 @@ def crear_entrada():
         fecha=date.today(),
         concepto='Movimiento de entrada',
         detalle='Detalle de entrada',
-        entrada=250
+        importe=250,
+        cta_entrada='Efectivo'
     )
 
 
@@ -17,7 +18,8 @@ def crear_salida():
             fecha=date.today(),
             concepto='Movimiento de salida',
             detalle='Detalle de salida',
-            salida=250
+            importe=250,
+            cta_salida='Efectivo'
         )
 
 
@@ -26,6 +28,7 @@ def crear_traspaso():
             fecha=date.today(),
             concepto='Movimiento de traspaso',
             detalle='Detalle de traspaso',
-            salida=300,
-            entrada=300
+            importe=300,
+            cta_salida='Salida',
+            cta_entrada='Entrada'
         )

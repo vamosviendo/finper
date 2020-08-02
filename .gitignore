@@ -4,7 +4,7 @@ vfinper
 __pycache__
 *.pyc
 .idea
-db.backup
+db.backup*
 static
 !diario/static
 finper.todo

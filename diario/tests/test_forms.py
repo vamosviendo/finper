@@ -11,17 +11,22 @@ class FormMovimientoTest(TestCase):
         self.assertIn('input type="text" name="fecha"', form.as_p())
         self.assertIn('input type="text" name="concepto"', form.as_p())
         self.assertIn('input type="text" name="detalle"', form.as_p())
-        self.assertIn('input type="number" name="entrada"', form.as_p())
-        self.assertIn('input type="number" name="salida"', form.as_p())
+        self.assertIn('input type="number" name="importe"', form.as_p())
+        self.assertIn('input type="text" name="cta_entrada"', form.as_p())
+        self.assertIn('input type="text" name="cta_salida"', form.as_p())
 
     def test_atributos_de_campos(self):
         form = FormMovimiento()
         formp = form.as_p()
         self.assertIn('id_input_fecha', formp)
         self.assertIn('id_input_concepto', formp)
-        self.assertIn('id_input_entrada', formp)
+        self.assertIn('id_input_importe', formp)
+        self.assertIn('id_input_cta_entrada', formp)
+        self.assertIn('id_input_cta_salida', formp)
         self.assertIn('placeholder="Concepto"', formp)
         self.assertIn('placeholder="Detalle"', formp)
+        self.assertIn('placeholder="Cta. de entrada"', formp)
+        self.assertIn('placeholder="Cta. de salida"', formp)
 
     def test_muestra_fecha_de_hoy_por_defecto(self):
         form = FormMovimiento()
@@ -36,30 +41,32 @@ class FormMovimientoTest(TestCase):
             data={
                 'fecha': date.today(),
                 'concepto': 'Movimiento de salida',
-                'salida': 258,
-                'entrada': 258
+                'importe': 258,
+                'cta_entrada': 'Banco'
             }
         )
         self.assertTrue(form.is_valid())
 
-    def test_permite_entrada_vacia(self):
+    def test_permite_cta_entrada_vacia(self):
         form = FormMovimiento(
             data={
                 'fecha': date.today(),
                 'concepto': 'Movimiento de salida',
                 'detalle': 'Detalle de salida',
-                'salida': 258
+                'importe': 258,
+                'cta_salida': 'Efectivo'
             }
         )
         self.assertTrue(form.is_valid())
 
-    def test_permite_salida_vacia(self):
+    def test_permite_cta_salida_vacia(self):
         form = FormMovimiento(
             data={
                 'fecha': date.today(),
                 'concepto': 'Movimiento de entrada',
                 'detalle': 'Detalle de entrada',
-                'entrada': 258
+                'importe': 258,
+                'cta_entrada': 'Efectivo'
             }
         )
         self.assertTrue(form.is_valid())
@@ -70,8 +77,9 @@ class FormMovimientoTest(TestCase):
                 'fecha': date.today().strftime('%d-%m-%Y'),
                 'concepto': 'Movimiento de entrada',
                 'detalle': 'Detalle de entrada',
-                'entrada': 258,
-                'salida': 258,
+                'importe': 258,
+                'cta_entrada': 'Efectivo',
+                'cta_salida': 'Banco',
             })
         self.assertTrue(form.is_valid())
 
@@ -79,7 +87,20 @@ class FormMovimientoTest(TestCase):
         form = FormMovimiento(
             data={
                 'fecha': date.today().strftime('%d-%m-%Y'),
-                'entrada': 5000
+                'importe': 5000,
+                'cta_entrada': 'Banco'
+            }
+        )
+        self.assertFalse(form.is_valid())
+
+    def test_no_permite_importe_vacio(self):
+        form = FormMovimiento(
+            data={
+                'fecha': date.today().strftime('%d-%m-%Y'),
+                'concepto': 'Movimiento de entrada',
+                'detalle': 'Detalle de entrada',
+                'cta_entrada': 'Efectivo',
+                'cta_salida': 'Banco',
             }
         )
         self.assertFalse(form.is_valid())
@@ -88,7 +109,8 @@ class FormMovimientoTest(TestCase):
         form = FormMovimiento(
             data={
                 'fecha': date.today().strftime('%d-%m-%Y'),
-                'concepto': 'Movimiento sin importe'
+                'concepto': 'Movimiento sin importe',
+                'importe': 5000
             }
         )
         self.assertFalse(form.is_valid())

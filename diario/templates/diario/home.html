@@ -19,8 +19,9 @@
         <th>{{ form.fecha.label_tag }}</th>
         <th>{{ form.concepto.label_tag }}</th>
         <th>{{ form.detalle.label_tag }}</th>
-        <th>{{ form.entrada.label_tag }}</th>
-        <th>{{ form.salida.label_tag }}</th>
+        <th>{{ form.importe.label_tag }}</th>
+        <th>{{ form.cta_entrada.label_tag }}</th>
+        <th>{{ form.cta_salida.label_tag }}</th>
         <th>Total:</th>
       </tr>
       {% for mov in movs %}
@@ -34,11 +35,14 @@
         <td id="id_td_detalle_{{ forloop.counter|stringformat:'02d' }}">
           {{ mov.detalle|default_if_none:'' }}
         </td>
+        <td id="id_td_importe_{{ forloop.counter|stringformat:'02d' }}">
+          {{ mov.importe|default_if_none:'' }}
+        </td>
         <td id="id_td_entrada_{{ forloop.counter|stringformat:'02d' }}">
-          {{ mov.entrada|default_if_none:'' }}
+          {{ mov.cta_entrada|default_if_none:'' }}
         </td>
         <td id="id_td_salida_{{ forloop.counter|stringformat:'02d' }}">
-          {{ mov.salida|default_if_none:'' }}
+          {{ mov.cta_salida|default_if_none:'' }}
         </td>
         <td id="id_td_total_{{ forloop.counter|stringformat:'02d' }}"></td>
       </tr>
@@ -52,8 +56,9 @@
           {% endif %}
         </td>
         <td>{{ form.detalle }}</td>
-        <td>{{ form.entrada }}</td>
-        <td>{{ form.salida }}</td>
+        <td>{{ form.importe }}</td>
+        <td>{{ form.cta_entrada }}</td>
+        <td>{{ form.cta_salida }}</td>
         <td>
           <span id="id_span_total">
             <button id="id_btn_submit" type="submit">

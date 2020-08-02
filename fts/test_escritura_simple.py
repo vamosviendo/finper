@@ -19,8 +19,9 @@ class TestVisitanteNuevo(FunctionalTest):
             'Fecha:',
             'Concepto:',
             'Detalle:',
-            'Entrada:',
-            'Salida:',
+            'Importe:',
+            'Cta entrada:',
+            'Cta salida:',
             'Total:',
         ]):
             self.assertEqual(header, headers[index].text)
@@ -32,9 +33,10 @@ class TestVisitanteNuevo(FunctionalTest):
         fecha = celdas[0].find_element_by_id('id_input_fecha')
         concepto = celdas[1].find_element_by_id('id_input_concepto')
         detalle = celdas[2].find_element_by_id('id_input_detalle')
-        entrada = celdas[3].find_element_by_id('id_input_entrada')
-        salida = celdas[4].find_element_by_id('id_input_salida')
-        total = celdas[5].find_element_by_id('id_span_total').text
+        importe = celdas[3].find_element_by_id('id_input_importe')
+        entrada = celdas[4].find_element_by_id('id_input_cta_entrada')
+        salida = celdas[5].find_element_by_id('id_input_cta_salida')
+        total = celdas[6].find_element_by_id('id_span_total').text
 
         # Algunos de los campos del formulario vienen con valores por defecto.
         # Los que no, tienen un placeholder.
@@ -53,7 +55,8 @@ class TestVisitanteNuevo(FunctionalTest):
         # saldo anterior.
         concepto.send_keys('Supermercado')
         detalle.send_keys('Arroz')
-        salida.send_keys('250')
+        importe.send_keys('250')
+        salida.send_keys('Efectivo')
         self.browser.find_element_by_id('id_btn_submit').click()
 
         # Los datos ingresados pasan a formar parte del texto de la página,
@@ -64,13 +67,15 @@ class TestVisitanteNuevo(FunctionalTest):
         fecha = self.browser.find_element_by_id('id_td_fecha_01').text
         concepto = tablamovs.find_element_by_id('id_td_concepto_01').text
         detalle = tablamovs.find_element_by_id('id_td_detalle_01').text
+        importe = tablamovs.find_element_by_id('id_td_importe_01').text
         entrada = tablamovs.find_element_by_id('id_td_entrada_01').text
         salida = tablamovs.find_element_by_id('id_td_salida_01').text
         self.assertEqual(fecha, date.today().strftime('%d-%m-%Y'))
         self.assertEqual(concepto, 'Supermercado')
         self.assertEqual(detalle, 'Arroz')
+        self.assertEqual(importe, '250.00')
         self.assertEqual(entrada, '')
-        self.assertEqual(salida, '250.00')
+        self.assertEqual(salida, 'Efectivo')
 
         # Los campos del formulario se limpian y está listo para una nueva entrada
 
@@ -79,9 +84,10 @@ class TestVisitanteNuevo(FunctionalTest):
         fecha = celdas[0].find_element_by_id('id_input_fecha')
         concepto = celdas[1].find_element_by_id('id_input_concepto')
         detalle = celdas[2].find_element_by_id('id_input_detalle')
-        entrada = celdas[3].find_element_by_id('id_input_entrada')
-        salida = celdas[4].find_element_by_id('id_input_salida')
-        total = celdas[5].find_element_by_id('id_span_total').text
+        importe = celdas[3].find_element_by_id('id_input_importe')
+        entrada = celdas[4].find_element_by_id('id_input_cta_entrada')
+        salida = celdas[5].find_element_by_id('id_input_cta_salida')
+        total = celdas[6].find_element_by_id('id_span_total').text
 
         self.assertEqual(
             date.today().strftime("%d-%m-%Y"),
@@ -91,6 +97,7 @@ class TestVisitanteNuevo(FunctionalTest):
         self.assertEqual('Detalle', detalle.get_attribute('placeholder'))
         self.assertEqual(concepto.get_attribute('value'), '')
         self.assertEqual(detalle.get_attribute('value'), '')
+        self.assertEqual(importe.get_attribute('value'), '')
         self.assertEqual(entrada.get_attribute('value'), '')
         self.assertEqual(salida.get_attribute('value'), '')
 

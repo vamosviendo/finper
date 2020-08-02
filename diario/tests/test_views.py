@@ -15,8 +15,9 @@ class HomeTest(TestCase):
             fecha,
             concepto='',
             detalle='',
-            entrada='',
-            salida='',
+            importe='',
+            cta_entrada='',
+            cta_salida='',
             follow=False
     ):
         return self.client.post(
@@ -24,8 +25,9 @@ class HomeTest(TestCase):
             data={'fecha': fecha,
                   'concepto': concepto,
                   'detalle': detalle,
-                  'entrada': entrada,
-                  'salida': salida},
+                  'importe': importe,
+                  'cta_entrada': cta_entrada,
+                  'cta_salida': cta_salida},
             follow=follow
         )
 
@@ -34,7 +36,8 @@ class HomeTest(TestCase):
             fecha=date.today(),
             concepto='Movimiento de entrada',
             detalle='Detalle de entrada',
-            entrada='1050.00',
+            importe='1050.00',
+            cta_entrada='Efectivo',
             follow=follow
         )
 
@@ -43,7 +46,8 @@ class HomeTest(TestCase):
             fecha=date.today(),
             concepto='Movimiento de salida',
             detalle='Detalle de salida',
-            salida='2000.00',
+            importe='2000.00',
+            cta_salida='Efectivo',
             follow=follow
         )
 
@@ -52,8 +56,9 @@ class HomeTest(TestCase):
             fecha=date.today(),
             concepto='Movimiento de salida',
             detalle='Detalle de salida',
-            entrada='2000.00',
-            salida='2000.00',
+            importe='2000.00',
+            cta_entrada='Efectivo',
+            cta_salida='Banco',
             follow=follow
         )
 
@@ -70,7 +75,8 @@ class HomeTest(TestCase):
             fecha=date(2020, 6, 20),
             concepto='Movimiento de entrada',
             detalle='Detalle de entrada',
-            entrada='1050.00'
+            importe='1050.00',
+            cta_entrada='Efectivo'
         )
         self.post_movimiento_salida()
         self.assertEqual(Movimiento.objects.count(), 2)
@@ -82,8 +88,10 @@ class HomeTest(TestCase):
         self.assertEqual(mov2.concepto, 'Movimiento de salida')
         self.assertEqual(mov1.detalle, 'Detalle de entrada')
         self.assertEqual(mov2.detalle, 'Detalle de salida')
-        self.assertEqual(mov1.entrada, 1050)
-        self.assertEqual(mov2.salida, 2000)
+        self.assertEqual(mov1.importe, 1050)
+        self.assertEqual(mov2.importe, 2000)
+        self.assertEqual(mov1.cta_entrada, 'Efectivo')
+        self.assertEqual(mov2.cta_salida, 'Efectivo')
 
     def test_post_redirige_a_home(self):
         response = self.post_movimiento_traspaso()
@@ -123,23 +131,24 @@ class HomeTest(TestCase):
         self.assertIn(date.today().strftime('%d-%m-%Y').encode(), response.content)
 
     def test_entrada_no_valida_muestra_plantilla_home(self):
-        response = self.post_movimiento(fecha=date.today, entrada='1260')
+        response = self.post_movimiento(fecha=date.today, importe='1260')
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'diario/home.html')
 
     def test_entrada_no_valida_pasa_el_formulario_a_la_plantilla(self):
-        response = self.post_movimiento(date.today(), entrada='1250')
+        response = self.post_movimiento(date.today(), importe='1250')
         self.assertIsInstance(response.context['form'], FormMovimiento)
 
     def test_muestra_errores_de_validacion_concepto_vacio(self):
-        response = self.post_movimiento(date.today(), entrada='1250')
+        response = self.post_movimiento(date.today(), importe='1250', cta_entrada='Entrada')
         self.assertContains(response, 'Este campo es obligatorio')
 
     def test_muestra_errores_de_validacion_entrada_y_salida_vacias(self):
         response = self.post_movimiento(
             date.today(),
             concepto='Movimiento nulo',
-            detalle='Detalle nulo'
+            detalle='Detalle nulo',
+            importe='100',
         )
         self.assertContains(response,
                             'Entrada y salida no pueden ser ambos nulos')
@@ -148,9 +157,15 @@ class HomeTest(TestCase):
         response = self.post_movimiento(
             date.today(),
             concepto='Movimiento nulo',
-            detalle='Detalle nulo'
+            detalle='Detalle nulo',
+            importe='100',
         )
         self.assertEqual(response.context['form'].data['concepto'], 'Movimiento nulo')
+
+    def test_pasa_total_acumulado_a_plantilla(self):
+        self.post_movimiento_entrada()
+        response = self.post_movimiento_salida(follow=True)
+        self.assertEqual(response.context['total'], -950)
 
     # def test_calcula_total_movimiento(self):
     #     pass

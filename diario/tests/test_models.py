@@ -15,8 +15,9 @@ class ModelMovimientoTest(TestCase):
             mov = Movimiento(
                 fecha=date.today(),
                 detalle='Movimiento de salida',
-                entrada=250,
-                salida=250
+                importe = 250,
+                cta_entrada="Efectivo",
+                cta_salida="Banco"
             )
             mov.full_clean()
             mov.save()
@@ -32,8 +33,9 @@ class ModelMovimientoTest(TestCase):
             mov = Movimiento(
                 detalle='Detalle de movimiento',
                 concepto='Movimiento de salida',
-                entrada=250,
-                salida=250
+                importe=250,
+                cta_entrada="Efectivo",
+                cta_salida="Banco"
             )
             mov.full_clean()
             mov.save()
@@ -46,9 +48,10 @@ class ModelMovimientoTest(TestCase):
     def test_guarda_movimiento_sin_detalle(self):
         Movimiento.crear(
             fecha=date.today(),
-            concepto='Movimiento de salida',
-            entrada=250,
-            salida=250
+            concepto='Depósito',
+            importe=250,
+            cta_entrada='Banco',
+            cta_salida='Efectivo'
         )
         self.assertEqual(Movimiento.objects.count(), 1)
 
@@ -81,7 +84,8 @@ class ModelMovimientoTest(TestCase):
             fecha=date.today(),
             concepto='Movimiento de entrada',
             detalle='Detalle 2',
-            entrada=250
+            importe=250,
+            cta_entrada='Efectivo'
         )
         mov.full_clean()
         mov.save()
@@ -93,7 +97,8 @@ class ModelMovimientoTest(TestCase):
             fecha=date.today(),
             concepto='movimiento 2',
             detalle='Detalle de entrada',
-            entrada=250
+            importe=250,
+            cta_entrada="Efectivo"
         )
         mov.full_clean()
         mov.save()
@@ -102,8 +107,9 @@ class ModelMovimientoTest(TestCase):
     def test_crear_guarda_fecha_de_hoy_por_defecto(self):
         mov = Movimiento.crear(
             detalle='Detalle de movimiento',
-            concepto='Movimiento de salida',
-            entrada=250,
-            salida=250
+            concepto='Retiro de efectivo',
+            importe=250,
+            cta_entrada='Efectivo',
+            cta_salida='Banco'
         )
         self.assertEqual(mov.fecha, date.today())
