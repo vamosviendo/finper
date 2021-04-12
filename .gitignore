@@ -1,0 +1,9 @@
+db.sqlite3
+pruebadb.sqlite3
+geckodriver.log
+vfinper
+__pycache__
+*.pyc
+.idea
+.tags
+
