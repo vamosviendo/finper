@@ -61,7 +61,7 @@ class TestRecorrido(LiveServerTestCase):
         for elem in totales:
             self.assertEqual(
                 elem.find_element_by_id(
-                    elem.get_attribute('id').replace('div', 'importe')),
+                    elem.get_attribute('id').replace('div', 'importe')).text,
                 '0,00'
             )
 
