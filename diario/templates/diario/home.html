@@ -1,7 +1,12 @@
+{% load static %}
 <html>
 <head>
-  <title>Finanzas personales</title>
   <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Finanzas Personales</title>
+  <link href="{% static '/diario/bootstrap/css/bootstrap.min.css' %}"
+        rel="stylesheet">
 </head>
 <body>
 
@@ -20,7 +25,9 @@
 </div>
 
 <div id="id_grid_cuentas">
-  <button id="id_btn_cta_nueva">Cuenta nueva</button>
+  <a href="{% url cta_nueva %}" id="id_btn_cta_nueva" class="btn btn-primary">
+    Cuenta nueva
+  </a>
 </div>
 
 <div id="id_lista_ult_movs"></div>
