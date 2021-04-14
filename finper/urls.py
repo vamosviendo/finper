@@ -20,5 +20,6 @@ from diario import views
 
 urlpatterns = [
     path('', views.HomeView.as_view(), name='home'),
+    path('cta_nueva', views.CtaNuevaView.as_view(), name='cta_nueva'),
     path('admin/', admin.site.urls),
 ]

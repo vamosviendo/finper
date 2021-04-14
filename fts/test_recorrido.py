@@ -1,5 +1,6 @@
 import time
 
+from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.test import LiveServerTestCase
 from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
@@ -26,7 +27,7 @@ def esperar(condicion, tiempo=10):
     return condicion_modificada
 
 
-class TestRecorrido(LiveServerTestCase):
+class TestRecorrido(StaticLiveServerTestCase):
 
     def setUp(self):
         super().setUp()
