@@ -76,6 +76,8 @@ class TestRecorrido(StaticLiveServerTestCase):
         ult_movs = lista_ult_movs.find_elements_by_tag_name('li')
         self.assertEqual(len(ult_movs), 0)
 
+        # Lo primero que hacemos es agregar una cuenta a la cual podamos
+        # cargarle movimientos.
         self.browser.find_element_by_id('id_btn_cta_nueva').click()
 
         self.esperar_elemento('id_input_nombre')

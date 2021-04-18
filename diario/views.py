@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.views.generic import TemplateView, View
+from django.views.generic import TemplateView
 
 
 def home(request):
@@ -10,5 +10,5 @@ class HomeView(TemplateView):
     template_name = 'diario/home.html'
 
 
-class CtaNuevaView(View):
-    pass
+class CtaNuevaView(TemplateView):
+    template_name = 'diario/cta_nueva.html'

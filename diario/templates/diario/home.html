@@ -1,16 +1,6 @@
 {% load static %}
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Finanzas Personales</title>
-  <link href="{% static '/diario/bootstrap/css/bootstrap.min.css' %}"
-        rel="stylesheet">
-</head>
-<body>
 
-<h1>Finanzas personales</h1>
+{% block contenido %}
 <div id="id_div_activo" class="class_div_totales">
   <h3>Activos:</h3>
   <div id="id_importe_activo">0,00</div>
@@ -31,6 +21,4 @@
 </div>
 
 <div id="id_lista_ult_movs"></div>
-  
-</body>
-</html>
+{% endblock contenido %}
