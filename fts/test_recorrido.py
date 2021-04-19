@@ -7,7 +7,7 @@ from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.common.by import By
 
 
-def esperar(condicion, tiempo=10):
+def esperar(condicion, tiempo=2):
     """ Devuelve una función que espera un tiempo
         que se cumpla una condición.
         Requiere: time
@@ -40,6 +40,12 @@ class TestRecorrido(StaticLiveServerTestCase):
     def esperar_elemento(self, elemento, criterio=By.ID):
         return self.browser.find_element(criterio, elemento)
 
+    @esperar
+    def esperar_elementos(self, elementos, criterio=By.CLASS_NAME):
+        result = self.browser.find_elements(criterio, elementos)
+        self.assertNotEqual(len(result), 0)
+        return result
+
     def test_recorrido_del_sitio(self):
 
         self.browser.get(self.live_server_url)
@@ -68,8 +74,6 @@ class TestRecorrido(StaticLiveServerTestCase):
 
         # (2) Cuentas (vacío):
         grid_cuentas = self.browser.find_element_by_id('id_grid_cuentas')
-        cuentas = grid_cuentas.find_elements_by_class_name('class_div_cuenta')
-        self.assertEqual(len(cuentas), 0)
 
         # (3) Lista movimientos (vacío)
         lista_ult_movs = self.browser.find_element_by_id('id_lista_ult_movs')
@@ -78,6 +82,20 @@ class TestRecorrido(StaticLiveServerTestCase):
 
         # Lo primero que hacemos es agregar una cuenta a la cual podamos
         # cargarle movimientos.
-        self.browser.find_element_by_id('id_btn_cta_nueva').click()
+        grid_cuentas.find_element_by_id('id_btn_cta_nueva').click()
 
-        self.esperar_elemento('id_input_nombre')
+        self.esperar_elemento('id_input_nombre').send_keys("Efectivo")
+        self.esperar_elemento('id_btn_submit').click()
+
+        # Aparece una caja para la nueva cuenta, con saldo cero
+        cuentas = self.esperar_elementos('class_div_cuenta')
+        self.assertEqual(len(cuentas), 1)
+
+        self.assertEqual(
+            cuentas[0].find_element_by_class_name('class_nombre_cuenta').text,
+            'Efectivo'
+        )
+        self.assertEqual(
+            cuentas[0].find_element_by_class_name('class_saldo_cuenta').text,
+            '0.00'
+        )
