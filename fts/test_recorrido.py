@@ -1,10 +1,11 @@
 import time
 
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
-from django.test import LiveServerTestCase
+from django.utils.datetime_safe import date
 from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.select import Select
 
 
 def esperar(condicion, tiempo=2):
@@ -99,3 +100,45 @@ class TestRecorrido(StaticLiveServerTestCase):
             cuentas[0].find_element_by_class_name('class_saldo_cuenta').text,
             '0.00'
         )
+
+        # Cargamos saldo a la cuenta por medio de un movimiento
+        lista_ult_movs = self.esperar_elemento('id_lista_ult_movs')
+        lista_ult_movs.find_element_by_id('id_btn_mov_nuevo').click()
+
+        # El campo fecha tiene por defecto la fecha del día.
+        fecha = self.esperar_elemento('id_input_fecha')
+        self.assertEqual(
+            fecha.get_attribute('value'),
+            date.today().strftime('%Y-%m-%d')
+        )
+        self.esperar_elemento('id_input_concepto').send_keys(
+            'Carga de saldo inicial')
+        self.esperar_elemento('id_input_importe').send_keys('985.5')
+        cta_entrada = self.esperar_elemento('id_cta_entrada')
+        Select(cta_entrada).select_by_value('Efectivo')
+        self.esperar_elemento('id_btn_submit').click()
+
+        # El movimiento aparece en la lista de últimos movimientos
+        lista_ult_movs = self.browser.find_element_by_id('id_lista_ult_movs')
+        ult_movs = lista_ult_movs.find_elements_by_tag_name('li')
+        self.assertEqual(len(ult_movs), 1)
+        self.assertIn(date.today(), ult_movs[0])
+        self.assertIn('Carga de saldo inicial', ult_movs[0])
+        self.assertIn('Efectivo', ult_movs[0])
+        self.assertIn('985.50', ult_movs[0])
+
+        # El importe cargado aparece en el campo saldo de la cuenta
+        cuenta = self.esperar_elemento(
+            'class_div_cuenta', criterio=By.CLASS_NAME)
+        self.assertEqual(
+            cuenta.find_element_by_class_name('class_saldo_cuenta').text,
+            '985.50'
+        )
+
+        # El importe del movimiento también aparece sumado a activo y a saldo
+        # general
+        activo = self.esperar_elemento('id_importe_activo')
+        saldo_gral = self.esperar_elemento('id_importe_saldo_gral')
+        self.assertEqual(activo.text, '985.50')
+        self.assertEqual(saldo_gral.text, '985.50')
+

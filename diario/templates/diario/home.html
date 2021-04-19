@@ -1,3 +1,4 @@
+{% extends 'diario/base.html' %}
 {% load static %}
 
 {% block contenido %}
@@ -26,5 +27,9 @@
   </a>
 </div>
 
-<div id="id_lista_ult_movs"></div>
+<div id="id_lista_ult_movs">
+  <a href="{% url 'mov_nuevo' %}" id="id_btn_mov_nuevo" class="btn btn-primary">
+    Movimiento nuevo
+  </a>
+</div>
 {% endblock contenido %}

@@ -1,7 +1,8 @@
 from django.test import TestCase
 from django.urls import reverse
+from django.utils.datetime_safe import date
 
-from diario.models import Cuenta
+from diario.models import Cuenta, Movimiento
 
 
 class TestHomePage(TestCase):
@@ -37,10 +38,46 @@ class TestCtaNueva(TestCase):
             reverse('cta_nueva'),
             data={'nombre': 'Efectivo'}
         )
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['location'], reverse('home'))
+        self.assertRedirects(response, reverse('home'))
 
     def test_solo_guarda_cuentas_con_post(self):
         # ¿Retirar más adelante?
         self.client.get(reverse('cta_nueva'))
         self.assertEqual(Cuenta.objects.count(), 0)
+
+
+class TestMovNuevo(TestCase):
+
+    def test_usa_template_mov_nuevo(self):
+        response = self.client.get(reverse('mov_nuevo'))
+        self.assertTemplateUsed(response, 'diario/mov_nuevo.html')
+
+    def test_redirige_a_home_despues_de_POST(self):
+        response = self.client.post(
+            reverse('mov_nuevo'),
+            data={
+                'fecha': date.today(),
+                'concepto': 'entrada de efectivo',
+                'importe': 100,
+                'cta_entrada': 'Efectivo'
+            }
+        )
+        self.assertRedirects(response, reverse('home'))
+
+    def test_puede_guardar_movimiento_nueva(self):
+        cuenta = Cuenta.objects.create(nombre='Efectivo')
+        self.client.post(
+            reverse('mov_nuevo'),
+            data={
+                'fecha': date.today(),
+                'concepto': 'entrada de efectivo',
+                'importe': 100,
+                'cta_entrada': cuenta
+            }
+        )
+        self.assertEqual(Movimiento.objects.count(), 1)
+        mov_nuevo = Movimiento.objects.first()
+        self.assertEqual(mov_nuevo.fecha, date.today())
+        self.assertEqual(mov_nuevo.concepto, 'entrada de efectivo')
+        self.assertEqual(mov_nuevo.importe, 100)
+        self.assertEqual(mov_nuevo.cta_entrada, cuenta)

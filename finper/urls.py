@@ -21,5 +21,6 @@ from diario import views
 urlpatterns = [
     path('', views.home, name='home'),
     path('cta_nueva', views.cuenta_nueva, name='cta_nueva'),
+    path('mov_nuevo', views.mov_nuevo, name='mov_nuevo'),
     path('admin/', admin.site.urls),
 ]

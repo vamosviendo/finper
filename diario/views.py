@@ -30,3 +30,8 @@ class CtaNuevaView(CreateView):
     def get_success_url(self):
         return redirect(reverse('home'))
 
+
+def mov_nuevo(request):
+    if request.method == 'POST':
+        return redirect(reverse('home'))
+    return render(request, 'diario/mov_nuevo.html')
