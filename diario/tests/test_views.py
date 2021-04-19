@@ -52,19 +52,29 @@ class TestMovNuevo(TestCase):
         response = self.client.get(reverse('mov_nuevo'))
         self.assertTemplateUsed(response, 'diario/mov_nuevo.html')
 
+    def test_pasa_todas_las_cuentas_a_template(self):
+        Cuenta.objects.create(nombre='cuenta 1')
+        Cuenta.objects.create(nombre='cuenta 2')
+        response = self.client.get(reverse('mov_nuevo'))
+        self.assertEqual(
+            list(Cuenta.objects.all()),
+            list(response.context['cuentas'])
+        )
+
     def test_redirige_a_home_despues_de_POST(self):
+        cuenta = Cuenta.objects.create(nombre='Efectivo')
         response = self.client.post(
             reverse('mov_nuevo'),
             data={
                 'fecha': date.today(),
                 'concepto': 'entrada de efectivo',
                 'importe': 100,
-                'cta_entrada': 'Efectivo'
+                'cta_entrada': cuenta.id,
             }
         )
         self.assertRedirects(response, reverse('home'))
 
-    def test_puede_guardar_movimiento_nueva(self):
+    def test_puede_guardar_movimiento_nuevo(self):
         cuenta = Cuenta.objects.create(nombre='Efectivo')
         self.client.post(
             reverse('mov_nuevo'),
@@ -72,7 +82,7 @@ class TestMovNuevo(TestCase):
                 'fecha': date.today(),
                 'concepto': 'entrada de efectivo',
                 'importe': 100,
-                'cta_entrada': cuenta
+                'cta_entrada': cuenta.id
             }
         )
         self.assertEqual(Movimiento.objects.count(), 1)

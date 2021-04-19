@@ -115,7 +115,7 @@ class TestRecorrido(StaticLiveServerTestCase):
             'Carga de saldo inicial')
         self.esperar_elemento('id_input_importe').send_keys('985.5')
         cta_entrada = self.esperar_elemento('id_cta_entrada')
-        Select(cta_entrada).select_by_value('Efectivo')
+        Select(cta_entrada).select_by_visible_text('Efectivo')
         self.esperar_elemento('id_btn_submit').click()
 
         # El movimiento aparece en la lista de últimos movimientos

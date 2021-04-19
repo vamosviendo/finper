@@ -9,7 +9,7 @@ class Cuenta(models.Model):
 class Movimiento(models.Model):
     fecha = models.DateField()
     concepto = models.CharField(max_length=80)
-    detalle = models.TextField(blank=True)
+    detalle = models.TextField(blank=True, null=True)
     importe = models.FloatField()
     cta_entrada = models.ForeignKey(
         Cuenta, related_name='entradas', null=True, blank=True,
