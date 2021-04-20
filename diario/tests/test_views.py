@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import reverse
 from django.utils.datetime_safe import date
@@ -11,14 +12,34 @@ class TestHomePage(TestCase):
         response = self.client.get('/')
         self.assertTemplateUsed(response, 'diario/home.html')
 
-    def test_muestra_todas_las_cuentas(self):
-        Cuenta.objects.create(nombre='Efectivo')
-        Cuenta.objects.create(nombre='Caja de ahorro')
+    def test_pasa_cuentas_a_template(self):
+        cta1 = Cuenta.objects.create(nombre='Efectivo')
+        cta2 = Cuenta.objects.create(nombre='Banco')
 
         response = self.client.get(reverse('home'))
 
-        self.assertIn('Efectivo', response.content.decode())
-        self.assertIn('Caja de ahorro', response.content.decode())
+        self.assertIn(cta1, response.context.get('cuentas'))
+        self.assertIn(cta2, response.context.get('cuentas'))
+
+    def test_pasa_movimientos_a_template(self):
+        cuenta = Cuenta.objects.create(nombre='Efectivo')
+        Movimiento.objects.create(
+            fecha=date.today(),
+            concepto='movimiento 1',
+            importe=100,
+            cta_entrada=cuenta
+        )
+        Movimiento.objects.create(
+            fecha=date.today(),
+            concepto='movimiento 2',
+            importe=50,
+            cta_salida=cuenta
+        )
+
+        response = self.client.get(reverse('home'))
+
+        self.assertContains(response, 'movimiento 1')
+        self.assertContains(response, 'movimiento 2')
 
 
 class TestCtaNueva(TestCase):
@@ -91,3 +112,14 @@ class TestMovNuevo(TestCase):
         self.assertEqual(mov_nuevo.concepto, 'entrada de efectivo')
         self.assertEqual(mov_nuevo.importe, 100)
         self.assertEqual(mov_nuevo.cta_entrada, cuenta)
+
+    def test_no_acepta_movimientos_no_validos(self):
+        with self.assertRaises(ValidationError):
+            self.client.post(
+                reverse('mov_nuevo'),
+                data={
+                    'fecha': date.today(),
+                    'concepto': 'entrada de efectivo',
+                    'importe': 100,
+                }
+            )

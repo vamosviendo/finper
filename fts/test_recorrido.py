@@ -122,10 +122,10 @@ class TestRecorrido(StaticLiveServerTestCase):
         lista_ult_movs = self.browser.find_element_by_id('id_lista_ult_movs')
         ult_movs = lista_ult_movs.find_elements_by_tag_name('li')
         self.assertEqual(len(ult_movs), 1)
-        self.assertIn(date.today(), ult_movs[0])
-        self.assertIn('Carga de saldo inicial', ult_movs[0])
-        self.assertIn('Efectivo', ult_movs[0])
-        self.assertIn('985.50', ult_movs[0])
+        self.assertIn(date.today().strftime('%Y-%m-%d'), ult_movs[0].text)
+        self.assertIn('Carga de saldo inicial', ult_movs[0].text)
+        self.assertIn('+Efectivo', ult_movs[0].text)
+        self.assertIn('985.5', ult_movs[0].text)
 
         # El importe cargado aparece en el campo saldo de la cuenta
         cuenta = self.esperar_elemento(

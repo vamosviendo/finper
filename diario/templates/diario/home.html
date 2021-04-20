@@ -28,6 +28,13 @@
 </div>
 
 <div id="id_lista_ult_movs">
+  <ul>
+    {% for mov in ult_movs %}
+    <li>
+      {{ mov.fecha|date:'Y-m-d' }} {{ mov.concepto }} {{ mov.importe }} +{{ mov.cta_entrada.nombre }} -{{ mov.cta_salida.nombre }}
+    </li>
+    {% endfor %}
+  </ul>
   <a href="{% url 'mov_nuevo' %}" id="id_btn_mov_nuevo" class="btn btn-primary">
     Movimiento nuevo
   </a>

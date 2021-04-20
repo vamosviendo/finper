@@ -7,7 +7,11 @@ from diario.models import Cuenta, Movimiento
 
 def home(request):
     return render(
-        request, 'diario/home.html', {'cuentas': Cuenta.objects.all()}
+        request, 'diario/home.html',
+        {
+            'cuentas': Cuenta.objects.all(),
+            'ult_movs': Movimiento.objects.all(),
+        }
     )
 
 
@@ -41,7 +45,7 @@ def mov_nuevo(request):
     except Cuenta.DoesNotExist:
         cuenta_salida = None
     if request.method == 'POST':
-        Movimiento.objects.create(
+        m = Movimiento(
             fecha=request.POST.get('fecha'),
             concepto=request.POST['concepto'],
             detalle=request.POST.get('detalle'),
@@ -49,6 +53,8 @@ def mov_nuevo(request):
             cta_entrada=cuenta_entrada,
             cta_salida=cuenta_salida,
         )
+        m.full_clean()
+        m.save()
         return redirect(reverse('home'))
     return render(
         request,
