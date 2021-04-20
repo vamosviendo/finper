@@ -24,6 +24,11 @@ class TestModelCuenta(TestCase):
         self.assertEqual(primera_cuenta_guardada.nombre, 'Efectivo')
         self.assertEqual(segunda_cuenta_guardada.nombre, 'Caja de ahorro')
 
+    def test_cuenta_creada_tiene_saldo_cero(self):
+        cuenta = Cuenta(nombre='Efectivo')
+        cuenta.save()
+        self.assertEqual(cuenta.saldo, 0)
+
     def test_no_permite_cuentas_duplicadas(self):
         Cuenta.objects.create(nombre='Efectivo')
         with self.assertRaises(ValidationError):
@@ -183,3 +188,42 @@ class TestModelMovimiento(TestCase):
         with self.assertRaisesMessage(
                 ValidationError, 'Cuentas de entrada y salida no pueden ser la misma.'):
             mov.full_clean()
+
+    def test_suma_importe_a_cta_entrada(self):
+        cuenta = Cuenta.objects.create(nombre='Efectivo')
+        Movimiento.objects.create(
+            fecha=date.today(),
+            concepto='Carga de saldo',
+            importe=125.5,
+            cta_entrada=cuenta
+        )
+        self.assertEqual(cuenta.saldo, 125.5)
+
+    def test_resta_importe_de_cta_salida(self):
+        cuenta = Cuenta.objects.create(nombre='Banco')
+        Movimiento.objects.create(
+            fecha=date.today(),
+            concepto='Transferencia a otra cuenta',
+            importe=35.35,
+            cta_salida=cuenta
+        )
+        self.assertEqual(cuenta.saldo, -35.35)
+
+    def test_puede_traspasar_saldo_de_una_cuenta_a_otra(self):
+        cta1 = Cuenta.objects.create(nombre='Efectivo')
+        cta2 = Cuenta.objects.create(nombre='Banco')
+        Movimiento.objects.create(
+            fecha=date.today(),
+            concepto='Carga de saldo',
+            importe=1535,
+            cta_entrada=cta1
+        )
+        Movimiento.objects.create(
+            fecha=date.today(),
+            concepto='Depósito',
+            importe=830.25,
+            cta_entrada=cta2,
+            cta_salida=cta1
+        )
+        self.assertEqual(cta2.saldo, 830.25)
+        self.assertEqual(cta1.saldo, 704.75)

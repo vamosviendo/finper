@@ -19,7 +19,7 @@
   {% for cuenta in cuentas %}
   <div class="class_div_cuenta">
     <div class="class_nombre_cuenta">{{ cuenta.nombre }}</div>
-    <div class="class_saldo_cuenta">0.00</div>
+    <div class="class_saldo_cuenta">{{ cuenta.saldo|floatformat:2}}</div>
   </div>
   {% endfor %}
   <a href="{% url 'cta_nueva' %}" id="id_btn_cta_nueva" class="btn btn-primary">

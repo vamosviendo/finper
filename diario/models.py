@@ -4,6 +4,7 @@ from django.db import models
 
 class Cuenta(models.Model):
     nombre = models.CharField(max_length=50, unique=True)
+    saldo = models.FloatField(default=0)
 
     def __str__(self):
         return self.nombre
@@ -42,3 +43,12 @@ class Movimiento(models.Model):
         if self.cta_entrada == self.cta_salida:
             raise ValidationError(
                 message='Cuentas de entrada y salida no pueden ser la misma.')
+
+    def save(self, *args, **kwargs):
+        if self.cta_entrada:
+            self.cta_entrada.saldo += self.importe
+            self.cta_entrada.save()
+        if self.cta_salida:
+            self.cta_salida.saldo -= self.importe
+            self.cta_salida.save()
+        super().save(*args, **kwargs)

@@ -41,6 +41,28 @@ class TestHomePage(TestCase):
         self.assertContains(response, 'movimiento 1')
         self.assertContains(response, 'movimiento 2')
 
+    def test_pasa_saldo_de_cuentas_a_template(self):
+        cta1 = Cuenta.objects.create(nombre='Efectivo')
+        cta2 = Cuenta.objects.create(nombre='Banco')
+        Movimiento.objects.create(
+            fecha=date.today(),
+            concepto='movimiento 1',
+            importe=100,
+            cta_entrada=cta1
+        )
+        Movimiento.objects.create(
+            fecha=date.today(),
+            concepto='transferencia de fondos',
+            importe=75,
+            cta_entrada=cta2,
+            cta_salida=cta1
+        )
+
+        response = self.client.get(reverse('home'))
+
+        self.assertContains(response, '25.00')
+        self.assertContains(response, '75.00')
+
 
 class TestCtaNueva(TestCase):
 
