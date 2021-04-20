@@ -30,6 +30,10 @@ class TestModelCuenta(TestCase):
             cuenta2 = Cuenta(nombre='Efectivo')
             cuenta2.full_clean()
 
+    def test_cuenta_str(self):
+        cuenta = Cuenta(nombre='Efectivo')
+        self.assertEqual(str(cuenta), 'Efectivo')
+
 
 class TestModelMovimiento(TestCase):
 
@@ -68,6 +72,41 @@ class TestModelMovimiento(TestCase):
             segundo_mov_guardado.detalle, 'salchichas, pan, mostaza')
         self.assertEqual(segundo_mov_guardado.importe, 500)
         self.assertEqual(segundo_mov_guardado.cta_salida, cuenta)
+
+    def test_movimiento_str(self):
+        cta1 = Cuenta.objects.create(nombre='Efectivo')
+        cta2 = Cuenta.objects.create(nombre='Banco')
+        mov1 = Movimiento(
+            fecha=date(2021, 3, 22),
+            concepto='Retiro de efectivo',
+            importe='250.2',
+            cta_entrada=cta1,
+            cta_salida=cta2
+        )
+        mov2 = Movimiento(
+            fecha=date(2021, 3, 22),
+            concepto='Carga de saldo',
+            importe='500',
+            cta_entrada=cta1,
+        )
+        mov3 = Movimiento(
+            fecha=date(2021, 3, 22),
+            concepto='Transferencia',
+            importe='300.35',
+            cta_salida=cta2
+        )
+        self.assertEqual(
+            str(mov1),
+            '2021-03-22 Retiro de efectivo: 250.2 +Efectivo -Banco'
+        )
+        self.assertEqual(
+            str(mov2),
+            '2021-03-22 Carga de saldo: 500 +Efectivo'
+        )
+        self.assertEqual(
+            str(mov3),
+            '2021-03-22 Transferencia: 300.35 -Banco'
+        )
 
     def test_permite_movimientos_duplicados(self):
         cuenta = Cuenta.objects.create(nombre='Efectivo')

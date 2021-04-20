@@ -5,6 +5,9 @@ from django.db import models
 class Cuenta(models.Model):
     nombre = models.CharField(max_length=50, unique=True)
 
+    def __str__(self):
+        return self.nombre
+
 
 class Movimiento(models.Model):
     fecha = models.DateField()
@@ -19,6 +22,15 @@ class Movimiento(models.Model):
         Cuenta, related_name='salidas', null=True, blank=True,
         on_delete=models.CASCADE
     )
+
+    def __str__(self):
+        string = f'{self.fecha.strftime("%Y-%m-%d")} {self.concepto}: ' \
+                 f'{self.importe}'
+        if self.cta_entrada:
+            string += f' +{self.cta_entrada}'
+        if self.cta_salida:
+            string += f' -{self.cta_salida}'
+        return string
 
     def clean(self):
         super().clean()
