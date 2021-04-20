@@ -59,19 +59,12 @@ class TestRecorrido(StaticLiveServerTestCase):
             - Una lista de últimos movimientos, también vacía, con un botón
                 para agregar movimientos. (3)
         """
-        # (1) Totales generales:
-        totales = self.browser.find_elements_by_class_name('class_div_totales')
-        self.assertSetEqual(
-            set(tot.get_attribute('id') for tot in totales),
-            {'id_div_activo', 'id_div_pasivo', 'id_div_saldo_gral'}
+        # (1) Saldo general:
+        total = self.browser.find_element_by_id('id_div_saldo_gral')
+        self.assertEqual(
+            total.find_element_by_id('id_importe_saldo_gral').text,
+            '0.00'
         )
-
-        for elem in totales:
-            self.assertEqual(
-                elem.find_element_by_id(
-                    elem.get_attribute('id').replace('div', 'importe')).text,
-                '0,00'
-            )
 
         # (2) Cuentas (vacío):
         grid_cuentas = self.browser.find_element_by_id('id_grid_cuentas')
@@ -137,8 +130,6 @@ class TestRecorrido(StaticLiveServerTestCase):
 
         # El importe del movimiento también aparece sumado a activo y a saldo
         # general
-        activo = self.esperar_elemento('id_importe_activo')
         saldo_gral = self.esperar_elemento('id_importe_saldo_gral')
-        self.assertEqual(activo.text, '985.50')
         self.assertEqual(saldo_gral.text, '985.50')
 

@@ -2,17 +2,9 @@
 {% load static %}
 
 {% block contenido %}
-<div id="id_div_activo" class="class_div_totales">
-  <h3>Activos:</h3>
-  <div id="id_importe_activo">0,00</div>
-</div>
-<div id="id_div_pasivo" class="class_div_totales">
-  <h3>Pasivos:</h3>
-  <div id="id_importe_pasivo">0,00</div>
-</div>
 <div id="id_div_saldo_gral" class="class_div_totales">
-  <h3>Saldo:</h3>
-  <div id="id_importe_saldo_gral">0,00</div>
+  <h3>Saldo general:</h3>
+  <div id="id_importe_saldo_gral">{{ saldo_gral|floatformat:2 }}</div>
 </div>
 
 <div id="id_grid_cuentas">

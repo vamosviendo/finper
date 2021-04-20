@@ -63,6 +63,14 @@ class TestHomePage(TestCase):
         self.assertContains(response, '25.00')
         self.assertContains(response, '75.00')
 
+    def test_pasa_saldos_generales_a_template(self):
+        cta1 = Cuenta.objects.create(nombre='Efectivo', saldo=125)
+        cta2 = Cuenta.objects.create(nombre='Banco', saldo=225)
+
+        response = self.client.get(reverse('home'))
+
+        self.assertContains(response, '350.00')
+
 
 class TestCtaNueva(TestCase):
 

@@ -6,10 +6,15 @@ from diario.models import Cuenta, Movimiento
 
 
 def home(request):
+    cuentas = Cuenta.objects.all()
+    saldo_gral = 0
+    for cuenta in cuentas:
+        saldo_gral += cuenta.saldo
     return render(
         request, 'diario/home.html',
         {
-            'cuentas': Cuenta.objects.all(),
+            'cuentas': cuentas,
+            'saldo_gral': saldo_gral,
             'ult_movs': Movimiento.objects.all(),
         }
     )
