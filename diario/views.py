@@ -15,7 +15,7 @@ def home(request):
         request, 'diario/home.html',
         {
             'cuentas': cuentas,
-            'saldo_gral': saldo_gral,
+            'saldo_gral': saldo_gral or 0,
             'ult_movs': Movimiento.objects.all(),
         }
     )
@@ -34,7 +34,7 @@ class HomeView(ListView):
 
         context.update({
             'ult_movs': Movimiento.objects.all(),
-            'saldo_gral': saldo_gral,
+            'saldo_gral': saldo_gral or 0,
         })
 
         return context
@@ -49,11 +49,11 @@ def cuenta_nueva(request):
 
 class CtaNuevaView(CreateView):
     model = Cuenta
-    fields = []
+    fields = ['nombre', ]
     template_name = 'diario/cta_nueva.html'
 
     def get_success_url(self):
-        return redirect(reverse('home'))
+        return reverse('home')
 
 
 def mov_nuevo(request):

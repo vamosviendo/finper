@@ -18,6 +18,6 @@ from django.urls import path
 from diario import views
 
 urlpatterns = [
-    path('cta_nueva', views.cuenta_nueva, name='cta_nueva'),
+    path('cta_nueva', views.CtaNuevaView.as_view(), name='cta_nueva'),
     path('mov_nuevo', views.mov_nuevo, name='mov_nuevo'),
 ]

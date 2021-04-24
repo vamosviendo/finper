@@ -71,6 +71,9 @@ class TestHomePage(TestCase):
 
         self.assertContains(response, '350.00')
 
+    def test_si_no_hay_movimientos_pasa_0_a_saldo_general(self):
+        response = self.client.get(reverse('home'))
+        self.assertEqual(response.context['saldo_gral'], 0)
 
 class TestCtaNueva(TestCase):
 
