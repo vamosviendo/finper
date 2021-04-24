@@ -1,15 +1,16 @@
+from django.db.models import Sum
 from django.shortcuts import render, redirect
 from django.urls import reverse
-from django.views.generic import TemplateView, CreateView
+from django.views.generic import ListView, CreateView
 
 from diario.models import Cuenta, Movimiento
 
 
 def home(request):
     cuentas = Cuenta.objects.all()
-    saldo_gral = 0
-    for cuenta in cuentas:
-        saldo_gral += cuenta.saldo
+
+    saldo_gral = cuentas.aggregate(Sum('saldo'))['saldo__sum']
+
     return render(
         request, 'diario/home.html',
         {
@@ -20,8 +21,23 @@ def home(request):
     )
 
 
-class HomeView(TemplateView):
+class HomeView(ListView):
     template_name = 'diario/home.html'
+    model = Cuenta
+    context_object_name = 'cuentas'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        saldo_gral = context.get('cuentas')\
+            .aggregate(Sum('saldo'))['saldo__sum']
+
+        context.update({
+            'ult_movs': Movimiento.objects.all(),
+            'saldo_gral': saldo_gral,
+        })
+
+        return context
 
 
 def cuenta_nueva(request):

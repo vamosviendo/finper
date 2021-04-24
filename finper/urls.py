@@ -20,7 +20,7 @@ from diario import views
 from diario import urls as diario_urls
 
 urlpatterns = [
-    path('', views.home, name='home'),
+    path('', views.HomeView.as_view(), name='home'),
     path('diario/', include(diario_urls)),
     path('admin/', admin.site.urls),
 ]
