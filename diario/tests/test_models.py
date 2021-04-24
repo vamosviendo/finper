@@ -113,6 +113,15 @@ class TestModelMovimiento(TestCase):
             '2021-03-22 Transferencia: 300.35 -Banco'
         )
 
+    def test_guarda_fecha_de_hoy_por_defecto(self):
+        cuenta = Cuenta.objects.create(nombre='Efectivo')
+        mov = Movimiento.objects.create(
+            concepto='Cobranza en efectivo',
+            importe=100,
+            cta_entrada=cuenta
+        )
+        self.assertEqual(mov.fecha, date.today())
+
     def test_permite_movimientos_duplicados(self):
         cuenta = Cuenta.objects.create(nombre='Efectivo')
         Movimiento.objects.create(

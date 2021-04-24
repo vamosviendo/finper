@@ -1,5 +1,10 @@
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils.datetime_safe import date
+
+
+def hoy():
+    return date.today()
 
 
 class Cuenta(models.Model):
@@ -11,7 +16,7 @@ class Cuenta(models.Model):
 
 
 class Movimiento(models.Model):
-    fecha = models.DateField()
+    fecha = models.DateField(default=hoy)
     concepto = models.CharField(max_length=80)
     detalle = models.TextField(blank=True, null=True)
     importe = models.FloatField()
