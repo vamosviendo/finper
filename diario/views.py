@@ -58,30 +58,16 @@ class CtaNuevaView(CreateView):
 
 
 def mov_nuevo(request):
-    try:
-        cuenta_entrada = Cuenta.objects.get(pk=request.POST.get('cta_entrada'))
-    except Cuenta.DoesNotExist:
-        cuenta_entrada = None
-    try:
-        cuenta_salida = Cuenta.objects.get(pk=request.POST.get('cta_salida'))
-    except Cuenta.DoesNotExist:
-        cuenta_salida = None
+    form = FormMovimiento()
     if request.method == 'POST':
-        m = Movimiento(
-            fecha=request.POST.get('fecha'),
-            concepto=request.POST['concepto'],
-            detalle=request.POST.get('detalle'),
-            importe=request.POST['importe'],
-            cta_entrada=cuenta_entrada,
-            cta_salida=cuenta_salida,
-        )
-        m.full_clean()
-        m.save()
-        return redirect(reverse('home'))
+        form = FormMovimiento(data=request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect(reverse('home'))
     return render(
         request,
         'diario/mov_nuevo.html',
-        context={'cuentas': Cuenta.objects.all()}
+        context={'form': form}
     )
 
 
