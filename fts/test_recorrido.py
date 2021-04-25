@@ -78,7 +78,7 @@ class TestRecorrido(StaticLiveServerTestCase):
         # cargarle movimientos.
         grid_cuentas.find_element_by_id('id_btn_cta_nueva').click()
 
-        self.esperar_elemento('id_input_nombre').send_keys("Efectivo")
+        self.esperar_elemento('id_nombre').send_keys("Efectivo")
         self.esperar_elemento('id_btn_submit').click()
 
         # Aparece una caja para la nueva cuenta, con saldo cero
@@ -99,14 +99,14 @@ class TestRecorrido(StaticLiveServerTestCase):
         lista_ult_movs.find_element_by_id('id_btn_mov_nuevo').click()
 
         # El campo fecha tiene por defecto la fecha del día.
-        fecha = self.esperar_elemento('id_input_fecha')
+        fecha = self.esperar_elemento('id_fecha')
         self.assertEqual(
             fecha.get_attribute('value'),
             date.today().strftime('%Y-%m-%d')
         )
-        self.esperar_elemento('id_input_concepto').send_keys(
+        self.esperar_elemento('id_concepto').send_keys(
             'Carga de saldo inicial')
-        self.esperar_elemento('id_input_importe').send_keys('985.5')
+        self.esperar_elemento('id_importe').send_keys('985.5')
         cta_entrada = self.esperar_elemento('id_cta_entrada')
         Select(cta_entrada).select_by_visible_text('Efectivo')
         self.esperar_elemento('id_btn_submit').click()

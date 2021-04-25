@@ -1,21 +1,7 @@
 {% extends 'diario/base.html' %}
 {% block contenido %}
 <form method="post">
-  <input type="date" name="fecha" id="id_input_fecha" value="{% now 'Y-m-d' %}">
-  <input type="text" name="concepto" id="id_input_concepto" placeholder="concepto">
-  <input type="number" name="importe" id="id_input_importe" step="0.01">
-  <select name="cta_entrada" id="id_cta_entrada">
-    <option value="0" label=" "></option>
-    {% for cuenta in cuentas %}
-    <option value="{{ cuenta.id }}">{{ cuenta.nombre }}</option>
-    {% endfor %}
-  </select>
-  <select name="cta_salida" id="id_cta_salida">
-    <option value="0" label=" "></option>
-    {% for cuenta in cuentas %}
-    <option value="{{ cuenta.id }}">{{ cuenta.nombre }}</option>
-    {% endfor %}
-  </select>
+  {{ form }}
   <button type="submit" id="id_btn_submit">OK</button>
   {% csrf_token %}
 </form>

@@ -1,7 +1,7 @@
 {% extends 'diario/base.html' %}
 {% block contenido %}
 <form method="post">
-  <input name='nombre' type="text" id="id_input_nombre">
+  {{ form }}
   <button type="submit" id="id_btn_submit">OK</button>
   {% csrf_token %}
 </form>
