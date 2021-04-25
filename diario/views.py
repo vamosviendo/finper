@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.views.generic import ListView, CreateView
 
-from diario.forms import FormMovimiento
+from diario.forms import FormCuenta, FormMovimiento
 from diario.models import Cuenta, Movimiento
 
 
@@ -42,15 +42,19 @@ class HomeView(ListView):
 
 
 def cuenta_nueva(request):
+    form = FormCuenta()
     if request.method == 'POST':
-        Cuenta.objects.create(nombre=request.POST['nombre'])
-        return redirect(reverse('home'))
-    return render(request, 'diario/cta_nueva.html')
+        form = FormCuenta(data=request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect(reverse('home'))
+    return render(request, 'diario/cta_nueva.html', {'form': form})
 
 
 class CtaNuevaView(CreateView):
     model = Cuenta
-    fields = ('nombre', )
+    # fields = ('nombre', )
+    form_class = FormCuenta
     template_name = 'diario/cta_nueva.html'
 
     def get_success_url(self):
