@@ -19,5 +19,5 @@ from diario import views
 
 urlpatterns = [
     path('cta_nueva', views.CtaNuevaView.as_view(), name='cta_nueva'),
-    path('mov_nuevo', views.mov_nuevo, name='mov_nuevo'),
+    path('mov_nuevo', views.MovNuevoView.as_view(), name='mov_nuevo'),
 ]

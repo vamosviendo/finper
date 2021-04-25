@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db.models import Sum
 from django.shortcuts import render, redirect
 from django.urls import reverse
@@ -49,7 +50,7 @@ def cuenta_nueva(request):
 
 class CtaNuevaView(CreateView):
     model = Cuenta
-    fields = ['nombre', ]
+    fields = ('nombre', )
     template_name = 'diario/cta_nueva.html'
 
     def get_success_url(self):
@@ -82,3 +83,14 @@ def mov_nuevo(request):
         'diario/mov_nuevo.html',
         context={'cuentas': Cuenta.objects.all()}
     )
+
+
+class MovNuevoView(CreateView):
+    model = Movimiento
+    fields = (
+        'fecha', 'concepto', 'detalle', 'importe', 'cta_entrada', 'cta_salida',
+    )
+    template_name = 'diario/mov_nuevo.html'
+
+    def get_success_url(self):
+        return reverse('home')

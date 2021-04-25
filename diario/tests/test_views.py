@@ -106,15 +106,6 @@ class TestMovNuevo(TestCase):
         response = self.client.get(reverse('mov_nuevo'))
         self.assertTemplateUsed(response, 'diario/mov_nuevo.html')
 
-    def test_pasa_todas_las_cuentas_a_template(self):
-        Cuenta.objects.create(nombre='cuenta 1')
-        Cuenta.objects.create(nombre='cuenta 2')
-        response = self.client.get(reverse('mov_nuevo'))
-        self.assertEqual(
-            list(Cuenta.objects.all()),
-            list(response.context['cuentas'])
-        )
-
     def test_redirige_a_home_despues_de_POST(self):
         cuenta = Cuenta.objects.create(nombre='Efectivo')
         response = self.client.post(
