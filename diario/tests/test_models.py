@@ -3,6 +3,7 @@ from django.test import TestCase
 from django.utils.datetime_safe import date
 
 from diario.models import Cuenta, Movimiento
+from utils import errors
 
 
 class TestModelCuenta(TestCase):
@@ -180,8 +181,7 @@ class TestModelMovimiento(TestCase):
             importe=100
         )
         with self.assertRaisesMessage(
-                ValidationError,
-                'Debe haber una cuenta de entrada, una de salida o ambas.'
+                ValidationError, errors.CUENTA_INEXISTENTE
         ):
             mov.full_clean()
 
@@ -194,8 +194,7 @@ class TestModelMovimiento(TestCase):
             cta_entrada=cuenta,
             cta_salida=cuenta
         )
-        with self.assertRaisesMessage(
-                ValidationError, 'Cuentas de entrada y salida no pueden ser la misma.'):
+        with self.assertRaisesMessage(ValidationError, errors.CUENTAS_IGUALES):
             mov.full_clean()
 
     def test_suma_importe_a_cta_entrada(self):

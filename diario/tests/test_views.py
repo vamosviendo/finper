@@ -1,4 +1,3 @@
-from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import reverse
 from django.utils.datetime_safe import date
@@ -75,6 +74,7 @@ class TestHomePage(TestCase):
         response = self.client.get(reverse('home'))
         self.assertEqual(response.context['saldo_gral'], 0)
 
+
 class TestCtaNueva(TestCase):
 
     def test_usa_template_cta_nueva(self):
@@ -137,13 +137,13 @@ class TestMovNuevo(TestCase):
         self.assertEqual(mov_nuevo.importe, 100)
         self.assertEqual(mov_nuevo.cta_entrada, cuenta)
 
-    def test_no_acepta_movimientos_no_validos(self):
-        with self.assertRaises(ValidationError):
-            self.client.post(
-                reverse('mov_nuevo'),
-                data={
-                    'fecha': date.today(),
-                    'concepto': 'entrada de efectivo',
-                    'importe': 100,
-                }
-            )
+    def test_no_guarda_movimientos_no_validos(self):
+        self.client.post(
+            reverse('mov_nuevo'),
+            data={
+                'fecha': date.today(),
+                'concepto': 'entrada de efectivo',
+                'importe': 100,
+            }
+        )
+        self.assertEqual(Movimiento.objects.count(), 0)

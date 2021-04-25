@@ -2,6 +2,8 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.datetime_safe import date
 
+from utils import errors
+
 
 def hoy():
     return date.today()
@@ -41,13 +43,9 @@ class Movimiento(models.Model):
     def clean(self):
         super().clean()
         if not self.cta_entrada and not self.cta_salida:
-            raise ValidationError(
-                message='Debe haber una cuenta de entrada, '
-                        'una de salida o ambas.'
-            )
+            raise ValidationError(message=errors.CUENTA_INEXISTENTE)
         if self.cta_entrada == self.cta_salida:
-            raise ValidationError(
-                message='Cuentas de entrada y salida no pueden ser la misma.')
+            raise ValidationError(message=errors.CUENTAS_IGUALES)
 
     def save(self, *args, **kwargs):
         if self.cta_entrada:
