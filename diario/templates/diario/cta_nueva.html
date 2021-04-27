@@ -1,8 +1,11 @@
 {% extends 'diario/base.html' %}
 {% block contenido %}
+<h4>Cuenta nueva</h4>
 <form method="post">
-  {{ form }}
-  <button type="submit" id="id_btn_submit">OK</button>
+  <div class="form-group">
+    {{ form }}
+  </div>
+  <button type="submit" id="id_btn_submit" class="btn btn-primary">OK</button>
   {% csrf_token %}
 </form>
 {% endblock contenido %}
