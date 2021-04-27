@@ -7,12 +7,15 @@
   <title>Finanzas Personales</title>
   <link href="{% static '/diario/bootstrap/css/bootstrap.min.css' %}"
         rel="stylesheet">
+  <link rel="stylesheet" href="{% static '/diario/css/base.css' %}">
 </head>
 <body>
-
-<h1>Finanzas personales</h1>
-
-{% block contenido %} {% endblock contenido %}
-
+<div id="container" class="container-fluid">
+  <div class="navbar">
+    <h1 class="">Finanzas personales</h1>
+  </div>
+  {% block contenido %} {% endblock contenido %}
+</div>
+{% block extrajs %}{% endblock extrajs %}
 </body>
 </html>

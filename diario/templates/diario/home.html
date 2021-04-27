@@ -2,33 +2,76 @@
 {% load static %}
 
 {% block contenido %}
-<div id="id_div_saldo_gral" class="class_div_totales">
-  <h3>Saldo general:</h3>
-  <div id="id_importe_saldo_gral">{{ saldo_gral|floatformat:2 }}</div>
-</div>
-
-<div id="id_grid_cuentas">
-  {% for cuenta in cuentas %}
-  <div class="class_div_cuenta">
-    <div class="class_nombre_cuenta">{{ cuenta.nombre }}</div>
-    <div class="class_saldo_cuenta">{{ cuenta.saldo|floatformat:2}}</div>
+<section id="id_saldos" class="text-center">
+  <div id="id_div_saldo_gral" class="card mt-3 border-success class_div_totales">
+    <div class="card-header bg-success text-light" id="id_header_saldo_gral">
+      <h4>Saldo general</h4>
+    </div>
+    <div id="id_importe_saldo_gral" class="card-body text-success">
+      {{ saldo_gral|floatformat:2 }}
+    </div>
   </div>
-  {% endfor %}
-  <a href="{% url 'cta_nueva' %}" id="id_btn_cta_nueva" class="btn btn-primary">
+
+  <div id="id_grid_cuentas" class="card-deck mt-3">
+    {% for cuenta in cuentas %}
+    <div class="card border-danger class_div_cuenta">
+      <div class="card-header bg-danger text-light class_nombre_cuenta">
+        {{ cuenta.nombre }}
+      </div>
+      <div class="card-body text-danger class_saldo_cuenta">
+        {{ cuenta.saldo|floatformat:2}}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  <a href="{% url 'cta_nueva' %}" id="id_btn_cta_nueva" class="btn my-3 btn-primary">
     Cuenta nueva
   </a>
-</div>
+</section>
 
-<div id="id_lista_ult_movs">
-  <ul>
+<section id="id_lista_ult_movs">
+  <table class="table">
+    <thead><tr>
+      <th>Fecha</th>
+      <th>Concepto</th>
+      <th class="d-none d-md-table-cell">Detalle</th>
+      <th>Importe</th>
+      <th>Cuentas</th>
+    </tr></thead>
     {% for mov in ult_movs %}
-    <li>
-      {{ mov.fecha|date:'Y-m-d' }} {{ mov.concepto }} {{ mov.importe }} +{{ mov.cta_entrada.nombre }} -{{ mov.cta_salida.nombre }}
-    </li>
+    <tr>
+      <th>{{ mov.fecha|date:'Y-m-d' }}</th>
+      <th>
+        <span data-toggle="tooltip" title="{{ mov.detalle }}">
+          {{ mov.concepto }}
+        </span>
+      </th>
+      <th class="d-none d-md-table-cell">{{ mov.detalle }}</th>
+      <th class="text-right
+                 {% if mov.cta_salida and not mov.cta_entrada %}
+                   text-danger
+                 {% elif mov.cta_salida and mov.cta_entrada %}
+                   text-primary
+                 {% endif %}">
+        {% if mov.cta_salida and not mov.cta_entrada %}-{% endif %}
+        {{ mov.importe|floatformat:2 }}
+      </th>
+      <th>
+        {% if mov.cta_entrada %}+{{ mov.cta_entrada.nombre }}{% endif %}
+        {% if mov.cta_salida %}-{{ mov.cta_salida.nombre }}{% endif %}
+      </th>
+    </tr>
     {% endfor %}
-  </ul>
+  </table>
   <a href="{% url 'mov_nuevo' %}" id="id_btn_mov_nuevo" class="btn btn-primary">
     Movimiento nuevo
   </a>
-</div>
+</section>
 {% endblock contenido %}
+{% block extrajs %}
+<script>
+  $(document).ready(function(){
+    $('[data-toggle="tooltip"]').tooltip();
+  });
+</script>
+{% endblock extrajs %}
