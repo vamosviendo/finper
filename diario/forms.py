@@ -30,6 +30,6 @@ class FormMovimiento(ModelForm):
                   'cta_salida', )
         widgets = {
             'detalle': TextInput,
-            'fecha': DateInput(format='%Y%m%d', attrs={'type': 'date'}),
+            'fecha': DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
             'importe': NumberInput(attrs={'step': 0.01}),
         }

@@ -47,3 +47,12 @@ class TestFormMovimiento(TestCase):
             errors.CUENTAS_IGUALES,
             formmov.errors[NON_FIELD_ERRORS]
         )
+
+    def test_toma_fecha_del_dia_por_defecto(self):
+        cuenta = Cuenta.objects.create(nombre='efectivo')
+        formmov = FormMovimiento(data={
+            'concepto': 'entrada de efectivo',
+            'importe': 150,
+            'cta_entrada': cuenta
+        })
+        self.assertEqual(formmov.fields['fecha'].initial(), date.today())

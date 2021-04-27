@@ -76,7 +76,7 @@ class TestRecorrido(StaticLiveServerTestCase):
 
         # Lo primero que hacemos es agregar una cuenta a la cual podamos
         # cargarle movimientos.
-        grid_cuentas.find_element_by_id('id_btn_cta_nueva').click()
+        self.browser.find_element_by_id('id_btn_cta_nueva').click()
 
         self.esperar_elemento('id_nombre').send_keys("Efectivo")
         self.esperar_elemento('id_btn_submit').click()
@@ -113,12 +113,12 @@ class TestRecorrido(StaticLiveServerTestCase):
 
         # El movimiento aparece en la lista de últimos movimientos
         lista_ult_movs = self.browser.find_element_by_id('id_lista_ult_movs')
-        ult_movs = lista_ult_movs.find_elements_by_tag_name('li')
-        self.assertEqual(len(ult_movs), 1)
-        self.assertIn(date.today().strftime('%Y-%m-%d'), ult_movs[0].text)
-        self.assertIn('Carga de saldo inicial', ult_movs[0].text)
-        self.assertIn('+Efectivo', ult_movs[0].text)
-        self.assertIn('985.5', ult_movs[0].text)
+        ult_movs = lista_ult_movs.find_elements_by_tag_name('tr')
+        self.assertEqual(len(ult_movs), 2)   # El encabezado y un movimiento
+        self.assertIn(date.today().strftime('%Y-%m-%d'), ult_movs[1].text)
+        self.assertIn('Carga de saldo inicial', ult_movs[1].text)
+        self.assertIn('+Efectivo', ult_movs[1].text)
+        self.assertIn('985.5', ult_movs[1].text)
 
         # El importe cargado aparece en el campo saldo de la cuenta
         cuenta = self.esperar_elemento(
