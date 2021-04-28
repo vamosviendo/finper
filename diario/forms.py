@@ -3,11 +3,19 @@ from django.forms import ModelForm, TextInput, DateInput, NumberInput
 from diario.models import Cuenta, Movimiento
 
 
+def agregar_clase(campo, clase):
+    if campo.widget.attrs.get('class'):
+        campo.widget.attrs['class'] += ' form-control'
+    else:
+        campo.widget.attrs['class'] = 'form-control'
+
+
 class FormCuenta(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['nombre'].widget.attrs['class'] = 'form-control'
+        for _, campo in self.fields.items():
+            agregar_clase(campo, 'form-control')
 
     class Meta:
         model = Cuenta
@@ -18,11 +26,8 @@ class FormMovimiento(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        for nombre, campo in self.fields.items():
-            if campo.widget.attrs.get('class'):
-                campo.widget.attrs['class'] += ' form-control'
-            else:
-                campo.widget.attrs['class'] = 'form-control'
+        for _, campo in self.fields.items():
+            agregar_clase(campo, 'form-control')
 
     class Meta:
         model = Movimiento
