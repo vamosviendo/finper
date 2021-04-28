@@ -31,14 +31,15 @@ class TestRecorrido(FunctionalTest):
 
         # (3) Lista movimientos (vacío)
         lista_ult_movs = self.browser.find_element_by_id('id_lista_ult_movs')
-        ult_movs = lista_ult_movs.find_elements_by_tag_name('li')
-        self.assertEqual(len(ult_movs), 0)
+        ult_movs = lista_ult_movs.find_elements_by_tag_name('tr')
+        self.assertEqual(len(ult_movs), 1)
 
         # Lo primero que hacemos es agregar una cuenta a la cual podamos
         # cargarle movimientos.
         self.browser.find_element_by_id('id_btn_cta_nueva').click()
 
         self.esperar_elemento('id_nombre').send_keys("Efectivo")
+        self.esperar_elemento('id_slug').send_keys('E')
         self.esperar_elemento('id_btn_submit').click()
 
         # Aparece una caja para la nueva cuenta, con saldo cero
