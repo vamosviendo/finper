@@ -60,6 +60,15 @@ class CtaNuevaView(CreateView):
         return reverse('home')
 
 
+class CtaModView(UpdateView):
+    model = Cuenta
+    form_class = FormCuenta
+    template_name = 'diario/cta_mod.html'
+
+    def get_success_url(self):
+        return reverse('home')
+
+
 def mov_nuevo(request):
     form = FormMovimiento()
     if request.method == 'POST':
@@ -72,15 +81,6 @@ def mov_nuevo(request):
         'diario/mov_nuevo.html',
         context={'form': form}
     )
-
-
-class CtaModView(UpdateView):
-    model = Cuenta
-    template_name = 'diario/cta_mod.html'
-    fields = ('nombre', 'slug', )
-
-    def get_success_url(self):
-        return reverse('home')
 
 
 class MovNuevoView(CreateView):
