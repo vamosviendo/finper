@@ -24,6 +24,10 @@ class Cuenta(models.Model):
     def __str__(self):
         return self.nombre
 
+    def save(self, *args, **kwargs):
+        self.slug = self.slug.upper()
+        super().save(*args, **kwargs)
+
 
 class Movimiento(models.Model):
     fecha = models.DateField(default=hoy)

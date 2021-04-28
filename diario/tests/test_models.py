@@ -51,6 +51,11 @@ class TestModelCuenta(TestCase):
             cuenta = Cuenta(nombre='Efectivo')
             cuenta.full_clean()
 
+    def test_slug_se_guarda_siempre_en_mayusculas(self):
+        Cuenta.crear(nombre='Efectivo', slug='Efec')
+        cuenta = Cuenta.objects.first()
+        self.assertEqual(cuenta.slug, 'EFEC')
+
     def test_cuenta_str(self):
         cuenta = Cuenta(nombre='Efectivo', slug='E')
         self.assertEqual(str(cuenta), 'Efectivo')
