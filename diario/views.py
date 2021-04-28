@@ -53,7 +53,6 @@ def cuenta_nueva(request):
 
 class CtaNuevaView(CreateView):
     model = Cuenta
-    # fields = ('nombre', )
     form_class = FormCuenta
     template_name = 'diario/cta_nueva.html'
 
