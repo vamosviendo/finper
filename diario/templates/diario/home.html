@@ -16,7 +16,7 @@
     {% for cuenta in cuentas %}
     <div class="card border-danger class_div_cuenta">
       <div class="card-header bg-danger text-light class_nombre_cuenta">
-        {{ cuenta.nombre }}
+        <a href="{% url 'cta_mod' cuenta.slug %}" class="link_mod_cuenta">{{ cuenta.nombre }}</a>
       </div>
       <div class="card-body text-danger class_saldo_cuenta">
         {{ cuenta.saldo|floatformat:2}}

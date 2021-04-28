@@ -21,7 +21,7 @@ class TestHomePage(TestCase):
         self.assertIn(cta2, response.context.get('cuentas'))
 
     def test_pasa_movimientos_a_template(self):
-        cuenta = Cuenta.objects.create(nombre='Efectivo')
+        cuenta = Cuenta.objects.create(nombre='Efectivo', slug='E')
         Movimiento.objects.create(
             fecha=date.today(),
             concepto='movimiento 1',
@@ -110,7 +110,7 @@ class TestMovNuevo(TestCase):
         self.assertTemplateUsed(response, 'diario/mov_nuevo.html')
 
     def test_redirige_a_home_despues_de_POST(self):
-        cuenta = Cuenta.objects.create(nombre='Efectivo')
+        cuenta = Cuenta.objects.create(nombre='Efectivo', slug='E')
         response = self.client.post(
             reverse('mov_nuevo'),
             data={
@@ -123,7 +123,7 @@ class TestMovNuevo(TestCase):
         self.assertRedirects(response, reverse('home'))
 
     def test_puede_guardar_movimiento_nuevo(self):
-        cuenta = Cuenta.objects.create(nombre='Efectivo')
+        cuenta = Cuenta.objects.create(nombre='Efectivo', slug='E')
         self.client.post(
             reverse('mov_nuevo'),
             data={
@@ -150,3 +150,32 @@ class TestMovNuevo(TestCase):
             }
         )
         self.assertEqual(Movimiento.objects.count(), 0)
+
+
+class TestCtaMod(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.cuenta = Cuenta.crear(nombre='Nombre', slug='slug')
+
+    def test_usa_template_cta_mod(self):
+        response = self.client.get(reverse('cta_mod', args=[self.cuenta.slug]))
+        self.assertTemplateUsed(response, 'diario/cta_mod.html')
+
+    def test_post_puede_guardar_cambios_en_cuenta(self):
+        self.client.post(
+            reverse('cta_mod', args=[self.cuenta.slug]),
+            data={'nombre': 'Nombro', 'slug': 'slag'}
+        )
+        self.cuenta.refresh_from_db()
+        self.assertEqual(
+            (self.cuenta.nombre, self.cuenta.slug),
+            ('Nombro', 'SLAG')
+        )
+
+    def test_redirige_a_home_despues_de_post(self):
+        response = self.client.post(
+            reverse('cta_mod', args=[self.cuenta.slug]),
+            data={'nombre': 'Nombro', 'slug': 'slag'}
+        )
+        self.assertRedirects(response, reverse('home'))

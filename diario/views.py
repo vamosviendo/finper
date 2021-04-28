@@ -1,7 +1,7 @@
 from django.db.models import Sum
 from django.shortcuts import render, redirect
 from django.urls import reverse
-from django.views.generic import ListView, CreateView
+from django.views.generic import ListView, CreateView, UpdateView
 
 from diario.forms import FormCuenta, FormMovimiento
 from diario.models import Cuenta, Movimiento
@@ -72,6 +72,15 @@ def mov_nuevo(request):
         'diario/mov_nuevo.html',
         context={'form': form}
     )
+
+
+class CtaModView(UpdateView):
+    model = Cuenta
+    template_name = 'diario/cta_mod.html'
+    fields = ('nombre', 'slug', )
+
+    def get_success_url(self):
+        return reverse('home')
 
 
 class MovNuevoView(CreateView):
