@@ -12,8 +12,8 @@ class TestHomePage(TestCase):
         self.assertTemplateUsed(response, 'diario/home.html')
 
     def test_pasa_cuentas_a_template(self):
-        cta1 = Cuenta.objects.create(nombre='Efectivo')
-        cta2 = Cuenta.objects.create(nombre='Banco')
+        cta1 = Cuenta.objects.create(nombre='Efectivo', slug='E')
+        cta2 = Cuenta.objects.create(nombre='Banco', slug='B')
 
         response = self.client.get(reverse('home'))
 
@@ -41,8 +41,8 @@ class TestHomePage(TestCase):
         self.assertContains(response, 'movimiento 2')
 
     def test_pasa_saldo_de_cuentas_a_template(self):
-        cta1 = Cuenta.objects.create(nombre='Efectivo')
-        cta2 = Cuenta.objects.create(nombre='Banco')
+        cta1 = Cuenta.objects.create(nombre='Efectivo', slug='E')
+        cta2 = Cuenta.objects.create(nombre='Banco', slug='B')
         Movimiento.objects.create(
             fecha=date.today(),
             concepto='movimiento 1',
@@ -63,8 +63,8 @@ class TestHomePage(TestCase):
         self.assertContains(response, '75.00')
 
     def test_pasa_saldos_generales_a_template(self):
-        cta1 = Cuenta.objects.create(nombre='Efectivo', saldo=125)
-        cta2 = Cuenta.objects.create(nombre='Banco', saldo=225)
+        cta1 = Cuenta.objects.create(nombre='Efectivo', slug='E', saldo=125)
+        cta2 = Cuenta.objects.create(nombre='Banco', slug='B', saldo=225)
 
         response = self.client.get(reverse('home'))
 
@@ -82,7 +82,10 @@ class TestCtaNueva(TestCase):
         self.assertTemplateUsed(response, 'diario/cta_nueva.html')
 
     def test_puede_guardar_cuenta_nueva(self):
-        self.client.post(reverse('cta_nueva'), data={'nombre': 'Efectivo'})
+        self.client.post(
+            reverse('cta_nueva'),
+            data={'nombre': 'Efectivo', 'slug': 'E'}
+        )
         self.assertEqual(Cuenta.objects.count(), 1)
         cuenta_nueva = Cuenta.objects.first()
         self.assertEqual(cuenta_nueva.nombre, 'Efectivo')
@@ -90,7 +93,7 @@ class TestCtaNueva(TestCase):
     def test_redirige_a_home_despues_de_POST(self):
         response = self.client.post(
             reverse('cta_nueva'),
-            data={'nombre': 'Efectivo'}
+            data={'nombre': 'Efectivo', 'slug': 'E'}
         )
         self.assertRedirects(response, reverse('home'))
 

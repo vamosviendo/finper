@@ -11,7 +11,7 @@ class FormCuenta(ModelForm):
 
     class Meta:
         model = Cuenta
-        fields = ('nombre', )
+        fields = ('nombre', 'slug', )
 
 
 class FormMovimiento(ModelForm):

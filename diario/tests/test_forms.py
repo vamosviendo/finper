@@ -2,9 +2,16 @@ from django.core.exceptions import NON_FIELD_ERRORS
 from django.test import TestCase
 from django.utils.datetime_safe import date
 
-from diario.forms import FormMovimiento
+from diario.forms import FormMovimiento, FormCuenta
 from diario.models import Cuenta
 from utils import errors
+
+
+class TestFormCuenta(TestCase):
+
+    def test_no_acepta_cuentas_sin_slug(self):
+        formcta = FormCuenta(data={'nombre': 'Efectivo'})
+        self.assertFalse(formcta.is_valid())
 
 
 class TestFormMovimiento(TestCase):

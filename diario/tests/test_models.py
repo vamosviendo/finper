@@ -11,10 +11,12 @@ class TestModelCuenta(TestCase):
     def test_guarda_y_recupera_cuentas(self):
         primera_cuenta = Cuenta()
         primera_cuenta.nombre = 'Efectivo'
+        primera_cuenta.slug = 'E'
         primera_cuenta.save()
 
         segunda_cuenta = Cuenta()
         segunda_cuenta.nombre = 'Caja de ahorro'
+        segunda_cuenta.slug = 'CA'
         segunda_cuenta.save()
 
         cuentas_guardadas = Cuenta.objects.all()
@@ -23,22 +25,47 @@ class TestModelCuenta(TestCase):
         primera_cuenta_guardada = cuentas_guardadas[0]
         segunda_cuenta_guardada = cuentas_guardadas[1]
         self.assertEqual(primera_cuenta_guardada.nombre, 'Efectivo')
+        self.assertEqual(primera_cuenta_guardada.slug, 'E')
         self.assertEqual(segunda_cuenta_guardada.nombre, 'Caja de ahorro')
+        self.assertEqual(segunda_cuenta_guardada.slug, 'CA')
 
     def test_cuenta_creada_tiene_saldo_cero(self):
-        cuenta = Cuenta(nombre='Efectivo')
+        cuenta = Cuenta(nombre='Efectivo', slug='E')
         cuenta.save()
         self.assertEqual(cuenta.saldo, 0)
 
-    def test_no_permite_cuentas_duplicadas(self):
-        Cuenta.objects.create(nombre='Efectivo')
+    def test_no_permite_nombres_duplicados(self):
+        Cuenta.objects.create(nombre='Efectivo', slug='E')
         with self.assertRaises(ValidationError):
-            cuenta2 = Cuenta(nombre='Efectivo')
+            cuenta2 = Cuenta(nombre='Efectivo', slug='EF')
             cuenta2.full_clean()
 
+    def test_no_permite_slugs_duplicados(self):
+        Cuenta.objects.create(nombre='Caja de ahorro', slug='CA')
+        with self.assertRaises(ValidationError):
+            cuenta2 = Cuenta(nombre='Cuenta de ahorro', slug='CA')
+            cuenta2.full_clean()
+
+    def test_no_permite_slug_vacio(self):
+        with self.assertRaises(ValidationError):
+            cuenta = Cuenta(nombre='Efectivo')
+            cuenta.full_clean()
+
     def test_cuenta_str(self):
-        cuenta = Cuenta(nombre='Efectivo')
+        cuenta = Cuenta(nombre='Efectivo', slug='E')
         self.assertEqual(str(cuenta), 'Efectivo')
+
+    def test_crear_crea_cuenta(self):
+        Cuenta.crear(nombre='Efectivo', slug='E')
+        self.assertEqual(Cuenta.objects.count(), 1)
+
+    def test_crear_devuelve_cuenta_creada(self):
+        cuenta = Cuenta.crear(nombre='Efectivo', slug='E')
+        self.assertEqual((cuenta.nombre, cuenta.slug), ('Efectivo', 'E'))
+
+    def test_crear_valida_nombre_vacio(self):
+        with self.assertRaises(ValidationError):
+            Cuenta.crear(nombre=None, slug='E')
 
 
 class TestModelMovimiento(TestCase):
@@ -80,8 +107,8 @@ class TestModelMovimiento(TestCase):
         self.assertEqual(segundo_mov_guardado.cta_salida, cuenta)
 
     def test_movimiento_str(self):
-        cta1 = Cuenta.objects.create(nombre='Efectivo')
-        cta2 = Cuenta.objects.create(nombre='Banco')
+        cta1 = Cuenta.objects.create(nombre='Efectivo', slug='E')
+        cta2 = Cuenta.objects.create(nombre='Banco', slug='B')
         mov1 = Movimiento(
             fecha=date(2021, 3, 22),
             concepto='Retiro de efectivo',
@@ -156,8 +183,8 @@ class TestModelMovimiento(TestCase):
         self.assertIn(mov, cuenta.salidas.all())
 
     def test_permite_guardar_cuentas_de_entrada_y_salida_en_un_movimiento(self):
-        cuenta1 = Cuenta.objects.create(nombre='Efectivo')
-        cuenta2 = Cuenta.objects.create(nombre='Banco')
+        cuenta1 = Cuenta.objects.create(nombre='Efectivo', slug='E')
+        cuenta2 = Cuenta.objects.create(nombre='Banco', slug='B')
         mov = Movimiento(
             fecha=date.today(),
             concepto='Retiro de efectivo',
@@ -218,8 +245,8 @@ class TestModelMovimiento(TestCase):
         self.assertEqual(cuenta.saldo, -35.35)
 
     def test_puede_traspasar_saldo_de_una_cuenta_a_otra(self):
-        cta1 = Cuenta.objects.create(nombre='Efectivo')
-        cta2 = Cuenta.objects.create(nombre='Banco')
+        cta1 = Cuenta.objects.create(nombre='Efectivo', slug='E')
+        cta2 = Cuenta.objects.create(nombre='Banco', slug='B')
         Movimiento.objects.create(
             fecha=date.today(),
             concepto='Carga de saldo',

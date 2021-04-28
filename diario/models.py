@@ -11,7 +11,15 @@ def hoy():
 
 class Cuenta(models.Model):
     nombre = models.CharField(max_length=50, unique=True)
+    slug = models.CharField(max_length=4, unique=True)
     saldo = models.FloatField(default=0)
+
+    @staticmethod
+    def crear(nombre, slug):
+        cuenta = Cuenta(nombre=nombre, slug=slug)
+        cuenta.full_clean()
+        cuenta.save()
+        return cuenta
 
     def __str__(self):
         return self.nombre
