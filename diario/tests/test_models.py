@@ -72,6 +72,13 @@ class TestModelCuenta(TestCase):
         with self.assertRaises(ValidationError):
             Cuenta.crear(nombre=None, slug='E')
 
+    def test_no_permite_eliminar_cuentas_con_saldo(self):
+        cuenta = Cuenta.crear(nombre='Efectivo', slug='E')
+        Movimiento.objects.create(
+            concepto='Saldo', importe=100, cta_entrada=cuenta)
+        with self.assertRaises(ValueError):
+            cuenta.delete()
+
 
 class TestModelMovimiento(TestCase):
 

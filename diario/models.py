@@ -28,6 +28,11 @@ class Cuenta(models.Model):
         self.slug = self.slug.upper()
         super().save(*args, **kwargs)
 
+    def delete(self, *args, **kwargs):
+        if self.saldo != 0:
+            raise ValueError
+        super().delete(*args, **kwargs)
+
 
 class Movimiento(models.Model):
     fecha = models.DateField(default=hoy)

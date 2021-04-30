@@ -103,6 +103,68 @@ class TestCtaNueva(TestCase):
         self.assertEqual(Cuenta.objects.count(), 0)
 
 
+class TestCtaMod(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.cuenta = Cuenta.crear(nombre='Nombre', slug='slug')
+
+    def test_usa_template_cta_mod(self):
+        response = self.client.get(reverse('cta_mod', args=[self.cuenta.slug]))
+        self.assertTemplateUsed(response, 'diario/cta_mod.html')
+
+    def test_post_puede_guardar_cambios_en_cuenta(self):
+        self.client.post(
+            reverse('cta_mod', args=[self.cuenta.slug]),
+            data={'nombre': 'Nombro', 'slug': 'slag'}
+        )
+        self.cuenta.refresh_from_db()
+        self.assertEqual(
+            (self.cuenta.nombre, self.cuenta.slug),
+            ('Nombro', 'SLAG')
+        )
+
+    def test_redirige_a_home_despues_de_post(self):
+        response = self.client.post(
+            reverse('cta_mod', args=[self.cuenta.slug]),
+            data={'nombre': 'Nombro', 'slug': 'slag'}
+        )
+        self.assertRedirects(response, reverse('home'))
+
+
+class TestCtaElim(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.cuenta = Cuenta.crear('Efectivo', 'E')
+
+    def test_get_usa_template_cuenta_confirm_delete(self):
+        response = self.client.get(
+            reverse('cta_elim', args=[self.cuenta.slug])
+        )
+        self.assertTemplateUsed(response, 'diario/cuenta_confirm_delete.html')
+
+    def test_post_elimina_cuenta(self):
+        self.client.post(
+            reverse('cta_elim', args=[self.cuenta.slug])
+        )
+        self.assertEqual(Cuenta.objects.count(), 0)
+
+    def test_redirige_a_home_despues_de_borrar(self):
+        response = self.client.post(
+            reverse('cta_elim', args=[self.cuenta.slug])
+        )
+        self.assertRedirects(response, reverse('home'))
+
+    def test_muestra_mensaje_de_error_si_se_elimina_cuenta_con_saldo(self):
+        Movimiento.objects.create(
+            concepto='saldo', importe=100, cta_entrada=self.cuenta)
+        response = self.client.get(
+            reverse('cta_elim', args=[self.cuenta.slug])
+        )
+        self.assertContains(response, 'No se puede eliminar cuenta con saldo')
+
+
 class TestMovNuevo(TestCase):
 
     def test_usa_template_mov_nuevo(self):
@@ -150,32 +212,3 @@ class TestMovNuevo(TestCase):
             }
         )
         self.assertEqual(Movimiento.objects.count(), 0)
-
-
-class TestCtaMod(TestCase):
-
-    def setUp(self):
-        super().setUp()
-        self.cuenta = Cuenta.crear(nombre='Nombre', slug='slug')
-
-    def test_usa_template_cta_mod(self):
-        response = self.client.get(reverse('cta_mod', args=[self.cuenta.slug]))
-        self.assertTemplateUsed(response, 'diario/cta_mod.html')
-
-    def test_post_puede_guardar_cambios_en_cuenta(self):
-        self.client.post(
-            reverse('cta_mod', args=[self.cuenta.slug]),
-            data={'nombre': 'Nombro', 'slug': 'slag'}
-        )
-        self.cuenta.refresh_from_db()
-        self.assertEqual(
-            (self.cuenta.nombre, self.cuenta.slug),
-            ('Nombro', 'SLAG')
-        )
-
-    def test_redirige_a_home_despues_de_post(self):
-        response = self.client.post(
-            reverse('cta_mod', args=[self.cuenta.slug]),
-            data={'nombre': 'Nombro', 'slug': 'slag'}
-        )
-        self.assertRedirects(response, reverse('home'))
