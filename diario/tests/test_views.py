@@ -212,3 +212,25 @@ class TestMovNuevo(TestCase):
             }
         )
         self.assertEqual(Movimiento.objects.count(), 0)
+
+
+class TestMovElim(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.cuenta = Cuenta.objects.create(nombre='Efectivo', slug='E')
+        self.mov = Movimiento.objects.create(
+            concepto='saldo', importe=166, cta_entrada=self.cuenta)
+
+    def test_usa_template_movimiento_confirm_delete(self):
+        response = self.client.get(reverse('mov_elim', args=[self.mov.pk]))
+        self.assertTemplateUsed(
+            response, 'diario/movimiento_confirm_delete.html')
+
+    def test_post_elimina_movimiento(self):
+        self.client.post(reverse('mov_elim', args=[self.mov.pk]))
+        self.assertEqual(Movimiento.objects.count(), 0)
+
+    def test_post_redirige_a_home(self):
+        response = self.client.post(reverse('mov_elim', args=[self.mov.pk]))
+        self.assertRedirects(response, reverse('home'))

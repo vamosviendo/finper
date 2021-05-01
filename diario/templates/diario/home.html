@@ -14,13 +14,13 @@
 
   <div id="id_grid_cuentas" class="card-deck mt-3">
     {% for cuenta in cuentas %}
-    <div class="card border-danger class_div_cuenta">
+    <div id="id_div_cta_{{ cuenta.slug|lower }}" class="card border-danger class_div_cuenta">
       <div class="card-header bg-danger text-light class_nombre_cuenta">
         <a href="{% url 'cta_mod' cuenta.slug %}" class="text-light link_mod_cuenta">
           {{ cuenta.nombre }}
         </a>
       </div>
-      <div class="card-body text-danger class_saldo_cuenta">
+      <div id="id_saldo_cta_{{ cuenta.slug|lower }}" class="card-body text-danger class_saldo_cuenta">
         {{ cuenta.saldo|floatformat:2}}
       </div>
       <div class="card-footer">
@@ -45,15 +45,15 @@
       <th>Cuentas</th>
     </tr></thead>
     {% for mov in ult_movs %}
-    <tr>
-      <th>{{ mov.fecha|date:'Y-m-d' }}</th>
-      <th>
+    <tr class="class_row_mov">
+      <td>{{ mov.fecha|date:'Y-m-d' }}</td>
+      <td>
         <span data-toggle="tooltip" title="{{ mov.detalle }}">
           {{ mov.concepto }}
         </span>
-      </th>
-      <th class="d-none d-md-table-cell">{{ mov.detalle }}</th>
-      <th class="text-right
+      </td>
+      <td class="d-none d-md-table-cell">{{ mov.detalle }}</td>
+      <td class="text-right
                  {% if mov.cta_salida and not mov.cta_entrada %}
                    text-danger
                  {% elif mov.cta_salida and mov.cta_entrada %}
@@ -61,11 +61,17 @@
                  {% endif %}">
         {% if mov.cta_salida and not mov.cta_entrada %}-{% endif %}
         {{ mov.importe|floatformat:2 }}
-      </th>
-      <th>
+      </td>
+      <td>
         {% if mov.cta_entrada %}+{{ mov.cta_entrada.nombre }}{% endif %}
         {% if mov.cta_salida %}-{{ mov.cta_salida.nombre }}{% endif %}
-      </th>
+      </td>
+      <td>
+        <a href="{% url 'mov_elim' mov.id %}"
+           class="btn btn-danger btn-sm link_elim_mov">
+          Borrar
+        </a>
+      </td>
     </tr>
     {% endfor %}
   </table>

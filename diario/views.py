@@ -100,3 +100,8 @@ class MovNuevoView(CreateView):
     form_class = FormMovimiento
     template_name = 'diario/mov_nuevo.html'
     success_url = reverse_lazy('home')
+
+
+class MovElimView(DeleteView):
+    model = Movimiento
+    success_url = reverse_lazy('home')

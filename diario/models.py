@@ -64,6 +64,15 @@ class Movimiento(models.Model):
         if self.cta_entrada == self.cta_salida:
             raise ValidationError(message=errors.CUENTAS_IGUALES)
 
+    def delete(self, *args, **kwargs):
+        if self.cta_entrada:
+            self.cta_entrada.saldo -= self.importe
+            self.cta_entrada.save()
+        if self.cta_salida:
+            self.cta_salida.saldo += self.importe
+            self.cta_salida.save()
+        super().delete(*args, **kwargs)
+
     def save(self, *args, **kwargs):
         if self.cta_entrada:
             self.cta_entrada.saldo += self.importe

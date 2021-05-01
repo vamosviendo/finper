@@ -274,3 +274,36 @@ class TestModelMovimiento(TestCase):
         )
         self.assertEqual(cta2.saldo, 830.25)
         self.assertEqual(cta1.saldo, 704.75)
+
+    def test_eliminar_movimiento_resta_de_saldo_cta_entrada_y_suma_a_saldo_cta_salida(self):
+        cta1 = Cuenta.objects.create(nombre='Efectivo', slug='E')
+        cta2 = Cuenta.objects.create(nombre='Banco', slug='B')
+        m1 = Movimiento.objects.create(
+            concepto='Carga de saldo',
+            importe=1535,
+            cta_entrada=cta1
+        )
+        m2 = Movimiento.objects.create(
+            concepto='Entrada de efectivo',
+            importe=2500,
+            cta_entrada=cta1
+        )
+        m3 = Movimiento.objects.create(
+            concepto='Depósito',
+            importe=830.25,
+            cta_entrada=cta2,
+            cta_salida=cta1
+        )
+
+        m1.delete()
+        cta1.refresh_from_db(fields=['saldo'])
+        # cta1 = Cuenta.objects.get(slug='E')
+
+        self.assertEqual(cta1.saldo, 3204.75-1535)
+
+        m3.delete()
+        cta1.refresh_from_db(fields=['saldo'])
+        cta2.refresh_from_db(fields=['saldo'])
+
+        self.assertEqual(cta1.saldo, 3204.75-1535+830.25)
+        self.assertEqual(cta2.saldo, 0)

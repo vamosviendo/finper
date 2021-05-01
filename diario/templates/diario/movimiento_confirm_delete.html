@@ -4,7 +4,9 @@
 <div id="id_errores">{{ error }}</div>
 {% else %}
 <form method="post">{% csrf_token %}
-    <p>Eliminar cuenta "{{ object }}"?</p>
+    <p>Eliminar movimiento "{{ object }}"?</p>
+    <p>El importe del movimiento se descontará de las cuentas relacionadas</p>
+    <p>(se sumará a la cuenta de salida y/o se restará de la cuenta de entrada)</p>
     <input type="submit" value="Confirm" id="id_btn_confirm">
 </form>
 {% endif %}
