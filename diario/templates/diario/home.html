@@ -46,30 +46,35 @@
     </tr></thead>
     {% for mov in ult_movs %}
     <tr class="class_row_mov">
-      <td>{{ mov.fecha|date:'Y-m-d' }}</td>
-      <td>
-        <span data-toggle="tooltip" title="{{ mov.detalle }}">
+      <td class="class_td_fecha">{{ mov.fecha|date:'Y-m-d' }}</td>
+      <td class="class_td_concepto">
+        <span data-toggle="tooltip" title="{{ mov.detalle }}" class="class_tooltip_detalle">
           {{ mov.concepto }}
         </span>
       </td>
-      <td class="d-none d-md-table-cell">{{ mov.detalle }}</td>
+      <td class="d-none d-md-table-cell class_td_detalle">{{ mov.detalle }}</td>
       <td class="text-right
                  {% if mov.cta_salida and not mov.cta_entrada %}
                    text-danger
                  {% elif mov.cta_salida and mov.cta_entrada %}
                    text-primary
-                 {% endif %}">
+                 {% endif %}
+                 class_td_importe">
         {% if mov.cta_salida and not mov.cta_entrada %}-{% endif %}
         {{ mov.importe|floatformat:2 }}
       </td>
-      <td>
+      <td class="class_td_cuentas">
         {% if mov.cta_entrada %}+{{ mov.cta_entrada.nombre }}{% endif %}
         {% if mov.cta_salida %}-{{ mov.cta_salida.nombre }}{% endif %}
       </td>
-      <td>
+      <td class="class_td_menu">
         <a href="{% url 'mov_elim' mov.id %}"
            class="btn btn-danger btn-sm link_elim_mov">
           Borrar
+        </a>
+        <a href="{% url 'mov_mod' mov.id %}"
+           class="btn btn-primary btn-sm link_mod_mov">
+          Edit
         </a>
       </td>
     </tr>

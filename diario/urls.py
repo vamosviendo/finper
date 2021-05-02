@@ -23,4 +23,5 @@ urlpatterns = [
     path('cta_mod/<slug:slug>', views.CtaModView.as_view(), name='cta_mod'),
     path('mov_nuevo', views.MovNuevoView.as_view(), name='mov_nuevo'),
     path('mov_elim/<int:pk>', views.MovElimView.as_view(), name='mov_elim'),
+    path('mov_mod/<int:pk>', views.MovModView.as_view(), name='mov_mod'),
 ]

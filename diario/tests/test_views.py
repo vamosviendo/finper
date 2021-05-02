@@ -234,3 +234,41 @@ class TestMovElim(TestCase):
     def test_post_redirige_a_home(self):
         response = self.client.post(reverse('mov_elim', args=[self.mov.pk]))
         self.assertRedirects(response, reverse('home'))
+
+
+class TestMovMod(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.cuenta = Cuenta.objects.create(nombre='Efectivo', slug='E')
+        self.mov = Movimiento.objects.create(
+            concepto='saldo', importe=166, cta_entrada=self.cuenta)
+
+    def test_usa_template_mov_mod(self):
+        response = self.client.get(reverse('mov_mod', args=[self.mov.pk]))
+        self.assertTemplateUsed(response, 'diario/mov_mod.html')
+
+    def test_guarda_cambios_en_el_mov(self):
+        self.client.post(
+            reverse('mov_mod', args=[self.mov.pk]),
+            {
+                'fecha': date.today(),
+                'concepto': 'Saldo inicial',
+                'importe': self.mov.importe,
+                'cta_entrada': self.mov.cta_entrada.pk,
+            }
+        )
+        self.mov.refresh_from_db()
+        self.assertEqual(self.mov.concepto, 'Saldo inicial')
+
+    def test_redirige_a_home_despues_de_post(self):
+        response = self.client.post(
+            reverse('mov_mod', args=[self.mov.pk]),
+            {
+                'fecha': date.today(),
+                'concepto': 'Saldo',
+                'importe': self.mov.importe,
+                'cta_entrada': self.mov.cta_entrada.pk,
+            }
+        )
+        self.assertRedirects(response, reverse('home'))

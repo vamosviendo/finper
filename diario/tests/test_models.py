@@ -307,3 +307,30 @@ class TestModelMovimiento(TestCase):
 
         self.assertEqual(cta1.saldo, 3204.75-1535+830.25)
         self.assertEqual(cta2.saldo, 0)
+
+    def test_modificar_movimiento_no_modifica_saldo_de_cuentas_si_no_se_modifica_importe_ni_cuentas(self):
+        cta1 = Cuenta.objects.create(nombre='Efectivo', slug='E')
+        cta2 = Cuenta.objects.create(nombre='Banco', slug='B')
+        Movimiento.objects.create(
+            concepto='Carga de saldo',
+            importe=1535,
+            cta_entrada=cta1
+        )
+        Movimiento.objects.create(
+            concepto='traspaso',
+            importe=830.25,
+            cta_entrada=cta2,
+            cta_salida=cta1
+        )
+        saldo1 = cta1.saldo
+        saldo2 = cta2.saldo
+
+        mov = Movimiento.objects.get(concepto='traspaso')
+        mov.concepto = 'Depósito'
+        mov.save()
+
+        cta1.refresh_from_db()
+        cta2.refresh_from_db()
+
+        self.assertEqual(cta1.saldo, saldo1)
+        self.assertEqual(cta2.saldo, saldo2)

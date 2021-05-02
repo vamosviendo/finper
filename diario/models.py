@@ -74,10 +74,12 @@ class Movimiento(models.Model):
         super().delete(*args, **kwargs)
 
     def save(self, *args, **kwargs):
-        if self.cta_entrada:
-            self.cta_entrada.saldo += self.importe
-            self.cta_entrada.save()
-        if self.cta_salida:
-            self.cta_salida.saldo -= self.importe
-            self.cta_salida.save()
+        if self._state.adding:
+            if self.cta_entrada:
+                self.cta_entrada.saldo += self.importe
+                self.cta_entrada.save()
+            if self.cta_salida:
+                self.cta_salida.saldo -= self.importe
+                self.cta_salida.save()
+
         super().save(*args, **kwargs)
