@@ -29,7 +29,7 @@ class TestFormMovimiento(TestCase):
         )
 
     def test_no_acepta_cuentas_de_entrada_y_salida_iguales(self):
-        cuenta = Cuenta.objects.create(nombre="repetida")
+        cuenta = Cuenta.crear(nombre="repetida", slug='r')
         formmov = FormMovimiento(data={
             'fecha': date.today(),
             'concepto': 'entrada de efectivo',
@@ -56,7 +56,7 @@ class TestFormMovimiento(TestCase):
         )
 
     def test_toma_fecha_del_dia_por_defecto(self):
-        cuenta = Cuenta.objects.create(nombre='efectivo')
+        cuenta = Cuenta.crear(nombre='efectivo', slug='e')
         formmov = FormMovimiento(data={
             'concepto': 'entrada de efectivo',
             'importe': 150,

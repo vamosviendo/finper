@@ -9,14 +9,14 @@ from .base import FunctionalTest
 class TestModificaCuenta(FunctionalTest):
 
     def test_puede_modificar_nombre_de_cuenta(self):
-        Cuenta.objects.create(nombre='Efetivo', slug='E')
-        self.browser.get(self.live_server_url)
-        self.esperar_elemento("link_mod_cuenta", By.CLASS_NAME).click()
+        Cuenta.crear(nombre='Efetivo', slug='E')
+        self.ir_a_pag()
+        self.pulsar("link_mod_cuenta", By.CLASS_NAME)
 
         for x in range(4):
             self.esperar_elemento('id_nombre').send_keys(Keys.LEFT)
         self.esperar_elemento('id_nombre').send_keys('c')
-        self.esperar_elemento('id_btn_submit').click()
+        self.pulsar()
 
         nombre = self.esperar_elemento('class_nombre_cuenta', By.CLASS_NAME).text
         self.assertEqual(nombre, 'Efectivo')

@@ -19,7 +19,7 @@ class TestModelCuenta(TestCase):
         segunda_cuenta.slug = 'CA'
         segunda_cuenta.save()
 
-        cuentas_guardadas = Cuenta.objects.all()
+        cuentas_guardadas = Cuenta.todes()
         self.assertEqual(cuentas_guardadas.count(), 2)
 
         primera_cuenta_guardada = cuentas_guardadas[0]
@@ -35,13 +35,13 @@ class TestModelCuenta(TestCase):
         self.assertEqual(cuenta.saldo, 0)
 
     def test_no_permite_nombres_duplicados(self):
-        Cuenta.objects.create(nombre='Efectivo', slug='E')
+        Cuenta.crear(nombre='Efectivo', slug='E')
         with self.assertRaises(ValidationError):
             cuenta2 = Cuenta(nombre='Efectivo', slug='EF')
             cuenta2.full_clean()
 
     def test_no_permite_slugs_duplicados(self):
-        Cuenta.objects.create(nombre='Caja de ahorro', slug='CA')
+        Cuenta.crear(nombre='Caja de ahorro', slug='CA')
         with self.assertRaises(ValidationError):
             cuenta2 = Cuenta(nombre='Cuenta de ahorro', slug='CA')
             cuenta2.full_clean()
@@ -53,7 +53,7 @@ class TestModelCuenta(TestCase):
 
     def test_slug_se_guarda_siempre_en_mayusculas(self):
         Cuenta.crear(nombre='Efectivo', slug='Efec')
-        cuenta = Cuenta.objects.first()
+        cuenta = Cuenta.primere()
         self.assertEqual(cuenta.slug, 'EFEC')
 
     def test_cuenta_str(self):
@@ -62,7 +62,7 @@ class TestModelCuenta(TestCase):
 
     def test_crear_crea_cuenta(self):
         Cuenta.crear(nombre='Efectivo', slug='E')
-        self.assertEqual(Cuenta.objects.count(), 1)
+        self.assertEqual(Cuenta.cantidad(), 1)
 
     def test_crear_devuelve_cuenta_creada(self):
         cuenta = Cuenta.crear(nombre='Efectivo', slug='E')
@@ -74,7 +74,7 @@ class TestModelCuenta(TestCase):
 
     def test_no_permite_eliminar_cuentas_con_saldo(self):
         cuenta = Cuenta.crear(nombre='Efectivo', slug='E')
-        Movimiento.objects.create(
+        Movimiento.crear(
             concepto='Saldo', importe=100, cta_entrada=cuenta)
         with self.assertRaises(ValueError):
             cuenta.delete()
@@ -83,7 +83,7 @@ class TestModelCuenta(TestCase):
 class TestModelMovimiento(TestCase):
 
     def test_guarda_y_recupera_movimientos(self):
-        cuenta = Cuenta.objects.create(nombre='Efectivo')
+        cuenta = Cuenta.crear(nombre='Efectivo', slug='e')
 
         primer_mov = Movimiento()
         primer_mov.fecha = date.today()
@@ -100,7 +100,7 @@ class TestModelMovimiento(TestCase):
         segundo_mov.cta_salida = cuenta
         segundo_mov.save()
 
-        movs_guardados = Movimiento.objects.all()
+        movs_guardados = Movimiento.todes()
         self.assertEqual(movs_guardados.count(), 2)
 
         primer_mov_guardado = movs_guardados[0]
@@ -119,8 +119,8 @@ class TestModelMovimiento(TestCase):
         self.assertEqual(segundo_mov_guardado.cta_salida, cuenta)
 
     def test_movimiento_str(self):
-        cta1 = Cuenta.objects.create(nombre='Efectivo', slug='E')
-        cta2 = Cuenta.objects.create(nombre='Banco', slug='B')
+        cta1 = Cuenta.crear(nombre='Efectivo', slug='E')
+        cta2 = Cuenta.crear(nombre='Banco', slug='B')
         mov1 = Movimiento(
             fecha=date(2021, 3, 22),
             concepto='Retiro de efectivo',
@@ -154,8 +154,8 @@ class TestModelMovimiento(TestCase):
         )
 
     def test_guarda_fecha_de_hoy_por_defecto(self):
-        cuenta = Cuenta.objects.create(nombre='Efectivo')
-        mov = Movimiento.objects.create(
+        cuenta = Cuenta.crear(nombre='Efectivo', slug='e')
+        mov = Movimiento.crear(
             concepto='Cobranza en efectivo',
             importe=100,
             cta_entrada=cuenta
@@ -163,8 +163,8 @@ class TestModelMovimiento(TestCase):
         self.assertEqual(mov.fecha, date.today())
 
     def test_permite_movimientos_duplicados(self):
-        cuenta = Cuenta.objects.create(nombre='Efectivo')
-        Movimiento.objects.create(
+        cuenta = Cuenta.crear(nombre='Efectivo', slug='e')
+        Movimiento.crear(
             fecha=date.today(),
             concepto='Cobranza en efectivo',
             importe=100,
@@ -179,7 +179,7 @@ class TestModelMovimiento(TestCase):
         mov.full_clean()    # No debe dar error
 
     def test_cta_entrada_se_relaciona_con_cuenta(self):
-        cuenta = Cuenta.objects.create(nombre='Efectivo')
+        cuenta = Cuenta.crear(nombre='Efectivo', slug='e')
         mov = Movimiento(
             fecha=date.today(), concepto='Cobranza en efectivo', importe=100)
         mov.cta_entrada = cuenta
@@ -187,7 +187,7 @@ class TestModelMovimiento(TestCase):
         self.assertIn(mov, cuenta.entradas.all())
 
     def test_cta_salida_se_relaciona_con_cuenta(self):
-        cuenta = Cuenta.objects.create(nombre='Efectivo')
+        cuenta = Cuenta.crear(nombre='Efectivo', slug='e')
         mov = Movimiento(
             fecha=date.today(), concepto='Cobranza en efectivo', importe=100)
         mov.cta_salida = cuenta
@@ -195,8 +195,8 @@ class TestModelMovimiento(TestCase):
         self.assertIn(mov, cuenta.salidas.all())
 
     def test_permite_guardar_cuentas_de_entrada_y_salida_en_un_movimiento(self):
-        cuenta1 = Cuenta.objects.create(nombre='Efectivo', slug='E')
-        cuenta2 = Cuenta.objects.create(nombre='Banco', slug='B')
+        cuenta1 = Cuenta.crear(nombre='Efectivo', slug='E')
+        cuenta2 = Cuenta.crear(nombre='Banco', slug='B')
         mov = Movimiento(
             fecha=date.today(),
             concepto='Retiro de efectivo',
@@ -225,7 +225,7 @@ class TestModelMovimiento(TestCase):
             mov.full_clean()
 
     def test_no_admite_misma_cuenta_de_entrada_y_de_salida(self):
-        cuenta = Cuenta.objects.create(nombre='Efectivo')
+        cuenta = Cuenta.crear(nombre='Efectivo', slug='e')
         mov = Movimiento(
             fecha=date.today(),
             concepto='Cobranza en efectivo',
@@ -237,8 +237,8 @@ class TestModelMovimiento(TestCase):
             mov.full_clean()
 
     def test_suma_importe_a_cta_entrada(self):
-        cuenta = Cuenta.objects.create(nombre='Efectivo')
-        Movimiento.objects.create(
+        cuenta = Cuenta.crear(nombre='Efectivo', slug='E')
+        Movimiento.crear(
             fecha=date.today(),
             concepto='Carga de saldo',
             importe=125.5,
@@ -247,8 +247,8 @@ class TestModelMovimiento(TestCase):
         self.assertEqual(cuenta.saldo, 125.5)
 
     def test_resta_importe_de_cta_salida(self):
-        cuenta = Cuenta.objects.create(nombre='Banco')
-        Movimiento.objects.create(
+        cuenta = Cuenta.crear(nombre='Banco', slug='b')
+        Movimiento.crear(
             fecha=date.today(),
             concepto='Transferencia a otra cuenta',
             importe=35.35,
@@ -257,15 +257,15 @@ class TestModelMovimiento(TestCase):
         self.assertEqual(cuenta.saldo, -35.35)
 
     def test_puede_traspasar_saldo_de_una_cuenta_a_otra(self):
-        cta1 = Cuenta.objects.create(nombre='Efectivo', slug='E')
-        cta2 = Cuenta.objects.create(nombre='Banco', slug='B')
-        Movimiento.objects.create(
+        cta1 = Cuenta.crear(nombre='Efectivo', slug='E')
+        cta2 = Cuenta.crear(nombre='Banco', slug='B')
+        Movimiento.crear(
             fecha=date.today(),
             concepto='Carga de saldo',
             importe=1535,
             cta_entrada=cta1
         )
-        Movimiento.objects.create(
+        Movimiento.crear(
             fecha=date.today(),
             concepto='Depósito',
             importe=830.25,
@@ -276,19 +276,19 @@ class TestModelMovimiento(TestCase):
         self.assertEqual(cta1.saldo, 704.75)
 
     def test_eliminar_movimiento_resta_de_saldo_cta_entrada_y_suma_a_saldo_cta_salida(self):
-        cta1 = Cuenta.objects.create(nombre='Efectivo', slug='E')
-        cta2 = Cuenta.objects.create(nombre='Banco', slug='B')
-        m1 = Movimiento.objects.create(
+        cta1 = Cuenta.crear(nombre='Efectivo', slug='E')
+        cta2 = Cuenta.crear(nombre='Banco', slug='B')
+        m1 = Movimiento.crear(
             concepto='Carga de saldo',
             importe=1535,
             cta_entrada=cta1
         )
-        m2 = Movimiento.objects.create(
+        m2 = Movimiento.crear(
             concepto='Entrada de efectivo',
             importe=2500,
             cta_entrada=cta1
         )
-        m3 = Movimiento.objects.create(
+        m3 = Movimiento.crear(
             concepto='Depósito',
             importe=830.25,
             cta_entrada=cta2,
@@ -297,7 +297,6 @@ class TestModelMovimiento(TestCase):
 
         m1.delete()
         cta1.refresh_from_db(fields=['saldo'])
-        # cta1 = Cuenta.objects.get(slug='E')
 
         self.assertEqual(cta1.saldo, 3204.75-1535)
 
@@ -309,14 +308,14 @@ class TestModelMovimiento(TestCase):
         self.assertEqual(cta2.saldo, 0)
 
     def test_modificar_movimiento_no_modifica_saldo_de_cuentas_si_no_se_modifica_importe_ni_cuentas(self):
-        cta1 = Cuenta.objects.create(nombre='Efectivo', slug='E')
-        cta2 = Cuenta.objects.create(nombre='Banco', slug='B')
-        Movimiento.objects.create(
+        cta1 = Cuenta.crear(nombre='Efectivo', slug='E')
+        cta2 = Cuenta.crear(nombre='Banco', slug='B')
+        Movimiento.crear(
             concepto='Carga de saldo',
             importe=1535,
             cta_entrada=cta1
         )
-        Movimiento.objects.create(
+        Movimiento.crear(
             concepto='traspaso',
             importe=830.25,
             cta_entrada=cta2,
@@ -325,7 +324,7 @@ class TestModelMovimiento(TestCase):
         saldo1 = cta1.saldo
         saldo2 = cta2.saldo
 
-        mov = Movimiento.objects.get(concepto='traspaso')
+        mov = Movimiento.tomar(concepto='traspaso')
         mov.concepto = 'Depósito'
         mov.save()
 

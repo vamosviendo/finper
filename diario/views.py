@@ -8,7 +8,7 @@ from diario.models import Cuenta, Movimiento
 
 
 def home(request):
-    cuentas = Cuenta.objects.all()
+    cuentas = Cuenta.todes()
 
     saldo_gral = cuentas.aggregate(Sum('saldo'))['saldo__sum']
 
@@ -17,7 +17,7 @@ def home(request):
         {
             'cuentas': cuentas,
             'saldo_gral': saldo_gral or 0,
-            'ult_movs': Movimiento.objects.all(),
+            'ult_movs': Movimiento.todes(),
         }
     )
 
@@ -34,7 +34,7 @@ class HomeView(ListView):
             .aggregate(Sum('saldo'))['saldo__sum']
 
         context.update({
-            'ult_movs': Movimiento.objects.all(),
+            'ult_movs': Movimiento.todes(),
             'saldo_gral': saldo_gral or 0,
         })
 

@@ -12,8 +12,8 @@ class TestHomePage(TestCase):
         self.assertTemplateUsed(response, 'diario/home.html')
 
     def test_pasa_cuentas_a_template(self):
-        cta1 = Cuenta.objects.create(nombre='Efectivo', slug='E')
-        cta2 = Cuenta.objects.create(nombre='Banco', slug='B')
+        cta1 = Cuenta.crear(nombre='Efectivo', slug='E')
+        cta2 = Cuenta.crear(nombre='Banco', slug='B')
 
         response = self.client.get(reverse('home'))
 
@@ -21,14 +21,14 @@ class TestHomePage(TestCase):
         self.assertIn(cta2, response.context.get('cuentas'))
 
     def test_pasa_movimientos_a_template(self):
-        cuenta = Cuenta.objects.create(nombre='Efectivo', slug='E')
-        Movimiento.objects.create(
+        cuenta = Cuenta.crear(nombre='Efectivo', slug='E')
+        Movimiento.crear(
             fecha=date.today(),
             concepto='movimiento 1',
             importe=100,
             cta_entrada=cuenta
         )
-        Movimiento.objects.create(
+        Movimiento.crear(
             fecha=date.today(),
             concepto='movimiento 2',
             importe=50,
@@ -41,15 +41,15 @@ class TestHomePage(TestCase):
         self.assertContains(response, 'movimiento 2')
 
     def test_pasa_saldo_de_cuentas_a_template(self):
-        cta1 = Cuenta.objects.create(nombre='Efectivo', slug='E')
-        cta2 = Cuenta.objects.create(nombre='Banco', slug='B')
-        Movimiento.objects.create(
+        cta1 = Cuenta.crear(nombre='Efectivo', slug='E')
+        cta2 = Cuenta.crear(nombre='Banco', slug='B')
+        Movimiento.crear(
             fecha=date.today(),
             concepto='movimiento 1',
             importe=100,
             cta_entrada=cta1
         )
-        Movimiento.objects.create(
+        Movimiento.crear(
             fecha=date.today(),
             concepto='transferencia de fondos',
             importe=75,
@@ -63,8 +63,10 @@ class TestHomePage(TestCase):
         self.assertContains(response, '75.00')
 
     def test_pasa_saldos_generales_a_template(self):
-        cta1 = Cuenta.objects.create(nombre='Efectivo', slug='E', saldo=125)
-        cta2 = Cuenta.objects.create(nombre='Banco', slug='B', saldo=225)
+        cta1 = Cuenta.crear(nombre='Efectivo', slug='E')
+        cta2 = Cuenta.crear(nombre='Banco', slug='B')
+        Movimiento.crear(concepto='m1', importe=125, cta_entrada=cta1)
+        Movimiento.crear(concepto='m3', importe=225, cta_entrada=cta2)
 
         response = self.client.get(reverse('home'))
 
@@ -86,8 +88,8 @@ class TestCtaNueva(TestCase):
             reverse('cta_nueva'),
             data={'nombre': 'Efectivo', 'slug': 'E'}
         )
-        self.assertEqual(Cuenta.objects.count(), 1)
-        cuenta_nueva = Cuenta.objects.first()
+        self.assertEqual(Cuenta.cantidad(), 1)
+        cuenta_nueva = Cuenta.primere()
         self.assertEqual(cuenta_nueva.nombre, 'Efectivo')
 
     def test_redirige_a_home_despues_de_POST(self):
@@ -100,7 +102,7 @@ class TestCtaNueva(TestCase):
     def test_solo_guarda_cuentas_con_post(self):
         # ¿Retirar más adelante?
         self.client.get(reverse('cta_nueva'))
-        self.assertEqual(Cuenta.objects.count(), 0)
+        self.assertEqual(Cuenta.cantidad(), 0)
 
 
 class TestCtaMod(TestCase):
@@ -148,7 +150,7 @@ class TestCtaElim(TestCase):
         self.client.post(
             reverse('cta_elim', args=[self.cuenta.slug])
         )
-        self.assertEqual(Cuenta.objects.count(), 0)
+        self.assertEqual(Cuenta.cantidad(), 0)
 
     def test_redirige_a_home_despues_de_borrar(self):
         response = self.client.post(
@@ -157,7 +159,7 @@ class TestCtaElim(TestCase):
         self.assertRedirects(response, reverse('home'))
 
     def test_muestra_mensaje_de_error_si_se_elimina_cuenta_con_saldo(self):
-        Movimiento.objects.create(
+        Movimiento.crear(
             concepto='saldo', importe=100, cta_entrada=self.cuenta)
         response = self.client.get(
             reverse('cta_elim', args=[self.cuenta.slug])
@@ -172,7 +174,7 @@ class TestMovNuevo(TestCase):
         self.assertTemplateUsed(response, 'diario/mov_nuevo.html')
 
     def test_redirige_a_home_despues_de_POST(self):
-        cuenta = Cuenta.objects.create(nombre='Efectivo', slug='E')
+        cuenta = Cuenta.crear(nombre='Efectivo', slug='E')
         response = self.client.post(
             reverse('mov_nuevo'),
             data={
@@ -185,7 +187,7 @@ class TestMovNuevo(TestCase):
         self.assertRedirects(response, reverse('home'))
 
     def test_puede_guardar_movimiento_nuevo(self):
-        cuenta = Cuenta.objects.create(nombre='Efectivo', slug='E')
+        cuenta = Cuenta.crear(nombre='Efectivo', slug='E')
         self.client.post(
             reverse('mov_nuevo'),
             data={
@@ -195,8 +197,8 @@ class TestMovNuevo(TestCase):
                 'cta_entrada': cuenta.id
             }
         )
-        self.assertEqual(Movimiento.objects.count(), 1)
-        mov_nuevo = Movimiento.objects.first()
+        self.assertEqual(Movimiento.cantidad(), 1)
+        mov_nuevo = Movimiento.primere()
         self.assertEqual(mov_nuevo.fecha, date.today())
         self.assertEqual(mov_nuevo.concepto, 'entrada de efectivo')
         self.assertEqual(mov_nuevo.importe, 100)
@@ -211,15 +213,15 @@ class TestMovNuevo(TestCase):
                 'importe': 100,
             }
         )
-        self.assertEqual(Movimiento.objects.count(), 0)
+        self.assertEqual(Movimiento.cantidad(), 0)
 
 
 class TestMovElim(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.cuenta = Cuenta.objects.create(nombre='Efectivo', slug='E')
-        self.mov = Movimiento.objects.create(
+        self.cuenta = Cuenta.crear(nombre='Efectivo', slug='E')
+        self.mov = Movimiento.crear(
             concepto='saldo', importe=166, cta_entrada=self.cuenta)
 
     def test_usa_template_movimiento_confirm_delete(self):
@@ -229,7 +231,7 @@ class TestMovElim(TestCase):
 
     def test_post_elimina_movimiento(self):
         self.client.post(reverse('mov_elim', args=[self.mov.pk]))
-        self.assertEqual(Movimiento.objects.count(), 0)
+        self.assertEqual(Movimiento.cantidad(), 0)
 
     def test_post_redirige_a_home(self):
         response = self.client.post(reverse('mov_elim', args=[self.mov.pk]))
@@ -240,8 +242,8 @@ class TestMovMod(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.cuenta = Cuenta.objects.create(nombre='Efectivo', slug='E')
-        self.mov = Movimiento.objects.create(
+        self.cuenta = Cuenta.crear(nombre='Efectivo', slug='E')
+        self.mov = Movimiento.crear(
             concepto='saldo', importe=166, cta_entrada=self.cuenta)
 
     def test_usa_template_mov_mod(self):

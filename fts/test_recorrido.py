@@ -9,7 +9,7 @@ class TestRecorrido(FunctionalTest):
 
     def test_recorrido_del_sitio(self):
 
-        self.browser.get(self.live_server_url)
+        self.ir_a_pag()
 
         """ La primera vez que entramos al sitio nos encontramos con:
             - Una sección de totales generales con tres apartados: activo,
@@ -20,27 +20,26 @@ class TestRecorrido(FunctionalTest):
                 para agregar movimientos. (3)
         """
         # (1) Saldo general:
-        total = self.browser.find_element_by_id('id_div_saldo_gral')
+        total = self.esperar_elemento('id_div_saldo_gral')
         self.assertEqual(
-            total.find_element_by_id('id_importe_saldo_gral').text,
+            total.esperar_elemento('id_importe_saldo_gral').text,
             '0.00'
         )
 
         # (2) Cuentas (vacío):
-        grid_cuentas = self.browser.find_element_by_id('id_grid_cuentas')
+        grid_cuentas = self.esperar_elemento('id_grid_cuentas')
 
         # (3) Lista movimientos (vacío)
-        lista_ult_movs = self.browser.find_element_by_id('id_lista_ult_movs')
-        ult_movs = lista_ult_movs.find_elements_by_tag_name('tr')
+        lista_ult_movs = self.esperar_elemento('id_lista_ult_movs')
+        ult_movs = lista_ult_movs.esperar_elementos('tr', By.TAG_NAME)
         self.assertEqual(len(ult_movs), 1)
 
         # Lo primero que hacemos es agregar una cuenta a la cual podamos
         # cargarle movimientos.
-        self.browser.find_element_by_id('id_btn_cta_nueva').click()
-
-        self.esperar_elemento('id_nombre').send_keys("Efectivo")
-        self.esperar_elemento('id_slug').send_keys('E')
-        self.esperar_elemento('id_btn_submit').click()
+        self.esperar_elemento('id_btn_cta_nueva').click()
+        self.completar('id_nombre', 'Efectivo')
+        self.completar('id_slug', 'E')
+        self.pulsar()
 
         # Aparece una caja para la nueva cuenta, con saldo cero
         cuentas = self.esperar_elementos('class_div_cuenta')
@@ -57,7 +56,7 @@ class TestRecorrido(FunctionalTest):
 
         # Cargamos saldo a la cuenta por medio de un movimiento
         lista_ult_movs = self.esperar_elemento('id_lista_ult_movs')
-        lista_ult_movs.find_element_by_id('id_btn_mov_nuevo').click()
+        self.pulsar('id_btn_mov_nuevo')
 
         # El campo fecha tiene por defecto la fecha del día.
         fecha = self.esperar_elemento('id_fecha')
@@ -65,15 +64,15 @@ class TestRecorrido(FunctionalTest):
             fecha.get_attribute('value'),
             date.today().strftime('%Y-%m-%d')
         )
-        self.esperar_elemento('id_concepto').send_keys(
-            'Carga de saldo inicial')
-        self.esperar_elemento('id_importe').send_keys('985.5')
-        cta_entrada = self.esperar_elemento('id_cta_entrada')
-        Select(cta_entrada).select_by_visible_text('Efectivo')
-        self.esperar_elemento('id_btn_submit').click()
+        self.completar('id_concepto', 'Carga de saldo inicial')
+        self.completar('id_importe', '985.5')
+        self.completar('id_cta_entrada', 'Efectivo')
+        self.pulsar()
+        # cta_entrada = self.esperar_elemento('id_cta_entrada')
+        # Select(cta_entrada).select_by_visible_text('Efectivo')
 
         # El movimiento aparece en la lista de últimos movimientos
-        lista_ult_movs = self.browser.find_element_by_id('id_lista_ult_movs')
+        lista_ult_movs = self.esperar_elemento('id_lista_ult_movs')
         ult_movs = lista_ult_movs.find_elements_by_tag_name('tr')
         self.assertEqual(len(ult_movs), 2)   # El encabezado y un movimiento
         self.assertIn(date.today().strftime('%Y-%m-%d'), ult_movs[1].text)
@@ -82,8 +81,7 @@ class TestRecorrido(FunctionalTest):
         self.assertIn('985.5', ult_movs[1].text)
 
         # El importe cargado aparece en el campo saldo de la cuenta
-        cuenta = self.esperar_elemento(
-            'class_div_cuenta', criterio=By.CLASS_NAME)
+        cuenta = self.esperar_elemento('class_div_cuenta', By.CLASS_NAME)
         self.assertEqual(
             cuenta.find_element_by_class_name('class_saldo_cuenta').text,
             '985.50'

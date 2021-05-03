@@ -3,13 +3,14 @@ from django.db import models
 from django.utils.datetime_safe import date
 
 from utils import errors
+from utils.clases.mimodel import MiModel
 
 
 def hoy():
     return date.today()
 
 
-class Cuenta(models.Model):
+class Cuenta(MiModel):
     nombre = models.CharField(max_length=50, unique=True)
     slug = models.CharField(max_length=4, unique=True)
     saldo = models.FloatField(default=0)
@@ -34,7 +35,7 @@ class Cuenta(models.Model):
         super().delete(*args, **kwargs)
 
 
-class Movimiento(models.Model):
+class Movimiento(MiModel):
     fecha = models.DateField(default=hoy)
     concepto = models.CharField(max_length=80)
     detalle = models.TextField(blank=True, null=True)
