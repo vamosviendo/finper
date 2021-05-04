@@ -75,6 +75,7 @@ class Movimiento(MiModel):
         super().delete(*args, **kwargs)
 
     def save(self, *args, **kwargs):
+        # Movimiento nuevo
         if self._state.adding:
             if self.cta_entrada:
                 self.cta_entrada.saldo += self.importe
@@ -82,5 +83,54 @@ class Movimiento(MiModel):
             if self.cta_salida:
                 self.cta_salida.saldo -= self.importe
                 self.cta_salida.save()
+
+        # Movimiento existente
+        else:
+            mov_guardado = Movimiento.tomar(pk=self.pk)
+
+            # No cambió la cuenta de entrada
+            if self.cta_entrada == mov_guardado.cta_entrada:
+                try:
+                    self.cta_entrada.saldo = self.cta_entrada.saldo \
+                                             - mov_guardado.importe \
+                                             + self.importe
+                    self.cta_entrada.save()
+                except AttributeError:
+                    pass
+
+            # Cambió la cuenta de entrada
+            else:
+                # Había una cuenta de entrada
+                if mov_guardado.cta_entrada:
+                    mov_guardado.cta_entrada.saldo -= mov_guardado.importe
+                    mov_guardado.cta_entrada.save()
+
+                # Ahora hay una cuenta de entrada
+                if self.cta_entrada:
+                    self.cta_entrada.saldo += self.importe
+                    self.cta_entrada.save()
+                if self.cta_salida:
+                    self.cta_salida.refresh_from_db()
+
+            # No cambió la cuenta de salida
+            if self.cta_salida == mov_guardado.cta_salida:
+                try:
+                    self.cta_salida.saldo = self.cta_salida.saldo \
+                                            + mov_guardado.importe \
+                                            - self.importe
+                    self.cta_salida.save()
+                except AttributeError:
+                    pass
+
+            # Cambió la cuenta de salida
+            else:
+                # Había una cuenta de salida
+                if mov_guardado.cta_salida:
+                    mov_guardado.cta_salida.saldo += mov_guardado.importe
+                    mov_guardado.cta_salida.save()
+                # Ahora hay una cuenta de salida
+                if self.cta_salida:
+                    self.cta_salida.saldo -= self.importe
+                    self.cta_salida.save()
 
         super().save(*args, **kwargs)

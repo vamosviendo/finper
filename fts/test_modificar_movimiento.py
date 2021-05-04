@@ -7,12 +7,19 @@ from .base import FunctionalTest
 
 class TestModificaMovimiento(FunctionalTest):
 
-    def test_puede_modificar_movimiento(self):
-        cta = Cuenta.crear(nombre='Efectivo', slug='E')
-        Movimiento.crear(concepto='Saldo', importe=200, cta_entrada=cta)
+    def setUp(self):
+        super().setUp()
+        self.cta1 = Cuenta.crear(nombre='Efectivo', slug='E')
+        self.mov1 = Movimiento.crear(
+            concepto='Saldo', importe=200, cta_entrada=self.cta1)
         self.ir_a_pag()
-        saldo = self.esperar_elemento('id_saldo_cta_e').text
-        self.pulsar("link_mod_mov", By.CLASS_NAME)
+        self.saldo = self.esperar_elemento('id_saldo_cta_e').text
+
+    def pulsar(self, boton='link_mod_mov', crit=By.CLASS_NAME):
+        super().pulsar(boton, crit)
+
+    def test_puede_modificar_movimiento(self):
+        self.pulsar()
 
         self.completar('id_concepto', 'Saldo inicial')
 
@@ -20,5 +27,30 @@ class TestModificaMovimiento(FunctionalTest):
 
         nombre = self.esperar_elemento('class_td_concepto', By.CLASS_NAME).text
         self.assertEqual(nombre, 'Saldo inicial')
-        self.assertEqual(self.esperar_elemento('id_saldo_cta_e').text, saldo)
+        self.assertEqual(
+            self.esperar_elemento('id_saldo_cta_e').text, self.saldo)
 
+    def test_modificaciones_en_saldos_y_cuentas(self):
+        cta2 = Cuenta.crear('Banco', 'B')
+        mov2 = Movimiento.crear(concepto='Saldo', importe=150, cta_salida=cta2)
+        mov3 = Movimiento.crear(
+            concepto='Depósito', importe=70,
+            cta_entrada=cta2, cta_salida=self.cta1
+        )
+        self.ir_a_pag()
+
+        links_mod_movs = self.esperar_elementos('link_mod_mov')
+        links_mod_movs[0].click()
+        self.completar('id_importe', 100)
+        super().pulsar()
+        saldo1 = self.esperar_elemento('id_saldo_cta_e').text
+        self.assertEqual(saldo1, '30.00')
+
+        links_mod_movs = self.esperar_elementos('link_mod_mov')
+        links_mod_movs[1].click()
+        self.completar('id_cta_salida', 'Efectivo')
+        super().pulsar()
+        saldo1 = self.esperar_elemento('id_saldo_cta_e').text
+        saldo2 = self.esperar_elemento('id_saldo_cta_b').text
+        self.assertEqual(saldo1, '-120.00')
+        self.assertEqual(saldo2, '70.00')
