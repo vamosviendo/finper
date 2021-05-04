@@ -34,7 +34,7 @@ class Cuenta(MiModel):
 
     def delete(self, *args, **kwargs):
         if self.saldo != 0:
-            raise ValueError
+            raise errors.SaldoNoCeroException
         super().delete(*args, **kwargs)
 
 

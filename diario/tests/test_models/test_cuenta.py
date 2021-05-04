@@ -3,6 +3,8 @@ from django.test import TestCase
 
 from diario.models import Cuenta, Movimiento
 
+from utils.errors import SaldoNoCeroException
+
 
 class TestModelCuenta(TestCase):
 
@@ -75,7 +77,7 @@ class TestModelCuenta(TestCase):
         cuenta = Cuenta.crear(nombre='Efectivo', slug='E')
         Movimiento.crear(
             concepto='Saldo', importe=100, cta_entrada=cuenta)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SaldoNoCeroException):
             cuenta.delete()
 
     def test_cuentas_se_ordenan_por_nombre(self):
