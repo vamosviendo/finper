@@ -15,6 +15,9 @@ class Cuenta(MiModel):
     slug = models.CharField(max_length=4, unique=True)
     saldo = models.FloatField(default=0)
 
+    class Meta:
+        ordering = ('nombre', )
+
     @staticmethod
     def crear(nombre, slug):
         cuenta = Cuenta(nombre=nombre, slug=slug)
@@ -48,6 +51,9 @@ class Movimiento(MiModel):
         Cuenta, related_name='salidas', null=True, blank=True,
         on_delete=models.CASCADE
     )
+
+    class Meta:
+        ordering = ('fecha', 'concepto', )
 
     def __str__(self):
         string = f'{self.fecha.strftime("%Y-%m-%d")} {self.concepto}: ' \

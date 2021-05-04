@@ -20,8 +20,9 @@ class TestModelCuenta(TestCase):
         cuentas_guardadas = Cuenta.todes()
         self.assertEqual(cuentas_guardadas.count(), 2)
 
-        primera_cuenta_guardada = cuentas_guardadas[0]
-        segunda_cuenta_guardada = cuentas_guardadas[1]
+        primera_cuenta_guardada = Cuenta.tomar(pk=primera_cuenta.pk)
+        segunda_cuenta_guardada = Cuenta.tomar(pk=segunda_cuenta.pk)
+
         self.assertEqual(primera_cuenta_guardada.nombre, 'Efectivo')
         self.assertEqual(primera_cuenta_guardada.slug, 'E')
         self.assertEqual(segunda_cuenta_guardada.nombre, 'Caja de ahorro')
@@ -66,7 +67,7 @@ class TestModelCuenta(TestCase):
         cuenta = Cuenta.crear(nombre='Efectivo', slug='E')
         self.assertEqual((cuenta.nombre, cuenta.slug), ('Efectivo', 'E'))
 
-    def test_crear_valida_nombre_vacio(self):
+    def test_crear_no_permite_nombre_vacio(self):
         with self.assertRaises(ValidationError):
             Cuenta.crear(nombre=None, slug='E')
 
@@ -76,3 +77,10 @@ class TestModelCuenta(TestCase):
             concepto='Saldo', importe=100, cta_entrada=cuenta)
         with self.assertRaises(ValueError):
             cuenta.delete()
+
+    def test_cuentas_se_ordenan_por_nombre(self):
+        cuenta1 = Cuenta.crear(nombre='Efectivo', slug='E')
+        cuenta2 = Cuenta.crear(nombre='Banco', slug='ZZ')
+        cuenta3 = Cuenta.crear(nombre='Cuenta Corriente', slug='CC')
+
+        self.assertEqual(list(Cuenta.todes()), [cuenta2, cuenta3, cuenta1])

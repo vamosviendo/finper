@@ -1,6 +1,7 @@
+from datetime import date
+
 from django.core.exceptions import ValidationError
 from django.test import TestCase
-from django.utils.datetime_safe import date
 
 from diario.models import Cuenta, Movimiento
 from utils import errors
@@ -24,7 +25,7 @@ class TestModelMovimientoBasic(TestModelMovimiento):
         primer_mov.save()
 
         segundo_mov = Movimiento()
-        segundo_mov.fecha = date(2021, 4, 5)
+        segundo_mov.fecha = date(2021, 4, 28)
         segundo_mov.concepto = 'compra en efectivo'
         segundo_mov.detalle = 'salchichas, pan, mostaza'
         segundo_mov.importe = 500
@@ -34,15 +35,15 @@ class TestModelMovimientoBasic(TestModelMovimiento):
         movs_guardados = Movimiento.todes()
         self.assertEqual(movs_guardados.count(), 2)
 
-        primer_mov_guardado = movs_guardados[0]
-        segundo_mov_guardado = movs_guardados[1]
+        primer_mov_guardado = Movimiento.tomar(pk=primer_mov.pk)
+        segundo_mov_guardado = Movimiento.tomar(pk=segundo_mov.pk)
 
         self.assertEqual(primer_mov_guardado.fecha, date.today())
         self.assertEqual(primer_mov_guardado.concepto, 'entrada de efectivo')
         self.assertEqual(primer_mov_guardado.importe, 985.5)
         self.assertEqual(primer_mov_guardado.cta_entrada, self.cuenta1)
 
-        self.assertEqual(segundo_mov_guardado.fecha, date(2021, 4, 5))
+        self.assertEqual(segundo_mov_guardado.fecha, date(2021, 4, 28))
         self.assertEqual(segundo_mov_guardado.concepto, 'compra en efectivo')
         self.assertEqual(
             segundo_mov_guardado.detalle, 'salchichas, pan, mostaza')
@@ -159,6 +160,51 @@ class TestModelMovimientoBasic(TestModelMovimiento):
             cta_entrada=self.cuenta1
         )
         mov.full_clean()    # No debe dar error
+
+    def test_movimientos_se_ordenan_por_fecha(self):
+        mov1 = Movimiento.crear(
+            fecha=date(2021, 5, 3),
+            concepto='Pago en efectivo',
+            importe=100,
+            cta_salida=self.cuenta1,
+        )
+        mov2 = Movimiento.crear(
+            fecha=date(2021, 4, 2),
+            concepto='Cobranza en efectivo',
+            importe=100,
+            cta_entrada=self.cuenta1,
+        )
+        mov3 = Movimiento.crear(
+            fecha=date(2020, 10, 22),
+            concepto='Cobranza en efectivo',
+            importe=243,
+            cta_entrada=self.cuenta1,
+        )
+
+        self.assertEqual(list(Movimiento.todes()), [mov3, mov2, mov1])
+
+    def test_movimientos_se_ordenan_por_concepto_dentro_de_misma_fecha(self):
+        mov1 = Movimiento.crear(
+            fecha=date(2021, 5, 3),
+            concepto='Pago en efectivo',
+            importe=100,
+            cta_salida=self.cuenta1,
+        )
+        mov2 = Movimiento.crear(
+            fecha=date(2021, 5, 3),
+            concepto='Cobranza en efectivo',
+            importe=100,
+            cta_entrada=self.cuenta1,
+        )
+        mov3 = Movimiento.crear(
+            fecha=date(2021, 5, 3),
+            concepto='Pago a cuenta',
+            importe=243,
+            cta_entrada=self.cuenta1,
+        )
+
+        self.assertEqual(list(Movimiento.todes()), [mov2, mov3, mov1])
+
 
 
 class TestModelMovimientoSaldos(TestModelMovimiento):
