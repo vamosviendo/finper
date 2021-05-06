@@ -24,4 +24,5 @@ urlpatterns = [
     path('mov_nuevo', views.MovNuevoView.as_view(), name='mov_nuevo'),
     path('mov_elim/<int:pk>', views.MovElimView.as_view(), name='mov_elim'),
     path('mov_mod/<int:pk>', views.MovModView.as_view(), name='mov_mod'),
+    path('corregir_saldo', views.CorregirSaldo.as_view(), name='corregir_saldo'),
 ]

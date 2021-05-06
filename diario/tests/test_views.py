@@ -1,8 +1,14 @@
+import datetime
+import os
+from pathlib import Path
+from unittest.mock import patch
+
 from django.test import TestCase
 from django.urls import reverse
 from django.utils.datetime_safe import date
 
 from diario.models import Cuenta, Movimiento
+from utils.errors import SaldoNoCoincideException
 
 
 class TestHomePage(TestCase):
@@ -75,6 +81,68 @@ class TestHomePage(TestCase):
     def test_si_no_hay_movimientos_pasa_0_a_saldo_general(self):
         response = self.client.get(reverse('home'))
         self.assertEqual(response.context['saldo_gral'], 0)
+
+
+@patch('diario.views.verificar_saldos')
+class TestHomePageVerificarSaldo(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.fecha = datetime.date(2021, 4, 4)
+
+        # Falsificar datetime.date today (no se puede con @patch)
+        class FalsaFecha(datetime.date):
+            @classmethod
+            def today(cls):
+                return self.fecha
+
+        self.patcherf = patch('datetime.date', FalsaFecha)
+        self.patcherf.start()
+
+        # Preservar marca de fecha
+        self.hoy = Path('hoy.mark')
+        self.ayer = self.hoy.rename('ayer.mark')
+        with open('hoy.mark', 'w'):
+            pass
+
+        os.utime(
+            'hoy.mark',
+            (
+                self.hoy.stat().st_ctime,
+                datetime.datetime.timestamp(datetime.datetime(2021, 4, 4))
+            )
+        )
+
+    def tearDown(self):
+        self.patcherf.stop()
+
+        # Recuperar marca de fecha
+        self.hoy.unlink()
+        self.ayer.rename('hoy.mark')
+        super().tearDown()
+
+    def test_verifica_saldo_de_cuentas_si_cambia_la_fecha(
+            self, mock_verificar_saldos):
+
+        self.fecha = datetime.date(2021, 4, 5)
+        self.client.get(reverse('home'))
+        mock_verificar_saldos.assert_called_once()
+
+    def test_no_verifica_saldo_de_cuentas_si_no_cambia_la_fecha(
+            self, mock_verificar_saldos):
+
+        self.client.get(reverse('home'))
+
+        mock_verificar_saldos.assert_not_called()
+
+    def test_si_saldo_no_coincide_redirige_a_corregir_saldo(
+            self, mock_verificar_saldos):
+        def colateral():
+            raise SaldoNoCoincideException
+        mock_verificar_saldos.side_effect = colateral
+        self.fecha = datetime.date(2021, 4, 5)
+        response = self.client.get(reverse('home'))
+        self.assertRedirects(response, reverse('corregir_saldo'))
 
 
 class TestCtaNueva(TestCase):

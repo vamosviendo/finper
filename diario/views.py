@@ -1,10 +1,16 @@
+import datetime
+from pathlib import Path
+
 from django.db.models import Sum
 from django.shortcuts import render, redirect
 from django.urls import reverse, reverse_lazy
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.views.generic import \
+    ListView, CreateView, UpdateView, DeleteView, TemplateView
 
 from diario.forms import FormCuenta, FormMovimiento
 from diario.models import Cuenta, Movimiento
+from diario.utils import verificar_saldos
+from utils.errors import SaldoNoCoincideException
 
 
 def home(request):
@@ -26,6 +32,16 @@ class HomeView(ListView):
     template_name = 'diario/home.html'
     model = Cuenta
     context_object_name = 'cuentas'
+
+    def get(self, request, *args, **kwargs):
+        hoy = Path('hoy.mark')
+        if (datetime.date.today() >
+                datetime.date.fromtimestamp(hoy.stat().st_mtime)):
+            try:
+                verificar_saldos()
+            except SaldoNoCoincideException:
+                return redirect(reverse('corregir_saldo'))
+        return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -112,3 +128,7 @@ class MovModView(UpdateView):
     form_class = FormMovimiento
     template_name = 'diario/mov_mod.html'
     success_url = reverse_lazy('home')
+
+
+class CorregirSaldo(TemplateView):
+    template_name = 'diario/corregir_saldo.html'
