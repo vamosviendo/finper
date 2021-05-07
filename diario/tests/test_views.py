@@ -135,14 +135,14 @@ class TestHomePageVerificarSaldo(TestCase):
 
         mock_verificar_saldos.assert_not_called()
 
-    def test_si_saldo_no_coincide_redirige_a_corregir_saldo(
+    def test_si_saldo_no_coincide_redirige_a_corregir_saldo_con_lista_de_ctas_erroneas(
             self, mock_verificar_saldos):
-        def colateral():
-            raise SaldoNoCoincideException
-        mock_verificar_saldos.side_effect = colateral
+        cta1 = Cuenta.crear('Efectivo', 'E')
+        cta2 = Cuenta.crear('Banco', 'B')
+        mock_verificar_saldos.return_value = [cta1, cta2, ]
         self.fecha = datetime.date(2021, 4, 5)
         response = self.client.get(reverse('home'))
-        self.assertRedirects(response, reverse('corregir_saldo'))
+        self.assertRedirects(response, f"{reverse('corregir_saldo')}?ctas=e!b")
 
 
 class TestCtaNueva(TestCase):
@@ -342,3 +342,10 @@ class TestMovMod(TestCase):
             }
         )
         self.assertRedirects(response, reverse('home'))
+
+
+class TestCorregirSaldo(TestCase):
+
+    def test_usa_template_corregir_saldo(self):
+        response = self.client.get(reverse('corregir_saldo'))
+        self.assertTemplateUsed(response, 'diario/corregir_saldo.html')

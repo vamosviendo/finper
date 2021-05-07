@@ -10,7 +10,6 @@ from django.views.generic import \
 from diario.forms import FormCuenta, FormMovimiento
 from diario.models import Cuenta, Movimiento
 from diario.utils import verificar_saldos
-from utils.errors import SaldoNoCoincideException
 
 
 def home(request):
@@ -37,10 +36,12 @@ class HomeView(ListView):
         hoy = Path('hoy.mark')
         if (datetime.date.today() >
                 datetime.date.fromtimestamp(hoy.stat().st_mtime)):
-            try:
-                verificar_saldos()
-            except SaldoNoCoincideException:
-                return redirect(reverse('corregir_saldo'))
+            ctas_erroneas = verificar_saldos()
+            if ctas_erroneas is not None:
+                full_url = f"{reverse('corregir_saldo')}?ctas="
+                full_url += '!'.join([c.slug.lower() for c in ctas_erroneas])
+                return redirect(full_url)
+
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):

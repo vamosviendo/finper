@@ -9,6 +9,7 @@ from fts.base import FunctionalTest
 from diario.models import Cuenta, Movimiento
 
 
+@patch('diario.views.verificar_saldos')
 class TestVerificarSaldo(FunctionalTest):
 
     def setUp(self):
@@ -45,18 +46,30 @@ class TestVerificarSaldo(FunctionalTest):
             )
         )
 
-    def test_no_cambia_fecha_no_se_verifica_saldo(self):
+    def tearDown(self):
+        self.patcherf.stop()
+
+        # Recuperar marca de fecha
+        self.hoy.unlink()
+        self.ayer.rename('hoy.mark')
+        super().tearDown()
+
+
+    def test_no_cambia_fecha_no_se_verifica_saldo(self, mock_verificar_saldos):
         self.ir_a_pag()
         saldo = self.esperar_elemento('id_saldo_cta_e').text
         self.assertEqual(saldo, '250.00')
 
-    def test_saldo_no_coincide_corregir(self):
+    def test_saldo_no_coincide_corregir(self, mock_verificar_saldos):
+        mock_verificar_saldos.return_value = [self.cuenta, ]
         self.fecha = datetime.date(2021, 4, 5)
         self.ir_a_pag()
+        mensaje = self.browser.esperar_elemento('id_msj_ctas_erroneas').text
+        self.assertIn('Efectivo', mensaje)
         self.esperar_elemento('id_btn_corregir').click()
         saldo = self.esperar_elemento("id_saldo_cta_e").text
         self.assertEqual(saldo, '200.00')
 
     @skip
-    def test_saldo_no_coincide_agregar_movimiento(self):
+    def test_saldo_no_coincide_agregar_movimiento(self, mock_verificar_saldos):
         pass
