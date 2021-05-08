@@ -86,3 +86,85 @@ class TestModelCuenta(TestCase):
         cuenta3 = Cuenta.crear(nombre='Cuenta Corriente', slug='CC')
 
         self.assertEqual(list(Cuenta.todes()), [cuenta2, cuenta3, cuenta1])
+
+
+class TestModelCuentaMetodos(TestCase):
+
+    def setUp(self):
+        self.cta1 = Cuenta.crear('Efectivo', 'E')
+        self.cta2 = Cuenta.crear('Banco', 'B')
+        Movimiento.crear(concepto='mov1', importe=100, cta_entrada=self.cta1)
+        Movimiento.crear(
+            concepto='mov2', importe=70,
+            cta_entrada= self.cta2, cta_salida=self.cta1
+        )
+        Movimiento.crear(concepto='mov3', importe=80, cta_entrada=self.cta1)
+        Movimiento.crear(concepto='mov4', importe=50, cta_entrada=self.cta2)
+
+    def test_cantidad_movs_devuelve_entradas_mas_salidas(self):
+        self.assertEqual(self.cta1.cantidad_movs(), 3)
+
+    def test_total_movs_devuelve_suma_importes_entradas_menos_salidas(self):
+        self.assertEqual(self.cta1.total_movs(), 110)
+
+    def test_saldo_ok_devuelve_true_si_saldo_coincide_con_movimientos(self):
+        self.assertEqual(self.cta1.saldo, 110)
+        self.assertTrue(self.cta1.saldo_ok())
+
+    def test_saldo_ok_devuelve_false_si_saldo_no_coincide_con_movimientos(self):
+        self.cta1.saldo = 220
+        self.assertFalse(self.cta1.saldo_ok())
+
+    def test_corregir_saldo_corrige_saldo_a_partir_de_los_importes_de_movimientos(self):
+        self.cta1.saldo = 345
+        self.cta1.corregir_saldo()
+        self.assertEqual(self.cta1.saldo, 110)
+        self.assertTrue(self.cta1.saldo_ok())
+
+    def test_corregir_saldo_no_agrega_movimientos(self):
+        self.cta1.saldo = 345
+        entradas = self.cta1.entradas.count()
+        salidas = self.cta1.salidas.count()
+        self.cta1.corregir_saldo()
+        self.assertEqual(self.cta1.entradas.count(), entradas)
+        self.assertEqual(self.cta1.salidas.count(), salidas)
+
+    def test_agregar_mov_correctivo_agrega_un_movimiento(self):
+        self.cta1.saldo = 880
+        cant_movs = self.cta1.cantidad_movs()
+        self.cta1.agregar_mov_correctivo()
+        self.assertEqual(self.cta1.cantidad_movs(), cant_movs+1)
+
+    def test_agregar_mov_correctivo_devuelve_un_movimiento(self):
+        self.cta1.saldo = 880
+        self.assertIsInstance(self.cta1.agregar_mov_correctivo(), Movimiento)
+
+    def test_importe_del_mov_correctivo_coincide_con_diferencia_con_saldo(self):
+        self.cta1.saldo = 880
+        mov = self.cta1.agregar_mov_correctivo()
+        self.assertEqual(mov.importe, 770)
+
+    def test_mov_correctivo_importe_es_siempre_positivo(self):
+        self.cta2.saldo = 70
+        mov = self.cta2.agregar_mov_correctivo()
+        self.assertGreater(mov.importe, 0)
+
+    def test_mov_correctivo_cuenta_es_de_entrada_o_salida_segun_signo_de_la_diferencia(self):
+        self.cta1.saldo = 880
+        mov1 = self.cta1.agregar_mov_correctivo()
+        self.assertEqual(mov1.cta_entrada, self.cta1)
+
+        self.cta2.saldo = 70
+        mov2 = self.cta2.agregar_mov_correctivo()
+        self.assertEqual(mov2.cta_salida, self.cta2)
+
+    def test_mov_correctivo_no_modifica_saldo(self):
+        self.cta1.saldo = 880
+        mov1 = self.cta1.agregar_mov_correctivo()
+        self.assertEqual(self.cta1.saldo, 880)
+
+    def test_mov_correctivo_no_agrega_movimiento_si_saldo_es_correcto(self):
+        cant_movs = self.cta1.cantidad_movs()
+        mov = self.cta1.agregar_mov_correctivo()
+        self.assertEqual(self.cta1.cantidad_movs(), cant_movs)
+        self.assertIsNone(mov)

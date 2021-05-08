@@ -14,7 +14,7 @@ from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 User = get_user_model()
 
 
-def esperar(condicion, tiempo=10):
+def esperar(condicion, tiempo=2):
     """ Devuelve una función que espera un tiempo
         que se cumpla una condición.
         Requiere: time

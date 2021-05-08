@@ -37,7 +37,7 @@ class HomeView(ListView):
         if (datetime.date.today() >
                 datetime.date.fromtimestamp(hoy.stat().st_mtime)):
             ctas_erroneas = verificar_saldos()
-            if ctas_erroneas is not None:
+            if len(ctas_erroneas) > 0:
                 full_url = f"{reverse('corregir_saldo')}?ctas="
                 full_url += '!'.join([c.slug.lower() for c in ctas_erroneas])
                 return redirect(full_url)
@@ -133,3 +133,43 @@ class MovModView(UpdateView):
 
 class CorregirSaldo(TemplateView):
     template_name = 'diario/corregir_saldo.html'
+
+    def get(self, request, *args, **kwargs):
+        try:
+            self.ctas_erroneas = [
+                Cuenta.tomar(slug=c.upper())
+                for c in request.GET.get('ctas').split('!')
+            ]
+        except (AttributeError, Cuenta.DoesNotExist) as BadQuerystringError:
+            return redirect(reverse('home'))
+
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({'ctas_erroneas': self.ctas_erroneas})
+        return context
+
+
+def modificar_saldo_view(request, slug):
+    cta_a_corregir = Cuenta.tomar(slug=slug)
+    cta_a_corregir.corregir_saldo()
+    ctas_erroneas = [c.lower() for c in request.GET.get('ctas').split('!')
+                               if c != slug.lower()]
+    if ctas_erroneas == []:
+        return redirect(reverse('home'))
+    return redirect(
+        f"{reverse('corregir_saldo')}?ctas={'!'.join(ctas_erroneas)}")
+
+
+def agregar_movimiento_view(request, slug):
+    cta_a_corregir = Cuenta.tomar(slug=slug)
+    cta_a_corregir.agregar_mov_correctivo()
+    ctas_erroneas_restantes = [c.lower() for c in request.GET.get('ctas').split('!')
+                               if c != slug.lower()]
+    if ctas_erroneas_restantes == []:
+        return redirect(reverse('home'))
+
+    return redirect(
+        f"{reverse('corregir_saldo')}?ctas={'!'.join(ctas_erroneas_restantes)}"
+    )

@@ -8,7 +8,6 @@ from django.urls import reverse
 from django.utils.datetime_safe import date
 
 from diario.models import Cuenta, Movimiento
-from utils.errors import SaldoNoCoincideException
 
 
 class TestHomePage(TestCase):
@@ -346,6 +345,110 @@ class TestMovMod(TestCase):
 
 class TestCorregirSaldo(TestCase):
 
+    def setUp(self):
+        super().setUp()
+        self.cta1 = Cuenta.crear('Efectivo', 'E')
+        self.cta2 = Cuenta.crear('Banco', 'B')
+        self.full_url = f"{reverse('corregir_saldo')}?ctas=e!b"
+
     def test_usa_template_corregir_saldo(self):
-        response = self.client.get(reverse('corregir_saldo'))
+        response = self.client.get(self.full_url)
         self.assertTemplateUsed(response, 'diario/corregir_saldo.html')
+
+    def test_redirige_a_home_si_no_recibe_querystring_o_con_querystring_mal_formada(self):
+        url1 = reverse('corregir_saldo')
+        url2 = f"{reverse('corregir_saldo')}?ctas="
+        url3 = f"{reverse('corregir_saldo')}?ctas=a"
+        url4 = f"{reverse('corregir_saldo')}?cuculo=2"
+        self.assertRedirects(self.client.get(url1), reverse('home'))
+        self.assertRedirects(self.client.get(url2), reverse('home'))
+        self.assertRedirects(self.client.get(url3), reverse('home'))
+        self.assertRedirects(self.client.get(url4), reverse('home'))
+
+    def test_pasa_lista_de_cuentas_erroneas_a_template(self):
+        response = self.client.get(self.full_url)
+        self.assertEqual(
+            response.context['ctas_erroneas'], [self.cta1, self.cta2, ])
+
+
+class TestModificarSaldo(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.cta1 = Cuenta.crear('Efectivo', 'E')
+        self.cta2 = Cuenta.crear('Banco', 'B')
+        self.full_url = f"{reverse('modificar_saldo', args=[self.cta1.slug])}" \
+                        f"?ctas=e!b"
+
+    def test_redirige_a_corregir_saldo_con_ctas_erroneas_menos_la_corregida(self):
+        response = self.client.get(self.full_url)
+        self.assertRedirects(response, f"{reverse('corregir_saldo')}?ctas=b")
+
+    def test_redirige_a_home_si_es_la_unica_cuenta_erronea(self):
+        response = self.client.get(
+            f"{reverse('modificar_saldo', args=[self.cta2.slug])}"
+            f"?ctas=b"
+        )
+        self.assertRedirects(response, f"{reverse('home')}")
+
+    @patch('diario.views.Cuenta.corregir_saldo')
+    def test_corrige_saldo_de_cuenta(self, mock_cta_corregir_saldo):
+        self.client.get(self.full_url)
+        mock_cta_corregir_saldo.assert_called_once()
+
+
+class TestAgregarMovimiento(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.cta1 = Cuenta.crear('Efectivo', 'E')
+        self.cta2 = Cuenta.crear('Banco', 'B')
+        self.full_url = \
+            f"{reverse('agregar_movimiento', args=[self.cta2.slug])}" \
+            f"?ctas=e!b"
+
+    def test_redirige_a_corregir_saldo_con_ctas_erroneas_menos_la_corregida(self):
+        response = self.client.get(self.full_url)
+        self.assertRedirects(response, f"{reverse('corregir_saldo')}?ctas=e")
+
+    def test_redirige_a_home_si_es_la_unica_cuenta_erronea(self):
+        response = self.client.get(
+            f"{reverse('agregar_movimiento', args=[self.cta2.slug])}"
+            f"?ctas=b"
+        )
+        self.assertRedirects(response, f"{reverse('home')}")
+
+    @patch('diario.views.Cuenta.agregar_mov_correctivo')
+    def test_agrega_movimiento_para_coincidir_con_saldo(
+            self, mock_cta_agregar_mov):
+        self.client.get(self.full_url)
+        mock_cta_agregar_mov.assert_called_once()
+
+    def test_integrativo_agrega_movimiento_para_coincidir_con_saldo(self):
+        Movimiento.crear(concepto='mov', importe=100, cta_entrada=self.cta2)
+        cant_movs = self.cta1.cantidad_movs()
+        self.cta2.saldo = 135
+
+        self.client.get(self.full_url)
+
+        self.assertEqual(self.cta2.cantidad_movs(), cant_movs+1)
+        self.assertEqual(self.cta2.saldo, 135)
+
+
+class TestEspecial(TestCase):
+
+    def test_especial(self):
+        cuenta1 = Cuenta.crear('Efectivo', 'E')
+        cuenta2 = Cuenta.crear('Banco', 'B')
+        Movimiento.crear(
+            fecha= datetime.date(2021, 4, 3), concepto='Saldo inicial',
+            importe=200, cta_entrada=cuenta1, cta_salida=cuenta2,
+        )
+        cuenta1.saldo = 250
+        cuenta1.save()
+        cuenta2.saldo = 400
+        cuenta2.save()
+
+        self.client.get(f"{reverse('modificar_saldo', args=[cuenta1.slug])}?ctas=e!b")
+
+        response = self.client.get(f"{reverse('agregar_movimiento', args=[cuenta2.slug])}?ctas=b")

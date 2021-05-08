@@ -1,5 +1,6 @@
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Sum
 from django.utils.datetime_safe import date
 
 from utils import errors
@@ -36,6 +37,42 @@ class Cuenta(MiModel):
         if self.saldo != 0:
             raise errors.SaldoNoCeroException
         super().delete(*args, **kwargs)
+
+    def cantidad_movs(self):
+        return self.entradas.count() + self.salidas.count()
+
+    def total_movs(self):
+        total_entradas = self.entradas.all() \
+                             .aggregate(Sum('importe'))['importe__sum'] or 0
+        total_salidas = self.salidas.all()\
+                            .aggregate(Sum('importe'))['importe__sum'] or 0
+        return total_entradas - total_salidas
+
+    def corregir_saldo(self):
+        self.saldo = self.total_movs()
+
+    def saldo_ok(self):
+        return self.saldo == self.total_movs()
+
+    def agregar_mov_correctivo(self):
+        if self.saldo_ok():
+            return None
+        saldo = self.saldo
+        mov = Movimiento(concepto='Movimiento correctivo')
+        mov.importe = self.saldo - self.total_movs()
+        if mov.importe < 0:
+            mov.importe = -mov.importe
+            mov.cta_salida = self
+        else:
+            mov.cta_entrada = self
+        try:
+            mov.full_clean()
+        except TypeError:
+            raise TypeError(f'Error en mov {mov}')
+        mov.save()
+        self.saldo = saldo
+        self.save()
+        return mov
 
 
 class Movimiento(MiModel):

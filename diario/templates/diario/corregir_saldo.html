@@ -1,5 +1,18 @@
 {% extends 'diario/base.html' %}
 {% block contenido %}
-<a href="#" id="id_btn_corregir" class="btn btn-primary">Corregir Saldo</a>
-<a href="#" id="id_btn_agergar_mov" class="btn btn-primary">Agregar movimiento</a>
+<div id="id_msj_ctas_erroneas">
+  <p>Las siguientes cuentas tienen saldos que no coinciden con la suma de sus movimientos</p>
+  {% for cta in ctas_erroneas %}
+  <p>{{ cta.nombre }}
+    <a href="{% url 'modificar_saldo' cta.slug %}?ctas={{ request.GET.ctas }}"
+       class="btn btn-primary class_btn_corregir">
+      Corregir Saldo
+    </a>
+    <a href="{% url 'agregar_movimiento' cta.slug %}?ctas={{ request.GET.ctas }}"
+       class="btn btn-primary class_btn_agregar">
+      Agregar movimiento
+    </a>
+  </p>
+  {% endfor %}
+</div>
 {% endblock contenido %}
