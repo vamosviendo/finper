@@ -1,6 +1,7 @@
+from datetime import date
+
 from django.core.exceptions import NON_FIELD_ERRORS
 from django.test import TestCase
-from django.utils.datetime_safe import date
 
 from diario.forms import FormMovimiento, FormCuenta
 from diario.models import Cuenta

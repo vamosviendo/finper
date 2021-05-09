@@ -1,6 +1,6 @@
-from django.utils.datetime_safe import date
+from datetime import date
+
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.select import Select
 
 from .base import FunctionalTest
 

@@ -8,12 +8,11 @@ from fts.base import FunctionalTest
 from diario.models import Cuenta, Movimiento
 
 
-@patch('diario.views.verificar_saldos')
 class TestVerificarSaldo(FunctionalTest):
 
     def setUp(self):
         super().setUp()
-        self.cuenta1 = Cuenta.crear('Efectivo', 'E')
+        self.cuenta1 = Cuenta.crear('Afectivo', 'A')
         self.cuenta2 = Cuenta.crear('Banco', 'B')
         Movimiento.crear(
             fecha= datetime.date(2021, 4, 3), concepto='Saldo inicial',
@@ -56,20 +55,23 @@ class TestVerificarSaldo(FunctionalTest):
         self.ayer.rename('hoy.mark')
         super().tearDown()
 
-    def test_no_cambia_fecha_no_se_verifica_saldo(self, mock_verificar_saldos):
+    def test_no_cambia_fecha_no_se_verifica_saldo(self):
         self.ir_a_pag()
-        saldo = self.esperar_elemento('id_saldo_cta_e').text
+        saldo = self.esperar_elemento('id_saldo_cta_a').text
         self.assertEqual(saldo, '250.00')
 
-    def test_saldo_no_coincide_corregir_o_agregar_movimiento(self, mock_verificar_saldos):
-        mock_verificar_saldos.return_value = [self.cuenta1, self.cuenta2, ]
+    def test_saldo_no_coincide_corregir_o_agregar_movimiento(self):
         self.fecha = datetime.date(2021, 4, 5)
         self.ir_a_pag()
         mensaje = self.browser.esperar_elemento('id_msj_ctas_erroneas').text
-        self.assertIn('Efectivo', mensaje)
+        self.assertIn('Afectivo', mensaje)
         self.assertIn('Banco', mensaje)
         self.esperar_elementos('class_btn_corregir')[0].click()
         self.esperar_elementos('class_btn_agregar')[0].click()
         saldos = self.esperar_elementos("class_saldo_cuenta")
         self.assertEqual(saldos[0].text, '200.00')
-        self.assertEqual(saldos[1].text, '-200.00')
+        self.assertEqual(saldos[1].text, '400.00')
+        movs_concepto = self.esperar_elementos('class_td_concepto')
+        movs_importe = self.esperar_elementos('class_td_importe')
+        self.assertIn('Movimiento correctivo', [c.text for c in movs_concepto])
+        self.assertIn('600.00', [i.text for i in movs_importe])

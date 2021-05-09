@@ -1,11 +1,11 @@
 import datetime
 import os
+from datetime import date
 from pathlib import Path
 from unittest.mock import patch
 
 from django.test import TestCase
 from django.urls import reverse
-from django.utils.datetime_safe import date
 
 from diario.models import Cuenta, Movimiento
 
@@ -88,6 +88,7 @@ class TestHomePageVerificarSaldo(TestCase):
     def setUp(self):
         super().setUp()
         self.fecha = datetime.date(2021, 4, 4)
+        self.hora = datetime.datetime(2021, 4, 4)
 
         # Falsificar datetime.date today (no se puede con @patch)
         class FalsaFecha(datetime.date):
@@ -95,8 +96,15 @@ class TestHomePageVerificarSaldo(TestCase):
             def today(cls):
                 return self.fecha
 
+        class FalsaHora(datetime.datetime):
+            @classmethod
+            def now(cls):
+                return self.hora
+
         self.patcherf = patch('datetime.date', FalsaFecha)
+        self.patcherh = patch('datetime.datetime', FalsaHora)
         self.patcherf.start()
+        self.patcherh.start()
 
         # Preservar marca de fecha
         self.hoy = Path('hoy.mark')
@@ -114,6 +122,7 @@ class TestHomePageVerificarSaldo(TestCase):
 
     def tearDown(self):
         self.patcherf.stop()
+        self.patcherh.stop()
 
         # Recuperar marca de fecha
         self.hoy.unlink()
@@ -133,6 +142,18 @@ class TestHomePageVerificarSaldo(TestCase):
         self.client.get(reverse('home'))
 
         mock_verificar_saldos.assert_not_called()
+
+    def test_actualiza_fecha_despues_de_verificar_saldos(
+            self, mock_verificar_saldos):
+        self.fecha = datetime.date(2021, 4, 5)
+        self.hora = datetime.datetime(2021, 4, 5)
+
+        self.client.get(reverse('home'))
+
+        self.assertEqual(
+            datetime.date.fromtimestamp(self.hoy.stat().st_mtime),
+            datetime.date(2021, 4, 5)
+        )
 
     def test_si_saldo_no_coincide_redirige_a_corregir_saldo_con_lista_de_ctas_erroneas(
             self, mock_verificar_saldos):
@@ -433,22 +454,3 @@ class TestAgregarMovimiento(TestCase):
 
         self.assertEqual(self.cta2.cantidad_movs(), cant_movs+1)
         self.assertEqual(self.cta2.saldo, 135)
-
-
-class TestEspecial(TestCase):
-
-    def test_especial(self):
-        cuenta1 = Cuenta.crear('Efectivo', 'E')
-        cuenta2 = Cuenta.crear('Banco', 'B')
-        Movimiento.crear(
-            fecha= datetime.date(2021, 4, 3), concepto='Saldo inicial',
-            importe=200, cta_entrada=cuenta1, cta_salida=cuenta2,
-        )
-        cuenta1.saldo = 250
-        cuenta1.save()
-        cuenta2.saldo = 400
-        cuenta2.save()
-
-        self.client.get(f"{reverse('modificar_saldo', args=[cuenta1.slug])}?ctas=e!b")
-
-        response = self.client.get(f"{reverse('agregar_movimiento', args=[cuenta2.slug])}?ctas=b")

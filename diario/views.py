@@ -1,11 +1,12 @@
 import datetime
+import os
 from pathlib import Path
 
 from django.db.models import Sum
 from django.shortcuts import render, redirect
 from django.urls import reverse, reverse_lazy
 from django.views.generic import \
-    ListView, CreateView, UpdateView, DeleteView, TemplateView
+    CreateView, UpdateView, DeleteView, TemplateView
 
 from diario.forms import FormCuenta, FormMovimiento
 from diario.models import Cuenta, Movimiento
@@ -27,16 +28,21 @@ def home(request):
     )
 
 
-class HomeView(ListView):
+class HomeView(TemplateView):
     template_name = 'diario/home.html'
-    model = Cuenta
-    context_object_name = 'cuentas'
 
     def get(self, request, *args, **kwargs):
         hoy = Path('hoy.mark')
         if (datetime.date.today() >
                 datetime.date.fromtimestamp(hoy.stat().st_mtime)):
             ctas_erroneas = verificar_saldos()
+            os.utime(
+                'hoy.mark',
+                (
+                    hoy.stat().st_ctime,
+                    datetime.datetime.timestamp(datetime.datetime.now())
+                )
+            )
             if len(ctas_erroneas) > 0:
                 full_url = f"{reverse('corregir_saldo')}?ctas="
                 full_url += '!'.join([c.slug.lower() for c in ctas_erroneas])
@@ -47,10 +53,10 @@ class HomeView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        saldo_gral = context.get('cuentas')\
-            .aggregate(Sum('saldo'))['saldo__sum']
+        saldo_gral = Cuenta.todes().aggregate(Sum('saldo'))['saldo__sum']
 
         context.update({
+            'cuentas': Cuenta.todes(),
             'ult_movs': Movimiento.todes(),
             'saldo_gral': saldo_gral or 0,
         })
@@ -154,6 +160,7 @@ class CorregirSaldo(TemplateView):
 def modificar_saldo_view(request, slug):
     cta_a_corregir = Cuenta.tomar(slug=slug)
     cta_a_corregir.corregir_saldo()
+    # cta_a_corregir.refresh_from_db()
     ctas_erroneas = [c.lower() for c in request.GET.get('ctas').split('!')
                                if c != slug.lower()]
     if ctas_erroneas == []:
@@ -165,6 +172,7 @@ def modificar_saldo_view(request, slug):
 def agregar_movimiento_view(request, slug):
     cta_a_corregir = Cuenta.tomar(slug=slug)
     cta_a_corregir.agregar_mov_correctivo()
+    # cta_a_corregir.refresh_from_db()
     ctas_erroneas_restantes = [c.lower() for c in request.GET.get('ctas').split('!')
                                if c != slug.lower()]
     if ctas_erroneas_restantes == []:
