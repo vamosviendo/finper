@@ -19,8 +19,7 @@ class TestEliminaCuenta(FunctionalTest):
         self.assertEqual(len(cuentas), 1)
 
     def test_no_permite_eliminar_si_el_saldo_no_es_cero(self):
-        cta1 = Cuenta.crear(nombre='Efectivo', slug='E')
-        cta2 = Cuenta.crear(nombre='Caja de ahorro', slug='ca')
+        cta1 = Cuenta.crear(nombre='aEfectivo', slug='A')
         Movimiento.crear(
             concepto='saldo', importe=100, cta_entrada=cta1)
         self.ir_a_pag()
