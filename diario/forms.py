@@ -1,4 +1,4 @@
-from django.forms import ModelForm, TextInput, DateInput, NumberInput
+from django.forms import ModelForm, TextInput, DateInput, NumberInput, ValidationError
 
 from diario.models import Cuenta, Movimiento
 
@@ -38,3 +38,14 @@ class FormMovimiento(ModelForm):
             'fecha': DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
             'importe': NumberInput(attrs={'step': 0.01}),
         }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        concepto = cleaned_data.get('concepto')
+        if concepto.lower() == 'movimiento correctivo':
+            self.add_error(
+                'concepto',
+                ValidationError(f'El concepto "{concepto}" está reservado '
+                                f'para su uso por parte del sistema')
+            )
+        return cleaned_data

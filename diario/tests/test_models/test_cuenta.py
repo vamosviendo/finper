@@ -12,11 +12,13 @@ class TestModelCuenta(TestCase):
         primera_cuenta = Cuenta()
         primera_cuenta.nombre = 'Efectivo'
         primera_cuenta.slug = 'E'
+        primera_cuenta.full_clean()
         primera_cuenta.save()
 
         segunda_cuenta = Cuenta()
         segunda_cuenta.nombre = 'Caja de ahorro'
         segunda_cuenta.slug = 'CA'
+        segunda_cuenta.full_clean()
         segunda_cuenta.save()
 
         cuentas_guardadas = Cuenta.todes()
@@ -26,9 +28,9 @@ class TestModelCuenta(TestCase):
         segunda_cuenta_guardada = Cuenta.tomar(pk=segunda_cuenta.pk)
 
         self.assertEqual(primera_cuenta_guardada.nombre, 'Efectivo')
-        self.assertEqual(primera_cuenta_guardada.slug, 'E')
+        self.assertEqual(primera_cuenta_guardada.slug, 'e')
         self.assertEqual(segunda_cuenta_guardada.nombre, 'Caja de ahorro')
-        self.assertEqual(segunda_cuenta_guardada.slug, 'CA')
+        self.assertEqual(segunda_cuenta_guardada.slug, 'ca')
 
     def test_cuenta_creada_tiene_saldo_cero(self):
         cuenta = Cuenta(nombre='Efectivo', slug='E')
@@ -55,7 +57,11 @@ class TestModelCuenta(TestCase):
     def test_slug_se_guarda_siempre_en_mayusculas(self):
         Cuenta.crear(nombre='Efectivo', slug='Efec')
         cuenta = Cuenta.primere()
-        self.assertEqual(cuenta.slug, 'EFEC')
+        self.assertEqual(cuenta.slug, 'efec')
+
+    def test_slug_no_permite_caracteres_no_alfanumericos(self):
+        with self.assertRaises(ValidationError):
+            Cuenta.crear(nombre='Efectivo', slug='E!ec')
 
     def test_cuenta_str(self):
         cuenta = Cuenta(nombre='Efectivo', slug='E')
@@ -67,7 +73,7 @@ class TestModelCuenta(TestCase):
 
     def test_crear_devuelve_cuenta_creada(self):
         cuenta = Cuenta.crear(nombre='Efectivo', slug='E')
-        self.assertEqual((cuenta.nombre, cuenta.slug), ('Efectivo', 'E'))
+        self.assertEqual((cuenta.nombre, cuenta.slug), ('Efectivo', 'e'))
 
     def test_crear_no_permite_nombre_vacio(self):
         with self.assertRaises(ValidationError):

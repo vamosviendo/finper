@@ -44,6 +44,27 @@ class TestFormMovimiento(TestCase):
             formmov.errors[NON_FIELD_ERRORS]
         )
 
+    def test_no_acepta_conceptos_reservados(self):
+        cuenta = Cuenta.crear(nombre='efectivo', slug='e')
+        for c in ['movimiento correctivo',
+                  'Movimiento Correctivo',
+                  'MOVIMIENTO CORRECTIVO',]:
+            formmov = FormMovimiento(data={
+                'fecha': date.today(),
+                'concepto': c,
+                'importe': 100,
+                'cta_entrada': cuenta,
+            })
+            self.assertFalse(
+                formmov.is_valid(),
+                f'El concepto reservado "{c}" no debe pasar la verificación.'
+            )
+            self.assertIn(
+                f'El concepto "{c}" está reservado para su uso '
+                f'por parte del sistema',
+                formmov.errors['concepto'],
+            )
+
     def test_si_tira_error_mov_sin_cuentas_no_tira_error_cuentas_iguales(self):
         formmov = FormMovimiento(data={
             'fecha': date.today(),

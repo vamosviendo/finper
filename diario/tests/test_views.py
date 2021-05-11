@@ -195,12 +195,12 @@ class TestCtaMod(TestCase):
     def test_post_puede_guardar_cambios_en_cuenta(self):
         self.client.post(
             reverse('cta_mod', args=[self.cuenta.slug]),
-            data={'nombre': 'Nombro', 'slug': 'slag'}
+            data={'nombre': 'Nombro', 'slug': 'Slag'}
         )
         self.cuenta.refresh_from_db()
         self.assertEqual(
             (self.cuenta.nombre, self.cuenta.slug),
-            ('Nombro', 'SLAG')
+            ('Nombro', 'slag')
         )
 
     def test_redirige_a_home_despues_de_post(self):

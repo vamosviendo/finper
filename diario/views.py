@@ -138,7 +138,7 @@ class CorregirSaldo(TemplateView):
     def get(self, request, *args, **kwargs):
         try:
             self.ctas_erroneas = [
-                Cuenta.tomar(slug=c.upper())
+                Cuenta.tomar(slug=c)
                 for c in request.GET.get('ctas').split('!')
             ]
         except (AttributeError, Cuenta.DoesNotExist) as BadQuerystringError:

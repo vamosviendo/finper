@@ -1,6 +1,7 @@
 from datetime import date
 
 from django.core.exceptions import ValidationError
+from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import Sum
 
@@ -10,6 +11,10 @@ from utils.clases.mimodel import MiModel
 
 def hoy():
     return date.today()
+
+
+alfaminusculas = RegexValidator(
+    r'^[0-9a-z]*$', 'Solamente caracteres alfanuméricos')
 
 
 class MiDateField(models.DateField):
@@ -28,7 +33,8 @@ class MiDateField(models.DateField):
 
 class Cuenta(MiModel):
     nombre = models.CharField(max_length=50, unique=True)
-    slug = models.CharField(max_length=4, unique=True)
+    slug = models.CharField(
+        max_length=4, unique=True, validators=[alfaminusculas])
     saldo = models.FloatField(default=0)
 
     class Meta:
@@ -44,8 +50,11 @@ class Cuenta(MiModel):
     def __str__(self):
         return self.nombre
 
+    def full_clean(self, *args, **kwargs):
+        self.slug = self.slug.lower()
+        super().full_clean(*args, **kwargs)
+
     def save(self, *args, **kwargs):
-        self.slug = self.slug.upper()
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
