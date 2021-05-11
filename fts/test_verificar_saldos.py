@@ -1,11 +1,11 @@
 import datetime
-import os
 from pathlib import Path
 from unittest.mock import patch
 
 from fts.base import FunctionalTest
 
 from diario.models import Cuenta, Movimiento
+from utils.funciones.archivos import fijar_mtime
 
 
 class TestVerificarSaldo(FunctionalTest):
@@ -36,16 +36,8 @@ class TestVerificarSaldo(FunctionalTest):
         # Preservar marca de fecha real
         self.hoy = Path('hoy.mark')
         self.ayer = self.hoy.rename('ayer.mark')
-        with open('hoy.mark', 'w'):
-            pass
-
-        os.utime(
-            'hoy.mark',
-            (
-                self.hoy.stat().st_ctime,
-                datetime.datetime.timestamp(datetime.datetime(2021, 4, 4))
-            )
-        )
+        self.hoy.touch()
+        fijar_mtime(self.hoy, datetime.datetime(2021, 4, 4))
 
     def tearDown(self):
         self.patcherf.stop()

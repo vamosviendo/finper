@@ -1,5 +1,4 @@
 import datetime
-import os
 from pathlib import Path
 
 from django.db.models import Sum
@@ -36,16 +35,12 @@ class HomeView(TemplateView):
         if (datetime.date.today() >
                 datetime.date.fromtimestamp(hoy.stat().st_mtime)):
             ctas_erroneas = verificar_saldos()
-            os.utime(
-                'hoy.mark',
-                (
-                    hoy.stat().st_ctime,
-                    datetime.datetime.timestamp(datetime.datetime.now())
-                )
-            )
+
+            hoy.touch()
+
             if len(ctas_erroneas) > 0:
-                full_url = f"{reverse('corregir_saldo')}?ctas="
-                full_url += '!'.join([c.slug.lower() for c in ctas_erroneas])
+                full_url = f"{reverse('corregir_saldo')}?ctas=" + \
+                            '!'.join([c.slug.lower() for c in ctas_erroneas])
                 return redirect(full_url)
 
         return super().get(request, *args, **kwargs)
@@ -160,10 +155,9 @@ class CorregirSaldo(TemplateView):
 def modificar_saldo_view(request, slug):
     cta_a_corregir = Cuenta.tomar(slug=slug)
     cta_a_corregir.corregir_saldo()
-    # cta_a_corregir.refresh_from_db()
     ctas_erroneas = [c.lower() for c in request.GET.get('ctas').split('!')
                                if c != slug.lower()]
-    if ctas_erroneas == []:
+    if not ctas_erroneas:
         return redirect(reverse('home'))
     return redirect(
         f"{reverse('corregir_saldo')}?ctas={'!'.join(ctas_erroneas)}")
@@ -172,10 +166,9 @@ def modificar_saldo_view(request, slug):
 def agregar_movimiento_view(request, slug):
     cta_a_corregir = Cuenta.tomar(slug=slug)
     cta_a_corregir.agregar_mov_correctivo()
-    # cta_a_corregir.refresh_from_db()
     ctas_erroneas_restantes = [c.lower() for c in request.GET.get('ctas').split('!')
                                if c != slug.lower()]
-    if ctas_erroneas_restantes == []:
+    if not ctas_erroneas_restantes:
         return redirect(reverse('home'))
 
     return redirect(

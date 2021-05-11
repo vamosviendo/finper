@@ -1,5 +1,4 @@
 import datetime
-import os
 from datetime import date
 from pathlib import Path
 from unittest.mock import patch
@@ -8,6 +7,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from diario.models import Cuenta, Movimiento
+from utils.funciones.archivos import fijar_mtime
 
 
 class TestHomePage(TestCase):
@@ -109,16 +109,8 @@ class TestHomePageVerificarSaldo(TestCase):
         # Preservar marca de fecha
         self.hoy = Path('hoy.mark')
         self.ayer = self.hoy.rename('ayer.mark')
-        with open('hoy.mark', 'w'):
-            pass
-
-        os.utime(
-            'hoy.mark',
-            (
-                self.hoy.stat().st_ctime,
-                datetime.datetime.timestamp(datetime.datetime(2021, 4, 4))
-            )
-        )
+        self.hoy.touch()
+        fijar_mtime(self.hoy, datetime.datetime(2021, 4, 4))
 
     def tearDown(self):
         self.patcherf.stop()
@@ -143,17 +135,14 @@ class TestHomePageVerificarSaldo(TestCase):
 
         mock_verificar_saldos.assert_not_called()
 
+    @patch('diario.views.Path.touch')
     def test_actualiza_fecha_despues_de_verificar_saldos(
-            self, mock_verificar_saldos):
+            self, mock_touch, mock_verificar_saldos):
         self.fecha = datetime.date(2021, 4, 5)
         self.hora = datetime.datetime(2021, 4, 5)
 
         self.client.get(reverse('home'))
-
-        self.assertEqual(
-            datetime.date.fromtimestamp(self.hoy.stat().st_mtime),
-            datetime.date(2021, 4, 5)
-        )
+        mock_touch.assert_called_once()
 
     def test_si_saldo_no_coincide_redirige_a_corregir_saldo_con_lista_de_ctas_erroneas(
             self, mock_verificar_saldos):
