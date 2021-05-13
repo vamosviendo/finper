@@ -203,7 +203,7 @@ class FunctionalTest(StaticLiveServerTestCase):
             mensajes de error correspondientes."""
 
         for clave, valor in campos_y_valores.items():
-            self.completar_campo_o_seleccionar(clave, valor)
+            self.completar(clave, valor)
 
         self.pulsar()
 

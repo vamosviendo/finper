@@ -16,7 +16,7 @@
     {% for cuenta in cuentas %}
     <div id="id_div_cta_{{ cuenta.slug|lower }}" class="card border-danger class_div_cuenta">
       <div class="card-header bg-danger text-light class_nombre_cuenta">
-        <a href="{% url 'cta_mod' cuenta.slug %}" class="text-light link_mod_cuenta">
+        <a href="#" class="text-light link_cuenta">
           {{ cuenta.nombre }}
         </a>
       </div>
@@ -26,6 +26,9 @@
       <div class="card-footer">
         <a href="{% url 'cta_elim' cuenta.slug %}"
            class="btn btn-danger link_elim_cuenta">Borrar</a>
+        <a href="{% url 'cta_mod' cuenta.slug %}" class="btn btn-primary link_mod_cuenta">
+          Edit
+        </a>
       </div>
     </div>
     {% endfor %}
