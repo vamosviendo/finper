@@ -1,0 +1,29 @@
+{% load static %}
+
+{% block contenido %}
+{% block extracss %}
+<link rel="stylesheet" href="{% static 'sda/css/estilos.css' %}" />
+<style>
+  td {
+    padding: 5px 10px;
+  }
+</style>
+{% endblock extracss %}
+<div id="id_div_signin" class="inputbox">
+  <ul>
+  {% for message in messages %}
+    {{ message }}
+  {% endfor %}
+  </ul>
+  <form method="post">
+    <table>
+      {{ form }}
+      <tr><td>
+        <input type="hidden" name="next" value="{{ next }}">
+        <button type="submit" id="id_btn_login">Entrar</button>
+      </td></tr>
+      {% csrf_token %}
+    </table>
+  </form>
+</div>
+{% endblock contenido %}
