@@ -156,9 +156,9 @@ class TestHomePageVerificarSaldo(TestCase):
 
 class TestCtaNueva(TestCase):
 
-    def test_usa_template_cta_nueva(self):
+    def test_usa_template_cta_form(self):
         response = self.client.get(reverse('cta_nueva'))
-        self.assertTemplateUsed(response, 'diario/cta_nueva.html')
+        self.assertTemplateUsed(response, 'diario/cta_form.html')
 
     def test_puede_guardar_cuenta_nueva(self):
         self.client.post(
@@ -188,9 +188,9 @@ class TestCtaMod(TestCase):
         super().setUp()
         self.cuenta = Cuenta.crear(nombre='Nombre', slug='slug')
 
-    def test_usa_template_cta_mod(self):
+    def test_usa_template_cta_form(self):
         response = self.client.get(reverse('cta_mod', args=[self.cuenta.slug]))
-        self.assertTemplateUsed(response, 'diario/cta_mod.html')
+        self.assertTemplateUsed(response, 'diario/cta_form.html')
 
     def test_post_puede_guardar_cambios_en_cuenta(self):
         self.client.post(
@@ -246,9 +246,9 @@ class TestCtaElim(TestCase):
 
 class TestMovNuevo(TestCase):
 
-    def test_usa_template_mov_nuevo(self):
+    def test_usa_template_mov_form(self):
         response = self.client.get(reverse('mov_nuevo'))
-        self.assertTemplateUsed(response, 'diario/mov_nuevo.html')
+        self.assertTemplateUsed(response, 'diario/mov_form.html')
 
     def test_redirige_a_home_despues_de_POST(self):
         cuenta = Cuenta.crear(nombre='Efectivo', slug='E')
@@ -323,9 +323,9 @@ class TestMovMod(TestCase):
         self.mov = Movimiento.crear(
             concepto='saldo', importe=166, cta_entrada=self.cuenta)
 
-    def test_usa_template_mov_mod(self):
+    def test_usa_template_mov_form(self):
         response = self.client.get(reverse('mov_mod', args=[self.mov.pk]))
-        self.assertTemplateUsed(response, 'diario/mov_mod.html')
+        self.assertTemplateUsed(response, 'diario/mov_form.html')
 
     def test_guarda_cambios_en_el_mov(self):
         self.client.post(

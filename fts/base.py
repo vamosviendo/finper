@@ -196,7 +196,7 @@ class FunctionalTest(StaticLiveServerTestCase):
 
     def pulsar(self, boton="id_btn_submit", crit=By.ID):
         """ Busca un botón y lo pulsa."""
-        self.browser.find_element(crit, boton).click()
+        self.esperar_elemento(boton, crit).click()
 
     def completar_y_esperar_error(self, campos_y_valores, id_errores, error):
         """ Completa uno o más campos con valores erróneos y espera los

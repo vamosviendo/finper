@@ -72,7 +72,7 @@ def cuenta_nueva(request):
 class CtaNuevaView(CreateView):
     model = Cuenta
     form_class = FormCuenta
-    template_name = 'diario/cta_nueva.html'
+    template_name = 'diario/cta_form.html'
     success_url = reverse_lazy('home')
 
 
@@ -95,8 +95,9 @@ class CtaElimView(DeleteView):
 class CtaModView(UpdateView):
     model = Cuenta
     form_class = FormCuenta
-    template_name = 'diario/cta_mod.html'
+    template_name = 'diario/cta_form.html'
     success_url = reverse_lazy('home')
+    context_object_name = 'cta'
 
 
 def mov_nuevo(request):
@@ -116,7 +117,7 @@ def mov_nuevo(request):
 class MovNuevoView(CreateView):
     model = Movimiento
     form_class = FormMovimiento
-    template_name = 'diario/mov_nuevo.html'
+    template_name = 'diario/mov_form.html'
     success_url = reverse_lazy('home')
 
 
@@ -128,8 +129,9 @@ class MovElimView(DeleteView):
 class MovModView(UpdateView):
     model = Movimiento
     form_class = FormMovimiento
-    template_name = 'diario/mov_mod.html'
+    template_name = 'diario/mov_form.html'
     success_url = reverse_lazy('home')
+    context_object_name = 'mov'
 
 
 class CorregirSaldo(TemplateView):
