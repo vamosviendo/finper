@@ -8,4 +8,9 @@
   <button type="submit" id="id_btn_submit" class="btn btn-primary">OK</button>
   {% csrf_token %}
 </form>
+{% if cta.id %}
+<a href="{% url 'cta_div' cta.slug %}" class="btn btn-warning" id="id_btn_dividir">
+  Dividir en subcuentas
+</a>
+{% endif %}
 {% endblock contenido %}

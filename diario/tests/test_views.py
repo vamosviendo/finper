@@ -1,12 +1,14 @@
 import datetime
 from datetime import date
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
-from django.test import TestCase
+from django.test import TestCase, RequestFactory
 from django.urls import reverse
+from django.utils.datastructures import MultiValueDict
 
 from diario.models import Cuenta, Movimiento
+from diario.views import CtaDivView
 from utils.funciones.archivos import fijar_mtime
 
 
@@ -242,6 +244,113 @@ class TestCtaElim(TestCase):
             reverse('cta_elim', args=[self.cuenta.slug])
         )
         self.assertContains(response, 'No se puede eliminar cuenta con saldo')
+
+
+def patch_save():
+    mock = MagicMock()
+    mock.return_value.save.return_value.get_absolute_url.return_value = 'stub'
+    return mock
+
+
+@patch('diario.views.CtaDivView.form_class', new_callable=patch_save)
+class TestCtaDiv(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.cta = Cuenta.crear('Efectivo', 'e')
+        Movimiento.crear(
+            concepto='Ingreso de saldo', importe=250, cta_entrada=self.cta)
+        self.request = RequestFactory().post(
+            reverse('cta_div', args=[self.cta]),
+            data={
+                'form-TOTAL_FORMS': 2,
+                'form-INITIAL_FORMS': 0,
+                'form-cuenta': self.cta.slug,
+                'form-0-nombre': 'Billetera',
+                'form-0-slug': 'ebil',
+                'form-0-saldo': 50,
+                'form-1-nombre': 'Cajón de arriba',
+                'form-1-slug': 'ecaj',
+                'form-1-saldo': 200,
+            }
+        )
+        self.div_view = CtaDivView.as_view()
+
+    def test_usa_template_cta_div_formset(self, falso_FormSubcuentas):
+        response = self.client.get(reverse('cta_div', args=[self.cta.slug]))
+        self.assertTemplateUsed(response, 'diario/cta_div_formset.html')
+
+    def test_pasa_datos_POST_a_form_subcuentas(self, falso_FormSubcuentas):
+        self.div_view(self.request)
+        falso_FormSubcuentas.assert_called_once_with(
+            initial={},
+            prefix=None,
+            data=self.request.POST,
+            files=MultiValueDict(),
+        )
+
+    def test_pasa_cta_original_a_form_subcuentas(self, falso_FormSubcuentas):
+        self.div_view(self.request)
+
+    def test_guarda_form_si_los_datos_son_validos(self, falso_FormSubcuentas):
+        falso_form = falso_FormSubcuentas.return_value
+        falso_form.is_valid.return_value = True
+
+        self.div_view(self.request)
+
+        falso_form.save.assert_called_once()
+        falso_form.save.assert_called_once_with(
+            cuenta=self.cta.slug,
+            subcuentas=[
+                {
+                    'nombre': 'Billetera',
+                    'slug': 'ebil',
+                    'saldo': '50',
+                }, {
+                    'nombre': 'Cajón de arriba',
+                    'slug': 'ecaj',
+                    'saldo': '200',
+                },
+            ]
+        )
+
+    def test_no_guarda_form_si_los_datos_no_son_validos(self, falso_FormSubcuentas):
+        falso_form = falso_FormSubcuentas.return_value
+        falso_form.is_valid.return_value = False
+
+        self.div_view(self.request)
+
+        self.assertFalse(falso_form.save.called)
+
+    @patch('diario.views.redirect')
+    def test_redirige_a_pag_de_cuenta_con_form_valido(
+            self, falso_redirect, falso_FormSubcuentas):
+        falso_form = falso_FormSubcuentas.return_value
+        falso_form.is_valid.return_value = True
+
+        response = self.div_view(self.request)
+
+        self.assertEqual(response, falso_redirect.return_value)
+        falso_redirect.assert_called_once_with(falso_form.save.return_value)
+
+    @patch('diario.views.CtaDivView.response_class')
+    def test_redibuja_template_con_formset_con_form_no_valido(
+            self, falso_render, falso_FormSubcuentas):
+        falso_form = falso_FormSubcuentas.return_value
+        falso_form.is_valid.return_value = False
+
+        response = self.div_view(self.request)
+
+        # Se llamó al mock y no a la función de la clase
+        falso_render.assert_called_once()
+        self.assertEqual(response, falso_render.return_value)
+
+        # Se extraen los argumenos de llamado a falso_render
+        llamada = falso_render.call_args
+        args, kwargs = llamada
+
+        self.assertEqual(kwargs['template'], ['diario/cta_div_formset.html'])
+        self.assertEqual(kwargs['context']['form'], falso_form)
 
 
 class TestMovNuevo(TestCase):

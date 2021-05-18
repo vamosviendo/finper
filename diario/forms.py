@@ -22,6 +22,13 @@ class FormCuenta(ModelForm):
         fields = ('nombre', 'slug', )
 
 
+class FormSubcuentas(ModelForm):
+
+    class Meta:
+        model = Cuenta
+        fields = ('nombre', 'slug', 'saldo')
+
+
 class FormMovimiento(ModelForm):
 
     def __init__(self, *args, **kwargs):

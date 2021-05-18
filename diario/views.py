@@ -5,9 +5,9 @@ from django.db.models import Sum
 from django.shortcuts import render, redirect
 from django.urls import reverse, reverse_lazy
 from django.views.generic import \
-    CreateView, UpdateView, DeleteView, TemplateView
+    CreateView, UpdateView, DeleteView, TemplateView, FormView
 
-from diario.forms import FormCuenta, FormMovimiento
+from diario.forms import FormCuenta, FormMovimiento, FormSubcuentas
 from diario.models import Cuenta, Movimiento
 from diario.utils import verificar_saldos
 
@@ -98,6 +98,32 @@ class CtaModView(UpdateView):
     template_name = 'diario/cta_form.html'
     success_url = reverse_lazy('home')
     context_object_name = 'cta'
+
+
+class CtaDivView(FormView):
+    template_name = 'diario/cta_div_formset.html'
+    form_class = FormSubcuentas
+
+    def form_valid(self, form):
+        data = self.request.POST
+        keys = list(data.keys())[3:]
+        values = list(data.values())[3:]
+        keylists = [k.split('-') for k in keys]
+        n = 0
+        list_regs = list()
+
+        while True:
+            dict_reg = {k[2]:v for (k,v)
+                               in zip(keylists, values)
+                               if k[1] == str(n)}
+            if not dict_reg:
+                break
+            list_regs.append(dict_reg)
+            n += 1
+
+        self.object = form.save(cuenta=data.get('form-cuenta'), subcuentas=list_regs)
+
+        return redirect(self.object)
 
 
 def mov_nuevo(request):
