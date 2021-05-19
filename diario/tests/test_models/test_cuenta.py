@@ -3,7 +3,7 @@ from django.test import TestCase
 
 from diario.models import Cuenta, Movimiento
 
-from utils.errors import SaldoNoCeroException
+from utils.errors import SaldoNoCeroException, ErrorOpciones
 
 
 class TestModelCuenta(TestCase):
@@ -93,11 +93,47 @@ class TestModelCuenta(TestCase):
 
         self.assertEqual(list(Cuenta.todes()), [cuenta2, cuenta3, cuenta1])
 
+    def test_opciones_deben_incluir_un_tipo(self):
+        cuenta = Cuenta.crear(nombre='Efectivo', slug='E')
+        cuenta.opciones = ' '
+        with self.assertRaises(ErrorOpciones):
+            cuenta.full_clean()
+
 
 class TestModelCuentaMetodos(TestCase):
 
     def setUp(self):
         self.cta1 = Cuenta.crear('Efectivo', 'E')
+
+
+class TestModelCuentaPropiedades(TestModelCuentaMetodos):
+
+    # @property tipo
+    def test_tipo_devuelve_tipo_de_cuenta_segun_contenido_de_switches(self):
+        self.assertEqual(self.cta1.tipo, 'interactiva')
+        self.cta1.opciones = self.cta1.opciones.replace('i', 'c')
+        self.cta1.save()
+        self.assertEqual(self.cta1.tipo, 'caja')
+
+    def test_tipo_da_error_si_no_hay_opcion_de_tipo(self):
+        self.cta1.opciones = ' '
+        self.cta1.save()
+        with self.assertRaises(ErrorOpciones):
+            tipo = self.cta1.tipo
+
+    def test_tipo_agrega_y_retira_opciones_correctamente_al_ser_asignada(self):
+        self.cta1.tipo = 'caja'
+        self.cta1.save()
+        self.assertIn('c', self.cta1.opciones)
+        self.assertNotIn('i', self.cta1.opciones)
+        self.cta1.tipo = 'interactiva'
+        self.cta1.save()
+        self.assertIn('i', self.cta1.opciones)
+        self.assertNotIn('c', self.cta1.opciones)
+
+    def test_tipo_da_error_si_se_le_asigna_valor_no_admitido(self):
+        with self.assertRaises(ErrorOpciones):
+            self.cta1.tipo = 'sanguche'
 
 
 class TestMetodosMovsYSaldos(TestModelCuentaMetodos):
@@ -241,5 +277,27 @@ class TestMetodoDividir(TestModelCuentaMetodos):
 
     def test_saldo_de_cuenta_madre_pasa_a_cero(self):
         self.cta1.dividir_entre(self.subcuentas)
-
         self.assertEqual(self.cta1.saldo, 0)
+
+    def test_cuenta_madre_se_convierte_en_caja(self):
+        self.cta1.dividir_entre(self.subcuentas)
+        self.assertNotEqual(self.cta1.tipo, "interactiva")
+        self.assertEqual(self.cta1.tipo, "caja")
+
+    def test_cuentas_generadas_son_subcuentas_de_cuenta_madre(self):
+        self.cta1.dividir_entre(self.subcuentas)
+        cta2 = Cuenta.tomar(slug='ebil')
+        cta3 = Cuenta.tomar(slug='ecaj')
+
+        self.assertEqual(cta2.cta_madre, self.cta1)
+        self.assertEqual(cta3.cta_madre, self.cta1)
+
+        self.assertEqual(list(self.cta1.subcuentas.all()), [cta2, cta3, ])
+
+    def test_saldo_de_cta_madre_es_igual_a_la_suma_de_saldos_de_subcuentas(self):
+        self.cta1.dividir_entre(self.subcuentas)
+
+        cta2 = Cuenta.tomar(slug='ebil')
+        cta3 = Cuenta.tomar(slug='ecaj')
+
+        self.assertEqual(self.cta1.saldo, cta2.saldo + cta3.saldo)

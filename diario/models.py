@@ -7,6 +7,7 @@ from django.db.models import Sum
 
 from utils import errors
 from utils.clases.mimodel import MiModel
+from utils.errors import ErrorOpciones
 
 
 def hoy():
@@ -36,13 +37,21 @@ class Cuenta(MiModel):
     slug = models.CharField(
         max_length=4, unique=True, validators=[alfaminusculas])
     saldo = models.FloatField(default=0)
+    cta_madre = models.ForeignKey(
+        'Cuenta',
+        related_name='subcuentas',
+        null=True, blank=True,
+        on_delete=models.CASCADE,
+    )
+    opciones = models.CharField(max_length=8, default='i')
 
     class Meta:
         ordering = ('nombre', )
 
     @staticmethod
-    def crear(nombre, slug):
-        cuenta = Cuenta(nombre=nombre, slug=slug)
+    def crear(nombre, slug, opciones='i', cta_madre=None):
+        cuenta = Cuenta(
+            nombre=nombre, slug=slug, opciones=opciones, cta_madre=cta_madre)
         cuenta.full_clean()
         cuenta.save()
         return cuenta
@@ -50,12 +59,28 @@ class Cuenta(MiModel):
     def __str__(self):
         return self.nombre
 
+    @property
+    def tipo(self):
+        if 'i' in self.opciones:
+            return 'interactiva'
+        if 'c' in self.opciones:
+            return 'caja'
+        raise ErrorOpciones('No se encontró switch de tipo')
+
+    @tipo.setter
+    def tipo(self, tipo):
+        if tipo == 'caja':
+            self.opciones = self.opciones.replace('i', 'c')
+        elif tipo == 'interactiva':
+            self.opciones = self.opciones.replace('c', 'i')
+        else:
+            raise ErrorOpciones(f'Opción no admitida: {tipo}')
+
     def full_clean(self, *args, **kwargs):
         self.slug = self.slug.lower()
+        if 'c' not in self.opciones and 'i' not in self.opciones:
+            raise ErrorOpciones('La cuenta no tiene tipo asignado')
         super().full_clean(*args, **kwargs)
-
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
         if self.saldo != 0:
@@ -102,7 +127,10 @@ class Cuenta(MiModel):
     def dividir_entre(self, subcuentas):
         for subcuenta in subcuentas:
             cta = Cuenta.crear(
-                nombre=subcuenta['nombre'], slug=subcuenta['slug'])
+                nombre=subcuenta['nombre'],
+                slug=subcuenta['slug'],
+                cta_madre = self,
+            )
             conc = f'Paso de saldo de {self.nombre} a subcuenta {cta.nombre}'
             Movimiento.crear(
                 concepto=conc,
@@ -110,6 +138,8 @@ class Cuenta(MiModel):
                 cta_entrada=cta,
                 cta_salida=self,
             )
+            self.tipo = 'caja'
+
 
 class Movimiento(MiModel):
     fecha = MiDateField(default=hoy)
