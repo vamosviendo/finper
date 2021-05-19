@@ -1,5 +1,5 @@
 from django.forms import \
-    DateInput, ModelForm, NumberInput, TextInput, ValidationError, \
+    DateInput, FloatField, ModelForm, NumberInput, TextInput, ValidationError, \
     modelformset_factory
 
 from diario.models import Cuenta, Movimiento
@@ -46,14 +46,23 @@ class FormCuenta(ModelForm):
         fields = ('nombre', 'slug', )
 
 
-CuentaFormset = modelformset_factory(Cuenta, fields=('nombre', 'slug', 'saldo'))
-
-
-class FormSubcuentas(CuentaFormset):
+class FormSubcuenta(ModelForm):
 
     class Meta:
         model = Cuenta
-        fields = ('nombre', 'slug', 'saldo')
+        fields = ('nombre', 'slug', )
+
+    saldo = FloatField()
+
+    def save(self, *args, **kwargs):
+        self.instance.saldo = self.cleaned_data['saldo']
+        return super().save(*args, **kwargs)
+
+
+CuentaFormset = modelformset_factory(Cuenta, form=FormSubcuenta)
+
+
+class FormSubcuentas(CuentaFormset):
 
     def save(self):
         cta = Cuenta.objects.get(slug=self.data.get('form-cuenta'))

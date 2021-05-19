@@ -48,7 +48,7 @@ class HomeView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        saldo_gral = Cuenta.todes().aggregate(Sum('saldo'))['saldo__sum']
+        saldo_gral = Cuenta.todes().aggregate(Sum('_saldo'))['_saldo__sum']
 
         context.update({
             'cuentas': Cuenta.todes(),

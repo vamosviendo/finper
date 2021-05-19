@@ -36,7 +36,6 @@ class Cuenta(MiModel):
     nombre = models.CharField(max_length=50, unique=True)
     slug = models.CharField(
         max_length=4, unique=True, validators=[alfaminusculas])
-    saldo = models.FloatField(default=0)
     cta_madre = models.ForeignKey(
         'Cuenta',
         related_name='subcuentas',
@@ -44,6 +43,7 @@ class Cuenta(MiModel):
         on_delete=models.CASCADE,
     )
     opciones = models.CharField(max_length=8, default='i')
+    _saldo = models.FloatField(default=0)
 
     class Meta:
         ordering = ('nombre', )
@@ -75,6 +75,14 @@ class Cuenta(MiModel):
             self.opciones = self.opciones.replace('c', 'i')
         else:
             raise ErrorOpciones(f'Opción no admitida: {tipo}')
+
+    @property
+    def saldo(self):
+        return self._saldo
+
+    @saldo.setter
+    def saldo(self, saldo):
+        self._saldo = saldo
 
     def full_clean(self, *args, **kwargs):
         self.slug = self.slug.lower()
