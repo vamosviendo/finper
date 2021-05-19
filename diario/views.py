@@ -104,25 +104,35 @@ class CtaDivView(FormView):
     template_name = 'diario/cta_div_formset.html'
     form_class = FormSubcuentas
 
-    def form_valid(self, form):
-        data = self.request.POST
-        keys = list(data.keys())[3:]
-        values = list(data.values())[3:]
-        keylists = [k.split('-') for k in keys]
+    def formset_2_dict_list(self, data):
         n = 0
         list_regs = list()
 
         while True:
-            dict_reg = {k[2]:v for (k,v)
-                               in zip(keylists, values)
-                               if k[1] == str(n)}
+            dict_reg = {
+                k[2]:v for (k,v) in zip(
+                    [k.split('-') for k in list(data.keys())],
+                    data.values()
+                )
+                if k[1] == str(n) and len(k) == 3
+            }
+
             if not dict_reg:
                 break
+
             list_regs.append(dict_reg)
             n += 1
 
-        self.object = form.save(cuenta=data.get('form-cuenta'), subcuentas=list_regs)
+        return list_regs
 
+    def form_valid(self, form):
+        data = self.request.POST.copy()
+        cuenta = data.get('form-cuenta')
+
+        self.object = form.save(
+            cuenta=data.get('form-cuenta'),
+            subcuentas=self.formset_2_dict_list(data)
+        )
         return redirect(self.object)
 
 
