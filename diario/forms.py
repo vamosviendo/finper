@@ -57,7 +57,7 @@ class FormSubcuentas(CuentaFormset):
 
     def save(self):
         cta = Cuenta.objects.get(slug=self.data.get('form-cuenta'))
-        cta.dividir(formset_2_dict_list(self.data))
+        cta.dividir_entre(formset_2_dict_list(self.data))
         return cta
 
 

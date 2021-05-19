@@ -99,9 +99,17 @@ class Cuenta(MiModel):
         self.save()
         return mov
 
-    def dividir(self):
-        pass
-
+    def dividir_entre(self, subcuentas):
+        for subcuenta in subcuentas:
+            cta = Cuenta.crear(
+                nombre=subcuenta['nombre'], slug=subcuenta['slug'])
+            conc = f'Paso de saldo de {self.nombre} a subcuenta {cta.nombre}'
+            Movimiento.crear(
+                concepto=conc,
+                importe=subcuenta['saldo'],
+                cta_entrada=cta,
+                cta_salida=self,
+            )
 
 class Movimiento(MiModel):
     fecha = MiDateField(default=hoy)

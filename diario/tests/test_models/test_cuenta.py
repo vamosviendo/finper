@@ -98,6 +98,12 @@ class TestModelCuentaMetodos(TestCase):
 
     def setUp(self):
         self.cta1 = Cuenta.crear('Efectivo', 'E')
+
+
+class TestMetodosMovsYSaldos(TestModelCuentaMetodos):
+
+    def setUp(self):
+        super().setUp()
         self.cta2 = Cuenta.crear('Banco', 'B')
         Movimiento.crear(concepto='mov1', importe=100, cta_entrada=self.cta1)
         Movimiento.crear(
@@ -186,3 +192,54 @@ class TestModelCuentaMetodos(TestCase):
         mov = self.cta1.agregar_mov_correctivo()
         self.assertEqual(self.cta1.cantidad_movs(), cant_movs)
         self.assertIsNone(mov)
+
+
+class TestMetodoDividir(TestModelCuentaMetodos):
+
+    def setUp(self):
+        super().setUp()
+        Movimiento.crear(concepto='00000', importe=250, cta_entrada=self.cta1)
+        self.subcuentas = [
+            {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 50},
+             {'nombre': 'Cajón de arriba', 'slug': 'ecaj', 'saldo': 200},
+        ]
+
+    def test_genera_cuentas_a_partir_de_lista_de_diccionarios(self):
+        self.cta1.dividir_entre(self.subcuentas)
+
+        subcuenta1 = Cuenta.tomar(slug='ebil')
+        subcuenta2 = Cuenta.tomar(slug='ecaj')
+
+        self.assertEqual(subcuenta1.nombre, 'Billetera')
+        self.assertEqual(subcuenta1.saldo, 50)
+        self.assertEqual(subcuenta2.nombre, 'Cajón de arriba')
+        self.assertEqual(subcuenta2.saldo, 200)
+
+    def test_genera_movimientos_de_traspaso_entre_cta_madre_y_subcuentas(self):
+        self.cta1.dividir_entre(self.subcuentas)
+
+        subcuenta1 = Cuenta.tomar(slug='ebil')
+        subcuenta2 = Cuenta.tomar(slug='ecaj')
+
+        movs = Movimiento.todes()
+        self.assertEqual(len(movs), 3)
+
+        self.assertEqual(
+            movs[1].concepto,
+            'Paso de saldo de Efectivo a subcuenta Billetera'
+        )
+        self.assertEqual(movs[1].importe, 50)
+        self.assertEqual(movs[1].cta_entrada, subcuenta1)
+        self.assertEqual(movs[1].cta_salida, self.cta1)
+        self.assertEqual(
+            movs[2].concepto,
+            'Paso de saldo de Efectivo a subcuenta Cajón de arriba'
+        )
+        self.assertEqual(movs[2].importe, 200)
+        self.assertEqual(movs[2].cta_entrada, subcuenta2)
+        self.assertEqual(movs[2].cta_salida, self.cta1)
+
+    def test_saldo_de_cuenta_madre_pasa_a_cero(self):
+        self.cta1.dividir_entre(self.subcuentas)
+
+        self.assertEqual(self.cta1.saldo, 0)

@@ -16,7 +16,7 @@ class TestFormCuenta(TestCase):
         self.assertFalse(formcta.is_valid())
 
 
-@patch('diario.forms.Cuenta.dividir')
+@patch('diario.forms.Cuenta.dividir_entre')
 class TestFormSubcuentas(TestCase):
 
     def setUp(self):
