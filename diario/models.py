@@ -99,6 +99,9 @@ class Cuenta(MiModel):
         self.save()
         return mov
 
+    def dividir(self):
+        pass
+
 
 class Movimiento(MiModel):
     fecha = MiDateField(default=hoy)

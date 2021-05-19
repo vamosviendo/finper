@@ -1,4 +1,6 @@
-from django.forms import ModelForm, TextInput, DateInput, NumberInput, ValidationError
+from django.forms import \
+    DateInput, ModelForm, NumberInput, TextInput, ValidationError, \
+    modelformset_factory
 
 from diario.models import Cuenta, Movimiento
 
@@ -8,6 +10,28 @@ def agregar_clase(campo, clase):
         campo.widget.attrs['class'] += ' form-control'
     else:
         campo.widget.attrs['class'] = 'form-control'
+
+
+def formset_2_dict_list(data):
+    n = 0
+    list_regs = list()
+
+    while True:
+        dict_reg = {
+            k[2]:v for (k,v) in zip(
+                [k.split('-') for k in list(data.keys())],
+                data.values()
+            )
+            if k[1] == str(n) and len(k) == 3
+        }
+
+        if not dict_reg:
+            break
+
+        list_regs.append(dict_reg)
+        n += 1
+
+    return list_regs
 
 
 class FormCuenta(ModelForm):
@@ -22,11 +46,19 @@ class FormCuenta(ModelForm):
         fields = ('nombre', 'slug', )
 
 
-class FormSubcuentas(ModelForm):
+CuentaFormset = modelformset_factory(Cuenta, fields=('nombre', 'slug', 'saldo'))
+
+
+class FormSubcuentas(CuentaFormset):
 
     class Meta:
         model = Cuenta
         fields = ('nombre', 'slug', 'saldo')
+
+    def save(self):
+        cta = Cuenta.objects.get(slug=self.data.get('form-cuenta'))
+        cta.dividir(formset_2_dict_list(self.data))
+        return cta
 
 
 class FormMovimiento(ModelForm):

@@ -299,20 +299,7 @@ class TestCtaDiv(TestCase):
         self.div_view(self.request)
 
         falso_form.save.assert_called_once()
-        falso_form.save.assert_called_once_with(
-            cuenta=self.cta.slug,
-            subcuentas=[
-                {
-                    'nombre': 'Billetera',
-                    'slug': 'ebil',
-                    'saldo': '50',
-                }, {
-                    'nombre': 'Cajón de arriba',
-                    'slug': 'ecaj',
-                    'saldo': '200',
-                },
-            ]
-        )
+        falso_form.save.assert_called_once_with(self.request.POST)
 
     def test_no_guarda_form_si_los_datos_no_son_validos(self, falso_FormSubcuentas):
         falso_form = falso_FormSubcuentas.return_value

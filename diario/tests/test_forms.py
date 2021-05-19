@@ -1,10 +1,11 @@
 from datetime import date
+from unittest.mock import patch
 
 from django.core.exceptions import NON_FIELD_ERRORS
 from django.test import TestCase
 
-from diario.forms import FormMovimiento, FormCuenta
-from diario.models import Cuenta
+from diario.forms import FormMovimiento, FormCuenta, FormSubcuentas
+from diario.models import Cuenta, Movimiento
 from utils import errors
 
 
@@ -13,6 +14,40 @@ class TestFormCuenta(TestCase):
     def test_no_acepta_cuentas_sin_slug(self):
         formcta = FormCuenta(data={'nombre': 'Efectivo'})
         self.assertFalse(formcta.is_valid())
+
+
+@patch('diario.forms.Cuenta.dividir')
+class TestFormSubcuentas(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.cta = Cuenta.crear(nombre='Efectivo', slug='E')
+        Movimiento.crear(
+            concepto='Ingreso de saldo', importe=250, cta_entrada=self.cta)
+        self.form = FormSubcuentas(data={
+                'form-TOTAL_FORMS': 2,
+                'form-INITIAL_FORMS': 0,
+                'form-cuenta': self.cta.slug,
+                'form-0-nombre': 'Billetera',
+                'form-0-slug': 'ebil',
+                'form-0-saldo': 50,
+                'form-1-nombre': 'Cajón de arriba',
+                'form-1-slug': 'ecaj',
+                'form-1-saldo': 200,
+            }
+        )
+
+    def test_save_divide_cuenta(self, mockCuenta_dividir):
+        self.form.is_valid()
+        self.form.save()
+        mockCuenta_dividir.assert_called_once_with(
+            [{'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 50},
+             {'nombre': 'Cajón de arriba', 'slug': 'ecaj', 'saldo': 200}]
+        )
+
+    def test_save_devuelve_cuenta_madre(self, mockCuenta_dividir):
+        cuenta = self.form.save()
+        self.assertEqual(cuenta, self.cta)
 
 
 class TestFormMovimiento(TestCase):
