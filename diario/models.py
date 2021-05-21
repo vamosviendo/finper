@@ -90,6 +90,19 @@ class Cuenta(MiModel):
             raise ErrorOpciones('La cuenta no tiene tipo asignado')
         super().full_clean(*args, **kwargs)
 
+    def save(self, *args, **kwargs):
+        if self.esta_en_una_caja():
+            try:
+                saldo_guardado = Cuenta.tomar(slug=self.slug).saldo
+            except Cuenta.DoesNotExist:
+                saldo_guardado = 0.0
+            if self.saldo != saldo_guardado:
+                saldo_cm = self.cta_madre.saldo
+                self.cta_madre.saldo += self.saldo
+                self.cta_madre.saldo -= saldo_guardado
+                self.cta_madre.save()
+        super().save(*args, **kwargs)
+
     def delete(self, *args, **kwargs):
         if self.saldo != 0:
             raise errors.SaldoNoCeroException
@@ -137,16 +150,20 @@ class Cuenta(MiModel):
             cta = Cuenta.crear(
                 nombre=subcuenta['nombre'],
                 slug=subcuenta['slug'],
-                cta_madre = self,
+                cta_madre=self,
             )
-            conc = f'Paso de saldo de {self.nombre} a subcuenta {cta.nombre}'
             Movimiento.crear(
-                concepto=conc,
+                concepto=f'Paso de saldo de {self.nombre} '
+                         f'a subcuenta {cta.nombre}',
                 importe=subcuenta['saldo'],
                 cta_entrada=cta,
                 cta_salida=self,
             )
-            self.tipo = 'caja'
+        self.tipo = 'caja'
+        self.save()
+
+    def esta_en_una_caja(self):
+        return self.cta_madre is not None
 
 
 class Movimiento(MiModel):

@@ -104,6 +104,7 @@ class TestModelCuentaMetodos(TestCase):
 
     def setUp(self):
         self.cta1 = Cuenta.crear('Efectivo', 'E')
+        Movimiento.crear(concepto='00000', importe=100, cta_entrada=self.cta1)
 
 
 class TestModelCuentaPropiedades(TestModelCuentaMetodos):
@@ -135,13 +136,24 @@ class TestModelCuentaPropiedades(TestModelCuentaMetodos):
         with self.assertRaises(ErrorOpciones):
             self.cta1.tipo = 'sanguche'
 
+    # @property saldo:
+    def test_saldo_devuelve_el_saldo_de_la_cuenta(self):
+        self.assertEqual(self.cta1.saldo, self.cta1._saldo)
+
+    def test_saldo_asigna_saldo_a_cuenta(self):
+        self.cta1.saldo = 300
+        self.assertEqual(self.cta1._saldo, 300)
 
 class TestMetodosMovsYSaldos(TestModelCuentaMetodos):
+
+    """ Después del setUp:
+        self.cta1.saldo == 110
+        self.cta2.saldo == 120
+    """
 
     def setUp(self):
         super().setUp()
         self.cta2 = Cuenta.crear('Banco', 'B')
-        Movimiento.crear(concepto='mov1', importe=100, cta_entrada=self.cta1)
         Movimiento.crear(
             concepto='mov2', importe=70,
             cta_entrada= self.cta2, cta_salida=self.cta1
@@ -229,12 +241,25 @@ class TestMetodosMovsYSaldos(TestModelCuentaMetodos):
         self.assertEqual(self.cta1.cantidad_movs(), cant_movs)
         self.assertIsNone(mov)
 
+    def test_si_cta_es_subcuenta_cambio_en_saldo_se_refleja_en_saldo_de_cta_madre(self):
+        saldo_inicial = self.cta1.saldo
+        self.cta1.dividir_entre([
+            {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 25},
+            {'nombre': 'Cajón de arriba', 'slug': 'ecaj', 'saldo': 85},
+        ])
+        cta2 = Cuenta.tomar(slug='ebil')
+        cta3 = Cuenta.tomar(slug='ecaj')
+
+        Movimiento.crear(concepto='mov', importe=45, cta_entrada=cta2)
+        self.cta1.refresh_from_db()
+        self.assertEqual(self.cta1.saldo, saldo_inicial-25+70)
+
 
 class TestMetodoDividir(TestModelCuentaMetodos):
 
     def setUp(self):
         super().setUp()
-        Movimiento.crear(concepto='00000', importe=250, cta_entrada=self.cta1)
+        Movimiento.crear(concepto='00000', importe=150, cta_entrada=self.cta1)
         self.subcuentas = [
             {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 50},
              {'nombre': 'Cajón de arriba', 'slug': 'ecaj', 'saldo': 200},
@@ -258,26 +283,22 @@ class TestMetodoDividir(TestModelCuentaMetodos):
         subcuenta2 = Cuenta.tomar(slug='ecaj')
 
         movs = Movimiento.todes()
-        self.assertEqual(len(movs), 3)
+        self.assertEqual(len(movs), 4)
 
-        self.assertEqual(
-            movs[1].concepto,
-            'Paso de saldo de Efectivo a subcuenta Billetera'
-        )
-        self.assertEqual(movs[1].importe, 50)
-        self.assertEqual(movs[1].cta_entrada, subcuenta1)
-        self.assertEqual(movs[1].cta_salida, self.cta1)
         self.assertEqual(
             movs[2].concepto,
+            'Paso de saldo de Efectivo a subcuenta Billetera'
+        )
+        self.assertEqual(movs[2].importe, 50)
+        self.assertEqual(movs[2].cta_entrada, subcuenta1)
+        self.assertEqual(movs[2].cta_salida, self.cta1)
+        self.assertEqual(
+            movs[3].concepto,
             'Paso de saldo de Efectivo a subcuenta Cajón de arriba'
         )
-        self.assertEqual(movs[2].importe, 200)
-        self.assertEqual(movs[2].cta_entrada, subcuenta2)
-        self.assertEqual(movs[2].cta_salida, self.cta1)
-
-    def test_saldo_de_cuenta_madre_pasa_a_cero(self):
-        self.cta1.dividir_entre(self.subcuentas)
-        self.assertEqual(self.cta1.saldo, 0)
+        self.assertEqual(movs[3].importe, 200)
+        self.assertEqual(movs[3].cta_entrada, subcuenta2)
+        self.assertEqual(movs[3].cta_salida, self.cta1)
 
     def test_cuenta_madre_se_convierte_en_caja(self):
         self.cta1.dividir_entre(self.subcuentas)
@@ -301,3 +322,18 @@ class TestMetodoDividir(TestModelCuentaMetodos):
         cta3 = Cuenta.tomar(slug='ecaj')
 
         self.assertEqual(self.cta1.saldo, cta2.saldo + cta3.saldo)
+
+
+class TestMetodosVarios(TestModelCuentaMetodos):
+
+    def test_esta_en_una_caja_devuelve_true_si_tiene_cta_madre(self):
+        self.cta1.dividir_entre([
+            {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 40},
+            {'nombre': 'Cajón de arriba', 'slug': 'ecaj', 'saldo': 60},
+        ])
+
+        cta2 = Cuenta.tomar(slug='ebil')
+        cta3 = Cuenta.tomar(slug='ecaj')
+
+        self.assertTrue(cta2.esta_en_una_caja())
+        self.assertFalse(self.cta1.esta_en_una_caja())
