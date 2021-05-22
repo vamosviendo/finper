@@ -144,6 +144,7 @@ class TestModelCuentaPropiedades(TestModelCuentaMetodos):
         self.cta1.saldo = 300
         self.assertEqual(self.cta1._saldo, 300)
 
+
 class TestMetodosMovsYSaldos(TestModelCuentaMetodos):
 
     """ Después del setUp:
@@ -241,19 +242,6 @@ class TestMetodosMovsYSaldos(TestModelCuentaMetodos):
         self.assertEqual(self.cta1.cantidad_movs(), cant_movs)
         self.assertIsNone(mov)
 
-    def test_si_cta_es_subcuenta_cambio_en_saldo_se_refleja_en_saldo_de_cta_madre(self):
-        saldo_inicial = self.cta1.saldo
-        self.cta1.dividir_entre([
-            {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 25},
-            {'nombre': 'Cajón de arriba', 'slug': 'ecaj', 'saldo': 85},
-        ])
-        cta2 = Cuenta.tomar(slug='ebil')
-        cta3 = Cuenta.tomar(slug='ecaj')
-
-        Movimiento.crear(concepto='mov', importe=45, cta_entrada=cta2)
-        self.cta1.refresh_from_db()
-        self.assertEqual(self.cta1.saldo, saldo_inicial-25+70)
-
 
 class TestMetodoDividir(TestModelCuentaMetodos):
 
@@ -322,6 +310,93 @@ class TestMetodoDividir(TestModelCuentaMetodos):
         cta3 = Cuenta.tomar(slug='ecaj')
 
         self.assertEqual(self.cta1.saldo, cta2.saldo + cta3.saldo)
+
+
+class TestCuentaMadre(TestModelCuentaMetodos):
+
+    def setUp(self):
+        super().setUp()
+        self.cta1.dividir_entre([
+            {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 25},
+            {'nombre': 'Cajón de arriba', 'slug': 'ecaj', 'saldo': 75},
+        ])
+        self.cta2 = Cuenta.tomar(slug='ebil')
+        self.cta3 = Cuenta.tomar(slug='ecaj')
+
+    def test_movimiento_en_subcuenta_se_refleja_en_saldo_de_cta_madre(self):
+
+        saldo_cta1 = self.cta1.saldo
+
+        Movimiento.crear(concepto='mov', importe=45, cta_entrada=self.cta2)
+        self.cta1.refresh_from_db()
+        self.assertEqual(
+            self.cta1.saldo, saldo_cta1+45,
+            'Mov de entrada en subcuenta no se refleja en saldo de cta madre'
+        )
+
+    def test_movimiento_en_subcuenta_se_refleja_en_saldo_de_cta_abuela(self):
+
+        self.cta3.dividir_entre([
+            {'nombre': 'Cajita', 'slug': 'eccj', 'saldo': 32},
+            {'nombre': 'Sobre', 'slug': 'ecso', 'saldo': 53},
+        ])
+        cta4 = Cuenta.tomar(slug='ecso')
+
+        saldo_cta1 = self.cta1.saldo
+        saldo_cta3 = self.cta3.saldo
+
+        Movimiento.crear(concepto='mov2', importe=31, cta_entrada=cta4)
+        self.cta3.refresh_from_db()
+        self.cta1.refresh_from_db()
+
+        self.assertEqual(
+            self.cta3.saldo, saldo_cta3+31,
+            'Mov de entada en subcuenta no se refleja en saldo de cta madre'
+        )
+        self.assertEqual(
+            self.cta1.saldo, saldo_cta1+31,
+            'Mov de entrada en subcuenta no se refleja en saldo de cta abuela'
+        )
+
+        cta5 = Cuenta.tomar(slug='eccj')
+
+        saldo_cta1 = self.cta1.saldo
+        saldo_cta3 = self.cta3.saldo
+
+        Movimiento.crear(concepto='mov3', importe=15, cta_salida=cta5)
+        self.cta3.refresh_from_db()
+        self.cta1.refresh_from_db()
+
+        self.assertEqual(
+            self.cta3.saldo, saldo_cta3-15,
+            'Mov de salida en subcuenta no se refleja en saldo de cta madre'
+        )
+        self.assertEqual(
+            self.cta1.saldo, saldo_cta1-15,
+            'Mov de salida en subcuenta no se refleja en saldo de cta abuela'
+        )
+
+    def test_movimiento_entre_subcuentas_no_afecta_saldo_de_cta_madre(self):
+        saldo_cta1 = self.cta1.saldo
+
+        Movimiento.crear(
+            concepto='mov', importe=45,
+            cta_entrada=self.cta2, cta_salida=self.cta3
+        )
+        self.cta1.refresh_from_db()
+        self.assertEqual(
+            self.cta1.saldo, saldo_cta1,
+            'Mov de entre subcuentas no debe modificar saldo de cuenta madre'
+        )
+
+    def test_modificacion_en_movimiento_modifica_saldo_de_cta_madre(self):
+        self.fail('Testear!')
+
+    def test_cuenta_caja_no_acepta_movimientos(self):
+        with self.assertRaises(ValidationError):
+            Movimiento.crear(
+                concepto='mov', importe=100, cta_entrada=self.cta1
+            )
 
 
 class TestMetodosVarios(TestModelCuentaMetodos):

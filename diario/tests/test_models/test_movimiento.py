@@ -206,6 +206,31 @@ class TestModelMovimientoBasic(TestModelMovimiento):
         self.assertEqual(list(Movimiento.todes()), [mov2, mov3, mov1])
 
 
+class TestModelMovimientoPropiedades(TestModelMovimiento):
+
+    def test_sentido_devuelve_resultado_segun_cuentas_presentes(self):
+        mov1 = Movimiento.crear(
+            concepto='Pago en efectivo',
+            importe=100,
+            cta_salida=self.cuenta1,
+        )
+        mov2 = Movimiento.crear(
+            concepto='Cobranza en efectivo',
+            importe=100,
+            cta_entrada=self.cuenta1,
+        )
+        cuenta2 = Cuenta.crear("Banco", "bco")
+        mov3 = Movimiento.crear(
+            concepto='Pago a cuenta',
+            importe=143,
+            cta_entrada=cuenta2,
+            cta_salida=self.cuenta1,
+        )
+        self.assertEqual(mov1.sentido, 's')
+        self.assertEqual(mov2.sentido, 'e')
+        self.assertEqual(mov3.sentido, 't')
+
+
 
 class TestModelMovimientoSaldos(TestModelMovimiento):
 
@@ -736,3 +761,18 @@ class TestModelMovimientoCambios(TestModelMovimiento):
 
         self.assertEqual(self.cuenta1.saldo, self.saldo1+self.mov2.importe)
         self.assertEqual(self.cuenta2.saldo, self.saldo2+self.imp2)
+
+
+class TestModelMovimientoCuentas(TestModelMovimiento):
+
+    def setUp(self):
+        super().setUp()
+        self.cuenta1.dividir_entre([
+            {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 0},
+            {'nombre': 'Cajón', 'slug': 'ecaj', 'saldo': 0},
+        ])
+
+    def test_movimiento_no_acepta_cuenta_no_interactiva(self):
+        with self.assertRaises(ValidationError):
+            Movimiento.crear(
+                concepto='mov', importe=100, cta_entrada=self.cuenta1)

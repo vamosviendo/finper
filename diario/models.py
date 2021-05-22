@@ -183,6 +183,15 @@ class Movimiento(MiModel):
     class Meta:
         ordering = ('fecha', 'concepto', )
 
+    @property
+    def sentido(self):
+        if self.cta_entrada and self.cta_salida:
+            return 't'
+        if self.cta_entrada:
+            return 'e'
+        if self.cta_salida:
+            return 's'
+
     def __str__(self):
         string = f'{self.fecha.strftime("%Y-%m-%d")} {self.concepto}: ' \
                  f'{self.importe}'
@@ -198,6 +207,9 @@ class Movimiento(MiModel):
             raise ValidationError(message=errors.CUENTA_INEXISTENTE)
         if self.cta_entrada == self.cta_salida:
             raise ValidationError(message=errors.CUENTAS_IGUALES)
+        if (self.cta_entrada and self.cta_entrada.tipo != 'interactiva') \
+                or (self.cta_salida and self.cta_salida.tipo != 'interactiva'):
+            raise ValidationError(message=errors.CUENTA_NO_INTERACTIVA)
 
     def delete(self, *args, **kwargs):
         if self.cta_entrada:
