@@ -7,7 +7,7 @@ from django.db.models import Sum
 
 from utils import errors
 from utils.clases.mimodel import MiModel
-from utils.errors import ErrorOpciones, ErrorDeSuma
+from utils.errors import ErrorOpciones, ErrorDeSuma, ErrorTipo
 
 
 def hoy():
@@ -88,6 +88,12 @@ class Cuenta(MiModel):
         self.slug = self.slug.lower()
         if 'c' not in self.opciones and 'i' not in self.opciones:
             raise ErrorOpciones('La cuenta no tiene tipo asignado')
+        if 'c' in self.opciones and 'i' in self.opciones:
+            raise ErrorOpciones('La cuenta tiene más de un tipo asignado')
+        if self.tipo == 'caja' and self.subcuentas.count() == 0:
+            raise ErrorTipo('Cuenta caja debe tener subcuentas')
+        if self.tipo == 'interactiva' and self.subcuentas.count() != 0:
+            raise ErrorTipo('Cuenta interactiva no puede tener subcuentas')
         super().full_clean(*args, **kwargs)
 
     def save(self, *args, **kwargs):
@@ -149,10 +155,10 @@ class Cuenta(MiModel):
         subsaldos = [subc.get('saldo') for subc in subcuentas]
 
         if subsaldos.count(None) == 1:
-            subc_sin_saldo = subsaldos.index(None)
-            subsaldos.pop(subc_sin_saldo)
-            subcuentas[subc_sin_saldo]['saldo'] = self.saldo - sum(subsaldos)
-            subsaldos.append(subcuentas[subc_sin_saldo]['saldo'])
+            subcta_sin_saldo = subsaldos.index(None)
+            subsaldos.pop(subcta_sin_saldo)
+            subcuentas[subcta_sin_saldo]['saldo'] = self.saldo - sum(subsaldos)
+            subsaldos.append(subcuentas[subcta_sin_saldo]['saldo'])
 
         if sum(subsaldos) != self.saldo:
             raise ErrorDeSuma(f'Suma errónea. Saldos de subcuentas '

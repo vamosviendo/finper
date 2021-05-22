@@ -35,3 +35,9 @@ class ErrorDeSuma(ValidationError):
 
     def __init__(self, message='Suma no coincide'):
         super().__init__(message)
+
+
+class ErrorTipo(ValidationError):
+
+    def __init__(self, message='Incongruencia de tipo'):
+        super().__init__(message)

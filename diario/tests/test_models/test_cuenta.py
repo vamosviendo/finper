@@ -3,7 +3,7 @@ from django.test import TestCase
 
 from diario.models import Cuenta, Movimiento
 
-from utils.errors import SaldoNoCeroException, ErrorOpciones, ErrorDeSuma
+from utils.errors import SaldoNoCeroException, ErrorOpciones, ErrorDeSuma, ErrorTipo
 
 
 class TestModelCuenta(TestCase):
@@ -96,6 +96,12 @@ class TestModelCuenta(TestCase):
     def test_opciones_deben_incluir_un_tipo(self):
         cuenta = Cuenta.crear(nombre='Efectivo', slug='E')
         cuenta.opciones = ' '
+        with self.assertRaises(ErrorOpciones):
+            cuenta.full_clean()
+
+    def test_opciones_no_pueden_incluir_mas_de_un_tipo(self):
+        cuenta = Cuenta.crear(nombre='Efectivo', slug='e')
+        cuenta.opciones = 'ic'
         with self.assertRaises(ErrorOpciones):
             cuenta.full_clean()
 
@@ -358,6 +364,16 @@ class TestCuentaMadre(TestModelCuentaMetodos):
         ])
         self.cta2 = Cuenta.tomar(slug='ebil')
         self.cta3 = Cuenta.tomar(slug='ecaj')
+
+    def test_cuenta_caja_debe_tener_subcuentas(self):
+        self.cta2.tipo = 'caja'
+        with self.assertRaises(ErrorTipo):
+            self.cta2.full_clean()
+
+    def test_cuenta_interactiva_no_debe_tener_subcuentas(self):
+        self.cta1.tipo = 'interactiva'
+        with self.assertRaises(ErrorTipo):
+            self.cta1.full_clean()
 
     def test_movimiento_en_subcuenta_se_refleja_en_saldo_de_cta_madre(self):
 
