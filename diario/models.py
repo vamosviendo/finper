@@ -7,7 +7,7 @@ from django.db.models import Sum
 
 from utils import errors
 from utils.clases.mimodel import MiModel
-from utils.errors import ErrorOpciones
+from utils.errors import ErrorOpciones, ErrorDeSuma
 
 
 def hoy():
@@ -146,6 +146,18 @@ class Cuenta(MiModel):
         return mov
 
     def dividir_entre(self, subcuentas):
+        subsaldos = [subc.get('saldo') for subc in subcuentas]
+
+        if subsaldos.count(None) == 1:
+            subc_sin_saldo = subsaldos.index(None)
+            subsaldos.pop(subc_sin_saldo)
+            subcuentas[subc_sin_saldo]['saldo'] = self.saldo - sum(subsaldos)
+            subsaldos.append(subcuentas[subc_sin_saldo]['saldo'])
+
+        if sum(subsaldos) != self.saldo:
+            raise ErrorDeSuma(f'Suma errónea. Saldos de subcuentas '
+                              f'deben sumar {self.saldo:.2f}')
+
         for subcuenta in subcuentas:
             cta = Cuenta.crear(
                 nombre=subcuenta['nombre'],

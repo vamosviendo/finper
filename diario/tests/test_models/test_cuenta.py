@@ -3,7 +3,7 @@ from django.test import TestCase
 
 from diario.models import Cuenta, Movimiento
 
-from utils.errors import SaldoNoCeroException, ErrorOpciones
+from utils.errors import SaldoNoCeroException, ErrorOpciones, ErrorDeSuma
 
 
 class TestModelCuenta(TestCase):
@@ -264,6 +264,19 @@ class TestMetodoDividir(TestModelCuentaMetodos):
         self.assertEqual(subcuenta2.nombre, 'Cajón de arriba')
         self.assertEqual(subcuenta2.saldo, 200)
 
+    def test_acepta_mas_de_dos_subcuentas(self):
+        self.subcuentas[1]['saldo'] = 130
+        self.subcuentas.append(
+            {'nombre': 'Cajita', 'slug':'ecjt', 'saldo': 70})
+
+        self.cta1.dividir_entre(self.subcuentas)
+
+        self.assertEqual(self.cta1.subcuentas.count(), 3)
+        self.assertEqual(
+            sum([cta.saldo for cta in self.cta1.subcuentas.all()]),
+            250
+        )
+
     def test_genera_movimientos_de_traspaso_entre_cta_madre_y_subcuentas(self):
         self.cta1.dividir_entre(self.subcuentas)
 
@@ -311,6 +324,29 @@ class TestMetodoDividir(TestModelCuentaMetodos):
 
         self.assertEqual(self.cta1.saldo, cta2.saldo + cta3.saldo)
 
+    def test_da_error_si_suma_de_saldos_subcuentas_no_coinciden_con_saldo(self):
+        self.subcuentas[1]['saldo'] = 235
+
+        with self.assertRaisesMessage(
+                ErrorDeSuma,
+                "Suma errónea. Saldos de subcuentas deben sumar 250.00"
+        ):
+            self.cta1.dividir_entre(self.subcuentas)
+
+    def test_acepta_y_completa_una_subcuenta_sin_saldo(self):
+        self.subcuentas[1]['saldo'] = 130
+        self.subcuentas.append({'nombre': 'Cajita', 'slug': 'ecjt'})
+
+        self.cta1.dividir_entre(self.subcuentas)
+
+        cta = Cuenta.tomar(slug='ecjt')
+
+        self.assertEqual(self.cta1.subcuentas.count(), 3)
+        self.assertEqual(cta.saldo, 70)
+
+    def test_no_acepta_mas_de_una_subcuenta_sin_saldo(self):
+        pass
+
 
 class TestCuentaMadre(TestModelCuentaMetodos):
 
@@ -337,7 +373,7 @@ class TestCuentaMadre(TestModelCuentaMetodos):
     def test_movimiento_en_subcuenta_se_refleja_en_saldo_de_cta_abuela(self):
 
         self.cta3.dividir_entre([
-            {'nombre': 'Cajita', 'slug': 'eccj', 'saldo': 32},
+            {'nombre': 'Cajita', 'slug': 'eccj', 'saldo': 22},
             {'nombre': 'Sobre', 'slug': 'ecso', 'saldo': 53},
         ])
         cta4 = Cuenta.tomar(slug='ecso')
