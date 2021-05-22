@@ -7,7 +7,8 @@ from django.db.models import Sum
 
 from utils import errors
 from utils.clases.mimodel import MiModel
-from utils.errors import ErrorOpciones, ErrorDeSuma, ErrorTipo
+from utils.errors import \
+    ErrorDeSuma, ErrorDependenciaCircular, ErrorOpciones, ErrorTipo
 
 
 def hoy():
@@ -94,19 +95,30 @@ class Cuenta(MiModel):
             raise ErrorTipo('Cuenta caja debe tener subcuentas')
         if self.tipo == 'interactiva' and self.subcuentas.count() != 0:
             raise ErrorTipo('Cuenta interactiva no puede tener subcuentas')
+        if self.cta_madre in self.arbol_de_subcuentas():
+            raise ErrorDependenciaCircular(
+                f'Cuenta madre {self.cta_madre} está entre las subcuentas '
+                f'de {self} o entre las de una de sus subcuentas'
+            )
+
         super().full_clean(*args, **kwargs)
 
     def save(self, *args, **kwargs):
         if self.esta_en_una_caja():
             try:
-                saldo_guardado = Cuenta.tomar(slug=self.slug).saldo
+                cta_guardada = Cuenta.tomar(slug=self.slug)
+                saldo_guardado = cta_guardada.saldo
+                cta_madre_guardada = cta_guardada.cta_madre
             except Cuenta.DoesNotExist:
                 saldo_guardado = 0.0
+                cta_madre_guardada = None
             if self.saldo != saldo_guardado:
                 saldo_cm = self.cta_madre.saldo
                 self.cta_madre.saldo += self.saldo
                 self.cta_madre.saldo -= saldo_guardado
                 self.cta_madre.save()
+            if self.cta_madre and self.cta_madre != cta_madre_guardada:
+                self.cta_madre.saldo += self.saldo
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
@@ -164,6 +176,7 @@ class Cuenta(MiModel):
             raise ErrorDeSuma(f'Suma errónea. Saldos de subcuentas '
                               f'deben sumar {self.saldo:.2f}')
 
+        lista_subcuentas = list()
         for subcuenta in subcuentas:
             cta = Cuenta.crear(
                 nombre=subcuenta['nombre'],
@@ -172,16 +185,24 @@ class Cuenta(MiModel):
             )
             Movimiento.crear(
                 concepto=f'Paso de saldo de {self.nombre} '
-                         f'a subcuenta {cta.nombre}',
+                         f'a subcuenta {cta.nombre}'[:80],
                 importe=subcuenta['saldo'],
                 cta_entrada=cta,
                 cta_salida=self,
             )
+            lista_subcuentas.append(cta)
         self.tipo = 'caja'
         self.save()
+        return lista_subcuentas
 
     def esta_en_una_caja(self):
         return self.cta_madre is not None
+
+    def arbol_de_subcuentas(self):
+        todas_las_subcuentas = set(self.subcuentas.all())
+        for cuenta in self.subcuentas.all():
+            todas_las_subcuentas.update(cuenta.arbol_de_subcuentas())
+        return todas_las_subcuentas
 
 
 class Movimiento(MiModel):

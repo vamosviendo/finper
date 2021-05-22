@@ -41,3 +41,12 @@ class ErrorTipo(ValidationError):
 
     def __init__(self, message='Incongruencia de tipo'):
         super().__init__(message)
+
+
+class ErrorDependenciaCircular(ValidationError):
+
+    def __init__(
+            self,
+            message='Intento de asignar dos cuentas mutuamente como subcuentas'
+    ):
+        super().__init__(message)

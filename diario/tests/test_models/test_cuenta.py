@@ -3,7 +3,9 @@ from django.test import TestCase
 
 from diario.models import Cuenta, Movimiento
 
-from utils.errors import SaldoNoCeroException, ErrorOpciones, ErrorDeSuma, ErrorTipo
+from utils.errors import \
+    SaldoNoCeroException, ErrorOpciones, ErrorDeSuma, ErrorTipo, \
+    ErrorDependenciaCircular
 
 
 class TestModelCuenta(TestCase):
@@ -249,14 +251,14 @@ class TestMetodosMovsYSaldos(TestModelCuentaMetodos):
         self.assertIsNone(mov)
 
 
-class TestMetodoDividir(TestModelCuentaMetodos):
+class TestMetodoDividirEntre(TestModelCuentaMetodos):
 
     def setUp(self):
         super().setUp()
         Movimiento.crear(concepto='00000', importe=150, cta_entrada=self.cta1)
         self.subcuentas = [
             {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 50},
-             {'nombre': 'Cajón de arriba', 'slug': 'ecaj', 'saldo': 200},
+            {'nombre': 'Cajón de arriba', 'slug': 'ecaj', 'saldo': 200},
         ]
 
     def test_genera_cuentas_a_partir_de_lista_de_diccionarios(self):
@@ -281,6 +283,12 @@ class TestMetodoDividir(TestModelCuentaMetodos):
         self.assertEqual(
             sum([cta.saldo for cta in self.cta1.subcuentas.all()]),
             250
+        )
+
+    def test_devuelve_lista_con_subcuentas_creadas(self):
+        self.assertEqual(
+            self.cta1.dividir_entre(self.subcuentas),
+            [Cuenta.tomar(slug='ebil'), Cuenta.tomar(slug='ecaj')]
         )
 
     def test_genera_movimientos_de_traspaso_entre_cta_madre_y_subcuentas(self):
@@ -375,6 +383,94 @@ class TestCuentaMadre(TestModelCuentaMetodos):
         with self.assertRaises(ErrorTipo):
             self.cta1.full_clean()
 
+    def test_se_puede_asignar_cta_interactiva_a_cta_caja(self):
+        cta4 = Cuenta.crear("Bolsillo", "ebol")
+        cta4.cta_madre = self.cta1
+        cta4.save()
+        self.assertEqual(self.cta1.subcuentas.count(), 3)
+
+    def test_se_puede_asignar_cta_caja_a_otra_cta_caja(self):
+        cta4 = Cuenta.crear("Bolsillos", "ebol")
+        cta4.dividir_entre([
+            {'nombre': 'Bolsillo campera', 'slug': 'ebca', 'saldo': 0},
+            {'nombre': 'Bolsillo pantalón', 'slug': 'ebpa'}
+        ])
+        cta4.cta_madre = self.cta1
+        cta4.save()
+        self.assertEqual(self.cta1.subcuentas.count(), 3)
+
+    def test_si_se_asigna_cta_interactiva_con_saldo_a_cta_caja_se_suma_el_saldo(self):
+        saldo_cta1 = self.cta1.saldo
+        cta4 = Cuenta.crear("Bolsillo", "ebol")
+        Movimiento.crear(concepto='mov', importe=50, cta_entrada=cta4)
+
+        cta4.cta_madre = self.cta1
+        cta4.save()
+
+        self.assertEqual(cta4.saldo, 50)
+        self.assertEqual(self.cta1.saldo, saldo_cta1 + 50)
+
+    def test_si_se_asigna_cta_caja_con_saldo_a_cta_caja_se_suma_el_saldo(self):
+        saldo_cta1 = self.cta1.saldo
+        cta4 = Cuenta.crear("Bolsillos", "ebol")
+        Movimiento.crear(concepto='mov', importe=50, cta_entrada=cta4)
+
+        cta4.dividir_entre([
+            {'nombre': 'Bolsillo campera', 'slug': 'ebca', 'saldo': 30},
+            {'nombre': 'Bolsillo pantalón', 'slug': 'ebpa'}
+        ])
+
+        cta4.cta_madre = self.cta1
+        cta4.save()
+
+        self.assertEqual(cta4.saldo, 50)
+        self.assertEqual(self.cta1.saldo, saldo_cta1 + 50)
+
+    def test_cuenta_no_puede_ser_subcuenta_de_una_de_sus_subcuentas(self):
+        cta4 = Cuenta.crear("Bolsillos", "ebol")
+        cta4.dividir_entre([
+            {'nombre': 'Bolsillo campera', 'slug': 'ebca', 'saldo': 0},
+            {'nombre': 'Bolsillo pantalón', 'slug': 'ebpa'}
+        ])
+        cta4.cta_madre = self.cta1
+        cta4.save()
+
+        self.cta1.cta_madre = cta4
+        with self.assertRaisesMessage(
+                ErrorDependenciaCircular,
+                'Cuenta madre Bolsillos está entre las subcuentas de Efectivo '
+                'o entre las de una de sus subcuentas'
+        ):
+            self.cta1.full_clean()
+
+    def test_cuenta_no_puede_ser_subcuenta_de_una_subcuenta_de_una_de_sus_subcuentas(self):
+        cta4 = Cuenta.crear("Bolsillos", "ebol")
+        cta4.dividir_entre([
+            {'nombre': 'Bolsillo campera', 'slug': 'ebca', 'saldo': 0},
+            {'nombre': 'Bolsillo pantalón', 'slug': 'ebpa'}
+        ])
+
+        cta4.cta_madre = self.cta1
+        cta4.save()
+
+        cta5 = Cuenta.tomar(slug='ebpa')
+        cta5.dividir_entre([
+            {
+                'nombre': 'Bolsillo delantero pantalón',
+                'slug': 'ebpd',
+                'saldo': 0
+            },
+            {'nombre': 'Bolsillo pantalón trasero', 'slug': 'ebpt'}
+        ])
+
+        self.cta1.cta_madre = cta5
+        with self.assertRaisesMessage(
+                ErrorDependenciaCircular,
+                'Cuenta madre Bolsillo pantalón está entre las subcuentas '
+                'de Efectivo o entre las de una de sus subcuentas'
+        ):
+            self.cta1.full_clean()
+
     def test_movimiento_en_subcuenta_se_refleja_en_saldo_de_cta_madre(self):
 
         saldo_cta1 = self.cta1.saldo
@@ -464,3 +560,39 @@ class TestMetodosVarios(TestModelCuentaMetodos):
 
         self.assertTrue(cta2.esta_en_una_caja())
         self.assertFalse(self.cta1.esta_en_una_caja())
+
+    def test_arbol_de_subcuentas_devuelve_set_con_todas_las_cuentas_dependientes(self):
+        lista_subcuentas = self.cta1.dividir_entre([
+            {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 0},
+            {'nombre': 'Cajón de arriba', 'slug': 'ecaj', },
+        ])
+        lista_subcuentas += lista_subcuentas[0].dividir_entre([
+            {
+                'nombre': 'Billetera división delantera',
+                'slug': 'ebdd',
+                'saldo': 0,
+            },
+            {'nombre': 'Billetera división trasera', 'slug': 'ebdt', },
+        ])
+        lista_subcuentas += lista_subcuentas[2].dividir_entre([
+            {
+                'nombre': 'Billetera división delantera izquierda',
+                'slug': 'ebdi',
+                'saldo': 0,
+            },
+            {
+                'nombre': 'Billetera división delantera derecha',
+                'slug': 'ebdr',
+            },
+        ])
+        lista_subcuentas += lista_subcuentas[1].dividir_entre([
+            {
+                'nombre': 'Cajita verde',
+                'slug': 'eccv',
+                'saldo': 0,
+            },
+            {'nombre': 'Sobre', 'slug': 'ecs', },
+        ])
+
+        self.assertEqual(
+            self.cta1.arbol_de_subcuentas(), set(lista_subcuentas))
