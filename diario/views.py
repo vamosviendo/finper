@@ -105,7 +105,7 @@ class CtaDivView(FormView):
     form_class = FormSubcuentas
 
     def form_valid(self, form):
-        self.object = form.save(self.request.POST)
+        self.object = form.save()
         return redirect(self.object)
 
 

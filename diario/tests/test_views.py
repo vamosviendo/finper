@@ -299,7 +299,6 @@ class TestCtaDiv(TestCase):
         self.div_view(self.request)
 
         falso_form.save.assert_called_once()
-        falso_form.save.assert_called_once_with(self.request.POST)
 
     def test_no_guarda_form_si_los_datos_no_son_validos(self, falso_FormSubcuentas):
         falso_form = falso_FormSubcuentas.return_value
@@ -338,6 +337,34 @@ class TestCtaDiv(TestCase):
 
         self.assertEqual(kwargs['template'], ['diario/cta_div_formset.html'])
         self.assertEqual(kwargs['context']['form'], falso_form)
+
+
+class TestCtaDivIntegration(TestCase):
+
+    def test_puede_dividir_cuenta_a_partir_de_POST(self):
+        self.cta = Cuenta.crear('Efectivo', 'e')
+        Movimiento.crear(
+            concepto='Ingreso de saldo', importe=250, cta_entrada=self.cta)
+        self.client.post(
+            reverse('cta_div', args=[self.cta]),
+            data={
+                'form-TOTAL_FORMS': 2,
+                'form-INITIAL_FORMS': 0,
+                'form-cuenta': self.cta.slug,
+                'form-0-nombre': 'Billetera',
+                'form-0-slug': 'ebil',
+                'form-0-saldo': 50,
+                'form-1-nombre': 'Cajón de arriba',
+                'form-1-slug': 'ecaj',
+                'form-1-saldo': 200,
+            }
+        )
+        self.assertEqual(Cuenta.cantidad(), 3)
+        self.assertEqual(
+            len([x for x in Cuenta.todes() if x.es_interactiva]), 2)
+        self.assertEqual(
+            len([x for x in Cuenta.todes() if x.es_caja]), 1)
+
 
 
 class TestMovNuevo(TestCase):

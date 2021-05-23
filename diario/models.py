@@ -4,11 +4,14 @@ from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import Sum
+from django.urls import reverse
 
 from utils import errors
 from utils.clases.mimodel import MiModel
 from utils.errors import \
-    ErrorDeSuma, ErrorDependenciaCircular, ErrorOpciones, ErrorTipo
+    ErrorDeSuma, ErrorDependenciaCircular, ErrorOpciones, ErrorTipo, \
+    SaldoNoCeroException
+from utils.funciones.numeros import float_or_none
 
 
 def hoy():
@@ -78,6 +81,14 @@ class Cuenta(MiModel):
             raise ErrorOpciones(f'Opción no admitida: {tipo}')
 
     @property
+    def es_interactiva(self):
+        return 'i' in self.opciones
+
+    @property
+    def es_caja(self):
+        return 'c' in self.opciones
+
+    @property
     def saldo(self):
         return self._saldo
 
@@ -91,16 +102,16 @@ class Cuenta(MiModel):
             raise ErrorOpciones('La cuenta no tiene tipo asignado')
         if 'c' in self.opciones and 'i' in self.opciones:
             raise ErrorOpciones('La cuenta tiene más de un tipo asignado')
-        if self.tipo == 'caja' and self.subcuentas.count() == 0:
+        if self.es_caja and self.subcuentas.count() == 0:
             raise ErrorTipo('Cuenta caja debe tener subcuentas')
-        if self.tipo == 'interactiva' and self.subcuentas.count() != 0:
+        if self.es_interactiva and self.subcuentas.count() != 0:
             raise ErrorTipo('Cuenta interactiva no puede tener subcuentas')
         if self.cta_madre in self.arbol_de_subcuentas():
             raise ErrorDependenciaCircular(
                 f'Cuenta madre {self.cta_madre} está entre las subcuentas '
                 f'de {self} o entre las de una de sus subcuentas'
             )
-        if self.cta_madre and self.cta_madre.tipo == 'interactiva':
+        if self.cta_madre and self.cta_madre.es_interactiva:
             raise ErrorTipo(f'Cuenta interactiva "{self.cta_madre }" '
                             f'no puede ser madre')
 
@@ -126,8 +137,11 @@ class Cuenta(MiModel):
 
     def delete(self, *args, **kwargs):
         if self.saldo != 0:
-            raise errors.SaldoNoCeroException
+            raise SaldoNoCeroException
         super().delete(*args, **kwargs)
+
+    def get_absolute_url(self):
+        return reverse('cta_mod', args=[self.slug])
 
     def cantidad_movs(self):
         return self.entradas.count() + self.salidas.count()
@@ -167,13 +181,14 @@ class Cuenta(MiModel):
         return mov
 
     def dividir_entre(self, subcuentas):
-        subsaldos = [subc.get('saldo') for subc in subcuentas]
+
+        # Si una (y solo una) cuenta no tiene saldo, completar con diferencia
+        subsaldos = [float_or_none(subc.get('saldo')) for subc in subcuentas]
         if subsaldos.count(None) == 1:
             subcta_sin_saldo = subsaldos.index(None)
             subsaldos.pop(subcta_sin_saldo)
             subcuentas[subcta_sin_saldo]['saldo'] = self.saldo - sum(subsaldos)
             subsaldos.append(subcuentas[subcta_sin_saldo]['saldo'])
-
         if sum(subsaldos) != self.saldo:
             raise ErrorDeSuma(f'Suma errónea. Saldos de subcuentas '
                               f'deben sumar {self.saldo:.2f}')
@@ -250,8 +265,8 @@ class Movimiento(MiModel):
             raise ValidationError(message=errors.CUENTA_INEXISTENTE)
         if self.cta_entrada == self.cta_salida:
             raise ValidationError(message=errors.CUENTAS_IGUALES)
-        if (self.cta_entrada and self.cta_entrada.tipo != 'interactiva') \
-                or (self.cta_salida and self.cta_salida.tipo != 'interactiva'):
+        if (self.cta_entrada and not self.cta_entrada.es_interactiva) \
+                or (self.cta_salida and not self.cta_salida.es_interactiva):
             raise ValidationError(message=errors.CUENTA_NO_INTERACTIVA)
 
     def delete(self, *args, **kwargs):

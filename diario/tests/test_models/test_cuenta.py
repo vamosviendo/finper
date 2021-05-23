@@ -119,7 +119,7 @@ class TestModelCuentaPropiedades(TestModelCuentaMetodos):
 
     # @property tipo
     def test_tipo_devuelve_tipo_de_cuenta_segun_contenido_de_switches(self):
-        self.assertEqual(self.cta1.tipo, 'interactiva')
+        self.assertTrue(self.cta1.tipo, 'interactiva')
         self.cta1.opciones = self.cta1.opciones.replace('i', 'c')
         self.cta1.save()
         self.assertEqual(self.cta1.tipo, 'caja')
@@ -317,8 +317,8 @@ class TestMetodoDividirEntre(TestModelCuentaMetodos):
 
     def test_cuenta_madre_se_convierte_en_caja(self):
         self.cta1.dividir_entre(self.subcuentas)
-        self.assertNotEqual(self.cta1.tipo, "interactiva")
-        self.assertEqual(self.cta1.tipo, "caja")
+        self.assertFalse(self.cta1.es_interactiva)
+        self.assertTrue(self.cta1.es_caja)
 
     def test_cuentas_generadas_son_subcuentas_de_cuenta_madre(self):
         self.cta1.dividir_entre(self.subcuentas)
@@ -405,13 +405,13 @@ class TestCuentaMadre(TestModelCuentaMetodos):
         self.assertEqual(self.cta1.subcuentas.count(), 3)
 
     def test_cuenta_interactiva_no_puede_ser_asignada_como_madre(self):
-        cta2 = Cuenta.crear('Caja', 'c')
-        cta2.cta_madre = self.cta1
+        cta4 = Cuenta.crear('Caja', 'c')
+        cta4.cta_madre = self.cta2
         with self.assertRaisesMessage(
                 ErrorTipo,
-                'Cuenta interactiva "Efectivo" no puede ser madre'
+                'Cuenta interactiva "Billetera" no puede ser madre'
         ):
-            cta2.full_clean()
+            cta4.full_clean()
 
     def test_si_se_asigna_cta_interactiva_con_saldo_a_cta_caja_se_suma_el_saldo(self):
         saldo_cta1 = self.cta1.saldo
