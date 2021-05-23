@@ -100,6 +100,9 @@ class Cuenta(MiModel):
                 f'Cuenta madre {self.cta_madre} está entre las subcuentas '
                 f'de {self} o entre las de una de sus subcuentas'
             )
+        if self.cta_madre and self.cta_madre.tipo == 'interactiva':
+            raise ErrorTipo(f'Cuenta interactiva "{self.cta_madre }" '
+                            f'no puede ser madre')
 
         super().full_clean(*args, **kwargs)
 
@@ -165,7 +168,6 @@ class Cuenta(MiModel):
 
     def dividir_entre(self, subcuentas):
         subsaldos = [subc.get('saldo') for subc in subcuentas]
-
         if subsaldos.count(None) == 1:
             subcta_sin_saldo = subsaldos.index(None)
             subsaldos.pop(subcta_sin_saldo)
@@ -178,11 +180,13 @@ class Cuenta(MiModel):
 
         lista_subcuentas = list()
         for subcuenta in subcuentas:
+            self.tipo = 'caja'
             cta = Cuenta.crear(
                 nombre=subcuenta['nombre'],
                 slug=subcuenta['slug'],
                 cta_madre=self,
             )
+            self.tipo = 'interactiva'
             Movimiento.crear(
                 concepto=f'Paso de saldo de {self.nombre} '
                          f'a subcuenta {cta.nombre}'[:80],

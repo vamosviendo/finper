@@ -359,7 +359,12 @@ class TestMetodoDividirEntre(TestModelCuentaMetodos):
         self.assertEqual(cta.saldo, 70)
 
     def test_no_acepta_mas_de_una_subcuenta_sin_saldo(self):
-        pass
+        self.subcuentas[0]['saldo'] = 250
+        self.subcuentas[1].pop('saldo')
+        self.subcuentas.append({'nombre': 'Cajita', 'slug': 'ecjt'})
+
+        with self.assertRaises(TypeError):
+            self.cta1.dividir_entre(self.subcuentas)
 
 
 class TestCuentaMadre(TestModelCuentaMetodos):
@@ -378,7 +383,7 @@ class TestCuentaMadre(TestModelCuentaMetodos):
         with self.assertRaises(ErrorTipo):
             self.cta2.full_clean()
 
-    def test_cuenta_interactiva_no_debe_tener_subcuentas(self):
+    def test_cuenta_interactiva_no_puede_tener_subcuentas(self):
         self.cta1.tipo = 'interactiva'
         with self.assertRaises(ErrorTipo):
             self.cta1.full_clean()
@@ -398,6 +403,15 @@ class TestCuentaMadre(TestModelCuentaMetodos):
         cta4.cta_madre = self.cta1
         cta4.save()
         self.assertEqual(self.cta1.subcuentas.count(), 3)
+
+    def test_cuenta_interactiva_no_puede_ser_asignada_como_madre(self):
+        cta2 = Cuenta.crear('Caja', 'c')
+        cta2.cta_madre = self.cta1
+        with self.assertRaisesMessage(
+                ErrorTipo,
+                'Cuenta interactiva "Efectivo" no puede ser madre'
+        ):
+            cta2.full_clean()
 
     def test_si_se_asigna_cta_interactiva_con_saldo_a_cta_caja_se_suma_el_saldo(self):
         saldo_cta1 = self.cta1.saldo

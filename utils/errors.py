@@ -9,6 +9,7 @@ ERROR_OPCIONES = 'Error no especificado en el campo opciones de Cuenta.'
 SALDO_NO_CERO = 'No se puede eliminar cuenta con saldo distinto de cero.'
 SALDO_NO_COINCIDE = 'El saldo de la cuenta no coincide con sus movimientos.'
 
+
 class SaldoNoCeroException(ValueError):
     """ Se eleva cuando se intenta eliminar una cuenta con saldo distinto de
         cero."""
