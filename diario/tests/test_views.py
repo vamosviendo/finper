@@ -289,7 +289,7 @@ class TestCtaDivFBV(TestCase):
         falso_render.assert_called_once_with(
             request,
             'diario/cta_div_formset.html',
-            {'form': falso_form}
+            {'formset': falso_form}
         )
 
     def test_pasa_datos_post_y_cta_original_a_form_subcuentas(self, falsoFormSubcuentas):
@@ -336,7 +336,10 @@ class TestCtaDivFBV(TestCase):
 
         self.assertEqual(response, falso_render.return_value)
         falso_render.assert_called_once_with(
-            self.request, 'diario/cta_div_formset.html', {'form': falso_form})
+            self.request,
+            'diario/cta_div_formset.html',
+            {'formset': falso_form},
+        )
 
 
 @skip

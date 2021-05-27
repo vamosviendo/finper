@@ -1,10 +1,32 @@
 {% extends 'diario/base.html' %}
+{% load static %}
+
+{% block extra-css %}
+<link rel="stylesheet" href="{% static '/diario/css/cta_div_formset.css' %}">
+{% endblock extra-css %}
+
 {% block contenido %}
 <h4>Dividir cuenta {{cta}} </h4>
 <form method="post">
-  <div class="form-group">
-    {{ form }}
-  </div>
+  {{ formset.non_form_errors.as_ul }}
+  {{ formset.management_form }}
+  <table>
+    {% for form in formset.forms %}
+    <tr class="form-group row">
+      {% for field in form.visible_fields %}
+      <td class="cta-form">
+        {% if forloop.first %}
+          {% for hidden in form.hidden_fields %}
+            {{ hidden }}
+          {% endfor %}
+        {% endif %}
+        {{ field.errors.as_ul }}
+        {{ field.label }}: {{ field }}
+      </td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </table>
   <button type="submit" id="id_btn_submit" class="btn btn-primary">Dividir</button>
   {% csrf_token %}
 </form>
