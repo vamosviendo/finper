@@ -59,13 +59,17 @@ class FormSubcuenta(ModelForm):
         return super().save(*args, **kwargs)
 
 
-CuentaFormset = modelformset_factory(Cuenta, form=FormSubcuenta)
+CuentaFormset = modelformset_factory(Cuenta, form=FormSubcuenta, extra=2)
 
 
 class FormSubcuentas(CuentaFormset):
 
+    def __init__(self, *args, **kwargs):
+        self.cuenta = kwargs.pop('cuenta')
+        super().__init__(*args, **kwargs)
+
     def save(self):
-        cta = Cuenta.objects.get(slug=self.data.get('form-cuenta'))
+        cta = Cuenta.objects.get(slug=self.cuenta)
         cta.dividir_entre(formset_2_dict_list(self.data))
         return cta
 

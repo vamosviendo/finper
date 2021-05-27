@@ -1,14 +1,16 @@
 import datetime
 from datetime import date
 from pathlib import Path
+from unittest import skip
 from unittest.mock import patch, MagicMock
 
+from django.http import HttpRequest
 from django.test import TestCase, RequestFactory
 from django.urls import reverse
 from django.utils.datastructures import MultiValueDict
 
 from diario.models import Cuenta, Movimiento
-from diario.views import CtaDivView
+from diario.views import CtaDivView, cta_div_view
 from utils.funciones.archivos import fijar_mtime
 
 
@@ -252,7 +254,93 @@ def patch_save():
     return mock
 
 
-@patch('diario.views.CtaDivView.form_class', new_callable=patch_save)
+@patch('diario.views.FormSubcuentas', new_callable=patch_save)
+class TestCtaDivFBV(TestCase):
+
+    def setUp(self):
+        self.cta = Cuenta.crear('Efectivo', 'e')
+        Movimiento.crear(
+            concepto='Ingreso de saldo', importe=250, cta_entrada=self.cta)
+        self.request = HttpRequest()
+        self.request.method = 'POST'
+        self.request.POST['form-TOTAL_FORMS'] = 2
+        self.request.POST['form-INITIAL_FORMS'] = 0
+        self.request.POST['form-0-nombre'] = 'Billetera'
+        self.request.POST['form-0-slug'] = 'eb'
+        self.request.POST['form-0-saldo'] = 50
+        self.request.POST['form-1-nombre'] = 'Cajón de arriba'
+        self.request.POST['form-1-slug'] = 'ec'
+        self.request.POST['form-1-saldo'] = 200
+
+    def test_usa_template_cta_div_formset(self, falsoFormSubcuentas):
+        response = self.client.get(reverse('cta_div', args=[self.cta.slug]))
+        self.assertTemplateUsed(response, 'diario/cta_div_formset.html')
+
+    @patch('diario.views.render')
+    def test_muestra_form_subcuentas_al_acceder_a_pagina(
+            self, falso_render, falsoFormSubcuentas):
+        falso_form = falsoFormSubcuentas.return_value
+        request = HttpRequest()
+        request.method = 'GET'
+
+        cta_div_view(request, slug=self.cta.slug)
+
+        falsoFormSubcuentas.assert_called_once_with(cuenta=self.cta.slug)
+        falso_render.assert_called_once_with(
+            request,
+            'diario/cta_div_formset.html',
+            {'form': falso_form}
+        )
+
+    def test_pasa_datos_post_y_cta_original_a_form_subcuentas(self, falsoFormSubcuentas):
+        cta_div_view(self.request, slug=self.cta.slug)
+        falsoFormSubcuentas.assert_called_with(
+            data=self.request.POST,
+            cuenta=self.cta.slug,
+        )
+
+    def test_guarda_form_si_los_datos_son_validos(self, falsoFormSubcuentas):
+        falso_form = falsoFormSubcuentas.return_value
+        falso_form.is_valid.return_value = True
+
+        cta_div_view(self.request, slug=self.cta.slug)
+
+        falso_form.save.assert_called_once()
+
+    @patch('diario.views.redirect')
+    def test_redirige_a_pag_de_cuenta_si_el_form_es_valido(
+            self, falso_redirect, falsoFormSubcuentas):
+        falso_form = falsoFormSubcuentas.return_value
+        falso_form.is_valid.return_value = True
+
+        response = cta_div_view(self.request, slug=self.cta.slug)
+
+        self.assertEqual(response, falso_redirect.return_value)
+        falso_redirect.assert_called_once_with(falso_form.save.return_value)
+
+    def test_no_guarda_form_si_los_datos_no_son_validos(self, falsoFormSubcuentas):
+        falso_form = falsoFormSubcuentas.return_value
+        falso_form.is_valid.return_value = False
+
+        cta_div_view(self.request, slug=self.cta.slug)
+
+        self.assertFalse(falso_form.save.called)
+
+    @patch('diario.views.render')
+    def test_vuelve_a_mostrar_template_y_form_con_form_no_valido(
+            self, falso_render, falsoFormSubcuentas):
+        falso_form = falsoFormSubcuentas.return_value
+        falso_form.is_valid.return_value = False
+
+        response = cta_div_view(self.request, slug=self.cta.slug)
+
+        self.assertEqual(response, falso_render.return_value)
+        falso_render.assert_called_once_with(
+            self.request, 'diario/cta_div_formset.html', {'form': falso_form})
+
+
+@skip
+@patch('diario.views.FormSubcuentas', new_callable=patch_save)
 class TestCtaDiv(TestCase):
 
     def setUp(self):
@@ -265,7 +353,7 @@ class TestCtaDiv(TestCase):
             data={
                 'form-TOTAL_FORMS': 2,
                 'form-INITIAL_FORMS': 0,
-                'form-cuenta': self.cta.slug,
+                # 'form-cuenta': self.cta.slug,
                 'form-0-nombre': 'Billetera',
                 'form-0-slug': 'ebil',
                 'form-0-saldo': 50,
@@ -280,23 +368,24 @@ class TestCtaDiv(TestCase):
         response = self.client.get(reverse('cta_div', args=[self.cta.slug]))
         self.assertTemplateUsed(response, 'diario/cta_div_formset.html')
 
-    def test_pasa_datos_POST_a_form_subcuentas(self, falso_FormSubcuentas):
-        self.div_view(self.request)
+    def test_pasa_datos_POST_y_cta_original_a_form_subcuentas(self, falso_FormSubcuentas):
+        self.div_view(self.request, slug=self.cta.slug)
         falso_FormSubcuentas.assert_called_once_with(
-            initial={},
-            prefix=None,
+            # initial={},
+            # prefix=None,
             data=self.request.POST,
             files=MultiValueDict(),
+            cuenta=self.cta.slug,
         )
 
     def test_pasa_cta_original_a_form_subcuentas(self, falso_FormSubcuentas):
-        self.div_view(self.request)
+        self.div_view(self.request, slug=self.cta.slug)
 
     def test_guarda_form_si_los_datos_son_validos(self, falso_FormSubcuentas):
         falso_form = falso_FormSubcuentas.return_value
         falso_form.is_valid.return_value = True
 
-        self.div_view(self.request)
+        self.div_view(self.request, slug=self.cta.slug)
 
         falso_form.save.assert_called_once()
 
@@ -304,7 +393,7 @@ class TestCtaDiv(TestCase):
         falso_form = falso_FormSubcuentas.return_value
         falso_form.is_valid.return_value = False
 
-        self.div_view(self.request)
+        self.div_view(self.request, slug=self.cta.slug)
 
         self.assertFalse(falso_form.save.called)
 
@@ -314,7 +403,7 @@ class TestCtaDiv(TestCase):
         falso_form = falso_FormSubcuentas.return_value
         falso_form.is_valid.return_value = True
 
-        response = self.div_view(self.request)
+        response = self.div_view(self.request, slug=self.cta.slug)
 
         self.assertEqual(response, falso_redirect.return_value)
         falso_redirect.assert_called_once_with(falso_form.save.return_value)
@@ -325,7 +414,7 @@ class TestCtaDiv(TestCase):
         falso_form = falso_FormSubcuentas.return_value
         falso_form.is_valid.return_value = False
 
-        response = self.div_view(self.request)
+        response = self.div_view(self.request, slug=self.cta.slug)
 
         # Se llamó al mock y no a la función de la clase
         falso_render.assert_called_once()
@@ -346,25 +435,23 @@ class TestCtaDivIntegration(TestCase):
         Movimiento.crear(
             concepto='Ingreso de saldo', importe=250, cta_entrada=self.cta)
         self.client.post(
-            reverse('cta_div', args=[self.cta]),
+            reverse('cta_div', args=[self.cta.slug]),
             data={
                 'form-TOTAL_FORMS': 2,
                 'form-INITIAL_FORMS': 0,
-                'form-cuenta': self.cta.slug,
                 'form-0-nombre': 'Billetera',
                 'form-0-slug': 'ebil',
                 'form-0-saldo': 50,
                 'form-1-nombre': 'Cajón de arriba',
                 'form-1-slug': 'ecaj',
                 'form-1-saldo': 200,
-            }
+            },
         )
         self.assertEqual(Cuenta.cantidad(), 3)
         self.assertEqual(
             len([x for x in Cuenta.todes() if x.es_interactiva]), 2)
         self.assertEqual(
             len([x for x in Cuenta.todes() if x.es_caja]), 1)
-
 
 
 class TestMovNuevo(TestCase):

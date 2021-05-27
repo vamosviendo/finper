@@ -24,17 +24,18 @@ class TestFormSubcuentas(TestCase):
         self.cta = Cuenta.crear(nombre='Efectivo', slug='E')
         Movimiento.crear(
             concepto='Ingreso de saldo', importe=250, cta_entrada=self.cta)
-        self.form = FormSubcuentas(data={
+        self.form = FormSubcuentas(
+            data={
                 'form-TOTAL_FORMS': 2,
                 'form-INITIAL_FORMS': 0,
-                'form-cuenta': self.cta.slug,
                 'form-0-nombre': 'Billetera',
                 'form-0-slug': 'ebil',
                 'form-0-saldo': 50,
                 'form-1-nombre': 'Cajón de arriba',
                 'form-1-slug': 'ecaj',
                 'form-1-saldo': 200,
-            }
+            },
+            cuenta=self.cta.slug,
         )
 
     def test_save_divide_cuenta(self, mockCuenta_dividir):
