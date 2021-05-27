@@ -257,8 +257,9 @@ class TestMetodoDividirEntre(TestModelCuentaMetodos):
         super().setUp()
         Movimiento.crear(concepto='00000', importe=150, cta_entrada=self.cta1)
         self.subcuentas = [
-            {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 50},
-            {'nombre': 'Cajón de arriba', 'slug': 'ecaj', 'saldo': 200},
+            {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 50, 'id': None},
+            {'nombre': 'Cajón de arriba', 'slug': 'ecaj', 'saldo': 200,
+             'id': None},
         ]
 
     def test_genera_cuentas_a_partir_de_lista_de_diccionarios(self):
@@ -372,8 +373,8 @@ class TestCuentaMadre(TestModelCuentaMetodos):
     def setUp(self):
         super().setUp()
         self.cta1.dividir_entre([
-            {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 25},
-            {'nombre': 'Cajón de arriba', 'slug': 'ecaj', 'saldo': 75},
+            {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 25, 'id': None},
+            {'nombre': 'Cajón de arriba', 'slug': 'ecaj', 'saldo': 75, 'id': None},
         ])
         self.cta2 = Cuenta.tomar(slug='ebil')
         self.cta3 = Cuenta.tomar(slug='ecaj')

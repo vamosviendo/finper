@@ -12,28 +12,6 @@ def agregar_clase(campo, clase):
         campo.widget.attrs['class'] = 'form-control'
 
 
-def formset_2_dict_list(data):
-    n = 0
-    list_regs = list()
-
-    while True:
-        dict_reg = {
-            k[2]:v for (k,v) in zip(
-                [k.split('-') for k in list(data.keys())],
-                data.values()
-            )
-            if k[1] == str(n) and len(k) == 3
-        }
-
-        if not dict_reg:
-            break
-
-        list_regs.append(dict_reg)
-        n += 1
-
-    return list_regs
-
-
 class FormCuenta(ModelForm):
 
     def __init__(self, *args, **kwargs):
@@ -70,7 +48,7 @@ class FormSubcuentas(CuentaFormset):
 
     def save(self):
         cta = Cuenta.objects.get(slug=self.cuenta)
-        cta.dividir_entre(formset_2_dict_list(self.data))
+        cta.dividir_entre(self.cleaned_data)
         return cta
 
 
