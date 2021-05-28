@@ -239,7 +239,7 @@ class Movimiento(MiModel):
     )
 
     class Meta:
-        ordering = ('fecha', 'concepto', )
+        ordering = ('fecha', )
 
     @property
     def sentido(self):
