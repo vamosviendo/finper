@@ -10,7 +10,7 @@ from django.urls import reverse
 from django.utils.datastructures import MultiValueDict
 
 from diario.models import Cuenta, Movimiento
-from diario.views import CtaDivView, cta_div_view
+from diario.views import cta_div_view
 from utils.funciones.archivos import fijar_mtime
 
 
@@ -433,10 +433,12 @@ class TestCtaDiv(TestCase):
 
 class TestCtaDivIntegration(TestCase):
 
-    def test_puede_dividir_cuenta_a_partir_de_POST(self):
+    def setUp(self):
         self.cta = Cuenta.crear('Efectivo', 'e')
         Movimiento.crear(
             concepto='Ingreso de saldo', importe=250, cta_entrada=self.cta)
+
+    def test_puede_dividir_cuenta_a_partir_de_POST(self):
         self.client.post(
             reverse('cta_div', args=[self.cta.slug]),
             data={

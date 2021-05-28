@@ -1,6 +1,4 @@
-from django.forms import \
-    DateInput, FloatField, ModelForm, NumberInput, TextInput, ValidationError, \
-    modelformset_factory
+from django import forms
 
 from diario.models import Cuenta, Movimiento
 
@@ -12,7 +10,7 @@ def agregar_clase(campo, clase):
         campo.widget.attrs['class'] = 'form-control'
 
 
-class FormCuenta(ModelForm):
+class FormCuenta(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -24,20 +22,13 @@ class FormCuenta(ModelForm):
         fields = ('nombre', 'slug', )
 
 
-class FormSubcuenta(ModelForm):
-
-    class Meta:
-        model = Cuenta
-        fields = ('nombre', 'slug', )
-
-    saldo = FloatField()
-
-    def save(self, *args, **kwargs):
-        self.instance.saldo = self.cleaned_data['saldo']
-        return super().save(*args, **kwargs)
+class FormSubcuenta(forms.Form):
+    nombre = forms.CharField()
+    slug = forms.CharField()
+    saldo = forms.FloatField()
 
 
-CuentaFormset = modelformset_factory(Cuenta, form=FormSubcuenta, extra=2)
+CuentaFormset = forms.formset_factory(form=FormSubcuenta, extra=2)
 
 
 class FormSubcuentas(CuentaFormset):
@@ -52,7 +43,7 @@ class FormSubcuentas(CuentaFormset):
         return cta
 
 
-class FormMovimiento(ModelForm):
+class FormMovimiento(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -64,9 +55,9 @@ class FormMovimiento(ModelForm):
         fields = ('fecha', 'concepto', 'detalle', 'importe', 'cta_entrada',
                   'cta_salida', )
         widgets = {
-            'detalle': TextInput,
-            'fecha': DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
-            'importe': NumberInput(attrs={'step': 0.01}),
+            'detalle': forms.TextInput,
+            'fecha': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            'importe': forms.NumberInput(attrs={'step': 0.01}),
         }
 
     def clean(self):
@@ -75,7 +66,9 @@ class FormMovimiento(ModelForm):
         if concepto.lower() == 'movimiento correctivo':
             self.add_error(
                 'concepto',
-                ValidationError(f'El concepto "{concepto}" está reservado '
-                                f'para su uso por parte del sistema')
+                forms.ValidationError(
+                    f'El concepto "{concepto}" está reservado para su uso '
+                    f'por parte del sistema'
+                )
             )
         return cleaned_data

@@ -18,12 +18,10 @@ class TestModificaCuenta(FunctionalTest):
         self.pulsar('id_btn_dividir')
         self.completar('id_form-0-nombre', 'Cajón de arriba')
         self.completar('id_form-0-slug', 'ecar')
-        self.completar('id_form-0-saldo', 120)
+        self.completar('id_form-0-saldo', 150)
         self.completar('id_form-1-nombre', 'Billetera')
         self.completar('id_form-1-slug', 'ebil')
         self.completar('id_form-1-saldo', 50)
-        self.completar('id_form-2-nombre', 'Canuto')
-        self.completar('id_form-2-slug', 'ecan')
         self.pulsar()
 
         saldo = self.esperar_elemento('id_div_saldo_e')

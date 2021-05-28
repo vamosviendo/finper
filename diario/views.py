@@ -5,8 +5,7 @@ from django.db.models import Sum
 from django.shortcuts import render, redirect
 from django.urls import reverse, reverse_lazy
 from django.views.generic import \
-    CreateView, UpdateView, DeleteView, TemplateView, FormView
-from django.views.generic.detail import SingleObjectMixin, DetailView
+    CreateView, UpdateView, DeleteView, TemplateView
 
 from diario.forms import FormCuenta, FormMovimiento, FormSubcuentas
 from diario.models import Cuenta, Movimiento
@@ -102,7 +101,9 @@ class CtaModView(UpdateView):
 
 
 def cta_div_view(request, slug):
-    formset = FormSubcuentas(cuenta=slug)
+    formset = FormSubcuentas(
+        cuenta=slug,
+    )
     if request.method == 'POST':
         formset = FormSubcuentas(data=request.POST, cuenta=slug)
         if formset.is_valid():
@@ -110,49 +111,6 @@ def cta_div_view(request, slug):
             return redirect(cuenta)
 
     return render(request, 'diario/cta_div_formset.html', {'formset': formset})
-
-
-class CtaDivView(DetailView):
-    model = Cuenta
-    template_name = 'diario/cta_div_formset.html'
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.form = FormSubcuentas()
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['form'] = self.form
-        return context
-
-    def post(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        if self.form.is_valid():
-            self.form.save()
-
-
-class CtaDivViewNo(SingleObjectMixin, FormView):
-    template_name = 'diario/cta_div_formset.html'
-    form_class = FormSubcuentas
-    # context_object_name = 'cuenta_madre'
-    model = Cuenta
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.object = self.get_object(queryset = Cuenta.objects.all())
-    #
-    # def get(self, request, *args, **kwargs):
-    #     self.object = self.get_object()
-    #     return super().get(request, *args, **kwargs)
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['cuenta'] = self.object.slug
-        return kwargs
-    #
-    # def form_valid(self, form):
-    #     self.object = form.save()
-    #     return redirect(self.object)
 
 
 def mov_nuevo(request):

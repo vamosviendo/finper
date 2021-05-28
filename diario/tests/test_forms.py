@@ -1,4 +1,5 @@
 from datetime import date
+from unittest import skip
 from unittest.mock import patch
 
 from django.core.exceptions import NON_FIELD_ERRORS
@@ -42,9 +43,8 @@ class TestFormSubcuentas(TestCase):
         self.form.is_valid()
         self.form.save()
         mockCuenta_dividir.assert_called_once_with([
-            {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 50, 'id': None},
-            {'nombre': 'Cajón de arriba', 'slug': 'ecaj', 'saldo': 200,
-             'id': None},
+            {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 50.0},
+            {'nombre': 'Cajón de arriba', 'slug': 'ecaj', 'saldo': 200.0},
         ])
 
     def test_save_devuelve_cuenta_madre(self, mockCuenta_dividir):
