@@ -247,8 +247,7 @@ class Movimiento(MiModel):
             return 't'
         if self.cta_entrada:
             return 'e'
-        if self.cta_salida:
-            return 's'
+        return 's'
 
     def __str__(self):
         string = f'{self.fecha.strftime("%Y-%m-%d")} {self.concepto}: ' \
