@@ -12,21 +12,6 @@ from diario.models import Cuenta, Movimiento
 from diario.utils import verificar_saldos
 
 
-def home(request):
-    cuentas = Cuenta.todes()
-
-    saldo_gral = cuentas.aggregate(Sum('saldo'))['saldo__sum']
-
-    return render(
-        request, 'diario/home.html',
-        {
-            'cuentas': cuentas,
-            'saldo_gral': saldo_gral or 0,
-            'ult_movs': Movimiento.todes(),
-        }
-    )
-
-
 class HomeView(TemplateView):
     template_name = 'diario/home.html'
 
@@ -57,16 +42,6 @@ class HomeView(TemplateView):
         })
 
         return context
-
-
-def cuenta_nueva(request):
-    form = FormCuenta()
-    if request.method == 'POST':
-        form = FormCuenta(data=request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect(reverse('home'))
-    return render(request, 'diario/cta_nueva.html', {'form': form})
 
 
 class CtaNuevaView(CreateView):
@@ -111,20 +86,6 @@ def cta_div_view(request, slug):
             return redirect(cuenta)
 
     return render(request, 'diario/cta_div_formset.html', {'formset': formset})
-
-
-def mov_nuevo(request):
-    form = FormMovimiento()
-    if request.method == 'POST':
-        form = FormMovimiento(data=request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect(reverse('home'))
-    return render(
-        request,
-        'diario/mov_nuevo.html',
-        context={'form': form}
-    )
 
 
 class MovNuevoView(CreateView):
