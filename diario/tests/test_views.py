@@ -71,6 +71,21 @@ class TestHomePage(TestCase):
         self.assertContains(response, '25.00')
         self.assertContains(response, '75.00')
 
+    def test_pasa_solo_cuentas_independientes_a_template(self):
+        cta1 = Cuenta.crear(nombre='Efectivo', slug='E')
+        cta2 = Cuenta.crear(nombre='Banco', slug='B')
+        subctas = cta2.dividir_entre([
+            {'nombre': 'Caja de ahorro', 'slug': 'bca', 'saldo': 0},
+            {'nombre': 'Cuenta corriente', 'slug': 'bcc'},
+        ])
+
+        response = self.client.get(reverse('home'))
+
+        self.assertIn(cta1, response.context['cuentas'])
+        self.assertIn(cta2, response.context['cuentas'])
+        for cta in subctas:
+            self.assertNotIn(cta, response.context['cuentas'])
+
     def test_pasa_saldos_generales_a_template(self):
         cta1 = Cuenta.crear(nombre='Efectivo', slug='E')
         cta2 = Cuenta.crear(nombre='Banco', slug='B')
@@ -80,6 +95,20 @@ class TestHomePage(TestCase):
         response = self.client.get(reverse('home'))
 
         self.assertContains(response, '350.00')
+
+    def test_considera_solo_cuentas_independientes_para_calcular_saldo_gral(self):
+        cta1 = Cuenta.crear(nombre='Efectivo', slug='E')
+        cta2 = Cuenta.crear(nombre='Banco', slug='B')
+        Movimiento.crear(concepto='m1', importe=125, cta_entrada=cta1)
+        Movimiento.crear(concepto='m3', importe=225, cta_entrada=cta2)
+        subctas = cta2.dividir_entre([
+            {'nombre': 'Caja de ahorro', 'slug': 'bca', 'saldo': 200},
+            {'nombre': 'Cuenta corriente', 'slug': 'bcc'},
+        ])
+
+        response = self.client.get(reverse('home'))
+
+        self.assertEqual(response.context['saldo_gral'], 350)
 
     def test_si_no_hay_movimientos_pasa_0_a_saldo_general(self):
         response = self.client.get(reverse('home'))

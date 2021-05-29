@@ -209,7 +209,6 @@ class TestModelMovimientoPropiedades(TestModelMovimiento):
         self.assertEqual(mov3.sentido, 't')
 
 
-
 class TestModelMovimientoSaldos(TestModelMovimiento):
 
     def setUp(self):

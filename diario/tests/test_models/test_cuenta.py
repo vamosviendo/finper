@@ -496,6 +496,17 @@ class TestCuentaMadre(TestModelCuentaMetodos):
             'Mov de entrada en subcuenta no se refleja en saldo de cta madre'
         )
 
+    def test_movimiento_entre_subcuenta_y_otra_cta_independiente_se_refleja_en_saldo_de_cta_madre(self):
+        saldo_cta1 = self.cta1.saldo
+        cta4 = Cuenta.crear('Caja de ahorro', 'ca')
+
+        Movimiento.crear(
+            concepto='Depósito', importe=20,
+            cta_entrada=cta4, cta_salida=self.cta2
+        )
+        self.cta1.refresh_from_db()
+        self.assertEqual(self.cta1.saldo, saldo_cta1-20)
+
     def test_movimiento_en_subcuenta_se_refleja_en_saldo_de_cta_abuela(self):
 
         self.cta3.dividir_entre([
