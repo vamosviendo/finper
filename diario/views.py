@@ -5,7 +5,7 @@ from django.db.models import Sum
 from django.shortcuts import render, redirect
 from django.urls import reverse, reverse_lazy
 from django.views.generic import \
-    CreateView, UpdateView, DeleteView, TemplateView
+    DetailView, CreateView, UpdateView, DeleteView, TemplateView
 
 from diario.forms import FormCuenta, FormMovimiento, FormSubcuentas
 from diario.models import Cuenta, Movimiento
@@ -43,6 +43,11 @@ class HomeView(TemplateView):
         })
 
         return context
+
+
+class CtaDetalleView(DetailView):
+    model = Cuenta
+    template_name = 'diario/cta_detalle.html'
 
 
 class CtaNuevaView(CreateView):

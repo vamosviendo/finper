@@ -143,6 +143,11 @@ class Cuenta(MiModel):
     def get_absolute_url(self):
         return reverse('cta_mod', args=[self.slug])
 
+    def movs(self):
+        return list(
+            (self.entradas.all() | self.salidas.all()).order_by('fecha')
+        )
+
     def cantidad_movs(self):
         return self.entradas.count() + self.salidas.count()
 

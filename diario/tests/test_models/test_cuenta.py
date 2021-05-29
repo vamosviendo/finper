@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
@@ -169,6 +171,32 @@ class TestMetodosMovsYSaldos(TestModelCuentaMetodos):
         )
         Movimiento.crear(concepto='mov3', importe=80, cta_entrada=self.cta1)
         Movimiento.crear(concepto='mov4', importe=50, cta_entrada=self.cta2)
+
+    def test_movs_devuelve_todos_los_movimientos_de_una_cuenta(self):
+        movs_cta1 = [
+            Movimiento.tomar(concepto='00000'),
+            Movimiento.tomar(concepto='mov2'),
+            Movimiento.tomar(concepto='mov3'),
+        ]
+        for mov in movs_cta1:
+            self.assertIn(mov, self.cta1.movs())
+
+    def test_movs_devuelve_movimientos_ordenados_por_fecha(self):
+        movs_cta1 = [
+            Movimiento.tomar(concepto='00000'),
+            Movimiento.tomar(concepto='mov2'),
+            Movimiento.tomar(concepto='mov3'),
+        ]
+        movs_cta1[0].fecha = datetime(2021, 5, 25)
+        movs_cta1[1].fecha = datetime(2020, 12, 2)
+        movs_cta1[2].fecha = datetime(2021, 2, 28)
+        for mov in movs_cta1:
+            mov.save()
+
+        self.assertEqual(
+            self.cta1.movs(),
+            [movs_cta1[1], movs_cta1[2], movs_cta1[0]]
+        )
 
     def test_cantidad_movs_devuelve_entradas_mas_salidas(self):
         self.assertEqual(self.cta1.cantidad_movs(), 3)

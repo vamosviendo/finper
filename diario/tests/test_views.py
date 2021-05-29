@@ -187,6 +187,33 @@ class TestHomePageVerificarSaldo(TestCase):
         self.assertRedirects(response, f"{reverse('corregir_saldo')}?ctas=e!b")
 
 
+class TestCtaDetalle(TestCase):
+
+    def setUp(self):
+        self.cta = Cuenta.crear('Efectivo', 'e')
+        Movimiento.crear(
+            concepto='a primer movimiento', importe=100, cta_entrada=self.cta)
+        Movimiento.crear(
+            concepto='b segundo movimiento', importe=30, cta_salida=self.cta)
+
+    def test_usa_template_cta_detalle(self):
+        response = self.client.get(
+            reverse('cta_detalle', args=[self.cta.slug]))
+        self.assertTemplateUsed(response, 'diario/cta_detalle.html')
+
+    def test_pasa_cuenta_a_template(self):
+        response = self.client.get(
+            reverse('cta_detalle', args=[self.cta.slug]))
+        self.assertEqual(response.context['cuenta'], self.cta)
+        self.assertContains(response, self.cta.nombre)
+
+    def test_integrativo_pasa_movs_de_cuenta_a_template(self):
+        response = self.client.get(
+            reverse('cta_detalle', args=[self.cta.slug]))
+        self.assertContains(response, 'a primer movimiento')
+        self.assertContains(response, 'b segundo movimiento')
+
+
 class TestCtaNueva(TestCase):
 
     def test_usa_template_cta_form(self):
