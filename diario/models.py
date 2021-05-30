@@ -144,9 +144,10 @@ class Cuenta(MiModel):
         return reverse('cta_mod', args=[self.slug])
 
     def movs(self):
-        return list(
-            (self.entradas.all() | self.salidas.all()).order_by('fecha')
-        )
+        result = self.entradas.all() | self.salidas.all()
+        for sc in self.subcuentas.all():
+            result = result | sc.movs()
+        return result.order_by('fecha')
 
     def cantidad_movs(self):
         return self.entradas.count() + self.salidas.count()

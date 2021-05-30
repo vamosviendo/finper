@@ -1,8 +1,19 @@
+from selenium.webdriver.common.by import By
+
 from diario.models import Cuenta, Movimiento
 from .base import FunctionalTest
 
 
 class TestDetalleCuenta(FunctionalTest):
+
+    def esperar_elementos_especificos(
+            self, tipo, elementos, criterio=By.CLASS_NAME):
+        lista_elementos = self.esperar_elementos(tipo, criterio)
+        self.assertEqual(len(lista_elementos), len(elementos))
+        atribs = [x.text for x in lista_elementos]
+        for atrib in atribs:
+            self.assertIn(atrib, elementos)
+        return lista_elementos
 
     def test_detalle_de_cuentas(self):
 
@@ -62,11 +73,50 @@ class TestDetalleCuenta(FunctionalTest):
         )
         # En la tabla de movimientos se muestran solamente los relacionados
         # con esa cuenta.
-        movimientos = self.esperar_elementos('class_row_mov')
-        self.assertEqual(len(movimientos), 2)
-        conceptos = [
-            x.find_element_by_css_selector('td.class_td_concepto').text
-            for x in movimientos
-        ]
-        self.assertEqual(conceptos[0], 'Saldo inicial')
-        self.assertEqual(conceptos[1], 'Extracción bancaria')
+        self.esperar_elementos_especificos(
+            '.class_row_mov td.class_td_concepto',
+            ['Saldo inicial', 'Extracción bancaria'],
+            By.CSS_SELECTOR
+        )
+
+        # Probamos lo mismo con una cuenta dividida en subcuentas
+        self.ir_a_pag()
+        links_cuenta = self.esperar_elementos('link_cuenta')
+        links_cuenta[0].click()
+        self.assertEqual(
+            self.esperar_elemento('id_header_saldo_gral').text,
+            'Banco'
+        )
+
+        # En la grilla de cuentas aparecen las subcuentas de 'Banco'
+        links_cuenta = self.esperar_elementos_especificos(
+            'link_cuenta', ['Caja de ahorro', 'Cuenta corriente'])
+        # En la tabla de movimientos se muestran solamente los relacionados
+        # con esa cuenta.
+        self.esperar_elementos_especificos(
+            '.class_row_mov td.class_td_concepto',
+            [
+                'Saldo inicial',
+                'Paso de saldo de Banco a subcuenta Caja de ahorro',
+                'Paso de saldo de Banco a subcuenta Cuenta corriente',
+                'Extracción bancaria',
+            ],
+            By.CSS_SELECTOR
+        )
+
+        # Finalmente, probamos con una subcuenta de Banco
+        links_cuenta[0].click()
+        self.assertEqual(
+            self.esperar_elemento('id_header_saldo_gral').text,
+            'Caja de ahorro'
+        )
+        # En la tabla de movimientos se muestran solamente los relacionados
+        # con esa cuenta.
+        self.esperar_elementos_especificos(
+            '.class_row_mov td.class_td_concepto',
+            [
+                'Paso de saldo de Banco a subcuenta Caja de ahorro',
+                'Extracción bancaria',
+            ],
+            By.CSS_SELECTOR
+        )

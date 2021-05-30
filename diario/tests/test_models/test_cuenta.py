@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from django.core.exceptions import ValidationError
+from django.db.models import QuerySet
 from django.test import TestCase
 
 from diario.models import Cuenta, Movimiento
@@ -181,21 +182,38 @@ class TestMetodosMovsYSaldos(TestModelCuentaMetodos):
         for mov in movs_cta1:
             self.assertIn(mov, self.cta1.movs())
 
+    def test_movs_incluye_movimientos_de_subcuentas(self):
+        subcuentas = self.cta1.dividir_entre([
+            {'nombre': 'Billetera', 'slug': 'eb', 'saldo': 30, },
+            {'nombre': 'Cajoncito', 'slug': 'ec', }
+        ])
+        mov_subcuenta = Movimiento.crear(
+            concepto='movsubc', importe=10, cta_salida=subcuentas[0])
+
+        self.assertIn(mov_subcuenta, self.cta1.movs())
+
+        subsubctas = Cuenta.tomar(slug='eb').dividir_entre([
+            {'nombre': 'Primera billetera', 'slug': 'eb1', 'saldo': 15},
+            {'nombre': 'Segunda billetera', 'slug': 'eb2', },
+        ])
+        mov_subsubc = Movimiento.crear(
+            concepto='movsubsub', importe=5, cta_salida=subsubctas[1])
+
+        self.assertIn(mov_subsubc, self.cta1.movs())
+
     def test_movs_devuelve_movimientos_ordenados_por_fecha(self):
-        movs_cta1 = [
-            Movimiento.tomar(concepto='00000'),
-            Movimiento.tomar(concepto='mov2'),
-            Movimiento.tomar(concepto='mov3'),
-        ]
-        movs_cta1[0].fecha = datetime(2021, 5, 25)
-        movs_cta1[1].fecha = datetime(2020, 12, 2)
-        movs_cta1[2].fecha = datetime(2021, 2, 28)
-        for mov in movs_cta1:
+        m1 = Movimiento.tomar(concepto='00000')
+        m2 = Movimiento.tomar(concepto='mov2')
+        m3 = Movimiento.tomar(concepto='mov3')
+        m1.fecha = datetime(2021, 5, 25)
+        m2.fecha = datetime(2020, 12, 2)
+        m3.fecha = datetime(2021, 2, 28)
+        for mov in [m1, m2, m3]:
             mov.save()
 
         self.assertEqual(
-            self.cta1.movs(),
-            [movs_cta1[1], movs_cta1[2], movs_cta1[0]]
+            list(self.cta1.movs()),
+            [m2, m3, m1]
         )
 
     def test_cantidad_movs_devuelve_entradas_mas_salidas(self):
