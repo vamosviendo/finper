@@ -51,13 +51,15 @@ class Cuenta(MiModel):
     class Meta:
         ordering = ('nombre', )
 
-    @staticmethod
-    def crear(nombre, slug, opciones='i', cta_madre=None):
-        cuenta = Cuenta(
-            nombre=nombre, slug=slug, opciones=opciones, cta_madre=cta_madre)
-        cuenta.full_clean()
-        cuenta.save()
-        return cuenta
+    @classmethod
+    def crear(cls, nombre, slug, opciones='i', cta_madre=None, **kwargs):
+        return super().crear(
+            nombre=nombre,
+            slug=slug,
+            opciones=opciones,
+            cta_madre=cta_madre,
+            **kwargs
+        )
 
     def __str__(self):
         return self.nombre
