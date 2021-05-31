@@ -10,8 +10,7 @@ from utils import errors
 from utils.clases.mimodel import MiModel
 from utils.errors import \
     ErrorDeSuma, ErrorDependenciaCircular, ErrorOpciones, ErrorTipo, \
-    SaldoNoCeroException
-from utils.funciones.numeros import float_or_none
+    SaldoNoCeroException, SUBCUENTAS_SIN_SALDO
 
 
 def hoy():
@@ -186,39 +185,65 @@ class Cuenta(MiModel):
         self.save()
         return mov
 
-    def dividir_entre(self, subcuentas):
+    def dividir_entre(self, *subcuentas):
 
-        # Si una (y solo una) cuenta no tiene saldo, completar con diferencia
-        subsaldos = [float_or_none(subc.get('saldo')) for subc in subcuentas]
-        if subsaldos.count(None) == 1:
-            subcta_sin_saldo = subsaldos.index(None)
-            subsaldos.pop(subcta_sin_saldo)
-            subcuentas[subcta_sin_saldo]['saldo'] = self.saldo - sum(subsaldos)
-            subsaldos.append(subcuentas[subcta_sin_saldo]['saldo'])
-        if sum(subsaldos) != self.saldo:
+        # Limpieza de los argumentos
+        # Si se pasa una lista convertirla en argumentos sueltos
+        if len(subcuentas) == 1 and type(subcuentas) in (list, tuple):
+            subcuentas = subcuentas[0]
+
+        cuentas_limpias = list()
+
+        for i, subcuenta in enumerate(subcuentas):
+            if type(subcuenta) in (list, tuple):
+                try:
+                    subcuenta = {
+                        'nombre': subcuenta[0],
+                        'slug': subcuenta[1],
+                        'saldo': subcuenta[2]
+                    }
+                except IndexError:
+                    subcuenta = {'nombre': subcuenta[0], 'slug': subcuenta[1]}
+
+            try:
+                saldo = subcuenta['saldo']
+            except KeyError:
+                subcuenta['saldo'] = 0
+                try:
+                    subcuenta['saldo'] = \
+                        self.saldo - sum([x['saldo'] for x in subcuentas])
+                except TypeError:
+                    subcus = list(subcuentas)[:i] + list(subcuentas)[i+1:]
+                    try:
+                        subcuenta['saldo'] = \
+                            self.saldo - sum([x[2] for x in subcus])
+                    except IndexError:
+                        raise ErrorDeSuma(SUBCUENTAS_SIN_SALDO)
+                except KeyError:
+                    raise ErrorDeSuma(SUBCUENTAS_SIN_SALDO)
+            cuentas_limpias.append(subcuenta)
+
+        if sum([x['saldo'] for x in cuentas_limpias]) != self.saldo:
             raise ErrorDeSuma(f'Suma errónea. Saldos de subcuentas '
                               f'deben sumar {self.saldo:.2f}')
 
-        lista_subcuentas = list()
-        for subcuenta in subcuentas:
-            self.tipo = 'caja'
-            cta = Cuenta.crear(
-                nombre=subcuenta['nombre'],
-                slug=subcuenta['slug'],
-                cta_madre=self,
-            )
+        # Generación de subcuentas y traspaso de saldos
+        self.tipo = 'caja'
+        cuentas_creadas = list()
+        for i, subcuenta in enumerate(cuentas_limpias):
+            saldo = subcuenta.pop('saldo')
+            cuentas_creadas.append(Cuenta.crear(**subcuenta, cta_madre=self))
             self.tipo = 'interactiva'
             Movimiento.crear(
                 concepto=f'Paso de saldo de {self.nombre} '
-                         f'a subcuenta {cta.nombre}'[:80],
-                importe=subcuenta['saldo'],
-                cta_entrada=cta,
+                         f'a subcuenta {cuentas_creadas[i].nombre}'[:80],
+                importe=saldo,
+                cta_entrada=cuentas_creadas[i],
                 cta_salida=self,
             )
-            lista_subcuentas.append(cta)
-        self.tipo = 'caja'
+            self.tipo = 'caja'
         self.save()
-        return lista_subcuentas
+        return cuentas_creadas
 
     def esta_en_una_caja(self):
         return self.cta_madre is not None

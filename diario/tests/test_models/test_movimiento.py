@@ -744,10 +744,10 @@ class TestModelMovimientoCuentas(TestModelMovimiento):
 
     def setUp(self):
         super().setUp()
-        self.cuenta1.dividir_entre([
+        self.cuenta1.dividir_entre(
             {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 0},
             {'nombre': 'Cajón', 'slug': 'ecaj', 'saldo': 0},
-        ])
+        )
 
     def test_movimiento_no_acepta_cuenta_no_interactiva(self):
         with self.assertRaises(ValidationError):

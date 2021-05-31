@@ -28,10 +28,10 @@ class TestDetalleCuenta(FunctionalTest):
             concepto='Saldo inicial', importe=300, cta_entrada=cta2)
 
         # Dividir cuenta en subcuentas
-        cta2.dividir_entre([
+        cta2.dividir_entre(
             {'nombre': 'Caja de ahorro', 'slug': 'bca', 'saldo': 100, },
             {'nombre': 'Cuenta corriente', 'slug': 'bcc', 'saldo': 200, },
-        ])
+        )
         cta3 = Cuenta.tomar(slug='bca')
         cta4 = Cuenta.tomar(slug='bcc')
 

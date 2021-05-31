@@ -183,19 +183,19 @@ class TestMetodosMovsYSaldos(TestModelCuentaMetodos):
             self.assertIn(mov, self.cta1.movs())
 
     def test_movs_incluye_movimientos_de_subcuentas(self):
-        subcuentas = self.cta1.dividir_entre([
+        subcuentas = self.cta1.dividir_entre(
             {'nombre': 'Billetera', 'slug': 'eb', 'saldo': 30, },
             {'nombre': 'Cajoncito', 'slug': 'ec', }
-        ])
+        )
         mov_subcuenta = Movimiento.crear(
             concepto='movsubc', importe=10, cta_salida=subcuentas[0])
 
         self.assertIn(mov_subcuenta, self.cta1.movs())
 
-        subsubctas = Cuenta.tomar(slug='eb').dividir_entre([
+        subsubctas = Cuenta.tomar(slug='eb').dividir_entre(
             {'nombre': 'Primera billetera', 'slug': 'eb1', 'saldo': 15},
             {'nombre': 'Segunda billetera', 'slug': 'eb2', },
-        ])
+        )
         mov_subsubc = Movimiento.crear(
             concepto='movsubsub', importe=5, cta_salida=subsubctas[1])
 
@@ -308,37 +308,32 @@ class TestMetodoDividirEntre(TestModelCuentaMetodos):
         ]
 
     def test_genera_cuentas_a_partir_de_lista_de_diccionarios(self):
-        self.cta1.dividir_entre(self.subcuentas)
+        self.cta1.dividir_entre(*self.subcuentas)
 
         subcuenta1 = Cuenta.tomar(slug='ebil')
         subcuenta2 = Cuenta.tomar(slug='ecaj')
 
         self.assertEqual(subcuenta1.nombre, 'Billetera')
-        self.assertEqual(subcuenta1.saldo, 50)
         self.assertEqual(subcuenta2.nombre, 'Cajón de arriba')
-        self.assertEqual(subcuenta2.saldo, 200)
 
-    def test_acepta_mas_de_dos_subcuentas(self):
-        self.subcuentas[1]['saldo'] = 130
-        self.subcuentas.append(
-            {'nombre': 'Cajita', 'slug':'ecjt', 'saldo': 70})
+    def test_cuentas_generadas_son_subcuentas_de_cuenta_madre(self):
+        self.cta1.dividir_entre(*self.subcuentas)
+        cta2 = Cuenta.tomar(slug='ebil')
+        cta3 = Cuenta.tomar(slug='ecaj')
 
-        self.cta1.dividir_entre(self.subcuentas)
+        self.assertEqual(cta2.cta_madre, self.cta1)
+        self.assertEqual(cta3.cta_madre, self.cta1)
 
-        self.assertEqual(self.cta1.subcuentas.count(), 3)
-        self.assertEqual(
-            sum([cta.saldo for cta in self.cta1.subcuentas.all()]),
-            250
-        )
+        self.assertEqual(list(self.cta1.subcuentas.all()), [cta2, cta3, ])
 
     def test_devuelve_lista_con_subcuentas_creadas(self):
         self.assertEqual(
-            self.cta1.dividir_entre(self.subcuentas),
+            self.cta1.dividir_entre(*self.subcuentas),
             [Cuenta.tomar(slug='ebil'), Cuenta.tomar(slug='ecaj')]
         )
 
     def test_genera_movimientos_de_traspaso_entre_cta_madre_y_subcuentas(self):
-        self.cta1.dividir_entre(self.subcuentas)
+        self.cta1.dividir_entre(*self.subcuentas)
 
         subcuenta1 = Cuenta.tomar(slug='ebil')
         subcuenta2 = Cuenta.tomar(slug='ecaj')
@@ -361,43 +356,37 @@ class TestMetodoDividirEntre(TestModelCuentaMetodos):
         self.assertEqual(movs[3].cta_entrada, subcuenta2)
         self.assertEqual(movs[3].cta_salida, self.cta1)
 
+    def test_acepta_mas_de_dos_subcuentas(self):
+        self.subcuentas[1]['saldo'] = 130
+        self.subcuentas.append(
+            {'nombre': 'Cajita', 'slug':'ecjt', 'saldo': 70})
+
+        self.cta1.dividir_entre(*self.subcuentas)
+
+        self.assertEqual(self.cta1.subcuentas.count(), 3)
+        self.assertEqual(
+            sum([cta.saldo for cta in self.cta1.subcuentas.all()]),
+            250
+        )
+
     def test_cuenta_madre_se_convierte_en_caja(self):
-        self.cta1.dividir_entre(self.subcuentas)
+        self.cta1.dividir_entre(*self.subcuentas)
         self.assertFalse(self.cta1.es_interactiva)
         self.assertTrue(self.cta1.es_caja)
 
-    def test_cuentas_generadas_son_subcuentas_de_cuenta_madre(self):
-        self.cta1.dividir_entre(self.subcuentas)
-        cta2 = Cuenta.tomar(slug='ebil')
-        cta3 = Cuenta.tomar(slug='ecaj')
-
-        self.assertEqual(cta2.cta_madre, self.cta1)
-        self.assertEqual(cta3.cta_madre, self.cta1)
-
-        self.assertEqual(list(self.cta1.subcuentas.all()), [cta2, cta3, ])
-
     def test_saldo_de_cta_madre_es_igual_a_la_suma_de_saldos_de_subcuentas(self):
-        self.cta1.dividir_entre(self.subcuentas)
+        self.cta1.dividir_entre(*self.subcuentas)
 
         cta2 = Cuenta.tomar(slug='ebil')
         cta3 = Cuenta.tomar(slug='ecaj')
 
         self.assertEqual(self.cta1.saldo, cta2.saldo + cta3.saldo)
 
-    def test_da_error_si_suma_de_saldos_subcuentas_no_coinciden_con_saldo(self):
-        self.subcuentas[1]['saldo'] = 235
-
-        with self.assertRaisesMessage(
-                ErrorDeSuma,
-                "Suma errónea. Saldos de subcuentas deben sumar 250.00"
-        ):
-            self.cta1.dividir_entre(self.subcuentas)
-
     def test_acepta_y_completa_una_subcuenta_sin_saldo(self):
         self.subcuentas[1]['saldo'] = 130
         self.subcuentas.append({'nombre': 'Cajita', 'slug': 'ecjt'})
 
-        self.cta1.dividir_entre(self.subcuentas)
+        self.cta1.dividir_entre(*self.subcuentas)
 
         cta = Cuenta.tomar(slug='ecjt')
 
@@ -409,18 +398,90 @@ class TestMetodoDividirEntre(TestModelCuentaMetodos):
         self.subcuentas[1].pop('saldo')
         self.subcuentas.append({'nombre': 'Cajita', 'slug': 'ecjt'})
 
-        with self.assertRaises(TypeError):
-            self.cta1.dividir_entre(self.subcuentas)
+        with self.assertRaises(ErrorDeSuma):
+            self.cta1.dividir_entre(*self.subcuentas)
+
+    def test_da_error_si_suma_de_saldos_subcuentas_no_coinciden_con_saldo(self):
+        self.subcuentas[1]['saldo'] = 235
+
+        with self.assertRaisesMessage(
+                ErrorDeSuma,
+                "Suma errónea. Saldos de subcuentas deben sumar 250.00"
+        ):
+            self.cta1.dividir_entre(*self.subcuentas)
+
+    def test_funciona_con_lista_de_dicts(self):
+        self.cta1.dividir_entre(self.subcuentas)   # No debe dar error
+
+    def test_funciona_con_tuplas_o_listas_con_nombre_slug_y_saldo(self):
+        subctas = self.cta1.dividir_entre(
+            ('Billetera', 'ebil', 50), ('Cajón de arriba', 'ecaj', 200))
+        self.assertEqual(subctas[0].nombre, 'Billetera')
+        self.assertEqual(subctas[1].nombre, 'Cajón de arriba')
+
+        self.assertEqual(subctas[0].slug, 'ebil')
+        self.assertEqual(subctas[1].slug, 'ecaj')
+
+        self.assertEqual(subctas[0].saldo, 50.0)
+        self.assertEqual(subctas[1].saldo, 200.0)
+
+    def test_funciona_con_listas(self):
+        subctas = self.cta1.dividir_entre(
+            ['Billetera', 'ebil', 50], ['Cajón de arriba', 'ecaj', 200])
+        self.assertEqual(subctas[0].nombre, 'Billetera')
+        self.assertEqual(subctas[1].nombre, 'Cajón de arriba')
+
+        self.assertEqual(subctas[0].slug, 'ebil')
+        self.assertEqual(subctas[1].slug, 'ecaj')
+
+        self.assertEqual(subctas[0].saldo, 50.0)
+        self.assertEqual(subctas[1].saldo, 200.0)
+
+    def test_funciona_con_tupla_y_lista(self):
+        subctas = self.cta1.dividir_entre(
+            ('Billetera', 'ebil', 50), ['Cajón de arriba', 'ecaj', 200])
+        self.assertEqual(subctas[0].nombre, 'Billetera')
+        self.assertEqual(subctas[1].nombre, 'Cajón de arriba')
+
+    def test_funciona_con_tupla_y_dict(self):
+        subctas = self.cta1.dividir_entre(
+            ('Billetera', 'ebil', 50),
+            {'nombre': 'Cajón de arriba', 'slug': 'ecaj', 'saldo': 200}
+        )
+        self.assertEqual(subctas[0].nombre, 'Billetera')
+        self.assertEqual(subctas[1].nombre, 'Cajón de arriba')
+
+    def test_funciona_con_tupla_de_tuplas(self):
+        subctas = self.cta1.dividir_entre(
+            (('Billetera', 'ebil', 50), ['Cajón de arriba', 'ecaj', 200]))
+        self.assertEqual(subctas[0].nombre, 'Billetera')
+        self.assertEqual(subctas[1].nombre, 'Cajón de arriba')
+
+    def test_acepta_una_tupla_sin_saldo(self):
+        subctas = self.cta1.dividir_entre(
+            ('Billetera', 'ebil', 50), ('Cajón de arriba', 'ecaj'))
+        self.assertEqual(subctas[0].nombre, 'Billetera')
+        self.assertEqual(subctas[1].nombre, 'Cajón de arriba')
+        self.assertEqual(subctas[1].saldo, 200)
+
+    def test_no_acepta_mas_de_una_tupla_sin_saldo(self):
+        with self.assertRaises(ErrorDeSuma):
+            subctas = self.cta1.dividir_entre(
+                ('Billetera', 'ebil', 50),
+                ('Cajón de arriba', 'ecaj'),
+                ('Cajón de abajo', 'ecab')
+            )
+
 
 
 class TestCuentaMadre(TestModelCuentaMetodos):
 
     def setUp(self):
         super().setUp()
-        self.cta1.dividir_entre([
+        self.cta1.dividir_entre(
             {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 25},
             {'nombre': 'Cajón de arriba', 'slug': 'ecaj', 'saldo': 75},
-        ])
+        )
         self.cta2 = Cuenta.tomar(slug='ebil')
         self.cta3 = Cuenta.tomar(slug='ecaj')
 
@@ -442,10 +503,10 @@ class TestCuentaMadre(TestModelCuentaMetodos):
 
     def test_se_puede_asignar_cta_caja_a_otra_cta_caja(self):
         cta4 = Cuenta.crear("Bolsillos", "ebol")
-        cta4.dividir_entre([
+        cta4.dividir_entre(
             {'nombre': 'Bolsillo campera', 'slug': 'ebca', 'saldo': 0},
             {'nombre': 'Bolsillo pantalón', 'slug': 'ebpa'}
-        ])
+        )
         cta4.cta_madre = self.cta1
         cta4.save()
         self.assertEqual(self.cta1.subcuentas.count(), 3)
@@ -475,10 +536,10 @@ class TestCuentaMadre(TestModelCuentaMetodos):
         cta4 = Cuenta.crear("Bolsillos", "ebol")
         Movimiento.crear(concepto='mov', importe=50, cta_entrada=cta4)
 
-        cta4.dividir_entre([
+        cta4.dividir_entre(
             {'nombre': 'Bolsillo campera', 'slug': 'ebca', 'saldo': 30},
             {'nombre': 'Bolsillo pantalón', 'slug': 'ebpa'}
-        ])
+        )
 
         cta4.cta_madre = self.cta1
         cta4.save()
@@ -488,10 +549,10 @@ class TestCuentaMadre(TestModelCuentaMetodos):
 
     def test_cuenta_no_puede_ser_subcuenta_de_una_de_sus_subcuentas(self):
         cta4 = Cuenta.crear("Bolsillos", "ebol")
-        cta4.dividir_entre([
+        cta4.dividir_entre(
             {'nombre': 'Bolsillo campera', 'slug': 'ebca', 'saldo': 0},
             {'nombre': 'Bolsillo pantalón', 'slug': 'ebpa'}
-        ])
+        )
         cta4.cta_madre = self.cta1
         cta4.save()
 
@@ -505,23 +566,23 @@ class TestCuentaMadre(TestModelCuentaMetodos):
 
     def test_cuenta_no_puede_ser_subcuenta_de_una_subcuenta_de_una_de_sus_subcuentas(self):
         cta4 = Cuenta.crear("Bolsillos", "ebol")
-        cta4.dividir_entre([
+        cta4.dividir_entre(
             {'nombre': 'Bolsillo campera', 'slug': 'ebca', 'saldo': 0},
             {'nombre': 'Bolsillo pantalón', 'slug': 'ebpa'}
-        ])
+        )
 
         cta4.cta_madre = self.cta1
         cta4.save()
 
         cta5 = Cuenta.tomar(slug='ebpa')
-        cta5.dividir_entre([
+        cta5.dividir_entre(
             {
                 'nombre': 'Bolsillo delantero pantalón',
                 'slug': 'ebpd',
                 'saldo': 0
             },
             {'nombre': 'Bolsillo pantalón trasero', 'slug': 'ebpt'}
-        ])
+        )
 
         self.cta1.cta_madre = cta5
         with self.assertRaisesMessage(
@@ -555,10 +616,10 @@ class TestCuentaMadre(TestModelCuentaMetodos):
 
     def test_movimiento_en_subcuenta_se_refleja_en_saldo_de_cta_abuela(self):
 
-        self.cta3.dividir_entre([
+        self.cta3.dividir_entre(
             {'nombre': 'Cajita', 'slug': 'eccj', 'saldo': 22},
             {'nombre': 'Sobre', 'slug': 'ecso', 'saldo': 53},
-        ])
+        )
         cta4 = Cuenta.tomar(slug='ecso')
 
         saldo_cta1 = self.cta1.saldo
@@ -621,10 +682,10 @@ class TestCuentaMadre(TestModelCuentaMetodos):
 class TestMetodosVarios(TestModelCuentaMetodos):
 
     def test_esta_en_una_caja_devuelve_true_si_tiene_cta_madre(self):
-        self.cta1.dividir_entre([
+        self.cta1.dividir_entre(
             {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 40},
             {'nombre': 'Cajón de arriba', 'slug': 'ecaj', 'saldo': 60},
-        ])
+        )
 
         cta2 = Cuenta.tomar(slug='ebil')
         cta3 = Cuenta.tomar(slug='ecaj')
@@ -633,19 +694,19 @@ class TestMetodosVarios(TestModelCuentaMetodos):
         self.assertFalse(self.cta1.esta_en_una_caja())
 
     def test_arbol_de_subcuentas_devuelve_set_con_todas_las_cuentas_dependientes(self):
-        lista_subcuentas = self.cta1.dividir_entre([
+        lista_subcuentas = self.cta1.dividir_entre(
             {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 0},
             {'nombre': 'Cajón de arriba', 'slug': 'ecaj', },
-        ])
-        lista_subcuentas += lista_subcuentas[0].dividir_entre([
+        )
+        lista_subcuentas += lista_subcuentas[0].dividir_entre(
             {
                 'nombre': 'Billetera división delantera',
                 'slug': 'ebdd',
                 'saldo': 0,
             },
             {'nombre': 'Billetera división trasera', 'slug': 'ebdt', },
-        ])
-        lista_subcuentas += lista_subcuentas[2].dividir_entre([
+        )
+        lista_subcuentas += lista_subcuentas[2].dividir_entre(
             {
                 'nombre': 'Billetera división delantera izquierda',
                 'slug': 'ebdi',
@@ -655,15 +716,15 @@ class TestMetodosVarios(TestModelCuentaMetodos):
                 'nombre': 'Billetera división delantera derecha',
                 'slug': 'ebdr',
             },
-        ])
-        lista_subcuentas += lista_subcuentas[1].dividir_entre([
+        )
+        lista_subcuentas += lista_subcuentas[1].dividir_entre(
             {
                 'nombre': 'Cajita verde',
                 'slug': 'eccv',
                 'saldo': 0,
             },
             {'nombre': 'Sobre', 'slug': 'ecs', },
-        ])
+        )
 
         self.assertEqual(
             self.cta1.arbol_de_subcuentas(), set(lista_subcuentas))

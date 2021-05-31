@@ -8,6 +8,7 @@ CUENTAS_IGUALES = 'Cuentas de entrada y salida no pueden ser la misma.'
 ERROR_OPCIONES = 'Error no especificado en el campo opciones de Cuenta.'
 SALDO_NO_CERO = 'No se puede eliminar cuenta con saldo distinto de cero.'
 SALDO_NO_COINCIDE = 'El saldo de la cuenta no coincide con sus movimientos.'
+SUBCUENTAS_SIN_SALDO = 'Sólo se permite una subcuenta sin saldo'
 
 
 class SaldoNoCeroException(ValueError):
