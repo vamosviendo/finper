@@ -15,6 +15,14 @@ class TestDetalleCuenta(FunctionalTest):
             self.assertIn(atrib, elementos)
         return lista_elementos
 
+    def entrar_en_cuenta(self, link_cuenta):
+        nombre = link_cuenta.text
+        link_cuenta.click()
+        self.assertEqual(
+            self.esperar_elemento('id_header_saldo_gral').text,
+            nombre
+        )
+
     def test_detalle_de_cuentas(self):
 
         # Crear cuentas principales
@@ -66,11 +74,8 @@ class TestDetalleCuenta(FunctionalTest):
         # Al cliquear en enlace a cuenta, saldo de cuenta toma el lugar del
         # saldo general.
         links_cuenta = self.esperar_elementos('link_cuenta')
-        links_cuenta[1].click()
-        self.assertEqual(
-            self.esperar_elemento('id_header_saldo_gral').text,
-            'Efectivo'
-        )
+        self.entrar_en_cuenta(links_cuenta[1])
+
         # En la tabla de movimientos se muestran solamente los relacionados
         # con esa cuenta.
         self.esperar_elementos_especificos(
@@ -82,11 +87,7 @@ class TestDetalleCuenta(FunctionalTest):
         # Probamos lo mismo con una cuenta dividida en subcuentas
         self.ir_a_pag()
         links_cuenta = self.esperar_elementos('link_cuenta')
-        links_cuenta[0].click()
-        self.assertEqual(
-            self.esperar_elemento('id_header_saldo_gral').text,
-            'Banco'
-        )
+        self.entrar_en_cuenta(links_cuenta[0])
 
         # En la grilla de cuentas aparecen las subcuentas de 'Banco'
         links_cuenta = self.esperar_elementos_especificos(
@@ -105,11 +106,7 @@ class TestDetalleCuenta(FunctionalTest):
         )
 
         # Finalmente, probamos con una subcuenta de Banco
-        links_cuenta[0].click()
-        self.assertEqual(
-            self.esperar_elemento('id_header_saldo_gral').text,
-            'Caja de ahorro'
-        )
+        self.entrar_en_cuenta(links_cuenta[0])
         # En la tabla de movimientos se muestran solamente los relacionados
         # con esa cuenta.
         self.esperar_elementos_especificos(
