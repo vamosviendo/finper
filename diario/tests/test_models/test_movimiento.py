@@ -183,6 +183,33 @@ class TestModelMovimientoBasic(TestModelMovimiento):
 
         self.assertEqual(list(Movimiento.todes()), [mov3, mov2, mov1])
 
+    def test_crear_funciona_con_args_basicos_sin_nombre(self):
+        cta2 = Cuenta.crear(nombre='Banco', slug='B')
+        mov1 = Movimiento.crear('Pago en efectivo', 100, None, self.cuenta1)
+        mov2 = Movimiento.crear('Cobranza en efectivo', 100, self.cuenta1)
+        mov3 = Movimiento.crear('Extracción bancaria', 50, self.cuenta1, cta2)
+        self.assertEqual(mov1.concepto, 'Pago en efectivo')
+        self.assertIsNone(mov1.cta_entrada)
+        self.assertEqual(mov2.cta_entrada, self.cuenta1)
+        self.assertIsNone(mov2.cta_salida)
+        self.assertEqual(mov3.cta_salida, cta2)
+
+    def test_funciona_con_argumentos_mixtos(self):
+        mov1 = Movimiento.crear(
+            'Pago en efectivo', 100, None, self.cuenta1,
+            fecha=date(2020, 10, 22),
+        )
+        mov2 = Movimiento.crear(
+            'Cobranza en efectivo', 100, self.cuenta1, detalle='Alquiler')
+        mov3 = Movimiento.crear(
+            'Pago en efectivo', 100, cta_salida=self.cuenta1)
+
+        self.assertEqual(mov1.fecha, date(2020, 10, 22))
+        self.assertEqual(mov2.detalle, 'Alquiler')
+        self.assertIsNone(mov2.cta_salida)
+        self.assertEqual(mov3.cta_salida, self.cuenta1)
+        self.assertIsNone(mov3.cta_entrada)
+
 
 class TestModelMovimientoPropiedades(TestModelMovimiento):
 

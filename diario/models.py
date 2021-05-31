@@ -289,6 +289,17 @@ class Movimiento(MiModel):
             string += f' -{self.cta_salida}'
         return string
 
+    @classmethod
+    def crear(cls, concepto, importe, cta_entrada=None, cta_salida=None,
+              **kwargs):
+        return super().crear(
+            concepto=concepto,
+            importe=importe,
+            cta_entrada=cta_entrada,
+            cta_salida=cta_salida,
+            **kwargs
+        )
+
     def clean(self):
         super().clean()
         if not self.cta_entrada and not self.cta_salida:
