@@ -1,7 +1,6 @@
 from datetime import datetime
 
 from django.core.exceptions import ValidationError
-from django.db.models import QuerySet
 from django.test import TestCase
 
 from diario.models import Cuenta, Movimiento
@@ -112,6 +111,9 @@ class TestModelCuenta(TestCase):
 
 
 class TestModelCuentaMetodos(TestCase):
+    """ Saldos después de setUp
+        self.cta1: 100
+    """
 
     def setUp(self):
         self.cta1 = Cuenta.crear('Efectivo', 'E')
@@ -119,6 +121,9 @@ class TestModelCuentaMetodos(TestCase):
 
 
 class TestModelCuentaPropiedades(TestModelCuentaMetodos):
+    """ Saldos después de setUp
+        self.cta1: 100
+    """
 
     # @property tipo
     def test_tipo_devuelve_tipo_de_cuenta_segun_contenido_de_switches(self):
@@ -157,10 +162,9 @@ class TestModelCuentaPropiedades(TestModelCuentaMetodos):
 
 
 class TestMetodosMovsYSaldos(TestModelCuentaMetodos):
-
-    """ Después del setUp:
-        self.cta1.saldo == 110
-        self.cta2.saldo == 120
+    """ Saldos después del setUp:
+        self.cta1.saldo == 100-70+80 = 110
+        self.cta2.saldo == 70+50 = 120
     """
 
     def setUp(self):
@@ -298,6 +302,11 @@ class TestMetodosMovsYSaldos(TestModelCuentaMetodos):
 
 
 class TestMetodoDividirEntre(TestModelCuentaMetodos):
+    """ Saldos después de setUp:
+        self.cta1: 100+150 = 250
+        self.cta1.subcuentas.get(slug='ebil'): 50
+        self.cta1.subcuentas.get(slug='ecaj'): 200
+    """
 
     def setUp(self):
         super().setUp()
@@ -473,8 +482,12 @@ class TestMetodoDividirEntre(TestModelCuentaMetodos):
             )
 
 
-
 class TestCuentaMadre(TestModelCuentaMetodos):
+    """ Saldos después de setUp
+        self.cta1: 100
+        self.cta2: 25
+        self.cta3: 75
+    """
 
     def setUp(self):
         super().setUp()
@@ -670,7 +683,26 @@ class TestCuentaMadre(TestModelCuentaMetodos):
         )
 
     def test_modificacion_en_movimiento_modifica_saldo_de_cta_madre(self):
-        self.fail('Testear!')
+        saldo_cta1 = self.cta1.saldo
+        mov = Movimiento.crear('mov', 45, self.cta2)
+        self.cta1.refresh_from_db()
+        self.assertEqual(self.cta1.saldo, saldo_cta1+45)
+
+        mov.importe = 55
+        mov.save()
+        self.cta1.refresh_from_db()
+        self.assertEqual(self.cta1.saldo, saldo_cta1+55)
+
+        cta4 = Cuenta.crear('Otro banco', 'ob')
+        mov.cta_entrada = cta4
+        mov.save()
+        self.cta1.refresh_from_db()
+        self.assertEqual(self.cta1.saldo, saldo_cta1)
+
+        mov.cta_entrada = self.cta2
+        mov.cta_salida = self.cta1
+        mov.importe = 40
+        self.assertEqual(self.cta1.saldo, saldo_cta1)
 
     def test_cuenta_caja_no_acepta_movimientos(self):
         with self.assertRaises(ValidationError):

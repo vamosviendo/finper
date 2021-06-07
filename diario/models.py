@@ -70,7 +70,7 @@ class Cuenta(MiModel):
             return 'interactiva'
         if 'c' in self.opciones:
             return 'caja'
-        raise ErrorOpciones('No se encontró switch de tipo')
+        raise ErrorOpciones('No se encontró opción de tipo')
 
     @tipo.setter
     def tipo(self, tipo):

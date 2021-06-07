@@ -237,6 +237,10 @@ class TestModelMovimientoPropiedades(TestModelMovimiento):
 
 
 class TestModelMovimientoSaldos(TestModelMovimiento):
+    """ Saldos después de setUp:
+        self.cuenta1: 125.0
+        self.cuenta2: -35.0
+    """
 
     def setUp(self):
         super().setUp()
@@ -277,6 +281,10 @@ class TestModelMovimientoSaldos(TestModelMovimiento):
 
 
 class TestModelMovimientoCambios(TestModelMovimiento):
+    """ Saldos después de setUp:
+        self.cuenta1: 125.0+50 = 175
+        self.cuenta2: -35.0-50 = -85
+    """
 
     def setUp(self):
         super().setUp()

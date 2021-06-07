@@ -26,7 +26,7 @@ class SaldoNoCoincideException(ValueError):
         super().__init__(message)
 
 
-class ErrorOpciones(ValueError):
+class ErrorOpciones(ValidationError):
     """ Error en el campo switches de Cuenta."""
 
     def __init__(self, message=ERROR_OPCIONES):
