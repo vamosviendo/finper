@@ -142,7 +142,7 @@ class Cuenta(MiModel):
         super().delete(*args, **kwargs)
 
     def get_absolute_url(self):
-        return reverse('cta_mod', args=[self.slug])
+        return reverse('cta_detalle', args=[self.slug])
 
     def movs(self):
         result = self.entradas.all() | self.salidas.all()

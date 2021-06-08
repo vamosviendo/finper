@@ -364,7 +364,7 @@ class TestCtaDivFBV(TestCase):
         falso_form.save.assert_called_once()
 
     @patch('diario.views.redirect')
-    def test_redirige_a_pag_de_cuenta_si_el_form_es_valido(
+    def test_redirige_a_destino_si_el_form_es_valido(
             self, falso_redirect, falsoFormSubcuentas):
         falso_form = falsoFormSubcuentas.return_value
         falso_form.is_valid.return_value = True
@@ -493,9 +493,7 @@ class TestCtaDivIntegration(TestCase):
         self.cta = Cuenta.crear('Efectivo', 'e')
         Movimiento.crear(
             concepto='Ingreso de saldo', importe=250, cta_entrada=self.cta)
-
-    def test_puede_dividir_cuenta_a_partir_de_POST(self):
-        self.client.post(
+        self.response = self.client.post(
             reverse('cta_div', args=[self.cta.slug]),
             data={
                 'form-TOTAL_FORMS': 2,
@@ -508,11 +506,19 @@ class TestCtaDivIntegration(TestCase):
                 'form-1-saldo': 200,
             },
         )
+
+    def test_puede_dividir_cuenta_a_partir_de_POST(self):
         self.assertEqual(Cuenta.cantidad(), 3)
         self.assertEqual(
             len([x for x in Cuenta.todes() if x.es_interactiva]), 2)
         self.assertEqual(
             len([x for x in Cuenta.todes() if x.es_caja]), 1)
+
+    def test_redirige_a_pagina_de_cuenta(self):
+        self.assertRedirects(
+            self.response,
+            reverse('cta_detalle', args=[self.cta.slug]),
+        )
 
 
 class TestMovNuevo(TestCase):
