@@ -118,9 +118,11 @@ class MiWebElement(WebElement):
         return self.find_element(criterio, elemento)
 
     @esperar
-    def esperar_elementos(self, search_str, criterio=By.CLASS_NAME):
+    def esperar_elementos(self, search_str, criterio=By.CLASS_NAME, fail=True):
         elementos = self.find_elements(criterio, search_str)
-        assert(len(elementos) != 0)
+        if fail:
+            assert len(elementos) != 0, \
+                f'no se encontraron elementos coincidentes con {search_str}'
         return elementos
 
 
@@ -136,11 +138,30 @@ class MiFirefox(webdriver.Firefox):
         return self.find_element(criterio, elemento)
 
     @esperar
-    def esperar_elementos(self, search_str, criterio=By.CLASS_NAME):
+    def esperar_elementos(self, search_str, criterio=By.CLASS_NAME, fail=True):
         elementos = self.find_elements(criterio, search_str)
-        assert len(elementos) != 0, \
-            f'no se encontraron elementos coincidentes con {search_str}'
+        if fail:
+            assert len(elementos) != 0, \
+                f'no se encontraron elementos coincidentes con {search_str}'
         return elementos
+
+    def limpiar_campo(self, id_campo):
+        """ Elimina el valor de un campo de form."""
+        self.find_element_by_id(id_campo).clear()
+
+    def completar(self, id_campo, texto):
+        """ Completa un campo de texto en un form, o selecciona un valor
+            de un campo select."""
+        campo = self.esperar_elemento(id_campo)
+        try:
+            self.limpiar_campo(id_campo)
+            campo.send_keys(str(texto))
+        except InvalidElementStateException:
+            Select(campo).select_by_visible_text(texto)
+
+    def pulsar(self, boton="id_btn_submit", crit=By.ID):
+        """ Busca un botón y lo pulsa."""
+        self.esperar_elemento(boton, crit).click()
 
 
 class FunctionalTest(StaticLiveServerTestCase):
@@ -182,21 +203,16 @@ class FunctionalTest(StaticLiveServerTestCase):
 
     def limpiar_campo(self, id_campo):
         """ Elimina el valor de un campo de form."""
-        self.browser.find_element_by_id(id_campo).clear()
+        self.browser.limpiar_campo(id_campo)
 
     def completar(self, id_campo, texto):
         """ Completa un campo de texto en un form, o selecciona un valor
             de un campo select."""
-        campo = self.esperar_elemento(id_campo)
-        try:
-            self.limpiar_campo(id_campo)
-            campo.send_keys(str(texto))
-        except InvalidElementStateException:
-            Select(campo).select_by_visible_text(texto)
+        self.browser.completar(id_campo, texto)
 
     def pulsar(self, boton="id_btn_submit", crit=By.ID):
         """ Busca un botón y lo pulsa."""
-        self.esperar_elemento(boton, crit).click()
+        self.browser.pulsar(boton, crit)
 
     def completar_y_esperar_error(self, campos_y_valores, id_errores, error):
         """ Completa uno o más campos con valores erróneos y espera los
