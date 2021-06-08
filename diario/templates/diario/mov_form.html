@@ -1,7 +1,7 @@
 {% extends 'diario/base.html' %}
 {% block contenido %}
 <h4>{{ mov.concepto|default:"Movimiento nuevo"}}</h4>
-<form method="post">
+<form id="id_form_movimiento" method="post">
   <div class="form-group">
     {{ form }}
   </div>
