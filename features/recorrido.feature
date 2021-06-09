@@ -17,7 +17,7 @@ Característica: Recorrido
         Cuando cliqueo en el botón Cuenta nueva
         Entonces veo un formulario de cuenta
 
-        Cuando agrego una cuenta con nombre "Efectivo" y slug "E"
+        Cuando agrego una cuenta con nombre "Efectivo"
         Entonces veo una cuenta en la grilla con nombre "Efectivo"
         Y veo que el saldo de Efectivo es cero pesos
         Y veo un botón de Movimiento nuevo

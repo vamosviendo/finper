@@ -26,9 +26,20 @@ def hay_una_cuenta(context):
 @when('agrego una cuenta con nombre "{nombre}" y slug "{slug}"')
 def agregar_cuenta(context, nombre, slug):
     context.browser.completar('id_nombre', nombre)
-    if slug is None: slug = 'E'
     context.browser.completar('id_slug', slug)
     context.browser.pulsar()
+
+
+@when('agrego una cuenta con nombre "{nombre}"')
+def agregar_cuenta(context, nombre):
+    context.execute_steps(
+        f'Cuando agrego una cuenta con nombre "{nombre}" y slug "{nombre[:1]}"'
+    )
+
+
+@when('agrego una cuenta')
+def agregar_cuenta(context):
+    context.execute_steps('Cuando agrego una cuenta con nombre "Efectivo"')
 
 
 @when('agrego un movimiento con campos')
