@@ -20,7 +20,7 @@ Escenario: Dividir una cuenta en subcuentas
         | Billetera       | ebil | 50    |
 
     Entonces veo que el saldo de Efectivo es 200 pesos
-    Y veo que la página de Efectivo muestra 2 subcuentas
+    Y veo 2 subcuentas en la página Efectivo
     Y las subcuentas de la página de Efectivo tienen estos valores:
         | nombre          | slug | saldo |
         | Billetera       | ebil | 50    |
