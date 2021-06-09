@@ -5,7 +5,7 @@ from diario.models import Cuenta, Movimiento
 from .base import FunctionalTest
 
 
-class TestModificaCuenta(FunctionalTest):
+class TestDividirCuenta(FunctionalTest):
 
     def test_puede_dividir_cuenta_en_subcuentas(self):
         cta1 = Cuenta.crear(nombre='Efectivo', slug='E')
@@ -24,22 +24,20 @@ class TestModificaCuenta(FunctionalTest):
         self.completar('id_form-1-saldo', 50)
         self.pulsar()
 
-        saldo = self.esperar_elemento('id_div_saldo_e')
+        saldo = self.esperar_elemento('id_saldo_cta_e').text
         self.assertEqual(saldo, '200.00')
 
-        nombres = self.esperar_elementos('class_nombre_cuenta')
-        saldos = self.esperar_elementos('class_saldo_cuenta')
-        self.assertEqual(nombres[0], 'Cajón de arriba')
-        self.assertEqual(saldos[0], '120.00')
-        self.assertEqual(nombres[1], 'Billetera')
-        self.assertEqual(saldos[1], '50.00')
-        self.assertEqual(nombres[2], 'Canuto')
-        self.assertEqual(saldos[2], '30.00')
+        nombres = [e.text for e in self.esperar_elementos('class_nombre_cuenta')]
+        saldos = [s.text for s in self.esperar_elementos('class_saldo_cuenta')]
+        self.assertEqual(nombres[0], 'Billetera')
+        self.assertEqual(saldos[0], '50.00')
+        self.assertEqual(nombres[1], 'Cajón de arriba')
+        self.assertEqual(saldos[1], '150.00')
 
         self.ir_a_pag()
 
         movs = self.esperar_elementos('class_row_mov')
-        self.assertEqual(len(movs), 4)
+        self.assertEqual(len(movs), 3)
         conceptos = [
             c.text for c in self.esperar_elementos('class_td_concepto')]
         importes = [i.text for i in self.esperar_elementos('class_td_importe')]
@@ -49,13 +47,11 @@ class TestModificaCuenta(FunctionalTest):
                 c, 'Saldo al inicio', 'Concepto equivocado'),
             conceptos
         )
-        self.assertEqual(importes[1], '120.00')
+        self.assertEqual(importes[1], '150.00')
         self.assertEqual(importes[2], '50.00')
-        self.assertEqual(importes[3], '30.00')
 
-        self.assertEqual(cuentas[1], '-Efectivo +Cajón de arriba')
-        self.assertEqual(cuentas[2], '-Efectivo +Billetera')
-        self.assertEqual(cuentas[3], '-Efectivo +Canuto')
+        self.assertEqual(cuentas[1], '+Cajón de arriba -Efectivo')
+        self.assertEqual(cuentas[2], '+Billetera -Efectivo')
 
         nombre = self.esperar_elemento('class_nombre_cuenta', By.CLASS_NAME).text
         self.assertEqual(nombre, 'Efectivo')

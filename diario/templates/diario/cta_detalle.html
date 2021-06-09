@@ -3,18 +3,18 @@
 
 {% block contenido %}
 <section id="id_saldos" class="text-center">
-  <div id="id_div_saldo_gral" class="card mt-3 border-success class_div_totales">
-    <div class="card-header bg-success text-light" id="id_header_saldo_gral">
+  <div id="id_div_cta_{{ cuenta.slug }}" class="card mt-3 border-success class_div_totales">
+    <div class="card-header bg-success text-light class_nombre_cuenta_main">
       <h4>{{ cuenta.nombre }}</h4>
     </div>
-    <div id="id_importe_saldo_gral" class="card-body text-success">
+    <div id="id_saldo_cta_{{ cuenta.slug }}" class="card-body text-success">
       {{ cuenta.saldo|floatformat:2 }}
     </div>
   </div>
 
   <div id="id_grid_cuentas" class="card-deck mt-3">
     {% for subc in cuenta.subcuentas.all %}
-    <div id="id_div_cta_{{ subc.slug|lower }}" class="card border-danger class_div_cuenta">
+    <div id="id_div_cta_{{ subc.slug|lower }}" class="card border-danger class_div_cuenta class_div_subcta">
       <div class="card-header bg-danger text-light class_nombre_cuenta">
         <a href="{% url 'cta_detalle' subc.slug %}" class="text-light link_cuenta">
           {{ subc.nombre }}

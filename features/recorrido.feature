@@ -7,7 +7,7 @@ Característica: Recorrido
 
     Escenario: Crear una cuenta y verla en la homepage
 
-        Cuando voy a la pagina principal
+        Cuando voy a la página principal
         Entonces veo que el saldo general es 0.00 pesos
         Y la grilla de cuentas está vacia
         Y la lista de movimientos está vacia

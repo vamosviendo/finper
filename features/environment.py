@@ -1,5 +1,6 @@
 from fts.base import MiFirefox, FunctionalTest
 
+
 def before_all(context):
     context.browser = MiFirefox()
     context.ft = FunctionalTest()
