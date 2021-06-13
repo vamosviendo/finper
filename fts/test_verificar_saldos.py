@@ -67,3 +67,45 @@ class TestVerificarSaldo(FunctionalTest):
         movs_importe = self.esperar_elementos('class_td_importe')
         self.assertIn('Movimiento correctivo', [c.text for c in movs_concepto])
         self.assertIn('600.00', [i.text for i in movs_importe])
+
+    def test_cuenta_caja_no_muestra_movimiento_correctivo(self):
+        # Dada una cuenta con dos subcuentas y saldo erróneo
+        self.cuenta1.corregir_saldo()
+        self.cuenta2.corregir_saldo()
+        cuenta3 = Cuenta.crear('Banco Nación', 'bn')
+        Movimiento.crear('Ingreso', 500, cta_entrada=cuenta3)
+        cuenta3.dividir_entre(
+            {
+                'nombre': 'Banco Nación Caja de Ahorro',
+                'slug': 'bnca',
+                'saldo': 200,
+            },
+            {
+                'nombre': 'Banco Nación Cuenta Corriente',
+                'slug': 'bncc',
+            }
+        )
+        cuenta3.saldo = 600
+        cuenta3.save()
+
+        # Al cambiar la fecha se detecta el saldo erróneo y se indica que
+        # debe ser corregido.
+        self.fecha = datetime.date(2021, 4, 5)
+        self.ir_a_pag()
+        mensaje = self.browser.esperar_elemento('id_msj_ctas_erroneas').text
+        self.assertIn('Banco Nación', mensaje)
+
+        # Al ser una cuenta acumulativa, no aparece el botón de agregar
+        # movimiento
+        self.assertEqual(
+            len(self.esperar_elementos('class_btn_agregar', fail=False)), 0,
+            'Aparece botón "agregar movimiento" en una cuenta que no los admite'
+        )
+
+        # Si cliqueamos en el botón de corregir saldo, aparece el saldo
+        # corregido
+        self.esperar_elementos('class_btn_corregir')[0].click()
+        saldo = self.esperar_elemento('id_saldo_cta_bn').text
+        self.assertEqual(saldo, '500.00')
+
+

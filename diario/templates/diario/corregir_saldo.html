@@ -8,10 +8,12 @@
        class="btn btn-primary class_btn_corregir">
       Corregir Saldo
     </a>
+    {% if cta.es_interactiva %}
     <a href="{% url 'agregar_movimiento' cta.slug %}?ctas={{ request.GET.ctas }}"
        class="btn btn-primary class_btn_agregar">
       Agregar movimiento
     </a>
+    {% endif %}
   </p>
   {% endfor %}
 </div>

@@ -251,8 +251,8 @@ class FunctionalTest(StaticLiveServerTestCase):
     def esperar_elemento(self, elemento, criterio=By.ID):
         return self.browser.esperar_elemento(elemento, criterio)
 
-    def esperar_elementos(self, elementos, criterio=By.CLASS_NAME):
-        return self.browser.esperar_elementos(elementos, criterio)
+    def esperar_elementos(self, elementos, criterio=By.CLASS_NAME, fail=True):
+        return self.browser.esperar_elementos(elementos, criterio, fail)
 
     @esperar
     def esperar_que_se_abra(self, elemento, display='flex'):
