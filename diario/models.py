@@ -9,8 +9,8 @@ from django.urls import reverse
 from utils import errors
 from utils.clases.mimodel import MiModel
 from utils.errors import \
-    ErrorDeSuma, ErrorDependenciaCircular, ErrorOpciones, ErrorTipo, \
-    SaldoNoCeroException, SUBCUENTAS_SIN_SALDO
+    ErrorCuentaEsInteractiva, ErrorDeSuma, ErrorDependenciaCircular, \
+    ErrorOpciones, ErrorTipo, SaldoNoCeroException, SUBCUENTAS_SIN_SALDO
 
 
 def hoy():
@@ -153,7 +153,16 @@ class Cuenta(MiModel):
     def cantidad_movs(self):
         return self.entradas.count() + self.salidas.count()
 
+    def total_subcuentas(self):
+        if self.es_interactiva:
+            raise ErrorCuentaEsInteractiva(
+                f'Cuenta "{self.nombre}" es interactiva y como tal no tiene '
+                f'subcuentas'
+            )
+        return self.subcuentas.all().aggregate(Sum('_saldo'))['_saldo__sum']
+
     def total_movs(self):
+        """ Devuelve suma de los importes de los movimientos de la cuenta"""
         total_entradas = self.entradas.all() \
                              .aggregate(Sum('importe'))['importe__sum'] or 0
         total_salidas = self.salidas.all()\
@@ -161,11 +170,17 @@ class Cuenta(MiModel):
         return total_entradas - total_salidas
 
     def corregir_saldo(self):
-        self.saldo = self.total_movs()
+        if self.es_interactiva:
+            self.saldo = self.total_movs()
+        else:
+            self.saldo = self.total_subcuentas()
         self.save()
 
     def saldo_ok(self):
-        return self.saldo == self.total_movs()
+        if self.es_interactiva:
+            return self.saldo == self.total_movs()
+        else:
+            return self.saldo == self.total_subcuentas()
 
     def agregar_mov_correctivo(self):
         if self.saldo_ok():

@@ -7,7 +7,7 @@ from diario.models import Cuenta, Movimiento
 
 from utils.errors import \
     SaldoNoCeroException, ErrorOpciones, ErrorDeSuma, ErrorTipo, \
-    ErrorDependenciaCircular
+    ErrorDependenciaCircular, ErrorCuentaEsInteractiva
 
 
 class TestModelCuenta(TestCase):
@@ -226,11 +226,46 @@ class TestMetodosMovsYSaldos(TestModelCuentaMetodos):
     def test_total_movs_devuelve_suma_importes_entradas_menos_salidas(self):
         self.assertEqual(self.cta1.total_movs(), 110)
 
-    def test_saldo_ok_devuelve_true_si_saldo_coincide_con_movimientos(self):
+    def test_total_subcuentas_devuelve_suma_saldos_subcuentas(self):
+        self.cta1.dividir_entre(
+            {'nombre': 'Billetera', 'slug': 'eb', 'saldo': 15},
+            {'nombre': 'Cajón', 'slug': 'ec', 'saldo': 65},
+            {'nombre': 'Cajita', 'slug': 'eca', }
+        )
+        cta2 = Cuenta.tomar(slug='eb')
+        Movimiento.crear('Movimiento', 5, cta_salida=cta2)
+        self.assertEqual(self.cta1.total_subcuentas(), 105)
+
+    def test_total_subcuentas_tira_excepcion_si_cuenta_es_interactiva(self):
+        with self.assertRaisesMessage(
+                ErrorCuentaEsInteractiva,
+                'Cuenta "Efectivo" es interactiva y como tal no tiene '
+                'subcuentas'
+        ):
+            total = self.cta1.total_subcuentas()
+
+    def test_saldo_ok_devuelve_true_si_saldo_coincide_con_movimientos_en_cuenta_interactiva(self):
         self.assertEqual(self.cta1.saldo, 110)
         self.assertTrue(self.cta1.saldo_ok())
 
-    def test_saldo_ok_devuelve_false_si_saldo_no_coincide_con_movimientos(self):
+    def test_saldo_ok_devuelve_true_si_saldo_coincide_con_saldos_subcuentas_en_cuenta_caja(self):
+        self.cta1.dividir_entre(
+            {'nombre': 'Billetera', 'slug': 'eb', 'saldo': 15},
+            {'nombre': 'Cajón', 'slug': 'ec', }
+        )
+        self.assertEqual(self.cta1.saldo, 110)
+        self.assertTrue(self.cta1.saldo_ok())
+
+    def test_saldo_ok_devuelve_false_si_saldo_cta_interactiva_no_coincide_con_movimientos(self):
+        self.cta1.saldo = 220
+        self.cta1.save()
+        self.assertFalse(self.cta1.saldo_ok())
+
+    def test_saldo_ok_devuelve_false_si_saldo_cta_caja_no_coincide_con_saldos_subcuentas(self):
+        self.cta1.dividir_entre(
+            {'nombre': 'Billetera', 'slug': 'eb', 'saldo': 15},
+            {'nombre': 'Cajón', 'slug': 'ec', }
+        )
         self.cta1.saldo = 220
         self.cta1.save()
         self.assertFalse(self.cta1.saldo_ok())
@@ -240,7 +275,21 @@ class TestMetodosMovsYSaldos(TestModelCuentaMetodos):
         self.cta1.save()
         self.cta1.corregir_saldo()
         self.cta1.refresh_from_db()
-        self.assertTrue(self.cta1.saldo_ok())
+        self.assertEqual(self.cta1.saldo, self.cta1.total_movs())
+
+    def test_corregir_saldo_corrige_a_partir_de_saldos_de_subcuentas_en_cuentas_caja(self):
+        self.cta1.dividir_entre(
+            {'nombre': 'Billetera', 'slug': 'eb', 'saldo': 15},
+            {'nombre': 'Cajón', 'slug': 'ec', 'saldo': 65},
+            {'nombre': 'Cajita', 'slug': 'eca', }
+        )
+        cta2 = Cuenta.tomar(slug='eb')
+        Movimiento.crear('Movimiento', 5, cta_salida=cta2)
+        self.cta1.saldo = 550
+        self.cta1.save()
+        self.cta1.corregir_saldo()
+        self.cta1.refresh_from_db()
+        self.assertEqual(self.cta1.saldo, self.cta1.total_subcuentas())
 
     def test_corregir_saldo_no_agrega_movimientos(self):
         self.cta1.saldo = 345
@@ -264,6 +313,16 @@ class TestMetodosMovsYSaldos(TestModelCuentaMetodos):
         self.cta1.saldo = 880
         self.cta1.save()
         self.assertIsInstance(self.cta1.agregar_mov_correctivo(), Movimiento)
+
+    def test_agregar_mov_correctivo_no_acepta_ctas_caja(self):
+        self.cta1.dividir_entre(
+            {'nombre': 'Billetera', 'slug': 'eb', 'saldo': 15},
+            {'nombre': 'Cajón', 'slug': 'ec', }
+        )
+        self.cta1.saldo = 945
+        self.cta1.save()
+        with self.assertRaises(ValidationError):
+            self.cta1.agregar_mov_correctivo()
 
     def test_importe_del_mov_correctivo_coincide_con_diferencia_con_saldo(self):
         self.cta1.saldo = 880

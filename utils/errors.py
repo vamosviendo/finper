@@ -52,3 +52,12 @@ class ErrorDependenciaCircular(ValidationError):
             message='Intento de asignar dos cuentas mutuamente como subcuentas'
     ):
         super().__init__(message)
+
+
+class ErrorCuentaEsInteractiva(TypeError):
+
+    def __init__(
+            self,
+            message='Operación no admitida para cuentas interaactivas'
+    ):
+        super().__init__(message)
