@@ -6,10 +6,26 @@ from selenium.webdriver.common.by import By
 from diario.models import Cuenta, Movimiento
 
 
+def table_to_str(tabla):
+    result = ''
+    if tabla.headings:
+        result = '|'
+    for enc in tabla.headings:
+        result += enc + '|'
+    result += '\n'
+    for fila in tabla.rows:
+        if fila.cells:
+            result += '|'
+        for cell in fila.cells:
+            result += cell + '|'
+        result += '\n'
+    return result
+
+
 # @givens
 
-@given('una cuenta con los siguientes valores')
-def hay_una_cuenta(context):
+@given('{n} cuenta{s} con los siguientes valores')
+def hay_n_cuentas(context, n, s):
     for fila in context.table:
         cuenta = Cuenta.crear(fila['nombre'], fila['slug'])
         saldo = fila.get('saldo')
@@ -19,6 +35,43 @@ def hay_una_cuenta(context):
                 importe=saldo,
                 cta_entrada=cuenta,
             )
+
+
+@given('una cuenta con los siguientes valores')
+def hay_una_cuenta(context):
+    context.execute_steps(
+        'Dadas 1 cuentas con los siguientes valores\n ' +
+        table_to_str(context.table)
+    )
+
+
+@given('la cuenta "{nombre}" dividida en subcuentas')
+def cuenta_dividida(context, nombre):
+    cta = Cuenta.tomar(nombre=nombre)
+    subcuentas = list()
+    for fila in context.table:
+        subcuentas.append(dict(
+                nombre=fila['nombre'],
+                slug=fila['slug'],
+                saldo=int(fila['saldo'])
+        ))
+    cta.dividir_entre(*subcuentas)
+
+
+@given('movimientos con estos valores')
+def hay_n_movimientos(context):
+    for fila in context.table:
+        ce = cs = None
+        if fila.get('cta_entrada') is not None:
+            ce = Cuenta.tomar(slug=fila.get('cta_entrada'))
+        if fila.get('cta_salida') is not None:
+            cs = Cuenta.tomar(slug=fila.get('cta_salida'))
+        Movimiento.crear(
+            concepto=fila['concepto'],
+            importe=fila['importe'],
+            cta_entrada=ce,
+            cta_salida=cs,
+        )
 
 
 # @whens (por orden alfabético)
@@ -63,6 +116,19 @@ def completar_form_dividir_cuenta(context):
     context.browser.pulsar()
 
 
+@when('entro en la cuenta "{nombre}"')
+def entrar_en_cuenta(context, nombre):
+    slug = Cuenta.tomar(nombre=nombre).slug
+    context.browser.esperar_elemento(nombre, By.LINK_TEXT).click()
+    context.test.assertEqual(
+        context.browser.esperar_elemento(
+            f'#id_div_cta_{slug} .class_nombre_cuenta_main',
+            By.CSS_SELECTOR
+        ).text,
+        nombre
+    )
+
+
 @when('voy a la página principal')
 def ir_a_pag_principal(context):
     context.browser.get(context.get_url('/'))
@@ -76,6 +142,16 @@ def campo_muestra_fecha_de_hoy(context, campo):
     context.test.assertEqual(
         campo_fecha.get_attribute("value"),
         date.today().strftime('%Y-%m-%d')
+    )
+
+
+@then('el saldo general es la suma de los de "{cta1}" y "{cta2}"')
+def saldo_general_es(context, cta1, cta2):
+    cta1 = Cuenta.tomar(nombre=cta1)
+    cta2 = Cuenta.tomar(nombre=cta2)
+    context.test.assertEqual(
+        context.browser.esperar_elemento('id_importe_saldo_gral').text,
+        f'{cta1.saldo + cta2.saldo:.2f}'
     )
 
 
@@ -151,17 +227,14 @@ def movs_en_pagina_coinciden_con(context):
         )
 
 
-@then('veo {num} movimient{os} en la página')
-def veo_movimiento(context, num, os):
-    if num == 'un':
-        num = 1
-    else:
-        num = int(num)
-
-    lista_ult_movs = context.browser.esperar_elemento('id_lista_ult_movs')
-    ult_movs = lista_ult_movs.find_elements_by_tag_name('tr')
-
-    context.test.assertEqual(len(ult_movs), num+1)  # El encabezado y un movimiento
+@then('no veo una cuenta {nombre} en la grilla')
+def cuenta_no_esta_en_grilla(context, nombre):
+    cuentas = context.browser.esperar_elementos('class_div_cuenta')
+    context.test.assertNotIn(
+        nombre,
+        [x.find_element_by_class_name('class_nombre_cuenta').text
+         for x in cuentas]
+    )
 
 
 @then('veo {x} subcuentas en la página {cuenta}')
@@ -177,7 +250,19 @@ def detalle_cuenta_tiene_subcuentas(context, cuenta, x):
     num_subcuentas = len(context.browser.esperar_elementos('class_div_subcta'))
     context.test.assertEqual(
         num_subcuentas, int(x),
-        f'La página {cuenta} mustra {num_subcuentas} subcuentas, no {x}.'
+        f'La página {cuenta} muestra {num_subcuentas} subcuentas, no {x}.'
+    )
+
+
+@then('veo las subcuentas de "{nombre_cta}"')
+def detalle_muestra_subcuentas_de(context, nombre_cta):
+    cta = Cuenta.tomar(nombre=nombre_cta)
+    subctas_pag = [x.text for x in context.browser.esperar_elementos(
+        'link_cuenta'
+    )]
+    context.test.assertEqual(
+        subctas_pag,
+        [x.nombre for x in cta.subcuentas.all()]
     )
 
 
@@ -200,13 +285,44 @@ def el_saldo_general_es_tanto(context, nombre, tantos):
     )
 
 
+@then('veo {num} movimient{os} en la página')
+def veo_movimiento(context, num, os):
+    if num == 'un':
+        num = 1
+    else:
+        num = int(num)
+
+    lista_ult_movs = context.browser.esperar_elemento('id_lista_ult_movs')
+    ult_movs = lista_ult_movs.find_elements_by_tag_name('tr')
+
+    context.test.assertEqual(len(ult_movs), num+1)  # El encabezado y un movimiento
+
+
+@then('veo sólo los movimientos relacionados con "{nombre_cta}" o con sus subcuentas')
+def veo_solo_movimientos_relacionados_con_cta_o_subctas(context, nombre_cta):
+    cta = Cuenta.tomar(nombre=nombre_cta)
+    movs_pag = [x.text for x in context.browser.esperar_elementos(
+        '.class_row_mov td.class_td_concepto',
+        By.CSS_SELECTOR
+    )]
+    context.test.assertEqual(movs_pag, [x.concepto for x in cta.movs()])
+
+
+@then('veo sólo los movimientos relacionados con "{nombre_cta}"')
+def veo_solo_movimientos_relacionados_con(context, nombre_cta):
+    context.execute_steps(
+        f'Entonces veo sólo los movimientos relacionados con "{nombre_cta}" '
+        f'o con sus subcuentas'
+    )
+
+
 @then('veo una cuenta en la grilla con nombre "{nombre}"')
 def veo_una_cuenta(context, nombre):
     cuentas = context.browser.esperar_elementos('class_div_cuenta')
-    context.test.assertEqual(len(cuentas), 1)
-    context.test.assertEqual(
-        cuentas[0].find_element_by_class_name('class_nombre_cuenta').text,
-        nombre
+    context.test.assertIn(
+        nombre,
+        [x.find_element_by_class_name('class_nombre_cuenta').text
+         for x in cuentas]
     )
 
 
