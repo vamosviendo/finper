@@ -11,6 +11,7 @@ from behave import given, then, when
 from selenium.webdriver.common.by import By
 
 from diario.models import Cuenta, Movimiento
+from utils.constantes import ORDINALES
 
 
 def table_to_str(tabla):
@@ -31,8 +32,8 @@ def table_to_str(tabla):
 
 # @givens
 
-@given('{n} cuenta{s} con los siguientes valores')
-def hay_n_cuentas(context, n, s):
+@given('{n} cuentas con los siguientes valores')
+def hay_n_cuentas(context, n):
     for fila in context.table:
         cuenta = Cuenta.crear(fila['nombre'], fila['slug'])
         saldo = fila.get('saldo')
@@ -42,6 +43,26 @@ def hay_n_cuentas(context, n, s):
                 importe=saldo,
                 cta_entrada=cuenta,
             )
+
+
+@given('{n} movimientos con los siguientes valores')
+def hay_n_movimientos(context, n):
+    for fila in context.table:
+        slug_entrada = fila.get('cta_entrada')
+        slug_salida = fila.get('cta_salida')
+        cta_entrada = cta_salida = None
+
+        if slug_entrada:
+            cta_entrada = Cuenta.tomar(slug=slug_entrada)
+        if slug_salida:
+            cta_salida = Cuenta.tomar(slug=slug_salida)
+
+        Movimiento.crear(
+            concepto=fila['concepto'],
+            importe=fila['importe'],
+            cta_entrada=cta_entrada,
+            cta_salida=cta_salida,
+        )
 
 
 @given('una cuenta con los siguientes valores')
@@ -109,15 +130,22 @@ def agregar_movimiento(context):
     context.browser.pulsar()
 
 
-@when('cliqueo en el botón de {atributo} "{texto}"')
-def cliquear_en(context, atributo, texto):
+@when('cliqueo en el {orden} botón de {atributo} "{texto}"')
+def cliquear_en(context, orden, atributo, texto):
     if atributo == 'clase':
         atr = By.CLASS_NAME
     elif atributo == 'id':
         atr = By.ID
     else:
         atr = By.LINK_TEXT
-    context.browser.esperar_elemento(texto, atr).click()
+    context.browser.esperar_elementos(texto, atr)[ORDINALES[orden]].click()
+
+
+@when('cliqueo en el botón de {atributo} "{texto}"')
+def cliquear_en(context, atributo, texto):
+    context.execute_steps(
+        f'Cuando cliqueo en el primer botón de {atributo} "{texto}"'
+    )
 
 
 @when('cliqueo en el botón "{texto}"')
@@ -292,6 +320,8 @@ def el_saldo_general_es_tanto(context, nombre, tantos):
         total = context.browser.esperar_elemento('id_importe_saldo_gral')
     else:
         nombre = nombre[3:]
+        if nombre[0] == '"':
+            nombre = nombre[1:-1]
         slug = Cuenta.tomar(nombre=nombre).slug
         total = context.browser.esperar_elemento(f'id_saldo_cta_{slug}')
 
