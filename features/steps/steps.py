@@ -1,3 +1,10 @@
+""" Las implementaciones deben ir de lo más particular a lo más general.
+    Por ejemplo:
+        @when('agrego una cuenta con nombre "{nombre}" y slug "{slug}"')
+        @when('agrego una cuenta con nombre "{nombre}"')
+        @when('agrego una cuenta')
+"""
+
 from datetime import date
 
 from behave import given, then, when
@@ -102,9 +109,22 @@ def agregar_movimiento(context):
     context.browser.pulsar()
 
 
-@when('cliqueo en el botón {texto}')
+@when('cliqueo en el botón de {atributo} "{texto}"')
+def cliquear_en(context, atributo, texto):
+    if atributo == 'clase':
+        atr = By.CLASS_NAME
+    elif atributo == 'id':
+        atr = By.ID
+    else:
+        atr = By.LINK_TEXT
+    context.browser.esperar_elemento(texto, atr).click()
+
+
+@when('cliqueo en el botón "{texto}"')
 def cliquear_en_el_boton(context, texto):
-    context.browser.esperar_elemento(texto, By.LINK_TEXT).click()
+    context.execute_steps(
+        f'Cuando cliqueo en el botón de contenido "{texto}"'
+    )
 
 
 @when('completo el form de dividir cuenta con estos valores')
@@ -334,3 +354,9 @@ def veo_un_boton(context, texto):
 @then('veo un formulario de {elem}')
 def veo_formulario(context, elem):
     context.browser.esperar_elemento(f'id_form_{elem}')
+
+
+@then('veo un mensaje de error: "{mensaje}"')
+def veo_mensaje_de_error(context, mensaje):
+    errores = context.browser.esperar_elemento('id_errores').text
+    context.test.assertIn(mensaje, errores)

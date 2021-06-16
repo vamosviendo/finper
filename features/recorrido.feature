@@ -14,7 +14,7 @@ Característica: Recorrido
 
         Y veo un botón de Cuenta nueva
 
-        Cuando cliqueo en el botón Cuenta nueva
+        Cuando cliqueo en el botón "Cuenta nueva"
         Entonces veo un formulario de cuenta
 
         Cuando agrego una cuenta con nombre "Efectivo"
@@ -22,7 +22,7 @@ Característica: Recorrido
         Y veo que el saldo de Efectivo es cero pesos
         Y veo un botón de Movimiento nuevo
 
-        Cuando cliqueo en el botón Movimiento nuevo
+        Cuando cliqueo en el botón "Movimiento nuevo"
         Entonces veo un formulario de movimiento
         Y el campo "fecha" del formulario tiene fecha de hoy como valor por defecto
 
