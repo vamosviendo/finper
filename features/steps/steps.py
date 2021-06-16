@@ -73,6 +73,15 @@ def hay_una_cuenta(context):
     )
 
 
+@given('una cuenta')
+def hay_una_cuenta(context):
+    context.execute_steps(
+        'Dada una cuenta con los siguientes valores\n' +
+        '| nombre   | slug |\n' +
+        '| Efectivo | e    |'
+    )
+
+
 @given('la cuenta "{nombre}" dividida en subcuentas')
 def cuenta_dividida(context, nombre):
     cta = Cuenta.tomar(nombre=nombre)
@@ -148,6 +157,13 @@ def cliquear_en(context, atributo, texto):
     )
 
 
+@when('cliqueo en el botón')
+def cliquear_en(context):
+    context.execute_steps(
+        'Cuando cliqueo en el botón de id "id_btn_submit"'
+    )
+
+
 @when('cliqueo en el botón "{texto}"')
 def cliquear_en_el_boton(context, texto):
     context.execute_steps(
@@ -175,6 +191,11 @@ def entrar_en_cuenta(context, nombre):
         ).text,
         nombre
     )
+
+
+@when('escribo "{texto}" en el campo "{campo}"')
+def completar_campo(context, texto, campo):
+    context.browser.completar(f'input[name="{campo}"]', texto, By.CSS_SELECTOR)
 
 
 @when('voy a la página principal')
@@ -333,6 +354,13 @@ def el_saldo_general_es_tanto(context, nombre, tantos):
     context.test.assertEqual(
         total.text, tantos
     )
+
+
+@then('veo que el nombre de la cuenta es "{nombre}"')
+def el_nombre_es_tal(context, nombre):
+    nombre_en_pag = context.browser.esperar_elemento(
+        'class_nombre_cuenta', By.CLASS_NAME).text
+    context.test.assertEqual(nombre_en_pag, nombre)
 
 
 @then('veo {num} movimient{os} en la página')

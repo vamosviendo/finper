@@ -1,6 +1,8 @@
 # language: es
 
 Característica: Eliminar movimiento
+    Quiero poder eliminar movimientos
+    y que eso se refleje en los saldos de las cuentas involucradas
 
 Escenario: Eliminar movimiento
     Dadas 2 cuentas con los siguientes valores:
