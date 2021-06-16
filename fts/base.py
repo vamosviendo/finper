@@ -149,12 +149,12 @@ class MiFirefox(webdriver.Firefox):
         """ Elimina el valor de un campo de form."""
         self.find_element_by_id(id_campo).clear()
 
-    def completar(self, id_campo, texto):
+    def completar(self, id_campo, texto, criterio=By.ID):
         """ Completa un campo de texto en un form, o selecciona un valor
             de un campo select."""
-        campo = self.esperar_elemento(id_campo)
+        campo = self.esperar_elemento(id_campo, criterio=criterio)
         try:
-            self.limpiar_campo(id_campo)
+            campo.clear()
             campo.send_keys(str(texto))
         except InvalidElementStateException:
             Select(campo).select_by_visible_text(texto)
@@ -205,10 +205,10 @@ class FunctionalTest(StaticLiveServerTestCase):
         """ Elimina el valor de un campo de form."""
         self.browser.limpiar_campo(id_campo)
 
-    def completar(self, id_campo, texto):
+    def completar(self, id_campo, texto, criterio=By.ID):
         """ Completa un campo de texto en un form, o selecciona un valor
             de un campo select."""
-        self.browser.completar(id_campo, texto)
+        self.browser.completar(id_campo, texto, criterio)
 
     def pulsar(self, boton="id_btn_submit", crit=By.ID):
         """ Busca un botón y lo pulsa."""
