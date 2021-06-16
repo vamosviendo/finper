@@ -65,6 +65,14 @@ def hay_n_movimientos(context, n):
         )
 
 
+@given('un movimiento con los siguientes valores')
+def hay_un_movimiento(context):
+    context.execute_steps(
+        'Dados 1 movimientos con los siguientes valores\n ' +
+        table_to_str(context.table)
+    )
+
+
 @given('una cuenta con los siguientes valores')
 def hay_una_cuenta(context):
     context.execute_steps(
@@ -193,9 +201,15 @@ def entrar_en_cuenta(context, nombre):
     )
 
 
-@when('escribo "{texto}" en el campo "{campo}"')
-def completar_campo(context, texto, campo):
-    context.browser.completar(f'input[name="{campo}"]', texto, By.CSS_SELECTOR)
+@when('{accion} "{texto}" en el campo "{campo}"') # acción=escribo, selecciono
+def completar_campo(context, accion, texto, campo):
+    if accion == 'escribo':
+        tipo = 'input'
+    elif accion == 'selecciono':
+        tipo = 'select'
+    else:
+        raise ValueError('La acción debe ser "escribo" o "selecciono')
+    context.browser.completar(f'{tipo}[name="{campo}"]', texto, By.CSS_SELECTOR)
 
 
 @when('voy a la página principal')
@@ -335,15 +349,25 @@ def detalle_muestra_subcuentas_de(context, nombre_cta):
     )
 
 
+@then('veo que el concepto del movimiento es "{concepto}"')
+def el_concepto_es_tal(context, concepto):
+    concepto_en_pag = context.browser.esperar_elemento(
+        'class_td_concepto', By.CLASS_NAME).text
+    context.test.assertEqual(concepto_en_pag, concepto)
+
+
 @then('veo que el saldo {nombre} es {tantos} pesos')
 def el_saldo_general_es_tanto(context, nombre, tantos):
     if nombre == 'general':
         total = context.browser.esperar_elemento('id_importe_saldo_gral')
     else:
-        nombre = nombre[3:]
-        if nombre[0] == '"':
-            nombre = nombre[1:-1]
-        slug = Cuenta.tomar(nombre=nombre).slug
+        if nombre == 'de la cuenta':
+            slug = 'e'
+        else:
+            nombre = nombre[3:]
+            if nombre[0] == '"':
+                nombre = nombre[1:-1]
+            slug = Cuenta.tomar(nombre=nombre).slug
         total = context.browser.esperar_elemento(f'id_saldo_cta_{slug}')
 
     if tantos == 'cero':
