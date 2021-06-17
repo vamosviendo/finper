@@ -5,13 +5,17 @@
         @when('agrego una cuenta')
 """
 
+import datetime
 from datetime import date
+from pathlib import Path
+from unittest.mock import patch
 
 from behave import given, then, when
 from selenium.webdriver.common.by import By
 
 from diario.models import Cuenta, Movimiento
-from utils.constantes import ORDINALES
+from utils.constantes import BYS, ORDINALES
+from utils.funciones.archivos import fijar_mtime
 
 
 def table_to_str(tabla):
@@ -63,6 +67,13 @@ def hay_n_movimientos(context, n):
             cta_entrada=cta_entrada,
             cta_salida=cta_salida,
         )
+
+
+@given('un error de {cantidad} pesos en el saldo de la cuenta "{nombre}"')
+def hay_un_error_en_el_saldo(context, cantidad, nombre):
+    cta = Cuenta.tomar(nombre=nombre)
+    cta.saldo += float(cantidad)
+    cta.save()
 
 
 @given('un movimiento con los siguientes valores')
@@ -149,12 +160,7 @@ def agregar_movimiento(context):
 
 @when('cliqueo en el {orden} botón de {atributo} "{texto}"')
 def cliquear_en(context, orden, atributo, texto):
-    if atributo == 'clase':
-        atr = By.CLASS_NAME
-    elif atributo == 'id':
-        atr = By.ID
-    else:
-        atr = By.LINK_TEXT
+    atr = BYS.get(atributo, By.LINK_TEXT)
     context.browser.esperar_elementos(texto, atr)[ORDINALES[orden]].click()
 
 
@@ -201,6 +207,13 @@ def entrar_en_cuenta(context, nombre):
     )
 
 
+@when('introduzco un error de {importe} pesos en el saldo de la cuenta "{nombre}"')
+def introducir_saldo_erroneo(context, importe, nombre):
+    context.execute_steps(
+        f'Dado un error de {importe} pesos en el saldo de la cuenta "{nombre}"'
+    )
+
+
 @when('{accion} "{texto}" en el campo "{campo}"') # acción=escribo, selecciono
 def completar_campo(context, accion, texto, campo):
     if accion == 'escribo':
@@ -212,9 +225,39 @@ def completar_campo(context, accion, texto, campo):
     context.browser.completar(f'{tipo}[name="{campo}"]', texto, By.CSS_SELECTOR)
 
 
+@when('voy a la página principal por primera vez en el día')
+def ir_a_pag_principal(context):
+    fecha = date(2021, 4, 4)
+
+    class FalsaFecha(datetime.date):
+        @classmethod
+        def today(cls):
+            return fecha
+
+    patcherf = patch('datetime.date', FalsaFecha)
+    patcherf.start()
+
+    hoy = Path('hoy.mark')
+    ayer = hoy.rename('ayer.mark')
+    hoy.touch()
+    fijar_mtime(hoy, datetime.datetime(2021, 4, 4))
+
+    fecha = datetime.date(2021, 4, 5)
+    context.browser.get(context.get_url('/'))
+
+    patcherf.stop()
+    hoy.unlink()
+    ayer.rename('hoy.mark')
+
+
 @when('voy a la página principal')
 def ir_a_pag_principal(context):
     context.browser.get(context.get_url('/'))
+
+
+@when('voy a la página principal sin que haya cambiado el día')
+def ir_a_pag_principal(context):
+    context.execute_steps('Cuando voy a la página principal')
 
 
 # @thens (por orden alfabético)
@@ -317,6 +360,15 @@ def cuenta_no_esta_en_grilla(context, nombre):
         nombre,
         [x.find_element_by_class_name('class_nombre_cuenta').text
          for x in cuentas]
+    )
+
+
+@then('no veo un elemento de {atributo} "{elemento}"')
+def elemento_no_aparece(context, atributo, elemento):
+    atr = BYS.get(atributo, By.LINK_TEXT)
+    context.test.assertEqual(
+        len(context.browser.esperar_elementos(elemento, atr, fail=False)), 0,
+        'Aparece botón "agregar movimiento" en una cuenta que no los admite'
     )
 
 
@@ -442,3 +494,39 @@ def veo_formulario(context, elem):
 def veo_mensaje_de_error(context, mensaje):
     errores = context.browser.esperar_elemento('id_errores').text
     context.test.assertIn(mensaje, errores)
+
+
+@then('veo un mensaje de saldos erróneos que incluye las cuentas')
+def veo_mensaje_de_saldos_erroneos(context):
+    msj = context.browser.esperar_elemento('id_msj_ctas_erroneas').text
+    for fila in context.table:
+        context.test.assertIn(fila['nombre'], msj)
+
+
+@then('veo un mensaje de saldo erróneo para la cuenta "{nombre}"')
+def veo_mensaje_de_saldo_erroneo(context, nombre):
+    context.execute_steps(
+        'Entonces veo un mensaje de saldos erróneos que incluye las cuentas\n'
+        f'    | nombre |\n| {nombre} |'
+    )
+
+
+@then('veo un movimiento con los siguientes valores')
+def veo_un_movimiento(context):
+    movs_concepto = [
+        c.text for c in context.browser.esperar_elementos('class_td_concepto')
+    ]
+    movs_importe = [
+        c.text for c in context.browser.esperar_elementos('class_td_importe')
+    ]
+    movs_ctas = [
+        c.text for c in context.browser.esperar_elementos('class_td_cuentas')
+    ]
+    for fila in context.table:
+        context.test.assertIn(fila['concepto'], movs_concepto)
+        indice = movs_concepto.index(fila['concepto'])
+        context.test.assertEqual(movs_importe[indice], fila['importe'])
+        if fila.get('cta_entrada'):
+            context.test.assertIn(fila['cta_entrada'], movs_ctas[indice])
+        if fila.get('cta_salida'):
+            context.test.assertIn(fila['cta_salida'], movs_ctas[indice])

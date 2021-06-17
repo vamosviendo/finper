@@ -2,6 +2,8 @@
 
 Característica: Modificar movimiento
     Quiero poder modificar movimientos
+    y que el saldo de las cuentas involucradas no cambie
+    a menos que se modifiquen importes o cuentas
 
 Escenario: Modificar movimiento
     Dada una cuenta
@@ -15,7 +17,7 @@ Escenario: Modificar movimiento
     Entonces veo que el concepto del movimiento es "Saldo inicial"
         Y veo que el saldo de la cuenta es 200.00 pesos
 
-Escenario: Modificar importe de movimiento
+Escenario: Modificar importe o cuentas de movimiento
     Dadas 2 cuentas con los siguientes valores:
         | nombre         | slug |
         | Aefectivo      | a    |
