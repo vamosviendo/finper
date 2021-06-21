@@ -61,3 +61,12 @@ class ErrorCuentaEsInteractiva(TypeError):
             message='Operación no admitida para cuentas interaactivas'
     ):
         super().__init__(message)
+
+
+class ErrorImporteCero(ValueError):
+
+    def __init__(
+            self,
+            message='No se admite importe igual a 0'
+    ):
+        super().__init__(message)

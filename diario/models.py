@@ -250,19 +250,26 @@ class Cuenta(MiModel):
         # Generación de subcuentas y traspaso de saldos
         self.tipo = 'caja'
         cuentas_creadas = list()
+
         for i, subcuenta in enumerate(cuentas_limpias):
             saldo = subcuenta.pop('saldo')
             cuentas_creadas.append(Cuenta.crear(**subcuenta, cta_madre=self))
+
             self.tipo = 'interactiva'
-            Movimiento.crear(
-                concepto=f'Paso de saldo de {self.nombre} '
-                         f'a subcuenta {cuentas_creadas[i].nombre}'[:80],
-                importe=saldo,
-                cta_entrada=cuentas_creadas[i],
-                cta_salida=self,
-            )
+            try:
+                Movimiento.crear(
+                    concepto=f'Paso de saldo de {self.nombre} '
+                             f'a subcuenta {cuentas_creadas[i].nombre}'[:80],
+                    importe=saldo,
+                    cta_entrada=cuentas_creadas[i],
+                    cta_salida=self,
+                )
+            except errors.ErrorImporteCero:
+                pass
             self.tipo = 'caja'
+
         self.save()
+
         return cuentas_creadas
 
     def esta_en_una_caja(self):
@@ -312,6 +319,13 @@ class Movimiento(MiModel):
     @classmethod
     def crear(cls, concepto, importe, cta_entrada=None, cta_salida=None,
               **kwargs):
+        if importe == 0:
+            raise errors.ErrorImporteCero(
+                'Se intentó crear un movimiento con importe cero')
+        if importe < 0:
+            cuenta = cta_salida
+            cta_salida = cta_entrada
+            cta_entrada = cuenta
         return super().crear(
             concepto=concepto,
             importe=importe,

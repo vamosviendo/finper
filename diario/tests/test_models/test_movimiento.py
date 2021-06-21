@@ -183,16 +183,23 @@ class TestModelMovimientoBasic(TestModelMovimiento):
 
         self.assertEqual(list(Movimiento.todes()), [mov3, mov2, mov1])
 
+
+class TestModelMovimientoCrear(TestModelMovimiento):
+
+    def setUp(self):
+        super().setUp()
+        self.cuenta2 = Cuenta.crear(nombre='Banco', slug='b')
+
     def test_crear_funciona_con_args_basicos_sin_nombre(self):
-        cta2 = Cuenta.crear(nombre='Banco', slug='B')
         mov1 = Movimiento.crear('Pago en efectivo', 100, None, self.cuenta1)
         mov2 = Movimiento.crear('Cobranza en efectivo', 100, self.cuenta1)
-        mov3 = Movimiento.crear('Extracción bancaria', 50, self.cuenta1, cta2)
+        mov3 = Movimiento.crear(
+            'Extracción bancaria', 50, self.cuenta1, self.cuenta2)
         self.assertEqual(mov1.concepto, 'Pago en efectivo')
         self.assertIsNone(mov1.cta_entrada)
         self.assertEqual(mov2.cta_entrada, self.cuenta1)
         self.assertIsNone(mov2.cta_salida)
-        self.assertEqual(mov3.cta_salida, cta2)
+        self.assertEqual(mov3.cta_salida, self.cuenta2)
 
     def test_funciona_con_argumentos_mixtos(self):
         mov1 = Movimiento.crear(
@@ -209,6 +216,29 @@ class TestModelMovimientoBasic(TestModelMovimiento):
         self.assertIsNone(mov2.cta_salida)
         self.assertEqual(mov3.cta_salida, self.cuenta1)
         self.assertIsNone(mov3.cta_entrada)
+
+    def test_mov_entrada_con_saldo_negativo_se_convierte_en_mov_salida(self):
+        mov = Movimiento.crear('Pago', -100, cta_entrada=self.cuenta1)
+        self.assertIsNone(mov.cta_entrada)
+        self.assertEqual(mov.cta_salida, self.cuenta1)
+
+    def test_mov_salida_con_saldo_negativo_se_convierte_en_mov_entrada(self):
+        mov = Movimiento.crear('Pago', -100, cta_salida=self.cuenta1)
+        self.assertIsNone(mov.cta_salida)
+        self.assertEqual(mov.cta_entrada, self.cuenta1)
+
+    def test_mov_traspaso_con_saldo_negativo_intercambia_cta_entrada_y_salida(self):
+        mov = Movimiento.crear(
+            'Pago', -100, cta_entrada=self.cuenta2, cta_salida=self.cuenta1)
+        self.assertEqual(mov.cta_salida, self.cuenta2)
+        self.assertEqual(mov.cta_entrada, self.cuenta1)
+
+    def test_importe_cero_tira_error(self):
+        with self.assertRaisesMessage(
+                errors.ErrorImporteCero,
+                "Se intentó crear un movimiento con importe cero"
+        ):
+            mov = Movimiento.crear('Pago', 0, cta_salida=self.cuenta1)
 
 
 class TestModelMovimientoPropiedades(TestModelMovimiento):
