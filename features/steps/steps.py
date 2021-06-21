@@ -109,7 +109,7 @@ def cuenta_dividida(context, nombre):
         subcuentas.append(dict(
                 nombre=fila['nombre'],
                 slug=fila['slug'],
-                saldo=int(fila['saldo'])
+                saldo=fila['saldo']
         ))
     cta.dividir_entre(*subcuentas)
 

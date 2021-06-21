@@ -478,6 +478,34 @@ class TestMetodoDividirEntre(TestModelCuentaMetodos):
         ):
             self.cta1.dividir_entre(*self.subcuentas)
 
+    def test_acepta_saldos_en_formato_str(self):
+        self.subcuentas[0]['saldo'] = '50'
+        self.subcuentas[1]['saldo'] = '200'
+
+        subcuentas_creadas = self.cta1.dividir_entre(self.subcuentas)
+
+        self.assertEqual(subcuentas_creadas[0].saldo, 50.0)
+        self.assertEqual(subcuentas_creadas[1].saldo, 200.0)
+
+    def test_acepta_saldos_en_distintos_formatos(self):
+        self.subcuentas[0]['saldo'] = 50
+        self.subcuentas[1]['saldo'] = '200'
+
+        subcuentas_creadas = self.cta1.dividir_entre(self.subcuentas)
+
+
+    def test_acepta_una_cuenta_sin_saldo_con_saldos_en_formato_str(self):
+        self.subcuentas[0]['saldo'] = '50'
+        self.subcuentas[1]['saldo'] = '130'
+        self.subcuentas.append({'nombre': 'Cajita', 'slug': 'ecjt'})
+
+        self.cta1.dividir_entre(*self.subcuentas)
+
+        cta_nueva = Cuenta.tomar(slug='ecjt')
+
+        self.assertEqual(cta_nueva.saldo, 70.0)
+
+
     def test_funciona_con_lista_de_dicts(self):
         self.cta1.dividir_entre(self.subcuentas)   # No debe dar error
 

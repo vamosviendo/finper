@@ -211,6 +211,8 @@ class Cuenta(MiModel):
 
         cuentas_limpias = list()
 
+        # Verificar que todas las subcuentas tengan saldo y tomar las
+        # acciones correspondientes en caso de que no
         for i, subcuenta in enumerate(subcuentas):
             if type(subcuenta) in (list, tuple):
                 try:
@@ -219,24 +221,25 @@ class Cuenta(MiModel):
                         'slug': subcuenta[1],
                         'saldo': subcuenta[2]
                     }
-                except IndexError:
+                except IndexError:  # No hay elemento para saldo
                     subcuenta = {'nombre': subcuenta[0], 'slug': subcuenta[1]}
 
             try:
-                saldo = subcuenta['saldo']
-            except KeyError:
-                subcuenta['saldo'] = 0
+                subcuenta['saldo'] = float(subcuenta['saldo'])
+            except KeyError:    # El dict no tiene clave 'saldo'
+                subcuenta['saldo'] = 0.0
                 try:
-                    subcuenta['saldo'] = \
-                        self.saldo - sum([x['saldo'] for x in subcuentas])
+                    subcuenta['saldo'] = self.saldo - sum([
+                        x['saldo'] for x in subcuentas
+                    ])
                 except TypeError:
                     subcus = list(subcuentas)[:i] + list(subcuentas)[i+1:]
                     try:
                         subcuenta['saldo'] = \
                             self.saldo - sum([x[2] for x in subcus])
-                    except IndexError:
+                    except IndexError:  # Hay más de una subcuenta sin saldo
                         raise ErrorDeSuma(SUBCUENTAS_SIN_SALDO)
-                except KeyError:
+                except KeyError:    # Hay más de una subcuenta sin saldo
                     raise ErrorDeSuma(SUBCUENTAS_SIN_SALDO)
             cuentas_limpias.append(subcuenta)
 
