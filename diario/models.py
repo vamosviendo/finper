@@ -53,13 +53,28 @@ class Cuenta(MiModel):
 
     @classmethod
     def crear(cls, nombre, slug, opciones='i', cta_madre=None, **kwargs):
-        return super().crear(
+
+        try:
+            saldo = kwargs.pop('saldo')
+        except KeyError:
+            saldo = None
+
+        cuenta_nueva = super().crear(
             nombre=nombre,
             slug=slug,
             opciones=opciones,
             cta_madre=cta_madre,
             **kwargs
         )
+
+        if saldo:
+            Movimiento.crear(
+                concepto=f'Saldo inicial de {cuenta_nueva.nombre}',
+                importe=saldo,
+                cta_entrada=cuenta_nueva
+            )
+
+        return cuenta_nueva
 
     def __str__(self):
         return self.nombre
@@ -319,10 +334,13 @@ class Movimiento(MiModel):
     @classmethod
     def crear(cls, concepto, importe, cta_entrada=None, cta_salida=None,
               **kwargs):
+        importe = float(importe)
+
         if importe == 0:
             raise errors.ErrorImporteCero(
                 'Se intentó crear un movimiento con importe cero')
         if importe < 0:
+            importe = -importe
             cuenta = cta_salida
             cta_salida = cta_entrada
             cta_entrada = cuenta

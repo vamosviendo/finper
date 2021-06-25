@@ -36,7 +36,7 @@ class TestModelCuenta(TestCase):
         self.assertEqual(segunda_cuenta_guardada.nombre, 'Caja de ahorro')
         self.assertEqual(segunda_cuenta_guardada.slug, 'ca')
 
-    def test_cuenta_creada_tiene_saldo_cero(self):
+    def test_cuenta_creada_tiene_saldo_cero_por_defecto(self):
         cuenta = Cuenta(nombre='Efectivo', slug='E')
         cuenta.save()
         self.assertEqual(cuenta.saldo, 0)
@@ -58,7 +58,7 @@ class TestModelCuenta(TestCase):
             cuenta = Cuenta(nombre='Efectivo')
             cuenta.full_clean()
 
-    def test_slug_se_guarda_siempre_en_mayusculas(self):
+    def test_slug_se_guarda_siempre_en_minusculas(self):
         Cuenta.crear(nombre='Efectivo', slug='Efec')
         cuenta = Cuenta.primere()
         self.assertEqual(cuenta.slug, 'efec')
@@ -71,22 +71,8 @@ class TestModelCuenta(TestCase):
         cuenta = Cuenta(nombre='Efectivo', slug='E')
         self.assertEqual(str(cuenta), 'Efectivo')
 
-    def test_crear_crea_cuenta(self):
-        Cuenta.crear(nombre='Efectivo', slug='E')
-        self.assertEqual(Cuenta.cantidad(), 1)
-
-    def test_crear_devuelve_cuenta_creada(self):
-        cuenta = Cuenta.crear(nombre='Efectivo', slug='E')
-        self.assertEqual((cuenta.nombre, cuenta.slug), ('Efectivo', 'e'))
-
-    def test_crear_no_permite_nombre_vacio(self):
-        with self.assertRaises(ValidationError):
-            Cuenta.crear(nombre=None, slug='E')
-
     def test_no_permite_eliminar_cuentas_con_saldo(self):
-        cuenta = Cuenta.crear(nombre='Efectivo', slug='E')
-        Movimiento.crear(
-            concepto='Saldo', importe=100, cta_entrada=cuenta)
+        cuenta = Cuenta.crear(nombre='Efectivo', slug='E', saldo=100)
         with self.assertRaises(SaldoNoCeroException):
             cuenta.delete()
 
@@ -108,6 +94,56 @@ class TestModelCuenta(TestCase):
         cuenta.opciones = 'ic'
         with self.assertRaises(ErrorOpciones):
             cuenta.full_clean()
+
+
+class TestModelCuentaCrear(TestCase):
+
+    def test_crear_crea_cuenta(self):
+        Cuenta.crear(nombre='Efectivo', slug='E')
+        self.assertEqual(Cuenta.cantidad(), 1)
+
+    def test_crear_devuelve_cuenta_creada(self):
+        cuenta = Cuenta.crear(nombre='Efectivo', slug='E')
+        self.assertEqual((cuenta.nombre, cuenta.slug), ('Efectivo', 'e'))
+
+    def test_crear_no_permite_nombre_vacio(self):
+        with self.assertRaises(ValidationError):
+            Cuenta.crear(nombre=None, slug='E')
+
+    def test_genera_movimiento_inicial_si_se_pasa_argumento_saldo(self):
+        cuenta = Cuenta.crear(nombre='Efectivo', slug='e', saldo=155)
+        self.assertEqual(Movimiento.cantidad(), 1)
+        mov = Movimiento.primere()
+        self.assertEqual(mov.concepto, f'Saldo inicial de {cuenta.nombre}')
+
+    def test_no_genera_movimiento_si_no_se_pasa_argumento_saldo(self):
+        Cuenta.crear('Efectivo', 'e')
+        self.assertEqual(Movimiento.cantidad(), 0)
+
+    def test_no_genera_movimiento_si_argumento_saldo_es_igual_a_cero(self):
+        Cuenta.crear('Efectivo', 'e', saldo=0)
+        self.assertEqual(Movimiento.cantidad(), 0)
+
+    def test_importe_de_movimiento_generado_coincide_con_argumento_saldo(self):
+        Cuenta.crear('Efectivo', 'e', saldo=232)
+        mov = Movimiento.primere()
+        self.assertEqual(mov.importe, 232)
+
+    def test_cuenta_creada_es_cta_entrada_del_movimiento_generado(self):
+        cuenta = Cuenta.crear('Efectivo', 'e', saldo=234)
+        mov = Movimiento.primere()
+        self.assertEqual(mov.cta_entrada, cuenta)
+
+    def test_cuenta_creada_es_cta_salida_del_movimiento_generado_si_el_saldo_es_negativo(self):
+        cuenta = Cuenta.crear('Efectivo', 'e', saldo=-354)
+        mov = Movimiento.primere()
+        self.assertIsNone(mov.cta_entrada)
+        self.assertEqual(mov.cta_salida, cuenta)
+        self.assertEqual(mov.importe, 354)
+
+    def test_funciona_con_saldo_en_formato_str(self):
+        cuenta = Cuenta.crear('Efectivo', 'e', saldo='354')
+        self.assertEqual(cuenta.saldo, 354)
 
 
 class TestModelCuentaMetodos(TestCase):
@@ -493,7 +529,6 @@ class TestMetodoDividirEntre(TestModelCuentaMetodos):
 
         subcuentas_creadas = self.cta1.dividir_entre(self.subcuentas)
 
-
     def test_acepta_una_cuenta_sin_saldo_con_saldos_en_formato_str(self):
         self.subcuentas[0]['saldo'] = '50'
         self.subcuentas[1]['saldo'] = '130'
@@ -504,7 +539,6 @@ class TestMetodoDividirEntre(TestModelCuentaMetodos):
         cta_nueva = Cuenta.tomar(slug='ecjt')
 
         self.assertEqual(cta_nueva.saldo, 70.0)
-
 
     def test_funciona_con_lista_de_dicts(self):
         self.cta1.dividir_entre(self.subcuentas)   # No debe dar error
@@ -622,8 +656,7 @@ class TestCuentaMadre(TestModelCuentaMetodos):
 
     def test_si_se_asigna_cta_interactiva_con_saldo_a_cta_caja_se_suma_el_saldo(self):
         saldo_cta1 = self.cta1.saldo
-        cta4 = Cuenta.crear("Bolsillo", "ebol")
-        Movimiento.crear(concepto='mov', importe=50, cta_entrada=cta4)
+        cta4 = Cuenta.crear("Bolsillo", "ebol", saldo=50)
 
         cta4.cta_madre = self.cta1
         cta4.save()
@@ -633,8 +666,7 @@ class TestCuentaMadre(TestModelCuentaMetodos):
 
     def test_si_se_asigna_cta_caja_con_saldo_a_cta_caja_se_suma_el_saldo(self):
         saldo_cta1 = self.cta1.saldo
-        cta4 = Cuenta.crear("Bolsillos", "ebol")
-        Movimiento.crear(concepto='mov', importe=50, cta_entrada=cta4)
+        cta4 = Cuenta.crear("Bolsillos", "ebol", saldo=50)
 
         cta4.dividir_entre(
             {'nombre': 'Bolsillo campera', 'slug': 'ebca', 'saldo': 30},

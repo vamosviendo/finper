@@ -217,21 +217,25 @@ class TestModelMovimientoCrear(TestModelMovimiento):
         self.assertEqual(mov3.cta_salida, self.cuenta1)
         self.assertIsNone(mov3.cta_entrada)
 
-    def test_mov_entrada_con_saldo_negativo_se_convierte_en_mov_salida(self):
+    def test_mov_entrada_con_importe_negativo_se_convierte_en_mov_salida(self):
         mov = Movimiento.crear('Pago', -100, cta_entrada=self.cuenta1)
         self.assertIsNone(mov.cta_entrada)
         self.assertEqual(mov.cta_salida, self.cuenta1)
 
-    def test_mov_salida_con_saldo_negativo_se_convierte_en_mov_entrada(self):
+    def test_mov_salida_con_importe_negativo_se_convierte_en_mov_entrada(self):
         mov = Movimiento.crear('Pago', -100, cta_salida=self.cuenta1)
         self.assertIsNone(mov.cta_salida)
         self.assertEqual(mov.cta_entrada, self.cuenta1)
 
-    def test_mov_traspaso_con_saldo_negativo_intercambia_cta_entrada_y_salida(self):
+    def test_mov_traspaso_con_importe_negativo_intercambia_cta_entrada_y_salida(self):
         mov = Movimiento.crear(
             'Pago', -100, cta_entrada=self.cuenta2, cta_salida=self.cuenta1)
         self.assertEqual(mov.cta_salida, self.cuenta2)
         self.assertEqual(mov.cta_entrada, self.cuenta1)
+
+    def test_mov_con_importe_negativo_se_guarda_con_importe_positivo(self):
+        mov = Movimiento.crear('Pago', -100, cta_entrada=self.cuenta1)
+        self.assertEqual(mov.importe, 100)
 
     def test_importe_cero_tira_error(self):
         with self.assertRaisesMessage(
@@ -239,6 +243,10 @@ class TestModelMovimientoCrear(TestModelMovimiento):
                 "Se intentó crear un movimiento con importe cero"
         ):
             mov = Movimiento.crear('Pago', 0, cta_salida=self.cuenta1)
+
+    def test_acepta_importe_en_formato_str(self):
+        mov = Movimiento.crear('Pago', '200', cta_entrada=self.cuenta1)
+        self.assertEqual(mov.importe, 200.0)
 
 
 class TestModelMovimientoPropiedades(TestModelMovimiento):
