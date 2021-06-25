@@ -48,7 +48,7 @@ class TestModificaMovimiento(FunctionalTest):
 
         links_mod_movs = self.esperar_elementos('link_mod_mov')
         links_mod_movs[1].click()
-        self.completar('id_cta_salida', 'Afectivo')
+        self.completar('id_cta_salida', 'afectivo')
         super().pulsar()
         saldo1 = self.esperar_elemento('id_saldo_cta_a').text
         saldo2 = self.esperar_elemento('id_saldo_cta_b').text

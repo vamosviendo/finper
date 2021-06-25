@@ -113,7 +113,11 @@ class Cuenta(MiModel):
         self._saldo = saldo
 
     def full_clean(self, *args, **kwargs):
-        self.slug = self.slug.lower()
+        if self.slug:
+            self.slug = self.slug.lower()
+        if self.nombre:
+            self.nombre = self.nombre.lower()
+
         if 'c' not in self.opciones and 'i' not in self.opciones:
             raise ErrorOpciones('La cuenta no tiene tipo asignado')
         if 'c' in self.opciones and 'i' in self.opciones:
@@ -124,8 +128,9 @@ class Cuenta(MiModel):
             raise ErrorTipo('Cuenta interactiva no puede tener subcuentas')
         if self.cta_madre in self.arbol_de_subcuentas():
             raise ErrorDependenciaCircular(
-                f'Cuenta madre {self.cta_madre} está entre las subcuentas '
-                f'de {self} o entre las de una de sus subcuentas'
+                f'Cuenta madre {self.cta_madre.nombre.capitalize()} está '
+                f'entre las subcuentas de {self.nombre.capitalize()} o entre '
+                f'las de una de sus subcuentas'
             )
         if self.cta_madre and self.cta_madre.es_interactiva:
             raise ErrorTipo(f'Cuenta interactiva "{self.cta_madre }" '
@@ -273,8 +278,9 @@ class Cuenta(MiModel):
             self.tipo = 'interactiva'
             try:
                 Movimiento.crear(
-                    concepto=f'Paso de saldo de {self.nombre} '
-                             f'a subcuenta {cuentas_creadas[i].nombre}'[:80],
+                    concepto=f'Paso de saldo de {self.nombre.capitalize()} '
+                             f'a subcuenta '
+                             f'{cuentas_creadas[i].nombre.capitalize()}'[:80],
                     importe=saldo,
                     cta_entrada=cuentas_creadas[i],
                     cta_salida=self,

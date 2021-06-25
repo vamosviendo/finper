@@ -127,15 +127,15 @@ class TestModelMovimientoBasic(TestModelMovimiento):
         )
         self.assertEqual(
             str(mov1),
-            '2021-03-22 Retiro de efectivo: 250.2 +Efectivo -Banco'
+            '2021-03-22 Retiro de efectivo: 250.2 +efectivo -banco'
         )
         self.assertEqual(
             str(mov2),
-            '2021-03-22 Carga de saldo: 500 +Efectivo'
+            '2021-03-22 Carga de saldo: 500 +efectivo'
         )
         self.assertEqual(
             str(mov3),
-            '2021-03-22 Transferencia: 300.35 -Banco'
+            '2021-03-22 Transferencia: 300.35 -banco'
         )
 
     def test_guarda_fecha_de_hoy_por_defecto(self):

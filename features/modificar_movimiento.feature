@@ -34,7 +34,7 @@ Escenario: Modificar importe o cuentas de movimiento
     Entonces veo que el saldo de Aefectivo es 30.00 pesos
 
     Cuando cliqueo en el segundo botón de clase "link_mod_mov"
-        Y selecciono "Aefectivo" en el campo "cta_salida"
+        Y selecciono "aefectivo" en el campo "cta_salida"
         Y cliqueo en el botón
     Entonces veo que el saldo de Aefectivo es -120.00 pesos
         Y veo que el saldo de "Caja de ahorro" es 70.00 pesos

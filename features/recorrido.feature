@@ -18,7 +18,7 @@ Característica: Recorrido
         Entonces veo un formulario de cuenta
 
         Cuando agrego una cuenta con nombre "Efectivo"
-        Entonces veo una cuenta en la grilla con nombre "Efectivo"
+        Entonces veo una cuenta en la grilla con nombre "efectivo"
         Y veo que el saldo de Efectivo es cero pesos
         Y veo un botón de Movimiento nuevo
 
@@ -29,7 +29,7 @@ Característica: Recorrido
         Cuando agrego un movimiento con campos
             | nombre      | valor                  |
             | concepto    | Carga de saldo inicial |
-            | cta_entrada | Efectivo               |
+            | cta_entrada | efectivo               |
             | importe     | 50.00                  |
         Entonces veo un movimiento en la página
         Y veo que el saldo de Efectivo es 50 pesos

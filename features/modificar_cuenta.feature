@@ -8,4 +8,4 @@ Escenario: Modificar cuenta
         Y cliqueo en el botón de clase "link_mod_cuenta"
         Y escribo "Nombre modificado" en el campo "nombre"
         Y cliqueo en el botón
-    Entonces veo que el nombre de la cuenta es "Nombre modificado"
+    Entonces veo que el nombre de la cuenta es "nombre modificado"

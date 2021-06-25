@@ -47,7 +47,7 @@ class TestRecorrido(FunctionalTest):
 
         self.assertEqual(
             cuentas[0].find_element_by_class_name('class_nombre_cuenta').text,
-            'Efectivo'
+            'efectivo'
         )
         self.assertEqual(
             cuentas[0].find_element_by_class_name('class_saldo_cuenta').text,
@@ -66,7 +66,7 @@ class TestRecorrido(FunctionalTest):
         )
         self.completar('id_concepto', 'Carga de saldo inicial')
         self.completar('id_importe', '985.5')
-        self.completar('id_cta_entrada', 'Efectivo')
+        self.completar('id_cta_entrada', 'efectivo')
         self.pulsar()
         # cta_entrada = self.esperar_elemento('id_cta_entrada')
         # Select(cta_entrada).select_by_visible_text('Efectivo')
@@ -77,7 +77,7 @@ class TestRecorrido(FunctionalTest):
         self.assertEqual(len(ult_movs), 2)   # El encabezado y un movimiento
         self.assertIn(date.today().strftime('%Y-%m-%d'), ult_movs[1].text)
         self.assertIn('Carga de saldo inicial', ult_movs[1].text)
-        self.assertIn('+Efectivo', ult_movs[1].text)
+        self.assertIn('+efectivo', ult_movs[1].text)
         self.assertIn('985.5', ult_movs[1].text)
 
         # El importe cargado aparece en el campo saldo de la cuenta

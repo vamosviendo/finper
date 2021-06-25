@@ -71,7 +71,7 @@ def hay_n_movimientos(context, n):
 
 @given('un error de {cantidad} pesos en el saldo de la cuenta "{nombre}"')
 def hay_un_error_en_el_saldo(context, cantidad, nombre):
-    cta = Cuenta.tomar(nombre=nombre)
+    cta = Cuenta.tomar(nombre=nombre.lower())
     cta.saldo += float(cantidad)
     cta.save()
 
@@ -103,7 +103,7 @@ def hay_una_cuenta(context):
 
 @given('la cuenta "{nombre}" dividida en subcuentas')
 def cuenta_dividida(context, nombre):
-    cta = Cuenta.tomar(nombre=nombre)
+    cta = Cuenta.tomar(nombre=nombre.lower())
     subcuentas = list()
     for fila in context.table:
         subcuentas.append(dict(
@@ -196,6 +196,7 @@ def completar_form_dividir_cuenta(context):
 
 @when('entro en la cuenta "{nombre}"')
 def entrar_en_cuenta(context, nombre):
+    nombre = nombre.lower()
     slug = Cuenta.tomar(nombre=nombre).slug
     context.browser.esperar_elemento(nombre, By.LINK_TEXT).click()
     context.test.assertEqual(
@@ -273,8 +274,8 @@ def campo_muestra_fecha_de_hoy(context, campo):
 
 @then('el saldo general es la suma de los de "{cta1}" y "{cta2}"')
 def saldo_general_es(context, cta1, cta2):
-    cta1 = Cuenta.tomar(nombre=cta1)
-    cta2 = Cuenta.tomar(nombre=cta2)
+    cta1 = Cuenta.tomar(nombre=cta1.lower())
+    cta2 = Cuenta.tomar(nombre=cta2.lower())
     context.test.assertEqual(
         context.browser.esperar_elemento('id_importe_saldo_gral').text,
         f'{cta1.saldo + cta2.saldo:.2f}'
@@ -317,7 +318,7 @@ def subcuentas_de_detalle_cuenta_coinciden_con(context, cuenta):
             f"La id id_div_cta_{fila['slug']} no coincide con {ids[i]}"
         )
         context.test.assertEqual(
-            nombres[i], fila['nombre'],
+            nombres[i], fila['nombre'].lower(),
             f"El nombre {fila['nombre']} no coincide con {nombres[i]}."
         )
         saldo = f"{float(fila['saldo']):.2f}"
@@ -347,7 +348,7 @@ def movs_en_pagina_coinciden_con(context):
             f"El importe del mov {i+1} es {importes[i]}, no {importe}"
         )
         context.test.assertEqual(
-            cuentas[i], fila['cuentas'],
+            cuentas[i], fila['cuentas'].lower(),
             f"Las cuentas involucradas en el mov {i+1} son {cuentas[i]}, "
             f"no {fila['cuentas']}"
         )
@@ -357,7 +358,7 @@ def movs_en_pagina_coinciden_con(context):
 def cuenta_no_esta_en_grilla(context, nombre):
     cuentas = context.browser.esperar_elementos('class_div_cuenta')
     context.test.assertNotIn(
-        nombre,
+        nombre.lower(),
         [x.find_element_by_class_name('class_nombre_cuenta').text
          for x in cuentas]
     )
@@ -378,7 +379,7 @@ def detalle_cuenta_tiene_subcuentas(context, cuenta, x):
         'class_nombre_cuenta_main', By.CLASS_NAME)
 
     context.test.assertEqual(
-        nombre_cta_main.text, cuenta,
+        nombre_cta_main.text, cuenta.lower(),
         f'La cuenta seleccionada no coincide con {cuenta}'
     )
 
@@ -391,7 +392,7 @@ def detalle_cuenta_tiene_subcuentas(context, cuenta, x):
 
 @then('veo las subcuentas de "{nombre_cta}"')
 def detalle_muestra_subcuentas_de(context, nombre_cta):
-    cta = Cuenta.tomar(nombre=nombre_cta)
+    cta = Cuenta.tomar(nombre=nombre_cta.lower())
     subctas_pag = [x.text for x in context.browser.esperar_elementos(
         'link_cuenta'
     )]
@@ -419,7 +420,7 @@ def el_saldo_general_es_tanto(context, nombre, tantos):
             nombre = nombre[3:]
             if nombre[0] == '"':
                 nombre = nombre[1:-1]
-            slug = Cuenta.tomar(nombre=nombre).slug
+            slug = Cuenta.tomar(nombre=nombre.lower()).slug
         total = context.browser.esperar_elemento(f'id_saldo_cta_{slug}')
 
     if tantos == 'cero':
@@ -454,7 +455,7 @@ def veo_movimiento(context, num, os):
 
 @then('veo sólo los movimientos relacionados con "{nombre_cta}" o con sus subcuentas')
 def veo_solo_movimientos_relacionados_con_cta_o_subctas(context, nombre_cta):
-    cta = Cuenta.tomar(nombre=nombre_cta)
+    cta = Cuenta.tomar(nombre=nombre_cta.lower())
     movs_pag = [x.text for x in context.browser.esperar_elementos(
         '.class_row_mov td.class_td_concepto',
         By.CSS_SELECTOR
@@ -474,7 +475,7 @@ def veo_solo_movimientos_relacionados_con(context, nombre_cta):
 def veo_una_cuenta(context, nombre):
     cuentas = context.browser.esperar_elementos('class_div_cuenta')
     context.test.assertIn(
-        nombre,
+        nombre.lower(),
         [x.find_element_by_class_name('class_nombre_cuenta').text
          for x in cuentas]
     )
@@ -500,14 +501,14 @@ def veo_mensaje_de_error(context, mensaje):
 def veo_mensaje_de_saldos_erroneos(context):
     msj = context.browser.esperar_elemento('id_msj_ctas_erroneas').text
     for fila in context.table:
-        context.test.assertIn(fila['nombre'], msj)
+        context.test.assertIn(fila['nombre'].lower(), msj)
 
 
 @then('veo un mensaje de saldo erróneo para la cuenta "{nombre}"')
 def veo_mensaje_de_saldo_erroneo(context, nombre):
     context.execute_steps(
         'Entonces veo un mensaje de saldos erróneos que incluye las cuentas\n'
-        f'    | nombre |\n| {nombre} |'
+        f'    | nombre |\n| {nombre.lower()} |'
     )
 
 
@@ -527,6 +528,8 @@ def veo_un_movimiento(context):
         indice = movs_concepto.index(fila['concepto'])
         context.test.assertEqual(movs_importe[indice], fila['importe'])
         if fila.get('cta_entrada'):
-            context.test.assertIn(fila['cta_entrada'], movs_ctas[indice])
+            context.test.assertIn(
+                fila['cta_entrada'].lower(), movs_ctas[indice])
         if fila.get('cta_salida'):
-            context.test.assertIn(fila['cta_salida'], movs_ctas[indice])
+            context.test.assertIn(
+                fila['cta_salida'].lower(), movs_ctas[indice])

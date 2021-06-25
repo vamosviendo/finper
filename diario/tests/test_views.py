@@ -227,7 +227,7 @@ class TestCtaNueva(TestCase):
         )
         self.assertEqual(Cuenta.cantidad(), 1)
         cuenta_nueva = Cuenta.primere()
-        self.assertEqual(cuenta_nueva.nombre, 'Efectivo')
+        self.assertEqual(cuenta_nueva.nombre, 'efectivo')
 
     def test_redirige_a_home_despues_de_POST(self):
         response = self.client.post(
@@ -260,7 +260,7 @@ class TestCtaMod(TestCase):
         self.cuenta.refresh_from_db()
         self.assertEqual(
             (self.cuenta.nombre, self.cuenta.slug),
-            ('Nombro', 'slag')
+            ('nombro', 'slag')
         )
 
     def test_redirige_a_home_despues_de_post(self):

@@ -19,4 +19,4 @@ class TestModificaCuenta(FunctionalTest):
         self.pulsar()
 
         nombre = self.esperar_elemento('class_nombre_cuenta', By.CLASS_NAME).text
-        self.assertEqual(nombre, 'Efectivo')
+        self.assertEqual(nombre, 'efectivo')

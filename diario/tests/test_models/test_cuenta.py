@@ -31,9 +31,9 @@ class TestModelCuenta(TestCase):
         primera_cuenta_guardada = Cuenta.tomar(pk=primera_cuenta.pk)
         segunda_cuenta_guardada = Cuenta.tomar(pk=segunda_cuenta.pk)
 
-        self.assertEqual(primera_cuenta_guardada.nombre, 'Efectivo')
+        self.assertEqual(primera_cuenta_guardada.nombre, 'efectivo')
         self.assertEqual(primera_cuenta_guardada.slug, 'e')
-        self.assertEqual(segunda_cuenta_guardada.nombre, 'Caja de ahorro')
+        self.assertEqual(segunda_cuenta_guardada.nombre, 'caja de ahorro')
         self.assertEqual(segunda_cuenta_guardada.slug, 'ca')
 
     def test_cuenta_creada_tiene_saldo_cero_por_defecto(self):
@@ -43,8 +43,8 @@ class TestModelCuenta(TestCase):
 
     def test_no_permite_nombres_duplicados(self):
         Cuenta.crear(nombre='Efectivo', slug='E')
+        cuenta2 = Cuenta(nombre='Efectivo', slug='EF')
         with self.assertRaises(ValidationError):
-            cuenta2 = Cuenta(nombre='Efectivo', slug='EF')
             cuenta2.full_clean()
 
     def test_no_permite_slugs_duplicados(self):
@@ -58,10 +58,15 @@ class TestModelCuenta(TestCase):
             cuenta = Cuenta(nombre='Efectivo')
             cuenta.full_clean()
 
-    def test_slug_se_guarda_siempre_en_minusculas(self):
+    def test_slug_se_guarda_en_minusculas(self):
         Cuenta.crear(nombre='Efectivo', slug='Efec')
         cuenta = Cuenta.primere()
         self.assertEqual(cuenta.slug, 'efec')
+
+    def test_nombre_se_guarda_en_minusculas(self):
+        Cuenta.crear(nombre='Efectivo', slug='Efec')
+        cuenta = Cuenta.primere()
+        self.assertEqual(cuenta.nombre, 'efectivo')
 
     def test_slug_no_permite_caracteres_no_alfanumericos(self):
         with self.assertRaises(ValidationError):
@@ -104,11 +109,15 @@ class TestModelCuentaCrear(TestCase):
 
     def test_crear_devuelve_cuenta_creada(self):
         cuenta = Cuenta.crear(nombre='Efectivo', slug='E')
-        self.assertEqual((cuenta.nombre, cuenta.slug), ('Efectivo', 'e'))
+        self.assertEqual((cuenta.nombre, cuenta.slug), ('efectivo', 'e'))
 
     def test_crear_no_permite_nombre_vacio(self):
         with self.assertRaises(ValidationError):
             Cuenta.crear(nombre=None, slug='E')
+
+    def test_crear_no_permite_slug_vacio(self):
+        with self.assertRaises(ValidationError):
+            Cuenta.crear(nombre='Efectivo', slug=None)
 
     def test_genera_movimiento_inicial_si_se_pasa_argumento_saldo(self):
         cuenta = Cuenta.crear(nombre='Efectivo', slug='e', saldo=155)
@@ -275,7 +284,7 @@ class TestMetodosMovsYSaldos(TestModelCuentaMetodos):
     def test_total_subcuentas_tira_excepcion_si_cuenta_es_interactiva(self):
         with self.assertRaisesMessage(
                 ErrorCuentaEsInteractiva,
-                'Cuenta "Efectivo" es interactiva y como tal no tiene '
+                'Cuenta "efectivo" es interactiva y como tal no tiene '
                 'subcuentas'
         ):
             total = self.cta1.total_subcuentas()
@@ -417,8 +426,8 @@ class TestMetodoDividirEntre(TestModelCuentaMetodos):
         subcuenta1 = Cuenta.tomar(slug='ebil')
         subcuenta2 = Cuenta.tomar(slug='ecaj')
 
-        self.assertEqual(subcuenta1.nombre, 'Billetera')
-        self.assertEqual(subcuenta2.nombre, 'Cajón de arriba')
+        self.assertEqual(subcuenta1.nombre, 'billetera')
+        self.assertEqual(subcuenta2.nombre, 'cajón de arriba')
 
     def test_cuentas_generadas_son_subcuentas_de_cuenta_madre(self):
         self.cta1.dividir_entre(*self.subcuentas)
@@ -546,8 +555,8 @@ class TestMetodoDividirEntre(TestModelCuentaMetodos):
     def test_funciona_con_tuplas_o_listas_con_nombre_slug_y_saldo(self):
         subctas = self.cta1.dividir_entre(
             ('Billetera', 'ebil', 50), ('Cajón de arriba', 'ecaj', 200))
-        self.assertEqual(subctas[0].nombre, 'Billetera')
-        self.assertEqual(subctas[1].nombre, 'Cajón de arriba')
+        self.assertEqual(subctas[0].nombre, 'billetera')
+        self.assertEqual(subctas[1].nombre, 'cajón de arriba')
 
         self.assertEqual(subctas[0].slug, 'ebil')
         self.assertEqual(subctas[1].slug, 'ecaj')
@@ -558,8 +567,8 @@ class TestMetodoDividirEntre(TestModelCuentaMetodos):
     def test_funciona_con_listas(self):
         subctas = self.cta1.dividir_entre(
             ['Billetera', 'ebil', 50], ['Cajón de arriba', 'ecaj', 200])
-        self.assertEqual(subctas[0].nombre, 'Billetera')
-        self.assertEqual(subctas[1].nombre, 'Cajón de arriba')
+        self.assertEqual(subctas[0].nombre, 'billetera')
+        self.assertEqual(subctas[1].nombre, 'cajón de arriba')
 
         self.assertEqual(subctas[0].slug, 'ebil')
         self.assertEqual(subctas[1].slug, 'ecaj')
@@ -570,28 +579,28 @@ class TestMetodoDividirEntre(TestModelCuentaMetodos):
     def test_funciona_con_tupla_y_lista(self):
         subctas = self.cta1.dividir_entre(
             ('Billetera', 'ebil', 50), ['Cajón de arriba', 'ecaj', 200])
-        self.assertEqual(subctas[0].nombre, 'Billetera')
-        self.assertEqual(subctas[1].nombre, 'Cajón de arriba')
+        self.assertEqual(subctas[0].nombre, 'billetera')
+        self.assertEqual(subctas[1].nombre, 'cajón de arriba')
 
     def test_funciona_con_tupla_y_dict(self):
         subctas = self.cta1.dividir_entre(
             ('Billetera', 'ebil', 50),
             {'nombre': 'Cajón de arriba', 'slug': 'ecaj', 'saldo': 200}
         )
-        self.assertEqual(subctas[0].nombre, 'Billetera')
-        self.assertEqual(subctas[1].nombre, 'Cajón de arriba')
+        self.assertEqual(subctas[0].nombre, 'billetera')
+        self.assertEqual(subctas[1].nombre, 'cajón de arriba')
 
     def test_funciona_con_tupla_de_tuplas(self):
         subctas = self.cta1.dividir_entre(
             (('Billetera', 'ebil', 50), ['Cajón de arriba', 'ecaj', 200]))
-        self.assertEqual(subctas[0].nombre, 'Billetera')
-        self.assertEqual(subctas[1].nombre, 'Cajón de arriba')
+        self.assertEqual(subctas[0].nombre, 'billetera')
+        self.assertEqual(subctas[1].nombre, 'cajón de arriba')
 
     def test_acepta_una_tupla_sin_saldo(self):
         subctas = self.cta1.dividir_entre(
             ('Billetera', 'ebil', 50), ('Cajón de arriba', 'ecaj'))
-        self.assertEqual(subctas[0].nombre, 'Billetera')
-        self.assertEqual(subctas[1].nombre, 'Cajón de arriba')
+        self.assertEqual(subctas[0].nombre, 'billetera')
+        self.assertEqual(subctas[1].nombre, 'cajón de arriba')
         self.assertEqual(subctas[1].saldo, 200)
 
     def test_no_acepta_mas_de_una_tupla_sin_saldo(self):
@@ -650,7 +659,7 @@ class TestCuentaMadre(TestModelCuentaMetodos):
         cta4.cta_madre = self.cta2
         with self.assertRaisesMessage(
                 ErrorTipo,
-                'Cuenta interactiva "Billetera" no puede ser madre'
+                'Cuenta interactiva "billetera" no puede ser madre'
         ):
             cta4.full_clean()
 

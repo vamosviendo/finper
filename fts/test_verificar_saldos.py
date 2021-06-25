@@ -56,8 +56,8 @@ class TestVerificarSaldo(FunctionalTest):
         self.fecha = datetime.date(2021, 4, 5)
         self.ir_a_pag()
         mensaje = self.browser.esperar_elemento('id_msj_ctas_erroneas').text
-        self.assertIn('Afectivo', mensaje)
-        self.assertIn('Banco', mensaje)
+        self.assertIn('afectivo', mensaje)
+        self.assertIn('banco', mensaje)
         self.esperar_elementos('class_btn_corregir')[0].click()
         self.esperar_elementos('class_btn_agregar')[0].click()
         saldos = self.esperar_elementos("class_saldo_cuenta")
@@ -93,7 +93,7 @@ class TestVerificarSaldo(FunctionalTest):
         self.fecha = datetime.date(2021, 4, 5)
         self.ir_a_pag()
         mensaje = self.browser.esperar_elemento('id_msj_ctas_erroneas').text
-        self.assertIn('Banco Nación', mensaje)
+        self.assertIn('banco nación', mensaje)
 
         # Al ser una cuenta acumulativa, no aparece el botón de agregar
         # movimiento

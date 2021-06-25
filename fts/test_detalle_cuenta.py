@@ -16,10 +16,14 @@ class TestDetalleCuenta(FunctionalTest):
         return lista_elementos
 
     def entrar_en_cuenta(self, link_cuenta):
-        nombre = link_cuenta.text
+        nombre = link_cuenta.text.lower()
+        slug = Cuenta.tomar(nombre=nombre).slug
         link_cuenta.click()
         self.assertEqual(
-            self.esperar_elemento('id_header_saldo_gral').text,
+            self.esperar_elemento(
+                f'#id_div_cta_{slug} .class_nombre_cuenta_main',
+                By.CSS_SELECTOR
+            ).text,
             nombre
         )
 
@@ -91,7 +95,7 @@ class TestDetalleCuenta(FunctionalTest):
 
         # En la grilla de cuentas aparecen las subcuentas de 'Banco'
         links_cuenta = self.esperar_elementos_especificos(
-            'link_cuenta', ['Caja de ahorro', 'Cuenta corriente'])
+            'link_cuenta', ['caja de ahorro', 'cuenta corriente'])
         # En la tabla de movimientos se muestran solamente los relacionados
         # con esa cuenta.
         self.esperar_elementos_especificos(

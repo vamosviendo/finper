@@ -29,9 +29,9 @@ class TestDividirCuenta(FunctionalTest):
 
         nombres = [e.text for e in self.esperar_elementos('class_nombre_cuenta')]
         saldos = [s.text for s in self.esperar_elementos('class_saldo_cuenta')]
-        self.assertEqual(nombres[0], 'Billetera')
+        self.assertEqual(nombres[0], 'billetera')
         self.assertEqual(saldos[0], '50.00')
-        self.assertEqual(nombres[1], 'Cajón de arriba')
+        self.assertEqual(nombres[1], 'cajón de arriba')
         self.assertEqual(saldos[1], '150.00')
 
         self.ir_a_pag()
@@ -50,8 +50,8 @@ class TestDividirCuenta(FunctionalTest):
         self.assertEqual(importes[1], '150.00')
         self.assertEqual(importes[2], '50.00')
 
-        self.assertEqual(cuentas[1], '+Cajón de arriba -Efectivo')
-        self.assertEqual(cuentas[2], '+Billetera -Efectivo')
+        self.assertEqual(cuentas[1], '+cajón de arriba -efectivo')
+        self.assertEqual(cuentas[2], '+billetera -efectivo')
 
         nombre = self.esperar_elemento('class_nombre_cuenta', By.CLASS_NAME).text
-        self.assertEqual(nombre, 'Efectivo')
+        self.assertEqual(nombre, 'efectivo')
