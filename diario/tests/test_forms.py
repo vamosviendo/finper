@@ -42,10 +42,10 @@ class TestFormSubcuentas(TestCase):
     def test_save_divide_cuenta(self, mockCuenta_dividir):
         self.form.is_valid()
         self.form.save()
-        mockCuenta_dividir.assert_called_once_with([
+        mockCuenta_dividir.assert_called_once_with(
             {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 50.0},
             {'nombre': 'Cajón de arriba', 'slug': 'ecaj', 'saldo': 200.0},
-        ])
+        )
 
     def test_save_devuelve_cuenta_madre(self, mockCuenta_dividir):
         cuenta = self.form.save()

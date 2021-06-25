@@ -39,7 +39,7 @@ class FormSubcuentas(CuentaFormset):
 
     def save(self):
         cta = Cuenta.objects.get(slug=self.cuenta)
-        cta.dividir_entre(self.cleaned_data)
+        cta.dividir_entre(*self.cleaned_data)
         return cta
 
 
