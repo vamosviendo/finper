@@ -164,7 +164,12 @@ class Cuenta(MiModel):
     def get_absolute_url(self):
         return reverse('cta_detalle', args=[self.slug])
 
+    def movs_directos(self):
+        """ Devuelve entradas y salidas de la cuenta"""
+        return self.entradas.all() | self.salidas.all()
+
     def movs(self):
+        """ Devuelve movimientos propios y de sus subcuentas."""
         result = self.entradas.all() | self.salidas.all()
         for sc in self.subcuentas.all():
             result = result | sc.movs()
@@ -267,6 +272,21 @@ class Cuenta(MiModel):
             raise ErrorDeSuma(f'Suma errónea. Saldos de subcuentas '
                               f'deben sumar {self.saldo:.2f}')
 
+        # Un movimiento de salida por cada una de las subcuentas
+        # (después de generar cada subcuenta se generará el movimiento de
+        # entrada correspondiente).
+        for subcuenta in cuentas_limpias:
+            try:
+                Movimiento.crear(
+                    concepto=f'Saldo pasado por {self.nombre.capitalize()} '
+                             f'a nueva subcuenta {subcuenta["nombre"]}',
+                    importe=subcuenta['saldo'],
+                    cta_salida=self,
+                )
+            except errors.ErrorImporteCero:
+                # Si el saldo de la subcuenta es 0, no generar movimiento
+                pass
+
         # Generación de subcuentas y traspaso de saldos
         self.tipo = 'caja'
         cuentas_creadas = list()
@@ -275,19 +295,19 @@ class Cuenta(MiModel):
             saldo = subcuenta.pop('saldo')
             cuentas_creadas.append(Cuenta.crear(**subcuenta, cta_madre=self))
 
-            self.tipo = 'interactiva'
+            # Se generan movimientos de entrada correspondientes a los
+            # movimientos de salida en cta_madre
             try:
                 Movimiento.crear(
-                    concepto=f'Paso de saldo de {self.nombre.capitalize()} '
-                             f'a subcuenta '
-                             f'{cuentas_creadas[i].nombre.capitalize()}'[:80],
+                    concepto=f'Saldo recibido '
+                             f'por {cuentas_creadas[i].nombre.capitalize()} de'
+                             f' cuenta madre {self.nombre.capitalize()}'[:80],
                     importe=saldo,
                     cta_entrada=cuentas_creadas[i],
-                    cta_salida=self,
                 )
             except errors.ErrorImporteCero:
+                # Si el saldo de la subcuenta es 0, no generar movimiento
                 pass
-            self.tipo = 'caja'
 
         self.save()
 

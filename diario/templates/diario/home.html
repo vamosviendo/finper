@@ -63,7 +63,6 @@
                    text-primary
                  {% endif %}
                  class_td_importe">
-        {% if mov.cta_salida and not mov.cta_entrada %}-{% endif %}
         {{ mov.importe|floatformat:2 }}
       </td>
       <td class="class_td_cuentas">

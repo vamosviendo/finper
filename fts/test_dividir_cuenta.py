@@ -37,7 +37,7 @@ class TestDividirCuenta(FunctionalTest):
         self.ir_a_pag()
 
         movs = self.esperar_elementos('class_row_mov')
-        self.assertEqual(len(movs), 3)
+        self.assertEqual(len(movs), 5)
         conceptos = [
             c.text for c in self.esperar_elementos('class_td_concepto')]
         importes = [i.text for i in self.esperar_elementos('class_td_importe')]
@@ -49,9 +49,14 @@ class TestDividirCuenta(FunctionalTest):
         )
         self.assertEqual(importes[1], '150.00')
         self.assertEqual(importes[2], '50.00')
+        self.assertEqual(importes[3], '150.00')
+        self.assertEqual(importes[4], '50.00')
 
-        self.assertEqual(cuentas[1], '+cajón de arriba -efectivo')
-        self.assertEqual(cuentas[2], '+billetera -efectivo')
+        self.assertEqual(cuentas[1], '-efectivo')
+        self.assertEqual(cuentas[2], '-efectivo')
+        self.assertEqual(cuentas[3], '+cajón de arriba')
+        self.assertEqual(cuentas[4], '+billetera')
 
-        nombre = self.esperar_elemento('class_nombre_cuenta', By.CLASS_NAME).text
+        nombre = self.esperar_elemento(
+            'class_nombre_cuenta', By.CLASS_NAME).text
         self.assertEqual(nombre, 'efectivo')

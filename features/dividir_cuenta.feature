@@ -25,9 +25,11 @@ Escenario: Dividir una cuenta en subcuentas
         | nombre          | slug | saldo |
         | Billetera       | ebil | 50    |
         | Cajón de arriba | ecar | 150   |
-    Y veo 3 movimientos en la página
+    Y veo 5 movimientos en la página
     Y los movimientos en la página tienen estos valores:
-        | concepto                                              | importe | cuentas                    |
-        | Saldo al inicio                                       | 200.00  | +Efectivo                  |
-        | Paso de saldo de Efectivo a subcuenta Cajón de arriba | 150.00  | +Cajón de arriba -Efectivo |
-        | Paso de saldo de Efectivo a subcuenta Billetera       | 50.00   | +Billetera -Efectivo       |
+        | concepto                                                    | importe | cuentas          |
+        | Saldo al inicio                                             | 200.00  | +Efectivo        |
+        | Saldo pasado por Efectivo a nueva subcuenta Cajón de arriba | 150.00  | -Efectivo        |
+        | Saldo pasado por Efectivo a nueva subcuenta Billetera       | 50.00   | -Efectivo        |
+        | Saldo recibido por Billetera de cuenta madre Efectivo       | 50.00   | +Billetera       |
+        | Saldo recibido por Cajón de arriba de cuenta madre Efectivo | 150.00  | +Cajón de arriba |
