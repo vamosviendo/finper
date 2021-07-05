@@ -78,6 +78,7 @@ class TestHomePage(TestCase):
             {'nombre': 'Caja de ahorro', 'slug': 'bca', 'saldo': 0},
             {'nombre': 'Cuenta corriente', 'slug': 'bcc'},
         )
+        cta2 = Cuenta.tomar(slug=cta2.slug)
 
         response = self.client.get(reverse('home'))
 
@@ -204,7 +205,10 @@ class TestCtaDetalle(TestCase):
     def test_pasa_cuenta_a_template(self):
         response = self.client.get(
             reverse('cta_detalle', args=[self.cta.slug]))
-        self.assertEqual(response.context['cuenta'], self.cta)
+        self.assertEqual(
+            response.context['cuenta'],
+            Cuenta.tomar(polymorphic=False, slug=self.cta.slug)
+        )
         self.assertContains(response, self.cta.nombre)
 
     def test_integrativo_pasa_movs_de_cuenta_a_template(self):
@@ -607,13 +611,14 @@ class TestMovMod(TestCase):
     def test_guarda_cambios_en_el_mov(self):
         self.client.post(
             reverse('mov_mod', args=[self.mov.pk]),
-            {
+            data={
                 'fecha': date.today(),
                 'concepto': 'Saldo inicial',
                 'importe': self.mov.importe,
                 'cta_entrada': self.mov.cta_entrada.pk,
             }
         )
+        print(Movimiento.tomar(pk=self.mov.pk).concepto)
         self.mov.refresh_from_db()
         self.assertEqual(self.mov.concepto, 'Saldo inicial')
 

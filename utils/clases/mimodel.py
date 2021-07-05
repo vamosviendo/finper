@@ -15,12 +15,15 @@ class MiModel(models.Model):
         return cls.objects.using(using).first()
 
     @classmethod
-    def tomar(cls, *args, **kwargs):
+    def tomar(cls, polymorphic=True, *args, **kwargs):
         try:
             using = kwargs.pop('using')
         except KeyError:
             using = 'default'
-        return cls.objects.db_manager(using).get(*args, **kwargs)
+
+        if polymorphic:
+            return cls.objects.db_manager(using).get(*args, **kwargs)
+        return cls.objects.db_manager(using).get_no_poly(*args, **kwargs)
 
     @classmethod
     def cantidad(cls, using='default'):

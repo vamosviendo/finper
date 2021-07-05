@@ -3,7 +3,8 @@ from datetime import datetime
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
-from diario.models import Cuenta, Movimiento
+from diario.models import Cuenta, CuentaInteractiva, CuentaAcumulativa, \
+    Movimiento
 
 from utils.errors import \
     SaldoNoCeroException, ErrorOpciones, ErrorDeSuma, ErrorTipo, \
@@ -107,6 +108,10 @@ class TestModelCuentaCrear(TestCase):
         Cuenta.crear(nombre='Efectivo', slug='E')
         self.assertEqual(Cuenta.cantidad(), 1)
 
+    def test_cuenta_creada_es_interactiva(self):
+        cuenta = Cuenta.crear(nombre='Efectivo', slug='E')
+        self.assertIsInstance(cuenta, CuentaInteractiva)
+
     def test_crear_devuelve_cuenta_creada(self):
         cuenta = Cuenta.crear(nombre='Efectivo', slug='E')
         self.assertEqual((cuenta.nombre, cuenta.slug), ('efectivo', 'e'))
@@ -141,13 +146,19 @@ class TestModelCuentaCrear(TestCase):
     def test_cuenta_creada_es_cta_entrada_del_movimiento_generado(self):
         cuenta = Cuenta.crear('Efectivo', 'e', saldo=234)
         mov = Movimiento.primere()
-        self.assertEqual(mov.cta_entrada, cuenta)
+        self.assertEqual(
+            mov.cta_entrada,
+            Cuenta.tomar(polymorphic=False, pk=cuenta.pk)
+        )
 
     def test_cuenta_creada_es_cta_salida_del_movimiento_generado_si_el_saldo_es_negativo(self):
         cuenta = Cuenta.crear('Efectivo', 'e', saldo=-354)
         mov = Movimiento.primere()
         self.assertIsNone(mov.cta_entrada)
-        self.assertEqual(mov.cta_salida, cuenta)
+        self.assertEqual(
+            mov.cta_salida,
+            Cuenta.tomar(polymorphic=False, pk=cuenta.pk)
+        )
         self.assertEqual(mov.importe, 354)
 
     def test_funciona_con_saldo_en_formato_str(self):
@@ -256,6 +267,7 @@ class TestMetodosMovsYSaldos(TestModelCuentaMetodos):
             {'nombre': 'Billetera', 'slug': 'eb', 'saldo': 30, },
             {'nombre': 'Cajoncito', 'slug': 'ec', }
         )
+        self.cta1 = Cuenta.tomar(slug=self.cta1.slug)
         mov_subcuenta = Movimiento.crear(
             concepto='movsubc', importe=10, cta_salida=subcuentas[0])
 
@@ -292,7 +304,7 @@ class TestMetodosMovsYSaldos(TestModelCuentaMetodos):
         self.assertEqual(self.cta1.total_movs(), 110)
 
     def test_total_subcuentas_devuelve_suma_saldos_subcuentas(self):
-        self.cta1.dividir_entre(
+        self.cta1 = self.cta1.dividir_y_actualizar(
             {'nombre': 'Billetera', 'slug': 'eb', 'saldo': 15},
             {'nombre': 'Cajón', 'slug': 'ec', 'saldo': 65},
             {'nombre': 'Cajita', 'slug': 'eca', }
@@ -314,7 +326,7 @@ class TestMetodosMovsYSaldos(TestModelCuentaMetodos):
         self.assertTrue(self.cta1.saldo_ok())
 
     def test_saldo_ok_devuelve_true_si_saldo_coincide_con_saldos_subcuentas_en_cuenta_caja(self):
-        self.cta1.dividir_entre(
+        self.cta1 = self.cta1.dividir_y_actualizar(
             {'nombre': 'Billetera', 'slug': 'eb', 'saldo': 15},
             {'nombre': 'Cajón', 'slug': 'ec', }
         )
@@ -343,7 +355,7 @@ class TestMetodosMovsYSaldos(TestModelCuentaMetodos):
         self.assertEqual(self.cta1.saldo, self.cta1.total_movs())
 
     def test_corregir_saldo_corrige_a_partir_de_saldos_de_subcuentas_en_cuentas_caja(self):
-        self.cta1.dividir_entre(
+        self.cta1 = self.cta1.dividir_y_actualizar(
             {'nombre': 'Billetera', 'slug': 'eb', 'saldo': 15},
             {'nombre': 'Cajón', 'slug': 'ec', 'saldo': 65},
             {'nombre': 'Cajita', 'slug': 'eca', }
@@ -380,7 +392,7 @@ class TestMetodosMovsYSaldos(TestModelCuentaMetodos):
         self.assertIsInstance(self.cta1.agregar_mov_correctivo(), Movimiento)
 
     def test_agregar_mov_correctivo_no_acepta_ctas_caja(self):
-        self.cta1.dividir_entre(
+        self.cta1 = self.cta1.dividir_y_actualizar(
             {'nombre': 'Billetera', 'slug': 'eb', 'saldo': 15},
             {'nombre': 'Cajón', 'slug': 'ec', }
         )
@@ -450,7 +462,7 @@ class TestMetodoDividirEntre(TestModelCuentaMetodos):
         self.assertEqual(subcuenta2.nombre, 'cajón de arriba')
 
     def test_cuentas_generadas_son_subcuentas_de_cuenta_madre(self):
-        self.cta1.dividir_entre(*self.subcuentas)
+        self.cta1 = self.cta1.dividir_y_actualizar(*self.subcuentas)
         cta2 = Cuenta.tomar(slug='ebil')
         cta3 = Cuenta.tomar(slug='ecaj')
 
@@ -499,21 +511,27 @@ class TestMetodoDividirEntre(TestModelCuentaMetodos):
             'Saldo recibido por Billetera de cuenta madre Efectivo'
         )
         self.assertEqual(movs[4].importe, 50)
-        self.assertEqual(movs[4].cta_entrada, subcuentas_creadas[0])
+        self.assertEqual(
+            movs[4].cta_entrada,
+            Cuenta.tomar(polymorphic=False, pk=subcuentas_creadas[0].pk)
+        )
 
         self.assertEqual(
             movs[5].concepto,
             'Saldo recibido por Cajón de arriba de cuenta madre Efectivo'
         )
         self.assertEqual(movs[5].importe, 200)
-        self.assertEqual(movs[5].cta_entrada, subcuentas_creadas[1])
+        self.assertEqual(
+            movs[5].cta_entrada,
+            Cuenta.tomar(polymorphic=False, pk=subcuentas_creadas[1].pk)
+        )
 
     def test_acepta_mas_de_dos_subcuentas(self):
         self.subcuentas[1]['saldo'] = 130
         self.subcuentas.append(
             {'nombre': 'Cajita', 'slug':'ecjt', 'saldo': 70})
 
-        self.cta1.dividir_entre(*self.subcuentas)
+        self.cta1 = self.cta1.dividir_y_actualizar(*self.subcuentas)
 
         self.assertEqual(self.cta1.subcuentas.count(), 3)
         self.assertEqual(
@@ -522,7 +540,10 @@ class TestMetodoDividirEntre(TestModelCuentaMetodos):
         )
 
     def test_cuenta_madre_se_convierte_en_caja(self):
+        pk = self.cta1.pk
         self.cta1.dividir_entre(*self.subcuentas)
+        self.cta1 = Cuenta.tomar(pk=pk)
+
         self.assertFalse(self.cta1.es_interactiva)
         self.assertTrue(self.cta1.es_caja)
 
@@ -532,13 +553,15 @@ class TestMetodoDividirEntre(TestModelCuentaMetodos):
         cta2 = Cuenta.tomar(slug='ebil')
         cta3 = Cuenta.tomar(slug='ecaj')
 
+        self.cta1 = Cuenta.tomar(slug=self.cta1.slug)
+
         self.assertEqual(self.cta1.saldo, cta2.saldo + cta3.saldo)
 
     def test_acepta_y_completa_una_subcuenta_sin_saldo(self):
         self.subcuentas[1]['saldo'] = 130
         self.subcuentas.append({'nombre': 'Cajita', 'slug': 'ecjt'})
 
-        self.cta1.dividir_entre(*self.subcuentas)
+        self.cta1 = self.cta1.dividir_y_actualizar(*self.subcuentas)
 
         cta = Cuenta.tomar(slug='ecjt')
 
@@ -651,6 +674,14 @@ class TestMetodoDividirEntre(TestModelCuentaMetodos):
             )
 
 
+class TestCuentaPolymorphic(TestCase):
+
+    def test_tomar_devuelve_cuenta_de_la_clase_correcta(self):
+        cta = Cuenta.crear('Efectivo', 'e')
+        cta_nueva = Cuenta.tomar(pk=cta.pk)
+        self.assertIsInstance(cta_nueva, CuentaInteractiva)
+
+
 class TestCuentaMadre(TestModelCuentaMetodos):
     """ Saldos después de setUp
         self.cta1: 100
@@ -660,7 +691,7 @@ class TestCuentaMadre(TestModelCuentaMetodos):
 
     def setUp(self):
         super().setUp()
-        self.cta1.dividir_entre(
+        self.cta1 = self.cta1.dividir_y_actualizar(
             {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 25},
             {'nombre': 'Cajón de arriba', 'slug': 'ecaj', 'saldo': 75},
         )
@@ -668,14 +699,15 @@ class TestCuentaMadre(TestModelCuentaMetodos):
         self.cta3 = Cuenta.tomar(slug='ecaj')
 
     def test_cuenta_caja_debe_tener_subcuentas(self):
-        self.cta2.tipo = 'caja'
+        self.cta2.saldo = 0.0
+        self.cta2 = self.cta2.convertirse_en_acumulativa()
         with self.assertRaises(ErrorTipo):
             self.cta2.full_clean()
 
     def test_cuenta_interactiva_no_puede_tener_subcuentas(self):
-        self.cta1.tipo = 'interactiva'
-        with self.assertRaises(ErrorTipo):
-            self.cta1.full_clean()
+        subcuenta = Cuenta.crear("Bolsillos", "ebol")
+        with self.assertRaises(ValueError):
+            subcuenta.cta_madre = self.cta2  # cta2 interactiva
 
     def test_se_puede_asignar_cta_interactiva_a_cta_caja(self):
         cta4 = Cuenta.crear("Bolsillo", "ebol")
@@ -693,17 +725,8 @@ class TestCuentaMadre(TestModelCuentaMetodos):
         cta4.save()
         self.assertEqual(self.cta1.subcuentas.count(), 3)
 
-    def test_cuenta_interactiva_no_puede_ser_asignada_como_madre(self):
-        cta4 = Cuenta.crear('Caja', 'c')
-        cta4.cta_madre = self.cta2
-        with self.assertRaisesMessage(
-                ErrorTipo,
-                'Cuenta interactiva "billetera" no puede ser madre'
-        ):
-            cta4.full_clean()
-
     def test_si_se_asigna_cta_interactiva_con_saldo_a_cta_caja_se_suma_el_saldo(self):
-        saldo_cta1 = self.cta1.saldo
+        saldo_cta1 = self.cta1.saldo    # 100
         cta4 = Cuenta.crear("Bolsillo", "ebol", saldo=50)
 
         cta4.cta_madre = self.cta1
@@ -713,10 +736,10 @@ class TestCuentaMadre(TestModelCuentaMetodos):
         self.assertEqual(self.cta1.saldo, saldo_cta1 + 50)
 
     def test_si_se_asigna_cta_caja_con_saldo_a_cta_caja_se_suma_el_saldo(self):
-        saldo_cta1 = self.cta1.saldo
+        saldo_cta1 = self.cta1.saldo    # 100
         cta4 = Cuenta.crear("Bolsillos", "ebol", saldo=50)
 
-        cta4.dividir_entre(
+        cta4 = cta4.dividir_y_actualizar(
             {'nombre': 'Bolsillo campera', 'slug': 'ebca', 'saldo': 30},
             {'nombre': 'Bolsillo pantalón', 'slug': 'ebpa'}
         )
@@ -729,13 +752,12 @@ class TestCuentaMadre(TestModelCuentaMetodos):
 
     def test_cuenta_no_puede_ser_subcuenta_de_una_de_sus_subcuentas(self):
         cta4 = Cuenta.crear("Bolsillos", "ebol")
-        cta4.dividir_entre(
+        cta4 = cta4.dividir_y_actualizar(
             {'nombre': 'Bolsillo campera', 'slug': 'ebca', 'saldo': 0},
             {'nombre': 'Bolsillo pantalón', 'slug': 'ebpa'}
         )
         cta4.cta_madre = self.cta1
         cta4.save()
-
         self.cta1.cta_madre = cta4
         with self.assertRaisesMessage(
                 ErrorDependenciaCircular,
@@ -745,8 +767,7 @@ class TestCuentaMadre(TestModelCuentaMetodos):
             self.cta1.full_clean()
 
     def test_cuenta_no_puede_ser_subcuenta_de_una_subcuenta_de_una_de_sus_subcuentas(self):
-        cta4 = Cuenta.crear("Bolsillos", "ebol")
-        cta4.dividir_entre(
+        cta4 = Cuenta.crear("Bolsillos", "ebol").dividir_y_actualizar(
             {'nombre': 'Bolsillo campera', 'slug': 'ebca', 'saldo': 0},
             {'nombre': 'Bolsillo pantalón', 'slug': 'ebpa'}
         )
@@ -754,8 +775,7 @@ class TestCuentaMadre(TestModelCuentaMetodos):
         cta4.cta_madre = self.cta1
         cta4.save()
 
-        cta5 = Cuenta.tomar(slug='ebpa')
-        cta5.dividir_entre(
+        cta5 = Cuenta.tomar(slug='ebpa').dividir_y_actualizar(
             {
                 'nombre': 'Bolsillo delantero pantalón',
                 'slug': 'ebpd',
@@ -777,7 +797,7 @@ class TestCuentaMadre(TestModelCuentaMetodos):
         saldo_cta1 = self.cta1.saldo
 
         Movimiento.crear(concepto='mov', importe=45, cta_entrada=self.cta2)
-        self.cta1.refresh_from_db()
+        self.cta1 = Cuenta.tomar(slug=self.cta1.slug)
         self.assertEqual(
             self.cta1.saldo, saldo_cta1+45,
             'Mov de entrada en subcuenta no se refleja en saldo de cta madre'
@@ -796,7 +816,7 @@ class TestCuentaMadre(TestModelCuentaMetodos):
 
     def test_movimiento_en_subcuenta_se_refleja_en_saldo_de_cta_abuela(self):
 
-        self.cta3.dividir_entre(
+        self.cta3 = self.cta3.dividir_y_actualizar(
             {'nombre': 'Cajita', 'slug': 'eccj', 'saldo': 22},
             {'nombre': 'Sobre', 'slug': 'ecso', 'saldo': 53},
         )
@@ -850,20 +870,20 @@ class TestCuentaMadre(TestModelCuentaMetodos):
         )
 
     def test_modificacion_en_movimiento_modifica_saldo_de_cta_madre(self):
-        saldo_cta1 = self.cta1.saldo
-        mov = Movimiento.crear('mov', 45, self.cta2)
-        self.cta1.refresh_from_db()
+        saldo_cta1 = self.cta1.saldo                        # 100
+        mov = Movimiento.crear('mov', 45, self.cta2)        # 70
+        self.cta1 = Cuenta.tomar(slug=self.cta1.slug)       # 145
         self.assertEqual(self.cta1.saldo, saldo_cta1+45)
 
-        mov.importe = 55
+        mov.importe = 55        # cta1 = 155 - cta2 = 80
         mov.save()
-        self.cta1.refresh_from_db()
+        self.cta1 = Cuenta.tomar(slug=self.cta1.slug)
         self.assertEqual(self.cta1.saldo, saldo_cta1+55)
 
         cta4 = Cuenta.crear('Otro banco', 'ob')
         mov.cta_entrada = cta4
         mov.save()
-        self.cta1.refresh_from_db()
+        self.cta1 = Cuenta.tomar(slug=self.cta1.slug)
         self.assertEqual(self.cta1.saldo, saldo_cta1)
 
         mov.cta_entrada = self.cta2
@@ -902,6 +922,8 @@ class TestMetodosVarios(TestModelCuentaMetodos):
             {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 0},
             {'nombre': 'Cajón de arriba', 'slug': 'ecaj', },
         )
+        self.cta1 = Cuenta.tomar(slug=self.cta1.slug)
+
         lista_subcuentas += lista_subcuentas[0].dividir_entre(
             {
                 'nombre': 'Billetera división delantera',
@@ -910,6 +932,8 @@ class TestMetodosVarios(TestModelCuentaMetodos):
             },
             {'nombre': 'Billetera división trasera', 'slug': 'ebdt', },
         )
+        lista_subcuentas[0] = Cuenta.tomar(slug=lista_subcuentas[0].slug)
+
         lista_subcuentas += lista_subcuentas[2].dividir_entre(
             {
                 'nombre': 'Billetera división delantera izquierda',
@@ -921,6 +945,8 @@ class TestMetodosVarios(TestModelCuentaMetodos):
                 'slug': 'ebdr',
             },
         )
+        lista_subcuentas[2] = Cuenta.tomar(slug=lista_subcuentas[2].slug)
+
         lista_subcuentas += lista_subcuentas[1].dividir_entre(
             {
                 'nombre': 'Cajita verde',
@@ -929,6 +955,56 @@ class TestMetodosVarios(TestModelCuentaMetodos):
             },
             {'nombre': 'Sobre', 'slug': 'ecs', },
         )
+        lista_subcuentas[1] = Cuenta.tomar(slug=lista_subcuentas[1].slug)
 
         self.assertEqual(
             self.cta1.arbol_de_subcuentas(), set(lista_subcuentas))
+
+    # Cuenta.como_subclase()
+    def test_como_subclase_devuelve_cuenta_como_subclase(self):
+        self.assertIsInstance(self.cta1.como_subclase(), CuentaInteractiva)
+
+
+class TestCuentaInteractiva(TestCase):
+
+    def test_convertirse_en_acumulativa_convierte_cuenta_interactiva_en_acumulativa(self):
+        cta_int = CuentaInteractiva.crear('Efectivo', 'efec')
+        pk_cta_int = cta_int.pk
+
+        cta_int.convertirse_en_acumulativa()
+
+        cta_acum = CuentaAcumulativa.tomar(pk=pk_cta_int)
+
+        self.assertIsInstance(cta_acum, CuentaAcumulativa)
+        self.assertNotIsInstance(cta_acum, CuentaInteractiva)
+
+    def test_cuenta_convertida_conserva_movimientos(self):
+        cta_int = CuentaInteractiva.crear('Efectivo', 'efec', saldo=1000)
+        pk_cta_int = cta_int.pk
+        Movimiento.crear('salida', 1500, cta_salida=cta_int)
+        Movimiento.crear('entrada', 500, cta_entrada=cta_int)
+
+        cta_int.convertirse_en_acumulativa()
+
+        cta_acum = CuentaAcumulativa.tomar(pk=pk_cta_int)
+
+        self.assertEqual(cta_acum.cantidad_movs(), 3)
+
+    def test_cuenta_convertida_conserva_nombre(self):
+        cta_int = CuentaInteractiva.crear('Efectivo', 'efec')
+        pk_cta_int = cta_int.pk
+        nombre_cta_int = cta_int.nombre
+
+        cta_acum = cta_int.convertirse_en_acumulativa()
+        self.assertEqual(cta_acum.nombre, nombre_cta_int)
+
+    def test_devuelve_cuenta_convertida(self):
+        cta_int = CuentaInteractiva.crear('Efectivo', 'efec')
+        pk_cta_int = cta_int.pk
+
+        cta_acum = cta_int.convertirse_en_acumulativa()
+
+        self.assertEqual(
+            CuentaAcumulativa.tomar(pk=pk_cta_int),
+            cta_acum
+        )

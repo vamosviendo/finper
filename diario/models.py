@@ -1,11 +1,13 @@
 from datetime import date
 
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import Sum
 from django.urls import reverse
 
+from diario.managers import PolymorphManager
 from utils import errors
 from utils.clases.mimodel import MiModel
 from utils.errors import \
@@ -40,32 +42,48 @@ class Cuenta(MiModel):
     slug = models.CharField(
         max_length=4, unique=True, validators=[alfaminusculas])
     cta_madre = models.ForeignKey(
-        'Cuenta',
+        'CuentaAcumulativa',
         related_name='subcuentas',
         null=True, blank=True,
         on_delete=models.CASCADE,
     )
     opciones = models.CharField(max_length=8, default='i')
     _saldo = models.FloatField(default=0)
+    content_type = models.ForeignKey(
+        ContentType,
+        null=True, editable=False, on_delete=models.CASCADE,
+    )
+
+    objects = PolymorphManager()
 
     class Meta:
         ordering = ('nombre', )
 
     @classmethod
-    def crear(cls, nombre, slug, opciones='i', cta_madre=None, **kwargs):
+    def crear(cls, nombre, slug, opciones='i', cta_madre=None, finalizar=False,
+              **kwargs):
 
         try:
             saldo = kwargs.pop('saldo')
         except KeyError:
             saldo = None
 
-        cuenta_nueva = super().crear(
-            nombre=nombre,
-            slug=slug,
-            opciones=opciones,
-            cta_madre=cta_madre,
-            **kwargs
-        )
+        if finalizar:
+            cuenta_nueva = super().crear(
+                nombre=nombre,
+                slug=slug,
+                opciones=opciones,
+                cta_madre=cta_madre,
+                **kwargs
+            )
+        else:
+            cuenta_nueva = CuentaInteractiva.crear(
+                nombre=nombre,
+                slug=slug,
+                opciones=opciones,
+                cta_madre=cta_madre,
+                **kwargs
+            )
 
         if saldo:
             Movimiento.crear(
@@ -98,11 +116,11 @@ class Cuenta(MiModel):
 
     @property
     def es_interactiva(self):
-        return 'i' in self.opciones
+        return isinstance(self, CuentaInteractiva)
 
     @property
     def es_caja(self):
-        return 'c' in self.opciones
+        return isinstance(self, CuentaAcumulativa)
 
     @property
     def saldo(self):
@@ -124,14 +142,6 @@ class Cuenta(MiModel):
             raise ErrorOpciones('La cuenta tiene más de un tipo asignado')
         if self.es_caja and self.subcuentas.count() == 0:
             raise ErrorTipo('Cuenta caja debe tener subcuentas')
-        if self.es_interactiva and self.subcuentas.count() != 0:
-            raise ErrorTipo('Cuenta interactiva no puede tener subcuentas')
-        if self.cta_madre in self.arbol_de_subcuentas():
-            raise ErrorDependenciaCircular(
-                f'Cuenta madre {self.cta_madre.nombre.capitalize()} está '
-                f'entre las subcuentas de {self.nombre.capitalize()} o entre '
-                f'las de una de sus subcuentas'
-            )
         if self.cta_madre and self.cta_madre.es_interactiva:
             raise ErrorTipo(f'Cuenta interactiva "{self.cta_madre }" '
                             f'no puede ser madre')
@@ -148,12 +158,17 @@ class Cuenta(MiModel):
                 saldo_guardado = 0.0
                 cta_madre_guardada = None
             if self.saldo != saldo_guardado:
-                saldo_cm = self.cta_madre.saldo
                 self.cta_madre.saldo += self.saldo
                 self.cta_madre.saldo -= saldo_guardado
                 self.cta_madre.save()
             if self.cta_madre and self.cta_madre != cta_madre_guardada:
                 self.cta_madre.saldo += self.saldo
+
+        if not self.content_type:
+            self.content_type = ContentType.objects.get(
+                app_label=self._meta.app_label,
+                model=self.get_lower_class_name()
+            )
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
@@ -164,6 +179,17 @@ class Cuenta(MiModel):
     def get_absolute_url(self):
         return reverse('cta_detalle', args=[self.slug])
 
+    @classmethod
+    def get_lower_class_name(cls):
+        return cls.__name__.lower()
+
+    def como_subclase(self, database='default'):
+        content_type = self.content_type
+        model = content_type.model_class()
+        if model == Cuenta:
+            return self
+        return model.tomar(pk=self.pk, polymorphic=False, using=database)
+
     def movs_directos(self):
         """ Devuelve entradas y salidas de la cuenta"""
         return self.entradas.all() | self.salidas.all()
@@ -171,8 +197,6 @@ class Cuenta(MiModel):
     def movs(self):
         """ Devuelve movimientos propios y de sus subcuentas."""
         result = self.entradas.all() | self.salidas.all()
-        for sc in self.subcuentas.all():
-            result = result | sc.movs()
         return result.order_by('fecha')
 
     def cantidad_movs(self):
@@ -288,12 +312,13 @@ class Cuenta(MiModel):
                 pass
 
         # Generación de subcuentas y traspaso de saldos
-        self.tipo = 'caja'
+        cta_madre = self.convertirse_en_acumulativa()
+
         cuentas_creadas = list()
 
         for i, subcuenta in enumerate(cuentas_limpias):
             saldo = subcuenta.pop('saldo')
-            cuentas_creadas.append(Cuenta.crear(**subcuenta, cta_madre=self))
+            cuentas_creadas.append(Cuenta.crear(**subcuenta, cta_madre=cta_madre))
 
             # Se generan movimientos de entrada correspondientes a los
             # movimientos de salida en cta_madre
@@ -309,18 +334,65 @@ class Cuenta(MiModel):
                 # Si el saldo de la subcuenta es 0, no generar movimiento
                 pass
 
-        self.save()
-
         return cuentas_creadas
+
+    def dividir_y_actualizar(self, *subcuentas):
+        self.dividir_entre(*subcuentas)
+        return Cuenta.tomar(slug=self.slug)
 
     def esta_en_una_caja(self):
         return self.cta_madre is not None
 
+
+class CuentaInteractiva(Cuenta):
+
+    @classmethod
+    def crear(cls, nombre, slug, opciones='i', cta_madre=None, **kwargs):
+        return super().crear(
+            nombre=nombre,
+            slug=slug,
+            opciones=opciones,
+            cta_madre=cta_madre,
+            finalizar=True,
+            **kwargs)
+
+    def convertirse_en_acumulativa(self):
+        pk_preservado = self.pk
+        self.delete(keep_parents=True)
+        cuenta = Cuenta.objects.get_no_poly(pk=pk_preservado)
+        cuenta_acumulativa = CuentaAcumulativa(cuenta_ptr_id=cuenta.pk)
+        cuenta_acumulativa.__dict__.update(cuenta.__dict__)
+        cuenta_acumulativa.content_type = ContentType.objects.get(
+            app_label='diario', model='cuentaacumulativa'
+        )
+        cuenta_acumulativa.save()
+        return cuenta_acumulativa
+
+
+class CuentaAcumulativa(Cuenta):
+
     def arbol_de_subcuentas(self):
         todas_las_subcuentas = set(self.subcuentas.all())
         for cuenta in self.subcuentas.all():
-            todas_las_subcuentas.update(cuenta.arbol_de_subcuentas())
+            if isinstance(cuenta, CuentaAcumulativa):
+                todas_las_subcuentas.update(cuenta.arbol_de_subcuentas())
         return todas_las_subcuentas
+
+    def full_clean(self, *args, **kwargs):
+        if self.cta_madre in self.arbol_de_subcuentas():
+            raise ErrorDependenciaCircular(
+                f'Cuenta madre {self.cta_madre.nombre.capitalize()} está '
+                f'entre las subcuentas de {self.nombre.capitalize()} o entre '
+                f'las de una de sus subcuentas'
+            )
+        super().full_clean(*args, **kwargs)
+
+    def movs(self):
+        """ Devuelve movimientos propios y de sus subcuentas."""
+        result = super().movs()
+        for sc in self.subcuentas.all():
+            result = result | sc.movs()
+        return result.order_by('fecha')
 
 
 class Movimiento(MiModel):
@@ -370,6 +442,7 @@ class Movimiento(MiModel):
             cuenta = cta_salida
             cta_salida = cta_entrada
             cta_entrada = cuenta
+
         return super().crear(
             concepto=concepto,
             importe=importe,
@@ -377,6 +450,15 @@ class Movimiento(MiModel):
             cta_salida=cta_salida,
             **kwargs
         )
+
+    @classmethod
+    def tomar(self, polymorphic=True, *args, **kwargs):
+        mov = super().tomar(polymorphic, *args, **kwargs)
+        if mov.cta_entrada:
+            mov.cta_entrada = Cuenta.tomar(pk=mov.cta_entrada.pk)
+        if mov.cta_salida:
+            mov.cta_salida = Cuenta.tomar(pk=mov.cta_salida.pk)
+        return mov
 
     def clean(self):
         super().clean()
@@ -449,6 +531,7 @@ class Movimiento(MiModel):
             else:
                 # Había una cuenta de salida
                 if mov_guardado.cta_salida:
+                    mov_guardado.cta_salida.refresh_from_db()
                     mov_guardado.cta_salida.saldo += mov_guardado.importe
                     mov_guardado.cta_salida.save()
                 # Ahora hay una cuenta de salida

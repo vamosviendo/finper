@@ -670,6 +670,9 @@ class TestModelMovimientoCambios(TestModelMovimiento):
             self.cuenta1.saldo, self.saldo1-self.imp1-self.mov1.importe)
 
     def test_cta_salida_pasa_a_entrada_con_nuevo_importe(self):
+        # self.cuenta1.saldo = 175
+        # self.cuenta2.saldo = -85
+        # self.mov2.importe = 35
         self.mov2.cta_entrada = self.mov2.cta_salida
         self.mov2.cta_salida = None
         self.mov2.importe = 128
@@ -817,7 +820,7 @@ class TestModelMovimientoCuentas(TestModelMovimiento):
 
     def setUp(self):
         super().setUp()
-        self.cuenta1.dividir_entre(
+        self.cuenta1 = self.cuenta1.dividir_y_actualizar(
             {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 0},
             {'nombre': 'Cajón', 'slug': 'ecaj', 'saldo': 0},
         )
