@@ -55,3 +55,7 @@ class MiModel(models.Model):
         obj.full_clean()
         obj.save()
         return obj
+
+    @classmethod
+    def get_class(cls):
+        return cls

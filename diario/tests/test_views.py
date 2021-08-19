@@ -9,7 +9,7 @@ from django.test import TestCase, RequestFactory
 from django.urls import reverse
 from django.utils.datastructures import MultiValueDict
 
-from diario.models import Cuenta, Movimiento
+from diario.models import Cuenta, CuentaInteractiva, Movimiento
 from diario.views import cta_div_view
 from utils.funciones.archivos import fijar_mtime
 
@@ -241,9 +241,18 @@ class TestCtaNueva(TestCase):
         self.assertRedirects(response, reverse('home'))
 
     def test_solo_guarda_cuentas_con_post(self):
-        # ¿Retirar más adelante?
+        # TODO ¿Retirar más adelante?
         self.client.get(reverse('cta_nueva'))
         self.assertEqual(Cuenta.cantidad(), 0)
+
+    def test_cuentas_creadas_son_interactivas(self):
+        self.client.post(
+            reverse('cta_nueva'),
+            data={'nombre': 'Efectivo', 'slug': 'E'}
+        )
+        cuenta_nueva = Cuenta.primere()
+        self.assertEqual(cuenta_nueva.get_class(), CuentaInteractiva)
+
 
 
 class TestCtaMod(TestCase):
@@ -425,7 +434,7 @@ class TestCtaDiv(TestCase):
                 'form-1-saldo': 200,
             }
         )
-        self.div_view = CtaDivView.as_view()
+        self.div_view = cta_div_view()
 
     def test_usa_template_cta_div_formset(self, falso_FormSubcuentas):
         response = self.client.get(reverse('cta_div', args=[self.cta.slug]))

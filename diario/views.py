@@ -8,7 +8,7 @@ from django.views.generic import \
     DetailView, CreateView, UpdateView, DeleteView, TemplateView
 
 from diario.forms import FormCuenta, FormMovimiento, FormSubcuentas
-from diario.models import Cuenta, Movimiento
+from diario.models import Cuenta, CuentaInteractiva, Movimiento
 from diario.utils import verificar_saldos
 
 
@@ -51,7 +51,7 @@ class CtaDetalleView(DetailView):
 
 
 class CtaNuevaView(CreateView):
-    model = Cuenta
+    model = CuentaInteractiva
     form_class = FormCuenta
     template_name = 'diario/cta_form.html'
     success_url = reverse_lazy('home')

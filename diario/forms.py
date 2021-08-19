@@ -1,6 +1,6 @@
 from django import forms
 
-from diario.models import Cuenta, Movimiento
+from diario.models import Cuenta, CuentaInteractiva, Movimiento
 
 
 def agregar_clase(campo, clase):
@@ -18,7 +18,7 @@ class FormCuenta(forms.ModelForm):
             agregar_clase(campo, 'form-control')
 
     class Meta:
-        model = Cuenta
+        model = CuentaInteractiva
         fields = ('nombre', 'slug', )
 
 
