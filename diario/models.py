@@ -231,26 +231,6 @@ class Cuenta(MiModel):
         else:
             return self.saldo == self.total_subcuentas()
 
-    def agregar_mov_correctivo(self):
-        if self.saldo_ok():
-            return None
-        saldo = self.saldo
-        mov = Movimiento(concepto='Movimiento correctivo')
-        mov.importe = self.saldo - self.total_movs()
-        if mov.importe < 0:
-            mov.importe = -mov.importe
-            mov.cta_salida = self
-        else:
-            mov.cta_entrada = self
-        try:
-            mov.full_clean()
-        except TypeError:
-            raise TypeError(f'Error en mov {mov}')
-        mov.save()
-        self.saldo = saldo
-        self.save()
-        return mov
-
     def dividir_entre(self, *subcuentas):
 
         # Limpieza de los argumentos
@@ -365,11 +345,34 @@ class CuentaInteractiva(Cuenta):
         cuenta_acumulativa.content_type = ContentType.objects.get(
             app_label='diario', model='cuentaacumulativa'
         )
+        cuenta_acumulativa.fecha_conversion = date.today()
         cuenta_acumulativa.save()
         return cuenta_acumulativa
 
+    def agregar_mov_correctivo(self):
+        if self.saldo_ok():
+            return None
+        saldo = self.saldo
+        mov = Movimiento(concepto='Movimiento correctivo')
+        mov.importe = self.saldo - self.total_movs()
+        if mov.importe < 0:
+            mov.importe = -mov.importe
+            mov.cta_salida = self
+        else:
+            mov.cta_entrada = self
+        try:
+            mov.full_clean()
+        except TypeError:
+            raise TypeError(f'Error en mov {mov}')
+        mov.save()
+        self.saldo = saldo
+        self.save()
+        return mov
+
 
 class CuentaAcumulativa(Cuenta):
+
+    fecha_conversion = models.DateField()
 
     def arbol_de_subcuentas(self):
         todas_las_subcuentas = set(self.subcuentas.all())
@@ -452,7 +455,7 @@ class Movimiento(MiModel):
         )
 
     @classmethod
-    def tomar(self, polymorphic=True, *args, **kwargs):
+    def tomar(cls, polymorphic=True, *args, **kwargs):
         mov = super().tomar(polymorphic, *args, **kwargs)
         if mov.cta_entrada:
             mov.cta_entrada = Cuenta.tomar(pk=mov.cta_entrada.pk)
@@ -466,8 +469,11 @@ class Movimiento(MiModel):
             raise ValidationError(message=errors.CUENTA_INEXISTENTE)
         if self.cta_entrada == self.cta_salida:
             raise ValidationError(message=errors.CUENTAS_IGUALES)
-        if (self.cta_entrada and not self.cta_entrada.es_interactiva) \
-                or (self.cta_salida and not self.cta_salida.es_interactiva):
+        # TODO: mejorar redacción de esto
+        if (hasattr(self.cta_entrada, 'fecha_conversion')
+                and self.fecha > self.cta_entrada.fecha_conversion) \
+            or (hasattr(self.cta_salida, 'fecha_conversion')
+                and self.fecha > self.cta_salida.fecha_conversion):
             raise ValidationError(message=errors.CUENTA_NO_INTERACTIVA)
 
     def delete(self, *args, **kwargs):

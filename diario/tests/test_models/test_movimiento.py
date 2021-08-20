@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -63,6 +63,14 @@ class TestModelMovimientoBasic(TestModelMovimiento):
         mov.cta_salida = self.cuenta1
         mov.save()
         self.assertIn(mov, self.cuenta1.salidas.all())
+
+    def test_cta_entrada_es_interactiva(self):
+        mov = Movimiento.crear(
+            concepto='Cobranza en efectivo',
+            importe=100,
+            cta_entrada=self.cuenta1
+        )
+        self.assertTrue(mov.cta_entrada.es_interactiva)
 
     def test_permite_guardar_cuentas_de_entrada_y_salida_en_un_movimiento(self):
         cuenta2 = Cuenta.crear(nombre='Banco', slug='B')
@@ -825,7 +833,10 @@ class TestModelMovimientoCuentas(TestModelMovimiento):
             {'nombre': 'Cajón', 'slug': 'ecaj', 'saldo': 0},
         )
 
-    def test_movimiento_no_acepta_cuenta_no_interactiva(self):
+    def test_movimiento_no_acepta_cuenta_convertida_en_acumulativa_antes_de_fecha_del_movimiento(self):
+        fecha_mov = date.today() + timedelta(days=2)
         with self.assertRaises(ValidationError):
             Movimiento.crear(
-                concepto='mov', importe=100, cta_entrada=self.cuenta1)
+                fecha=fecha_mov, concepto='mov',
+                importe=100, cta_entrada=self.cuenta1
+            )

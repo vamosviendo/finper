@@ -254,7 +254,6 @@ class TestCtaNueva(TestCase):
         self.assertEqual(cuenta_nueva.get_class(), CuentaInteractiva)
 
 
-
 class TestCtaMod(TestCase):
 
     def setUp(self):
@@ -555,6 +554,7 @@ class TestMovNuevo(TestCase):
 
     def test_puede_guardar_movimiento_nuevo(self):
         cuenta = Cuenta.crear(nombre='Efectivo', slug='E')
+
         self.client.post(
             reverse('mov_nuevo'),
             data={
@@ -569,7 +569,7 @@ class TestMovNuevo(TestCase):
         self.assertEqual(mov_nuevo.fecha, date.today())
         self.assertEqual(mov_nuevo.concepto, 'entrada de efectivo')
         self.assertEqual(mov_nuevo.importe, 100)
-        self.assertEqual(mov_nuevo.cta_entrada, cuenta)
+        self.assertEqual(mov_nuevo.cta_entrada.id, cuenta.id)
 
     def test_no_guarda_movimientos_no_validos(self):
         self.client.post(
@@ -627,7 +627,6 @@ class TestMovMod(TestCase):
                 'cta_entrada': self.mov.cta_entrada.pk,
             }
         )
-        print(Movimiento.tomar(pk=self.mov.pk).concepto)
         self.mov.refresh_from_db()
         self.assertEqual(self.mov.concepto, 'Saldo inicial')
 
@@ -719,7 +718,7 @@ class TestAgregarMovimiento(TestCase):
         )
         self.assertRedirects(response, f"{reverse('home')}")
 
-    @patch('diario.views.Cuenta.agregar_mov_correctivo')
+    @patch('diario.views.CuentaInteractiva.agregar_mov_correctivo')
     def test_agrega_movimiento_para_coincidir_con_saldo(
             self, mock_cta_agregar_mov):
         self.client.get(self.full_url)

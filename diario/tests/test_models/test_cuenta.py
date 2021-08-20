@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date, timedelta
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -398,7 +398,7 @@ class TestMetodosMovsYSaldos(TestModelCuentaMetodos):
         )
         self.cta1.saldo = 945
         self.cta1.save()
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(AttributeError):
             self.cta1.agregar_mov_correctivo()
 
     def test_importe_del_mov_correctivo_coincide_con_diferencia_con_saldo(self):
@@ -546,6 +546,13 @@ class TestMetodoDividirEntre(TestModelCuentaMetodos):
 
         self.assertFalse(self.cta1.es_interactiva)
         self.assertTrue(self.cta1.es_caja)
+
+    def test_guarda_fecha_de_conversion_en_cuenta_madre(self):
+        pk = self.cta1.pk
+        self.cta1.dividir_entre(*self.subcuentas)
+        self.cta1 = Cuenta.tomar(pk=pk)
+
+        self.assertEqual(self.cta1.fecha_conversion, date.today())
 
     def test_saldo_de_cta_madre_es_igual_a_la_suma_de_saldos_de_subcuentas(self):
         self.cta1.dividir_entre(*self.subcuentas)
@@ -891,9 +898,10 @@ class TestCuentaMadre(TestModelCuentaMetodos):
         mov.importe = 40
         self.assertEqual(self.cta1.saldo, saldo_cta1)
 
-    def test_cuenta_caja_no_acepta_movimientos(self):
+    def test_cuenta_caja_no_acepta_movimientos_posteriores_a_su_conversion(self):
         with self.assertRaises(ValidationError):
             Movimiento.crear(
+                fecha=date.today()+timedelta(days=2),
                 concepto='mov', importe=100, cta_entrada=self.cta1
             )
 
