@@ -211,6 +211,26 @@ class TestCtaDetalle(TestCase):
         )
         self.assertContains(response, self.cta.nombre)
 
+    def test_pasa_subcuentas_a_template(self):
+        self.cta.dividir_entre(['ea', 'ea', 40], ['eb', 'eb'])
+        self.cta = Cuenta.tomar(slug=self.cta.slug)
+        self.assertTrue(self.cta.es_caja)
+
+        response = self.client.get(
+            reverse('cta_detalle', args=[self.cta.slug])
+        )
+
+        self.assertEqual(
+            list(response.context['subcuentas']),
+            list(self.cta.subcuentas.all())
+        )
+
+    def test_cuenta_interactiva_pasa_lista_vacia_en_subcuentas(self):
+        response = self.client.get(
+            reverse('cta_detalle', args=[self.cta.slug])
+        )
+        self.assertEqual(list(response.context['subcuentas']), [])
+
     def test_integrativo_pasa_movs_de_cuenta_a_template(self):
         response = self.client.get(
             reverse('cta_detalle', args=[self.cta.slug]))

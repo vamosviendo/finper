@@ -49,6 +49,16 @@ class CtaDetalleView(DetailView):
     model = Cuenta
     template_name = 'diario/cta_detalle.html'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        cuenta = self.object.como_subclase()
+
+        context['subcuentas'] = cuenta.subcuentas.all() \
+            if cuenta.es_caja \
+            else []
+
+        return context
+
 
 class CtaNuevaView(CreateView):
     model = CuentaInteractiva

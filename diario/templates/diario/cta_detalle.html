@@ -13,7 +13,7 @@
   </div>
 
   <div id="id_grid_cuentas" class="card-deck mt-3">
-    {% for subc in cuenta.subcuentas.all %}
+    {% for subc in subcuentas %}
     <div id="id_div_cta_{{ subc.slug|lower }}" class="card border-danger class_div_cuenta class_div_subcta">
       <div class="card-header bg-danger text-light class_nombre_cuenta">
         <a href="{% url 'cta_detalle' subc.slug %}" class="text-light link_cuenta">
