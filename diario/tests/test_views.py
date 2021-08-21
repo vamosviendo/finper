@@ -706,6 +706,22 @@ class TestMovMod(TestCase):
         )
         self.assertRedirects(response, reverse('home'))
 
+    def test_si_no_se_modifica_importe_no_cambia_saldo_cuentas(self):
+        saldo = self.cuenta.saldo
+
+        self.client.post(
+            reverse('mov_mod', args=[self.mov.pk]),
+            {
+                'fecha': date.today(),
+                'concepto': 'Saldo inicial',
+                'importe': self.mov.importe,
+                'cta_entrada': self.mov.cta_entrada.pk,
+            }
+        )
+        self.cuenta.refresh_from_db()
+
+        self.assertEqual(self.cuenta.saldo, saldo)
+
 
 class TestCorregirSaldo(TestCase):
 

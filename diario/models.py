@@ -487,6 +487,7 @@ class Movimiento(MiModel):
         super().delete(*args, **kwargs)
 
     def save(self, *args, **kwargs):
+
         # Movimiento nuevo
         if self._state.adding:
             if self.cta_entrada:
@@ -501,7 +502,13 @@ class Movimiento(MiModel):
             mov_guardado = Movimiento.tomar(pk=self.pk)
 
             # No cambió la cuenta de entrada
-            if self.cta_entrada == mov_guardado.cta_entrada:
+            try:
+                entradas_iguales = (
+                        self.cta_entrada.pk == mov_guardado.cta_entrada.pk)
+            except AttributeError:
+                entradas_iguales = False
+
+            if entradas_iguales:
                 try:
                     self.cta_entrada.saldo = self.cta_entrada.saldo \
                                              - mov_guardado.importe \
@@ -525,7 +532,13 @@ class Movimiento(MiModel):
                     self.cta_salida.refresh_from_db()
 
             # No cambió la cuenta de salida
-            if self.cta_salida == mov_guardado.cta_salida:
+            try:
+                salidas_iguales = (
+                        self.cta_salida.pk == mov_guardado.cta_salida.pk)
+            except AttributeError:
+                salidas_iguales = False
+
+            if salidas_iguales:
                 try:
                     self.cta_salida.saldo = self.cta_salida.saldo \
                                             + mov_guardado.importe \
