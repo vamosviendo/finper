@@ -771,8 +771,14 @@ class TestModificarSaldo(TestCase):
         )
         self.assertRedirects(response, f"{reverse('home')}")
 
-    @patch('diario.views.Cuenta.corregir_saldo')
-    def test_corrige_saldo_de_cuenta(self, mock_cta_corregir_saldo):
+    @patch('diario.views.CuentaInteractiva.corregir_saldo')
+    def test_corrige_saldo_de_cuenta_interactiva(self, mock_cta_corregir_saldo):
+        self.client.get(self.full_url)
+        mock_cta_corregir_saldo.assert_called_once()
+
+    @patch('diario.models.CuentaAcumulativa.corregir_saldo')
+    def test_corrige_saldo_de_cuenta_acumulativa(self, mock_cta_corregir_saldo):
+        self.cta1.dividir_entre(['sc1', 'sc1', 0], ['sc2', 'sc2'])
         self.client.get(self.full_url)
         mock_cta_corregir_saldo.assert_called_once()
 

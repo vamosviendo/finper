@@ -6,9 +6,8 @@ from django.test import TestCase
 from diario.models import Cuenta, CuentaInteractiva, CuentaAcumulativa, \
     Movimiento
 
-from utils.errors import \
-    SaldoNoCeroException, ErrorOpciones, ErrorDeSuma, ErrorTipo, \
-    ErrorDependenciaCircular, ErrorCuentaEsInteractiva
+from utils.errors import SaldoNoCeroException, ErrorOpciones, ErrorDeSuma, \
+    ErrorTipo, ErrorDependenciaCircular
 
 
 class TestModelCuenta(TestCase):
@@ -324,14 +323,6 @@ class TestMetodosMovsYSaldos(TestModelCuentaMetodos):
         Movimiento.crear('Movimiento', 5, cta_salida=cta2)
         self.assertEqual(self.cta1.total_subcuentas(), 105)
 
-    def test_total_subcuentas_tira_excepcion_si_cuenta_es_interactiva(self):
-        with self.assertRaisesMessage(
-                ErrorCuentaEsInteractiva,
-                'Cuenta "efectivo" es interactiva y como tal no tiene '
-                'subcuentas'
-        ):
-            total = self.cta1.total_subcuentas()
-
     def test_saldo_ok_devuelve_true_si_saldo_coincide_con_movimientos_en_cuenta_interactiva(self):
         self.assertEqual(self.cta1.saldo, 110)
         self.assertTrue(self.cta1.saldo_ok())
@@ -550,7 +541,7 @@ class TestMetodoDividirEntre(TestModelCuentaMetodos):
             250
         )
 
-    def test_cuenta_madre_se_convierte_en_caja(self):
+    def test_cuenta_madre_se_convierte_en_acumulativa(self):
         pk = self.cta1.pk
         self.cta1.dividir_entre(*self.subcuentas)
         self.cta1 = Cuenta.tomar(pk=pk)

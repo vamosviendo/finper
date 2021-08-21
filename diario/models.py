@@ -8,8 +8,7 @@ from django.db.models import Sum
 from django.urls import reverse
 
 from utils import errors
-from utils.errors import \
-    ErrorCuentaEsInteractiva, ErrorDeSuma, ErrorDependenciaCircular, \
+from utils.errors import ErrorDeSuma, ErrorDependenciaCircular, \
     ErrorOpciones, ErrorTipo, SaldoNoCeroException, SUBCUENTAS_SIN_SALDO
 from vvmodel.models import MiModel, PolymorphModel
 
@@ -172,10 +171,6 @@ class Cuenta(PolymorphModel):
     def get_absolute_url(self):
         return reverse('cta_detalle', args=[self.slug])
 
-    @classmethod
-    def get_lower_class_name(cls):
-        return cls.__name__.lower()
-
     def movs_directos(self):
         """ Devuelve entradas y salidas de la cuenta"""
         return self.entradas.all() | self.salidas.all()
@@ -188,14 +183,6 @@ class Cuenta(PolymorphModel):
     def cantidad_movs(self):
         return self.entradas.count() + self.salidas.count()
 
-    def total_subcuentas(self):
-        if self.es_interactiva:
-            raise ErrorCuentaEsInteractiva(
-                f'Cuenta "{self.nombre}" es interactiva y como tal no tiene '
-                f'subcuentas'
-            )
-        return self.subcuentas.all().aggregate(Sum('_saldo'))['_saldo__sum']
-
     def total_movs(self):
         """ Devuelve suma de los importes de los movimientos de la cuenta"""
         total_entradas = self.entradas.all() \
@@ -204,18 +191,61 @@ class Cuenta(PolymorphModel):
                             .aggregate(Sum('importe'))['importe__sum'] or 0
         return total_entradas - total_salidas
 
+    def esta_en_una_caja(self):
+        return self.cta_madre is not None
+
+
+class CuentaInteractiva(Cuenta):
+
+    @classmethod
+    def crear(cls, nombre, slug, opciones='i', cta_madre=None, **kwargs):
+        return super().crear(
+            nombre=nombre,
+            slug=slug,
+            opciones=opciones,
+            cta_madre=cta_madre,
+            finalizar=True,
+            **kwargs)
+
+    def convertirse_en_acumulativa(self):
+        pk_preservado = self.pk
+        self.delete(keep_parents=True)
+        cuenta = Cuenta.objects.get_no_poly(pk=pk_preservado)
+        cuenta_acumulativa = CuentaAcumulativa(cuenta_ptr_id=cuenta.pk)
+        cuenta_acumulativa.__dict__.update(cuenta.__dict__)
+        cuenta_acumulativa.content_type = ContentType.objects.get(
+            app_label='diario', model='cuentaacumulativa'
+        )
+        cuenta_acumulativa.fecha_conversion = date.today()
+        cuenta_acumulativa.save()
+        return cuenta_acumulativa
+
     def corregir_saldo(self):
-        if self.es_interactiva:
-            self.saldo = self.total_movs()
-        else:
-            self.saldo = self.total_subcuentas()
+        self.saldo = self.total_movs()
         self.save()
 
-    def saldo_ok(self):
-        if self.es_interactiva:
-            return self.saldo == self.total_movs()
+    def agregar_mov_correctivo(self):
+        if self.saldo_ok():
+            return None
+        saldo = self.saldo
+        mov = Movimiento(concepto='Movimiento correctivo')
+        mov.importe = self.saldo - self.total_movs()
+        if mov.importe < 0:
+            mov.importe = -mov.importe
+            mov.cta_salida = self
         else:
-            return self.saldo == self.total_subcuentas()
+            mov.cta_entrada = self
+        try:
+            mov.full_clean()
+        except TypeError:
+            raise TypeError(f'Error en mov {mov}')
+        mov.save()
+        self.saldo = saldo
+        self.save()
+        return mov
+
+    def saldo_ok(self):
+        return self.saldo == self.total_movs()
 
     def dividir_entre(self, *subcuentas):
 
@@ -306,55 +336,6 @@ class Cuenta(PolymorphModel):
         self.dividir_entre(*subcuentas)
         return Cuenta.tomar(slug=self.slug)
 
-    def esta_en_una_caja(self):
-        return self.cta_madre is not None
-
-
-class CuentaInteractiva(Cuenta):
-
-    @classmethod
-    def crear(cls, nombre, slug, opciones='i', cta_madre=None, **kwargs):
-        return super().crear(
-            nombre=nombre,
-            slug=slug,
-            opciones=opciones,
-            cta_madre=cta_madre,
-            finalizar=True,
-            **kwargs)
-
-    def convertirse_en_acumulativa(self):
-        pk_preservado = self.pk
-        self.delete(keep_parents=True)
-        cuenta = Cuenta.objects.get_no_poly(pk=pk_preservado)
-        cuenta_acumulativa = CuentaAcumulativa(cuenta_ptr_id=cuenta.pk)
-        cuenta_acumulativa.__dict__.update(cuenta.__dict__)
-        cuenta_acumulativa.content_type = ContentType.objects.get(
-            app_label='diario', model='cuentaacumulativa'
-        )
-        cuenta_acumulativa.fecha_conversion = date.today()
-        cuenta_acumulativa.save()
-        return cuenta_acumulativa
-
-    def agregar_mov_correctivo(self):
-        if self.saldo_ok():
-            return None
-        saldo = self.saldo
-        mov = Movimiento(concepto='Movimiento correctivo')
-        mov.importe = self.saldo - self.total_movs()
-        if mov.importe < 0:
-            mov.importe = -mov.importe
-            mov.cta_salida = self
-        else:
-            mov.cta_entrada = self
-        try:
-            mov.full_clean()
-        except TypeError:
-            raise TypeError(f'Error en mov {mov}')
-        mov.save()
-        self.saldo = saldo
-        self.save()
-        return mov
-
 
 class CuentaAcumulativa(Cuenta):
 
@@ -366,6 +347,13 @@ class CuentaAcumulativa(Cuenta):
             if isinstance(cuenta, CuentaAcumulativa):
                 todas_las_subcuentas.update(cuenta.arbol_de_subcuentas())
         return todas_las_subcuentas
+
+    def corregir_saldo(self):
+        self.saldo = self.total_subcuentas()
+        self.save()
+
+    def saldo_ok(self):
+        return self.saldo == self.total_subcuentas()
 
     def full_clean(self, *args, **kwargs):
         if self.cta_madre in self.arbol_de_subcuentas():
@@ -383,6 +371,9 @@ class CuentaAcumulativa(Cuenta):
         for sc in self.subcuentas.all():
             result = result | sc.movs()
         return result.order_by('fecha')
+
+    def total_subcuentas(self):
+        return self.subcuentas.all().aggregate(Sum('_saldo'))['_saldo__sum']
 
 
 class Movimiento(MiModel):

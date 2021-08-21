@@ -2,11 +2,11 @@ from unittest.mock import patch
 
 from django.test import TestCase
 
-from diario.models import Cuenta, Movimiento
+from diario.models import Cuenta
 from diario.utils import verificar_saldos
 
 
-@patch('diario.models.Cuenta.saldo_ok')
+@patch('diario.models.CuentaInteractiva.saldo_ok')
 class TestVerificarSaldos(TestCase):
 
     def setUp(self):
@@ -14,10 +14,6 @@ class TestVerificarSaldos(TestCase):
         self.cta1 = Cuenta.crear('Afectivo', 'A')
         self.cta2 = Cuenta.crear('Banco', 'B')
         self.cta3 = Cuenta.crear('Cuenta corriente', 'C')
-        Movimiento.crear(
-            concepto='Extracción', importe=200,
-            cta_entrada=self.cta1, cta_salida=self.cta2
-        )
 
     def test_devuelve_lista_vacia_si_todos_los_saldos_ok(self, mock_saldo_ok):
         mock_saldo_ok.return_value = True

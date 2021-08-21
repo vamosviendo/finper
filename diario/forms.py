@@ -1,6 +1,6 @@
 from django import forms
 
-from diario.models import Cuenta, CuentaInteractiva, Movimiento
+from diario.models import CuentaInteractiva, Movimiento
 
 
 def agregar_clase(campo, clase):
@@ -38,7 +38,7 @@ class FormSubcuentas(CuentaFormset):
         super().__init__(*args, **kwargs)
 
     def save(self):
-        cta = Cuenta.objects.get(slug=self.cuenta)
+        cta = CuentaInteractiva.objects.get(slug=self.cuenta)
         cta.dividir_entre(*self.cleaned_data)
         return cta
 

@@ -1,5 +1,4 @@
 from datetime import date
-from unittest import skip
 from unittest.mock import patch
 
 from django.core.exceptions import NON_FIELD_ERRORS
@@ -17,7 +16,7 @@ class TestFormCuenta(TestCase):
         self.assertFalse(formcta.is_valid())
 
 
-@patch('diario.forms.Cuenta.dividir_entre')
+@patch('diario.forms.CuentaInteractiva.dividir_entre')
 class TestFormSubcuentas(TestCase):
 
     def setUp(self):
