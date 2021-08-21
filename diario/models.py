@@ -7,12 +7,11 @@ from django.db import models
 from django.db.models import Sum
 from django.urls import reverse
 
-from diario.managers import PolymorphManager
 from utils import errors
-from utils.clases.mimodel import MiModel
 from utils.errors import \
     ErrorCuentaEsInteractiva, ErrorDeSuma, ErrorDependenciaCircular, \
     ErrorOpciones, ErrorTipo, SaldoNoCeroException, SUBCUENTAS_SIN_SALDO
+from vvmodel.models import MiModel, PolymorphModel
 
 
 def hoy():
@@ -37,7 +36,7 @@ class MiDateField(models.DateField):
             return value
 
 
-class Cuenta(MiModel):
+class Cuenta(PolymorphModel):
     nombre = models.CharField(max_length=50, unique=True)
     slug = models.CharField(
         max_length=4, unique=True, validators=[alfaminusculas])
@@ -49,12 +48,6 @@ class Cuenta(MiModel):
     )
     opciones = models.CharField(max_length=8, default='i')
     _saldo = models.FloatField(default=0)
-    content_type = models.ForeignKey(
-        ContentType,
-        null=True, editable=False, on_delete=models.CASCADE,
-    )
-
-    objects = PolymorphManager()
 
     class Meta:
         ordering = ('nombre', )
@@ -182,13 +175,6 @@ class Cuenta(MiModel):
     @classmethod
     def get_lower_class_name(cls):
         return cls.__name__.lower()
-
-    def como_subclase(self, database='default'):
-        content_type = self.content_type
-        model = content_type.model_class()
-        if model == Cuenta:
-            return self
-        return model.tomar(pk=self.pk, polymorphic=False, using=database)
 
     def movs_directos(self):
         """ Devuelve entradas y salidas de la cuenta"""

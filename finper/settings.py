@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'diario',
     'usuarios',
+    'vvmodel',
     'behave_django',
 ]
 
