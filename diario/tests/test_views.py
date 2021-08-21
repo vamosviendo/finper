@@ -215,7 +215,7 @@ class TestCtaDetalle(TestCase):
     def test_pasa_subcuentas_a_template(self):
         self.cta.dividir_entre(['ea', 'ea', 40], ['eb', 'eb'])
         self.cta = Cuenta.tomar(slug=self.cta.slug)
-        self.assertTrue(self.cta.es_caja)
+        self.assertTrue(self.cta.es_acumulativa)
 
         response = self.client.get(
             reverse('cta_detalle', args=[self.cta.slug])
@@ -588,7 +588,7 @@ class TestCtaDivIntegration(TestCase):
         self.assertEqual(
             len([x for x in Cuenta.todes() if x.es_interactiva]), 2)
         self.assertEqual(
-            len([x for x in Cuenta.todes() if x.es_caja]), 1)
+            len([x for x in Cuenta.todes() if x.es_acumulativa]), 1)
 
     def test_redirige_a_pagina_de_cuenta(self):
         self.assertRedirects(

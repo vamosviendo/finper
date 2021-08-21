@@ -54,7 +54,7 @@ class CtaDetalleView(DetailView):
         cuenta = self.object.como_subclase()
 
         context['subcuentas'] = cuenta.subcuentas.all() \
-            if cuenta.es_caja \
+            if cuenta.es_acumulativa \
             else []
         context['movimientos'] = cuenta.movs()
 

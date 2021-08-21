@@ -119,7 +119,7 @@ class Cuenta(MiModel):
         return isinstance(self, CuentaInteractiva)
 
     @property
-    def es_caja(self):
+    def es_acumulativa(self):
         return isinstance(self, CuentaAcumulativa)
 
     @property
@@ -140,7 +140,7 @@ class Cuenta(MiModel):
             raise ErrorOpciones('La cuenta no tiene tipo asignado')
         if 'c' in self.opciones and 'i' in self.opciones:
             raise ErrorOpciones('La cuenta tiene más de un tipo asignado')
-        if self.es_caja and self.subcuentas.count() == 0:
+        if self.es_acumulativa and self.subcuentas.count() == 0:
             raise ErrorTipo('Cuenta caja debe tener subcuentas')
         if self.cta_madre and self.cta_madre.es_interactiva:
             raise ErrorTipo(f'Cuenta interactiva "{self.cta_madre }" '

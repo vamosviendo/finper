@@ -556,7 +556,7 @@ class TestMetodoDividirEntre(TestModelCuentaMetodos):
         self.cta1 = Cuenta.tomar(pk=pk)
 
         self.assertFalse(self.cta1.es_interactiva)
-        self.assertTrue(self.cta1.es_caja)
+        self.assertTrue(self.cta1.es_acumulativa)
 
     def test_guarda_fecha_de_conversion_en_cuenta_madre(self):
         pk = self.cta1.pk
