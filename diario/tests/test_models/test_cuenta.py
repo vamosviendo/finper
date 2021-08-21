@@ -253,6 +253,17 @@ class TestMetodosMovsYSaldos(TestModelCuentaMetodos):
         for mov in movs_cta1:
             self.assertIn(mov, movs_directos)
 
+    def test_movs_directos_no_incluye_los_movimientos_de_subcuentas(self):
+        subcuentas = self.cta1.dividir_entre(
+            {'nombre': 'Billetera', 'slug': 'eb', 'saldo': 30, },
+            {'nombre': 'Cajoncito', 'slug': 'ec', }
+        )
+        self.cta1 = Cuenta.tomar(slug=self.cta1.slug)
+        mov_subcuenta = Movimiento.crear(
+            concepto='movsubc', importe=10, cta_salida=subcuentas[0])
+
+        self.assertNotIn(mov_subcuenta, self.cta1.movs_directos())
+
     def test_movs_devuelve_todos_los_movimientos_de_una_cuenta(self):
         movs_cta1 = [
             Movimiento.tomar(concepto='00000'),

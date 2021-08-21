@@ -56,6 +56,7 @@ class CtaDetalleView(DetailView):
         context['subcuentas'] = cuenta.subcuentas.all() \
             if cuenta.es_caja \
             else []
+        context['movimientos'] = cuenta.movs()
 
         return context
 

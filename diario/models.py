@@ -195,9 +195,9 @@ class Cuenta(MiModel):
         return self.entradas.all() | self.salidas.all()
 
     def movs(self):
-        """ Devuelve movimientos propios y de sus subcuentas."""
-        result = self.entradas.all() | self.salidas.all()
-        return result.order_by('fecha')
+        """ Devuelve movimientos propios y de sus subcuentas
+            ordenados por fecha."""
+        return self.movs_directos().order_by('fecha')
 
     def cantidad_movs(self):
         return self.entradas.count() + self.salidas.count()
@@ -391,7 +391,8 @@ class CuentaAcumulativa(Cuenta):
         super().full_clean(*args, **kwargs)
 
     def movs(self):
-        """ Devuelve movimientos propios y de sus subcuentas."""
+        """ Devuelve movimientos propios y de sus subcuentas
+            ordenados por fecha."""
         result = super().movs()
         for sc in self.subcuentas.all():
             result = result | sc.movs()

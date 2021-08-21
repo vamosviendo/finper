@@ -47,7 +47,7 @@
       <th>Importe</th>
       <th>Cuentas</th>
     </tr></thead>
-    {% for mov in cuenta.movs %}
+    {% for mov in movimientos %}
     <tr class="class_row_mov">
       <td class="class_td_fecha">{{ mov.fecha|date:'Y-m-d' }}</td>
       <td class="class_td_concepto">

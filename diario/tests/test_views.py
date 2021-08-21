@@ -9,7 +9,8 @@ from django.test import TestCase, RequestFactory
 from django.urls import reverse
 from django.utils.datastructures import MultiValueDict
 
-from diario.models import Cuenta, CuentaInteractiva, Movimiento
+from diario.models import Cuenta, CuentaAcumulativa, CuentaInteractiva, \
+    Movimiento
 from diario.views import cta_div_view
 from utils.funciones.archivos import fijar_mtime
 
@@ -230,6 +231,49 @@ class TestCtaDetalle(TestCase):
             reverse('cta_detalle', args=[self.cta.slug])
         )
         self.assertEqual(list(response.context['subcuentas']), [])
+
+    def test_pasa_movimientos_de_cuenta_a_template(self):
+        response = self.client.get(
+            reverse('cta_detalle', args=[self.cta.slug]))
+        self.assertEqual(
+            list(response.context['movimientos']),
+            list(self.cta.movs())
+        )
+
+    def test_pasa_movimientos_ordenados_por_fecha(self):
+        m1 = Movimiento.tomar(concepto='a primer movimiento')
+        m2 = Movimiento.tomar(concepto='b segundo movimiento')
+        m3 = Movimiento.crear(
+            fecha=date.today() - datetime.timedelta(days=2),
+            concepto='c tercer movimiento',
+            importe=30,
+            cta_salida=self.cta
+        )
+        movs = [m3, m1, m2]
+
+        response = self.client.get(
+            reverse('cta_detalle', args=[self.cta.slug]))
+
+        self.assertEqual(list(response.context['movimientos']), movs)
+
+    def test_pasa_movimientos_de_subcuentas(self):
+        subcus = self.cta.dividir_entre(
+            ['subcuenta1', 'sc1', 40], ['subcuenta2', 'sc2'])
+        Movimiento.crear('c tercer movimiento', 30, cta_entrada=subcus[0])
+        Movimiento.crear('d cuarto movimiento', 35, cta_salida=subcus[1])
+        Movimiento.crear(
+            'e quinto movimiento', 45,
+            cta_entrada=subcus[0], cta_salida=subcus[1]
+        )
+        cuenta = CuentaAcumulativa.tomar(slug=self.cta.slug)
+
+        response = self.client.get(
+            reverse('cta_detalle', args=[self.cta.slug]))
+
+        self.assertEqual(
+            list(response.context['movimientos']),
+            list(cuenta.movs())
+        )
 
     def test_integrativo_pasa_movs_de_cuenta_a_template(self):
         response = self.client.get(
