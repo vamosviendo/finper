@@ -88,18 +88,6 @@ class TestModelCuenta(TestCase):
 
         self.assertEqual(list(Cuenta.todes()), [cuenta2, cuenta3, cuenta1])
 
-    def test_opciones_deben_incluir_un_tipo(self):
-        cuenta = Cuenta.crear(nombre='Efectivo', slug='E')
-        cuenta.opciones = ' '
-        with self.assertRaises(ErrorOpciones):
-            cuenta.full_clean()
-
-    def test_opciones_no_pueden_incluir_mas_de_un_tipo(self):
-        cuenta = Cuenta.crear(nombre='Efectivo', slug='e')
-        cuenta.opciones = 'ic'
-        with self.assertRaises(ErrorOpciones):
-            cuenta.full_clean()
-
 
 class TestModelCuentaCrear(TestCase):
 
@@ -179,33 +167,6 @@ class TestModelCuentaPropiedades(TestModelCuentaMetodos):
     """ Saldos después de setUp
         self.cta1: 100
     """
-
-    # @property tipo
-    def test_tipo_devuelve_tipo_de_cuenta_segun_contenido_de_switches(self):
-        self.assertTrue(self.cta1.tipo, 'interactiva')
-        self.cta1.opciones = self.cta1.opciones.replace('i', 'c')
-        self.cta1.save()
-        self.assertEqual(self.cta1.tipo, 'caja')
-
-    def test_tipo_da_error_si_no_hay_opcion_de_tipo(self):
-        self.cta1.opciones = ' '
-        self.cta1.save()
-        with self.assertRaises(ErrorOpciones):
-            tipo = self.cta1.tipo
-
-    def test_tipo_agrega_y_retira_opciones_correctamente_al_ser_asignada(self):
-        self.cta1.tipo = 'caja'
-        self.cta1.save()
-        self.assertIn('c', self.cta1.opciones)
-        self.assertNotIn('i', self.cta1.opciones)
-        self.cta1.tipo = 'interactiva'
-        self.cta1.save()
-        self.assertIn('i', self.cta1.opciones)
-        self.assertNotIn('c', self.cta1.opciones)
-
-    def test_tipo_da_error_si_se_le_asigna_valor_no_admitido(self):
-        with self.assertRaises(ErrorOpciones):
-            self.cta1.tipo = 'sanguche'
 
     # @property saldo:
     def test_saldo_devuelve_el_saldo_de_la_cuenta(self):

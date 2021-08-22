@@ -45,26 +45,18 @@ class Cuenta(PolymorphModel):
         null=True, blank=True,
         on_delete=models.CASCADE,
     )
-    opciones = models.CharField(max_length=8, default='i')
     _saldo = models.FloatField(default=0)
 
     class Meta:
         ordering = ('nombre', )
 
     @classmethod
-    def crear(cls, nombre, slug, opciones='i', cta_madre=None, finalizar=False,
-              **kwargs):
-
-        try:
-            saldo = kwargs.pop('saldo')
-        except KeyError:
-            saldo = None
+    def crear(cls, nombre, slug, cta_madre=None, finalizar=False, **kwargs):
 
         if finalizar:
             cuenta_nueva = super().crear(
                 nombre=nombre,
                 slug=slug,
-                opciones=opciones,
                 cta_madre=cta_madre,
                 **kwargs
             )
@@ -72,39 +64,14 @@ class Cuenta(PolymorphModel):
             cuenta_nueva = CuentaInteractiva.crear(
                 nombre=nombre,
                 slug=slug,
-                opciones=opciones,
                 cta_madre=cta_madre,
                 **kwargs
-            )
-
-        if saldo:
-            Movimiento.crear(
-                concepto=f'Saldo inicial de {cuenta_nueva.nombre}',
-                importe=saldo,
-                cta_entrada=cuenta_nueva
             )
 
         return cuenta_nueva
 
     def __str__(self):
         return self.nombre
-
-    @property
-    def tipo(self):
-        if 'i' in self.opciones:
-            return 'interactiva'
-        if 'c' in self.opciones:
-            return 'caja'
-        raise ErrorOpciones('No se encontró opción de tipo')
-
-    @tipo.setter
-    def tipo(self, tipo):
-        if tipo == 'caja':
-            self.opciones = self.opciones.replace('i', 'c')
-        elif tipo == 'interactiva':
-            self.opciones = self.opciones.replace('c', 'i')
-        else:
-            raise ErrorOpciones(f'Opción no admitida: {tipo}')
 
     @property
     def es_interactiva(self):
@@ -127,11 +94,6 @@ class Cuenta(PolymorphModel):
             self.slug = self.slug.lower()
         if self.nombre:
             self.nombre = self.nombre.lower()
-
-        if 'c' not in self.opciones and 'i' not in self.opciones:
-            raise ErrorOpciones('La cuenta no tiene tipo asignado')
-        if 'c' in self.opciones and 'i' in self.opciones:
-            raise ErrorOpciones('La cuenta tiene más de un tipo asignado')
         if self.es_acumulativa and self.subcuentas.count() == 0:
             raise ErrorTipo('Cuenta caja debe tener subcuentas')
         if self.cta_madre and self.cta_madre.es_interactiva:
@@ -198,14 +160,23 @@ class Cuenta(PolymorphModel):
 class CuentaInteractiva(Cuenta):
 
     @classmethod
-    def crear(cls, nombre, slug, opciones='i', cta_madre=None, **kwargs):
-        return super().crear(
+    def crear(cls, nombre, slug, cta_madre=None, saldo=None, **kwargs):
+
+        cuenta_nueva = super().crear(
             nombre=nombre,
             slug=slug,
-            opciones=opciones,
             cta_madre=cta_madre,
             finalizar=True,
             **kwargs)
+
+        if saldo:
+            Movimiento.crear(
+                concepto=f'Saldo inicial de {cuenta_nueva.nombre}',
+                importe=saldo,
+                cta_entrada=cuenta_nueva
+            )
+
+        return cuenta_nueva
 
     def convertirse_en_acumulativa(self):
         pk_preservado = self.pk
