@@ -54,19 +54,12 @@ class Cuenta(PolymorphModel):
     def crear(cls, nombre, slug, cta_madre=None, finalizar=False, **kwargs):
 
         if finalizar:
-            cuenta_nueva = super().crear(
-                nombre=nombre,
-                slug=slug,
-                cta_madre=cta_madre,
-                **kwargs
-            )
+            cuenta_nueva = super().crear(nombre=nombre, slug=slug,
+                                         cta_madre=cta_madre, **kwargs)
         else:
-            cuenta_nueva = CuentaInteractiva.crear(
-                nombre=nombre,
-                slug=slug,
-                cta_madre=cta_madre,
-                **kwargs
-            )
+            cuenta_nueva = CuentaInteractiva.crear(nombre=nombre, slug=slug,
+                                                   cta_madre=cta_madre,
+                                                   **kwargs)
 
         return cuenta_nueva
 
@@ -103,7 +96,7 @@ class Cuenta(PolymorphModel):
         super().full_clean(*args, **kwargs)
 
     def save(self, *args, **kwargs):
-        if self.esta_en_una_caja():
+        if self.tiene_madre():
             try:
                 cta_guardada = Cuenta.tomar(slug=self.slug)
                 saldo_guardado = cta_guardada.saldo
@@ -153,7 +146,7 @@ class Cuenta(PolymorphModel):
                             .aggregate(Sum('importe'))['importe__sum'] or 0
         return total_entradas - total_salidas
 
-    def esta_en_una_caja(self):
+    def tiene_madre(self):
         return self.cta_madre is not None
 
 

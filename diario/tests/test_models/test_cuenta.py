@@ -870,12 +870,12 @@ class TestCuentaMadre(TestModelCuentaMetodos):
 
 
 class TestMetodosVarios(TestModelCuentaMetodos):
-    """ Testea: Cuenta.esta_en_una_caja()
+    """ Testea: Cuenta.tiene_madre()
                 Cuenta.arbol_de_subcuentas()
     """
 
-    # Cuenta.esta_en_una_caja()
-    def test_esta_en_una_caja_devuelve_true_si_tiene_cta_madre(self):
+    # Cuenta.tiene_madre()
+    def test_tiene_madre_devuelve_true_si_tiene_cta_madre(self):
         self.cta1.dividir_entre(
             {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 40},
             {'nombre': 'Cajón de arriba', 'slug': 'ecaj', 'saldo': 60},
@@ -884,8 +884,8 @@ class TestMetodosVarios(TestModelCuentaMetodos):
         cta2 = Cuenta.tomar(slug='ebil')
         cta3 = Cuenta.tomar(slug='ecaj')
 
-        self.assertTrue(cta2.esta_en_una_caja())
-        self.assertFalse(self.cta1.esta_en_una_caja())
+        self.assertTrue(cta2.tiene_madre())
+        self.assertFalse(self.cta1.tiene_madre())
 
     # Cuenta.arbol_de_subcuentas()
     def test_arbol_de_subcuentas_devuelve_set_con_todas_las_cuentas_dependientes(self):
