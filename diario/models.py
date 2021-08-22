@@ -157,12 +157,9 @@ class CuentaInteractiva(Cuenta):
     @classmethod
     def crear(cls, nombre, slug, cta_madre=None, saldo=None, **kwargs):
 
-        cuenta_nueva = super().crear(
-            nombre=nombre,
-            slug=slug,
-            cta_madre=cta_madre,
-            finalizar=True,
-            **kwargs)
+        cuenta_nueva = super().crear(nombre=nombre, slug=slug,
+                                     cta_madre=cta_madre, finalizar=True,
+                                     **kwargs)
 
         if saldo:
             Movimiento.crear(
@@ -172,19 +169,6 @@ class CuentaInteractiva(Cuenta):
             )
 
         return cuenta_nueva
-
-    def convertirse_en_acumulativa(self):
-        pk_preservado = self.pk
-        self.delete(keep_parents=True)
-        cuenta = Cuenta.objects.get_no_poly(pk=pk_preservado)
-        cuenta_acumulativa = CuentaAcumulativa(cuenta_ptr_id=cuenta.pk)
-        cuenta_acumulativa.__dict__.update(cuenta.__dict__)
-        cuenta_acumulativa.content_type = ContentType.objects.get(
-            app_label='diario', model='cuentaacumulativa'
-        )
-        cuenta_acumulativa.fecha_conversion = date.today()
-        cuenta_acumulativa.save()
-        return cuenta_acumulativa
 
     def corregir_saldo(self):
         self.saldo = self.total_movs()
@@ -215,48 +199,7 @@ class CuentaInteractiva(Cuenta):
 
     def dividir_entre(self, *subcuentas):
 
-        # Limpieza de los argumentos
-        # Si se pasa una lista convertirla en argumentos sueltos
-        if len(subcuentas) == 1 and type(subcuentas) in (list, tuple):
-            subcuentas = subcuentas[0]
-
-        cuentas_limpias = list()
-
-        # Verificar que todas las subcuentas tengan saldo y tomar las
-        # acciones correspondientes en caso de que no
-        for i, subcuenta in enumerate(subcuentas):
-            if type(subcuenta) in (list, tuple):
-                try:
-                    subcuenta = {
-                        'nombre': subcuenta[0],
-                        'slug': subcuenta[1],
-                        'saldo': subcuenta[2]
-                    }
-                except IndexError:  # No hay elemento para saldo
-                    subcuenta = {'nombre': subcuenta[0], 'slug': subcuenta[1]}
-
-            try:
-                subcuenta['saldo'] = float(subcuenta['saldo'])
-            except KeyError:    # El dict no tiene clave 'saldo'
-                subcuenta['saldo'] = 0.0
-                try:
-                    subcuenta['saldo'] = self.saldo - sum([
-                        x['saldo'] for x in subcuentas
-                    ])
-                except TypeError:
-                    subcus = list(subcuentas)[:i] + list(subcuentas)[i+1:]
-                    try:
-                        subcuenta['saldo'] = \
-                            self.saldo - sum([x[2] for x in subcus])
-                    except IndexError:  # Hay más de una subcuenta sin saldo
-                        raise ErrorDeSuma(SUBCUENTAS_SIN_SALDO)
-                except KeyError:    # Hay más de una subcuenta sin saldo
-                    raise ErrorDeSuma(SUBCUENTAS_SIN_SALDO)
-            cuentas_limpias.append(subcuenta)
-
-        if sum([x['saldo'] for x in cuentas_limpias]) != self.saldo:
-            raise ErrorDeSuma(f'Suma errónea. Saldos de subcuentas '
-                              f'deben sumar {self.saldo:.2f}')
+        cuentas_limpias = self._ajustar_subcuentas(subcuentas)
 
         # Un movimiento de salida por cada una de las subcuentas
         # (después de generar cada subcuenta se generará el movimiento de
@@ -274,7 +217,7 @@ class CuentaInteractiva(Cuenta):
                 pass
 
         # Generación de subcuentas y traspaso de saldos
-        cta_madre = self.convertirse_en_acumulativa()
+        cta_madre = self._convertirse_en_acumulativa()
 
         cuentas_creadas = list()
 
@@ -301,6 +244,80 @@ class CuentaInteractiva(Cuenta):
     def dividir_y_actualizar(self, *subcuentas):
         self.dividir_entre(*subcuentas)
         return Cuenta.tomar(slug=self.slug)
+
+    # Protected
+
+    def _ajustar_subcuentas(self, subcuentas):
+        """ Verificar que todas las subcuentas sean diccionarios y
+            que todas tengan saldo y tomar las acciones correspondientes
+            en caso de que no sea así."""
+        if len(subcuentas) == 1 and type(subcuentas) in (list, tuple):
+            subcuentas = subcuentas[0]
+
+        subcuentas_limpias = list()
+
+        for i, subcuenta in enumerate(subcuentas):
+
+            # TODO Cuenta._asegurar_dict_subcuenta()
+            # Asegurarse de que subcuenta venga en un dict
+            if type(subcuenta) in (tuple, list):
+                dic_subcuenta = {
+                    'nombre': subcuenta[0],
+                    'slug': subcuenta[1],
+                }
+                try:
+                    dic_subcuenta['saldo'] = subcuenta[2]
+                except IndexError:  # subcuenta no tiene saldo
+                    dic_subcuenta['saldo'] = None
+            else:
+                dic_subcuenta = subcuenta
+
+            # Completar subcuenta sin saldo
+            if dic_subcuenta.get('saldo', None) is None:
+                otras_subcuentas = subcuentas[:i] + subcuentas[i+1:]
+                try:
+                    total_otras_subcuentas = sum(
+                        [float(x['saldo']) for x in otras_subcuentas]
+                    )
+                except TypeError:  # No es un dict. Suponemos iterable.
+                    try:
+                        total_otras_subcuentas = sum(
+                            [float(x[2]) for x in otras_subcuentas]
+                        )
+                    except IndexError:  # Más de una subcuenta sin saldo
+                        raise errors.ErrorDeSuma(
+                            "Sólo se permite una subcuenta sin saldo."
+                        )
+                except KeyError:  # Más de una subcuenta sin saldo
+                    raise errors.ErrorDeSuma
+
+                dic_subcuenta['saldo'] = self.saldo - total_otras_subcuentas
+
+            # Si saldo no es float, convertir
+            dic_subcuenta['saldo'] = float(dic_subcuenta['saldo'])
+            subcuentas_limpias.append(dic_subcuenta)
+
+        # En este punto suma saldos subcuentas debe ser igual a self.saldo
+        if sum([x['saldo'] for x in subcuentas_limpias]) != self.saldo:
+            raise errors.ErrorDeSuma(
+                f"Suma errónea. Saldos de subcuentas "
+                f"deben sumar {self.saldo:.2f}"
+            )
+
+        return subcuentas_limpias
+
+    def _convertirse_en_acumulativa(self):
+        pk_preservado = self.pk
+        self.delete(keep_parents=True)
+        cuenta = Cuenta.objects.get_no_poly(pk=pk_preservado)
+        cuenta_acumulativa = CuentaAcumulativa(cuenta_ptr_id=cuenta.pk)
+        cuenta_acumulativa.__dict__.update(cuenta.__dict__)
+        cuenta_acumulativa.content_type = ContentType.objects.get(
+            app_label='diario', model='cuentaacumulativa'
+        )
+        cuenta_acumulativa.fecha_conversion = date.today()
+        cuenta_acumulativa.save()
+        return cuenta_acumulativa
 
 
 class CuentaAcumulativa(Cuenta):

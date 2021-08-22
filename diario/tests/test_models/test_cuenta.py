@@ -670,7 +670,7 @@ class TestCuentaMadre(TestModelCuentaMetodos):
 
     def test_cuenta_caja_debe_tener_subcuentas(self):
         self.cta2.saldo = 0.0
-        self.cta2 = self.cta2.convertirse_en_acumulativa()
+        self.cta2 = self.cta2._convertirse_en_acumulativa()
         with self.assertRaises(ErrorTipo):
             self.cta2.full_clean()
 
@@ -942,7 +942,7 @@ class TestCuentaInteractiva(TestCase):
         cta_int = CuentaInteractiva.crear('Efectivo', 'efec')
         pk_cta_int = cta_int.pk
 
-        cta_int.convertirse_en_acumulativa()
+        cta_int._convertirse_en_acumulativa()
 
         cta_acum = CuentaAcumulativa.tomar(pk=pk_cta_int)
 
@@ -955,7 +955,7 @@ class TestCuentaInteractiva(TestCase):
         Movimiento.crear('salida', 1500, cta_salida=cta_int)
         Movimiento.crear('entrada', 500, cta_entrada=cta_int)
 
-        cta_int.convertirse_en_acumulativa()
+        cta_int._convertirse_en_acumulativa()
 
         cta_acum = CuentaAcumulativa.tomar(pk=pk_cta_int)
 
@@ -966,14 +966,14 @@ class TestCuentaInteractiva(TestCase):
         pk_cta_int = cta_int.pk
         nombre_cta_int = cta_int.nombre
 
-        cta_acum = cta_int.convertirse_en_acumulativa()
+        cta_acum = cta_int._convertirse_en_acumulativa()
         self.assertEqual(cta_acum.nombre, nombre_cta_int)
 
     def test_devuelve_cuenta_convertida(self):
         cta_int = CuentaInteractiva.crear('Efectivo', 'efec')
         pk_cta_int = cta_int.pk
 
-        cta_acum = cta_int.convertirse_en_acumulativa()
+        cta_acum = cta_int._convertirse_en_acumulativa()
 
         self.assertEqual(
             CuentaAcumulativa.tomar(pk=pk_cta_int),
