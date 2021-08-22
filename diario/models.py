@@ -97,25 +97,8 @@ class Cuenta(PolymorphModel):
 
     def save(self, *args, **kwargs):
         if self.tiene_madre():
-            try:
-                cta_guardada = Cuenta.tomar(slug=self.slug)
-                saldo_guardado = cta_guardada.saldo
-                cta_madre_guardada = cta_guardada.cta_madre
-            except Cuenta.DoesNotExist:
-                saldo_guardado = 0.0
-                cta_madre_guardada = None
-            if self.saldo != saldo_guardado:
-                self.cta_madre.saldo += self.saldo
-                self.cta_madre.saldo -= saldo_guardado
-                self.cta_madre.save()
-            if self.cta_madre and self.cta_madre != cta_madre_guardada:
-                self.cta_madre.saldo += self.saldo
+            self._actualizar_madre()
 
-        if not self.content_type:
-            self.content_type = ContentType.objects.get(
-                app_label=self._meta.app_label,
-                model=self.get_lower_class_name()
-            )
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
@@ -127,7 +110,8 @@ class Cuenta(PolymorphModel):
         return reverse('cta_detalle', args=[self.slug])
 
     def movs_directos(self):
-        """ Devuelve entradas y salidas de la cuenta"""
+        """ Devuelve entradas y salidas de la cuenta sin los de sus subcuentas
+        """
         return self.entradas.all() | self.salidas.all()
 
     def movs(self):
@@ -148,6 +132,24 @@ class Cuenta(PolymorphModel):
 
     def tiene_madre(self):
         return self.cta_madre is not None
+
+    # Métodos protegidos
+
+    def _actualizar_madre(self):
+        try:
+            cta_guardada = Cuenta.tomar(slug=self.slug)
+            saldo_guardado = cta_guardada.saldo
+            cta_madre_guardada = cta_guardada.cta_madre
+        except Cuenta.DoesNotExist:
+            saldo_guardado = 0.0
+            cta_madre_guardada = None
+
+        if self.saldo != saldo_guardado:
+            self.cta_madre.saldo += self.saldo
+            self.cta_madre.saldo -= saldo_guardado
+            self.cta_madre.save()
+        if self.cta_madre and self.cta_madre != cta_madre_guardada:
+            self.cta_madre.saldo += self.saldo
 
 
 class CuentaInteractiva(Cuenta):
