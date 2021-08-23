@@ -8,8 +8,8 @@ from django.db.models import Sum
 from django.urls import reverse
 
 from utils import errors
-from utils.errors import ErrorDeSuma, ErrorDependenciaCircular, \
-    ErrorOpciones, ErrorTipo, SaldoNoCeroException, SUBCUENTAS_SIN_SALDO
+from utils.errors import ErrorDependenciaCircular, ErrorTipo, \
+    SaldoNoCeroException, ErrorCuentaEsAcumulativa
 from vvmodel.models import MiModel, PolymorphModel
 
 
@@ -68,11 +68,11 @@ class Cuenta(PolymorphModel):
 
     @property
     def es_interactiva(self):
-        return isinstance(self, CuentaInteractiva)
+        return str(self.content_type) == 'diario | cuenta interactiva'
 
     @property
     def es_acumulativa(self):
-        return isinstance(self, CuentaAcumulativa)
+        return str(self.content_type) == 'diario | cuenta acumulativa'
 
     @property
     def saldo(self):
@@ -398,6 +398,11 @@ class Movimiento(MiModel):
               **kwargs):
         importe = float(importe)
 
+        if (cta_entrada and cta_entrada.es_acumulativa) \
+                or (cta_salida and cta_salida.es_acumulativa):
+            raise errors.ErrorCuentaEsAcumulativa(
+                errors.CUENTA_ACUMULATIVA_EN_MOVIMIENTO)
+
         if importe == 0:
             raise errors.ErrorImporteCero(
                 'Se intentó crear un movimiento con importe cero')
@@ -425,19 +430,57 @@ class Movimiento(MiModel):
         return mov
 
     def clean(self):
+        try:
+            from_db = Movimiento.tomar(pk=self.pk)
+        except Movimiento.DoesNotExist:
+            from_db = None
+
         super().clean()
         if not self.cta_entrada and not self.cta_salida:
             raise ValidationError(message=errors.CUENTA_INEXISTENTE)
+
         if self.cta_entrada == self.cta_salida:
             raise ValidationError(message=errors.CUENTAS_IGUALES)
+
+        if from_db:
+            if from_db.tiene_cuenta_acumulativa():
+                if self.cambia_importe():
+                    raise ErrorCuentaEsAcumulativa(
+                        errors.CAMBIO_IMPORTE_CON_CUENTA_ACUMULATIVA)
+
+            if from_db.tiene_cta_entrada_acumulativa():
+                if self.cta_entrada.slug != from_db.cta_entrada.slug:
+                    raise ErrorCuentaEsAcumulativa(
+                        errors.CUENTA_ACUMULATIVA_RETIRADA)
+            if from_db.tiene_cta_salida_acumulativa():
+                if self.cta_salida.slug != from_db.cta_salida.slug:
+                    raise ErrorCuentaEsAcumulativa(
+                        errors.CUENTA_ACUMULATIVA_RETIRADA)
+            if self.tiene_cta_entrada_acumulativa():
+                if (from_db.cta_entrada is None
+                        or self.cta_entrada.slug != from_db.cta_entrada.slug):
+                    raise ErrorCuentaEsAcumulativa(
+                        errors.CUENTA_ACUMULATIVA_AGREGADA)
+            if self.tiene_cta_salida_acumulativa():
+                if (from_db.cta_salida is None
+                        or self.cta_salida.slug != from_db.cta_salida.slug):
+                    raise ErrorCuentaEsAcumulativa(
+                        errors.CUENTA_ACUMULATIVA_AGREGADA)
+
         # TODO: mejorar redacción de esto
         if (hasattr(self.cta_entrada, 'fecha_conversion')
                 and self.fecha > self.cta_entrada.fecha_conversion) \
             or (hasattr(self.cta_salida, 'fecha_conversion')
                 and self.fecha > self.cta_salida.fecha_conversion):
-            raise ValidationError(message=errors.CUENTA_NO_INTERACTIVA)
+            raise ValidationError(
+                message=errors.CUENTA_ACUMULATIVA_EN_MOVIMIENTO)
 
     def delete(self, *args, **kwargs):
+        self.refresh_from_db()
+        if self.tiene_cuenta_acumulativa():
+            raise errors.ErrorCuentaEsAcumulativa(
+                errors.MOVIMIENTO_CON_CA_ELIMINADO)
+
         if self.cta_entrada:
             self.cta_entrada.saldo -= self.importe
             self.cta_entrada.save()
@@ -520,3 +563,20 @@ class Movimiento(MiModel):
                     self.cta_salida.save()
 
         super().save(*args, **kwargs)
+
+    def tiene_cuenta_acumulativa(self):
+        if self.tiene_cta_entrada_acumulativa():
+            return True
+        if self.tiene_cta_salida_acumulativa():
+            return True
+        return False
+
+    def tiene_cta_entrada_acumulativa(self):
+        return self.cta_entrada and self.cta_entrada.es_acumulativa
+
+    def tiene_cta_salida_acumulativa(self):
+        return self.cta_salida and self.cta_salida.es_acumulativa
+
+    def cambia_importe(self):
+        importe_guardado = Movimiento.tomar(pk=self.pk).importe
+        return importe_guardado != self.importe

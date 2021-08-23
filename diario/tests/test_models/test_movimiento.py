@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -280,6 +280,34 @@ class TestModelMovimientoPropiedades(TestModelMovimiento):
         self.assertEqual(mov1.sentido, 's')
         self.assertEqual(mov2.sentido, 'e')
         self.assertEqual(mov3.sentido, 't')
+
+
+class TestModelMovimientoMetodos(TestModelMovimiento):
+
+    def test_tiene_cuenta_acumulativa_devuelve_true_si_mov_tiene_una_cuenta_acumulativa(self):
+        cuenta2 = Cuenta.crear('cuenta2', 'c2')
+        mov = Movimiento.crear(
+            'traspaso', 100, cta_entrada=self.cuenta1, cta_salida=cuenta2)
+        self.cuenta1.dividir_entre(['subc1', 'sc1', 60], ['subc2', 'sc2'])
+        mov.refresh_from_db()
+
+        self.assertTrue(mov.tiene_cuenta_acumulativa())
+
+    def test_tiene_cuenta_acumulativa_devuelve_false_si_mov_no_tiene_cuenta_acumulativa(self):
+        cuenta2 = Cuenta.crear('cuenta2', 'c2')
+        mov = Movimiento.crear(
+            'traspaso', 100, cta_entrada=self.cuenta1, cta_salida=cuenta2)
+        mov.refresh_from_db()
+        self.assertFalse(mov.tiene_cuenta_acumulativa())
+
+    def test_cambia_importe_devuelve_true_si_importe_es_distinto_del_guardado(self):
+        mov = Movimiento.crear('entrada', 100, self.cuenta1)
+        mov.importe = 200
+        self.assertTrue(mov.cambia_importe())
+
+    def test_cambia_importe_devuelve_false_si_importe_es_igual_al_guardado(self):
+        mov = Movimiento.crear('entrada', 100, self.cuenta1)
+        self.assertFalse(mov.cambia_importe())
 
 
 class TestModelMovimientoSaldos(TestModelMovimiento):
@@ -828,15 +856,148 @@ class TestModelMovimientoCuentas(TestModelMovimiento):
 
     def setUp(self):
         super().setUp()
+        self.cuenta2 = Cuenta.crear('cuenta2', 'c2')
+
+        self.entrada = Movimiento.crear('entrada', 400, self.cuenta1)
+        self.salida = Movimiento.crear('salida', 200, None, self.cuenta1)
+        self.trans_e = Movimiento.crear(
+            'trans entrada acum', 200, self.cuenta1, self.cuenta2)
+        self.trans_s = Movimiento.crear(
+            'trans salida acum', 200, self.cuenta2, self.cuenta1)
+
         self.cuenta1 = self.cuenta1.dividir_y_actualizar(
-            {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 0},
-            {'nombre': 'Cajón', 'slug': 'ecaj', 'saldo': 0},
+            {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 150},
+            {'nombre': 'Cajón', 'slug': 'ecaj', 'saldo': 50},
         )
 
-    def test_movimiento_no_acepta_cuenta_convertida_en_acumulativa_antes_de_fecha_del_movimiento(self):
-        fecha_mov = date.today() + timedelta(days=2)
-        with self.assertRaises(ValidationError):
+    def test_movimiento_nuevo_no_acepta_cuenta_acumulativa(self):
+        with self.assertRaisesMessage(
+                errors.ErrorCuentaEsAcumulativa,
+                errors.CUENTA_ACUMULATIVA_EN_MOVIMIENTO):
             Movimiento.crear(
-                fecha=fecha_mov, concepto='mov',
-                importe=100, cta_entrada=self.cuenta1
-            )
+                'movimiento sobre acum', 100, cta_entrada=self.cuenta1)
+
+    def test_no_puede_modificarse_importe_de_movimiento_con_cta_entrada_acumulativa(self):
+        self.entrada.importe = 300
+        with self.assertRaisesMessage(
+                errors.ErrorCuentaEsAcumulativa,
+                errors.CAMBIO_IMPORTE_CON_CUENTA_ACUMULATIVA):
+            self.entrada.full_clean()
+
+    def test_no_puede_modificarse_importe_de_movimiento_con_cta_salida_acumulativa(self):
+        self.salida.importe = 300
+        with self.assertRaisesMessage(
+                errors.ErrorCuentaEsAcumulativa,
+                errors.CAMBIO_IMPORTE_CON_CUENTA_ACUMULATIVA):
+            self.salida.full_clean()
+
+    def test_no_puede_modificarse_importe_de_mov_de_traspaso_con_una_cuenta_acumulativa(self):
+        self.trans_s.importe = 500
+        with self.assertRaisesMessage(
+                errors.ErrorCuentaEsAcumulativa,
+                errors.CAMBIO_IMPORTE_CON_CUENTA_ACUMULATIVA):
+            self.trans_s.full_clean()
+
+        self.trans_e.importe = 500
+        with self.assertRaisesMessage(
+                errors.ErrorCuentaEsAcumulativa,
+                errors.CAMBIO_IMPORTE_CON_CUENTA_ACUMULATIVA):
+            self.trans_e.full_clean()
+
+    def test_no_puede_modificarse_importe_de_mov_de_traspaso_con_ambas_cuentas_acumulativa(self):
+        self.cuenta2.dividir_entre(
+            ['cuenta2 subcuenta 1', 'c2s1', 100],
+            ['cuenta2 subcuenta2', 'c2s2']
+        )
+
+        self.trans_e.importe = 600
+        with self.assertRaisesMessage(
+                errors.ErrorCuentaEsAcumulativa,
+                errors.CAMBIO_IMPORTE_CON_CUENTA_ACUMULATIVA):
+            self.trans_e.full_clean()
+
+    def test_no_puede_retirarse_cta_entrada_de_movimiento_si_es_acumulativa(self):
+        self.entrada.cta_entrada = self.cuenta2
+        with self.assertRaisesMessage(
+                errors.ErrorCuentaEsAcumulativa,
+                errors.CUENTA_ACUMULATIVA_RETIRADA):
+            self.entrada.full_clean()
+
+    def test_no_puede_retirarse_cta_salida_de_movimiento_si_es_acumulativa(self):
+        self.salida.cta_salida = self.cuenta2
+        with self.assertRaisesMessage(
+                errors.ErrorCuentaEsAcumulativa,
+                errors.CUENTA_ACUMULATIVA_RETIRADA):
+            self.salida.full_clean()
+
+    def test_no_puede_retirarse_cuenta_de_traspaso_si_es_acumulativa(self):
+        cuenta3 = Cuenta.crear('cuenta3', 'c3')
+        self.trans_s.cta_salida = cuenta3
+        with self.assertRaisesMessage(
+                errors.ErrorCuentaEsAcumulativa,
+                errors.CUENTA_ACUMULATIVA_RETIRADA):
+            self.trans_s.full_clean()
+
+        self.trans_e.cta_entrada = cuenta3
+        with self.assertRaisesMessage(
+                errors.ErrorCuentaEsAcumulativa,
+                errors.CUENTA_ACUMULATIVA_RETIRADA):
+            self.trans_e.full_clean()
+
+    def test_no_puede_retirarse_cuenta_de_traspaso_si_ambas_son_acumulativas(self):
+        cuenta3 = Cuenta.crear('cuenta3', 'c3')
+        self.cuenta2.dividir_entre(
+            ['cuenta2 subcuenta 1', 'c2s1', 100],
+            ['cuenta2 subcuenta2', 'c2s2']
+        )
+
+        self.trans_e.cta_entrada = cuenta3
+        with self.assertRaisesMessage(
+                errors.ErrorCuentaEsAcumulativa,
+                errors.CUENTA_ACUMULATIVA_RETIRADA):
+            self.trans_e.full_clean()
+
+        self.trans_s.cta_salida = cuenta3
+        with self.assertRaisesMessage(
+                errors.ErrorCuentaEsAcumulativa,
+                errors.CUENTA_ACUMULATIVA_RETIRADA):
+            self.trans_s.full_clean()
+
+    def test_no_puede_agregarse_cta_entrada_acumulativa_a_movimiento(self):
+        mov1 = Movimiento.crear('entrada', 100, self.cuenta2)
+        mov2 = Movimiento.crear('salida', 100, None, self.cuenta2)
+
+        mov1.cta_entrada = self.cuenta1
+        with self.assertRaisesMessage(
+                errors.ErrorCuentaEsAcumulativa,
+                errors.CUENTA_ACUMULATIVA_AGREGADA):
+            mov1.full_clean()
+
+        mov2.cta_entrada = self.cuenta1
+        with self.assertRaisesMessage(
+                errors.ErrorCuentaEsAcumulativa,
+                errors.CUENTA_ACUMULATIVA_AGREGADA):
+            mov2.full_clean()
+
+    def test_no_puede_agregarse_cta_salida_acumulativa_a_movimiento(self):
+        mov1 = Movimiento.crear('entrada', 100, self.cuenta2)
+        mov2 = Movimiento.crear('salida', 100, None, self.cuenta2)
+
+        mov1.cta_salida = self.cuenta1
+        with self.assertRaisesMessage(
+                errors.ErrorCuentaEsAcumulativa,
+                errors.CUENTA_ACUMULATIVA_AGREGADA):
+            mov1.full_clean()
+
+        mov2.cta_salida = self.cuenta1
+        with self.assertRaisesMessage(
+                errors.ErrorCuentaEsAcumulativa,
+                errors.CUENTA_ACUMULATIVA_AGREGADA):
+            mov2.full_clean()
+
+    def test_no_puede_eliminarse_movimiento_con_cuenta_acumulativa(self):
+        with self.assertRaisesMessage(
+            errors.ErrorCuentaEsAcumulativa,
+            errors.MOVIMIENTO_CON_CA_ELIMINADO
+        ):
+            self.entrada.delete()

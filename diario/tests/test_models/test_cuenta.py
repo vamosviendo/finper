@@ -1,4 +1,4 @@
-from datetime import datetime, date, timedelta
+from datetime import datetime, date
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -6,8 +6,8 @@ from django.test import TestCase
 from diario.models import Cuenta, CuentaInteractiva, CuentaAcumulativa, \
     Movimiento
 
-from utils.errors import SaldoNoCeroException, ErrorOpciones, ErrorDeSuma, \
-    ErrorTipo, ErrorDependenciaCircular
+from utils.errors import SaldoNoCeroException, ErrorDeSuma, \
+    ErrorTipo, ErrorDependenciaCircular, ErrorCuentaEsAcumulativa, CUENTA_ACUMULATIVA_EN_MOVIMIENTO
 
 
 class TestModelCuenta(TestCase):
@@ -861,13 +861,6 @@ class TestCuentaMadre(TestModelCuentaMetodos):
         mov.importe = 40
         self.assertEqual(self.cta1.saldo, saldo_cta1)
 
-    def test_cuenta_caja_no_acepta_movimientos_posteriores_a_su_conversion(self):
-        with self.assertRaises(ValidationError):
-            Movimiento.crear(
-                fecha=date.today()+timedelta(days=2),
-                concepto='mov', importe=100, cta_entrada=self.cta1
-            )
-
 
 class TestMetodosVarios(TestModelCuentaMetodos):
     """ Testea: Cuenta.tiene_madre()
@@ -944,7 +937,7 @@ class TestCuentaInteractiva(TestCase):
 
         cta_int._convertirse_en_acumulativa()
 
-        cta_acum = CuentaAcumulativa.tomar(pk=pk_cta_int)
+        cta_acum = Cuenta.tomar(pk=pk_cta_int)
 
         self.assertIsInstance(cta_acum, CuentaAcumulativa)
         self.assertNotIsInstance(cta_acum, CuentaInteractiva)
@@ -979,3 +972,21 @@ class TestCuentaInteractiva(TestCase):
             CuentaAcumulativa.tomar(pk=pk_cta_int),
             cta_acum
         )
+
+
+class TestCuentaAcumulativa(TestCase):
+
+    def setUp(self):
+        self.cta_acum = Cuenta.crear('cta acum', 'ca')
+        self.cta_int = Cuenta.crear('cta int', 'ci')
+        Movimiento.crear('entrada', 200, cta_entrada=self.cta_acum)
+        Movimiento.crear('salida', 100, cta_salida=self.cta_acum)
+        self.cta_acum = self.cta_acum.dividir_y_actualizar(
+            ['subc1', 'sc1', 100], ['subc2', 'sc2']
+        )
+
+    def test_cuenta_acumulativa_no_puede_participar_en_movimientos_nuevos(self):
+        with self.assertRaisesMessage(
+                ErrorCuentaEsAcumulativa, CUENTA_ACUMULATIVA_EN_MOVIMIENTO):
+            Movimiento.crear(
+                'movimiento sobre acum', 100, cta_entrada=self.cta_acum)
