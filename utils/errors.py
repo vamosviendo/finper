@@ -13,6 +13,7 @@ MOVIMIENTO_CON_CA_ELIMINADO = \
     'Se intentó borrar un movimiento con una o más cuentas acumulativas'
 CUENTA_INEXISTENTE = 'Debe haber una cuenta de entrada, una de salida o ambas'
 CUENTAS_IGUALES = 'Cuentas de entrada y salida no pueden ser la misma'
+FECHA_POSTERIOR_A_CONVERSION = 'Fecha del movimiento debe ser anterior a '
 SALDO_NO_CERO = 'No se puede eliminar cuenta con saldo distinto de cero'
 SALDO_NO_COINCIDE = 'El saldo de la cuenta no coincide con sus movimientos'
 SUBCUENTAS_SIN_SALDO = 'Sólo se permite una subcuenta sin saldo'

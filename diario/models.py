@@ -452,15 +452,28 @@ class Movimiento(MiModel):
                 if self.cta_entrada.slug != from_db.cta_entrada.slug:
                     raise ErrorCuentaEsAcumulativa(
                         errors.CUENTA_ACUMULATIVA_RETIRADA)
+                if self.fecha > from_db.cta_entrada.fecha_conversion:
+                    raise ErrorCuentaEsAcumulativa(
+                        f'{errors.FECHA_POSTERIOR_A_CONVERSION}'
+                        f'{from_db.cta_entrada.fecha_conversion}'
+                    )
+
             if from_db.tiene_cta_salida_acumulativa():
                 if self.cta_salida.slug != from_db.cta_salida.slug:
                     raise ErrorCuentaEsAcumulativa(
                         errors.CUENTA_ACUMULATIVA_RETIRADA)
+                if self.fecha > from_db.cta_salida.fecha_conversion:
+                    raise ErrorCuentaEsAcumulativa(
+                        f'{errors.FECHA_POSTERIOR_A_CONVERSION}'
+                        f'{from_db.cta_salida.fecha_conversion}'
+                    )
+
             if self.tiene_cta_entrada_acumulativa():
                 if (from_db.cta_entrada is None
                         or self.cta_entrada.slug != from_db.cta_entrada.slug):
                     raise ErrorCuentaEsAcumulativa(
                         errors.CUENTA_ACUMULATIVA_AGREGADA)
+
             if self.tiene_cta_salida_acumulativa():
                 if (from_db.cta_salida is None
                         or self.cta_salida.slug != from_db.cta_salida.slug):

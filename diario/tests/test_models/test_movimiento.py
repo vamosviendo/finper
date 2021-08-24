@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -950,7 +950,8 @@ class TestModelMovimientoCuentas(TestModelMovimiento):
         super().setUp()
         self.cuenta2 = Cuenta.crear('cuenta2', 'c2')
 
-        self.entrada = Movimiento.crear('entrada', 400, self.cuenta1)
+        self.entrada = Movimiento.crear(
+            'entrada', 400, self.cuenta1, fecha=date(2021, 1, 5))
         self.salida = Movimiento.crear('salida', 200, None, self.cuenta1)
         self.trans_e = Movimiento.crear(
             'trans entrada acum', 200, self.cuenta1, self.cuenta2)
@@ -1094,15 +1095,106 @@ class TestModelMovimientoCuentas(TestModelMovimiento):
         ):
             self.entrada.delete()
 
-    def test_puede_modificarse_concepto_en_movimiento_con_cuenta_acumulativa(self):
+    def test_puede_modificarse_concepto_en_movimiento_de_entrada_con_cuenta_acumulativa(self):
         self.entrada.concepto = 'entrada cambiada'
         self.entrada.full_clean()
         self.entrada.save()
         self.assertEqual(self.entrada.concepto, 'entrada cambiada')
 
-    def test_puede_modificarse_detalle_en_movimiento_con_cuenta_acumulativa(self):
-        self.salida.concepto = 'detalle de movimiento de entrada'
+    def test_puede_modificarse_concepto_en_movimiento_de_salida_con_cuenta_acumulativa(self):
+        self.salida.concepto = 'salida cambiada'
         self.salida.full_clean()
         self.salida.save()
         self.assertEqual(
-            self.salida.concepto, 'detalle de movimiento de entrada')
+            self.salida.concepto, 'salida cambiada')
+
+    def test_puede_modificarse_concepto_en_movimiento_de_traspaso_con_cuenta_acumulativa_en_entrada(self):
+        self.trans_e.concepto = 'entrada cambiada en traspaso'
+        self.trans_e.full_clean()
+        self.trans_e.save()
+        self.assertEqual(
+            self.trans_e.concepto, 'entrada cambiada en traspaso')
+
+    def test_puede_modificarse_concepto_en_movimiento_de_traspaso_con_cuenta_acumulativa_en_salida(self):
+        self.trans_s.concepto = 'salida cambiada en traspaso'
+        self.trans_s.full_clean()
+        self.trans_s.save()
+        self.assertEqual(
+            self.trans_s.concepto, 'salida cambiada en traspaso')
+
+    def test_puede_modificarse_concepto_en_movimiento_de_traspaso_con_ambas_cuentas_acumulativas(self):
+        self.cuenta2.dividir_entre(
+            ['cuenta2 subcuenta 1', 'c2s1', 100],
+            ['cuenta2 subcuenta2', 'c2s2']
+        )
+        self.trans_s.concepto = 'concepto cambiado en traspaso'
+        self.trans_s.full_clean()
+        self.trans_s.save()
+        self.assertEqual(
+            self.trans_s.concepto, 'concepto cambiado en traspaso')
+
+    def test_puede_modificarse_detalle_en_movimiento_de_entrada_con_cuenta_acumulativa(self):
+        self.entrada.detalle = 'entrada cambiada'
+        self.entrada.full_clean()
+        self.entrada.save()
+        self.assertEqual(self.entrada.detalle, 'entrada cambiada')
+
+    def test_puede_modificarse_detalle_en_movimiento_de_salida_con_cuenta_acumulativa(self):
+        self.salida.detalle = 'salida cambiada'
+        self.salida.full_clean()
+        self.salida.save()
+        self.assertEqual(
+            self.salida.detalle, 'salida cambiada')
+
+    def test_puede_modificarse_detalle_en_movimiento_de_traspaso_con_cuenta_acumulativa_en_entrada(self):
+        self.trans_e.detalle = 'entrada cambiada en traspaso'
+        self.trans_e.full_clean()
+        self.trans_e.save()
+        self.assertEqual(
+            self.trans_e.detalle, 'entrada cambiada en traspaso')
+
+    def test_puede_modificarse_detalle_en_movimiento_de_traspaso_con_cuenta_acumulativa_en_salida(self):
+        self.trans_s.detalle = 'salida cambiada en traspaso'
+        self.trans_s.full_clean()
+        self.trans_s.save()
+        self.assertEqual(
+            self.trans_s.detalle, 'salida cambiada en traspaso')
+
+    def test_puede_modificarse_detalle_en_movimiento_de_traspaso_con_ambas_cuentas_acumulativas(self):
+        self.cuenta2.dividir_entre(
+            ['cuenta2 subcuenta 1', 'c2s1', 100],
+            ['cuenta2 subcuenta2', 'c2s2']
+        )
+        self.trans_s.detalle = 'detalle cambiado en traspaso'
+        self.trans_s.full_clean()
+        self.trans_s.save()
+        self.assertEqual(
+            self.trans_s.detalle, 'detalle cambiado en traspaso')
+
+    def test_puede_modificarse_fecha_en_movimiento_con_cta_entrada_acumulativa_si_fecha_es_anterior_a_conversion(self):
+        self.entrada.fecha = date(2020, 1, 5)
+        self.entrada.full_clean()
+        self.entrada.save()
+        self.assertEqual(self.entrada.fecha, date(2020, 1, 5))
+
+    def test_puede_modificarse_fecha_en_movimiento_con_cta_salida_acumulativa_si_fecha_es_anterior_a_conversion(self):
+        self.salida.fecha = date(2020, 1, 5)
+        self.salida.full_clean()
+        self.salida.save()
+        self.assertEqual(self.salida.fecha, date(2020, 1, 5))
+
+    def test_no_puede_asignarse_fecha_posterior_a_conversion_en_mov_con_cta_entrada_acumulativa(self):
+        self.entrada.fecha = date.today() + timedelta(days=2)
+        with self.assertRaisesMessage(
+                errors.ErrorCuentaEsAcumulativa,
+                f'{errors.FECHA_POSTERIOR_A_CONVERSION}{date.today()}'
+        ):
+            self.entrada.full_clean()
+
+    def test_no_puede_asignarse_fecha_posterior_a_conversion_en_mov_con_cta_salida_acumulativa(self):
+        self.salida.fecha = date.today() + timedelta(days=2)
+        with self.assertRaisesMessage(
+                errors.ErrorCuentaEsAcumulativa,
+                f'{errors.FECHA_POSTERIOR_A_CONVERSION}{date.today()}'
+        ):
+            self.salida.full_clean()

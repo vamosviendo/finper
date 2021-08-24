@@ -990,3 +990,10 @@ class TestCuentaAcumulativa(TestCase):
                 ErrorCuentaEsAcumulativa, CUENTA_ACUMULATIVA_EN_MOVIMIENTO):
             Movimiento.crear(
                 'movimiento sobre acum', 100, cta_entrada=self.cta_acum)
+
+    def test_guarda_en_campo_fecha_conversion_dia_en_que_se_convirtio_en_acumulativa(self):
+        fecha = date.today()
+        cta_acum = self.cta_int.dividir_y_actualizar(
+            ['subi1', 'si1', 0], ['subi2', 'si2']
+        )
+        self.assertEqual(cta_acum.fecha_conversion, fecha)
