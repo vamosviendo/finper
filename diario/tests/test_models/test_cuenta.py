@@ -28,8 +28,8 @@ class TestModelCuenta(TestCase):
         cuentas_guardadas = Cuenta.todes()
         self.assertEqual(cuentas_guardadas.count(), 2)
 
-        primera_cuenta_guardada = Cuenta.tomar(pk=primera_cuenta.pk)
-        segunda_cuenta_guardada = Cuenta.tomar(pk=segunda_cuenta.pk)
+        primera_cuenta_guardada = primera_cuenta.tomar_de_bd()
+        segunda_cuenta_guardada = segunda_cuenta.tomar_de_bd()
 
         self.assertEqual(primera_cuenta_guardada.nombre, 'efectivo')
         self.assertEqual(primera_cuenta_guardada.slug, 'e')

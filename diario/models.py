@@ -423,17 +423,15 @@ class Movimiento(MiModel):
     @classmethod
     def tomar(cls, polymorphic=True, *args, **kwargs):
         mov = super().tomar(polymorphic, *args, **kwargs)
-        if mov.cta_entrada:
-            mov.cta_entrada = Cuenta.tomar(pk=mov.cta_entrada.pk)
-        if mov.cta_salida:
-            mov.cta_salida = Cuenta.tomar(pk=mov.cta_salida.pk)
+        mov.cta_entrada = Cuenta.tomar(pk=mov.cta_entrada.pk) \
+            if mov.cta_entrada else None
+        mov.cta_salida = Cuenta.tomar(pk=mov.cta_salida.pk) \
+            if mov.cta_salida else None
         return mov
 
     def clean(self):
-        try:
-            from_db = Movimiento.tomar(pk=self.pk)
-        except Movimiento.DoesNotExist:
-            from_db = None
+
+        from_db = self.tomar_de_bd()
 
         super().clean()
         if not self.cta_entrada and not self.cta_salida:
@@ -442,7 +440,7 @@ class Movimiento(MiModel):
         if self.cta_entrada == self.cta_salida:
             raise ValidationError(message=errors.CUENTAS_IGUALES)
 
-        if from_db:
+        if from_db is not None:
             if from_db.tiene_cuenta_acumulativa():
                 if self.cambia_importe():
                     raise ErrorCuentaEsAcumulativa(
@@ -515,7 +513,7 @@ class Movimiento(MiModel):
 
         # Movimiento existente
         else:
-            mov_guardado = Movimiento.tomar(pk=self.pk)
+            mov_guardado = self.tomar_de_bd()
 
             # No cambió la cuenta de entrada
             try:
@@ -591,5 +589,5 @@ class Movimiento(MiModel):
         return self.cta_salida and self.cta_salida.es_acumulativa
 
     def cambia_importe(self):
-        importe_guardado = Movimiento.tomar(pk=self.pk).importe
+        importe_guardado = self.tomar_de_bd().importe
         return importe_guardado != self.importe
