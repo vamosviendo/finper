@@ -1198,3 +1198,39 @@ class TestModelMovimientoCuentas(TestModelMovimiento):
                 f'{errors.FECHA_POSTERIOR_A_CONVERSION}{date.today()}'
         ):
             self.salida.full_clean()
+
+    def test_puede_agregarse_contracuenta_interactiva_a_entrada_con_cta_acumulativa(self):
+        self.entrada.cta_salida = self.cuenta2
+        self.entrada.full_clean()
+        self.entrada.save()
+        self.assertEqual(self.entrada.cta_salida, self.cuenta2)
+
+    def test_puede_agregarse_contracuenta_interactiva_a_salida_con_cta_acumulativa(self):
+        self.salida.cta_entrada = self.cuenta2
+        self.salida.full_clean()
+        self.salida.save()
+        self.assertEqual(self.salida.cta_entrada, self.cuenta2)
+
+    def test_puede_modificarse_cta_interactiva_en_movimiento_con_cta_entrada_acumulativa(self):
+        self.trans_e.cta_salida = self.cuenta2
+        self.trans_e.full_clean()
+        self.trans_e.save()
+        self.assertEqual(self.trans_e.cta_salida, self.cuenta2)
+
+    def test_puede_modificarse_cta_interactiva_en_movimiento_con_cta_salida_acumulativa(self):
+        self.trans_s.cta_entrada = self.cuenta2
+        self.trans_s.full_clean()
+        self.trans_s.save()
+        self.assertEqual(self.trans_s.cta_entrada, self.cuenta2)
+
+    def test_puede_retirarse_cta_interactiva_en_movimiento_con_cta_entrada_acumulativa(self):
+        self.trans_e.cta_salida = None
+        self.trans_e.full_clean()
+        self.trans_e.save()
+        self.assertIsNone(self.trans_e.cta_salida)
+
+    def test_puede_retirarse_cta_interactiva_en_movimiento_con_cta_salida_acumulativa(self):
+        self.trans_s.cta_entrada = None
+        self.trans_s.full_clean()
+        self.trans_s.save()
+        self.assertIsNone(self.trans_s.cta_entrada)
