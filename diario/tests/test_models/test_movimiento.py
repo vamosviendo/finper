@@ -434,6 +434,8 @@ class TestModelMovimientoCambios(TestModelMovimiento):
             self.cuenta2.saldo, self.saldo2+self.imp2-self.mov2.importe)
 
     def test_modificar_importe_en_mov_traspaso_actua_sobre_las_dos_cuentas(self):
+        """ Resta importe antiguo y suma nuevo a cta_entrada
+            Suma importe antiguo y resta nuevo a cta_salida"""
         self.mov3.importe = 60
         self.mov3.save()
         self.refresh_ctas()
@@ -458,6 +460,7 @@ class TestModelMovimientoCambios(TestModelMovimiento):
         self.assertEqual(self.cuenta2.saldo, self.saldo2+self.mov2.importe)
 
     def test_modificar_cta_entrada_funciona_en_movimientos_de_traspaso(self):
+        """ Resta importe de cta_entrada vieja y lo suma a la nueva."""
         cuenta3 = Cuenta.crear('Cuenta corriente', 'cc')
         saldo3 = cuenta3.saldo
         self.mov3.cta_entrada = cuenta3
@@ -467,6 +470,7 @@ class TestModelMovimientoCambios(TestModelMovimiento):
         self.assertEqual(cuenta3.saldo, saldo3+self.mov3.importe)
 
     def test_modificar_cta_salida_funciona_en_movimientos_de_traspaso(self):
+        """ Suma importe a cta_salida vieja y lo suma a la nueva"""
         cuenta3 = Cuenta.crear('Cuenta corriente', 'cc')
         saldo3 = cuenta3.saldo
         self.mov3.cta_salida = cuenta3
@@ -476,6 +480,8 @@ class TestModelMovimientoCambios(TestModelMovimiento):
         self.assertEqual(cuenta3.saldo, saldo3-self.mov3.importe)
 
     def test_modificar_ambas_cuentas_funciona_en_movimientos_de_traspaso(self):
+        """ Resta importe a cta_entrada vieja y lo suma a la nueva
+            Suma importe a cta_salida vieja y lo suma a la nueva"""
         cuenta3 = Cuenta.crear('Cuenta corriente', 'cc')
         cuenta4 = Cuenta.crear('Colchón', 'c')
         saldo3 = cuenta3.saldo
@@ -492,6 +498,8 @@ class TestModelMovimientoCambios(TestModelMovimiento):
         self.assertEqual(cuenta4.saldo, saldo4-self.mov3.importe)
 
     def test_intercambiar_cuentas_resta_importe_x2_de_cta_entrada_y_lo_suma_a_cta_salida(self):
+        """ Resta dos veces importe de vieja cta_entrada (ahora cta_salida)
+            Suma dos veces importe a vieja cta_salida (ahora cta_entrada)"""
         self.mov3.cta_salida = self.cuenta1
         self.mov3.cta_entrada = self.cuenta2
         self.mov3.save()
@@ -501,6 +509,7 @@ class TestModelMovimientoCambios(TestModelMovimiento):
         self.assertEqual(self.cuenta1.saldo, self.saldo1 - self.mov3.importe*2)
 
     def test_cuenta_de_salida_pasa_a_ser_de_entrada(self):
+        """ Suma dos veces importe a vieja cta_salida (ahora cta_entrada)"""
         self.mov2.cta_entrada = self.mov2.cta_salida
         self.mov2.cta_salida = None
         self.mov2.save()
@@ -509,6 +518,7 @@ class TestModelMovimientoCambios(TestModelMovimiento):
         self.assertEqual(self.cuenta2.saldo, self.saldo2 + self.mov2.importe*2)
 
     def test_cuenta_de_entrada_pasa_a_ser_de_salida(self):
+        """ Resta dos veces importe a vieja cta_entrada (ahora cta_salida)"""
         self.mov1.cta_salida = self.mov1.cta_entrada
         self.mov1.cta_entrada = None
         self.mov1.save()
@@ -517,6 +527,8 @@ class TestModelMovimientoCambios(TestModelMovimiento):
         self.assertEqual(self.cuenta1.saldo, self.saldo1 - self.mov1.importe*2)
 
     def test_cuenta_de_salida_pasa_a_ser_de_entrada_y_cuenta_nueva_de_salida(self):
+        """ Suma dos veces importe a vieja cta_salida (ahora cta_entrada)
+            Resta importe de nueva cta_salida"""
         cuenta3 = Cuenta.crear('Cuenta corriente', 'cc')
         saldo3 = cuenta3.saldo
 
@@ -530,6 +542,8 @@ class TestModelMovimientoCambios(TestModelMovimiento):
         self.assertEqual(cuenta3.saldo, saldo3-self.mov3.importe)
 
     def test_cuenta_de_entrada_pasa_a_ser_de_salida_y_cuenta_nueva_de_entrada(self):
+        """ Resta dos veces importe a vieja cta_entrada (ahora cta_salida
+            Suma importe a nueva cta_entrada """
         cuenta3 = Cuenta.crear('Cuenta corriente', 'cc')
         saldo3 = cuenta3.saldo
 
@@ -543,6 +557,7 @@ class TestModelMovimientoCambios(TestModelMovimiento):
         self.assertEqual(cuenta3.saldo, saldo3+self.mov3.importe)
 
     def test_cuenta_de_salida_desaparece(self):
+        """ Suma importe a cta_salida retirada"""
         self.mov3.cta_salida = None
         self.mov3.save()
         self.cuenta2.refresh_from_db()
@@ -550,6 +565,7 @@ class TestModelMovimientoCambios(TestModelMovimiento):
         self.assertEqual(self.cuenta2.saldo, self.saldo2+self.mov3.importe)
 
     def test_cuenta_de_entrada_desaparece(self):
+        """ Resta importe a cta_entrada retirada"""
         self.mov3.cta_entrada = None
         self.mov3.save()
         self.cuenta1.refresh_from_db()
@@ -557,6 +573,8 @@ class TestModelMovimientoCambios(TestModelMovimiento):
         self.assertEqual(self.cuenta1.saldo, self.saldo1-self.mov3.importe)
 
     def test_cuenta_de_salida_desaparece_y_cuenta_de_entrada_pasa_a_salida(self):
+        """ Suma importe a cta_salida retirada
+            Resta dos veces a vieja cta_entrada (ahora cta_salida) """
         self.mov3.cta_salida = self.mov3.cta_entrada
         self.mov3.cta_entrada = None
         self.mov3.save()
@@ -566,6 +584,8 @@ class TestModelMovimientoCambios(TestModelMovimiento):
         self.assertEqual(self.cuenta2.saldo, self.saldo2+self.mov3.importe)
 
     def test_cuenta_de_entrada_desaparece_y_cuenta_de_salida_pasa_a_entrada(self):
+        """ Resta importe a cta_entrada retirada
+            Suma dos veces importe a vieja cta_salida (ahora cta_entrada)"""
         self.mov3.cta_entrada = self.mov3.cta_salida
         self.mov3.cta_salida = None
         self.mov3.save()
@@ -575,6 +595,7 @@ class TestModelMovimientoCambios(TestModelMovimiento):
         self.assertEqual(self.cuenta2.saldo, self.saldo2+self.mov3.importe*2)
 
     def test_aparece_cuenta_de_salida(self):
+        """ Resta importe de nueva cta_salida """
         self.mov1.cta_salida = self.cuenta2
         self.mov1.save()
         self.cuenta2.refresh_from_db()
@@ -582,6 +603,7 @@ class TestModelMovimientoCambios(TestModelMovimiento):
         self.assertEqual(self.cuenta2.saldo, self.saldo2-self.mov1.importe)
 
     def test_aparece_cuenta_de_entrada(self):
+        """ Suma importe a nueva cta_entrada """
         self.mov2.cta_entrada = self.cuenta1
         self.mov2.save()
         self.cuenta1.refresh_from_db()
@@ -589,6 +611,8 @@ class TestModelMovimientoCambios(TestModelMovimiento):
         self.assertEqual(self.cuenta1.saldo, self.saldo1+self.mov2.importe)
 
     def test_cuenta_de_entrada_pasa_a_salida_y_aparece_nueva_cuenta_de_entrada(self):
+        """ Resta dos veces importe de vieja cta_entrada (ahora cta_salida)
+            Suma importe a nueva cta_entrada"""
         self.mov1.cta_salida = self.mov1.cta_entrada
         self.mov1.cta_entrada = self.cuenta2
         self.mov1.save()
@@ -598,6 +622,8 @@ class TestModelMovimientoCambios(TestModelMovimiento):
         self.assertEqual(self.cuenta2.saldo, self.saldo2+self.mov1.importe)
 
     def test_cuenta_de_salida_pasa_a_entrada_y_aparece_nueva_cuenta_de_salida(self):
+        """ Suma dos veces importe a vieja cta_salida (ahora cta_entrada)
+            Resta importe de nueva cta_salida """
         self.mov2.cta_entrada = self.mov2.cta_salida
         self.mov2.cta_salida = self.cuenta1
         self.mov2.save()
@@ -606,7 +632,9 @@ class TestModelMovimientoCambios(TestModelMovimiento):
         self.assertEqual(self.cuenta1.saldo, self.saldo1-self.mov2.importe)
         self.assertEqual(self.cuenta2.saldo, self.saldo2+self.mov2.importe*2)
 
-    def test_desaparece_cta_entrada_y_aparece_otra_cta_de_salida(self):
+    def test_desaparece_cta_entrada_y_aparece_cta_de_salida(self):
+        """ Resta importe de cta_entrada retirada
+            Resta importe de cta_salida agregada """
         self.mov1.cta_entrada = None
         self.mov1.cta_salida = self.cuenta2
         self.mov1.save()
@@ -615,7 +643,9 @@ class TestModelMovimientoCambios(TestModelMovimiento):
         self.assertEqual(self.cuenta1.saldo, self.saldo1-self.mov1.importe)
         self.assertEqual(self.cuenta2.saldo, self.saldo2-self.mov1.importe)
 
-    def test_desaparece_cta_salida_y_aparece_otra_cta_de_entrada(self):
+    def test_desaparece_cta_salida_y_aparece_cta_de_entrada(self):
+        """ Suma importe a cta_salida retirada
+            Suma importe a cta_entrada agregada"""
         self.mov2.cta_entrada = self.cuenta1
         self.mov2.cta_salida = None
         self.mov2.save()
@@ -625,6 +655,8 @@ class TestModelMovimientoCambios(TestModelMovimiento):
         self.assertEqual(self.cuenta2.saldo, self.saldo2+self.mov2.importe)
 
     def test_cambia_cuenta_de_entrada_con_nuevo_importe(self):
+        """ Resta viejo importe de cta_entrada vieja
+            Suma nuevo importe a cta_entrada nueva """
         self.mov1.cta_entrada = self.cuenta2
         self.mov1.importe = 128
         self.mov1.save()
@@ -634,6 +666,8 @@ class TestModelMovimientoCambios(TestModelMovimiento):
         self.assertEqual(self.cuenta2.saldo, self.saldo2+self.mov1.importe)
 
     def test_cambia_cuenta_de_salida_con_nuevo_importe(self):
+        """ Suma viejo importe a cta_salida vieja
+            Resta nuevo importe de cta_salida nueva """
         self.mov2.cta_salida = self.cuenta1
         self.mov2.importe = 63
         self.mov2.save()
@@ -643,6 +677,9 @@ class TestModelMovimientoCambios(TestModelMovimiento):
         self.assertEqual(self.cuenta2.saldo, self.saldo2+self.imp2)
 
     def test_cambia_cuenta_de_entrada_en_mov_de_traspaso_con_nuevo_importe(self):
+        """ Resta importe viejo de cta_entrada vieja
+            Suma importe nuevo a cta_entrada nueva
+            Cta_salida no cambia """
         cuenta3 = Cuenta.crear('Cuenta corriente', 'cc')
         saldo3 = cuenta3.saldo
 
@@ -653,8 +690,12 @@ class TestModelMovimientoCambios(TestModelMovimiento):
 
         self.assertEqual(self.cuenta1.saldo, self.saldo1-self.imp3)
         self.assertEqual(cuenta3.saldo, saldo3+self.mov3.importe)
+        self.assertEqual(self.cuenta2.saldo, self.saldo2)
 
     def test_cambia_cuenta_de_salida_en_mov_de_traspaso_con_nuevo_importe(self):
+        """ Suma importe viejo a cta_salida vieja
+            Resta importe nuevo de cta_salida nueva
+            cta_entrada no cambia """
         cuenta3 = Cuenta.crear('Cuenta corriente', 'cc')
         saldo3 = cuenta3.saldo
 
@@ -665,8 +706,13 @@ class TestModelMovimientoCambios(TestModelMovimiento):
 
         self.assertEqual(self.cuenta2.saldo, self.saldo2+self.imp3)
         self.assertEqual(cuenta3.saldo, saldo3-self.mov3.importe)
+        self.assertEqual(self.cuenta1.saldo, self.saldo1)
 
     def test_cambian_ambas_cuentas_en_mov_de_traspaso_con_nuevo_importe(self):
+        """ Resta importe viejo de cta_entrada vieja
+            Suma importe nuevo a cta_entrada nueva
+            Suma importe viejo a cta_salida vieja
+            Suma importe nuevo a cta_entrada nueva """
         cuenta3 = Cuenta.crear('Cuenta corriente', 'cc')
         saldo3 = cuenta3.saldo
         cuenta4 = Cuenta.crear('Colchón', 'ch')
@@ -684,6 +730,10 @@ class TestModelMovimientoCambios(TestModelMovimiento):
         self.assertEqual(cuenta4.saldo, saldo4-self.mov3.importe)
 
     def test_se_intercambian_cuentas_de_entrada_y_salida_con_nuevo_importe(self):
+        """ Resta importe viejo e importe nuevo de cta_entrada vieja
+                (ahora cta_salida)
+            Suma importe viejo e importe nuevo a cta_salida vieja
+                (ahora cta_entrada) """
         self.mov3.cta_entrada = self.cuenta2
         self.mov3.cta_salida = self.cuenta1
         self.mov3.importe = 456
@@ -696,6 +746,8 @@ class TestModelMovimientoCambios(TestModelMovimiento):
             self.cuenta2.saldo, self.saldo2+self.imp3+self.mov3.importe)
 
     def test_cta_entrada_pasa_a_salida_con_nuevo_importe(self):
+        """ Resta importe viejo e importe nuevo a cta_entrada vieja
+                (ahora cta_salida)"""
         self.mov1.cta_salida = self.mov1.cta_entrada
         self.mov1.cta_entrada = None
         self.mov1.importe = 128
@@ -706,6 +758,8 @@ class TestModelMovimientoCambios(TestModelMovimiento):
             self.cuenta1.saldo, self.saldo1-self.imp1-self.mov1.importe)
 
     def test_cta_salida_pasa_a_entrada_con_nuevo_importe(self):
+        """ Suma importe viejo e importe nuevo a cta_salida vieja
+                (ahora cta_entrada) """
         # self.cuenta1.saldo = 175
         # self.cuenta2.saldo = -85
         # self.mov2.importe = 35
@@ -719,6 +773,10 @@ class TestModelMovimientoCambios(TestModelMovimiento):
             self.cuenta2.saldo, self.saldo2+self.imp2+self.mov2.importe)
 
     def test_cta_salida_pasa_entrada_y_cta_salida_nueva_con_nuevo_importe(self):
+        """ Suma importe viejo e importe nuevo a cta_salida vieja
+                (ahora cta_entrada)
+            Resta importe viejo de cta_entrada vieja
+            Suma importe nuevo a cta_entrada nueva """
         cuenta3 = Cuenta.crear('Cuenta corriente', 'cc')
         saldo3 = cuenta3.saldo
 
@@ -734,6 +792,10 @@ class TestModelMovimientoCambios(TestModelMovimiento):
         self.assertEqual(cuenta3.saldo, saldo3-self.mov3.importe)
 
     def test_cta_entrada_pasa_salida_y_cta_entrada_nueva_con_nuevo_importe(self):
+        """ Resta importe viejo e importe nuevo a cta_entrada vieja
+                (ahora cta_salida)
+            Resta importe viejo de cta_salida vieja
+            Suma importe nuevo a cta_entrada nueva"""
         cuenta3 = Cuenta.crear('Cuenta corriente', 'cc')
         saldo3 = cuenta3.saldo
 
@@ -748,6 +810,8 @@ class TestModelMovimientoCambios(TestModelMovimiento):
         self.assertEqual(cuenta3.saldo, saldo3+self.mov3.importe)
 
     def test_cuenta_de_salida_desaparece_con_nuevo_importe(self):
+        """ Suma importe viejo a cta_salida retirada
+            Resta importe viejo y suma importe nuevo a cta_entrada"""
         self.mov3.cta_salida = None
         self.mov3.importe = 234
         self.mov3.save()
@@ -758,6 +822,8 @@ class TestModelMovimientoCambios(TestModelMovimiento):
         self.assertEqual(self.cuenta2.saldo, self.saldo2+self.imp3)
 
     def test_cuenta_de_entrada_desaparece_con_nuevo_importe(self):
+        """ Resta importe viejo a cta_entrada retirada
+            Suma importe viejo y resta importe nuevo a cta_salida"""
         self.mov3.cta_entrada = None
         self.mov3.importe = 234
         self.mov3.save()
@@ -768,6 +834,9 @@ class TestModelMovimientoCambios(TestModelMovimiento):
             self.cuenta2.saldo, self.saldo2+self.imp3-self.mov3.importe)
 
     def test_cuenta_de_salida_desaparece_y_cuenta_de_entrada_pasa_a_salida_con_nuevo_importe(self):
+        """ Resta importe viejo e importe nuevo a vieja cta_entrada
+                (ahora cta_salida)
+            Suma importe viejo a cta_salida retirada """
         self.mov3.cta_salida = self.mov3.cta_entrada
         self.mov3.cta_entrada = None
         self.mov3.importe = 350
@@ -779,6 +848,9 @@ class TestModelMovimientoCambios(TestModelMovimiento):
         self.assertEqual(self.cuenta2.saldo, self.saldo2+self.imp3)
 
     def test_cuenta_de_entrada_desaparece_y_cuenta_de_salida_pasa_a_entrada_con_nuevo_importe(self):
+        """ Suma importe viejo e importe nuevo a vieja cta_salida
+                (ahora cta_entrada)
+            Resta importe viejo a cta_entrada retirada """
         self.mov3.cta_entrada = self.mov3.cta_salida
         self.mov3.cta_salida = None
         self.mov3.importe = 354
@@ -790,6 +862,8 @@ class TestModelMovimientoCambios(TestModelMovimiento):
             self.cuenta2.saldo, self.saldo2+self.imp3+self.mov3.importe)
 
     def test_aparece_cuenta_de_salida_con_nuevo_importe(self):
+        """ Resta importe viejo y suma importe nuevo a cta_entrada
+            Resta importe nuevo a cta_salida nueva"""
         self.mov1.cta_salida = self.cuenta2
         self.mov1.importe = 255
         self.mov1.save()
@@ -800,6 +874,8 @@ class TestModelMovimientoCambios(TestModelMovimiento):
         self.assertEqual(self.cuenta2.saldo, self.saldo2-self.mov1.importe)
 
     def test_aparece_cuenta_de_entrada_con_nuevo_importe(self):
+        """ Suma importe viejo y resta importe nuevo a cta_salida
+            Suma importe nuevo a cta_entrada nueva"""
         self.mov2.cta_entrada = self.cuenta1
         self.mov2.importe = 446
         self.mov2.save()
@@ -810,6 +886,9 @@ class TestModelMovimientoCambios(TestModelMovimiento):
             self.cuenta2.saldo, self.saldo2+self.imp2-self.mov2.importe)
 
     def test_cuenta_de_entrada_pasa_a_salida_y_aparece_nueva_cuenta_de_entrada_con_nuevo_importe(self):
+        """ Resta importe viejo e importe nuevo de antigua cta_entrada
+                (ahora cta_salida)
+            Suma importe nuevo a cta_entrada agregada"""
         self.mov1.cta_salida = self.mov1.cta_entrada
         self.mov1.cta_entrada = self.cuenta2
         self.mov1.importe = 556
@@ -821,6 +900,9 @@ class TestModelMovimientoCambios(TestModelMovimiento):
         self.assertEqual(self.cuenta2.saldo, self.saldo2+self.mov1.importe)
 
     def test_cuenta_de_salida_pasa_a_entrada_y_aparece_nueva_cuenta_de_salida_con_nuevo_importe(self):
+        """ Suma importe viejo e importe nuevo de antigua cta_salida
+                (ahora cta_entrada)
+            Resta importe nuevo de cta_salida nueva """
         self.mov2.cta_entrada = self.mov2.cta_salida
         self.mov2.cta_salida = self.cuenta1
         self.mov2.importe = 445
@@ -832,6 +914,8 @@ class TestModelMovimientoCambios(TestModelMovimiento):
             self.cuenta2.saldo, self.saldo2+self.imp2+self.mov2.importe)
 
     def test_desaparece_cta_entrada_y_aparece_otra_cta_de_salida_con_nuevo_importe(self):
+        """ Resta importe viejo de cta_entrada retirada
+            Resta importe nuevo de cta_salida agregada """
         self.mov1.cta_entrada = None
         self.mov1.cta_salida = self.cuenta2
         self.mov1.importe = 565
@@ -842,6 +926,8 @@ class TestModelMovimientoCambios(TestModelMovimiento):
         self.assertEqual(self.cuenta2.saldo, self.saldo2-self.mov1.importe)
 
     def test_desaparece_cta_salida_y_aparece_otra_cta_de_entrada_con_nuevo_importe(self):
+        """ Suma importe viejo a cta_salida retirada
+            Suma importe nuevo a cta_entrada agregada """
         self.mov2.cta_entrada = self.cuenta1
         self.mov2.cta_salida = None
         self.mov2.importe = 675
@@ -1001,3 +1087,16 @@ class TestModelMovimientoCuentas(TestModelMovimiento):
             errors.MOVIMIENTO_CON_CA_ELIMINADO
         ):
             self.entrada.delete()
+
+    def test_puede_modificarse_concepto_en_movimiento_con_cuenta_acumulativa(self):
+        self.entrada.concepto = 'entrada cambiada'
+        self.entrada.full_clean()
+        self.entrada.save()
+        self.assertEqual(self.entrada.concepto, 'entrada cambiada')
+
+    def test_puede_modificarse_detalle_en_movimiento_con_cuenta_acumulativa(self):
+        self.salida.concepto = 'detalle de movimiento de entrada'
+        self.salida.full_clean()
+        self.salida.save()
+        self.assertEqual(
+            self.salida.concepto, 'detalle de movimiento de entrada')
