@@ -679,7 +679,7 @@ class TestModelMovimientoCambios(TestModelMovimiento):
     def test_cambia_cuenta_de_entrada_en_mov_de_traspaso_con_nuevo_importe(self):
         """ Resta importe viejo de cta_entrada vieja
             Suma importe nuevo a cta_entrada nueva
-            Cta_salida no cambia """
+            Suma importe viejo y resta importe nuevo a cta_salida """
         cuenta3 = Cuenta.crear('Cuenta corriente', 'cc')
         saldo3 = cuenta3.saldo
 
@@ -690,12 +690,15 @@ class TestModelMovimientoCambios(TestModelMovimiento):
 
         self.assertEqual(self.cuenta1.saldo, self.saldo1-self.imp3)
         self.assertEqual(cuenta3.saldo, saldo3+self.mov3.importe)
-        self.assertEqual(self.cuenta2.saldo, self.saldo2)
+        self.assertEqual(
+            self.cuenta2.saldo,
+            self.saldo2+self.imp3-self.mov3.importe
+        )
 
     def test_cambia_cuenta_de_salida_en_mov_de_traspaso_con_nuevo_importe(self):
         """ Suma importe viejo a cta_salida vieja
             Resta importe nuevo de cta_salida nueva
-            cta_entrada no cambia """
+            Resta importe viejo y suma importe nuevo a cta_entrada """
         cuenta3 = Cuenta.crear('Cuenta corriente', 'cc')
         saldo3 = cuenta3.saldo
 
@@ -706,7 +709,10 @@ class TestModelMovimientoCambios(TestModelMovimiento):
 
         self.assertEqual(self.cuenta2.saldo, self.saldo2+self.imp3)
         self.assertEqual(cuenta3.saldo, saldo3-self.mov3.importe)
-        self.assertEqual(self.cuenta1.saldo, self.saldo1)
+        self.assertEqual(
+            self.cuenta1.saldo,
+            self.saldo1-self.imp3+self.mov3.importe
+        )
 
     def test_cambian_ambas_cuentas_en_mov_de_traspaso_con_nuevo_importe(self):
         """ Resta importe viejo de cta_entrada vieja
@@ -827,7 +833,7 @@ class TestModelMovimientoCambios(TestModelMovimiento):
         self.mov3.cta_entrada = None
         self.mov3.importe = 234
         self.mov3.save()
-        self.cuenta1.refresh_from_db()
+        self.refresh_ctas()
 
         self.assertEqual(self.cuenta1.saldo, self.saldo1-self.imp3)
         self.assertEqual(
@@ -879,7 +885,7 @@ class TestModelMovimientoCambios(TestModelMovimiento):
         self.mov2.cta_entrada = self.cuenta1
         self.mov2.importe = 446
         self.mov2.save()
-        self.cuenta1.refresh_from_db()
+        self.refresh_ctas()
 
         self.assertEqual(self.cuenta1.saldo, self.saldo1+self.mov2.importe)
         self.assertEqual(

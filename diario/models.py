@@ -531,8 +531,8 @@ class Movimiento(MiModel):
                 if self.cta_entrada:
                     self.cta_entrada.saldo += self.importe
                     self.cta_entrada.save()
-                if self.cta_salida:
-                    self.cta_salida.refresh_from_db()
+                self.cta_salida = Cuenta.tomar(slug=self.cta_salida.slug) \
+                    if self.cta_salida else None
 
             # No cambió la cuenta de salida
             try:
