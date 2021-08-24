@@ -190,3 +190,18 @@ class TestGetLowerClassName(TestCase):
         ro = MiTestRelatedModel.crear(nombre='ro2')
         clase = ro.get_lower_class_name()
         self.assertEqual(clase, ro.get_class_name().lower())
+
+
+class TestTomarDeBd(TestCase):
+
+    def test_devuelve_la_version_guardada_de_un_objeto(self):
+        objeto = MiTestRelatedModel.crear(nombre='objeto guardado')
+        obj_guardado = MiTestRelatedModel.tomar(nombre='objeto guardado')
+
+        objeto.nombre = 'objeto modificado y no guardado'
+
+        self.assertEqual(objeto.tomar_de_bd(), obj_guardado)
+
+    def test_si_no_hay_version_guardada_de_un_objeto_devuelve_none(self):
+        objeto = MiTestRelatedModel(nombre='objeto nuevo')
+        self.assertIsNone(objeto.tomar_de_bd())

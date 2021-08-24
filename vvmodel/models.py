@@ -71,6 +71,12 @@ class MiModel(models.Model):
     def get_lower_class_name(cls):
         return cls.get_class_name().lower()
 
+    def tomar_de_bd(self):
+        try:
+            return self.get_class().tomar(pk=self.pk)
+        except self.get_class().DoesNotExist:
+            return None
+
     def update_from(self, objeto, commit=True):
         for campo in objeto.get_class()._meta.fields:
             valor = campo.value_from_object(objeto)
