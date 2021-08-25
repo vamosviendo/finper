@@ -201,32 +201,13 @@ class CuentaInteractiva(Cuenta):
 
         cuentas_limpias = self._ajustar_subcuentas(subcuentas)
 
-        movimientos_incompletos = []
-        for subcuenta in cuentas_limpias:
-            try:
-                movimientos_incompletos.append(Movimiento.crear(
-                    concepto=f'Saldo pasado por {self.nombre.capitalize()} '
-                             f'a nueva subcuenta {subcuenta["nombre"]}',
-                    importe=subcuenta.pop('saldo'),
-                    cta_salida=self,
-                ))
-            except errors.ErrorImporteCero:
-                # Si el saldo de la subcuenta es 0, no generar movimiento
-                movimientos_incompletos.append(None)
+        movimientos_incompletos = self._vaciar_saldo(cuentas_limpias)
 
-        # Generación de subcuentas y traspaso de saldos
         cta_madre = self._convertirse_en_acumulativa()
 
-        cuentas_creadas = list()
-
-        for i, subcuenta in enumerate(cuentas_limpias):
-            cuentas_creadas.append(Cuenta.crear(**subcuenta, cta_madre=cta_madre))
-
-            # Se agrega cta_entrada a movimientos traspaso de saldo
-            if movimientos_incompletos[i] is not None:
-                movimientos_incompletos[i].cta_entrada = cuentas_creadas[i]
-                movimientos_incompletos[i].save()
-
+        cuentas_creadas = self._generar_subcuentas(
+            cuentas_limpias, movimientos_incompletos, cta_madre
+        )
         return cuentas_creadas
 
     def dividir_y_actualizar(self, *subcuentas):
@@ -306,6 +287,37 @@ class CuentaInteractiva(Cuenta):
         cuenta_acumulativa.fecha_conversion = date.today()
         cuenta_acumulativa.save()
         return cuenta_acumulativa
+
+    def _vaciar_saldo(self, cuentas_limpias):
+        movimientos_incompletos = []
+        for subcuenta in cuentas_limpias:
+            try:
+                movimientos_incompletos.append(Movimiento.crear(
+                    concepto=f'Saldo pasado por {self.nombre.capitalize()} '
+                             f'a nueva subcuenta {subcuenta["nombre"]}',
+                    importe=subcuenta.pop('saldo'),
+                    cta_salida=self,
+                ))
+            except errors.ErrorImporteCero:
+                # Si el saldo de la subcuenta es 0, no generar movimiento
+                movimientos_incompletos.append(None)
+
+        return movimientos_incompletos
+
+    def _generar_subcuentas(self, cuentas_limpias, movimientos_incompletos, cta_madre):
+
+        cuentas_creadas = list()
+
+        for i, subcuenta in enumerate(cuentas_limpias):
+            cuentas_creadas.append(
+                Cuenta.crear(**subcuenta, cta_madre=cta_madre)
+            )
+
+            if movimientos_incompletos[i] is not None:
+                movimientos_incompletos[i].cta_entrada = cuentas_creadas[i]
+                movimientos_incompletos[i].save()
+
+        return cuentas_creadas
 
 
 class CuentaAcumulativa(Cuenta):
