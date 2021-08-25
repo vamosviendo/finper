@@ -421,8 +421,8 @@ class Movimiento(MiModel):
         )
 
     @classmethod
-    def tomar(cls, polymorphic=True, *args, **kwargs):
-        mov = super().tomar(polymorphic, *args, **kwargs)
+    def tomar(cls, **kwargs):
+        mov = super().tomar(**kwargs)
         mov.cta_entrada = Cuenta.tomar(pk=mov.cta_entrada.pk) \
             if mov.cta_entrada else None
         mov.cta_salida = Cuenta.tomar(pk=mov.cta_salida.pk) \

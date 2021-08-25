@@ -18,15 +18,10 @@ class MiModel(models.Model):
         return cls.objects.using(using).first()
 
     @classmethod
-    def tomar(cls, polymorphic=True, *args, **kwargs):
-        try:
-            using = kwargs.pop('using')
-        except KeyError:
-            using = 'default'
+    def tomar(cls, **kwargs):
+        using = kwargs.pop('using') if 'using' in kwargs.keys() else 'default'
 
-        if polymorphic:
-            return cls.objects.db_manager(using).get(*args, **kwargs)
-        return cls.objects.db_manager(using).get_no_poly(*args, **kwargs)
+        return cls.objects.db_manager(using).get(**kwargs)
 
     @classmethod
     def cantidad(cls, using='default'):
@@ -34,29 +29,20 @@ class MiModel(models.Model):
 
     @classmethod
     def excepto(cls, *args, **kwargs):
-        try:
-            using = kwargs.pop('using')
-        except KeyError:
-            using = 'default'
+        using = kwargs.pop('using') if 'using' in kwargs.keys() else 'default'
         return cls.objects.using(using).exclude(*args, **kwargs)
 
     @classmethod
     def filtro(cls, *args, **kwargs):
-        try:
-            using = kwargs.pop('using')
-        except KeyError:
-            using = 'default'
+        using = kwargs.pop('using') if 'using' in kwargs.keys() else 'default'
         return cls.objects.using(using).filter(*args, **kwargs)
 
     @classmethod
     def crear(cls, **kwargs):
-        try:
-            using = kwargs.pop('using')
-        except KeyError:
-            using = 'default'
+        using = kwargs.pop('using') if 'using' in kwargs.keys() else 'default'
         obj = cls(**kwargs)
         obj.full_clean()
-        obj.save()
+        obj.save(using=using)
         return obj
 
     @classmethod
@@ -114,6 +100,14 @@ class PolymorphModel(MiModel):
     )
 
     objects = PolymorphManager()
+
+    @classmethod
+    def tomar(cls, polymorphic=True, **kwargs):
+        using = kwargs.pop('using') if 'using' in kwargs.keys() else 'default'
+
+        if polymorphic:
+            return super().tomar(**kwargs)
+        return cls.objects.db_manager(using).get_no_poly(**kwargs)
 
     def como_subclase(self, db='default'):
         """ Devuelve objeto polimórfico, basándose en el campo content_type.
