@@ -201,20 +201,18 @@ class CuentaInteractiva(Cuenta):
 
         cuentas_limpias = self._ajustar_subcuentas(subcuentas)
 
-        # Un movimiento de salida por cada una de las subcuentas
-        # (después de generar cada subcuenta se generará el movimiento de
-        # entrada correspondiente).
+        movimientos_incompletos = []
         for subcuenta in cuentas_limpias:
             try:
-                Movimiento.crear(
+                movimientos_incompletos.append(Movimiento.crear(
                     concepto=f'Saldo pasado por {self.nombre.capitalize()} '
                              f'a nueva subcuenta {subcuenta["nombre"]}',
-                    importe=subcuenta['saldo'],
+                    importe=subcuenta.pop('saldo'),
                     cta_salida=self,
-                )
+                ))
             except errors.ErrorImporteCero:
                 # Si el saldo de la subcuenta es 0, no generar movimiento
-                pass
+                movimientos_incompletos.append(None)
 
         # Generación de subcuentas y traspaso de saldos
         cta_madre = self._convertirse_en_acumulativa()
@@ -222,22 +220,12 @@ class CuentaInteractiva(Cuenta):
         cuentas_creadas = list()
 
         for i, subcuenta in enumerate(cuentas_limpias):
-            saldo = subcuenta.pop('saldo')
             cuentas_creadas.append(Cuenta.crear(**subcuenta, cta_madre=cta_madre))
 
-            # Se generan movimientos de entrada correspondientes a los
-            # movimientos de salida en cta_madre
-            try:
-                Movimiento.crear(
-                    concepto=f'Saldo recibido '
-                             f'por {cuentas_creadas[i].nombre.capitalize()} de'
-                             f' cuenta madre {self.nombre.capitalize()}'[:80],
-                    importe=saldo,
-                    cta_entrada=cuentas_creadas[i],
-                )
-            except errors.ErrorImporteCero:
-                # Si el saldo de la subcuenta es 0, no generar movimiento
-                pass
+            # Se agrega cta_entrada a movimientos traspaso de saldo
+            if movimientos_incompletos[i] is not None:
+                movimientos_incompletos[i].cta_entrada = cuentas_creadas[i]
+                movimientos_incompletos[i].save()
 
         return cuentas_creadas
 

@@ -465,29 +465,16 @@ class TestMetodoDividirEntre(TestModelCuentaMetodos):
         # self.assertEqual(movs[3].cta_entrada, subcuenta2)
         self.assertEqual(movs[3].cta_salida, self.cta1)
 
-    def test_genera_movimientos_de_entrada_en_subcuentas(self):
-        subcuentas_creadas = self.cta1.dividir_entre(*self.subcuentas)
-        movs = Movimiento.todes()
+    def test_agrega_subcuenta_como_cta_entrada_en_movimiento(self):
+        self.cta1.dividir_entre(*self.subcuentas)
 
-        self.assertEqual(
-            movs[4].concepto,
-            'Saldo recibido por Billetera de cuenta madre Efectivo'
-        )
-        self.assertEqual(movs[4].importe, 50)
-        self.assertEqual(
-            movs[4].cta_entrada,
-            Cuenta.tomar(polymorphic=False, pk=subcuentas_creadas[0].pk)
-        )
+        movs = self.cta1.movs_directos()
 
-        self.assertEqual(
-            movs[5].concepto,
-            'Saldo recibido por Cajón de arriba de cuenta madre Efectivo'
-        )
-        self.assertEqual(movs[5].importe, 200)
-        self.assertEqual(
-            movs[5].cta_entrada,
-            Cuenta.tomar(polymorphic=False, pk=subcuentas_creadas[1].pk)
-        )
+        for i, mov in enumerate(movs[2:]):
+            self.assertEqual(
+                mov.cta_entrada.como_subclase(),
+                Cuenta.tomar(slug=self.subcuentas[i]['slug'])
+            )
 
     def test_acepta_mas_de_dos_subcuentas(self):
         self.subcuentas[1]['saldo'] = 130
