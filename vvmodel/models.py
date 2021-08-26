@@ -106,14 +106,14 @@ class PolymorphModel(MiModel):
         using = kwargs.pop('using') if 'using' in kwargs.keys() else 'default'
 
         if polymorphic:
-            return super().tomar(**kwargs)
+            return super().tomar(using=using, **kwargs)
         return cls.objects.db_manager(using).get_no_poly(**kwargs)
 
     def como_subclase(self, db='default'):
         """ Devuelve objeto polimórfico, basándose en el campo content_type.
             Arg db: corrige un error (¿bug?) que se produce cuando se intenta
             eliminar todos los registros de la clase madre (ver punto 2 en
-            comentario inicial de sda.managers).
+            comentario inicial de vvmodel.managers).
         """
         content_type = self.content_type
         model = content_type.model_class()

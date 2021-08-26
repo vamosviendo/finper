@@ -41,5 +41,5 @@ class PolymorphManager(models.Manager):
         return item.como_subclase(db=item._state.db)
 
     def get_no_poly(self, *args, **kwargs):
-        """ get() no polimórfico. No tiene en cuenta el tipo de obra"""
+        """ get() no polimórfico. No tiene en cuenta la subclase"""
         return super().get(*args, **kwargs)
