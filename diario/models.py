@@ -517,8 +517,8 @@ class Movimiento(MiModel):
 
             # No cambió la cuenta de entrada
             try:
-                entradas_iguales = (
-                        self.cta_entrada.pk == mov_guardado.cta_entrada.pk)
+                entradas_iguales = self.cta_entrada.es_le_misme_que(
+                    mov_guardado.cta_entrada)
             except AttributeError:
                 entradas_iguales = False
 
@@ -547,8 +547,8 @@ class Movimiento(MiModel):
 
             # No cambió la cuenta de salida
             try:
-                salidas_iguales = (
-                        self.cta_salida.pk == mov_guardado.cta_salida.pk)
+                salidas_iguales = self.cta_salida.es_le_misme_que(
+                    mov_guardado.cta_salida)
             except AttributeError:
                 salidas_iguales = False
 

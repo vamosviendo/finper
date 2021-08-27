@@ -23,3 +23,7 @@ class MiTestPolymorphModel(PolymorphModel):
 
 class MiTestPolymorphSubmodel(MiTestPolymorphModel):
     detalle = models.TextField()
+
+
+class MiTestPolymorphSubSubModel(MiTestPolymorphSubmodel):
+    pass

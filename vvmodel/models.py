@@ -119,6 +119,20 @@ class PolymorphModel(MiModel):
         model = content_type.model_class()
         return model.tomar(pk=self.pk, polymorphic=False, using=db)
 
+    def es_le_misme_que(self, otro):
+
+        try:
+            return (self.primer_ancestre() == otro.primer_ancestre() and
+                    self.pk == otro.pk)
+        except AttributeError:
+            return False
+
+    def primer_ancestre(self):
+        try:
+            return self._meta.get_parent_list()[-1]
+        except IndexError:
+            return self.get_class()
+
     def save(self, *args, using='default', **kwargs):
 
         if not self.content_type:
