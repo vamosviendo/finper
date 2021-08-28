@@ -116,7 +116,10 @@ class Cuenta(PolymorphModel):
 
     def movs(self):
         """ Devuelve movimientos propios y de sus subcuentas
-            ordenados por fecha."""
+            ordenados por fecha.
+            Antes de protestar que devuelve lo mismo que movs_directos()
+            tener en cuenta que está sobrescrita en CuentaAcumulativa
+            """
         return self.movs_directos().order_by('fecha')
 
     def cantidad_movs(self):
@@ -129,6 +132,12 @@ class Cuenta(PolymorphModel):
         total_salidas = self.salidas.all()\
                             .aggregate(Sum('importe'))['importe__sum'] or 0
         return total_entradas - total_salidas
+
+    def fecha_ultimo_mov_directo(self):
+        try:
+            return self.movs_directos().order_by('fecha').last().fecha
+        except AttributeError:
+            return None
 
     def tiene_madre(self):
         return self.cta_madre is not None
@@ -197,13 +206,19 @@ class CuentaInteractiva(Cuenta):
     def saldo_ok(self):
         return self.saldo == self.total_movs()
 
-    def dividir_entre(self, *subcuentas):
+    def dividir_entre(self, *subcuentas, fecha=None):
+        fecha = fecha or date.today()
+        try:
+            if fecha < self.fecha_ultimo_mov_directo():
+                raise errors.ErrorMovimientoPosteriorAConversion
+        except TypeError:
+            pass
 
         cuentas_limpias = self._ajustar_subcuentas(subcuentas)
 
-        movimientos_incompletos = self._vaciar_saldo(cuentas_limpias)
+        movimientos_incompletos = self._vaciar_saldo(cuentas_limpias, fecha)
 
-        cta_madre = self._convertirse_en_acumulativa()
+        cta_madre = self._convertirse_en_acumulativa(fecha)
 
         cuentas_creadas = self._generar_subcuentas(
             cuentas_limpias, movimientos_incompletos, cta_madre
@@ -275,8 +290,10 @@ class CuentaInteractiva(Cuenta):
 
         return subcuentas_limpias
 
-    def _convertirse_en_acumulativa(self):
+    def _convertirse_en_acumulativa(self, fecha=None):
+        fecha = fecha or date.today()
         pk_preservado = self.pk
+
         self.delete(keep_parents=True)
         cuenta = Cuenta.objects.get_no_poly(pk=pk_preservado)
         cuenta_acumulativa = CuentaAcumulativa(cuenta_ptr_id=cuenta.pk)
@@ -284,15 +301,17 @@ class CuentaInteractiva(Cuenta):
         cuenta_acumulativa.content_type = ContentType.objects.get(
             app_label='diario', model='cuentaacumulativa'
         )
-        cuenta_acumulativa.fecha_conversion = date.today()
+        cuenta_acumulativa.fecha_conversion = fecha
         cuenta_acumulativa.save()
         return cuenta_acumulativa
 
-    def _vaciar_saldo(self, cuentas_limpias):
+    def _vaciar_saldo(self, cuentas_limpias, fecha=None):
         movimientos_incompletos = []
+
         for subcuenta in cuentas_limpias:
             try:
                 movimientos_incompletos.append(Movimiento.crear(
+                    fecha=fecha,
                     concepto=f'Saldo pasado por {self.nombre.capitalize()} '
                              f'a nueva subcuenta {subcuenta["nombre"]}',
                     importe=subcuenta.pop('saldo'),
@@ -304,7 +323,8 @@ class CuentaInteractiva(Cuenta):
 
         return movimientos_incompletos
 
-    def _generar_subcuentas(self, cuentas_limpias, movimientos_incompletos, cta_madre):
+    def _generar_subcuentas(
+            self, cuentas_limpias, movimientos_incompletos, cta_madre):
 
         cuentas_creadas = list()
 

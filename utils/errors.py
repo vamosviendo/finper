@@ -80,3 +80,13 @@ class ErrorImporteCero(ValueError):
             message='No se admite importe igual a 0'
     ):
         super().__init__(message)
+
+
+class ErrorMovimientoPosteriorAConversion(ValidationError):
+
+    def __init__(
+            self,
+            message="Hay movimientos posteriores a la fecha de conversión "
+                    "en cuenta acumulativa"
+    ):
+        super().__init__(message)

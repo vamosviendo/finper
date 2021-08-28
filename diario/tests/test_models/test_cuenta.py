@@ -7,7 +7,8 @@ from diario.models import Cuenta, CuentaInteractiva, CuentaAcumulativa, \
     Movimiento
 
 from utils.errors import SaldoNoCeroException, ErrorDeSuma, \
-    ErrorTipo, ErrorDependenciaCircular, ErrorCuentaEsAcumulativa, CUENTA_ACUMULATIVA_EN_MOVIMIENTO
+    ErrorTipo, ErrorDependenciaCircular, ErrorCuentaEsAcumulativa, \
+    CUENTA_ACUMULATIVA_EN_MOVIMIENTO, ErrorMovimientoPosteriorAConversion
 
 
 class TestModelCuenta(TestCase):
@@ -160,7 +161,12 @@ class TestModelCuentaMetodos(TestCase):
 
     def setUp(self):
         self.cta1 = Cuenta.crear('Efectivo', 'E')
-        Movimiento.crear(concepto='00000', importe=100, cta_entrada=self.cta1)
+        Movimiento.crear(
+            concepto='00000',
+            importe=100,
+            cta_entrada=self.cta1,
+            fecha=date(2019, 1, 1)
+        )
 
 
 class TestModelCuentaPropiedades(TestModelCuentaMetodos):
@@ -409,7 +415,10 @@ class TestMetodoDividirEntre(TestModelCuentaMetodos):
 
     def setUp(self):
         super().setUp()
-        Movimiento.crear(concepto='00000', importe=150, cta_entrada=self.cta1)
+        Movimiento.crear(
+            concepto='00000', importe=150, cta_entrada=self.cta1,
+            fecha=date(2019, 1, 1)
+        )
         self.subcuentas = [
             {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 50},
             {'nombre': 'Cajón de arriba', 'slug': 'ecaj', 'saldo': 200},
@@ -503,6 +512,36 @@ class TestMetodoDividirEntre(TestModelCuentaMetodos):
         self.cta1 = Cuenta.tomar(pk=pk)
 
         self.assertEqual(self.cta1.fecha_conversion, date.today())
+
+    def test_acepta_fecha_de_conversion_distinta_de_la_actual(self):
+        pk = self.cta1.pk
+        self.cta1.dividir_entre(*self.subcuentas, fecha=date(2020, 10, 5))
+        self.cta1 = Cuenta.tomar(pk=pk)
+
+        self.assertEqual(self.cta1.fecha_conversion, date(2020, 10, 5))
+
+    def test_movimientos_tienen_fecha_igual_a_la_de_conversion(self):
+        fecha = date(2020, 10, 5)
+        self.cta1.dividir_entre(*self.subcuentas, fecha=fecha)
+        traspaso1 = Movimiento.tomar(
+            concepto="Saldo pasado por Efectivo a nueva subcuenta Billetera")
+        traspaso2 = Movimiento.tomar(concepto="Saldo pasado por Efectivo a nue"
+                                              "va subcuenta Cajón de arriba")
+        self.assertEqual(traspaso1.fecha, fecha)
+        self.assertEqual(traspaso2.fecha, fecha)
+
+    def test_no_acepta_fecha_de_conversion_anterior_a_la_de_cualquier_movimiento_de_la_cuenta(self):
+        fecha = date(2020, 1, 1)
+        Movimiento.crear(
+            'movimiento posterior', 100, self.cta1, fecha=date(2020, 5, 5))
+        Movimiento.crear(
+            'movimiento posterior', 100, None, self.cta1,
+            fecha=date(2020, 6, 5)
+        )
+        self.cta1.refresh_from_db()
+
+        with self.assertRaises(ErrorMovimientoPosteriorAConversion):
+            self.cta1.dividir_entre(*self.subcuentas, fecha=fecha)
 
     def test_saldo_de_cta_madre_es_igual_a_la_suma_de_saldos_de_subcuentas(self):
         self.cta1.dividir_entre(*self.subcuentas)
@@ -911,9 +950,47 @@ class TestMetodosVarios(TestModelCuentaMetodos):
         self.assertEqual(
             self.cta1.arbol_de_subcuentas(), set(lista_subcuentas))
 
-    # Cuenta.como_subclase()
-    def test_como_subclase_devuelve_cuenta_como_subclase(self):
-        self.assertIsInstance(self.cta1.como_subclase(), CuentaInteractiva)
+    def test_fecha_ultimo_mov_directo_devuelve_fecha_ultimo_mov(self):
+        Movimiento.primere().delete()
+        m1 = Movimiento.crear(
+            'primer movimiento', 100, self.cta1, fecha=date(2021, 8, 1))
+        m2 = Movimiento.crear(
+            'tercer movimiento', 100, self.cta1, fecha=date(2021, 8, 10))
+        m3 = Movimiento.crear(
+            'segundo movimiento', 100, None, self.cta1, fecha=date(2021, 8, 5))
+
+        self.assertEqual(
+            self.cta1.fecha_ultimo_mov_directo(),
+            date(2021, 8, 10)
+        )
+
+    def test_fecha_ultimo_mov_directo_devuelve_none_si_no_hay_movimientos(self):
+        Movimiento.primere().delete()
+        self.assertIsNone(self.cta1.fecha_ultimo_mov_directo())
+
+    def test_fecha_ultimo_mov_directo_en_cta_acumulativa_devuelve_ultimo_mov_directo(self):
+        Movimiento.primere().delete()
+        m1 = Movimiento.crear(
+            'primer movimiento', 100, self.cta1, fecha=date(2021, 8, 1))
+        m2 = Movimiento.crear(
+            'tercer movimiento', 100, self.cta1, fecha=date(2021, 8, 10))
+        m3 = Movimiento.crear(
+            'segundo movimiento', 100, None, self.cta1, fecha=date(2021, 8, 5))
+
+        subcuenta1 = self.cta1.dividir_entre(
+            ['subcuenta1', 'sc1', 100],
+            ['subcuenta2', 'sc2'],
+            fecha=date(2021, 8, 11)
+        )[0]
+        self.cta1 = Cuenta.tomar(slug=self.cta1.slug)
+
+        m4 = Movimiento.crear(
+            'cuarto movimiento', 100, subcuenta1, fecha=date(2021, 8, 20))
+
+        self.assertEqual(
+            self.cta1.fecha_ultimo_mov_directo(),
+            date(2021, 8, 11)
+        )
 
 
 class TestCuentaInteractiva(TestCase):
@@ -928,6 +1005,15 @@ class TestCuentaInteractiva(TestCase):
 
         self.assertIsInstance(cta_acum, CuentaAcumulativa)
         self.assertNotIsInstance(cta_acum, CuentaInteractiva)
+
+    def test_convertirse_en_acumulativa_acepta_fecha_distinta_de_la_actual(self):
+        cta_int = CuentaInteractiva.crear('Efectivo', 'efec')
+        pk_cta_int = cta_int.pk
+
+        cta_int._convertirse_en_acumulativa(fecha=date(2020, 5, 2))
+
+        cta_acum = Cuenta.tomar(pk=pk_cta_int)
+        self.assertEqual(cta_acum.fecha_conversion, date(2020, 5, 2))
 
     def test_cuenta_convertida_conserva_movimientos(self):
         cta_int = CuentaInteractiva.crear('Efectivo', 'efec', saldo=1000)
@@ -959,6 +1045,19 @@ class TestCuentaInteractiva(TestCase):
             CuentaAcumulativa.tomar(pk=pk_cta_int),
             cta_acum
         )
+
+    def test_vaciar_saldo_genera_movimientos_con_fecha_recibida(self):
+        fecha = date(2020, 5, 4)
+        cta_int = CuentaInteractiva.crear('Efectivo', 'efec')
+        ctas_limpias = cta_int._ajustar_subcuentas(
+            [['subc1', 'sc1', 10], ['subc2', 'sc2']])
+        cta_int._vaciar_saldo(ctas_limpias, fecha=fecha)
+        traspaso1 = Movimiento.tomar(
+            concepto="Saldo pasado por Efectivo a nueva subcuenta subc1")
+        traspaso2 = Movimiento.tomar(
+            concepto="Saldo pasado por Efectivo a nueva subcuenta subc2")
+        self.assertEqual(traspaso1.fecha, fecha)
+        self.assertEqual(traspaso2.fecha, fecha)
 
 
 class TestCuentaAcumulativa(TestCase):
