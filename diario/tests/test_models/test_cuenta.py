@@ -202,10 +202,17 @@ class TestMetodosMovsYSaldos(TestModelCuentaMetodos):
         self.cta2 = Cuenta.crear('Banco', 'B')
         Movimiento.crear(
             concepto='mov2', importe=70,
-            cta_entrada= self.cta2, cta_salida=self.cta1
+            cta_entrada= self.cta2, cta_salida=self.cta1,
+            fecha=date(2021, 8, 10)
         )
-        Movimiento.crear(concepto='mov3', importe=80, cta_entrada=self.cta1)
-        Movimiento.crear(concepto='mov4', importe=50, cta_entrada=self.cta2)
+        Movimiento.crear(
+            concepto='mov3', importe=80,
+            cta_entrada=self.cta1, fecha=date(2021, 8, 5)
+        )
+        Movimiento.crear(
+            concepto='mov4', importe=50,
+            cta_entrada=self.cta2, fecha=date(2021, 8, 1)
+        )
 
     def test_movs_directos_devuelve_todos_los_movimientos_de_una_cuenta(self):
         movs_cta1 = [
@@ -263,15 +270,10 @@ class TestMetodosMovsYSaldos(TestModelCuentaMetodos):
         m1 = Movimiento.tomar(concepto='00000')
         m2 = Movimiento.tomar(concepto='mov2')
         m3 = Movimiento.tomar(concepto='mov3')
-        m1.fecha = datetime(2021, 5, 25)
-        m2.fecha = datetime(2020, 12, 2)
-        m3.fecha = datetime(2021, 2, 28)
-        for mov in [m1, m2, m3]:
-            mov.save()
 
         self.assertEqual(
             list(self.cta1.movs()),
-            [m2, m3, m1]
+            [m1, m3, m2]
         )
 
     def test_cantidad_movs_devuelve_entradas_mas_salidas(self):
@@ -279,6 +281,33 @@ class TestMetodosMovsYSaldos(TestModelCuentaMetodos):
 
     def test_total_movs_devuelve_suma_importes_entradas_menos_salidas(self):
         self.assertEqual(self.cta1.total_movs(), 110)
+
+    def test_fecha_ultimo_mov_directo_devuelve_fecha_ultimo_mov(self):
+        self.assertEqual(
+            self.cta1.fecha_ultimo_mov_directo(),
+            date(2021, 8, 10)
+        )
+
+    def test_fecha_ultimo_mov_directo_devuelve_none_si_no_hay_movimientos(self):
+        Movimiento.todes().delete()
+        self.assertIsNone(self.cta1.fecha_ultimo_mov_directo())
+
+    def test_fecha_ultimo_mov_directo_en_cta_acumulativa_devuelve_ultimo_mov_directo(self):
+
+        subcuenta1 = self.cta1.dividir_entre(
+            ['subcuenta1', 'sc1', 100],
+            ['subcuenta2', 'sc2'],
+            fecha=date(2021, 8, 11)
+        )[0]
+        self.cta1 = Cuenta.tomar(slug=self.cta1.slug)
+
+        m4 = Movimiento.crear(
+            'cuarto movimiento', 100, subcuenta1, fecha=date(2021, 8, 20))
+
+        self.assertEqual(
+            self.cta1.fecha_ultimo_mov_directo(),
+            date(2021, 8, 11)
+        )
 
     def test_total_subcuentas_devuelve_suma_saldos_subcuentas(self):
         self.cta1 = self.cta1.dividir_y_actualizar(
@@ -949,48 +978,6 @@ class TestMetodosVarios(TestModelCuentaMetodos):
 
         self.assertEqual(
             self.cta1.arbol_de_subcuentas(), set(lista_subcuentas))
-
-    def test_fecha_ultimo_mov_directo_devuelve_fecha_ultimo_mov(self):
-        Movimiento.primere().delete()
-        m1 = Movimiento.crear(
-            'primer movimiento', 100, self.cta1, fecha=date(2021, 8, 1))
-        m2 = Movimiento.crear(
-            'tercer movimiento', 100, self.cta1, fecha=date(2021, 8, 10))
-        m3 = Movimiento.crear(
-            'segundo movimiento', 100, None, self.cta1, fecha=date(2021, 8, 5))
-
-        self.assertEqual(
-            self.cta1.fecha_ultimo_mov_directo(),
-            date(2021, 8, 10)
-        )
-
-    def test_fecha_ultimo_mov_directo_devuelve_none_si_no_hay_movimientos(self):
-        Movimiento.primere().delete()
-        self.assertIsNone(self.cta1.fecha_ultimo_mov_directo())
-
-    def test_fecha_ultimo_mov_directo_en_cta_acumulativa_devuelve_ultimo_mov_directo(self):
-        Movimiento.primere().delete()
-        m1 = Movimiento.crear(
-            'primer movimiento', 100, self.cta1, fecha=date(2021, 8, 1))
-        m2 = Movimiento.crear(
-            'tercer movimiento', 100, self.cta1, fecha=date(2021, 8, 10))
-        m3 = Movimiento.crear(
-            'segundo movimiento', 100, None, self.cta1, fecha=date(2021, 8, 5))
-
-        subcuenta1 = self.cta1.dividir_entre(
-            ['subcuenta1', 'sc1', 100],
-            ['subcuenta2', 'sc2'],
-            fecha=date(2021, 8, 11)
-        )[0]
-        self.cta1 = Cuenta.tomar(slug=self.cta1.slug)
-
-        m4 = Movimiento.crear(
-            'cuarto movimiento', 100, subcuenta1, fecha=date(2021, 8, 20))
-
-        self.assertEqual(
-            self.cta1.fecha_ultimo_mov_directo(),
-            date(2021, 8, 11)
-        )
 
 
 class TestCuentaInteractiva(TestCase):
