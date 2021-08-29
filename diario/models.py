@@ -504,13 +504,12 @@ class Movimiento(MiModel):
                     raise ErrorCuentaEsAcumulativa(
                         errors.CUENTA_ACUMULATIVA_AGREGADA)
 
-        # TODO: mejorar redacción de esto
         if (hasattr(self.cta_entrada, 'fecha_conversion')
-                and self.fecha > self.cta_entrada.fecha_conversion) \
-            or (hasattr(self.cta_salida, 'fecha_conversion')
-                and self.fecha > self.cta_salida.fecha_conversion):
-            raise ValidationError(
-                message=errors.CUENTA_ACUMULATIVA_EN_MOVIMIENTO)
+                or hasattr(self.cta_salida, 'fecha_conversion')):
+            if (self.fecha > self.cta_entrada.fecha_conversion
+                    or self.fecha > self.cta_salida.fecha_conversion):
+                raise ValidationError(
+                    message=errors.CUENTA_ACUMULATIVA_EN_MOVIMIENTO)
 
     def delete(self, *args, **kwargs):
         self.refresh_from_db()
