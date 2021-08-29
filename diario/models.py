@@ -242,19 +242,7 @@ class CuentaInteractiva(Cuenta):
 
         for i, subcuenta in enumerate(subcuentas):
 
-            # TODO Cuenta._asegurar_dict_subcuenta()
-            # Asegurarse de que subcuenta venga en un dict
-            if type(subcuenta) in (tuple, list):
-                dic_subcuenta = {
-                    'nombre': subcuenta[0],
-                    'slug': subcuenta[1],
-                }
-                try:
-                    dic_subcuenta['saldo'] = subcuenta[2]
-                except IndexError:  # subcuenta no tiene saldo
-                    dic_subcuenta['saldo'] = None
-            else:
-                dic_subcuenta = subcuenta
+            dic_subcuenta = self._asegurar_dict(subcuenta)
 
             # Completar subcuenta sin saldo
             if dic_subcuenta.get('saldo', None) is None:
@@ -289,6 +277,24 @@ class CuentaInteractiva(Cuenta):
             )
 
         return subcuentas_limpias
+
+    @staticmethod
+    def _asegurar_dict(subcuenta):
+        """ Recibe un dict, lista o tupla con información de cuenta y
+            los convierte a dict si es necesario."""
+        if type(subcuenta) in (tuple, list):
+            dic_subcuenta = {
+                'nombre': subcuenta[0],
+                'slug': subcuenta[1],
+            }
+            try:
+                dic_subcuenta['saldo'] = subcuenta[2]
+            except IndexError:  # subcuenta no tiene saldo
+                dic_subcuenta['saldo'] = None
+        else:
+            dic_subcuenta = subcuenta
+
+        return dic_subcuenta
 
     def _convertirse_en_acumulativa(self, fecha=None):
         fecha = fecha or date.today()
