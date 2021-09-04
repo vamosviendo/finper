@@ -1,3 +1,9 @@
+""" Las implementaciones deben ir de lo más particular a lo más general.
+    Por ejemplo:
+        @when('agrego una cuenta con nombre "{nombre}" y slug "{slug}"')
+        @when('agrego una cuenta con nombre "{nombre}"')
+        @when('agrego una cuenta')
+"""
 import datetime
 from pathlib import Path
 from unittest.mock import patch

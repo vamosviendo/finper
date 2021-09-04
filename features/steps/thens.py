@@ -4,23 +4,18 @@
         @when('agrego una cuenta con nombre "{nombre}"')
         @when('agrego una cuenta')
 """
-
-from datetime import date
-
 from behave import then
 from selenium.webdriver.common.by import By
 
 from consts import BYS
 from diario.models import Cuenta
+from utils.fechas import hoy
 
 
 @then('el campo "{campo}" del formulario tiene fecha de hoy como valor por defecto')
 def campo_muestra_fecha_de_hoy(context, campo):
     campo_fecha = context.browser.esperar_elemento(f'id_{campo}')
-    context.test.assertEqual(
-        campo_fecha.get_attribute("value"),
-        date.today().strftime('%Y-%m-%d')
-    )
+    context.test.assertEqual(campo_fecha.get_attribute("value"), hoy())
 
 
 @then('el saldo general es la suma de los de "{cta1}" y "{cta2}"')

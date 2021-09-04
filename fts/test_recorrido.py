@@ -3,6 +3,7 @@ from datetime import date
 from selenium.webdriver.common.by import By
 
 from .base import FunctionalTest
+from utils.fechas import hoy
 
 
 class TestRecorrido(FunctionalTest):
@@ -60,10 +61,7 @@ class TestRecorrido(FunctionalTest):
 
         # El campo fecha tiene por defecto la fecha del día.
         fecha = self.esperar_elemento('id_fecha')
-        self.assertEqual(
-            fecha.get_attribute('value'),
-            date.today().strftime('%Y-%m-%d')
-        )
+        self.assertEqual(fecha.get_attribute('value'), hoy())
         self.completar('id_concepto', 'Carga de saldo inicial')
         self.completar('id_importe', '985.5')
         self.completar('id_cta_entrada', 'efectivo')
@@ -75,7 +73,7 @@ class TestRecorrido(FunctionalTest):
         lista_ult_movs = self.esperar_elemento('id_lista_ult_movs')
         ult_movs = lista_ult_movs.find_elements_by_tag_name('tr')
         self.assertEqual(len(ult_movs), 2)   # El encabezado y un movimiento
-        self.assertIn(date.today().strftime('%Y-%m-%d'), ult_movs[1].text)
+        self.assertIn(hoy(), ult_movs[1].text)
         self.assertIn('Carga de saldo inicial', ult_movs[1].text)
         self.assertIn('+efectivo', ult_movs[1].text)
         self.assertIn('985.5', ult_movs[1].text)
