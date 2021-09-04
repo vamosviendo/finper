@@ -692,7 +692,7 @@ class TestMetodoDividirEntre(TestModelCuentaMetodos):
 
     def test_no_acepta_mas_de_una_tupla_sin_saldo(self):
         with self.assertRaises(ErrorDeSuma):
-            subctas = self.cta1.dividir_entre(
+            self.cta1.dividir_entre(
                 ('Billetera', 'ebil', 50),
                 ('Cajón de arriba', 'ecaj'),
                 ('Cajón de abajo', 'ecab')
@@ -1070,3 +1070,12 @@ class TestCuentaAcumulativa(TestCase):
             ['subi1', 'si1', 0], ['subi2', 'si2']
         )
         self.assertEqual(cta_acum.fecha_conversion, fecha)
+
+    def test_agregar_subcuenta_crea_nueva_subcuenta(self):
+        self.cta_acum.agregar_subcuenta(['subc3', 'sc3'])
+        self.assertEqual(self.cta_acum.subcuentas.count(), 3)
+
+    def test_subcuenta_agregadada_tiene_saldo_cero(self):
+        self.cta_acum.agregar_subcuenta(['subc3', 'sc3'])
+        subcuenta = Cuenta.tomar(slug='sc3')
+        self.assertEqual(subcuenta.saldo, 0)
