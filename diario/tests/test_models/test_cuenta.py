@@ -481,8 +481,8 @@ class TestMetodoDividirEntre(TestModelCuentaMetodos):
     def test_genera_movimientos_de_salida_en_cta_madre(self):
         self.cta1.dividir_entre(*self.subcuentas)
 
-        subcuenta1 = Cuenta.tomar(slug='ebil')
-        subcuenta2 = Cuenta.tomar(slug='ecaj')
+        Cuenta.tomar(slug='ebil')
+        Cuenta.tomar(slug='ecaj')
 
         movs = self.cta1.movs_directos()
 
