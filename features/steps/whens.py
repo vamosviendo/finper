@@ -7,7 +7,7 @@ from selenium.webdriver.common.by import By
 
 from consts import BYS, ORDINALES
 from diario.models import Cuenta
-from utils.funciones.archivos import fijar_mtime
+from utils.archivos import fijar_mtime
 
 
 @when('agrego una cuenta con nombre "{nombre}" y slug "{slug}"')

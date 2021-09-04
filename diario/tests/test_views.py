@@ -12,7 +12,7 @@ from django.utils.datastructures import MultiValueDict
 from diario.models import Cuenta, CuentaAcumulativa, CuentaInteractiva, \
     Movimiento
 from diario.views import cta_div_view
-from utils.funciones.archivos import fijar_mtime
+from utils.archivos import fijar_mtime
 
 
 class TestHomePage(TestCase):

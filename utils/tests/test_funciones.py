@@ -2,8 +2,8 @@ from datetime import datetime
 from pathlib import Path
 from unittest import TestCase
 
-from utils.funciones.archivos import fijar_mtime
-from utils.funciones.numeros import float_or_none
+from utils.archivos import fijar_mtime
+from utils.numeros import float_or_none
 
 
 class TestFijarTimestamp(TestCase):

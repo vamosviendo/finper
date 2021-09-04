@@ -5,7 +5,7 @@ from unittest.mock import patch
 from fts.base import FunctionalTest
 
 from diario.models import Cuenta, Movimiento
-from utils.funciones.archivos import fijar_mtime
+from utils.archivos import fijar_mtime
 
 
 class TestVerificarSaldo(FunctionalTest):
