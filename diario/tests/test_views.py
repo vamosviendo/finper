@@ -304,11 +304,6 @@ class TestCtaNueva(TestCase):
         )
         self.assertRedirects(response, reverse('home'))
 
-    def test_solo_guarda_cuentas_con_post(self):
-        # TODO ¿Retirar más adelante?
-        self.client.get(reverse('cta_nueva'))
-        self.assertEqual(Cuenta.cantidad(), 0)
-
     def test_cuentas_creadas_son_interactivas(self):
         self.client.post(
             reverse('cta_nueva'),

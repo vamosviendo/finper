@@ -369,7 +369,7 @@ def elemento_no_aparece(context, atributo, elemento):
     atr = BYS.get(atributo, By.LINK_TEXT)
     context.test.assertEqual(
         len(context.browser.esperar_elementos(elemento, atr, fail=False)), 0,
-        'Aparece botón "agregar movimiento" en una cuenta que no los admite'
+        f'Aparece elemento de {atributo} "{elemento}" que no debería aparecer'
     )
 
 
