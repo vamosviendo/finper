@@ -13,10 +13,6 @@ from utils.errors import ErrorDependenciaCircular, ErrorTipo, \
 from vvmodel.models import MiModel, PolymorphModel
 
 
-def hoy():
-    return date.today()
-
-
 alfaminusculas = RegexValidator(
     r'^[0-9a-z]*$', 'Solamente caracteres alfanuméricos')
 
@@ -386,7 +382,7 @@ class CuentaAcumulativa(Cuenta):
 
 
 class Movimiento(MiModel):
-    fecha = MiDateField(default=hoy)
+    fecha = MiDateField(default=date.today)
     concepto = models.CharField(max_length=80)
     detalle = models.TextField(blank=True, null=True)
     importe = models.FloatField()
