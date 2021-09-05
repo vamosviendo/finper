@@ -4,9 +4,9 @@ CAMPO_VACIO = 'Este campo es obligatorio.'
 CAMBIO_IMPORTE_CON_CUENTA_ACUMULATIVA = \
     'Movimiento tiene cuenta acumulativa. No puede modificarse el importe'
 CUENTA_ACUMULATIVA_EN_MOVIMIENTO = \
-    'Se intentó generar un movimiento sobre una cuenta no interactiva'
+    'No puede usarse cuenta acumulativa en movimiento'
 CUENTA_ACUMULATIVA_AGREGADA = \
-    'No puede agregarse cuenta acumulativa en movimiento'
+    'No puede agregarse cuenta acumulativa a movimiento'
 CUENTA_ACUMULATIVA_RETIRADA = \
     'No puede retirarse cuenta acumulativa en movimiento'
 MOVIMIENTO_CON_CA_ELIMINADO = \

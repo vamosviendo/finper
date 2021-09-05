@@ -962,13 +962,8 @@ class TestModelMovimientoCuentas(TestModelMovimiento):
             {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 150},
             {'nombre': 'Cajón', 'slug': 'ecaj', 'saldo': 50},
         )
-
-    def test_movimiento_nuevo_no_acepta_cuenta_acumulativa(self):
-        with self.assertRaisesMessage(
-                errors.ErrorCuentaEsAcumulativa,
-                errors.CUENTA_ACUMULATIVA_EN_MOVIMIENTO):
-            Movimiento.crear(
-                'movimiento sobre acum', 100, cta_entrada=self.cuenta1)
+        for mov in (self.entrada, self.salida, self.trans_e, self.trans_s):
+            mov.refresh_from_db()
 
     def test_no_puede_modificarse_importe_de_movimiento_con_cta_entrada_acumulativa(self):
         self.entrada.importe = 300

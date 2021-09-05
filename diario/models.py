@@ -422,14 +422,6 @@ class Movimiento(MiModel):
               **kwargs):
         importe = float(importe)
 
-        if (cta_entrada and cta_entrada.es_acumulativa) \
-                or (cta_salida and cta_salida.es_acumulativa):
-            raise errors.ErrorCuentaEsAcumulativa(
-                errors.CUENTA_ACUMULATIVA_EN_MOVIMIENTO)
-
-        if importe == 0:
-            raise errors.ErrorImporteCero(
-                'Se intentó crear un movimiento con importe cero')
         if importe < 0:
             importe = -importe
             cuenta = cta_salida
@@ -458,6 +450,18 @@ class Movimiento(MiModel):
         from_db = self.tomar_de_bd()
 
         super().clean()
+
+        if self._state.adding:
+            # No se admiten movimientos nuevos sobre cuentas acumulativas
+            if (self.cta_entrada and self.cta_entrada.es_acumulativa) \
+                    or (self.cta_salida and self.cta_salida.es_acumulativa):
+                raise errors.ErrorCuentaEsAcumulativa(
+                    errors.CUENTA_ACUMULATIVA_EN_MOVIMIENTO)
+
+        if self.importe == 0:
+            raise errors.ErrorImporteCero(
+                'Se intentó crear un movimiento con importe cero')
+
         if not self.cta_entrada and not self.cta_salida:
             raise ValidationError(message=errors.CUENTA_INEXISTENTE)
 
@@ -502,12 +506,15 @@ class Movimiento(MiModel):
                     raise ErrorCuentaEsAcumulativa(
                         errors.CUENTA_ACUMULATIVA_AGREGADA)
 
-        if (hasattr(self.cta_entrada, 'fecha_conversion')
-                or hasattr(self.cta_salida, 'fecha_conversion')):
-            if (self.fecha > self.cta_entrada.fecha_conversion
-                    or self.fecha > self.cta_salida.fecha_conversion):
-                raise ValidationError(
-                    message=errors.CUENTA_ACUMULATIVA_EN_MOVIMIENTO)
+        if (self.cta_entrada and hasattr(self.cta_entrada, 'fecha_conversion')
+                and self.fecha > self.cta_entrada.fecha_conversion):
+            raise ValidationError(
+                message=errors.CUENTA_ACUMULATIVA_EN_MOVIMIENTO)
+
+        if (self.cta_salida and hasattr(self.cta_salida, 'fecha_conversion')
+                and self.fecha > self.cta_salida.fecha_conversion):
+            raise ValidationError(
+                message=errors.CUENTA_ACUMULATIVA_EN_MOVIMIENTO)
 
     def delete(self, *args, **kwargs):
         self.refresh_from_db()
