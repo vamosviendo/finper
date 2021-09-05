@@ -13,14 +13,8 @@ from helpers import table_to_str
 @given('{n} cuentas con los siguientes valores')
 def hay_n_cuentas(context, n):
     for fila in context.table:
-        cuenta = Cuenta.crear(fila['nombre'], fila['slug'])
-        saldo = fila.get('saldo')
-        if saldo and float(saldo) != 0.0:
-            Movimiento.crear(
-                concepto='Saldo al inicio',
-                importe=saldo,
-                cta_entrada=cuenta,
-            )
+        Cuenta.crear(
+            fila['nombre'], fila['slug'], saldo=fila.get('saldo', 0.0))
 
 
 @given('{n} movimientos con los siguientes valores')
