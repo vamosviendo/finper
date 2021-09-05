@@ -102,3 +102,14 @@ def hay_una_cuenta(context):
         '| nombre   | slug |\n' +
         '| Efectivo | e    |'
     )
+
+
+@given('una cuenta acumulativa')
+def hay_una_cuenta_acumulativa(context):
+    context.execute_steps(
+        'Dada una cuenta\n' +
+        ' Y la cuenta "efectivo" dividida en subcuentas\n' +
+        '| nombre     | slug | saldo |\n' +
+        '| efect_sub1 | es1  | 0.0   |\n' +
+        '| efect_sub2 | es2  | 0.0   |'
+    )

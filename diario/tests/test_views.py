@@ -334,6 +334,20 @@ class TestCtaMod(TestCase):
             ('nombro', 'slag')
         )
 
+    def test_post_modifica_cuentas_interactivas(self):
+        self.cuenta = self.cuenta.dividir_y_actualizar(
+            ['subcuenta 1', 'sc1', 0], ['subcuenta 2', 'sc2'])
+
+        self.client.post(
+            reverse('cta_mod', args=[self.cuenta.slug]),
+            data={'nombre': 'Cuenta', 'slug': 'cta'}
+        )
+        self.cuenta.refresh_from_db()
+        self.assertEqual(
+            (self.cuenta.nombre, self.cuenta.slug),
+            ('cuenta', 'cta')
+        )
+
     def test_redirige_a_home_despues_de_post(self):
         response = self.client.post(
             reverse('cta_mod', args=[self.cuenta.slug]),

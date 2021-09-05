@@ -56,7 +56,6 @@ class Cuenta(PolymorphModel):
             cuenta_nueva = CuentaInteractiva.crear(nombre=nombre, slug=slug,
                                                    cta_madre=cta_madre,
                                                    **kwargs)
-
         return cuenta_nueva
 
     def __str__(self):
@@ -83,7 +82,7 @@ class Cuenta(PolymorphModel):
             self.slug = self.slug.lower()
         if self.nombre:
             self.nombre = self.nombre.lower()
-        if self.es_acumulativa and self.subcuentas.count() == 0:
+        if self.es_acumulativa and self.como_subclase().subcuentas.count()== 0:
             raise ErrorTipo('Cuenta caja debe tener subcuentas')
         if self.cta_madre and self.cta_madre.es_interactiva:
             raise ErrorTipo(f'Cuenta interactiva "{self.cta_madre }" '
