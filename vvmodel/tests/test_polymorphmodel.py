@@ -101,3 +101,9 @@ class PolymorphModelMetodos(TestCase):
     def test_primer_ancestre_devuelve_el_propio_modelo_si_no_tiene_ancestros(self):
         obj = MiTestPolymorphModel(nombre='test', numero=3)
         self.assertEqual(obj.primer_ancestre(), MiTestPolymorphModel)
+
+    def test_actualizar_subclase_devuelve_el_mismo_objeto_actualizado_como_subclase(self):
+        obj = MiTestPolymorphSubmodel.crear(
+            nombre="subobject", numero=1, detalle="detalles")
+        superobj = MiTestPolymorphModel.tomar(pk=obj.pk, polymorphic=False)
+        self.assertEqual(type(superobj.actualizar_subclase()), MiTestPolymorphSubmodel)
