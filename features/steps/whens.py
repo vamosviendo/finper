@@ -9,10 +9,11 @@ from pathlib import Path
 from unittest.mock import patch
 
 from behave import when
+from django.urls import reverse
 from selenium.webdriver.common.by import By
 
-from consts import BYS, ORDINALES
-from diario.models import Cuenta
+from consts import BYS, ORDINALES, NOMBRES_URL
+from diario.models import Cuenta, Movimiento
 from utils.archivos import fijar_mtime
 
 
@@ -143,3 +144,24 @@ def ir_a_pag_principal(context):
 @when('voy a la página principal sin que haya cambiado el día')
 def ir_a_pag_principal(context):
     context.execute_steps('Cuando voy a la página principal')
+
+
+@when('voy a la página "{pag}" del último movimiento')
+def ir_a_pag_ult_mov(context, pag):
+    nombre = NOMBRES_URL.get(pag) or pag
+    context.browser.get(
+        context.get_url(
+            reverse(nombre, args=[Movimiento.objects.last().pk])
+        )
+    )
+
+
+@when('voy a la página "{pag}"')
+def ir_a_pag(context, pag):
+    nombre = NOMBRES_URL.get(pag) or pag
+    context.browser.get(context.get_url(reverse(nombre)))
+
+
+@when('me detengo')
+def detenerse(context):
+    input()

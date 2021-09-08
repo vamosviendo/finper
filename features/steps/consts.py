@@ -3,7 +3,8 @@ from selenium.webdriver.common.by import By
 BYS = {
     'clase': By.CLASS_NAME,
     'id': By.ID,
-    'selector css': By.CSS_SELECTOR
+    'selector css': By.CSS_SELECTOR,
+    'contenido': By.LINK_TEXT,
 }
 
 ORDINALES = dict(
@@ -13,3 +14,8 @@ ORDINALES = dict(
     cuarto=3, cuarta=3,
     quinto=4, quinta=4,
 )
+
+# TODO: reemplazar esto por títulos en páginas (?)
+NOMBRES_URL = {
+    'modificar movimiento': 'mov_mod',
+}

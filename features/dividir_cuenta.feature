@@ -28,6 +28,6 @@ Escenario: Dividir una cuenta en subcuentas
     Y veo 3 movimientos en la página
     Y los movimientos en la página tienen estos valores:
         | concepto                                                    | importe | cuentas                    |
-        | Saldo al inicio                                             | 200.00  | +efectivo                  |
+        | Saldo inicial de efectivo                                   | 200.00  | +efectivo                  |
         | Saldo pasado por Efectivo a nueva subcuenta Cajón de arriba | 150.00  | +cajón de arriba -efectivo |
         | Saldo pasado por Efectivo a nueva subcuenta Billetera       | 50.00   | +billetera -efectivo       |

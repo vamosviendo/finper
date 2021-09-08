@@ -612,6 +612,23 @@ class TestMovNuevo(TestCase):
         response = self.client.get(reverse('mov_nuevo'))
         self.assertTemplateUsed(response, 'diario/mov_form.html')
 
+    def test_no_muestra_cuentas_acumulativas_entre_las_opciones(self):
+        cta_int = Cuenta.crear('cuenta interactiva', 'ci')
+        cta_acum = Cuenta.crear('cuenta_acumulativa', 'ca')\
+            .dividir_y_actualizar(
+                ['subcuenta 1', 'sc1', 0], ['subcuenta 2', 'sc2']
+            )
+
+        response = self.client.get(reverse('mov_nuevo'))
+        opciones_ce = response.context['form'].fields['cta_entrada'].queryset
+        opciones_cs = response.context['form'].fields['cta_salida'].queryset
+
+        self.assertIn(cta_int, opciones_ce)
+        self.assertNotIn(cta_acum, opciones_ce)
+
+        self.assertIn(cta_int, opciones_cs)
+        self.assertNotIn(cta_acum, opciones_cs)
+
     def test_redirige_a_home_despues_de_POST(self):
         cuenta = Cuenta.crear(nombre='Efectivo', slug='E')
         response = self.client.post(
@@ -689,6 +706,99 @@ class TestMovMod(TestCase):
     def test_usa_template_mov_form(self):
         response = self.client.get(reverse('mov_mod', args=[self.mov.pk]))
         self.assertTemplateUsed(response, 'diario/mov_form.html')
+
+    def test_si_mov_tiene_cuenta_acumulativa_en_campo_de_cuenta_la_muestra(self):
+        self.cuenta = self.cuenta.dividir_y_actualizar(
+            ['subcuenta 1', 'sc1', 0], ['subcuenta 2', 'sc2']
+        )
+        response = self.client.get(reverse('mov_mod', args=[self.mov.pk]))
+        self.assertIn(
+            self.cuenta,
+            response.context['form'].fields['cta_entrada'].queryset
+        )
+
+    def test_si_cta_entrada_es_acumulativa_campo_esta_deshabilitado(self):
+        self.cuenta = self.cuenta.dividir_y_actualizar(
+            ['subcuenta 1', 'sc1', 0], ['subcuenta 2', 'sc2']
+        )
+        response = self.client.get(reverse('mov_mod', args=[self.mov.pk]))
+        self.assertTrue(response.context['form'].fields['cta_entrada'].disabled)
+
+    def test_si_cta_entrada_es_interactiva_campo_esta_habilitado(self):
+        self.cuenta = self.cuenta.dividir_y_actualizar(
+            ['subcuenta 1', 'sc1', 0], ['subcuenta 2', 'sc2']
+        )
+        ci = Cuenta.crear('banco', 'b')
+        otro_mov = Movimiento.crear('Otro movimiento', 100, ci)
+        response = self.client.get(reverse('mov_mod', args=[otro_mov.pk]))
+        self.assertFalse(response.context['form'].fields['cta_entrada'].disabled)
+
+    def test_si_cta_entrada_es_interactiva_no_muestra_cuentas_acumulativas_entre_las_opciones(self):
+        self.cuenta = self.cuenta.dividir_y_actualizar(
+            ['subcuenta 1', 'sc1', 0], ['subcuenta 2', 'sc2']
+        )
+        ci = Cuenta.crear('banco', 'b')
+        otro_mov = Movimiento.crear('Otro movimiento', 100, ci)
+
+        response = self.client.get(reverse('mov_mod', args=[otro_mov.pk]))
+
+        self.assertNotIn(
+            self.cuenta,
+            response.context['form'].fields['cta_entrada'].queryset
+        )
+
+    def test_si_no_tiene_cta_entrada_no_muestra_cuentas_acumulativas_entre_las_opciones(self):
+        otro_mov = Movimiento.crear('Otro movimiento', 100, None, self.cuenta)
+        self.cuenta = self.cuenta.dividir_y_actualizar(
+            ['subcuenta 1', 'sc1', 0], ['subcuenta 2', 'sc2']
+        )
+
+        response = self.client.get(reverse('mov_mod', args=[otro_mov.pk]))
+
+        self.assertNotIn(
+            self.cuenta,
+            response.context['form'].fields['cta_entrada'].queryset
+        )
+
+    def test_si_cta_salida_es_acumulativa_campo_esta_deshabilitado(self):
+        salida = Movimiento.crear('Salida', 100, cta_salida=self.cuenta)
+        self.cuenta = self.cuenta.dividir_y_actualizar(
+            ['subcuenta 1', 'sc1', 0], ['subcuenta 2', 'sc2']
+        )
+
+        response = self.client.get(reverse('mov_mod', args=[salida.pk]))
+        self.assertTrue(response.context['form'].fields['cta_salida'].disabled)
+
+    def test_si_cta_salida_es_interactiva_campo_esta_habilitado(self):
+        ci = Cuenta.crear('banco', 'b')
+        otro_mov = Movimiento.crear('Otro movimiento', 100, self.cuenta, ci)
+        self.cuenta = self.cuenta.dividir_y_actualizar(
+            ['subcuenta 1', 'sc1', 0], ['subcuenta 2', 'sc2']
+        )
+        response = self.client.get(reverse('mov_mod', args=[otro_mov.pk]))
+        self.assertFalse(response.context['form'].fields['cta_salida'].disabled)
+
+    def test_si_cta_salida_es_interactiva_no_muestra_cuentas_acumulativas_entre_las_opciones(self):
+        ci = Cuenta.crear('banco', 'b')
+        otro_mov = Movimiento.crear('Otro movimiento', 100, self.cuenta, ci)
+        self.cuenta = self.cuenta.dividir_y_actualizar(
+            ['subcuenta 1', 'sc1', 0], ['subcuenta 2', 'sc2']
+        )
+        response = self.client.get(reverse('mov_mod', args=[otro_mov.pk]))
+        self.assertNotIn(
+            self.cuenta,
+            response.context['form'].fields['cta_salida'].queryset
+        )
+
+    def test_si_no_tiene_cta_salida_no_muestra_cuentas_acumulativas_entre_las_opciones(self):
+        self.cuenta = self.cuenta.dividir_y_actualizar(
+            ['subcuenta 1', 'sc1', 0], ['subcuenta 2', 'sc2']
+        )
+        response = self.client.get(reverse('mov_mod', args=[self.mov.pk]))
+        self.assertNotIn(
+            self.cuenta,
+            response.context['form'].fields['cta_salida'].queryset
+        )
 
     def test_guarda_cambios_en_el_mov(self):
         self.client.post(

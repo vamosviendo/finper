@@ -111,6 +111,14 @@ class MovNuevoView(CreateView):
     template_name = 'diario/mov_form.html'
     success_url = reverse_lazy('home')
 
+    def get_form(self, *args, **kwargs):
+        form = super().get_form(*args, **kwargs)
+
+        form.fields['cta_entrada'].queryset = CuentaInteractiva.todes()
+        form.fields['cta_salida'].queryset = CuentaInteractiva.todes()
+
+        return form
+
 
 class MovElimView(DeleteView):
     model = Movimiento
@@ -123,6 +131,21 @@ class MovModView(UpdateView):
     template_name = 'diario/mov_form.html'
     success_url = reverse_lazy('home')
     context_object_name = 'mov'
+
+    def get_form(self, *args, **kwargs):
+        form = super().get_form(*args, **kwargs)
+
+        if self.object.cta_entrada and self.object.cta_entrada.es_acumulativa:
+            form.fields['cta_entrada'].disabled = True
+        else:
+            form.fields['cta_entrada'].queryset = CuentaInteractiva.todes()
+
+        if self.object.cta_salida and self.object.cta_salida.es_acumulativa:
+            form.fields['cta_salida'].disabled = True
+        else:
+            form.fields['cta_salida'].queryset = CuentaInteractiva.todes()
+
+        return form
 
 
 class CorregirSaldo(TemplateView):

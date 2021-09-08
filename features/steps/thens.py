@@ -12,10 +12,49 @@ from diario.models import Cuenta
 from utils.fechas import hoy
 
 
-@then('el campo "{campo}" del formulario tiene fecha de hoy como valor por defecto')
+@then('el campo "{campo}" del formulario tiene fecha de hoy '
+      'como valor por defecto')
 def campo_muestra_fecha_de_hoy(context, campo):
     campo_fecha = context.browser.esperar_elemento(f'id_{campo}')
     context.test.assertEqual(campo_fecha.get_attribute("value"), hoy())
+
+
+@then('veo que entre las opciones del campo "{campo}" figura "{opcion}"')
+def select_muestra_opcion(context, campo, opcion):
+    select = context.browser.esperar_elemento(f'id_{campo}')
+    opciones = [x.text for x in select.find_elements_by_tag_name('option')]
+    context.test.assertIn(opcion, opciones)
+
+
+@then('veo que entre las opciones del campo "{campo}" figuran')
+def select_muestra_opciones(context, campo):
+    for fila in context.table:
+        opcion = fila['nombre']
+        context.execute_steps(
+            f'entonces veo que entre las opciones del campo "{campo}" '
+            f'figura "{opcion}"'
+        )
+
+
+@then('veo que entre las opciones del campo "{campo}" no figura "{opcion}"')
+def select_muestra_opcion(context, campo, opcion):
+    select = context.browser.esperar_elemento(f'id_{campo}')
+    opciones = [x.text for x in select.find_elements_by_tag_name('option')]
+    context.test.assertNotIn(opcion, opciones)
+#
+#
+# @then('veo que el campo "{campo}" tiene el atributo "{atributo}"')
+# def campo_tiene_atributo(context, campo, atributo):
+#     elemento = context.browser.esperar_elemento(campo, By.NAME)
+#     # print(elemento.get_property('attributes'))
+#     context.test.assertTrue(elemento.is_enabled())
+#     # context.test.assertIn(atributo, elemento.get_property('attributes'))
+
+
+@then('veo que el campo "{campo}" está deshabilitado')
+def campo_deshabilitado(context, campo):
+    elemento = context.browser.esperar_elemento(campo, By.NAME)
+    context.test.assertFalse(elemento.is_enabled())
 
 
 @then('el saldo general es la suma de los de "{cta1}" y "{cta2}"')
@@ -279,3 +318,8 @@ def veo_un_movimiento(context):
         if fila.get('cta_salida'):
             context.test.assertIn(
                 fila['cta_salida'].lower(), movs_ctas[indice])
+
+
+@then('me detengo')
+def detenerse(context):
+    input()
