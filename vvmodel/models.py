@@ -18,6 +18,10 @@ class MiModel(models.Model):
         return cls.objects.using(using).first()
 
     @classmethod
+    def ultime(cls, using='default'):
+        return cls.objects.using(using).last()
+
+    @classmethod
     def tomar(cls, **kwargs):
         using = kwargs.pop('using') if 'using' in kwargs.keys() else 'default'
 

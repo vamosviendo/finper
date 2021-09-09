@@ -33,6 +33,9 @@ class TestMiModelMetodos(TestMiModel):
     def test_primere_devuelve_primer_objeto(self):
         self.assertEqual(MiTestModel.primere(), self.o1)
 
+    def test_ultime_devuelve_ultimo_objeto(self):
+        self.assertEqual(MiTestModel.ultime(), self.o2)
+
     def test_tomar_devuelve_objeto_indicado(self):
         self.assertEqual(MiTestModel.tomar(nombre='obj2'), self.o2)
 
