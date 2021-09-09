@@ -5,6 +5,7 @@ from django.test import TestCase
 
 from diario.models import Cuenta, Movimiento
 from utils import errors
+from utils.helpers_tests import dividir_en_dos_subcuentas
 
 
 class TestModelMovimiento(TestCase):
@@ -958,10 +959,7 @@ class TestModelMovimientoCuentas(TestModelMovimiento):
         self.trans_s = Movimiento.crear(
             'trans salida acum', 200, self.cuenta2, self.cuenta1)
 
-        self.cuenta1 = self.cuenta1.dividir_y_actualizar(
-            {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 150},
-            {'nombre': 'Cajón', 'slug': 'ecaj', 'saldo': 50},
-        )
+        self.cuenta1 = dividir_en_dos_subcuentas(self.cuenta1)
         for mov in (self.entrada, self.salida, self.trans_e, self.trans_s):
             mov.refresh_from_db()
 

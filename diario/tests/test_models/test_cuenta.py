@@ -9,6 +9,7 @@ from diario.models import Cuenta, CuentaInteractiva, CuentaAcumulativa, \
 from utils.errors import SaldoNoCeroException, ErrorDeSuma, \
     ErrorTipo, ErrorDependenciaCircular, ErrorCuentaEsAcumulativa, \
     CUENTA_ACUMULATIVA_EN_MOVIMIENTO, ErrorMovimientoPosteriorAConversion
+from utils.helpers_tests import dividir_en_dos_subcuentas
 
 
 class TestModelCuenta(TestCase):
@@ -324,10 +325,7 @@ class TestMetodosMovsYSaldos(TestModelCuentaMetodos):
         self.assertTrue(self.cta1.saldo_ok())
 
     def test_saldo_ok_devuelve_true_si_saldo_coincide_con_saldos_subcuentas_en_cuenta_caja(self):
-        self.cta1 = self.cta1.dividir_y_actualizar(
-            {'nombre': 'Billetera', 'slug': 'eb', 'saldo': 15},
-            {'nombre': 'Cajón', 'slug': 'ec', }
-        )
+        self.cta1 = dividir_en_dos_subcuentas(self.cta1)
         self.assertEqual(self.cta1.saldo, 110)
         self.assertTrue(self.cta1.saldo_ok())
 
@@ -390,10 +388,7 @@ class TestMetodosMovsYSaldos(TestModelCuentaMetodos):
         self.assertIsInstance(self.cta1.agregar_mov_correctivo(), Movimiento)
 
     def test_agregar_mov_correctivo_no_acepta_ctas_caja(self):
-        self.cta1 = self.cta1.dividir_y_actualizar(
-            {'nombre': 'Billetera', 'slug': 'eb', 'saldo': 15},
-            {'nombre': 'Cajón', 'slug': 'ec', }
-        )
+        self.cta1 = dividir_en_dos_subcuentas(self.cta1)
         self.cta1.saldo = 945
         self.cta1.save()
         with self.assertRaises(AttributeError):
@@ -716,12 +711,9 @@ class TestCuentaMadre(TestModelCuentaMetodos):
 
     def setUp(self):
         super().setUp()
-        self.cta1 = self.cta1.dividir_y_actualizar(
-            {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 25},
-            {'nombre': 'Cajón de arriba', 'slug': 'ecaj', 'saldo': 75},
-        )
-        self.cta2 = Cuenta.tomar(slug='ebil')
-        self.cta3 = Cuenta.tomar(slug='ecaj')
+        self.cta1 = dividir_en_dos_subcuentas(self.cta1, saldo=25)
+        self.cta2 = Cuenta.tomar(slug='sc1')
+        self.cta3 = Cuenta.tomar(slug='sc2')
 
     def test_cuenta_caja_debe_tener_subcuentas(self):
         self.cta2.saldo = 0.0
@@ -1054,9 +1046,7 @@ class TestCuentaAcumulativa(TestCase):
         self.cta_int = Cuenta.crear('cta int', 'ci')
         Movimiento.crear('entrada', 200, cta_entrada=self.cta_acum)
         Movimiento.crear('salida', 100, cta_salida=self.cta_acum)
-        self.cta_acum = self.cta_acum.dividir_y_actualizar(
-            ['subc1', 'sc1', 100], ['subc2', 'sc2']
-        )
+        self.cta_acum = dividir_en_dos_subcuentas(self.cta_acum, saldo=100)
 
     def test_cuenta_acumulativa_no_puede_participar_en_movimientos_nuevos(self):
         with self.assertRaisesMessage(
