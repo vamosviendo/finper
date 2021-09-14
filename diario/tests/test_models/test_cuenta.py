@@ -320,50 +320,6 @@ class TestMetodosMovsYSaldos(TestModelCuentaMetodos):
         Movimiento.crear('Movimiento', 5, cta_salida=cta2)
         self.assertEqual(self.cta1.total_subcuentas(), 105)
 
-    def test_saldo_ok_devuelve_true_si_saldo_coincide_con_movimientos_en_cuenta_interactiva(self):
-        self.assertEqual(self.cta1.saldo, 110)
-        self.assertTrue(self.cta1.saldo_ok())
-
-    def test_saldo_ok_devuelve_true_si_saldo_coincide_con_saldos_subcuentas_en_cuenta_caja(self):
-        self.cta1 = dividir_en_dos_subcuentas(self.cta1)
-        self.assertEqual(self.cta1.saldo, 110)
-        self.assertTrue(self.cta1.saldo_ok())
-
-    def test_saldo_ok_devuelve_false_si_saldo_cta_interactiva_no_coincide_con_movimientos(self):
-        self.cta1.saldo = 220
-        self.cta1.save()
-        self.assertFalse(self.cta1.saldo_ok())
-
-    def test_saldo_ok_devuelve_false_si_saldo_cta_caja_no_coincide_con_saldos_subcuentas(self):
-        self.cta1.dividir_entre(
-            {'nombre': 'Billetera', 'slug': 'eb', 'saldo': 15},
-            {'nombre': 'Cajón', 'slug': 'ec', }
-        )
-        self.cta1.saldo = 220
-        self.cta1.save()
-        self.assertFalse(self.cta1.saldo_ok())
-
-    def test_corregir_saldo_corrige_saldo_a_partir_de_los_importes_de_movimientos(self):
-        self.cta1.saldo = 345
-        self.cta1.save()
-        self.cta1.corregir_saldo()
-        self.cta1.refresh_from_db()
-        self.assertEqual(self.cta1.saldo, self.cta1.total_movs())
-
-    def test_corregir_saldo_corrige_a_partir_de_saldos_de_subcuentas_en_cuentas_caja(self):
-        self.cta1 = self.cta1.dividir_y_actualizar(
-            {'nombre': 'Billetera', 'slug': 'eb', 'saldo': 15},
-            {'nombre': 'Cajón', 'slug': 'ec', 'saldo': 65},
-            {'nombre': 'Cajita', 'slug': 'eca', }
-        )
-        cta2 = Cuenta.tomar(slug='eb')
-        Movimiento.crear('Movimiento', 5, cta_salida=cta2)
-        self.cta1.saldo = 550
-        self.cta1.save()
-        self.cta1.corregir_saldo()
-        self.cta1.refresh_from_db()
-        self.assertEqual(self.cta1.saldo, self.cta1.total_subcuentas())
-
     def test_corregir_saldo_no_agrega_movimientos(self):
         self.cta1.saldo = 345
         self.cta1.save()
@@ -1038,6 +994,43 @@ class TestCuentaInteractiva(TestCase):
         self.assertEqual(traspaso1.fecha, fecha)
         self.assertEqual(traspaso2.fecha, fecha)
 
+    def test_saldo_ok_devuelve_true_si_saldo_coincide_con_movimientos_en_cuenta_interactiva(self):
+        cta1 = Cuenta.crear('Efectivo', 'E')
+        Movimiento.crear(
+            concepto='00000',
+            importe=100,
+            cta_entrada=cta1,
+            fecha=date(2019, 1, 1)
+        )
+        self.assertEqual(cta1.saldo, 100)
+        self.assertTrue(cta1.saldo_ok())
+
+    def test_saldo_ok_devuelve_false_si_saldo_cta_interactiva_no_coincide_con_movimientos(self):
+        cta1 = Cuenta.crear('Efectivo', 'E')
+        Movimiento.crear(
+            concepto='00000',
+            importe=100,
+            cta_entrada=cta1,
+            fecha=date(2019, 1, 1)
+        )
+        cta1.saldo = 220
+        cta1.save()
+        self.assertFalse(cta1.saldo_ok())
+
+    def test_corregir_saldo_corrige_saldo_a_partir_de_los_importes_de_movimientos(self):
+        cta1 = Cuenta.crear('Efectivo', 'E')
+        Movimiento.crear(
+            concepto='00000',
+            importe=100,
+            cta_entrada=cta1,
+            fecha=date(2019, 1, 1)
+        )
+        cta1.saldo = 345
+        cta1.save()
+        cta1.corregir_saldo()
+        cta1.refresh_from_db()
+        self.assertEqual(cta1.saldo, cta1.total_movs())
+
 
 class TestCuentaAcumulativa(TestCase):
 
@@ -1069,3 +1062,45 @@ class TestCuentaAcumulativa(TestCase):
         self.cta_acum.agregar_subcuenta(['subc3', 'sc3'])
         subcuenta = Cuenta.tomar(slug='sc3')
         self.assertEqual(subcuenta.saldo, 0)
+
+    def test_saldo_ok_devuelve_true_si_saldo_coincide_con_saldos_subcuentas(self):
+        self.assertEqual(self.cta_acum.saldo, self.cta_acum.total_subcuentas())
+        self.assertTrue(self.cta_acum.saldo_ok())
+
+    def test_saldo_ok_devuelve_false_si_saldo_no_coincide_con_saldos_subcuentas(self):
+        cta1 = Cuenta.crear('Efectivo', 'E')
+        Movimiento.crear(
+            concepto='00000',
+            importe=100,
+            cta_entrada=cta1,
+            fecha=date(2019, 1, 1)
+        )
+        cta1 = cta1.dividir_y_actualizar(
+            {'nombre': 'Billetera', 'slug': 'eb', 'saldo': 15},
+            {'nombre': 'Cajón', 'slug': 'ec', }
+        )
+        cta1.saldo = 220
+        cta1.save()
+
+        self.assertFalse(cta1.saldo_ok())
+
+    def test_corregir_saldo_corrige_a_partir_de_saldos_de_subcuentas(self):
+        cta1 = Cuenta.crear('Efectivo', 'E')
+        Movimiento.crear(
+            concepto='00000',
+            importe=100,
+            cta_entrada=cta1,
+            fecha=date(2019, 1, 1)
+        )
+        cta1 = cta1.dividir_y_actualizar(
+            {'nombre': 'Billetera', 'slug': 'eb', 'saldo': 15},
+            {'nombre': 'Cajón', 'slug': 'ec', 'saldo': 65},
+            {'nombre': 'Cajita', 'slug': 'eca', }
+        )
+        cta2 = Cuenta.tomar(slug='eb')
+        Movimiento.crear('Movimiento', 5, cta_salida=cta2)
+        cta1.saldo = 550
+        cta1.save()
+        cta1.corregir_saldo()
+        cta1.refresh_from_db()
+        self.assertEqual(cta1.saldo, cta1.total_subcuentas())

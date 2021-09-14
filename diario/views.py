@@ -19,14 +19,8 @@ class HomeView(TemplateView):
         hoy = Path('hoy.mark')
         if (datetime.date.today() >
                 datetime.date.fromtimestamp(hoy.stat().st_mtime)):
-            ctas_erroneas = verificar_saldos()
-
             hoy.touch()
-
-            if len(ctas_erroneas) > 0:
-                full_url = f"{reverse('corregir_saldo')}?ctas=" + \
-                            '!'.join([c.slug.lower() for c in ctas_erroneas])
-                return redirect(full_url)
+            return redirect('verificar_saldos')
 
         return super().get(request, *args, **kwargs)
 
@@ -166,6 +160,15 @@ class CorregirSaldo(TemplateView):
         context = super().get_context_data(**kwargs)
         context.update({'ctas_erroneas': self.ctas_erroneas})
         return context
+
+
+def verificar_saldos_view(request):
+    ctas_erroneas = verificar_saldos()
+    if len(ctas_erroneas) > 0:
+        slugs = '!'.join([c.slug.lower() for c in ctas_erroneas])
+        return redirect(f"{reverse('corregir_saldo')}?ctas={slugs}")
+
+    return redirect(reverse('home'))
 
 
 def modificar_saldo_view(request, slug):

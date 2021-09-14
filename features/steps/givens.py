@@ -79,6 +79,7 @@ def hay_un_error_en_el_saldo(context, cantidad, nombre):
     cta = Cuenta.tomar(nombre=nombre.lower())
     cta.saldo += float(cantidad)
     cta.save()
+    context.test.assertNotEqual(cta.saldo, cta.total_movs())
 
 
 @given('una cuenta con los siguientes valores')

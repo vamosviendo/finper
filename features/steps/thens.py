@@ -4,11 +4,15 @@
         @when('agrego una cuenta con nombre "{nombre}"')
         @when('agrego una cuenta')
 """
+from urllib.parse import urlparse
+
 from behave import then
+from django.urls import reverse
 from selenium.webdriver.common.by import By
 
 from consts import BYS
 from diario.models import Cuenta
+from features.steps.helpers import espacios_a_snake, espera
 from utils.fechas import hoy
 
 
@@ -223,6 +227,17 @@ def el_nombre_es_tal(context, nombre):
     nombre_en_pag = context.browser.esperar_elemento(
         'class_nombre_cuenta', By.CLASS_NAME).text
     context.test.assertEqual(nombre_en_pag, nombre)
+
+
+@then('soy dirigido a la página "{pagina}"')
+def soy_dirigido_a(context, pagina):
+    pagina = espacios_a_snake(pagina)
+    espera(
+        lambda: context.test.assertURLEqual(
+            reverse(pagina),
+            urlparse(context.browser.current_url).path
+        )
+    )
 
 
 @then('veo {num} movimient{os} en la página')

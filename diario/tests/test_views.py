@@ -118,7 +118,6 @@ class TestHomePage(TestCase):
         self.assertEqual(response.context['saldo_gral'], 0)
 
 
-@patch('diario.views.verificar_saldos')
 class TestHomePageVerificarSaldo(TestCase):
 
     def setUp(self):
@@ -157,37 +156,20 @@ class TestHomePageVerificarSaldo(TestCase):
         self.ayer.rename('hoy.mark')
         super().tearDown()
 
-    def test_verifica_saldo_de_cuentas_si_cambia_la_fecha(
-            self, mock_verificar_saldos):
+    def test_verifica_saldo_de_cuentas_si_cambia_la_fecha(self):
 
         self.fecha = datetime.date(2021, 4, 5)
-        self.client.get(reverse('home'))
-        mock_verificar_saldos.assert_called_once()
-
-    def test_no_verifica_saldo_de_cuentas_si_no_cambia_la_fecha(
-            self, mock_verificar_saldos):
-
-        self.client.get(reverse('home'))
-
-        mock_verificar_saldos.assert_not_called()
+        response = self.client.get(reverse('home'))
+        self.assertRedirects(
+            response, reverse('verificar_saldos'), target_status_code=302)
 
     @patch('diario.views.Path.touch')
-    def test_actualiza_fecha_despues_de_verificar_saldos(
-            self, mock_touch, mock_verificar_saldos):
+    def test_actualiza_fecha_despues_de_verificar_saldos(self, mock_touch):
         self.fecha = datetime.date(2021, 4, 5)
         self.hora = datetime.datetime(2021, 4, 5)
 
         self.client.get(reverse('home'))
         mock_touch.assert_called_once()
-
-    def test_si_saldo_no_coincide_redirige_a_corregir_saldo_con_lista_de_ctas_erroneas(
-            self, mock_verificar_saldos):
-        cta1 = Cuenta.crear('Efectivo', 'E')
-        cta2 = Cuenta.crear('Banco', 'B')
-        mock_verificar_saldos.return_value = [cta1, cta2, ]
-        self.fecha = datetime.date(2021, 4, 5)
-        response = self.client.get(reverse('home'))
-        self.assertRedirects(response, f"{reverse('corregir_saldo')}?ctas=e!b")
 
 
 class TestCtaDetalle(TestCase):
@@ -820,6 +802,41 @@ class TestMovMod(TestCase):
         self.cuenta.refresh_from_db()
 
         self.assertEqual(self.cuenta.saldo, saldo)
+
+
+@patch('diario.views.verificar_saldos')
+class TestVerificarSaldo(TestCase):
+
+    def test_verifica_saldo_de_cuentas(self, mock_verificar_saldos):
+        self.client.get(reverse('verificar_saldos'))
+        mock_verificar_saldos.assert_called_once()
+
+    def test_redirige_a_home_si_no_hay_saldos_erroneos(self, mock_verificar_saldos):
+        mock_verificar_saldos.return_value = []
+        response = self.client.get(reverse('verificar_saldos'))
+        self.assertRedirects(response, reverse('home'))
+
+    def test_redirige_a_corregir_saldo_si_hay_saldos_erroneos(self, mock_verificar_saldos):
+        cta_1 = Cuenta.crear('cta1efectivo', 'c1e')
+        cta_2 = Cuenta.crear('cta2banco', 'c2b')
+        mock_verificar_saldos.return_value = [cta_1, cta_2]
+
+        response = self.client.get(reverse('verificar_saldos'))
+
+        self.assertRedirects(
+            response,
+            reverse('corregir_saldo') + '?ctas=c1e!c2b',
+        )
+
+    def test_pasa_cuentas_con_saldo_erroneo_a_corregir_saldo(self, mock_verificar_saldos):
+        cta_1 = Cuenta.crear('cta1efectivo', 'c1e')
+        cta_2 = Cuenta.crear('cta2banco', 'c2b')
+        mock_verificar_saldos.return_value = [cta_1, cta_2]
+
+        response = self.client.get(reverse('verificar_saldos'))
+
+        self.assertIn(cta_1.slug, response.url)
+        self.assertIn(cta_2.slug, response.url)
 
 
 class TestCorregirSaldo(TestCase):
