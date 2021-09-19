@@ -4,55 +4,15 @@
         @when('agrego una cuenta con nombre "{nombre}"')
         @when('agrego una cuenta')
 """
-from urllib.parse import urlparse
-
 from behave import then
-from django.urls import reverse
 from selenium.webdriver.common.by import By
 
-from consts import BYS
 from diario.models import Cuenta
-from features.steps.helpers import espacios_a_snake, espera
 from utils import errors
 from utils.fechas import hoy
 
 
-@then('el campo "{campo}" del formulario tiene fecha de hoy '
-      'como valor por defecto')
-def campo_muestra_fecha_de_hoy(context, campo):
-    campo_fecha = context.browser.esperar_elemento(f'id_{campo}')
-    context.test.assertEqual(campo_fecha.get_attribute("value"), hoy())
-
-
-@then('veo que entre las opciones del campo "{campo}" figura "{opcion}"')
-def select_muestra_opcion(context, campo, opcion):
-    select = context.browser.esperar_elemento(f'id_{campo}')
-    opciones = [x.text for x in select.find_elements_by_tag_name('option')]
-    context.test.assertIn(opcion, opciones)
-
-
-@then('veo que entre las opciones del campo "{campo}" figuran')
-def select_muestra_opciones(context, campo):
-    for fila in context.table:
-        opcion = fila['nombre']
-        context.execute_steps(
-            f'entonces veo que entre las opciones del campo "{campo}" '
-            f'figura "{opcion}"'
-        )
-
-
-@then('veo que entre las opciones del campo "{campo}" no figura "{opcion}"')
-def select_muestra_opcion(context, campo, opcion):
-    select = context.browser.esperar_elemento(f'id_{campo}')
-    opciones = [x.text for x in select.find_elements_by_tag_name('option')]
-    context.test.assertNotIn(opcion, opciones)
-
-
-@then('veo que el campo "{campo}" está deshabilitado')
-def campo_deshabilitado(context, campo):
-    elemento = context.browser.esperar_elemento(campo, By.NAME)
-    context.test.assertFalse(elemento.is_enabled())
-
+# CONSTATACIONES GENERALES
 
 @then('el saldo general es la suma de los de "{cta1}" y "{cta2}"')
 def saldo_general_es(context, cta1, cta2):
@@ -61,15 +21,6 @@ def saldo_general_es(context, cta1, cta2):
     context.test.assertEqual(
         context.browser.esperar_elemento('id_importe_saldo_gral').text,
         f'{cta1.saldo + cta2.saldo:.2f}'
-    )
-
-
-@then('la cuenta "{slug}" tiene saldo {monto}')
-def cuenta_tiene_saldo(context, slug, monto):
-    cuenta = context.browser.esperar_elemento(f'id_div_cta_{slug.lower()}')
-    context.test.assertEqual(
-        cuenta.find_element_by_class_name('class_saldo_cuenta').text,
-        monto
     )
 
 
@@ -83,6 +34,17 @@ def grilla_cuentas_vacia(context):
 def lista_movimientos_vacia(context):
     movs = context.browser.esperar_elementos('tr', By.TAG_NAME)
     context.test.assertEqual(len(movs), 1)
+
+
+# CONSTATACIONES DE CUENTA
+
+@then('la cuenta "{slug}" tiene saldo {monto}')
+def cuenta_tiene_saldo(context, slug, monto):
+    cuenta = context.browser.esperar_elemento(f'id_div_cta_{slug.lower()}')
+    context.test.assertEqual(
+        cuenta.find_element_by_class_name('class_saldo_cuenta').text,
+        monto
+    )
 
 
 @then('las subcuentas de la página de {cuenta} tienen estos valores')
@@ -110,32 +72,6 @@ def subcuentas_de_detalle_cuenta_coinciden_con(context, cuenta):
         )
 
 
-@then('los movimientos en la página tienen estos valores')
-def movs_en_pagina_coinciden_con(context):
-    conceptos = [e.text for e in
-                 context.browser.esperar_elementos('class_td_concepto')]
-    importes = [e.text for e in
-                context.browser.esperar_elementos('class_td_importe')]
-    cuentas = [e.text for e in
-               context.browser.esperar_elementos('class_td_cuentas')]
-
-    for i, fila in enumerate(context.table):
-        context.test.assertEqual(
-            conceptos[i], fila['concepto'],
-            f"El concepto {fila['concepto']} no coincide con {conceptos[i]}"
-        )
-        importe = f"{float(fila['importe']):.2f}"
-        context.test.assertEqual(
-            importes[i], importe,
-            f"El importe del mov {i+1} es {importes[i]}, no {importe}"
-        )
-        context.test.assertEqual(
-            cuentas[i], fila['cuentas'].lower(),
-            f"Las cuentas involucradas en el mov {i+1} son {cuentas[i]}, "
-            f"no {fila['cuentas']}"
-        )
-
-
 @then('no veo una cuenta {nombre} en la grilla')
 def cuenta_no_esta_en_grilla(context, nombre):
     cuentas = context.browser.esperar_elementos('class_div_cuenta')
@@ -143,15 +79,6 @@ def cuenta_no_esta_en_grilla(context, nombre):
         nombre.lower(),
         [x.find_element_by_class_name('class_nombre_cuenta').text
          for x in cuentas]
-    )
-
-
-@then('no veo un elemento de {atributo} "{elemento}"')
-def elemento_no_aparece(context, atributo, elemento):
-    atr = BYS.get(atributo, By.LINK_TEXT)
-    context.test.assertEqual(
-        len(context.browser.esperar_elementos(elemento, atr, fail=False)), 0,
-        f'Aparece elemento de {atributo} "{elemento}" que no debería aparecer'
     )
 
 
@@ -182,6 +109,151 @@ def detalle_muestra_subcuentas_de(context, nombre_cta):
         subctas_pag,
         [x.nombre for x in cta.subcuentas.all()]
     )
+
+
+@then('veo que el saldo {tal} es {tantos} pesos')
+def el_saldo_tal_es_tanto(context, tal, tantos):
+    if tal == 'general':
+        total = context.browser.esperar_elemento('id_importe_saldo_gral')
+    else:
+        if tal == 'de la cuenta':
+            slug = 'e'
+        else:
+            tal = tal[3:]
+            if tal[0] == '"':
+                tal = tal[1:-1]
+            slug = Cuenta.tomar(nombre=tal.lower()).slug
+        total = context.browser.esperar_elemento(f'id_saldo_cta_{slug}')
+
+    if tantos == 'cero':
+        tantos = '0.00'
+    elif tantos.find('.') == -1:
+        tantos += '.00'
+
+    context.test.assertEqual(
+        total.text, tantos
+    )
+
+
+@then('veo que el nombre de la cuenta es "{nombre}"')
+def el_nombre_es_tal(context, nombre):
+    nombre_en_pag = context.browser.esperar_elemento(
+        'class_nombre_cuenta', By.CLASS_NAME).text
+    context.test.assertEqual(nombre_en_pag, nombre)
+
+
+@then('veo sólo los movimientos relacionados con "{nombre_cta}" o con sus subcuentas')
+def veo_solo_movimientos_relacionados_con_cta_o_subctas(context, nombre_cta):
+    cta = Cuenta.tomar(nombre=nombre_cta.lower())
+    movs_pag = [x.text for x in context.browser.esperar_elementos(
+        '.class_row_mov td.class_td_concepto',
+        By.CSS_SELECTOR
+    )]
+    context.test.assertEqual(movs_pag, [x.concepto for x in cta.movs()])
+
+
+@then('veo sólo los movimientos relacionados con "{nombre_cta}"')
+def veo_solo_movimientos_relacionados_con(context, nombre_cta):
+    context.execute_steps(
+        f'Entonces veo sólo los movimientos relacionados con "{nombre_cta}" '
+        f'o con sus subcuentas'
+    )
+
+
+@then('veo una cuenta en la grilla con nombre "{nombre}"')
+def veo_una_cuenta(context, nombre):
+    cuentas = context.browser.esperar_elementos('class_div_cuenta')
+    context.test.assertIn(
+        nombre.lower(),
+        [x.find_element_by_class_name('class_nombre_cuenta').text
+         for x in cuentas]
+    )
+
+
+@then('veo un mensaje de saldos erróneos que incluye las cuentas')
+def veo_mensaje_de_saldos_erroneos(context):
+    msj = context.browser.esperar_elemento('id_msj_ctas_erroneas').text
+    for fila in context.table:
+        context.test.assertIn(fila['nombre'].lower(), msj)
+
+
+@then('veo un mensaje de saldo erróneo para la cuenta "{nombre}"')
+def veo_mensaje_de_saldo_erroneo(context, nombre):
+    context.execute_steps(
+        'Entonces veo un mensaje de saldos erróneos que incluye las cuentas\n'
+        f'    | nombre |\n| {nombre.lower()} |'
+    )
+
+
+# CONSTATACIONES DE MOVIMIENTO
+
+@then('veo un movimiento con los siguientes valores')
+def veo_un_movimiento(context):
+    movs_concepto = [
+        c.text for c in context.browser.esperar_elementos('class_td_concepto')
+    ]
+    movs_importe = [
+        c.text for c in context.browser.esperar_elementos('class_td_importe')
+    ]
+    movs_ctas = [
+        c.text for c in context.browser.esperar_elementos('class_td_cuentas')
+    ]
+    for fila in context.table:
+        context.test.assertIn(fila['concepto'], movs_concepto)
+        indice = movs_concepto.index(fila['concepto'])
+        context.test.assertEqual(movs_importe[indice], fila['importe'])
+        if fila.get('cta_entrada'):
+            context.test.assertIn(
+                fila['cta_entrada'].lower(), movs_ctas[indice])
+        if fila.get('cta_salida'):
+            context.test.assertIn(
+                fila['cta_salida'].lower(), movs_ctas[indice])
+
+
+@then('veo {num} movimient{os} en la página')
+def veo_movimiento(context, num, os):
+    if num == 'un':
+        num = 1
+    else:
+        num = int(num)
+
+    lista_ult_movs = context.browser.esperar_elemento('id_lista_ult_movs')
+    ult_movs = lista_ult_movs.find_elements_by_tag_name('tr')
+
+    context.test.assertEqual(len(ult_movs), num+1)  # El encabezado y un movimiento
+
+
+@then('el campo "{campo}" del formulario tiene fecha de hoy '
+      'como valor por defecto')
+def campo_muestra_fecha_de_hoy(context, campo):
+    campo_fecha = context.browser.esperar_elemento(f'id_{campo}')
+    context.test.assertEqual(campo_fecha.get_attribute("value"), hoy())
+
+
+@then('los movimientos en la página tienen estos valores')
+def movs_en_pagina_coinciden_con(context):
+    conceptos = [e.text for e in
+                 context.browser.esperar_elementos('class_td_concepto')]
+    importes = [e.text for e in
+                context.browser.esperar_elementos('class_td_importe')]
+    cuentas = [e.text for e in
+               context.browser.esperar_elementos('class_td_cuentas')]
+
+    for i, fila in enumerate(context.table):
+        context.test.assertEqual(
+            conceptos[i], fila['concepto'],
+            f"El concepto {fila['concepto']} no coincide con {conceptos[i]}"
+        )
+        importe = f"{float(fila['importe']):.2f}"
+        context.test.assertEqual(
+            importes[i], importe,
+            f"El importe del mov {i+1} es {importes[i]}, no {importe}"
+        )
+        context.test.assertEqual(
+            cuentas[i], fila['cuentas'].lower(),
+            f"Las cuentas involucradas en el mov {i+1} son {cuentas[i]}, "
+            f"no {fila['cuentas']}"
+        )
 
 
 @then('veo que el concepto del movimiento es "{concepto}"')
@@ -241,145 +313,3 @@ def cuenta_no_esta_en_mov(context, nombre, concepto):
     cuentas = movimiento.find_element_by_class_name('class_td_cuentas').text
 
     context.test.assertNotIn(nombre, cuentas)
-
-
-@then('veo que el saldo {nombre} es {tantos} pesos')
-def el_saldo_general_es_tanto(context, nombre, tantos):
-    if nombre == 'general':
-        total = context.browser.esperar_elemento('id_importe_saldo_gral')
-    else:
-        if nombre == 'de la cuenta':
-            slug = 'e'
-        else:
-            nombre = nombre[3:]
-            if nombre[0] == '"':
-                nombre = nombre[1:-1]
-            slug = Cuenta.tomar(nombre=nombre.lower()).slug
-        total = context.browser.esperar_elemento(f'id_saldo_cta_{slug}')
-
-    if tantos == 'cero':
-        tantos = '0.00'
-    elif tantos.find('.') == -1:
-        tantos += '.00'
-
-    context.test.assertEqual(
-        total.text, tantos
-    )
-
-
-@then('veo que el nombre de la cuenta es "{nombre}"')
-def el_nombre_es_tal(context, nombre):
-    nombre_en_pag = context.browser.esperar_elemento(
-        'class_nombre_cuenta', By.CLASS_NAME).text
-    context.test.assertEqual(nombre_en_pag, nombre)
-
-
-@then('soy dirigido a la página "{pagina}"')
-def soy_dirigido_a(context, pagina):
-    pagina = espacios_a_snake(pagina)
-    espera(
-        lambda: context.test.assertURLEqual(
-            reverse(pagina),
-            urlparse(context.browser.current_url).path
-        )
-    )
-
-
-@then('veo {num} movimient{os} en la página')
-def veo_movimiento(context, num, os):
-    if num == 'un':
-        num = 1
-    else:
-        num = int(num)
-
-    lista_ult_movs = context.browser.esperar_elemento('id_lista_ult_movs')
-    ult_movs = lista_ult_movs.find_elements_by_tag_name('tr')
-
-    context.test.assertEqual(len(ult_movs), num+1)  # El encabezado y un movimiento
-
-
-@then('veo sólo los movimientos relacionados con "{nombre_cta}" o con sus subcuentas')
-def veo_solo_movimientos_relacionados_con_cta_o_subctas(context, nombre_cta):
-    cta = Cuenta.tomar(nombre=nombre_cta.lower())
-    movs_pag = [x.text for x in context.browser.esperar_elementos(
-        '.class_row_mov td.class_td_concepto',
-        By.CSS_SELECTOR
-    )]
-    context.test.assertEqual(movs_pag, [x.concepto for x in cta.movs()])
-
-
-@then('veo sólo los movimientos relacionados con "{nombre_cta}"')
-def veo_solo_movimientos_relacionados_con(context, nombre_cta):
-    context.execute_steps(
-        f'Entonces veo sólo los movimientos relacionados con "{nombre_cta}" '
-        f'o con sus subcuentas'
-    )
-
-
-@then('veo una cuenta en la grilla con nombre "{nombre}"')
-def veo_una_cuenta(context, nombre):
-    cuentas = context.browser.esperar_elementos('class_div_cuenta')
-    context.test.assertIn(
-        nombre.lower(),
-        [x.find_element_by_class_name('class_nombre_cuenta').text
-         for x in cuentas]
-    )
-
-
-@then('veo un botón de {texto}')
-def veo_un_boton(context, texto):
-    context.browser.esperar_elemento(texto, By.LINK_TEXT)
-
-
-@then('veo un formulario de {elem}')
-def veo_formulario(context, elem):
-    context.browser.esperar_elemento(f'id_form_{elem}')
-
-
-@then('veo un mensaje de error: "{mensaje}"')
-def veo_mensaje_de_error(context, mensaje):
-    errores = context.browser.esperar_elemento('id_errores').text
-    context.test.assertIn(mensaje, errores)
-
-
-@then('veo un mensaje de saldos erróneos que incluye las cuentas')
-def veo_mensaje_de_saldos_erroneos(context):
-    msj = context.browser.esperar_elemento('id_msj_ctas_erroneas').text
-    for fila in context.table:
-        context.test.assertIn(fila['nombre'].lower(), msj)
-
-
-@then('veo un mensaje de saldo erróneo para la cuenta "{nombre}"')
-def veo_mensaje_de_saldo_erroneo(context, nombre):
-    context.execute_steps(
-        'Entonces veo un mensaje de saldos erróneos que incluye las cuentas\n'
-        f'    | nombre |\n| {nombre.lower()} |'
-    )
-
-
-@then('veo un movimiento con los siguientes valores')
-def veo_un_movimiento(context):
-    movs_concepto = [
-        c.text for c in context.browser.esperar_elementos('class_td_concepto')
-    ]
-    movs_importe = [
-        c.text for c in context.browser.esperar_elementos('class_td_importe')
-    ]
-    movs_ctas = [
-        c.text for c in context.browser.esperar_elementos('class_td_cuentas')
-    ]
-    for fila in context.table:
-        context.test.assertIn(fila['concepto'], movs_concepto)
-        indice = movs_concepto.index(fila['concepto'])
-        context.test.assertEqual(movs_importe[indice], fila['importe'])
-        if fila.get('cta_entrada'):
-            context.test.assertIn(
-                fila['cta_entrada'].lower(), movs_ctas[indice])
-        if fila.get('cta_salida'):
-            context.test.assertIn(
-                fila['cta_salida'].lower(), movs_ctas[indice])
-
-
-@then('me detengo')
-def detenerse(context):
-    input()

@@ -58,7 +58,7 @@ Escenario: Casos movimiento: Modificar importe en movimiento de entrada
     Y escribo "150" en el campo "importe"
     Y cliqueo en el botón
 
-    Entonces veo que el importe del movimiento "aSaldo" es 100 pesos
+    Entonces veo que el importe del movimiento "aSaldo" es 150 pesos
     Y veo que el saldo de Efectivo es 150 pesos
     Y veo que el saldo general es 150 pesos
 
@@ -74,7 +74,7 @@ Escenario: Casos movimiento: Modificar importe en movimiento de salida
     Y escribo "150" en el campo "importe"
     Y cliqueo en el botón
 
-    Entonces veo que el importe del movimiento "aSaldo" es 100 pesos
+    Entonces veo que el importe del movimiento "aSaldo" es 150 pesos
     Y veo que el saldo de Efectivo es -150 pesos
     Y veo que el saldo general es -150 pesos
 
@@ -90,7 +90,7 @@ Escenario: Casos movimiento: Modificar importe en movimiento de traspaso
     Y escribo "150" en el campo "importe"
     Y cliqueo en el botón
 
-    Entonces veo que el importe del movimiento "traspaso" es 100 pesos
+    Entonces veo que el importe del movimiento "traspaso" es 150 pesos
     Y veo que el saldo de Efectivo es 150 pesos
     Y veo que el saldo de Banco es -150 pesos
     Y veo que el saldo general es 0 pesos
