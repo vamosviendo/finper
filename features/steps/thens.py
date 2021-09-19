@@ -13,6 +13,7 @@ from selenium.webdriver.common.by import By
 from consts import BYS
 from diario.models import Cuenta
 from features.steps.helpers import espacios_a_snake, espera
+from utils import errors
 from utils.fechas import hoy
 
 
@@ -45,14 +46,6 @@ def select_muestra_opcion(context, campo, opcion):
     select = context.browser.esperar_elemento(f'id_{campo}')
     opciones = [x.text for x in select.find_elements_by_tag_name('option')]
     context.test.assertNotIn(opcion, opciones)
-#
-#
-# @then('veo que el campo "{campo}" tiene el atributo "{atributo}"')
-# def campo_tiene_atributo(context, campo, atributo):
-#     elemento = context.browser.esperar_elemento(campo, By.NAME)
-#     # print(elemento.get_property('attributes'))
-#     context.test.assertTrue(elemento.is_enabled())
-#     # context.test.assertIn(atributo, elemento.get_property('attributes'))
 
 
 @then('veo que el campo "{campo}" está deshabilitado')
@@ -196,6 +189,58 @@ def el_concepto_es_tal(context, concepto):
     concepto_en_pag = context.browser.esperar_elemento(
         'class_td_concepto', By.CLASS_NAME).text
     context.test.assertEqual(concepto_en_pag, concepto)
+
+
+@then('veo que el importe del movimiento "{concepto}" es {tantos} pesos')
+def el_importe_es_tanto(context, concepto, tantos):
+
+    if tantos.find('.') == -1:
+        tantos += '.00'
+
+    movimiento = context.browser.esperar_movimiento(concepto)
+    importe = movimiento.find_element_by_class_name('class_td_importe').text
+
+    context.test.assertEqual(importe, tantos)
+
+
+@then('veo que la cuenta de {sentido} del movimiento "{concepto}" es "{esta}"')
+def cuenta_mov_es(context, sentido, concepto, esta):
+    movimiento = context.browser.esperar_movimiento(concepto)
+    cuentas = movimiento.find_element_by_class_name('class_td_cuentas').text
+
+    if sentido == "entrada":
+        signo = '+'
+    elif sentido == "salida":
+        signo = '-'
+    else: raise errors.ErrorOpcionInexistente(
+        'Las opciones posibles son "entrada" y "salida".'
+    )
+
+    context.test.assertIn(signo+esta.lower(), cuentas)
+
+
+@then('veo que el movimiento "{concepto}" no tiene cuenta de {sentido}')
+def mov_no_tiene_cuenta(context, concepto, sentido):
+    movimiento = context.browser.esperar_movimiento(concepto)
+    cuentas = movimiento.find_element_by_class_name('class_td_cuentas').text
+
+    if sentido == "entrada":
+        signo = '+'
+    elif sentido == "salida":
+        signo = '-'
+    else: raise errors.ErrorOpcionInexistente(
+        'Las opciones posibles son "entrada" y "salida".'
+    )
+
+    context.test.assertNotIn(signo, cuentas)
+
+
+@then('veo que "{nombre}" no está entre las cuentas del movimiento "{concepto}"')
+def cuenta_no_esta_en_mov(context, nombre, concepto):
+    movimiento = context.browser.esperar_movimiento(concepto)
+    cuentas = movimiento.find_element_by_class_name('class_td_cuentas').text
+
+    context.test.assertNotIn(nombre, cuentas)
 
 
 @then('veo que el saldo {nombre} es {tantos} pesos')

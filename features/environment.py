@@ -1,8 +1,8 @@
-from fts.base import MiFirefox, FunctionalTest
+from steps.helpers import FinperFirefox
 
 
 def before_all(context):
-    context.browser = MiFirefox()
+    context.browser = FinperFirefox()
 
 
 def after_all(context):

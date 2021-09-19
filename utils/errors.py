@@ -90,3 +90,12 @@ class ErrorMovimientoPosteriorAConversion(ValidationError):
                     "en cuenta acumulativa"
     ):
         super().__init__(message)
+
+
+class ErrorOpcionInexistente(ValidationError):
+
+    def __init__(
+            self,
+            message="Opción inexistente"
+    ):
+        super().__init__(message)

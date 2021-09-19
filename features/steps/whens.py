@@ -105,6 +105,7 @@ def completar_campo(context, accion, texto, campo):
     if accion == 'escribo':
         tipo = 'input'
     elif accion == 'selecciono':
+        texto = '---------' if texto == 'nada' else texto
         tipo = 'select'
     else:
         raise ValueError('La acción debe ser "escribo" o "selecciono')

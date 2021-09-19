@@ -99,6 +99,42 @@ def hay_una_cuenta(context):
     )
 
 
+@given('dos cuentas')
+def hay_dos_cuentas(context):
+    context.execute_steps(
+        '''Dadas 2 cuentas con los siguientes valores
+            | nombre   | slug |
+            | Efectivo | e    |
+            | Banco    | b    |
+        '''
+    )
+
+
+@given('tres cuentas')
+def hay_tres_cuentas(context):
+    context.execute_steps(
+        '''Dadas 2 cuentas con los siguientes valores
+            | nombre   | slug |
+            | Efectivo | e    |
+            | Banco    | b    |
+            | Caja     | c    |
+        '''
+    )
+
+
+@given('cuatro cuentas')
+def hay_cuatro_cuentas(context):
+    context.execute_steps(
+        '''Dadas 2 cuentas con los siguientes valores
+            | nombre   | slug |
+            | Efectivo | e    |
+            | Banco    | b    |
+            | Caja     | c    |
+            | Crédito  | r    |
+        '''
+    )
+
+
 @given('una cuenta acumulativa')
 def hay_una_cuenta_acumulativa(context):
     context.execute_steps(
