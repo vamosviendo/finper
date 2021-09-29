@@ -1,4 +1,4 @@
-from steps.helpers import FinperFirefox
+from fts.base import FinperFirefox
 
 
 def before_all(context):

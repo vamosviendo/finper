@@ -1,6 +1,6 @@
 from django.contrib import auth
 from django.contrib.auth.views import LoginView
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect
 from django.views import View
 
 from usuarios.forms import LoginForm

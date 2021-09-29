@@ -164,6 +164,19 @@ class MiFirefox(webdriver.Firefox):
         self.esperar_elemento(boton, crit).click()
 
 
+class FinperFirefox(MiFirefox):
+
+    def esperar_movimiento(self, concepto):
+        movimientos = self.esperar_elementos('class_row_mov', By.CLASS_NAME)
+        try:
+            return next(
+                x for x in movimientos
+                if x.find_element_by_class_name('class_td_concepto').text == concepto
+            )
+        except StopIteration:
+            raise ValueError(f'Concepto {concepto} no encontrado')
+
+
 class FunctionalTest(StaticLiveServerTestCase):
 
     @classmethod
