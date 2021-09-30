@@ -1,5 +1,7 @@
 from datetime import date
+from unittest.mock import patch
 
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from diario.models import \
@@ -74,6 +76,22 @@ class TestMetodoDividirEntre(TestCase):
             {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 50},
             {'nombre': 'Cajón de arriba', 'slug': 'ecaj', 'saldo': 200},
         ]
+
+    @patch('diario.models.cuenta.CuentaInteractiva.saldo_ok')
+    def test_verifica_saldo_cuenta_antes_de_dividirla(self, mock_saldo_ok):
+        self.cta1.dividir_entre(*self.subcuentas)
+        mock_saldo_ok.assert_called_once()
+
+    @patch('diario.models.cuenta.CuentaInteractiva.saldo_ok')
+    def test_da_error_si_saldo_no_ok(self, mock_saldo_ok):
+        mock_saldo_ok.return_value = False
+        with self.assertRaisesMessage(
+                ValidationError,
+                'Saldo de cuenta "efectivo" no coincide '
+                'con sus movimientos. Verificar'
+
+        ):
+            self.cta1.dividir_entre(*self.subcuentas)
 
     def test_genera_cuentas_a_partir_de_lista_de_diccionarios(self):
         self.cta1.dividir_entre(*self.subcuentas)

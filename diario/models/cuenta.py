@@ -1,6 +1,7 @@
 from datetime import date
 
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import Sum
@@ -192,6 +193,12 @@ class CuentaInteractiva(Cuenta):
                 raise errors.ErrorMovimientoPosteriorAConversion
         except TypeError:
             pass
+
+        if not self.saldo_ok():
+            raise ValidationError(
+                f'Saldo de cuenta "{self.nombre}" no coincide '
+                f'con sus movimientos. Verificar'
+            )
 
         cuentas_limpias = self._ajustar_subcuentas(subcuentas)
 
