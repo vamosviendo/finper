@@ -1,9 +1,25 @@
 from django.urls import reverse
 
 from behave import when
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 
-from consts import BYS, ORDINALES
+from consts_base import BYS, ORDINALES
+from features.steps.helpers import tomar_atributo
+
+
+@when('cliqueo en el {orden} botón de texto "{texto}"')
+def cliquear_en(context, orden, texto):
+    botones = context.browser.esperar_elementos(
+        f'//button[normalize-space()="{texto}"]', By.XPATH)
+    botones[ORDINALES[orden]].click()
+
+
+@when('cliqueo en el botón de texto "{texto}"')
+def cliquear_en(context, texto):
+    context.execute_steps(
+        f'Cuando cliqueo en el primer botón de texto "{texto}"'
+    )
 
 
 @when('cliqueo en el {orden} botón de {atributo} "{texto}"')
@@ -22,7 +38,7 @@ def cliquear_en(context, atributo, texto):
 @when('cliqueo en el botón "{texto}"')
 def cliquear_en_el_boton(context, texto):
     context.execute_steps(
-        f'Cuando cliqueo en el botón de contenido "{texto}"'
+        f'Cuando cliqueo en el botón de texto "{texto}"'
     )
 
 
@@ -31,6 +47,60 @@ def cliquear_en(context):
     context.execute_steps(
         'Cuando cliqueo en el botón de id "id_btn_submit"'
     )
+
+
+@when('cliqueo en la opción "{opcion}" del menú de {tipo} "{menu}"')
+def cliquear_en_opcion(context, opcion, tipo, menu):
+    tipo = "class" if tipo == "clase" else tipo
+    context.execute_steps(f'''
+        Entonces veo un menú de {tipo} "{menu}"
+        Cuando cliqueo en la opción "{opcion}" del elemento "{tipo}_nav_{menu}"        
+    ''')
+
+
+@when('cliqueo en la opción "{opcion}" del menú "{menu}"')
+def cliquear_en_opcion(context, opcion, menu):
+    context.execute_steps(
+        f'Cuando cliqueo en la opción "{opcion}" del menú de id "{menu}"')
+
+
+@when('cliqueo en la opción "{opcion}" del elemento "{nombre}"')
+def cliquear_en_opcion(context, opcion, nombre):
+    menu = getattr(context, nombre)
+    try:
+        opcion = menu.find_element_by_link_text(opcion)
+    except NoSuchElementException:
+        opcion = menu.esperar_enlace_con_titulo(opcion)
+    opcion.click()
+
+
+@when('cliqueo en el elemento "{elemento}"')
+def cliquear_en_elemento_guardado(context, elemento):
+    tomar_atributo(context, elemento).click()
+
+
+@when('cliqueo en el "{tag}" de id "{id}"')
+def cliquear_en(context, tag, id):
+    context.browser.esperar_elemento(f'id_{tag}_{id}').click()
+
+
+@when('cliqueo en un "{tag}" de clase "{clase}"')
+def cliquear_en(context, tag, clase):
+    context.browser.esperar_elemento(f'class_{tag}_{clase}', By.CLASS_NAME)\
+        .click()
+
+
+@when('cliqueo en el "{tag}" de clase "{clase}" con {atributo} "{valor}"')
+def cliquear_en(context, tag, clase, atributo, valor):
+    elementos = context.browser.esperar_elementos(f'class_{tag}_{clase}')
+    if atributo == "href":
+        if not valor.startswith('/'):
+            valor = f'/{valor}'
+        valor = f'{context.test.live_server_url}{valor}'
+        print(valor)
+        print([x.get_attribute("href") for x in elementos])
+
+    next(x for x in elementos if x.get_attribute(atributo) == valor).click()
 
 
 @when('{accion} "{texto}" en el campo "{campo}"') # acción=escribo, selecciono
@@ -50,6 +120,17 @@ def ir_a_pag_principal(context):
     context.browser.get(context.get_url('/'))
 
 
+@when('voy a la página "{nombre}" con el argumento "{arg}"')
+def ir_a_pag(context, nombre, arg):
+    context.browser.get(context.get_url(reverse(nombre, args=[arg])))
+
+
+@when('voy a la página "{nombre}" con los argumentos')
+def ir_a_pag(context, nombre):
+    args = [row['argumento'] for row in context.table]
+    context.browser.get(context.get_url(reverse(nombre, args=args)))
+
+
 @when('voy a la página "{nombre}"')
 def ir_a_pag(context, nombre):
     context.browser.get(context.get_url(reverse(nombre)))
@@ -58,3 +139,8 @@ def ir_a_pag(context, nombre):
 @when('me detengo')
 def detenerse(context):
     input()
+
+
+@when('fallo')
+def fallar(context):
+    context.test.fail()

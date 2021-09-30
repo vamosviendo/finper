@@ -1,5 +1,6 @@
 # language: es
 
+@sec
 Característica: Casos de creación, modificación y eliminación de movimientos
 
 
