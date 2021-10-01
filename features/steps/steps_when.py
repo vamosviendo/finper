@@ -44,10 +44,7 @@ def entrar_en_cuenta(context, nombre):
     slug = Cuenta.tomar(nombre=nombre).slug
     context.browser.esperar_elemento(nombre, By.LINK_TEXT).click()
     context.test.assertEqual(
-        context.browser.esperar_elemento(
-            f'#id_div_cta_{slug} .class_nombre_cuenta_main',
-            By.CSS_SELECTOR
-        ).text,
+        context.browser.esperar_elemento('id_header_saldo_pag',).text,
         nombre
     )
 

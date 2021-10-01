@@ -19,7 +19,7 @@ Escenario: Dividir una cuenta en subcuentas
         | Cajón de arriba | ecar | 150   |
         | Billetera       | ebil | 50    |
 
-    Entonces veo que el saldo de Efectivo es 200 pesos
+    Entonces veo que el saldo de la página es 200 pesos
     Y veo 2 subcuentas en la página Efectivo
     Y las subcuentas de la página de Efectivo tienen estos valores:
         | nombre          | slug | saldo |

@@ -1,0 +1,87 @@
+{% extends 'diario/base.html' %}
+{% load static %}
+
+{% block contenido %}
+<section id="id_saldos" class="text-center">
+  <div id="id_div_saldo_pag" class="card mt-3 border-success class_div_totales">
+    <div class="card-header bg-success text-light" id="id_header_saldo_pag">
+      <h4>{% block titulo_pag %}{% endblock titulo_pag %}</h4>
+    </div>
+    <div id="id_div_importe_saldo_pag" class="card-body text-success">
+      {% block saldo_pag %}{% endblock saldo_pag %}
+    </div>
+  </div>
+
+  <div id="id_grid_cuentas" class="card-deck mt-3">
+    {% block subsaldos_pag %}
+    {% endblock subsaldos_pag %}
+  </div>
+
+  <a href="{% url 'cta_nueva' %}" id="id_btn_cta_nueva" class="btn my-3 btn-primary">
+    Cuenta nueva
+  </a>
+
+  {% block verificar_saldos %}
+  {% endblock verificar_saldos %}
+
+</section>
+
+
+<section id="id_lista_ult_movs">
+  <table class="table">
+    <thead><tr>
+      <th>Fecha</th>
+      <th>Concepto</th>
+      <th class="d-none d-md-table-cell">Detalle</th>
+      <th>Importe</th>
+      <th>Cuentas</th>
+    </tr></thead>
+    {% for mov in movimientos %}
+    <tr class="class_row_mov">
+      <td class="class_td_fecha">{{ mov.fecha|date:'Y-m-d' }}</td>
+      <td class="class_td_concepto">
+        <span data-toggle="tooltip" title="{{ mov.detalle }}" class="class_tooltip_detalle">
+          {{ mov.concepto }}
+        </span>
+      </td>
+      <td class="d-none d-md-table-cell class_td_detalle">{{ mov.detalle }}</td>
+      <td class="text-right
+                 {% if mov.cta_salida and not mov.cta_entrada %}
+                   text-danger
+                 {% elif mov.cta_salida and mov.cta_entrada %}
+                   text-primary
+                 {% endif %}
+                 class_td_importe">
+        {{ mov.importe|floatformat:2 }}
+      </td>
+      <td class="class_td_cuentas">
+        {% if mov.cta_entrada %}+{{ mov.cta_entrada.nombre }}{% endif %}
+        {% if mov.cta_salida %}-{{ mov.cta_salida.nombre }}{% endif %}
+      </td>
+      <td class="class_td_menu">
+        <a href="{% url 'mov_elim' mov.id %}"
+           class="btn btn-danger btn-sm link_elim_mov">
+          Borrar
+        </a>
+        <a href="{% url 'mov_mod' mov.id %}"
+           class="btn btn-primary btn-sm link_mod_mov">
+          Edit
+        </a>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  <a href="{% url 'mov_nuevo' %}" id="id_btn_mov_nuevo" class="btn btn-primary">
+    Movimiento nuevo
+  </a>
+</section>
+
+{% endblock contenido %}
+
+{% block extrajs %}
+<script>
+  $(document).ready(function(){
+    $('[data-toggle="tooltip"]').tooltip();
+  });
+</script>
+{% endblock extrajs %}

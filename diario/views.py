@@ -32,7 +32,7 @@ class HomeView(TemplateView):
 
         context.update({
             'cuentas': Cuenta.filtro(cta_madre=None),
-            'ult_movs': Movimiento.todes(),
+            'movimientos': Movimiento.todes(),
             'saldo_gral': saldo_gral or 0,
         })
 

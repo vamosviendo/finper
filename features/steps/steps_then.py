@@ -19,7 +19,7 @@ def saldo_general_es(context, cta1, cta2):
     cta1 = Cuenta.tomar(nombre=cta1.lower())
     cta2 = Cuenta.tomar(nombre=cta2.lower())
     context.test.assertEqual(
-        context.browser.esperar_elemento('id_importe_saldo_gral').text,
+        context.browser.esperar_elemento('id_div_importe_saldo_pag').text,
         f'{cta1.saldo + cta2.saldo:.2f}'
     )
 
@@ -84,8 +84,7 @@ def cuenta_no_esta_en_grilla(context, nombre):
 
 @then('veo {x} subcuentas en la página {cuenta}')
 def detalle_cuenta_tiene_subcuentas(context, cuenta, x):
-    nombre_cta_main = context.browser.esperar_elemento(
-        'class_nombre_cuenta_main', By.CLASS_NAME)
+    nombre_cta_main = context.browser.esperar_elemento('id_header_saldo_pag')
 
     context.test.assertEqual(
         nombre_cta_main.text, cuenta.lower(),
@@ -113,8 +112,9 @@ def detalle_muestra_subcuentas_de(context, nombre_cta):
 
 @then('veo que el saldo {tal} es {tantos} pesos')
 def el_saldo_tal_es_tanto(context, tal, tantos):
-    if tal == 'general':
-        total = context.browser.esperar_elemento('id_importe_saldo_gral')
+    # TODO: Refactor
+    if tal in ('general', 'de la página'):
+        total = context.browser.esperar_elemento('id_div_importe_saldo_pag')
     else:
         if tal == 'de la cuenta':
             slug = 'e'
