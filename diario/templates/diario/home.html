@@ -4,28 +4,6 @@
 {% block titulo_pag %}Saldo general{% endblock titulo_pag %}
 {% block saldo_pag %}{{ saldo_gral|floatformat:2 }}{% endblock saldo_pag %}
 
-{% block subsaldos_pag %}
-{% for subc in subcuentas %}
-<div id="id_div_cta_{{ subc.slug|lower }}" class="card border-danger class_div_cuenta">
-  <div class="card-header bg-danger text-light class_nombre_cuenta">
-    <a href="{% url 'cta_detalle' subc.slug %}" class="text-light link_cuenta">
-      {{ subc.nombre }}
-    </a>
-  </div>
-  <div id="id_saldo_cta_{{ subc.slug|lower }}" class="card-body text-danger class_saldo_cuenta">
-    {{ subc.saldo|floatformat:2}}
-  </div>
-  <div class="card-footer">
-    <a href="{% url 'cta_elim' subc.slug %}"
-       class="btn btn-danger btn-sm link_elim_cuenta">Borrar</a>
-    <a href="{% url 'cta_mod' subc.slug %}" class="btn btn-primary btn-sm link_mod_cuenta">
-      Edit
-    </a>
-  </div>
-</div>
-{% endfor %}
-{% endblock subsaldos_pag %}
-
 {% block verificar_saldos %}
 <a href="{% url 'verificar_saldos' %}" id="id_btn_verificar_saldos" class="btn my-3 btn-primary">
   Verificar saldos
