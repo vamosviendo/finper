@@ -31,7 +31,7 @@ class HomeView(TemplateView):
                            .aggregate(Sum('_saldo'))['_saldo__sum']
 
         context.update({
-            'cuentas': Cuenta.filtro(cta_madre=None),
+            'subcuentas': Cuenta.filtro(cta_madre=None),
             'movimientos': Movimiento.todes(),
             'saldo_gral': saldo_gral or 0,
         })

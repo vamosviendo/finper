@@ -54,7 +54,7 @@ def subcuentas_de_detalle_cuenta_coinciden_con(context, cuenta):
     saldos = [e.text for e in
               context.browser.esperar_elementos('class_saldo_cuenta')]
     ids = [e.get_attribute('id') for e in
-           context.browser.esperar_elementos('class_div_subcta')]
+           context.browser.esperar_elementos('class_div_cuenta')]
 
     for i, fila in enumerate(context.table):
         context.test.assertEqual(
@@ -91,7 +91,7 @@ def detalle_cuenta_tiene_subcuentas(context, cuenta, x):
         f'La cuenta seleccionada no coincide con {cuenta}'
     )
 
-    num_subcuentas = len(context.browser.esperar_elementos('class_div_subcta'))
+    num_subcuentas = len(context.browser.esperar_elementos('class_div_cuenta'))
     context.test.assertEqual(
         num_subcuentas, int(x),
         f'La página {cuenta} muestra {num_subcuentas} subcuentas, no {x}.'

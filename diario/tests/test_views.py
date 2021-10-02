@@ -28,8 +28,8 @@ class TestHomePage(TestCase):
 
         response = self.client.get(reverse('home'))
 
-        self.assertIn(cta1, response.context.get('cuentas'))
-        self.assertIn(cta2, response.context.get('cuentas'))
+        self.assertIn(cta1, response.context.get('subcuentas'))
+        self.assertIn(cta2, response.context.get('subcuentas'))
 
     def test_pasa_movimientos_a_template(self):
         cuenta = Cuenta.crear(nombre='Efectivo', slug='E')
@@ -84,10 +84,10 @@ class TestHomePage(TestCase):
 
         response = self.client.get(reverse('home'))
 
-        self.assertIn(cta1, response.context['cuentas'])
-        self.assertIn(cta2, response.context['cuentas'])
+        self.assertIn(cta1, response.context['subcuentas'])
+        self.assertIn(cta2, response.context['subcuentas'])
         for cta in subctas:
-            self.assertNotIn(cta, response.context['cuentas'])
+            self.assertNotIn(cta, response.context['subcuentas'])
 
     def test_pasa_saldos_generales_a_template(self):
         cta1 = Cuenta.crear(nombre='Efectivo', slug='E')
