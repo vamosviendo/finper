@@ -2,6 +2,15 @@
 {% load static %}
 
 {% block titulo_pag %}Saldo general{% endblock titulo_pag %}
+
+{% block titulares %}
+<nav id="id_nav_titulares">
+  <a href="{% url 'tit_nuevo' %}" id="id_link_titular_nuevo" class="btn my-3 btn-primary">
+    Titular nuevo
+  </a>
+</nav>
+{% endblock titulares %}
+
 {% block saldo_pag %}{{ saldo_gral|floatformat:2 }}{% endblock saldo_pag %}
 
 {% block verificar_saldos %}
