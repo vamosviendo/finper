@@ -8,7 +8,7 @@ from django.views.generic import \
     DetailView, CreateView, UpdateView, DeleteView, TemplateView
 
 from diario.forms import FormCuenta, FormMovimiento, FormSubcuentas
-from diario.models import Cuenta, CuentaInteractiva, Movimiento
+from diario.models import Cuenta, CuentaInteractiva, Movimiento, Titular
 from diario.utils import verificar_saldos
 
 
@@ -140,6 +140,10 @@ class MovModView(UpdateView):
             form.fields['cta_salida'].queryset = CuentaInteractiva.todes()
 
         return form
+
+
+class TitularNuevoView(CreateView):
+    model = Titular
 
 
 class CorregirSaldo(TemplateView):

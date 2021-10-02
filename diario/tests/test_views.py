@@ -6,7 +6,7 @@ from unittest.mock import patch, MagicMock
 
 from django.http import HttpRequest
 from django.test import TestCase, RequestFactory
-from django.urls import reverse
+from django.urls import reverse, resolve
 from django.utils.datastructures import MultiValueDict
 
 from diario.models import Cuenta, CuentaAcumulativa, CuentaInteractiva, \
@@ -935,3 +935,10 @@ class TestAgregarMovimiento(TestCase):
 
         self.assertEqual(self.cta2.cantidad_movs(), cant_movs+1)
         self.assertEqual(self.cta2.saldo, 135)
+
+
+class TestTitularNuevo(TestCase):
+
+    def usa_template_tit_form(self):
+        response = self.client.get(reverse('tit_nuevo'))
+        self.assertTemplateUsed(response, 'diario/tit_form.html')
