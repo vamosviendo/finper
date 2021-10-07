@@ -49,6 +49,16 @@ def cliquear_en(context):
     )
 
 
+@when('cliqueo en la opción "{opcion}" del {orden} menú de {tipo} "{menu}"')
+def cliquear_en_opcion(context, opcion, orden, tipo, menu):
+    tipo = "class" if tipo == "clase" else tipo
+
+    context.execute_steps(f'''
+        Entonces veo varios "nav" de {tipo} "{menu}"
+        Cuando cliqueo en la opción "{opcion}" del {orden} elemento "{tipo}_nav_{menu}"
+    ''')
+
+
 @when('cliqueo en la opción "{opcion}" del menú de {tipo} "{menu}"')
 def cliquear_en_opcion(context, opcion, tipo, menu):
     tipo = "class" if tipo == "clase" else tipo
@@ -62,6 +72,16 @@ def cliquear_en_opcion(context, opcion, tipo, menu):
 def cliquear_en_opcion(context, opcion, menu):
     context.execute_steps(
         f'Cuando cliqueo en la opción "{opcion}" del menú de id "{menu}"')
+
+
+@when('cliqueo en la opción "{opcion}" del {orden} elemento "{nombre}"')
+def cliquear_en_opcion_de_elemento(context, opcion, orden, nombre):
+    menues = getattr(context, nombre)
+    indice = ORDINALES[orden]
+    setattr(context, f'{nombre}_{indice}', menues[indice])
+    context.execute_steps(
+        f'Cuando cliqueo en la opción "{opcion}" del elemento "{nombre}_{indice}"'
+    )
 
 
 @when('cliqueo en la opción "{opcion}" del elemento "{nombre}"')

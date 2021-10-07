@@ -62,11 +62,6 @@ def soy_dirigido_a(context, pagina, argumento):
     )
 
 
-@then('soy dirigido a la página principal')
-def soy_dirigido_a(context):
-    context.execute_steps('Entonces soy dirigido a la página "home"')
-
-
 @then('soy dirigido a la página "{pagina}" con los argumentos')
 def soy_dirigido_a(context, pagina):
     pagina = espacios_a_snake(pagina)
@@ -77,6 +72,11 @@ def soy_dirigido_a(context, pagina):
             urlparse(context.browser.current_url).path
         )
     )
+
+
+@then('soy dirigido a la página principal')
+def soy_dirigido_a(context):
+    context.execute_steps('Entonces soy dirigido a la página "home"')
 
 
 @then('soy dirigido a la página "{pagina}"')
@@ -108,6 +108,15 @@ def elemento_aparece(context, tag, tipo, nombre):
     context.test.assertTrue(
         elemento.es_visible(), f"{nombre_elemento} no es visible")
     fijar_atributo(context, nombre_elemento, elemento)
+
+
+@then('veo varios "{tag}" de {tipo} "{nombre}"')
+def veo_varios_elementos(context, tag, tipo, nombre):
+    by = BYS.get(tipo, tipo)
+    tipo = "class" if tipo == "clase" else tipo
+    nombre_elementos = f'{tipo}_{tag}_{nombre}'
+    elementos = context.browser.esperar_elementos(nombre_elementos, by)
+    fijar_atributo(context, nombre_elementos, elementos)
 
 
 @then('veo un link de texto "{texto}"')
