@@ -8,7 +8,8 @@ Característica: Ingresar movimiento
         no aparezcan cuentas acumulativas.
 
 Escenario: Ingresar movimiento
-    Dada una cuenta
+    Dado un titular
+    Y una cuenta
     Cuando voy a la página principal
     Y cliqueo en el botón "Movimiento nuevo"
     Entonces veo un formulario de movimiento
@@ -24,7 +25,8 @@ Escenario: Ingresar movimiento
     Y veo que el saldo general es 50 pesos
 
 Escenario: Cuentas acumulativas no aparecen en formulario de carga de movimiento
-    Dada una cuenta
+    Dado un titular
+    Y una cuenta
     Y una cuenta acumulativa
     Cuando voy a la página principal
     Y cliqueo en el botón "Movimiento nuevo"

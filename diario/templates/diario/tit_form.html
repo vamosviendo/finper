@@ -1,6 +1,6 @@
 {% extends 'diario/base.html' %}
 {% block contenido %}
-<h4>{{ cta.nombre|default:"Cuenta nueva" }}</h4>
+<h4>{{ tit.nombre|default:"Titular nuevo" }}</h4>
 <form id="id_form_titular" method="post">
   <div class="form-group">
     {{ form }}

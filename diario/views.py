@@ -16,6 +16,11 @@ class HomeView(TemplateView):
     template_name = 'diario/home.html'
 
     def get(self, request, *args, **kwargs):
+        if Titular.cantidad() == 0:
+            return redirect('tit_nuevo')
+        if Cuenta.cantidad() == 0:
+            return redirect('cta_nueva')
+
         hoy = Path('hoy.mark')
         if (datetime.date.today() >
                 datetime.date.fromtimestamp(hoy.stat().st_mtime)):
@@ -31,6 +36,7 @@ class HomeView(TemplateView):
                            .aggregate(Sum('_saldo'))['_saldo__sum']
 
         context.update({
+            'titulares': Titular.todes(),
             'subcuentas': Cuenta.filtro(cta_madre=None),
             'movimientos': Movimiento.todes(),
             'saldo_gral': saldo_gral or 0,
@@ -61,10 +67,14 @@ class CtaNuevaView(CreateView):
     template_name = 'diario/cta_form.html'
     success_url = reverse_lazy('home')
 
+    def get(self, request, *args, **kwargs):
+        if Titular.cantidad() == 0:
+            return redirect('tit_nuevo')
+        return super().get(request, *args, **kwargs)
+
 
 class CtaElimView(DeleteView):
     model = Cuenta
-    success_url = reverse_lazy('home')
 
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
@@ -76,6 +86,11 @@ class CtaElimView(DeleteView):
             return self.render_to_response(context)
 
         return super().get(request, *args, **kwargs)
+
+    def get_success_url(self):
+        if Cuenta.cantidad() == 1:      # Es la última cuenta que queda
+            return reverse('cta_nueva')
+        return reverse('home')
 
 
 class CtaModView(UpdateView):
@@ -104,6 +119,11 @@ class MovNuevoView(CreateView):
     form_class = FormMovimiento
     template_name = 'diario/mov_form.html'
     success_url = reverse_lazy('home')
+
+    def get(self, request, *args, **kwargs):
+        if Cuenta.cantidad() == 0:
+            return redirect('cta_nueva')
+        return super().get(request, *args, **kwargs)
 
     def get_form(self, *args, **kwargs):
         form = super().get_form(*args, **kwargs)
@@ -144,6 +164,9 @@ class MovModView(UpdateView):
 
 class TitularNuevoView(CreateView):
     model = Titular
+    fields = ['titname', 'nombre']
+    template_name = 'diario/tit_form.html'
+    success_url = '/'
 
 
 class CorregirSaldo(TemplateView):

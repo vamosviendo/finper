@@ -3,7 +3,8 @@
 Característica: Modificar cuenta
 
 Escenario: Modificar cuenta
-    Dada una cuenta
+    Dado un titular
+    Y una cuenta
     Cuando voy a la página principal
         Y cliqueo en el botón de clase "link_mod_cuenta"
         Y escribo "Nombre modificado" en el campo "nombre"
@@ -12,7 +13,8 @@ Escenario: Modificar cuenta
 
 
 Escenario: Modificar cuenta acumulativa
-    Dada una cuenta acumulativa
+    Dado un titular
+    Y una cuenta acumulativa
     Cuando voy a la página principal
         Y cliqueo en el botón de clase "link_mod_cuenta"
         Y escribo "Nombre modificado" en el campo "nombre"

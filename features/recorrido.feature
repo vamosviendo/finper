@@ -6,19 +6,20 @@ Característica: Recorrido
     y ver los cambios reflejados en la página
 
     Escenario: Crear una cuenta y verla en la homepage
+        Dado un titular
+        Y una cuenta
 
         Cuando voy a la página principal
         Entonces veo que el saldo general es 0.00 pesos
-        Y la grilla de cuentas está vacia
+        Y veo una cuenta en la grilla
         Y la lista de movimientos está vacia
-
         Y veo un botón de Cuenta nueva
 
         Cuando cliqueo en el botón "Cuenta nueva"
         Entonces veo un formulario de cuenta
 
-        Cuando agrego una cuenta con nombre "Efectivo"
-        Entonces veo una cuenta en la grilla con nombre "efectivo"
+        Cuando agrego una cuenta con nombre "Banco"
+        Entonces veo una cuenta en la grilla con nombre "banco"
         Y veo que el saldo de Efectivo es cero pesos
         Y veo un botón de Movimiento nuevo
 
@@ -29,8 +30,8 @@ Característica: Recorrido
         Cuando agrego un movimiento con campos
             | nombre      | valor                  |
             | concepto    | Carga de saldo inicial |
-            | cta_entrada | efectivo               |
+            | cta_entrada | banco               |
             | importe     | 50.00                  |
         Entonces veo un movimiento en la página
-        Y veo que el saldo de Efectivo es 50 pesos
+        Y veo que el saldo de Banco es 50 pesos
         Y veo que el saldo general es 50 pesos

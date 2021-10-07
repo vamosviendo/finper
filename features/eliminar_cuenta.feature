@@ -6,7 +6,8 @@ Característica: Eliminar cuenta
 
 
 Escenario: Eliminar cuenta
-    Dadas 2 cuentas con los siguientes valores:
+    Dado un titular
+    Y 2 cuentas con los siguientes valores:
         | nombre         | slug |
         | Efectivo       | e    |
         | Caja de ahorro | b    |
@@ -18,7 +19,8 @@ Escenario: Eliminar cuenta
 
 
 Escenario: Eliminar cuenta con saldo
-    Dada una cuenta con los siguientes valores:
+    Dado un titular
+    Y una cuenta con los siguientes valores:
         | nombre         | slug | saldo |
         | aEfectivo      | a    | 100   |
     Cuando voy a la página principal

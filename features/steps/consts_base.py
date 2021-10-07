@@ -8,8 +8,21 @@ BYS = {
     'contenido': By.LINK_TEXT,
 }
 
+CARDINALES = dict(
+    un=1, uno=1, una=1, une=1,
+    dos=2,
+    tres=3,
+    cuatro=4,
+    cinco=5,
+    seis=6,
+    siete=7,
+    ocho=8,
+    nueve=9,
+    diez=10,
+)
+
 ORDINALES = dict(
-    primer=0, primero=0, primera=0,
+    primer=0, primero=0, primera=0, primere=1,
     segundo=1, segunda=1,
     tercero=2, tercera=2,
     cuarto=3, cuarta=3,

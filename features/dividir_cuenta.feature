@@ -7,7 +7,8 @@ Característica: Dividir_cuenta
 
 
 Escenario: Dividir una cuenta en subcuentas
-    Dada una cuenta con los siguientes valores:
+    Dado un titular
+    Y una cuenta con los siguientes valores:
         | nombre   | slug | saldo |
         | Efectivo | e    | 200   |
 

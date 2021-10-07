@@ -7,6 +7,8 @@
 from behave import then
 from selenium.webdriver.common.by import By
 
+from consts import LISTAS_DE_ENTIDADES
+from consts_base import CARDINALES
 from diario.models import Cuenta
 from utils import errors
 from utils.fechas import hoy
@@ -170,6 +172,12 @@ def veo_una_cuenta(context, nombre):
     )
 
 
+@then('veo una cuenta en la grilla')
+def veo_una_cuenta(context):
+    cuentas = context.browser.esperar_elementos('class_div_cuenta')
+    context.test.assertEqual(len(cuentas), 1)
+
+
 @then('veo un mensaje de saldos erróneos que incluye las cuentas')
 def veo_mensaje_de_saldos_erroneos(context):
     msj = context.browser.esperar_elemento('id_msj_ctas_erroneas').text
@@ -212,15 +220,22 @@ def veo_un_movimiento(context):
 
 @then('veo {num} movimient{os} en la página')
 def veo_movimiento(context, num, os):
-    if num == 'un':
-        num = 1
-    else:
-        num = int(num)
+    num = int(CARDINALES.get(num, num))
 
     lista_ult_movs = context.browser.esperar_elemento('id_lista_ult_movs')
     ult_movs = lista_ult_movs.find_elements_by_tag_name('tr')
 
     context.test.assertEqual(len(ult_movs), num+1)  # El encabezado y un movimiento
+
+
+@then('veo {num} "{entidades}" en la página')
+def veo_cosas(context, num, entidades):
+    num = CARDINALES.get(num, int(num))
+    entidades = LISTAS_DE_ENTIDADES['entidades']
+
+    elementos = context.browser.esperar_elementos(entidades)
+
+    context.test.assertEqual(len(elementos), num)
 
 
 @then('el campo "{campo}" del formulario tiene fecha de hoy '

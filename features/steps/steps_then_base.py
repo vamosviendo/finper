@@ -62,6 +62,11 @@ def soy_dirigido_a(context, pagina, argumento):
     )
 
 
+@then('soy dirigido a la página principal')
+def soy_dirigido_a(context):
+    context.execute_steps('Entonces soy dirigido a la página "home"')
+
+
 @then('soy dirigido a la página "{pagina}" con los argumentos')
 def soy_dirigido_a(context, pagina):
     pagina = espacios_a_snake(pagina)

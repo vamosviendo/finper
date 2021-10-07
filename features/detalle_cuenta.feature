@@ -6,7 +6,8 @@ Característica: detalle_cuenta
     y los movimientos relacionados con ella o con sus subcuentas
 
     Escenario: Mostrar saldo, subcuentas y movimientos en vista de detalle
-        Dadas 2 cuentas con los siguientes valores:
+        Dado un titular
+        Y 2 cuentas con los siguientes valores:
             | nombre   | slug | saldo |
             | Efectivo | e    | 100   |
             | Banco    | b    | 300   |

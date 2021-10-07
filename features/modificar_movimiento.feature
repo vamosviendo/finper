@@ -10,7 +10,8 @@ Característica: Modificar movimiento
             opciones para cambiarla.
 
 Escenario: Modificar movimiento
-    Dada una cuenta
+    Dado un titular
+    Y una cuenta
         Y un movimiento con los siguientes valores:
             | concepto | importe | cta_entrada | cta_salida |
             | aSaldo   | 200     | e           |            |
@@ -23,7 +24,8 @@ Escenario: Modificar movimiento
 
 
 Escenario: Modificar importe o cuentas de movimiento
-    Dadas 2 cuentas con los siguientes valores:
+    Dado un titular
+    Y 2 cuentas con los siguientes valores:
         | nombre         | slug |
         | Aefectivo      | a    |
         | Caja de ahorro | b    |
@@ -47,7 +49,8 @@ Escenario: Modificar importe o cuentas de movimiento
 
 
 Escenario: Se modifica movimiento con cuenta acumulativa
-    Dadas 2 cuentas con los siguientes valores:
+    Dado un titular
+    Y 2 cuentas con los siguientes valores:
         | nombre         | slug |
         | cta 1 efectivo | c1e  |
         | cta 2 banco    | c2b  |

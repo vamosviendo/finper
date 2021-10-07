@@ -6,15 +6,8 @@
 """
 from behave import given
 
-from diario.models import Cuenta, Movimiento
+from diario.models import Cuenta, Movimiento, Titular
 from helpers import table_to_str
-
-
-@given('{n} cuentas con los siguientes valores')
-def hay_n_cuentas(context, n):
-    for fila in context.table:
-        Cuenta.crear(
-            fila['nombre'], fila['slug'], saldo=fila.get('saldo', 0.0))
 
 
 @given('{n} movimientos con los siguientes valores')
@@ -82,11 +75,45 @@ def hay_un_error_en_el_saldo(context, cantidad, nombre):
     context.test.assertNotEqual(cta.saldo, cta.total_movs())
 
 
+@given('{n} cuentas con los siguientes valores')
+def hay_n_cuentas(context, n):
+    for fila in context.table:
+        Cuenta.crear(
+            fila['nombre'], fila['slug'], saldo=fila.get('saldo', 0.0))
+
+
 @given('una cuenta con los siguientes valores')
 def hay_una_cuenta(context):
     context.execute_steps(
         'Dadas 1 cuentas con los siguientes valores\n ' +
         table_to_str(context.table)
+    )
+
+
+@given('{n} titulares con los siguientes valores')
+def hay_n_titulares(context, n):
+    for fila in context.table:
+        Titular.crear(
+            titname=fila['titname'],
+            nombre=fila.get('nombre') or fila['titname']
+        )
+
+
+@given('un titular con los siguientes valores')
+def hay_un_titular(context):
+    context.execute_steps(
+        'Dados 1 titulares con los siguientes valores\n' +
+        table_to_str(context.table)
+    )
+
+
+@given('un titular')
+def hay_un_titular(context):
+    context.execute_steps(
+        """Dado un titular con los siguientes valores:
+               | titname | nombre     |
+               | tito    | Tito Gómez |
+        """
     )
 
 
