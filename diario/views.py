@@ -169,6 +169,11 @@ class TitularNuevoView(CreateView):
     success_url = '/'
 
 
+class TitDetalleView(DetailView):
+    model = Titular
+    template_name = 'diario/tit_detalle.html'
+
+
 class CorregirSaldo(TemplateView):
     template_name = 'diario/corregir_saldo.html'
 

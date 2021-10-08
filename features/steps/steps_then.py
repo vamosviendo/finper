@@ -86,7 +86,7 @@ def cuenta_no_esta_en_grilla(context, nombre):
 
 @then('veo {x} subcuentas en la página {cuenta}')
 def detalle_cuenta_tiene_subcuentas(context, cuenta, x):
-    nombre_cta_main = context.browser.esperar_elemento('id_header_saldo_pag')
+    nombre_cta_main = context.browser.esperar_elemento('id_div_titulo_pag')
 
     context.test.assertEqual(
         nombre_cta_main.text, cuenta.lower(),

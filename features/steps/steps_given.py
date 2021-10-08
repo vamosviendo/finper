@@ -117,6 +117,17 @@ def hay_un_titular(context):
     )
 
 
+@given('dos titulares')
+def hay_dos_titulares(context):
+    context.execute_steps(
+        """Dados 2 titulares con los siguientes valores:
+            | titname | nombre      |
+            | tito    | Tito Gómez  |
+            | juan    | Juan Juánez |
+        """
+    )
+
+
 @given('una cuenta')
 def hay_una_cuenta(context):
     context.execute_steps(

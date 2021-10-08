@@ -49,6 +49,11 @@ def cliquear_en(context):
     )
 
 
+@when('cliqueo en el link de texto "{texto}"')
+def cliquear_en(context, texto):
+    context.browser.esperar_elemento(texto, By.LINK_TEXT).click()
+
+
 @when('cliqueo en la opción "{opcion}" del {orden} menú de {tipo} "{menu}"')
 def cliquear_en_opcion(context, opcion, orden, tipo, menu):
     tipo = "class" if tipo == "clase" else tipo

@@ -10,15 +10,14 @@ Característica: Ver titulares
 Escenario: Ver cuentas de un titular
     Dados dos titulares
     Y tres cuentas con los siguientes valores:
-        | tabla |
-    Y las cuentas 1 y 3 pertenecientes al titular 1
-    Y la cuenta 2 perteneciente al titular 2
-    Cuando voy a la página principal
-    Entonces veo un menú de titulares
-    Y veo que los dos titulares forman parte de esa lista
+        | nombre       | slug | titular | saldo |
+        | cta1efectivo | c1e  | tito    |       |
+        | cta2banco    | c2b  | juan    |       |
+        | cta3credito  | c3c  | tito    |       |
 
-    Cuando cliqueo en el titular 1
-    Entonces veo que en el título de la página está el nombre del titular
+    Cuando voy a la página principal
+    Y cliqueo en el titular "Tito Gómez"
+    Entonces veo un "div" de id "titulo_pag" con texto "Tito Gómez"
     Y veo que entre las cuentas de la página aparecen las cuentas 1 y 3
     Y veo que entre las cuentas de la página no aparece la cuenta 2
     Y veo que el saldo general de la página es la suma de los de las cuentas 1 y 3

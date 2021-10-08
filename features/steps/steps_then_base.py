@@ -98,6 +98,17 @@ def veo_mensaje_de_error(context, mensaje):
     context.test.assertIn(mensaje, errores)
 
 
+@then('veo un "{tag}" de {tipo} "{nombre}" con texto "{texto}"')
+def elemento_tiene_texto(context, tag, tipo, nombre, texto):
+    context.execute_steps(
+        f'Entonces veo un "{tag}" de {tipo} "{nombre}"'
+    )
+    context.test.assertEqual(
+        tomar_atributo(context, f'{tipo}_{tag}_{nombre}').text,
+        texto
+    )
+
+
 @then('veo un "{tag}" de {tipo} "{nombre}"')
 def elemento_aparece(context, tag, tipo, nombre):
     by = BYS.get(tipo, tipo)

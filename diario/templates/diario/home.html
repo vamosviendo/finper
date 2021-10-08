@@ -7,7 +7,7 @@
 <nav id="id_nav_titulares">
   {% for tit in titulares %}
   <div class="class_div_titular">
-    <a href="#" class="class_link_titular">{{ tit.nombre }}</a>
+    <a href="{% url 'tit_detalle' tit.pk %}" class="class_link_titular">{{ tit.nombre }}</a>
   </div>
   {% endfor %}
   <a href="{% url 'tit_nuevo' %}" id="id_link_titular_nuevo"

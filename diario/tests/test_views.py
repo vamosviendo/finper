@@ -30,6 +30,14 @@ class TestTitularNuevo(TestCase):
         self.assertRedirects(response, reverse('home'))
 
 
+class TestTitularDetalle(TestCase):
+
+    def test_usa_template_tit_detalle(self):
+        tit = Titular.crear(titname="tito", nombre="Tito Gómez")
+        response = self.client.get(reverse('tit_detalle', args=[tit.pk]))
+        self.assertTemplateUsed(response, 'diario/tit_detalle.html')
+
+
 class TestHomePage(TestCase):
 
     def setUp(self):

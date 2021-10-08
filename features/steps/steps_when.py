@@ -17,6 +17,16 @@ from diario.models import Cuenta, Movimiento
 from utils.archivos import fijar_mtime
 
 
+# ACCIONES DE TITULAR
+
+@when('cliqueo en el titular "{nombre}"')
+def cliquear_en_titular(context, nombre):
+    context.execute_steps(f'''
+        Entonces veo un "section" de id "titulares"
+        Cuando cliqueo en el link de texto "{nombre}"
+    ''')
+
+
 # ACCIONES DE CUENTA
 
 @when('agrego una cuenta con nombre "{nombre}" y slug "{slug}"')
@@ -41,10 +51,9 @@ def agregar_cuenta(context):
 @when('entro en la cuenta "{nombre}"')
 def entrar_en_cuenta(context, nombre):
     nombre = nombre.lower()
-    slug = Cuenta.tomar(nombre=nombre).slug
     context.browser.esperar_elemento(nombre, By.LINK_TEXT).click()
     context.test.assertEqual(
-        context.browser.esperar_elemento('id_header_saldo_pag',).text,
+        context.browser.esperar_elemento('id_div_titulo_pag',).text,
         nombre
     )
 
