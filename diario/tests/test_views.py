@@ -37,6 +37,19 @@ class TestTitularDetalle(TestCase):
         response = self.client.get(reverse('tit_detalle', args=[tit.pk]))
         self.assertTemplateUsed(response, 'diario/tit_detalle.html')
 
+    def test_pasa_cuentas_del_titular_a_la_pagina(self):
+        tit = Titular.crear(titname='tito', nombre='Tito Gómez')
+        cuenta1 = Cuenta.crear(nombre='cuenta1', slug='cta1', titular=tit)
+        cuenta2 = Cuenta.crear(nombre='cuenta2', slug='cta2', titular=tit)
+        cuenta3 = Cuenta.crear(nombre='cuenta3', slug='cta3')
+
+        response = self.client.get(reverse('tit_detalle', args=[tit.pk]))
+
+        self.assertEqual(
+            list(response.context['subcuentas']),
+            [cuenta1, cuenta2]
+        )
+
 
 class TestHomePage(TestCase):
 

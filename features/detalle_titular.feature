@@ -1,6 +1,6 @@
 # language: es
 
-Característica: Ver titulares
+Característica: Detalles titular
     Quiero poder ver las cuentas que pertenecen a un titular determinado
     en una página propia.
     Quiero que todas las cuentas de un titular sumen al saldo de ese titular, 
@@ -18,6 +18,7 @@ Escenario: Ver cuentas de un titular
     Cuando voy a la página principal
     Y cliqueo en el titular "Tito Gómez"
     Entonces veo un "div" de id "titulo_pag" con texto "Tito Gómez"
-    Y veo que entre las cuentas de la página aparecen las cuentas 1 y 3
-    Y veo que entre las cuentas de la página no aparece la cuenta 2
+    Y veo una cuenta en la grilla con nombre "cta1efectivo"
+    Y veo una cuenta en la grilla con nombre "cta3credito"
+    Y no veo una cuenta "cta2banco" en la grilla
     Y veo que el saldo general de la página es la suma de los de las cuentas 1 y 3

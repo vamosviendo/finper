@@ -79,7 +79,10 @@ def hay_un_error_en_el_saldo(context, cantidad, nombre):
 def hay_n_cuentas(context, n):
     for fila in context.table:
         Cuenta.crear(
-            fila['nombre'], fila['slug'], saldo=fila.get('saldo', 0.0))
+            fila['nombre'], fila['slug'],
+            titular=Titular.tomar_o_nada(titname=fila.get('titular')),
+            saldo=fila.get('saldo', 0.0)
+        )
 
 
 @given('una cuenta con los siguientes valores')

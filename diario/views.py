@@ -53,10 +53,11 @@ class CtaDetalleView(DetailView):
         context = super().get_context_data(**kwargs)
         cuenta = self.object.como_subclase()
 
-        context['subcuentas'] = cuenta.subcuentas.all() \
-            if cuenta.es_acumulativa \
-            else []
-        context['movimientos'] = cuenta.movs()
+        context.update({
+            'subcuentas': cuenta.subcuentas.all() if cuenta.es_acumulativa
+                                                  else [],
+            'movimientos': cuenta.movs(),
+        })
 
         return context
 
@@ -172,6 +173,13 @@ class TitularNuevoView(CreateView):
 class TitDetalleView(DetailView):
     model = Titular
     template_name = 'diario/tit_detalle.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'subcuentas': self.object.cuentas.all(),
+        })
+        return context
 
 
 class CorregirSaldo(TemplateView):
