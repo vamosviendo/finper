@@ -1,10 +1,15 @@
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
-from diario.models import Titular
+from diario.models import Titular, CuentaInteractiva
+from diario.settings_app import TITULAR_PRINCIPAL
 
 
 class TestModelTitular(TestCase):
+
+    def setUp(self):
+        for tit in Titular.todes():
+            tit.delete()
 
     def test_guarda_y_recupera_titulares(self):
         titular = Titular()
@@ -37,3 +42,37 @@ class TestModelTitular(TestCase):
         tit = Titular.tomar(titname='juan')
 
         self.assertEqual(tit.nombre, 'juan')
+
+    def test_se_relaciona_con_cuentas(self):
+        titular = Titular.crear(titname='juan')
+        cuenta = CuentaInteractiva(nombre='cuenta', slug='cta')
+        cuenta.titular = titular
+        cuenta.full_clean()
+        cuenta.save()
+
+        self.assertIn(cuenta, titular.cuentas.all())
+
+
+class TestMetodoPorDefecto(TestCase):
+
+    def setUp(self):
+        for tit in Titular.todes():
+            tit.delete()
+
+    def test_devuelve_pk_de_titular_principal(self):
+        titular_principal = Titular.crear(
+            titname=TITULAR_PRINCIPAL['titname'],
+            nombre=TITULAR_PRINCIPAL['nombre']
+        )
+        self.assertEqual(
+            Titular.por_defecto(),
+            titular_principal.pk
+        )
+
+    def test_crea_titular_principal_si_no_existe(self):
+        pk_titular_principal = Titular.por_defecto()
+        self.assertEqual(Titular.cantidad(), 1)
+        self.assertEqual(
+            Titular.primere(),
+            Titular.tomar(pk=pk_titular_principal)
+        )

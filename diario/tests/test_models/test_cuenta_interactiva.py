@@ -5,11 +5,35 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from diario.models import \
-    Cuenta, Movimiento, CuentaInteractiva, CuentaAcumulativa
+    Cuenta, Movimiento, CuentaInteractiva, CuentaAcumulativa, Titular
+from diario.settings_app import TITULAR_PRINCIPAL
 from utils.errors import ErrorDeSuma, ErrorMovimientoPosteriorAConversion
 
 
-class TestModelCuentaCrear(TestCase):
+class TestModelCuentaInteractiva(TestCase):
+
+    def test_se_relaciona_con_titular(self):
+        tit = Titular.crear(titname='tito', nombre='Tito Gómez')
+        cuenta = CuentaInteractiva(nombre='cuenta', slug='cta')
+        cuenta.titular = tit
+        cuenta.full_clean()
+        cuenta.save()
+
+        self.assertEqual(cuenta.titular, tit)
+
+    def test_toma_titular_por_defecto(self):
+        cuenta = CuentaInteractiva(nombre='cuenta', slug='cta')
+
+        cuenta.full_clean()
+        cuenta.save()
+
+        self.assertEqual(
+            cuenta.titular,
+            Titular.tomar(titname=TITULAR_PRINCIPAL['titname'])
+        )
+
+
+class TestModelCuentaInteractivaCrear(TestCase):
 
     def test_genera_movimiento_inicial_si_se_pasa_argumento_saldo(self):
         cuenta = Cuenta.crear(nombre='Efectivo', slug='e', saldo=155)

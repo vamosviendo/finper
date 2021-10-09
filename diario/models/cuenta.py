@@ -7,6 +7,7 @@ from django.db import models
 from django.db.models import Sum
 from django.urls import reverse
 
+from diario.models.titular import Titular
 from diario.models.movimiento import Movimiento
 from utils import errors
 from vvmodel.models import PolymorphModel
@@ -142,6 +143,11 @@ class Cuenta(PolymorphModel):
 
 
 class CuentaInteractiva(Cuenta):
+    titular = models.ForeignKey('diario.Titular',
+                                related_name='cuentas',
+                                on_delete=models.CASCADE,
+                                null=True, blank=True,
+                                default=Titular.por_defecto)
 
     @classmethod
     def crear(cls, nombre, slug, cta_madre=None, saldo=None, **kwargs):
