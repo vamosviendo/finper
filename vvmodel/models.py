@@ -61,11 +61,15 @@ class MiModel(models.Model):
     def get_lower_class_name(cls):
         return cls.get_class_name().lower()
 
-    def tomar_de_bd(self):
+    @classmethod
+    def tomar_o_nada(cls, **kwargs):
         try:
-            return self.get_class().tomar(pk=self.pk)
-        except self.get_class().DoesNotExist:
+            return cls.tomar(**kwargs)
+        except cls.DoesNotExist:
             return None
+
+    def tomar_de_bd(self):
+        return self.get_class().tomar_o_nada(pk=self.pk)
 
     def update_from(self, objeto, commit=True):
         for campo in objeto.get_class()._meta.fields:

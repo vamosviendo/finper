@@ -208,3 +208,18 @@ class TestTomarDeBd(TestCase):
     def test_si_no_hay_version_guardada_de_un_objeto_devuelve_none(self):
         objeto = MiTestRelatedModel(nombre='objeto nuevo')
         self.assertIsNone(objeto.tomar_de_bd())
+
+
+class TestTomarONada(TestCase):
+
+    def test_devuelve_objeto_si_existe(self):
+        objeto = MiTestRelatedModel.crear(nombre='objeto existente')
+        self.assertEqual(
+            MiTestRelatedModel.tomar_o_nada(nombre='objeto existente'),
+            objeto
+        )
+
+    def test_devuelve_none_si_objeto_no_existe(self):
+        self.assertIsNone(
+            MiTestRelatedModel.tomar_o_nada(nombre='objeto inexistente')
+        )
