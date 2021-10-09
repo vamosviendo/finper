@@ -5,6 +5,7 @@ vfinper
 __pycache__
 *.pyc
 .idea
+.swp
 .tags
 
 .project
