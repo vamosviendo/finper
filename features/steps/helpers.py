@@ -1,6 +1,11 @@
 # TODO: pasar funciones de fts.base a features.steps.helpers
 #       O mejor aún, usar un directorio vvselenium como en [proyecto]
+from django.contrib.auth import get_user_model
+
 from fts.base import esperar
+
+
+User = get_user_model()
 
 
 def table_to_str(tabla):
@@ -46,6 +51,14 @@ def fijar_atributo(objeto, atributo, valor):
 def espera(funcion):
     """ Espera el tiempo por default y ejecuta función."""
     return funcion()
+
+
+def crear_usuario_base(username, password):
+    try:
+        user = User.objects.get(username=username)
+    except User.DoesNotExist:
+        user = User.objects.create_user(username=username, password=password)
+    return user.username
 
 
 def overrides(step_text, step_keyword='step'):

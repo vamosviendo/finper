@@ -31,10 +31,10 @@ def hay_un_elemento(context, atributo, nombre):
 @given('un usuario identificado')
 def usuario_esta_identificado(context):
     """ Ingresa con nombre de usuario y password"""
-    context.execute_steps('Cuando voy a la página "login"')
-    context.browser.completar('id_username', context.test_username)
-    context.browser.completar('id_password', context.test_password)
-    context.browser.pulsar('id_btn_login')
+    context.execute_steps('''
+        Cuando voy a la página "login"
+        Y completo y envío el formulario de login
+    ''')
 
 
 @given('un usuario no identificado')

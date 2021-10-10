@@ -100,13 +100,19 @@ def veo_mensaje_de_error(context, mensaje):
 
 @then('veo un "{tag}" de {tipo} "{nombre}" con texto "{texto}"')
 def elemento_tiene_texto(context, tag, tipo, nombre, texto):
+    tipo = "class" if tipo == "clase" else tipo
     context.execute_steps(
-        f'Entonces veo un "{tag}" de {tipo} "{nombre}"'
+        f'Entonces veo varios "{tag}" de {tipo} "{nombre}"'
     )
-    context.test.assertEqual(
-        tomar_atributo(context, f'{tipo}_{tag}_{nombre}').text,
-        texto
-    )
+    elementos = tomar_atributo(context, f'{tipo}_{tag}_{nombre}')
+
+    try:
+        next(x for x in elementos if x.text == texto)
+    except StopIteration:
+        raise AssertionError(
+            f'No se encontró un elemento "{tipo}_{tag}_{nombre}" '
+            f'con texto "{texto}"'
+        )
 
 
 @then('veo un "{tag}" de {tipo} "{nombre}"')
@@ -145,6 +151,32 @@ def veo_un_menu(context, tipo, menu):
 @then('veo un menú "{menu}"')
 def veo_un_menu(context, menu):
     context.execute_steps(f'Entonces veo un menú de id "{menu}"')
+
+
+@then('veo una clase "{clase}"')
+def veo_una_clase(context, clase):
+    fijar_atributo(context, clase, context.browser.esperar_elementos(clase))
+
+
+@then('veo un tag "{tag}" dentro de una clase "{clase}"')
+def veo_un_tag_en_una_clase(context, tag, clase):
+    elementos = context.browser.esperar_elementos(clase)
+
+    for elemento in elementos:
+        try:
+            fijar_atributo(
+                context,
+                f'{clase}-{tag}',
+                elemento.find_element_by_tag_name(tag)
+            )
+            return
+        except NoSuchElementException:
+            pass
+
+    raise NoSuchElementException(
+        f'No se encontró un tag "{tag}" '
+        f'dentro de ningún elemento de clase "{clase}"'
+    )
 
 
 @then('veo que el elemento "{elemento}" '
@@ -212,6 +244,12 @@ def veo_que_elemento_incluye(context, elemento, tantos, tag, clase):
     contenidos = tomar_atributo(context, f'class_{tag}_{clase}')
 
     context.test.assertEqual(len(contenidos), int(tantos))
+
+
+@then('veo que el elemento "{elemento}" incluye el texto "{texto}"')
+def veo_que_elemento_incluye_texto(context, elemento, texto):
+    contenedor = tomar_atributo(context, elemento)
+    context.test.assertIn(texto, contenedor.text)
 
 
 @then('veo que el elemento "{elemento}" incluye {tantos} "{tag}"')
@@ -305,6 +343,21 @@ def mismo_tamanio(context, comparado, patron):
         tomar_atributo(context, comparado).size,
         tomar_atributo(context, patron).size
     )
+
+
+# LOGIN / LOGOUT
+@then('se inicia una sesión con mi nombre')
+def inicia_sesion(context):
+    div = context.browser.esperar_elemento('id_div_login')
+    context.test.assertIn(
+        context.test_username, div.get_attribute('innerHTML'))
+
+
+@then('se cierra la sesión')
+def cierra_sesion(context):
+    div = context.browser.esperar_elemento('id_div_login')
+    context.test.assertNotIn(
+        context.test_username, div.get_attribute('innerHTML'))
 
 
 # MISC

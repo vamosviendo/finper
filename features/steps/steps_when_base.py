@@ -128,6 +128,27 @@ def cliquear_en(context, tag, clase, atributo, valor):
     next(x for x in elementos if x.get_attribute(atributo) == valor).click()
 
 
+@when('completo y envío el formulario de login')
+def ingresar_nombre_y_password(context):
+    context.execute_steps(f'''
+        Cuando ingreso el nombre de usuario
+        Y ingreso el password
+        Y cliqueo en el botón de id "id_btn_login"
+    ''')
+
+
+@when('ingreso el nombre de usuario')
+def ingresar_nombre(context):
+    context.execute_steps(
+        f'Cuando escribo "{context.test_username}" en el campo "username"')
+
+
+@when('ingreso el password')
+def ingresar_password(context):
+    context.execute_steps(
+        f'Cuando escribo "{context.test_password}" en el campo "password"')
+
+
 @when('{accion} "{texto}" en el campo "{campo}"') # acción=escribo, selecciono
 def completar_campo(context, accion, texto, campo):
     if accion == 'escribo':
