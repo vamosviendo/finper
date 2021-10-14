@@ -2,7 +2,7 @@ import datetime
 from datetime import date
 from pathlib import Path
 from unittest import skip
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, PropertyMock
 
 from django.http import HttpRequest
 from django.test import TestCase, RequestFactory
@@ -32,23 +32,32 @@ class TestTitularNuevo(TestCase):
 
 class TestTitularDetalle(TestCase):
 
+    def setUp(self):
+        self.tit = Titular.crear(titname='tito', nombre='Tito Gómez')
+
     def test_usa_template_tit_detalle(self):
-        tit = Titular.crear(titname="tito", nombre="Tito Gómez")
-        response = self.client.get(reverse('tit_detalle', args=[tit.pk]))
+        response = self.client.get(reverse('tit_detalle', args=[self.tit.pk]))
         self.assertTemplateUsed(response, 'diario/tit_detalle.html')
 
-    def test_pasa_cuentas_del_titular_a_la_pagina(self):
-        tit = Titular.crear(titname='tito', nombre='Tito Gómez')
-        cuenta1 = Cuenta.crear(nombre='cuenta1', slug='cta1', titular=tit)
-        cuenta2 = Cuenta.crear(nombre='cuenta2', slug='cta2', titular=tit)
+    def test_pasa_cuentas_del_titular_al_template(self):
+        cuenta1 = Cuenta.crear(nombre='cuenta1', slug='cta1', titular=self.tit)
+        cuenta2 = Cuenta.crear(nombre='cuenta2', slug='cta2', titular=self.tit)
         cuenta3 = Cuenta.crear(nombre='cuenta3', slug='cta3')
 
-        response = self.client.get(reverse('tit_detalle', args=[tit.pk]))
+        response = self.client.get(reverse('tit_detalle', args=[self.tit.pk]))
 
         self.assertEqual(
             list(response.context['subcuentas']),
             [cuenta1, cuenta2]
         )
+
+    @patch('diario.models.Titular.patrimonio', new_callable=PropertyMock)
+    def test_pasa_patrimonio_del_titular_al_template(self, mock_patrimonio):
+        mock_patrimonio.return_value = 250
+
+        response = self.client.get(reverse('tit_detalle', args=[self.tit.pk]))
+
+        self.assertEqual(response.context['saldo_pag'], 250)
 
 
 class TestHomePage(TestCase):

@@ -53,6 +53,17 @@ class TestModelTitular(TestCase):
         self.assertIn(cuenta, titular.cuentas.all())
 
 
+class TestTitularPatrimonio(TestCase):
+
+    def test_devuelve_suma_de_saldos_de_cuentas_de_titular(self):
+        tit = Titular.crear(titname='Titu')
+        CuentaInteractiva.crear('cuenta1', 'cta1', saldo=500, titular=tit)
+        CuentaInteractiva.crear('cuenta2', 'cta2', saldo=-120, titular=tit)
+        CuentaInteractiva.crear('cuenta_ajena', 'ctaj', saldo=300)
+
+        self.assertEqual(tit.patrimonio, 380)
+
+
 class TestMetodoPorDefecto(TestCase):
 
     def setUp(self):

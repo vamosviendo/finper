@@ -30,7 +30,7 @@ Característica: Recorrido
         Cuando agrego un movimiento con campos
             | nombre      | valor                  |
             | concepto    | Carga de saldo inicial |
-            | cta_entrada | banco               |
+            | cta_entrada | banco                  |
             | importe     | 50.00                  |
         Entonces veo un movimiento en la página
         Y veo que el saldo de Banco es 50 pesos
