@@ -1,6 +1,8 @@
 from django import forms
+from django.core.exceptions import ValidationError
 
 from diario.models import CuentaInteractiva, Movimiento
+from utils.listas import hay_mas_de_un_none_en
 
 
 def agregar_clase(campo, clase):
@@ -25,7 +27,7 @@ class FormCuenta(forms.ModelForm):
 class FormSubcuenta(forms.Form):
     nombre = forms.CharField()
     slug = forms.CharField()
-    saldo = forms.FloatField()
+    saldo = forms.FloatField(required=False)
 
 
 CuentaFormset = forms.formset_factory(form=FormSubcuenta, extra=2)
@@ -37,9 +39,17 @@ class FormSubcuentas(CuentaFormset):
         self.cuenta = kwargs.pop('cuenta')
         super().__init__(*args, **kwargs)
 
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        saldos = [dicc['saldo'] for dicc in cleaned_data]
+        if hay_mas_de_un_none_en(saldos):
+            raise ValidationError('Sólo se permite una cuenta sin saldo')
+
+        return cleaned_data
+
     def save(self):
         cta = CuentaInteractiva.objects.get(slug=self.cuenta)
-        cta.dividir_entre(*self.cleaned_data)
+        cta = cta.dividir_y_actualizar(*self.cleaned_data)
         return cta
 
 

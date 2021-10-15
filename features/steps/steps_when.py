@@ -63,7 +63,8 @@ def completar_form_dividir_cuenta(context):
     for ind, fila in enumerate(context.table):
         context.browser.completar(f'id_form-{ind}-nombre', fila['nombre'])
         context.browser.completar(f'id_form-{ind}-slug', fila['slug'])
-        context.browser.completar(f'id_form-{ind}-saldo', fila['saldo'])
+        if fila.get('saldo') is not None:
+            context.browser.completar(f'id_form-{ind}-saldo', fila['saldo'])
     context.browser.pulsar()
 
 

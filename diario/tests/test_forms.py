@@ -16,7 +16,6 @@ class TestFormCuenta(TestCase):
         self.assertFalse(formcta.is_valid())
 
 
-@patch('diario.forms.CuentaInteractiva.dividir_entre')
 class TestFormSubcuentas(TestCase):
 
     def setUp(self):
@@ -38,6 +37,7 @@ class TestFormSubcuentas(TestCase):
             cuenta=self.cta.slug,
         )
 
+    @patch('diario.forms.CuentaInteractiva.dividir_entre')
     def test_save_divide_cuenta(self, mockCuenta_dividir):
         self.form.is_valid()
         self.form.save()
@@ -46,9 +46,18 @@ class TestFormSubcuentas(TestCase):
             {'nombre': 'Cajón de arriba', 'slug': 'ecaj', 'saldo': 200.0},
         )
 
-    def test_save_devuelve_cuenta_madre(self, mockCuenta_dividir):
+    def test_save_devuelve_cuenta_madre(self):
         cuenta = self.form.save()
-        self.assertEqual(cuenta, self.cta)
+        self.assertEqual(cuenta, Cuenta.tomar(pk=self.cta.pk))
+
+    def test_acepta_un_campo_saldo_vacio(self):
+        self.form.data.pop('form-1-saldo')
+        self.assertTrue(self.form.is_valid())
+
+    def test_no_acepta_mas_de_un_campo_saldo_vacio(self):
+        self.form.data.pop('form-0-saldo')
+        self.form.data.pop('form-1-saldo')
+        self.assertFalse(self.form.is_valid())
 
 
 class TestFormMovimiento(TestCase):

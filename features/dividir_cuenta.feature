@@ -18,7 +18,7 @@ Escenario: Dividir una cuenta en subcuentas
     Y completo el form de dividir cuenta con estos valores:
         | nombre          | slug | saldo |
         | Cajón de arriba | ecar | 150   |
-        | Billetera       | ebil | 50    |
+        | Billetera       | ebil |       |
 
     Entonces veo que el saldo de la página es 200 pesos
     Y veo 2 subcuentas en la página Efectivo
