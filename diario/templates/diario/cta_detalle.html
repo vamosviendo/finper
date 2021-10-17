@@ -1,6 +1,10 @@
 {% extends 'diario/base_contenido.html' %}
 {% load static %}
 
+{% block titulo_titulares %}
+{% if cuenta.es_interactiva %}Titular{% else %}Titulares{% endif %}
+{% endblock titulo_titulares %}
+
 {% block titular_nuevo %}
 {% endblock titular_nuevo %}
 

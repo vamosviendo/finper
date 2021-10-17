@@ -10,6 +10,7 @@ from django.urls import reverse
 from diario.models.titular import Titular
 from diario.models.movimiento import Movimiento
 from utils import errors
+from utils.listas import remove_duplicates
 from vvmodel.models import PolymorphModel
 
 
@@ -343,10 +344,23 @@ class CuentaAcumulativa(Cuenta):
 
     fecha_conversion = models.DateField()
 
+    @property
+    def titulares(self):
+        titulares = list()
+        subcuentas = list(self.subcuentas.all())
+
+        for subcuenta in subcuentas:
+            if subcuenta.es_interactiva:
+                titulares.append(subcuenta.titular)
+            else:
+                titulares += subcuenta.titulares
+
+        return remove_duplicates(titulares)
+
     def arbol_de_subcuentas(self):
         todas_las_subcuentas = set(self.subcuentas.all())
         for cuenta in self.subcuentas.all():
-            if isinstance(cuenta, CuentaAcumulativa):
+            if cuenta.es_acumulativa:
                 todas_las_subcuentas.update(cuenta.arbol_de_subcuentas())
         return todas_las_subcuentas
 

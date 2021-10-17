@@ -8,7 +8,8 @@ from django.views.generic import \
     DetailView, CreateView, UpdateView, DeleteView, TemplateView
 
 from diario.forms import FormCuenta, FormMovimiento, FormSubcuentas
-from diario.models import Cuenta, CuentaInteractiva, Movimiento, Titular
+from diario.models import Cuenta, CuentaInteractiva, CuentaAcumulativa, \
+    Movimiento, Titular
 from diario.utils import verificar_saldos
 
 
@@ -57,7 +58,8 @@ class CtaDetalleView(DetailView):
             'subcuentas': cuenta.subcuentas.all() if cuenta.es_acumulativa
                                                   else [],
             'movimientos': cuenta.movs(),
-            'titulares': [cuenta.titular] if cuenta.es_interactiva else None,
+            'titulares': cuenta.titulares if cuenta.es_acumulativa
+                                          else [cuenta.titular],
         })
 
         return context

@@ -6,3 +6,8 @@ def hay_mas_de_un_none_en(lista):
             nones += 1
             if nones > 1:
                 return True
+
+
+def remove_duplicates(lista):
+    """ Recibe una lista y la devuelve sin elementos duplicados."""
+    return list(set(lista))

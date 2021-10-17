@@ -4,6 +4,7 @@
 {% block contenido %}
 <section id="id_section_titulares">
   {% block menu_titulares %}
+  <div>{% block titulo_titulares %}Titulares{% endblock titulo_titulares %}</div>
   <nav id="id_nav_titulares">
     {% for tit in titulares %}
     <span class="class_span_titular">

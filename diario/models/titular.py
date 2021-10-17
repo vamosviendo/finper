@@ -17,6 +17,9 @@ class Titular(MiModel):
         self.nombre = self.nombre or self.titname
         super().full_clean(exclude=None, validate_unique=True)
 
+    def __str__(self):
+        return self.nombre
+
     @classmethod
     def por_defecto(cls):
         titular, created = cls.objects.get_or_create(

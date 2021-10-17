@@ -51,7 +51,7 @@ class TestTitularDetalle(TestCase):
             [cuenta1, cuenta2]
         )
 
-    @patch('diario.models.Titular.patrimonio', new_callable=PropertyMock)
+    @patch('diario.views.Titular.patrimonio', new_callable=PropertyMock)
     def test_pasa_patrimonio_del_titular_al_template(self, mock_patrimonio):
         mock_patrimonio.return_value = 250
 
@@ -287,6 +287,21 @@ class TestCtaDetalle(TestCase):
         response = self.client.get(
             reverse('cta_detalle', args=[self.cta.slug]))
         self.assertEqual(response.context['titulares'], [self.cta.titular])
+
+    @patch('diario.views.CuentaAcumulativa.titulares', new_callable=PropertyMock)
+    def test_cuenta_acumulativa_pasa_titulares_de_subcuentas_a_template(
+            self, falso_titulares):
+        tit1 = Titular.crear(titname='juan', nombre='Juan Gómez')
+        tit2 = Titular.crear(titname='tita', nombre='Tita Pérez')
+
+        self.cta.dividir_entre(['ea', 'ea', 40], ['eb', 'eb'])
+        self.cta = Cuenta.tomar(slug=self.cta.slug)
+
+        falso_titulares.return_value = [tit1, tit2]
+        response = self.client.get(
+            reverse('cta_detalle', args=[self.cta.slug]))
+        falso_titulares.assert_called_once()
+        self.assertEqual(response.context['titulares'], [tit1, tit2])
 
     def test_cuenta_interactiva_pasa_lista_vacia_en_subcuentas(self):
         response = self.client.get(
@@ -1008,7 +1023,7 @@ class TestModificarSaldo(TestCase):
         self.client.get(self.full_url)
         mock_cta_corregir_saldo.assert_called_once()
 
-    @patch('diario.models.CuentaAcumulativa.corregir_saldo')
+    @patch('diario.views.CuentaAcumulativa.corregir_saldo')
     def test_corrige_saldo_de_cuenta_acumulativa(self, mock_cta_corregir_saldo):
         self.cta1.dividir_entre(['sc1', 'sc1', 0], ['sc2', 'sc2'])
         self.client.get(self.full_url)

@@ -2,9 +2,9 @@ from datetime import date
 
 from django.test import TestCase
 
-from diario.models import Cuenta, Movimiento
-from utils.errors import \
-    ErrorCuentaEsAcumulativa, CUENTA_ACUMULATIVA_EN_MOVIMIENTO
+from diario.models import Cuenta, Movimiento, Titular
+from utils.errors import ErrorCuentaEsAcumulativa, \
+    CUENTA_ACUMULATIVA_EN_MOVIMIENTO
 from utils.helpers_tests import dividir_en_dos_subcuentas
 
 
@@ -29,6 +29,56 @@ class TestCuentaAcumulativa(TestCase):
             ['subi1', 'si1', 0], ['subi2', 'si2']
         )
         self.assertEqual(cta_acum.fecha_conversion, fecha)
+
+
+class TestTitulares(TestCase):
+
+    def setUp(self):
+        self.cta_acum = Cuenta.crear('cta acum', 'ca')
+        Movimiento.crear('entrada', 200, cta_entrada=self.cta_acum)
+        Movimiento.crear('salida', 100, cta_salida=self.cta_acum)
+        self.cta_acum = dividir_en_dos_subcuentas(self.cta_acum, saldo=100)
+        self.subcuentas = list(self.cta_acum.subcuentas.all())
+        self.tit1 = Titular.crear(titname='titi', nombre='Titi Títez')
+        self.tit2 = Titular.crear(titname='joji', nombre='Joji Jújez')
+
+    def test_devuelve_lista_de_titulares_de_subcuentas(self):
+        self.subcuentas[0].titular = self.tit1
+        self.subcuentas[0].save()
+        self.subcuentas[1].titular = self.tit2
+        self.subcuentas[1].save()
+
+        self.assertEqual(self.cta_acum.titulares, [self.tit1, self.tit2])
+
+    def test_no_incluye_titulares_repetidos(self):
+        self.cta_acum.agregar_subcuenta(['subcuenta 3', 'sc3'])
+        self.subcuentas.append(Cuenta.tomar(slug='sc3'))
+        self.subcuentas[0].titular = self.tit1
+        self.subcuentas[0].save()
+        self.subcuentas[1].titular = self.tit2
+        self.subcuentas[1].save()
+        self.subcuentas[2].titular = self.tit1
+        self.subcuentas[2].save()
+
+        self.assertEqual(self.cta_acum.titulares, [self.tit1, self.tit2])
+
+    def test_si_subcuenta_es_acumulativa_incluye_titulares_de_subcuenta(self):
+        self.subcuentas[1].titular = self.tit2
+        self.subcuentas[1].save()
+
+        self.subcuentas[0] = self.subcuentas[0].dividir_y_actualizar(
+            ['subsubcuenta 1.1', 'sc11', 50],
+            ['subsubcuenta 1.2', 'sc12']
+        )
+        tit3 = Titular.crear(titname='fufi', nombre='Fufi Fúfez')
+
+        subsubcuentas = list(self.subcuentas[0].subcuentas.all())
+        subsubcuentas[0].titular = self.tit1
+        subsubcuentas[0].save()
+        subsubcuentas[1].titular = tit3
+        subsubcuentas[1].save()
+
+        self.assertEqual(self.cta_acum.titulares, [self.tit1, self.tit2, tit3])
 
 
 class TestAgregarSubcuenta(TestCase):

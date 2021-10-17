@@ -52,6 +52,10 @@ class TestModelTitular(TestCase):
 
         self.assertIn(cuenta, titular.cuentas.all())
 
+    def test_str_devuelve_nombre_titular(self):
+        titular = Titular.crear(titname='juan', nombre='Juan Juanínez')
+        self.assertEqual(str(titular), 'Juan Juanínez')
+
 
 class TestTitularPatrimonio(TestCase):
 
