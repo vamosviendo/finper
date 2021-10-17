@@ -3,19 +3,6 @@
 
 {% block titulo_pag %}Saldo general{% endblock titulo_pag %}
 
-{% block menu_titulares %}
-<nav id="id_nav_titulares">
-  {% for tit in titulares %}
-  <div class="class_div_titular">
-    <a href="{% url 'tit_detalle' tit.pk %}" class="class_link_titular">{{ tit.nombre }}</a>
-  </div>
-  {% endfor %}
-  <a href="{% url 'tit_nuevo' %}" id="id_link_titular_nuevo"
-     class="class_link_titular btn my-3 btn-primary">
-    Titular nuevo
-  </a>
-</nav>
-{% endblock menu_titulares %}
 
 {% block saldo_pag %}{{ saldo_gral|floatformat:2 }}{% endblock saldo_pag %}
 

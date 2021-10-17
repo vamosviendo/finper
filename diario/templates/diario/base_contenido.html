@@ -4,6 +4,20 @@
 {% block contenido %}
 <section id="id_section_titulares">
   {% block menu_titulares %}
+  <nav id="id_nav_titulares">
+    {% for tit in titulares %}
+    <span class="class_span_titular">
+      <a href="{% url 'tit_detalle' tit.pk %}" class="class_link_titular">{{ tit.nombre }}</a>
+      &nbsp;
+    </span>
+    {% endfor %}
+    {% block titular_nuevo %}
+    <a href="{% url 'tit_nuevo' %}" id="id_link_titular_nuevo"
+       class="class_link_titular btn my-3 btn-primary">
+      Titular nuevo
+    </a>
+    {% endblock titular_nuevo %}
+  </nav>
   {% endblock menu_titulares %}
 </section>
 <section id="id_saldos" class="text-center">

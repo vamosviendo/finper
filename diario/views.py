@@ -57,6 +57,7 @@ class CtaDetalleView(DetailView):
             'subcuentas': cuenta.subcuentas.all() if cuenta.es_acumulativa
                                                   else [],
             'movimientos': cuenta.movs(),
+            'titulares': [cuenta.titular] if cuenta.es_interactiva else None,
         })
 
         return context

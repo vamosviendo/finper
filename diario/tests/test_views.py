@@ -283,6 +283,11 @@ class TestCtaDetalle(TestCase):
             list(self.cta.subcuentas.all())
         )
 
+    def test_cuenta_interactiva_pasa_titular_a_template(self):
+        response = self.client.get(
+            reverse('cta_detalle', args=[self.cta.slug]))
+        self.assertEqual(response.context['titulares'], [self.cta.titular])
+
     def test_cuenta_interactiva_pasa_lista_vacia_en_subcuentas(self):
         response = self.client.get(
             reverse('cta_detalle', args=[self.cta.slug])

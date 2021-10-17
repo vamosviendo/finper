@@ -112,6 +112,27 @@ def detalle_muestra_subcuentas_de(context, nombre_cta):
     )
 
 
+@then('veo el titular de "{nombre_cta}"')
+def veo_titular_de(context, nombre_cta):
+    cta = Cuenta.tomar(nombre=nombre_cta.lower())
+    titular_pag = context.browser.esperar_elemento(
+        'class_span_titular', By.CLASS_NAME).text.strip()
+
+    context.test.assertEqual(titular_pag, cta.titular.nombre)
+
+
+@then('veo los titulares de las subcuentas de "{nombre_cta}"')
+def veo_titulares_de(context, nombre_cta):
+    cta = Cuenta.tomar(nombre=nombre_cta.lower())
+    titulares_pag = [
+        x.text.strip() for x in
+            context.browser.esperar_elementos('class_span_titular')
+    ]
+    titulares_cta = [x.nombre for x in cta.titulares]
+
+    context.test.assertEqual(titulares_pag, titulares_cta)
+
+
 @then('veo que el saldo {tal} es {tantos} pesos')
 def el_saldo_tal_es_tanto(context, tal, tantos):
     # TODO: Refactor
