@@ -77,6 +77,11 @@ def hay_un_error_en_el_saldo(context, cantidad, nombre):
 
 @given('{n} cuentas con los siguientes valores')
 def hay_n_cuentas(context, n):
+    """ Campos: nombre
+                slug
+                saldo (optativo, default: 0)
+                titular (optativo, default: Titular por defecto)
+    """
     for fila in context.table:
         Cuenta.crear(
             fila['nombre'], fila['slug'],
@@ -87,6 +92,11 @@ def hay_n_cuentas(context, n):
 
 @given('una cuenta con los siguientes valores')
 def hay_una_cuenta(context):
+    """ Campos: nombre
+                slug
+                saldo (optativo, default: 0)
+                titular (optativo, default: Titular por defecto)
+    """
     context.execute_steps(
         'Dadas 1 cuentas con los siguientes valores\n ' +
         table_to_str(context.table)

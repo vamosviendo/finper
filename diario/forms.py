@@ -21,7 +21,7 @@ class FormCuenta(forms.ModelForm):
 
     class Meta:
         model = CuentaInteractiva
-        fields = ('nombre', 'slug', )
+        fields = ('nombre', 'slug', 'titular', )
 
 
 class FormSubcuenta(forms.Form):

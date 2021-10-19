@@ -24,6 +24,7 @@ Escenario: Crear cuenta
 
     Cuando escribo "efectivo" en el campo "nombre"
     Y escribo "efe" en el campo "slug"
+    Y selecciono "Tito Gómez" en el campo "titular"
     Y cliqueo en el botón
     Entonces soy dirigido a la página principal
     Y veo una cuenta en la grilla con nombre "efectivo"

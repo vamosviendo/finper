@@ -98,7 +98,15 @@ class CtaElimView(DeleteView):
 
 
 class CtaModView(UpdateView):
-    model = Cuenta
+    model = CuentaInteractiva
+    form_class = FormCuenta
+    template_name = 'diario/cta_form.html'
+    success_url = reverse_lazy('home')
+    context_object_name = 'cta'
+
+
+class CtaAcuModView(UpdateView):
+    model = CuentaAcumulativa
     form_class = FormCuenta
     template_name = 'diario/cta_form.html'
     success_url = reverse_lazy('home')

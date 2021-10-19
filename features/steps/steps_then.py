@@ -121,6 +121,13 @@ def veo_titular_de(context, nombre_cta):
     context.test.assertEqual(titular_pag, cta.titular.nombre)
 
 
+@then('veo que el titular de la cuenta es "{nombre_titular}"')
+def veo_que_titular_es(context, nombre_titular):
+    titular_pag = context.browser.esperar_elemento(
+        'class_span_titular', By.CLASS_NAME).text.strip()
+    context.test.assertEqual(titular_pag, nombre_titular)
+
+
 @then('veo los titulares de las subcuentas de "{nombre_cta}"')
 def veo_titulares_de(context, nombre_cta):
     cta = Cuenta.tomar(nombre=nombre_cta.lower())
@@ -213,6 +220,14 @@ def veo_mensaje_de_saldo_erroneo(context, nombre):
         f'    | nombre |\n| {nombre.lower()} |'
     )
 
+
+@then('soy dirigido a la página "{pag}" de la cuenta "{nombre}"')
+def soy_dirigido_a_pagina_de_cuenta(context, pag, nombre):
+    cuenta = Cuenta.tomar(nombre=nombre).slug
+    context.execute_steps(
+        f'Entonces soy dirigido a la página "{pag}" '
+        f'con el argumento "{cuenta}"'
+    )
 
 # CONSTATACIONES DE MOVIMIENTO
 

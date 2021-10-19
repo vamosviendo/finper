@@ -58,6 +58,13 @@ def entrar_en_cuenta(context, nombre):
     )
 
 
+@when('cliqueo en el botón "{boton}" de la cuenta "{cuenta}"')
+def cliquear_en_boton_cuenta(context, boton, cuenta):
+    cuenta_pag = context.browser.esperar_elemento(
+        f'id_div_cta_{Cuenta.tomar(nombre=cuenta).slug}')
+    cuenta_pag.find_element_by_link_text(boton).click()
+
+
 @when('completo el form de dividir cuenta con estos valores')
 def completar_form_dividir_cuenta(context):
     for ind, fila in enumerate(context.table):
@@ -84,6 +91,7 @@ def agregar_movimiento(context):
     context.browser.pulsar()
 
 
+# TODO refactor con execute_steps voy a la página pag con el argumento arg
 @when('voy a la página "{pag}" del último movimiento')
 def ir_a_pag_ult_mov(context, pag):
     nombre = NOMBRES_URL.get(pag) or pag
@@ -124,3 +132,10 @@ def ir_a_pag_principal(context):
 @when('voy a la página principal sin que haya cambiado el día')
 def ir_a_pag_principal(context):
     context.execute_steps('Cuando voy a la página principal')
+
+
+@when('voy a la página "{pag}" de la cuenta "{coso}"')
+def ir_a_pag_de_coso(context, pag, coso):
+    cuenta = Cuenta.tomar(nombre=coso).slug
+    context.execute_steps(
+        f'Cuando voy a la página "{pag}" con el argumento "{cuenta}"')

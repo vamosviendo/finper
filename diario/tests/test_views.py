@@ -399,20 +399,21 @@ class TestCtaNueva(TestCase):
         self.assertEqual(cuenta_nueva.get_class(), CuentaInteractiva)
 
 
-class TestCtaMod(TestCase):
+class TestCtaModInt(TestCase):
 
     def setUp(self):
         super().setUp()
-        Titular.crear(titname='tito')
+        self.tit = Titular.crear(titname='tito')
         self.cuenta = Cuenta.crear(nombre='Nombre', slug='slug')
 
     def test_usa_template_cta_form(self):
-        response = self.client.get(reverse('cta_mod', args=[self.cuenta.slug]))
+        response = self.client.get(
+            reverse('cta_mod_int', args=[self.cuenta.slug]))
         self.assertTemplateUsed(response, 'diario/cta_form.html')
 
     def test_post_puede_guardar_cambios_en_cuenta(self):
         self.client.post(
-            reverse('cta_mod', args=[self.cuenta.slug]),
+            reverse('cta_mod_int', args=[self.cuenta.slug]),
             data={'nombre': 'Nombro', 'slug': 'Slag'}
         )
         self.cuenta.refresh_from_db()
@@ -421,10 +422,10 @@ class TestCtaMod(TestCase):
             ('nombro', 'slag')
         )
 
-    def test_post_modifica_cuentas_interactivas(self):
+    def test_post_modifica_cuentas_acumulativas(self):
         self.cuenta = dividir_en_dos_subcuentas(self.cuenta)
         self.client.post(
-            reverse('cta_mod', args=[self.cuenta.slug]),
+            reverse('cta_mod_int', args=[self.cuenta.slug]),
             data={'nombre': 'Cuenta', 'slug': 'cta'}
         )
         self.cuenta.refresh_from_db()
@@ -433,9 +434,23 @@ class TestCtaMod(TestCase):
             ('cuenta', 'cta')
         )
 
+    def test_post_permite_cambiar_titular_de_cuenta_interactiva(self):
+        self.client.post(
+            reverse('cta_mod_int', args=[self.cuenta.slug]),
+            data={
+                'nombre': self.cuenta.nombre,
+                'slug': self.cuenta.slug,
+                'titular': self.tit.pk
+            }
+        )
+
+        self.cuenta.refresh_from_db()
+
+        self.assertEqual(self.cuenta.titular, self.tit)
+
     def test_redirige_a_home_despues_de_post(self):
         response = self.client.post(
-            reverse('cta_mod', args=[self.cuenta.slug]),
+            reverse('cta_mod_int', args=[self.cuenta.slug]),
             data={'nombre': 'Nombro', 'slug': 'slag'}
         )
         self.assertRedirects(response, reverse('home'))
@@ -822,14 +837,16 @@ class TestMovMod(TestCase):
     def test_si_cta_entrada_es_acumulativa_campo_esta_deshabilitado(self):
         self.cuenta = dividir_en_dos_subcuentas(self.cuenta)
         response = self.client.get(reverse('mov_mod', args=[self.mov.pk]))
-        self.assertTrue(response.context['form'].fields['cta_entrada'].disabled)
+        self.assertTrue(
+            response.context['form'].fields['cta_entrada'].disabled)
 
     def test_si_cta_entrada_es_interactiva_campo_esta_habilitado(self):
         self.cuenta = dividir_en_dos_subcuentas(self.cuenta)
         ci = Cuenta.crear('banco', 'b')
         otro_mov = Movimiento.crear('Otro movimiento', 100, ci)
         response = self.client.get(reverse('mov_mod', args=[otro_mov.pk]))
-        self.assertFalse(response.context['form'].fields['cta_entrada'].disabled)
+        self.assertFalse(
+            response.context['form'].fields['cta_entrada'].disabled)
 
     def test_si_cta_entrada_es_interactiva_no_muestra_cuentas_acumulativas_entre_las_opciones(self):
         self.cuenta = dividir_en_dos_subcuentas(self.cuenta)
@@ -866,7 +883,8 @@ class TestMovMod(TestCase):
         otro_mov = Movimiento.crear('Otro movimiento', 100, self.cuenta, ci)
         self.cuenta = dividir_en_dos_subcuentas(self.cuenta)
         response = self.client.get(reverse('mov_mod', args=[otro_mov.pk]))
-        self.assertFalse(response.context['form'].fields['cta_salida'].disabled)
+        self.assertFalse(
+            response.context['form'].fields['cta_salida'].disabled)
 
     def test_si_cta_salida_es_interactiva_no_muestra_cuentas_acumulativas_entre_las_opciones(self):
         ci = Cuenta.crear('banco', 'b')
@@ -1004,7 +1022,7 @@ class TestModificarSaldo(TestCase):
         Titular.crear(titname='tito')
         self.cta1 = Cuenta.crear('Efectivo', 'E')
         self.cta2 = Cuenta.crear('Banco', 'B')
-        self.full_url = f"{reverse('modificar_saldo', args=[self.cta1.slug])}" \
+        self.full_url = f"{reverse('modificar_saldo', args=[self.cta1.slug])}"\
                         f"?ctas=e!b"
 
     def test_redirige_a_corregir_saldo_con_ctas_erroneas_menos_la_corregida(self):
