@@ -7,7 +7,7 @@ from django.urls import reverse, reverse_lazy
 from django.views.generic import \
     DetailView, CreateView, UpdateView, DeleteView, TemplateView
 
-from diario.forms import FormCuenta, FormCuentaAcu, FormMovimiento, \
+from diario.forms import FormCuentaInt, FormCuentaAcu, FormMovimiento, \
     FormSubcuentas
 from diario.models import Cuenta, CuentaInteractiva, CuentaAcumulativa, \
     Movimiento, Titular
@@ -68,7 +68,7 @@ class CtaDetalleView(DetailView):
 
 class CtaNuevaView(CreateView):
     model = CuentaInteractiva
-    form_class = FormCuenta
+    form_class = FormCuentaInt
     template_name = 'diario/cta_form.html'
     success_url = reverse_lazy('home')
 
@@ -115,7 +115,7 @@ class CtaModView(UpdateView):
 
     def get_form_class(self):
         if self.cuenta.es_interactiva:
-            return FormCuenta
+            return FormCuentaInt
         else:
             return FormCuentaAcu
 

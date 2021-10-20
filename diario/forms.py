@@ -12,7 +12,7 @@ def agregar_clase(campo, clase):
         campo.widget.attrs['class'] = 'form-control'
 
 
-class FormCuenta(forms.ModelForm):
+class FormCuentaInt(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

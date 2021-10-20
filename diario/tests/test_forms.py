@@ -4,15 +4,23 @@ from unittest.mock import patch
 from django.core.exceptions import NON_FIELD_ERRORS
 from django.test import TestCase
 
-from diario.forms import FormMovimiento, FormCuenta, FormSubcuentas
+from diario.forms import FormMovimiento, FormCuentaAcu, FormCuentaInt, \
+    FormSubcuentas
 from diario.models import Cuenta, Movimiento
 from utils import errors
 
 
-class TestFormCuenta(TestCase):
+class TestFormCuentaInt(TestCase):
 
     def test_no_acepta_cuentas_sin_slug(self):
-        formcta = FormCuenta(data={'nombre': 'Efectivo'})
+        formcta = FormCuentaInt(data={'nombre': 'Efectivo'})
+        self.assertFalse(formcta.is_valid())
+
+
+class TestFormCuentaAcu(TestCase):
+
+    def test_no_acepta_cuentas_sin_slug(self):
+        formcta = FormCuentaAcu(data={'nombre': 'Efectivo'})
         self.assertFalse(formcta.is_valid())
 
 
