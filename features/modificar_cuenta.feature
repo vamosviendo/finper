@@ -47,7 +47,7 @@ Escenario: Modificar cuenta acumulativa
     
     Cuando voy a la página principal
     Y cliqueo en el botón de clase "link_mod_cuenta"
-    Entonces no veo el campo "titular" entre los campos del formulario
+    Entonces no veo el campo "titular" entre los campos del form "cuenta"
 
     Cuando escribo "Nombre modificado" en el campo "nombre"
     Y cliqueo en el botón

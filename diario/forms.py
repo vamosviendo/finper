@@ -1,7 +1,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
 
-from diario.models import CuentaInteractiva, Movimiento
+from diario.models import CuentaAcumulativa, CuentaInteractiva, Movimiento
 from utils.listas import hay_mas_de_un_none_en
 
 
@@ -22,6 +22,18 @@ class FormCuenta(forms.ModelForm):
     class Meta:
         model = CuentaInteractiva
         fields = ('nombre', 'slug', 'titular', )
+
+
+class FormCuentaAcu(forms.ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for _, campo in self.fields.items():
+            agregar_clase(campo, 'form-control')
+
+    class Meta:
+        model = CuentaAcumulativa
+        fields = ('nombre', 'slug')
 
 
 class FormSubcuenta(forms.Form):

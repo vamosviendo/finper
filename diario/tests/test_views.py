@@ -9,6 +9,7 @@ from django.test import TestCase, RequestFactory
 from django.urls import reverse
 from django.utils.datastructures import MultiValueDict
 
+from diario.forms import FormCuenta, FormCuentaAcu
 from diario.models import Cuenta, CuentaAcumulativa, CuentaInteractiva, \
     Movimiento, Titular
 from diario.views import cta_div_view
@@ -399,7 +400,7 @@ class TestCtaNueva(TestCase):
         self.assertEqual(cuenta_nueva.get_class(), CuentaInteractiva)
 
 
-class TestCtaModInt(TestCase):
+class TestCtaMod(TestCase):
 
     def setUp(self):
         super().setUp()
@@ -411,8 +412,21 @@ class TestCtaModInt(TestCase):
             reverse('cta_mod_int', args=[self.cuenta.slug]))
         self.assertTemplateUsed(response, 'diario/cta_form.html')
 
-    def test_post_puede_guardar_cambios_en_cuenta(self):
-        self.client.post(
+    def test_usa_form_cuenta_int_con_cuenta_interactiva(self):
+        response = self.client.get(
+            reverse('cta_mod_int', args=[self.cuenta.slug]),
+            data={'nombre': 'Nombro', 'slug': 'Slag'}
+        )
+        self.assertIsInstance(response.context['form'], FormCuenta)
+
+    def test_usa_form_cuenta_acu_con_cuenta_acumulativa(self):
+        self.cuenta = dividir_en_dos_subcuentas(self.cuenta)
+        response = self.client.get(
+            reverse('cta_mod_int', args=[self.cuenta.slug]))
+        self.assertIsInstance(response.context['form'], FormCuentaAcu)
+
+    def test_post_puede_guardar_cambios_en_cuenta_interactiva(self):
+        response = self.client.post(
             reverse('cta_mod_int', args=[self.cuenta.slug]),
             data={'nombre': 'Nombro', 'slug': 'Slag'}
         )
@@ -422,7 +436,7 @@ class TestCtaModInt(TestCase):
             ('nombro', 'slag')
         )
 
-    def test_post_modifica_cuentas_acumulativas(self):
+    def test_post_puede_guardar_cambios_en_cuenta_acumulativa(self):
         self.cuenta = dividir_en_dos_subcuentas(self.cuenta)
         self.client.post(
             reverse('cta_mod_int', args=[self.cuenta.slug]),

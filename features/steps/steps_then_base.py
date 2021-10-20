@@ -336,6 +336,16 @@ def elemento_no_aparece(context, atributo, nombre):
     )
 
 
+@then('no veo el campo "{campo}" entre los campos del form "{nombre_form}"')
+def campo_no_aparece_en_form(context, campo, nombre_form):
+    form = context.browser.esperar_elemento(f'id_form_{nombre_form}')
+    context.test.assertEqual(
+        len(form.esperar_elementos(f'id_{campo}', By.ID, fail=False)), 0,
+        f'Aparece en form "{nombre_form}" campo "{campo}" '
+        f'que no debería aparecer'
+    )
+
+
 @then('el tamaño del elemento "{comparado}" '
       'es igual al tamaño del elemento "{patron}"')
 def mismo_tamanio(context, comparado, patron):

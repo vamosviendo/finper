@@ -7,7 +7,8 @@ from django.urls import reverse, reverse_lazy
 from django.views.generic import \
     DetailView, CreateView, UpdateView, DeleteView, TemplateView
 
-from diario.forms import FormCuenta, FormMovimiento, FormSubcuentas
+from diario.forms import FormCuenta, FormCuentaAcu, FormMovimiento, \
+    FormSubcuentas
 from diario.models import Cuenta, CuentaInteractiva, CuentaAcumulativa, \
     Movimiento, Titular
 from diario.utils import verificar_saldos
@@ -98,19 +99,25 @@ class CtaElimView(DeleteView):
 
 
 class CtaModView(UpdateView):
-    model = CuentaInteractiva
-    form_class = FormCuenta
     template_name = 'diario/cta_form.html'
     success_url = reverse_lazy('home')
     context_object_name = 'cta'
 
+    def setup(self, request, *args, **kwargs):
+        super().setup(request, *args, **kwargs)
+        self.cuenta = Cuenta.tomar(slug=self.kwargs.get('slug'))
 
-class CtaAcuModView(UpdateView):
-    model = CuentaAcumulativa
-    form_class = FormCuenta
-    template_name = 'diario/cta_form.html'
-    success_url = reverse_lazy('home')
-    context_object_name = 'cta'
+    def get_queryset(self):
+        if self.cuenta.es_interactiva:
+            return CuentaInteractiva.todes()
+        else:
+            return CuentaAcumulativa.todes()
+
+    def get_form_class(self):
+        if self.cuenta.es_interactiva:
+            return FormCuenta
+        else:
+            return FormCuentaAcu
 
 
 def cta_div_view(request, slug):
