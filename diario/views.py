@@ -5,10 +5,10 @@ from django.db.models import Sum
 from django.shortcuts import render, redirect
 from django.urls import reverse, reverse_lazy
 from django.views.generic import \
-    DetailView, CreateView, UpdateView, DeleteView, TemplateView
+    CreateView, DeleteView, DetailView, FormView, TemplateView, UpdateView
 
 from diario.forms import FormCuentaInt, FormCuentaAcu, FormMovimiento, \
-    FormSubcuentas
+    FormSubcuentas, FormCrearSubcuenta
 from diario.models import Cuenta, CuentaInteractiva, CuentaAcumulativa, \
     Movimiento, Titular
 from diario.utils import verificar_saldos
@@ -121,9 +121,10 @@ class CtaModView(UpdateView):
 
 
 def cta_div_view(request, slug):
-    formset = FormSubcuentas(
-        cuenta=slug,
-    )
+    global formset
+    if request.method == 'GET':
+        formset = FormSubcuentas(cuenta=slug)
+
     if request.method == 'POST':
         formset = FormSubcuentas(data=request.POST, cuenta=slug)
         if formset.is_valid():
@@ -131,6 +132,20 @@ def cta_div_view(request, slug):
             return redirect(cuenta)
 
     return render(request, 'diario/cta_div_formset.html', {'formset': formset})
+
+
+def cta_agregar_subc_view(request, slug):
+    global form
+    if request.method == 'GET':
+        form = FormCrearSubcuenta(cuenta=slug)
+
+    if request.method == 'POST':
+        form = FormCrearSubcuenta(data=request.POST, cuenta=slug)
+        if form.is_valid():
+            cuenta = form.save()
+            return redirect(cuenta)
+
+    return render(request, 'diario/cta_agregar_subc.html', {'form': form})
 
 
 class MovNuevoView(CreateView):

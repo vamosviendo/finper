@@ -75,6 +75,13 @@ def completar_form_dividir_cuenta(context):
     context.browser.pulsar()
 
 
+@when('completo el form de agregar subcuenta con estos valores')
+def completar_form_agregar_subcuenta(context):
+    context.browser.completar('id_nombre', context.table[0]['nombre'])
+    context.browser.completar('id_slug', context.table[0]['slug'])
+    context.browser.pulsar()
+
+
 @when('introduzco un error de {importe} pesos en el saldo de la cuenta "{nombre}"')
 def introducir_saldo_erroneo(context, importe, nombre):
     context.execute_steps(

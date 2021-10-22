@@ -9,8 +9,14 @@
   {% csrf_token %}
 </form>
 {% if cta.id %}
+  {% if cta.es_interactiva %}
 <a href="{% url 'cta_div' cta.slug %}" class="btn btn-warning" id="id_btn_dividir">
   Dividir en subcuentas
 </a>
+  {% else %}
+<a href="{% url 'cta_agregar_subc' cta.slug %}" class="btn btn-warning" id="id_btn_agregar">
+  Agregar subcuenta
+</a>
+  {% endif %}
 {% endif %}
 {% endblock contenido %}

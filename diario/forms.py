@@ -60,9 +60,24 @@ class FormSubcuentas(CuentaFormset):
         return cleaned_data
 
     def save(self):
+        # TODO: cambiar objects.get por tomar
         cta = CuentaInteractiva.objects.get(slug=self.cuenta)
         cta = cta.dividir_y_actualizar(*self.cleaned_data)
         return cta
+
+
+class FormCrearSubcuenta(forms.Form):
+    nombre = forms.CharField()
+    slug = forms.CharField()
+
+    def __init__(self, *args, **kwargs):
+        self.cuenta = CuentaAcumulativa.tomar(slug=kwargs.pop('cuenta'))
+        super().__init__(*args, **kwargs)
+
+    def save(self):
+        self.cuenta.agregar_subcuenta(
+            [self.cleaned_data[x] for x in self.cleaned_data.keys()])
+        return self.cuenta
 
 
 class FormMovimiento(forms.ModelForm):

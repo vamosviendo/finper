@@ -5,9 +5,10 @@ from django.core.exceptions import NON_FIELD_ERRORS
 from django.test import TestCase
 
 from diario.forms import FormMovimiento, FormCuentaAcu, FormCuentaInt, \
-    FormSubcuentas
-from diario.models import Cuenta, Movimiento
+    FormSubcuentas, FormCrearSubcuenta
+from diario.models import Cuenta, CuentaInteractiva, Movimiento
 from utils import errors
+from utils.helpers_tests import dividir_en_dos_subcuentas
 
 
 class TestFormCuentaInt(TestCase):
@@ -66,6 +67,34 @@ class TestFormSubcuentas(TestCase):
         self.form.data.pop('form-0-saldo')
         self.form.data.pop('form-1-saldo')
         self.assertFalse(self.form.is_valid())
+
+
+class TestFormCrearSubcuenta(TestCase):
+
+    def setUp(self):
+        self.cuenta = dividir_en_dos_subcuentas(Cuenta.crear('cuenta', 'cta'))
+        self.formsubcuenta = FormCrearSubcuenta(data={
+            'nombre': 'subcuenta nueva',
+            'slug': 'sn'
+        }, cuenta=self.cuenta.slug)
+        self.formsubcuenta.is_valid()
+
+    @patch('diario.forms.CuentaAcumulativa.agregar_subcuenta')
+    def test_llama_a_agregar_subcuenta(self, falso_agregar_subcuenta):
+        self.formsubcuenta.save()
+        falso_agregar_subcuenta.assert_called_once_with(
+            ['subcuenta nueva', 'sn']
+        )
+
+    def test_cuenta_creada_es_subcuenta_de_cuenta(self):
+        self.formsubcuenta.save()
+        subcuenta = CuentaInteractiva.tomar(slug='sn')
+        self.assertEqual(subcuenta.cta_madre, self.cuenta)
+
+    def test_devuelve_cuenta_madre(self):
+        cuenta = self.formsubcuenta.save()
+        self.assertEqual(cuenta, self.cuenta)
+
 
 
 class TestFormMovimiento(TestCase):
