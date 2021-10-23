@@ -23,7 +23,7 @@ class MiDateField(models.DateField):
 
 class Movimiento(MiModel):
     fecha = MiDateField(default=date.today)
-    concepto = models.CharField(max_length=80)
+    concepto = models.CharField(max_length=120)
     detalle = models.TextField(blank=True, null=True)
     importe = models.FloatField()
     cta_entrada = models.ForeignKey(

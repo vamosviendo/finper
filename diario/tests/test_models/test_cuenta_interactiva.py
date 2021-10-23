@@ -433,12 +433,9 @@ class TestVaciarSaldo(TestCase):
         self.assertEqual(traspaso2.fecha, fecha)
 
     def test_genera_movimientos_con_fecha_de_hoy_si_no_se_pasa_fecha(self):
-        cta_madre = CuentaInteractiva.crear(
-            'Caja de ahorro Banco Nación', 'cabn')
-        ctas_limpias = cta_madre._ajustar_subcuentas([
-            ['caja de ahorro banco nación propia', 'cabp', 10],
-            ['caja de ahorro banco nación ajena', 'caba'],
-        ])
+        cta_madre = CuentaInteractiva.crear('Efectivo', 'efec')
+        ctas_limpias = cta_madre._ajustar_subcuentas(
+            [['subc1', 'sc1', 10], ['subc2', 'sc2']])
 
         movimientos = cta_madre._vaciar_saldo(ctas_limpias)
 
@@ -449,8 +446,10 @@ class TestVaciarSaldo(TestCase):
         cta_madre = CuentaInteractiva.crear(
             'Caja de ahorro Banco Nación', 'cabn')
         ctas_limpias = cta_madre._ajustar_subcuentas([
-            ['caja de ahorro banco nación propia', 'cabp', 10],
-            ['caja de ahorro banco nación ajena', 'caba'],
+            ['caja de ahorro banco nación propia pero no tan propia porque '
+             'en realidad la comparto', 'cabp', 10],
+            ['caja de ahorro banco nación ajena tralararí '
+             'tralarará chipoteo chipoteo fumanchú', 'caba'],
         ])
         maxlength = Movimiento.get_max_length('concepto')
 
