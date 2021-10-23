@@ -419,18 +419,29 @@ class TestConvertirseEnAcumulativa(TestCase):
 
 class TestVaciarSaldo(TestCase):
 
-    def test_vaciar_saldo_genera_movimientos_con_fecha_recibida(self):
+    def test_genera_movimientos_con_fecha_recibida(self):
         fecha = date(2020, 5, 4)
         cta_int = CuentaInteractiva.crear('Efectivo', 'efec')
         ctas_limpias = cta_int._ajustar_subcuentas(
             [['subc1', 'sc1', 10], ['subc2', 'sc2']])
         cta_int._vaciar_saldo(ctas_limpias, fecha=fecha)
         traspaso1 = Movimiento.tomar(
-            concepto="Saldo pasado por Efectivo a nueva subcuenta subc1")
+            concepto="Saldo pasado por Efectivo a nueva subcuenta Subc1")
         traspaso2 = Movimiento.tomar(
-            concepto="Saldo pasado por Efectivo a nueva subcuenta subc2")
+            concepto="Saldo pasado por Efectivo a nueva subcuenta Subc2")
         self.assertEqual(traspaso1.fecha, fecha)
         self.assertEqual(traspaso2.fecha, fecha)
+
+    def test_trunca_conceptos_excesivamente_largos_a_la_longitud_maxima(self):
+        cta_madre = CuentaInteractiva.crear(
+            'Caja de ahorro Banco Nación', 'cabn')
+        ctas_limpias = cta_madre._ajustar_subcuentas([
+            ['caja de ahorro banco nación propia', 'cabp', 10],
+            ['caja de ahorro banco nación ajena', 'caba'],
+        ])
+        movimientos = cta_madre._vaciar_saldo(ctas_limpias, fecha=date.today())
+        self.assertEqual(len(movimientos[0].concepto), 80)
+        self.assertEqual(len(movimientos[1].concepto), 80)
 
 
 class TestSaldoOk(TestCase):

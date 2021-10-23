@@ -32,3 +32,29 @@ Escenario: Dividir una cuenta en subcuentas
         | Saldo inicial de efectivo                                   | 200.00  | +efectivo                  |
         | Saldo pasado por Efectivo a nueva subcuenta Cajón de arriba | 150.00  | +cajón de arriba -efectivo |
         | Saldo pasado por Efectivo a nueva subcuenta Billetera       | 50.00   | +billetera -efectivo       |
+
+
+
+@sec
+Escenario: Dividir cuenta en subcuentas con nombres largos
+    Dado un titular
+    Y una cuenta con los siguientes valores:
+        | nombre                      | slug | saldo    |
+        | Caja de ahorro Banco Nación | cabn | 84296.57 |
+
+    Cuando voy a la página "cta_div" de la cuenta "Caja de ahorro Banco Nación"
+    Y completo el form de dividir cuenta con estos valores:
+        | nombre          | slug | saldo |
+        | Caja de ahorro Banco Nación propia | ecar | 43392.46 |
+        | Caja de ahorro Banco Nación gremio | ebil |          |
+    
+    Entonces veo 3 movimientos en la página
+    Y los movimientos en la página tienen estos valores:
+        | concepto                                                                         |
+        | Saldo inicial de caja de ahorro banco nación                                     |
+        | Saldo pasado por Caja de ahorro banco nación a nueva subcuenta Caja de ahorro ba |
+        | Saldo pasado por Caja de ahorro banco nación a nueva subcuenta Caja de ahorro ba |
+
+
+
+

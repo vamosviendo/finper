@@ -283,28 +283,15 @@ def campo_muestra_fecha_de_hoy(context, campo):
 
 @then('los movimientos en la página tienen estos valores')
 def movs_en_pagina_coinciden_con(context):
-    conceptos = [e.text for e in
-                 context.browser.esperar_elementos('class_td_concepto')]
-    importes = [e.text for e in
-                context.browser.esperar_elementos('class_td_importe')]
-    cuentas = [e.text for e in
-               context.browser.esperar_elementos('class_td_cuentas')]
 
     for i, fila in enumerate(context.table):
-        context.test.assertEqual(
-            conceptos[i], fila['concepto'],
-            f"El concepto {fila['concepto']} no coincide con {conceptos[i]}"
-        )
-        importe = f"{float(fila['importe']):.2f}"
-        context.test.assertEqual(
-            importes[i], importe,
-            f"El importe del mov {i+1} es {importes[i]}, no {importe}"
-        )
-        context.test.assertEqual(
-            cuentas[i], fila['cuentas'].lower(),
-            f"Las cuentas involucradas en el mov {i+1} son {cuentas[i]}, "
-            f"no {fila['cuentas']}"
-        )
+        for j, celda in enumerate(fila.cells):
+            columna = context.table.headings[j]
+            td = [
+                e.text for e in
+                context.browser.esperar_elementos(f'class_td_{columna}')
+            ][i]
+            context.test.assertEqual(td, fila[columna])
 
 
 @then('veo que el concepto del movimiento es "{concepto}"')

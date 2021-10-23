@@ -143,6 +143,6 @@ def ir_a_pag_principal(context):
 
 @when('voy a la página "{pag}" de la cuenta "{coso}"')
 def ir_a_pag_de_coso(context, pag, coso):
-    cuenta = Cuenta.tomar(nombre=coso).slug
+    cuenta = Cuenta.tomar(nombre=coso.lower()).slug
     context.execute_steps(
         f'Cuando voy a la página "{pag}" con el argumento "{cuenta}"')
