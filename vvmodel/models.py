@@ -50,6 +50,13 @@ class MiModel(models.Model):
         return obj
 
     @classmethod
+    def tomar_o_nada(cls, **kwargs):
+        try:
+            return cls.tomar(**kwargs)
+        except cls.DoesNotExist:
+            return None
+
+    @classmethod
     def get_class(cls):
         return cls
 
@@ -62,11 +69,8 @@ class MiModel(models.Model):
         return cls.get_class_name().lower()
 
     @classmethod
-    def tomar_o_nada(cls, **kwargs):
-        try:
-            return cls.tomar(**kwargs)
-        except cls.DoesNotExist:
-            return None
+    def get_max_length(cls, campo):
+        return cls._meta.get_field(campo).max_length
 
     def tomar_de_bd(self):
         return self.get_class().tomar_o_nada(pk=self.pk)

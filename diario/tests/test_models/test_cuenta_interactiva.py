@@ -432,6 +432,19 @@ class TestVaciarSaldo(TestCase):
         self.assertEqual(traspaso1.fecha, fecha)
         self.assertEqual(traspaso2.fecha, fecha)
 
+    def test_genera_movimientos_con_fecha_de_hoy_si_no_se_pasa_fecha(self):
+        cta_madre = CuentaInteractiva.crear(
+            'Caja de ahorro Banco Nación', 'cabn')
+        ctas_limpias = cta_madre._ajustar_subcuentas([
+            ['caja de ahorro banco nación propia', 'cabp', 10],
+            ['caja de ahorro banco nación ajena', 'caba'],
+        ])
+
+        movimientos = cta_madre._vaciar_saldo(ctas_limpias)
+
+        self.assertEqual(movimientos[0].fecha, date.today())
+        self.assertEqual(movimientos[1].fecha, date.today())
+
     def test_trunca_conceptos_excesivamente_largos_a_la_longitud_maxima(self):
         cta_madre = CuentaInteractiva.crear(
             'Caja de ahorro Banco Nación', 'cabn')
@@ -439,9 +452,12 @@ class TestVaciarSaldo(TestCase):
             ['caja de ahorro banco nación propia', 'cabp', 10],
             ['caja de ahorro banco nación ajena', 'caba'],
         ])
-        movimientos = cta_madre._vaciar_saldo(ctas_limpias, fecha=date.today())
-        self.assertEqual(len(movimientos[0].concepto), 80)
-        self.assertEqual(len(movimientos[1].concepto), 80)
+        maxlength = Movimiento.get_max_length('concepto')
+
+        movimientos = cta_madre._vaciar_saldo(ctas_limpias)
+
+        self.assertEqual(len(movimientos[0].concepto), maxlength)
+        self.assertEqual(len(movimientos[1].concepto), maxlength)
 
 
 class TestSaldoOk(TestCase):

@@ -305,13 +305,15 @@ class CuentaInteractiva(Cuenta):
         return cuenta_acumulativa
 
     def _vaciar_saldo(self, cuentas_limpias, fecha=None):
+        fecha = fecha or date.today()
         movimientos_incompletos = []
 
         for subcuenta in cuentas_limpias:
 
-            concepto = f'Saldo pasado por {self.nombre.capitalize()} ' \
-                       f'a nueva subcuenta ' \
-                       f'{subcuenta["nombre"].lower().capitalize()}'[:80]
+            concepto = \
+                f'Saldo pasado por {self.nombre.capitalize()} ' \
+                f'a nueva subcuenta {subcuenta["nombre"].lower().capitalize()}'[
+                    :Movimiento.get_max_length('concepto')]
             try:
                 movimientos_incompletos.append(Movimiento.crear(
                     fecha=fecha,
