@@ -310,14 +310,13 @@ class CuentaInteractiva(Cuenta):
 
         for subcuenta in cuentas_limpias:
 
-            concepto = \
-                f'Saldo pasado por {self.nombre.capitalize()} ' \
-                f'a nueva subcuenta {subcuenta["nombre"].lower().capitalize()}'[
-                    :Movimiento.get_max_length('concepto')]
             try:
                 movimientos_incompletos.append(Movimiento.crear(
                     fecha=fecha,
-                    concepto=concepto,
+                    concepto="Traspaso de saldo",
+                    detalle=f'Saldo pasado por {self.nombre.capitalize()} ' 
+                            f'a nueva subcuenta '
+                            f'{subcuenta["nombre"].lower().capitalize()}',
                     importe=subcuenta.pop('saldo'),
                     cta_salida=self,
                 ))

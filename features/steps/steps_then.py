@@ -285,13 +285,12 @@ def campo_muestra_fecha_de_hoy(context, campo):
 def movs_en_pagina_coinciden_con(context):
 
     for i, fila in enumerate(context.table):
-        for j, celda in enumerate(fila.cells):
-            columna = context.table.headings[j]
+        for heading in fila.headings:
             td = [
                 e.text for e in
-                context.browser.esperar_elementos(f'class_td_{columna}')
+                context.browser.esperar_elementos(f'class_td_{heading}')
             ][i]
-            context.test.assertEqual(td, fila[columna])
+            context.test.assertEqual(td, fila[heading])
 
 
 @then('veo que el concepto del movimiento es "{concepto}"')

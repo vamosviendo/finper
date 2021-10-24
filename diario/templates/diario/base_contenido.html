@@ -81,7 +81,9 @@
           {{ mov.concepto }}
         </span>
       </td>
-      <td class="d-none d-md-table-cell class_td_detalle">{{ mov.detalle }}</td>
+      <td class="d-none d-md-table-cell class_td_detalle">
+        {{ mov.detalle|default_if_none:"" }}
+      </td>
       <td class="text-right
                  {% if mov.cta_salida and not mov.cta_entrada %}
                    text-danger

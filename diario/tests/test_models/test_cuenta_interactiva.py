@@ -152,17 +152,11 @@ class TestMetodoDividirEntre(TestCase):
 
         self.assertEqual(len(movs), 4)
 
-        self.assertEqual(
-            movs[2].concepto,
-            'Saldo pasado por Efectivo a nueva subcuenta Billetera'
-        )
+        self.assertEqual(movs[2].concepto, 'Traspaso de saldo')
         self.assertEqual(movs[2].importe, 50)
         # self.assertEqual(movs[2].cta_entrada, subcuenta1)
         self.assertEqual(movs[2].cta_salida, self.cta1)
-        self.assertEqual(
-            movs[3].concepto,
-            'Saldo pasado por Efectivo a nueva subcuenta Cajón de arriba'
-        )
+        self.assertEqual(movs[3].concepto, 'Traspaso de saldo')
         self.assertEqual(movs[3].importe, 200)
         # self.assertEqual(movs[3].cta_entrada, subcuenta2)
         self.assertEqual(movs[3].cta_salida, self.cta1)
@@ -215,13 +209,11 @@ class TestMetodoDividirEntre(TestCase):
 
     def test_movimientos_tienen_fecha_igual_a_la_de_conversion(self):
         fecha = date(2020, 10, 5)
+
         self.cta1.dividir_entre(*self.subcuentas, fecha=fecha)
-        traspaso1 = Movimiento.tomar(
-            concepto="Saldo pasado por Efectivo a nueva subcuenta Billetera")
-        traspaso2 = Movimiento.tomar(concepto="Saldo pasado por Efectivo a nue"
-                                              "va subcuenta Cajón de arriba")
-        self.assertEqual(traspaso1.fecha, fecha)
-        self.assertEqual(traspaso2.fecha, fecha)
+
+        self.assertEqual(list(self.cta1.movs_directos())[-2].fecha, fecha)
+        self.assertEqual(list(self.cta1.movs_directos())[-1].fecha, fecha)
 
     def test_no_acepta_fecha_de_conversion_anterior_a_la_de_cualquier_movimiento_de_la_cuenta(self):
         fecha = date(2020, 1, 1)
@@ -424,13 +416,11 @@ class TestVaciarSaldo(TestCase):
         cta_int = CuentaInteractiva.crear('Efectivo', 'efec')
         ctas_limpias = cta_int._ajustar_subcuentas(
             [['subc1', 'sc1', 10], ['subc2', 'sc2']])
-        cta_int._vaciar_saldo(ctas_limpias, fecha=fecha)
-        traspaso1 = Movimiento.tomar(
-            concepto="Saldo pasado por Efectivo a nueva subcuenta Subc1")
-        traspaso2 = Movimiento.tomar(
-            concepto="Saldo pasado por Efectivo a nueva subcuenta Subc2")
-        self.assertEqual(traspaso1.fecha, fecha)
-        self.assertEqual(traspaso2.fecha, fecha)
+
+        movimientos = cta_int._vaciar_saldo(ctas_limpias, fecha=fecha)
+
+        self.assertEqual(movimientos[0].fecha, fecha)
+        self.assertEqual(movimientos[1].fecha, fecha)
 
     def test_genera_movimientos_con_fecha_de_hoy_si_no_se_pasa_fecha(self):
         cta_madre = CuentaInteractiva.crear('Efectivo', 'efec')
@@ -442,21 +432,23 @@ class TestVaciarSaldo(TestCase):
         self.assertEqual(movimientos[0].fecha, date.today())
         self.assertEqual(movimientos[1].fecha, date.today())
 
-    def test_trunca_conceptos_excesivamente_largos_a_la_longitud_maxima(self):
-        cta_madre = CuentaInteractiva.crear(
-            'Caja de ahorro Banco Nación', 'cabn')
-        ctas_limpias = cta_madre._ajustar_subcuentas([
-            ['caja de ahorro banco nación propia pero no tan propia porque '
-             'en realidad la comparto', 'cabp', 10],
-            ['caja de ahorro banco nación ajena tralararí '
-             'tralarará chipoteo chipoteo fumanchú', 'caba'],
-        ])
-        maxlength = Movimiento.get_max_length('concepto')
+    def test_guarda_datos_de_cuentas_involucradas_en_detalle_del_movimiento(self):
+        cta_madre = CuentaInteractiva.crear('Efectivo', 'efec')
+        ctas_limpias = cta_madre._ajustar_subcuentas(
+            [['subc1', 'sc1', 10], ['subc2', 'sc2']])
 
         movimientos = cta_madre._vaciar_saldo(ctas_limpias)
 
-        self.assertEqual(len(movimientos[0].concepto), maxlength)
-        self.assertEqual(len(movimientos[1].concepto), maxlength)
+        self.assertEqual(movimientos[0].concepto, "Traspaso de saldo")
+        self.assertEqual(
+            movimientos[0].detalle,
+            "Saldo pasado por Efectivo a nueva subcuenta Subc1"
+        )
+        self.assertEqual(movimientos[1].concepto, "Traspaso de saldo")
+        self.assertEqual(
+            movimientos[1].detalle,
+            "Saldo pasado por Efectivo a nueva subcuenta Subc2"
+        )
 
 
 class TestSaldoOk(TestCase):
