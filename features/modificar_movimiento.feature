@@ -55,12 +55,12 @@ Escenario: Se modifica movimiento con cuenta acumulativa
         | cta 1 efectivo | c1e  |
         | cta 2 banco    | c2b  |
     Y un movimiento con los siguientes valores:
-        | concepto    | importe | cta_entrada | cta_salida |
-        | cDepósito   |  70     | c2b         | c1e        |
+        | concepto    | importe   | cta_entrada | cta_salida |
+        | cDepósito   |  84296.57 | c2b         | c1e        |
     Y la cuenta "cta 1 efectivo" dividida en subcuentas:
-        | nombre               | slug | saldo |
-        | subcuenta 1 efectivo | sc1e | -40   |
-        | subcuenta 2 efectivo | sc2e |       |
+        | nombre               | slug | saldo    |
+        | subcuenta 1 efectivo | sc1e | 43180.67 |
+        | subcuenta 2 efectivo | sc2e |          |
 
     Cuando voy a la página "modificar movimiento" del último movimiento
     Entonces veo que el campo "cta_salida" está deshabilitado
@@ -70,3 +70,13 @@ Escenario: Se modifica movimiento con cuenta acumulativa
         | subcuenta 1 efectivo |
         | subcuenta 2 efectivo |
     Y veo que entre las opciones del campo "cta_entrada" no figura "cta 1 efectivo"
+
+    Cuando escribo "detalle de movimiento" en el campo "detalle"
+    Y cliqueo en el botón
+    Y me detengo
+    
+    Entonces soy dirigido a la página principal
+    Y veo que el importe del segundo movimiento es 43180.67
+    Y veo que el importe del tercer movimiento es 41115.90
+    Y veo que el saldo de la cuenta "subcuenta 1 efectivo" es 43180.67
+    Y veo que el saldo de la cuenta "subcuenta 2 efectivo" es 41115.90

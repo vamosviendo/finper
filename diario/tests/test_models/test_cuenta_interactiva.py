@@ -266,6 +266,16 @@ class TestMetodoDividirEntre(TestCase):
         ):
             self.cta1.dividir_entre(*self.subcuentas)
 
+    def test_maneja_correctamente_subcuenta_sin_saldo_con_decimales(self):
+        cuenta = Cuenta.crear('cuenta con decimales', 'ccd', saldo=84296.57)
+
+        subcuentas = cuenta.dividir_entre(
+            ['subcuenta 1', 'sc1', 43180.67],
+            ['subcuenta 2', 'sc2']
+        )
+
+        self.assertEqual(subcuentas[1].saldo, 41115.9)
+
     def test_acepta_saldos_en_formato_str(self):
         self.subcuentas[0]['saldo'] = '50'
         self.subcuentas[1]['saldo'] = '200'
