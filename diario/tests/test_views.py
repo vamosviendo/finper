@@ -518,7 +518,7 @@ def patch_save():
 
 
 @patch('diario.views.FormSubcuentas', new_callable=patch_save)
-class TestCtaDivFBV(TestCase):
+class TestCtaDiv(TestCase):
 
     def setUp(self):
         self.cta = Cuenta.crear('Efectivo', 'e')
@@ -602,86 +602,6 @@ class TestCtaDivFBV(TestCase):
             self.request,
             'diario/cta_div_formset.html',
             {'formset': falso_form},
-        )
-
-
-class TestCtaDiv(TestCase):
-
-    def setUp(self):
-        super().setUp()
-        self.cta = Cuenta.crear('Efectivo', 'e')
-        Movimiento.crear(
-            concepto='Ingreso de saldo', importe=250, cta_entrada=self.cta)
-        self.request = RequestFactory().post(
-            reverse('cta_div', args=[self.cta]),
-            data={
-                'form-TOTAL_FORMS': 2,
-                'form-INITIAL_FORMS': 0,
-                'form-0-nombre': 'Billetera',
-                'form-0-slug': 'ebil',
-                'form-0-saldo': 50,
-                'form-1-nombre': 'Cajón de arriba',
-                'form-1-slug': 'ecaj',
-                'form-1-saldo': 200,
-            }
-        )
-        self.div_view = cta_div_view
-
-    def test_usa_template_cta_div_formset(self):
-        response = self.client.get(reverse('cta_div', args=[self.cta.slug]))
-        self.assertTemplateUsed(response, 'diario/cta_div_formset.html')
-
-    @patch('diario.views.FormSubcuentas', new_callable=patch_save)
-    def test_pasa_datos_POST_y_cta_original_a_form_subcuentas(self, falso_FormSubcuentas):
-        self.div_view(self.request, slug=self.cta.slug)
-        falso_FormSubcuentas.assert_called_once_with(
-            data=self.request.POST,
-            cuenta=self.cta.slug,
-        )
-
-    @patch('diario.views.FormSubcuentas', new_callable=patch_save)
-    def test_guarda_form_si_los_datos_son_validos(self, falso_FormSubcuentas):
-        falso_form = falso_FormSubcuentas.return_value
-        falso_form.is_valid.return_value = True
-
-        self.div_view(self.request, slug=self.cta.slug)
-
-        falso_form.save.assert_called_once()
-
-    @patch('diario.views.FormSubcuentas', new_callable=patch_save)
-    def test_no_guarda_form_si_los_datos_no_son_validos(self, falso_FormSubcuentas):
-        falso_form = falso_FormSubcuentas.return_value
-        falso_form.is_valid.return_value = False
-
-        self.div_view(self.request, slug=self.cta.slug)
-
-        self.assertFalse(falso_form.save.called)
-
-    @patch('diario.views.FormSubcuentas', new_callable=patch_save)
-    @patch('diario.views.redirect')
-    def test_redirige_a_pag_de_cuenta_con_form_valido(
-            self, falso_redirect, falso_FormSubcuentas):
-        falso_form = falso_FormSubcuentas.return_value
-        falso_form.is_valid.return_value = True
-
-        response = self.div_view(self.request, slug=self.cta.slug)
-
-        self.assertEqual(response, falso_redirect.return_value)
-        falso_redirect.assert_called_once_with(falso_form.save.return_value)
-
-    @patch('diario.views.FormSubcuentas', new_callable=patch_save)
-    @patch('diario.views.render')
-    def test_redibuja_template_con_formset_con_form_no_valido(
-            self, falso_render, falso_FormSubcuentas):
-        falso_form = falso_FormSubcuentas.return_value
-        falso_form.is_valid.return_value = False
-
-        self.div_view(self.request, slug=self.cta.slug)
-
-        falso_render.assert_called_once_with(
-            self.request,
-            'diario/cta_div_formset.html',
-            {'formset': falso_form}
         )
 
 
