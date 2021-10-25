@@ -61,8 +61,8 @@ class Cuenta(PolymorphModel):
         return self._saldo
 
     @saldo.setter
-    def saldo(self, saldo):
-        self._saldo = saldo
+    def saldo(self, valor):
+        self._saldo = round(valor, 2)
 
     def full_clean(self, *args, **kwargs):
         if self.slug:
@@ -110,10 +110,11 @@ class Cuenta(PolymorphModel):
     def total_movs(self):
         """ Devuelve suma de los importes de los movimientos de la cuenta"""
         total_entradas = self.entradas.all() \
-                             .aggregate(Sum('importe'))['importe__sum'] or 0
+                             .aggregate(Sum('_importe'))['_importe__sum'] or 0
         total_salidas = self.salidas.all()\
-                            .aggregate(Sum('importe'))['importe__sum'] or 0
-        return total_entradas - total_salidas
+                            .aggregate(Sum('_importe'))['_importe__sum'] or 0
+
+        return round(total_entradas - total_salidas, 2)
 
     def fecha_ultimo_mov_directo(self):
         try:

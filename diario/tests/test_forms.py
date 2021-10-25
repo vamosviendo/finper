@@ -99,6 +99,16 @@ class TestFormCrearSubcuenta(TestCase):
 
 class TestFormMovimiento(TestCase):
 
+    def test_acepta_movimientos_bien_formados(self):
+        cuenta = Cuenta.crear(nombre='efectivo', slug='e')
+        formmov = FormMovimiento(data={
+            'fecha': date.today(),
+            'concepto': 'movimiento bien formado',
+            'importe': 150,
+            'cta_entrada': cuenta,
+        })
+        self.assertTrue(formmov.is_valid())
+
     def test_no_acepta_movimientos_sin_cuentas(self):
         formmov = FormMovimiento(data={
             'fecha': date.today(),

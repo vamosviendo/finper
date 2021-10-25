@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from unittest import skip
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -281,6 +282,34 @@ class TestModelMovimientoPropiedades(TestModelMovimiento):
         self.assertEqual(mov1.sentido, 's')
         self.assertEqual(mov2.sentido, 'e')
         self.assertEqual(mov3.sentido, 't')
+
+
+class TestModelMovimientoPropiedadImporte(TestModelMovimiento):
+
+    def setUp(self):
+        super().setUp()
+        self.mov = Movimiento(concepto='Movimiento con importe', _importe=100, cta_entrada=self.cuenta1)
+        self.mov.full_clean()
+        self.mov.save()
+
+    def test_devuelve_importe_del_movimiento(self):
+        self.assertEqual(self.mov.importe, self.mov._importe)
+
+    def test_asigna_valor_a_campo__importe(self):
+        self.mov.importe = 300
+        self.assertEqual(self.mov._importe, 300)
+
+    def test_redondea_importe(self):
+        self.mov.importe = 300.462
+        self.assertEqual(self.mov._importe, 300.46)
+
+    def test_funciona_con_strings(self):
+        self.mov.importe = '200'
+        self.assertEqual(self.mov._importe, 200)
+
+    def test_redondea_strings(self):
+        self.mov.importe = '222.2222'
+        self.assertEqual(self.mov._importe, 222.22)
 
 
 class TestModelMovimientoMetodos(TestModelMovimiento):

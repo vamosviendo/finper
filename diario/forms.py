@@ -82,15 +82,21 @@ class FormCrearSubcuenta(forms.Form):
 
 class FormMovimiento(forms.ModelForm):
 
+    importe = forms.FloatField()
+
     def __init__(self, *args, **kwargs):
+        instance = kwargs.get('instance')
+        if instance:
+            kwargs['initial'].update({'importe': instance.importe})
+
         super().__init__(*args, **kwargs)
+
         for _, campo in self.fields.items():
             agregar_clase(campo, 'form-control')
 
     class Meta:
         model = Movimiento
-        fields = ('fecha', 'concepto', 'detalle', 'importe', 'cta_entrada',
-                  'cta_salida', )
+        fields = ('fecha', 'concepto', 'detalle', 'cta_entrada', 'cta_salida')
         widgets = {
             'detalle': forms.TextInput,
             'fecha': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
@@ -109,3 +115,7 @@ class FormMovimiento(forms.ModelForm):
                 )
             )
         return cleaned_data
+
+    def save(self, *args, **kwargs):
+        self.instance.importe = self.cleaned_data['importe']
+        return super().save(*args, **kwargs)

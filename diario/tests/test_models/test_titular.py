@@ -67,6 +67,14 @@ class TestTitularPatrimonio(TestCase):
 
         self.assertEqual(tit.patrimonio, 380)
 
+    def test_funciona_correctamente_con_valores_con_decimales(self):
+        tit = Titular.crear(titname='Titu')
+        CuentaInteractiva.crear('cuenta1', 'cta1', saldo=500.22, titular=tit)
+        CuentaInteractiva.crear('cuenta2', 'cta2', saldo=-120.35, titular=tit)
+
+        self.assertEqual(tit.patrimonio, round(500.22-120.35, 2))
+
+
 
 class TestMetodoPorDefecto(TestCase):
 

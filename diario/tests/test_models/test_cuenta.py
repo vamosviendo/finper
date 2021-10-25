@@ -1,4 +1,5 @@
 from datetime import date
+from unittest import skip
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -88,6 +89,12 @@ class TestModelCuenta(TestCase):
 
         self.assertEqual(list(Cuenta.todes()), [cuenta2, cuenta3, cuenta1])
 
+    def test_guarda_correctamente_valores_con_decimales(self):
+        cuenta = Cuenta(nombre='Efectivo', slug='E', saldo= 132.25)
+        cuenta.full_clean()
+        cuenta.save()
+        self.assertEqual(cuenta.saldo, 132.25)
+
 
 class TestModelCuentaCrear(TestCase):
 
@@ -126,9 +133,9 @@ class TestModelCuentaCrear(TestCase):
         self.assertEqual(Movimiento.cantidad(), 0)
 
     def test_importe_de_movimiento_generado_coincide_con_argumento_saldo(self):
-        Cuenta.crear('Efectivo', 'e', saldo=232)
+        Cuenta.crear('Efectivo', 'e', saldo=232.24)
         mov = Movimiento.primere()
-        self.assertEqual(mov.importe, 232)
+        self.assertEqual(mov.importe, 232.24)
 
     def test_cuenta_creada_con_saldo_positivo_es_cta_entrada_del_movimiento_generado(self):
         cuenta = Cuenta.crear('Efectivo', 'e', saldo=234)
@@ -149,8 +156,8 @@ class TestModelCuentaCrear(TestCase):
         self.assertEqual(mov.importe, 354)
 
     def test_puede_pasarse_saldo_en_formato_str(self):
-        cuenta = Cuenta.crear('Efectivo', 'e', saldo='354')
-        self.assertEqual(cuenta.saldo, 354)
+        cuenta = Cuenta.crear('Efectivo', 'e', saldo='354.42')
+        self.assertEqual(cuenta.saldo, 354.42)
 
 
 class TestModelCuentaPropiedadSaldo(TestCase):
@@ -167,13 +174,16 @@ class TestModelCuentaPropiedadSaldo(TestCase):
             fecha=date(2019, 1, 1)
         )
 
-    # @property saldo:
-    def test_saldo_devuelve_el_saldo_de_la_cuenta(self):
+    def test_devuelve_el_saldo_de_la_cuenta(self):
         self.assertEqual(self.cta1.saldo, self.cta1._saldo)
 
-    def test_saldo_asigna_saldo_a_cuenta(self):
+    def test_asigna_saldo_a_cuenta(self):
         self.cta1.saldo = 300
         self.assertEqual(self.cta1._saldo, 300)
+
+    def test_redondea_saldo(self):
+        self.cta1.saldo = 354.452
+        self.assertEqual(self.cta1._saldo, 354.45)
 
 
 class TestMetodosMovsYSaldos(TestCase):
@@ -282,6 +292,12 @@ class TestMetodosMovsYSaldos(TestCase):
     def test_total_movs_devuelve_suma_importes_entradas_menos_salidas(self):
         self.assertEqual(self.cta1.total_movs(), 110)
 
+    def test_total_movs_funciona_correctamente_con_decimales(self):
+        Movimiento.crear(
+            'Movimiento con decimales', cta_salida=self.cta1, importe=50.32)
+
+        self.assertEqual(self.cta1.total_movs(), round(110-50.32, 2))
+
     def test_fecha_ultimo_mov_directo_devuelve_fecha_ultimo_mov(self):
         self.assertEqual(
             self.cta1.fecha_ultimo_mov_directo(),
@@ -317,7 +333,13 @@ class TestMetodosMovsYSaldos(TestCase):
         )
         cta2 = Cuenta.tomar(slug='eb')
         Movimiento.crear('Movimiento', 5, cta_salida=cta2)
-        self.assertEqual(self.cta1.total_subcuentas(), 105)
+        self.assertEqual(self.cta1.total_subcuentas(), 110-5)
+
+        Movimiento.crear('Movimiento con decimales', 4.45, cta_salida=cta2)
+        self.assertEqual(
+            self.cta1.total_subcuentas(), round(105-4.45, 2),
+            'No funciona correctamente con decimales'
+        )
 
     def test_corregir_saldo_no_agrega_movimientos(self):
         self.cta1.saldo = 345

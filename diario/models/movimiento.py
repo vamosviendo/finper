@@ -25,7 +25,7 @@ class Movimiento(MiModel):
     fecha = MiDateField(default=date.today)
     concepto = models.CharField(max_length=120)
     detalle = models.TextField(blank=True, null=True)
-    importe = models.FloatField()
+    _importe = models.FloatField()
     cta_entrada = models.ForeignKey(
         'diario.Cuenta', related_name='entradas', null=True, blank=True,
         on_delete=models.CASCADE
@@ -39,6 +39,14 @@ class Movimiento(MiModel):
         ordering = ('fecha', )
 
     @property
+    def importe(self):
+        return self._importe
+
+    @importe.setter
+    def importe(self, valor):
+        self._importe = round(float(valor), 2)
+
+    @property
     def sentido(self):
         if self.cta_entrada and self.cta_salida:
             return 't'
@@ -47,8 +55,13 @@ class Movimiento(MiModel):
         return 's'
 
     def __str__(self):
-        string = f'{self.fecha.strftime("%Y-%m-%d")} {self.concepto}: ' \
-                 f'{self.importe}'
+        importe = self.importe \
+            if self.importe != round(self.importe) \
+            else int(self.importe)
+
+        string = \
+            f'{self.fecha.strftime("%Y-%m-%d")} {self.concepto}: {importe}'
+
         if self.cta_entrada:
             string += f' +{self.cta_entrada}'
         if self.cta_salida:

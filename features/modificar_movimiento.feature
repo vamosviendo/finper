@@ -70,13 +70,4 @@ Escenario: Se modifica movimiento con cuenta acumulativa
         | subcuenta 1 efectivo |
         | subcuenta 2 efectivo |
     Y veo que entre las opciones del campo "cta_entrada" no figura "cta 1 efectivo"
-
-    Cuando escribo "detalle de movimiento" en el campo "detalle"
-    Y cliqueo en el botón
-    Y me detengo
     
-    Entonces soy dirigido a la página principal
-    Y veo que el importe del segundo movimiento es 43180.67
-    Y veo que el importe del tercer movimiento es 41115.90
-    Y veo que el saldo de la cuenta "subcuenta 1 efectivo" es 43180.67
-    Y veo que el saldo de la cuenta "subcuenta 2 efectivo" es 41115.90
