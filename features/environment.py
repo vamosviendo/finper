@@ -1,5 +1,5 @@
 from diario.models import Titular
-from fts.base import FinperFirefox
+from fts.driver import FinperFirefox
 
 
 def before_all(context):

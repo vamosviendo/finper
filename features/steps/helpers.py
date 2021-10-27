@@ -1,8 +1,6 @@
-# TODO: pasar funciones de fts.base a features.steps.helpers
-#       O mejor aún, usar un directorio vvselenium como en [proyecto]
 from django.contrib.auth import get_user_model
 
-from fts.base import esperar
+from utils.helpers_tests import esperar
 
 
 User = get_user_model()
