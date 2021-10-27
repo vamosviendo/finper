@@ -262,6 +262,15 @@ def veo_que_elemento_incluye(context, elemento, tantos, tag):
     context.test.assertEqual(len(contenidos), int(tantos))
 
 
+@then('veo que el "{tag}" de {tipo} "{nombre}" incluye el texto "{texto}"')
+def veo_que_tag_incluye_texto(context, tag, tipo, nombre, texto):
+    tipo = "class" if tipo == "clase" else tipo
+    context.execute_steps(f'''
+        Entonces veo un "{tag}" de {tipo} "{nombre}"
+        Y veo que el elemento "{tipo}_{tag}_{nombre}" incluye el texto "{texto}"
+    ''')
+
+
 @then('veo que entre los "{tag}" de clase "{clase}" '
       'está el de {atributo} "{valor}"')
 def entre_elementos_esta_el_elemento(context, tag, clase, atributo, valor):

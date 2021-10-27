@@ -115,6 +115,12 @@ def cliquear_en(context, tag, clase):
         .click()
 
 
+@when('cliqueo en el {orden} "{tag}" de clase "{clase}"')
+def cliquear_en(context, orden, tag, clase):
+    indice = ORDINALES[orden]
+    context.browser.esperar_elementos(f'class_{tag}_{clase}')[indice].click()
+
+
 @when('cliqueo en el "{tag}" de clase "{clase}" con {atributo} "{valor}"')
 def cliquear_en(context, tag, clase, atributo, valor):
     elementos = context.browser.esperar_elementos(f'class_{tag}_{clase}')
@@ -152,13 +158,18 @@ def ingresar_password(context):
 @when('{accion} "{texto}" en el campo "{campo}"') # acción=escribo, selecciono
 def completar_campo(context, accion, texto, campo):
     if accion == 'escribo':
-        tipo = 'input'
+        try:
+            context.browser.completar(
+                f'input[name="{campo}"]', texto, By.CSS_SELECTOR)
+        except NoSuchElementException:
+            context.browser.completar(
+                f'textarea[name="{campo}"', texto, By.CSS_SELECTOR)
     elif accion == 'selecciono':
         texto = '---------' if texto == 'nada' else texto
-        tipo = 'select'
+        context.browser.completar(
+            f'select[name="{campo}"', texto, By.CSS_SELECTOR)
     else:
         raise ValueError('La acción debe ser "escribo" o "selecciono')
-    context.browser.completar(f'{tipo}[name="{campo}"]', texto, By.CSS_SELECTOR)
 
 
 @when('voy a la página principal')
