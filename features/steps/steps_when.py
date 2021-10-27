@@ -98,14 +98,12 @@ def agregar_movimiento(context):
     context.browser.pulsar()
 
 
-# TODO refactor con execute_steps voy a la página pag con el argumento arg
 @when('voy a la página "{pag}" del último movimiento')
 def ir_a_pag_ult_mov(context, pag):
     nombre = NOMBRES_URL.get(pag) or pag
-    context.browser.get(
-        context.get_url(
-            reverse(nombre, args=[Movimiento.ultime().pk])
-        )
+    context.execute_steps(
+        f'Cuando voy a la página "{nombre}" '
+        f'con el argumento "{Movimiento.ultime().pk}"'
     )
 
 

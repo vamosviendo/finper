@@ -60,8 +60,7 @@ class FormSubcuentas(CuentaFormset):
         return cleaned_data
 
     def save(self):
-        # TODO: cambiar objects.get por tomar
-        cta = CuentaInteractiva.objects.get(slug=self.cuenta)
+        cta = CuentaInteractiva.tomar(slug=self.cuenta)
         cta = cta.dividir_y_actualizar(*self.cleaned_data)
         return cta
 
