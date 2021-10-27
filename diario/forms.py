@@ -2,7 +2,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 
 from diario.models import CuentaAcumulativa, CuentaInteractiva, Movimiento
-from utils.listas import hay_mas_de_un_none_en
+from utils.iterables import hay_mas_de_un_none_en
 
 
 def agregar_clase(campo, clase):

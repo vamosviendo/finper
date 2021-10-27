@@ -13,7 +13,7 @@ from diario.models import Cuenta, CuentaAcumulativa, CuentaInteractiva, \
 from diario.views import cta_div_view
 from utils.archivos import fijar_mtime
 from utils.helpers_tests import dividir_en_dos_subcuentas
-from utils.listas import dict2querydict
+from utils.iterables import dict2querydict
 
 
 class TestTitularNuevo(TestCase):

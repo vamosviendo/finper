@@ -10,7 +10,7 @@ from django.urls import reverse
 from diario.models.titular import Titular
 from diario.models.movimiento import Movimiento
 from utils import errors
-from utils.listas import remove_duplicates
+from utils.iterables import remove_duplicates
 from vvmodel.models import PolymorphModel
 
 
