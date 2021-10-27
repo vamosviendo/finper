@@ -10,8 +10,7 @@ Característica: Verificar saldos
 
 
 Escenario: Verificar saldos de cuentas interactivas
-    Dado un titular
-    Y 2 cuentas con los siguientes valores:
+    Dadas 2 cuentas con los siguientes valores:
         | nombre         | slug |
         | Aefectivo      | a    |
         | Caja de ahorro | b    |
@@ -47,8 +46,7 @@ Escenario: Verificar saldos de cuentas interactivas
 
 
 Escenario: Verificar saldos de cuentas acumulativas
-    Dado un titular
-    Y una cuenta con los siguientes valores:
+    Dada una cuenta con los siguientes valores:
         | nombre       | slug | saldo |
         | Banco Nación | bn   | 500   |
     Y la cuenta "Banco Nación" dividida en subcuentas:
@@ -69,8 +67,7 @@ Escenario: Verificar saldos de cuentas acumulativas
 
 
 Escenario: Verificar saldos diariamente
-    Dado un titular
-    Y 2 cuentas con los siguientes valores:
+    Dadas 2 cuentas con los siguientes valores:
         | nombre         | slug |
         | Aefectivo      | a    |
         | Caja de ahorro | b    |

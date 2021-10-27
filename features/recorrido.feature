@@ -6,8 +6,7 @@ Característica: Recorrido
     y ver los cambios reflejados en la página
 
     Escenario: Crear una cuenta y verla en la homepage
-        Dado un titular
-        Y una cuenta
+        Dada una cuenta
 
         Cuando voy a la página principal
         Entonces veo que el saldo general es 0.00 pesos

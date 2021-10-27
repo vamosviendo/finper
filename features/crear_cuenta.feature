@@ -7,8 +7,6 @@ Característica: Crear cuentas
 
 
 Escenario: No hay cuentas
-    Dado un titular
-
     Cuando voy a la página principal
     Entonces soy dirigido a la página "cta_nueva"
 
@@ -17,8 +15,6 @@ Escenario: No hay cuentas
 
 
 Escenario: Crear cuenta
-    Dado un titular
-
     Cuando voy a la página "cta_nueva"
     Entonces veo un formulario de cuenta
 
@@ -31,8 +27,7 @@ Escenario: Crear cuenta
 
 
 Escenario: Ir a crear cuenta
-    Dado un titular
-    Y una cuenta
+    Dada una cuenta
 
     Cuando voy a la página principal
     Y cliqueo en el botón "Cuenta nueva"

@@ -1,5 +1,6 @@
 # language: es
 
+@no_default_tit
 Característica: Crear titulares
     Quiero poder cargar nuevos titulares de cuenta y que aparezcan en la
     página principal

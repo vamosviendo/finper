@@ -7,8 +7,7 @@ Característica: Dividir_cuenta
 
 
 Escenario: Agregar subcuenta a cuenta
-    Dado un titular
-    Y una cuenta con los siguientes valores:
+    Dada una cuenta con los siguientes valores:
         | nombre   | slug | saldo |
         | Efectivo | e    | 200   |
     

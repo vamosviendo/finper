@@ -5,8 +5,7 @@ Característica: Eliminar movimiento
     y que eso se refleje en los saldos de las cuentas involucradas
 
 Escenario: Eliminar movimiento
-    Dado un titular
-    Y 2 cuentas con los siguientes valores:
+    Dadas 2 cuentas con los siguientes valores:
         | nombre         | slug |
         | Afectivo       | a    |
         | Caja de ahorro | ca   |

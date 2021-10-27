@@ -3,16 +3,14 @@
 Característica: Modificar cuenta
 
 Escenario: Ir a modificar cuenta interactiva
-    Dado un titular
-    Y una cuenta
+    Dada una cuenta
     Cuando voy a la página principal
     Y cliqueo en el botón "Edit" de la cuenta "efectivo"
     Entonces soy dirigido a la página "cta_mod" de la cuenta "efectivo"
 
 
 Escenario: Modificar cuenta interactiva
-    Dado un titular
-    Y una cuenta
+    Dada una cuenta
 
     Cuando voy a la página "cta_mod" de la cuenta "efectivo"
     Y escribo "Nombre modificado" en el campo "nombre"
@@ -20,6 +18,7 @@ Escenario: Modificar cuenta interactiva
     Entonces veo que el nombre de la cuenta es "nombre modificado"
 
 
+@no_default_tit
 Escenario: Cambiar titular de cuenta interactiva
     Dados dos titulares
     Y una cuenta con los siguientes valores:
@@ -34,8 +33,7 @@ Escenario: Cambiar titular de cuenta interactiva
 
 
 Escenario: Modificar cuenta acumulativa
-    Dado un titular
-    Y una cuenta acumulativa
+    Dada una cuenta acumulativa
     
     Cuando voy a la página principal
     Y cliqueo en el botón de clase "link_mod_cuenta"

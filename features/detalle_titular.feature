@@ -7,6 +7,7 @@ Característica: Detalles titular
     y no al de otro.
 
 
+@no_default_tit
 Escenario: Ver detalles de un titular
     Dados dos titulares
     Y tres cuentas con los siguientes valores:
