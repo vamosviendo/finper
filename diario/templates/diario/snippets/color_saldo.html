@@ -1,0 +1,5 @@
+{% if mov.cta_salida and not mov.cta_entrada %}
+  text-danger
+{% elif mov.cta_salida and mov.cta_entrada %}
+  text-primary
+{% endif %}

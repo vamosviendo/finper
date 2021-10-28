@@ -1,3 +1,7 @@
+.numero {
+  font-family: monospace;
+}
+
 @media(max-width: 576px) {
   h1 {
     font-size: 2em;

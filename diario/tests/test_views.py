@@ -128,8 +128,8 @@ class TestHomePage(TestCase):
 
         response = self.client.get(reverse('home'))
 
-        self.assertContains(response, '25.00')
-        self.assertContains(response, '75.00')
+        self.assertContains(response, '25,00')
+        self.assertContains(response, '75,00')
 
     def test_pasa_solo_cuentas_independientes_a_template(self):
         cta1 = Cuenta.crear(nombre='Efectivo', slug='E')
@@ -155,7 +155,7 @@ class TestHomePage(TestCase):
 
         response = self.client.get(reverse('home'))
 
-        self.assertContains(response, '350.00')
+        self.assertContains(response, '350,00')
 
     def test_considera_solo_cuentas_independientes_para_calcular_saldo_gral(self):
         cta1 = Cuenta.crear(nombre='Efectivo', slug='E')

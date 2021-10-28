@@ -21,12 +21,13 @@
   </nav>
   {% endblock menu_titulares %}
 </section>
+
 <section id="id_saldos" class="text-center">
   <div id="id_div_saldo_pag" class="card mt-3 border-success class_div_totales">
     <div class="card-header bg-success text-light" id="id_div_titulo_pag">
       <h4>{% block titulo_pag %}{% endblock titulo_pag %}</h4>
     </div>
-    <div id="id_div_importe_saldo_pag" class="card-body text-success">
+    <div id="id_div_importe_saldo_pag" class="card-body text-success numero">
       {% block saldo_pag %}{% endblock saldo_pag %}
     </div>
   </div>
@@ -36,11 +37,11 @@
     {% for subc in subcuentas %}
     <div id="id_div_cta_{{ subc.slug|lower }}" class="card border-danger class_div_cuenta">
       <div class="card-header bg-danger text-light class_nombre_cuenta">
-        <a href="{% url 'cta_detalle' subc.slug %}" class="text-light link_cuenta">
-          {{ subc.nombre }}
+        <a href="{% url 'cta_detalle' subc.slug %}" class="text-light class_link_cuenta" title="{{subc.nombre}}">
+          {{ subc.slug|upper }}
         </a>
       </div>
-      <div id="id_saldo_cta_{{ subc.slug|lower }}" class="card-body text-danger class_saldo_cuenta">
+      <div id="id_saldo_cta_{{ subc.slug|lower }}" class="card-body text-danger numero class_saldo_cuenta">
         {{ subc.saldo|floatformat:2}}
       </div>
       <div class="card-footer">
@@ -63,9 +64,8 @@
   {% endblock verificar_saldos %}
 </section>
 
-
 <section id="id_lista_ult_movs">
-  <table class="table">
+  <table class="table table-sm">
     <thead><tr>
       <th>Fecha</th>
       <th>Concepto</th>
@@ -75,29 +75,26 @@
     </tr></thead>
     {% for mov in movimientos %}
     <tr class="class_row_mov">
-      <td class="class_td_fecha">{{ mov.fecha|date:'Y-m-d' }}</td>
-      <td class="class_td_concepto">
-        <span data-toggle="tooltip" title="{{ mov.detalle }}" class="class_tooltip_detalle">
+      <td class="align-middle class_td_fecha" style="width: 8%;">{{ mov.fecha|date:'Y-m-d' }}</td>
+      <td class="align-middle class_td_concepto"  style="width: 50ch" title="{{ mov.detalle }}" >
           {{ mov.concepto }}
-        </span>
       </td>
-      <td class="d-none d-md-table-cell class_td_detalle">
-        {{ mov.detalle|default_if_none:"" }}
+      <td class="d-none d-md-table-cell align-middle class_td_detalle" title="{{mov.detalle}}" style="width: 30%;">
+        {{ mov.detalle|default_if_none:""|truncatechars:50 }}
       </td>
-      <td class="text-right
-                 {% if mov.cta_salida and not mov.cta_entrada %}
-                   text-danger
-                 {% elif mov.cta_salida and mov.cta_entrada %}
-                   text-primary
-                 {% endif %}
-                 class_td_importe">
+      <td class="align-middle text-right
+                 {% include './snippets/color_saldo.html' %}
+                 numero class_td_importe"
+          style="width: 9%;">
         {{ mov.importe|floatformat:2 }}
       </td>
-      <td class="class_td_cuentas">
-        {% if mov.cta_entrada %}+{{ mov.cta_entrada.nombre }}{% endif %}
-        {% if mov.cta_salida %}-{{ mov.cta_salida.nombre }}{% endif %}
+      <td class="small align-middle class_td_cuentas"
+          title="{% include './snippets/cuentas_mov.html' %}"
+          style="width: 9%;">
+        {% if mov.cta_entrada %}+{{ mov.cta_entrada.slug }}{% endif %}
+        {% if mov.cta_salida %}-{{ mov.cta_salida.slug }}{% endif %}
       </td>
-      <td class="class_td_menu">
+      <td class="align-middle class_td_menu">
         <a href="{% url 'mov_elim' mov.id %}"
            class="btn btn-danger btn-sm link_elim_mov">
           Borrar
