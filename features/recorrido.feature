@@ -9,7 +9,7 @@ Característica: Recorrido
         Dada una cuenta
 
         Cuando voy a la página principal
-        Entonces veo que el saldo general es 0.00 pesos
+        Entonces veo un titular en la grilla de titulares
         Y veo una cuenta en la grilla
         Y la lista de movimientos está vacia
         Y veo un botón de Cuenta nueva
@@ -19,7 +19,8 @@ Característica: Recorrido
 
         Cuando agrego una cuenta con nombre "Banco"
         Entonces veo una cuenta en la grilla con nombre "banco"
-        Y veo que el saldo de Efectivo es cero pesos
+        Y veo que el saldo de "Efectivo" es cero pesos
+        Y veo que el saldo de "Titular por defecto" es cero pesos
         Y veo un botón de Movimiento nuevo
 
         Cuando cliqueo en el botón "Movimiento nuevo"
@@ -33,4 +34,4 @@ Característica: Recorrido
             | importe     | 50.00                  |
         Entonces veo un movimiento en la página
         Y veo que el saldo de Banco es 50 pesos
-        Y veo que el saldo general es 50 pesos
+        Y veo que el saldo de "Titular por defecto" es 50 pesos
