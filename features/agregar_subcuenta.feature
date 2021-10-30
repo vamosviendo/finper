@@ -32,7 +32,7 @@ Escenario: Agregar subcuenta a cuenta
         | Cajón     | ecaj |   130 |
     Y veo 3 movimientos en la página
     Y los movimientos en la página tienen estos valores:
-        | concepto                  | importe | cuentas              |
-        | Saldo inicial de efectivo | 200.00  | +efectivo            |
-        | Traspaso de saldo         | 130.00  | +cajón -efectivo     |
-        | Traspaso de saldo         | 70.00   | +billetera -efectivo |
+        | concepto                  | importe | cuentas  |
+        | Saldo inicial de efectivo | 200,00  | +e       |
+        | Traspaso de saldo         | 130,00  | +ecaj -e |
+        | Traspaso de saldo         |  70,00  | +ebil -e |

@@ -23,7 +23,8 @@ Escenario: Crear cuenta
     Y selecciono "Tito Gómez" en el campo "titular"
     Y cliqueo en el botón
     Entonces soy dirigido a la página principal
-    Y veo una cuenta en la grilla con nombre "efectivo"
+    Y veo una cuenta en la grilla con slug "EFE" y nombre "efectivo"
+    # Y veo una cuenta en la grilla con nombre "efectivo"
 
 
 Escenario: Ir a crear cuenta

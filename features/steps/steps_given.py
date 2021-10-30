@@ -75,34 +75,6 @@ def hay_un_error_en_el_saldo(context, cantidad, nombre):
     context.test.assertNotEqual(cta.saldo, cta.total_movs())
 
 
-@given('{n} cuentas con los siguientes valores')
-def hay_n_cuentas(context, n):
-    """ Campos: nombre
-                slug
-                saldo (optativo, default: 0)
-                titular (optativo, default: Titular por defecto)
-    """
-    for fila in context.table:
-        Cuenta.crear(
-            fila['nombre'], fila['slug'],
-            titular=Titular.tomar_o_nada(titname=fila.get('titular')),
-            saldo=fila.get('saldo', 0.0)
-        )
-
-
-@given('una cuenta con los siguientes valores')
-def hay_una_cuenta(context):
-    """ Campos: nombre
-                slug
-                saldo (optativo, default: 0)
-                titular (optativo, default: Titular por defecto)
-    """
-    context.execute_steps(
-        'Dadas 1 cuentas con los siguientes valores\n ' +
-        table_to_str(context.table)
-    )
-
-
 @given('{n} titulares con los siguientes valores')
 def hay_n_titulares(context, n):
     for fila in context.table:
@@ -138,6 +110,34 @@ def hay_dos_titulares(context):
             | tito    | Tito Gómez  |
             | juan    | Juan Juánez |
         """
+    )
+
+
+@given('{n} cuentas con los siguientes valores')
+def hay_n_cuentas(context, n):
+    """ Campos: nombre
+                slug
+                saldo (optativo, default: 0)
+                titular (optativo, default: Titular por defecto)
+    """
+    for fila in context.table:
+        Cuenta.crear(
+            fila['nombre'], fila['slug'],
+            titular=Titular.tomar_o_nada(titname=fila.get('titular')),
+            saldo=fila.get('saldo', 0.0)
+        )
+
+
+@given('una cuenta con los siguientes valores')
+def hay_una_cuenta(context):
+    """ Campos: nombre
+                slug
+                saldo (optativo, default: 0)
+                titular (optativo, default: Titular por defecto)
+    """
+    context.execute_steps(
+        'Dadas 1 cuentas con los siguientes valores\n ' +
+        table_to_str(context.table)
     )
 
 

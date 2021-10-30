@@ -20,10 +20,10 @@ Escenario: Eliminar movimiento
         Y cliqueo en el botón de id "id_btn_confirm"
     
     Entonces veo 2 movimientos en la página
-        Y veo que el saldo de "Afectivo" es 45.00 pesos
+        Y veo que el saldo de "Afectivo" es 45 pesos
     
     Cuando cliqueo en el segundo botón de clase "link_elim_mov"
         Y cliqueo en el botón de id "id_btn_confirm"
-    Entonces veo que el saldo de "Afectivo" es 0.00 pesos
-        Y veo que el saldo de "Caja de ahorro" es 200.00 pesos
+    Entonces veo que el saldo de "Afectivo" es cero pesos
+        Y veo que el saldo de "Caja de ahorro" es 200 pesos
 

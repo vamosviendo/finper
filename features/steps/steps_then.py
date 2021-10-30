@@ -12,9 +12,12 @@ from consts_base import CARDINALES
 from diario.models import Cuenta
 from utils import errors
 from utils.fechas import hoy
+from utils.numeros import float_str_coma
+from utils.texto import truncar
 
 
 # CONSTATACIONES GENERALES
+
 
 @then('el saldo general es la suma de los de "{cta1}" y "{cta2}"')
 def saldo_general_es(context, cta1, cta2):
@@ -53,6 +56,8 @@ def cuenta_tiene_saldo(context, slug, monto):
 def subcuentas_de_detalle_cuenta_coinciden_con(context, cuenta):
     nombres = [e.text for e in
                context.browser.esperar_elementos('class_nombre_cuenta')]
+    titulos = [e.get_attribute("title") for e in
+               context.browser.esperar_elementos('class_link_cuenta')]
     saldos = [e.text for e in
               context.browser.esperar_elementos('class_saldo_cuenta')]
     ids = [e.get_attribute('id') for e in
@@ -64,10 +69,14 @@ def subcuentas_de_detalle_cuenta_coinciden_con(context, cuenta):
             f"La id id_div_cta_{fila['slug']} no coincide con {ids[i]}"
         )
         context.test.assertEqual(
-            nombres[i], fila['nombre'].lower(),
-            f"El nombre {fila['nombre']} no coincide con {nombres[i]}."
+            nombres[i], fila['slug'].upper(),
+            f"El slug {fila['slug']} no coincide con {nombres[i]}."
         )
-        saldo = f"{float(fila['saldo']):.2f}"
+        context.test.assertEqual(
+            titulos[i], fila['nombre'].lower(),
+            f"El nombre {fila['nombre']} no coincide con {titulos[i]}."
+        )
+        saldo = float_str_coma(fila['saldo'])
         context.test.assertEqual(
             saldos[i], saldo,
             f"El saldo de {fila['nombre']} es {saldos[i]}, no {saldo}."
@@ -104,11 +113,11 @@ def detalle_cuenta_tiene_subcuentas(context, cuenta, x):
 def detalle_muestra_subcuentas_de(context, nombre_cta):
     cta = Cuenta.tomar(nombre=nombre_cta.lower())
     subctas_pag = [x.text for x in context.browser.esperar_elementos(
-        'link_cuenta'
+        'class_link_cuenta'
     )]
     context.test.assertEqual(
         subctas_pag,
-        [x.nombre for x in cta.subcuentas.all()]
+        [x.slug.upper() for x in cta.subcuentas.all()]
     )
 
 
@@ -156,9 +165,9 @@ def el_saldo_tal_es_tanto(context, tal, tantos):
         total = context.browser.esperar_elemento(f'id_saldo_cta_{slug}')
 
     if tantos == 'cero':
-        tantos = '0.00'
+        tantos = '0,00'
     elif tantos.find('.') == -1:
-        tantos += '.00'
+        tantos += ',00'
 
     context.test.assertEqual(
         total.text, tantos
@@ -168,7 +177,7 @@ def el_saldo_tal_es_tanto(context, tal, tantos):
 @then('veo que el nombre de la cuenta es "{nombre}"')
 def el_nombre_es_tal(context, nombre):
     nombre_en_pag = context.browser.esperar_elemento(
-        'class_nombre_cuenta', By.CLASS_NAME).text
+        'class_link_cuenta', By.CLASS_NAME).get_attribute('title')
     context.test.assertEqual(nombre_en_pag, nombre)
 
 
@@ -190,7 +199,34 @@ def veo_solo_movimientos_relacionados_con(context, nombre_cta):
     )
 
 
+@then('veo una cuenta en la grilla con slug "{slug}" y nombre "{nombre}"')
+def veo_una_cuenta(context, slug, nombre):
+    cuentas = context.browser.esperar_elementos('class_div_cuenta')
+    print('SLUG, NOMBRE:', slug, nombre)
+    for cta in cuentas:
+        print(cta.get_attribute('id'))
+    div_cuenta = next(x
+                      for x in cuentas
+                      if x.get_attribute('id') == f'id_div_cta_{slug.lower()}')
+    slug_cuenta = div_cuenta.find_element_by_class_name(
+        'class_nombre_cuenta').text
+    nombre_cuenta = div_cuenta.find_element_by_class_name(
+        'class_link_cuenta').get_attribute('title')
+    context.test.assertEqual(slug_cuenta, slug.upper())
+    context.test.assertEqual(nombre_cuenta, nombre.lower())
+
+
 @then('veo una cuenta en la grilla con nombre "{nombre}"')
+def veo_una_cuenta(context, nombre):
+    cuentas = context.browser.esperar_elementos('class_div_cuenta')
+    context.test.assertIn(
+        nombre.lower(),
+        [x.find_element_by_class_name('class_link_cuenta')
+             .get_attribute('title') for x in cuentas]
+    )
+
+
+@then('veo una cuenta en la grilla con slug "{nombre}"')
 def veo_una_cuenta(context, nombre):
     cuentas = context.browser.esperar_elementos('class_div_cuenta')
     context.test.assertIn(
@@ -290,7 +326,10 @@ def movs_en_pagina_coinciden_con(context):
                 e.text for e in
                 context.browser.esperar_elementos(f'class_td_{heading}')
             ][i]
-            context.test.assertEqual(td, fila[heading])
+            if heading == 'detalle':
+                context.test.assertEqual(td, truncar(fila[heading], 50))
+            else:
+                context.test.assertEqual(td, fila[heading])
 
 
 @then('veo que el concepto del movimiento es "{concepto}"')

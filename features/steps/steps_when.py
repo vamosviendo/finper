@@ -51,7 +51,8 @@ def agregar_cuenta(context):
 @when('entro en la cuenta "{nombre}"')
 def entrar_en_cuenta(context, nombre):
     nombre = nombre.lower()
-    context.browser.esperar_elemento(nombre, By.LINK_TEXT).click()
+    slug = Cuenta.tomar(nombre=nombre).slug.upper()
+    context.browser.esperar_elemento(slug, By.LINK_TEXT).click()
     context.test.assertEqual(
         context.browser.esperar_elemento('id_div_titulo_pag',).text,
         nombre
