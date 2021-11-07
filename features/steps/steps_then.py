@@ -371,7 +371,7 @@ def el_concepto_es_tal(context, concepto):
 def el_importe_es_tanto(context, concepto, tantos):
 
     if tantos.find('.') == -1:
-        tantos += '.00'
+        tantos += ',00'
 
     movimiento = context.browser.esperar_movimiento(concepto)
     importe = movimiento.find_element_by_class_name('class_td_importe').text
@@ -391,8 +391,9 @@ def cuenta_mov_es(context, sentido, concepto, esta):
     else: raise errors.ErrorOpcionInexistente(
         'Las opciones posibles son "entrada" y "salida".'
     )
+    slug = Cuenta.tomar(nombre=esta.lower()).slug
 
-    context.test.assertIn(signo+esta.lower(), cuentas)
+    context.test.assertIn(signo+slug, cuentas)
 
 
 @then('veo que el movimiento "{concepto}" no tiene cuenta de {sentido}')
