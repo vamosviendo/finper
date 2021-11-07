@@ -22,7 +22,7 @@ from utils.archivos import fijar_mtime
 @when('cliqueo en el titular "{nombre}"')
 def cliquear_en_titular(context, nombre):
     context.execute_steps(f'''
-        Entonces veo un "section" de id "titulares"
+        Entonces veo un "grid" de id "titulares"
         Cuando cliqueo en el link de texto "{nombre}"
     ''')
 

@@ -2,36 +2,44 @@
 {% load static %}
 
 {% block contenido %}
-<section id="id_section_titulares">
-  {% block menu_titulares %}
-  <div>{% block titulo_titulares %}Titulares{% endblock titulo_titulares %}</div>
-  <nav id="id_nav_titulares">
+
+<section id="id_saldos" class="text-center">
+
+  {% block saldo_pag %}
+  <div id="id_div_saldo_pag" class="card mt-3 border-danger class_div_totales">
+    <div class="card-header bg-danger text-light" id="id_div_titulo_pag">
+      <h4>{% block titulo_pag %}{% endblock titulo_pag %}</h4>
+    </div>
+    <div id="id_div_importe_saldo_pag" class="card-body text-danger numero">
+      {% block importe_saldo_pag %}{% endblock importe_saldo_pag %}
+    </div>
+  </div>
+  {% endblock saldo_pag %}
+
+  {% block grid_titulares %}
+    <div id="id_grid_titulares" class="card-deck mt-3">
     {% for tit in titulares %}
-    <span class="class_span_titular">
-      <a href="{% url 'tit_detalle' tit.pk %}" class="class_link_titular">{{ tit.nombre }}</a>
-      &nbsp;
-    </span>
+      <div class="card border-success class_div_titular">
+        <div class="card-header bg-success text-light class_div_nombre_titular">
+          <a href="{% url 'tit_detalle' tit.pk %}" class="text-light class_link_titular" >
+            {{ tit.nombre }}
+          </a>
+        </div>
+        <div id="id_patrimonio_{{ tit.titname }}" class="card-body text-success numero class_patrimonio_titular">
+          {{ tit.patrimonio|floatformat:2 }}
+        </div>
+      </div>
     {% endfor %}
+    </div>
     {% block titular_nuevo %}
     <a href="{% url 'tit_nuevo' %}" id="id_link_titular_nuevo"
        class="class_link_titular btn my-3 btn-primary">
       Titular nuevo
     </a>
     {% endblock titular_nuevo %}
-  </nav>
-  {% endblock menu_titulares %}
-</section>
+  {% endblock grid_titulares %}
 
-<section id="id_saldos" class="text-center">
-  <div id="id_div_saldo_pag" class="card mt-3 border-success class_div_totales">
-    <div class="card-header bg-success text-light" id="id_div_titulo_pag">
-      <h4>{% block titulo_pag %}{% endblock titulo_pag %}</h4>
-    </div>
-    <div id="id_div_importe_saldo_pag" class="card-body text-success numero">
-      {% block saldo_pag %}{% endblock saldo_pag %}
-    </div>
-  </div>
-
+  {% block grid_cuentas %}
   <div id="id_grid_cuentas" class="card-deck mt-3">
 
     {% for subc in subcuentas %}
@@ -55,6 +63,7 @@
     </div>
     {% endfor %}
   </div>
+  {% endblock grid_cuentas %}
 
   <a href="{% url 'cta_nueva' %}" id="id_btn_cta_nueva" class="btn my-3 btn-primary">
     Cuenta nueva

@@ -2,9 +2,9 @@
 {% load static %}
 
 {% block titulo_pag %}Saldo general{% endblock titulo_pag %}
-
-
-{% block saldo_pag %}{{ saldo_gral|floatformat:2 }}{% endblock saldo_pag %}
+{% block importe_saldo_pag %}
+  {{saldo_gral|floatformat:2}}
+{% endblock importe_saldo_pag %}
 
 {% block verificar_saldos %}
 <a href="{% url 'verificar_saldos' %}" id="id_btn_verificar_saldos" class="btn my-3 btn-primary">

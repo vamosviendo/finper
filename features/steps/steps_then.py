@@ -9,7 +9,7 @@ from selenium.webdriver.common.by import By
 
 from consts import LISTAS_DE_ENTIDADES
 from consts_base import CARDINALES
-from diario.models import Cuenta
+from diario.models import Cuenta, Titular
 from utils import errors
 from utils.fechas import hoy
 from utils.numeros import float_str_coma
@@ -125,7 +125,7 @@ def detalle_muestra_subcuentas_de(context, nombre_cta):
 def veo_titular_de(context, nombre_cta):
     cta = Cuenta.tomar(nombre=nombre_cta.lower())
     titular_pag = context.browser.esperar_elemento(
-        'class_span_titular', By.CLASS_NAME).text.strip()
+        'class_div_nombre_titular', By.CLASS_NAME).text.strip()
 
     context.test.assertEqual(titular_pag, cta.titular.nombre)
 
@@ -133,7 +133,7 @@ def veo_titular_de(context, nombre_cta):
 @then('veo que el titular de la cuenta es "{nombre_titular}"')
 def veo_que_titular_es(context, nombre_titular):
     titular_pag = context.browser.esperar_elemento(
-        'class_span_titular', By.CLASS_NAME).text.strip()
+        'class_div_nombre_titular', By.CLASS_NAME).text.strip()
     context.test.assertEqual(titular_pag, nombre_titular)
 
 
@@ -142,7 +142,7 @@ def veo_titulares_de(context, nombre_cta):
     cta = Cuenta.tomar(nombre=nombre_cta.lower())
     titulares_pag = [
         x.text.strip() for x in
-            context.browser.esperar_elementos('class_span_titular')
+            context.browser.esperar_elementos('class_div_nombre_titular')
     ]
     titulares_cta = [x.nombre for x in cta.titulares]
 
@@ -153,7 +153,8 @@ def veo_titulares_de(context, nombre_cta):
 def el_saldo_tal_es_tanto(context, tal, tantos):
     # TODO: Refactor
     if tal in ('general', 'de la página'):
-        total = context.browser.esperar_elemento('id_div_importe_saldo_pag')
+        total = context.browser.esperar_elemento(
+            'id_div_importe_saldo_pag').text
     else:
         if tal == 'de la cuenta':
             slug = 'e'
@@ -162,16 +163,14 @@ def el_saldo_tal_es_tanto(context, tal, tantos):
             if tal[0] == '"':
                 tal = tal[1:-1]
             slug = Cuenta.tomar(nombre=tal.lower()).slug
-        total = context.browser.esperar_elemento(f'id_saldo_cta_{slug}')
+        total = context.browser.esperar_elemento(f'id_saldo_cta_{slug}').text
 
     if tantos == 'cero':
         tantos = '0,00'
     elif tantos.find('.') == -1:
         tantos += ',00'
 
-    context.test.assertEqual(
-        total.text, tantos
-    )
+    context.test.assertEqual(total, tantos)
 
 
 @then('veo que el nombre de la cuenta es "{nombre}"')
@@ -242,6 +241,26 @@ def veo_una_cuenta(context):
     context.test.assertEqual(len(cuentas), 1)
 
 
+@then('veo un titular en la grilla')
+def veo_un_titular(context):
+    titulares = context.browser.esperar_elementos('class_div_titular')
+    context.test.assertEqual(len(titulares), 1)
+
+
+@then('veo que el patrimonio de "{titular}" es {tantos} pesos')
+def el_patrimonio_es_tanto(context, titular, tantos):
+    titname = Titular.tomar(nombre=titular).titname
+
+    # TODO: Unificar esta "adaptación" con la de saldo de cuenta
+    if tantos == 'cero':
+        tantos = '0,00'
+    elif tantos.find('.') == -1:
+        tantos += ',00'
+
+    patri = context.browser.esperar_elemento(f'id_patrimonio_{titname}')
+    context.test.assertEqual(patri.text, tantos)
+
+
 @then('veo un mensaje de saldos erróneos que incluye las cuentas')
 def veo_mensaje_de_saldos_erroneos(context):
     msj = context.browser.esperar_elemento('id_msj_ctas_erroneas').text
@@ -263,6 +282,15 @@ def soy_dirigido_a_pagina_de_cuenta(context, pag, nombre):
     context.execute_steps(
         f'Entonces soy dirigido a la página "{pag}" '
         f'con el argumento "{cuenta}"'
+    )
+
+
+@then('soy dirigido a la página "{pag}" del titular "{nombre}"')
+def soy_dirigido_a_pagina_de_titular(context, pag, nombre):
+    titular = Titular.tomar(nombre=nombre).pk
+    context.execute_steps(
+        f'Entonces soy dirigido a la página "{pag}" '
+        f'con el argumento "{titular}"'
     )
 
 # CONSTATACIONES DE MOVIMIENTO

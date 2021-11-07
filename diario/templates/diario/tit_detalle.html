@@ -1,11 +1,25 @@
 {% extends 'diario/base_contenido.html' %}
 {% load static %}
 
-{% block menu_titulares %}
-{% endblock menu_titulares %}
+{% block grid_titulares %}
+<!-- TODO: Unificar con block grid_titulares de base_contenido.html
+           (No sé si se puede porque en grid_titulares de base_contenido
+           hay un loop for y acá no -->
+<div class="card border-success class_div_titular">
+  <div class="card-header bg-success text-light class_div_nombre_titular">
+    <a href="{% url 'tit_detalle' titular.pk %}" class="text-light class_link_titular" >
+      {{ titular.nombre }}
+    </a>
+  </div>
+  <div id="id_patrimonio_{{ titular.titname }}" class="card-body text-success numero class_patrimonio_titular">
+    {{ titular.patrimonio|floatformat:2 }}
+  </div>
+</div>
+{% endblock grid_titulares %}
 
 {% block titulo_pag %}{{ titular.nombre }}{% endblock titulo_pag %}
-{% block saldo_pag %}{{ saldo_pag|floatformat:2 }}{% endblock saldo_pag %}
+{% block saldo_pag %}
+{% endblock saldo_pag %}
 
 {% block verificar_saldos %}
 {% endblock verificar_saldos %}

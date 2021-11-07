@@ -18,8 +18,9 @@ Escenario: Ver detalles de un titular
 
     Cuando voy a la página principal
     Y cliqueo en el titular "Tito Gómez"
-    Entonces veo un "div" de id "titulo_pag" con texto "Tito Gómez"
+    Entonces soy dirigido a la página "tit_detalle" del titular "Tito Gómez"
+    Y veo un "div" de clase "nombre_titular" con texto "Tito Gómez"
+    Y veo que el patrimonio de "Tito Gómez" es 650 pesos
     Y veo una cuenta en la grilla con nombre "cta1efectivo"
     Y veo una cuenta en la grilla con nombre "cta3credito"
     Y no veo una cuenta "cta2banco" en la grilla
-    Y veo que el saldo general es 650 pesos
