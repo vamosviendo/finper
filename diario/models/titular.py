@@ -11,7 +11,7 @@ class Titular(MiModel):
 
     @property
     def patrimonio(self):
-        return self.cuentas.all().aggregate(Sum('_saldo'))['_saldo__sum']
+        return self.cuentas.all().aggregate(Sum('_saldo'))['_saldo__sum'] or 0
 
     def full_clean(self, exclude=None, validate_unique=True):
         self.nombre = self.nombre or self.titname

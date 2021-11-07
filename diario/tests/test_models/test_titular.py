@@ -74,6 +74,9 @@ class TestTitularPatrimonio(TestCase):
 
         self.assertEqual(tit.patrimonio, round(500.22-120.35, 2))
 
+    def test_devuelve_cero_si_titular_no_tiene_cuentas(self):
+        tit = Titular.crear(titname='Toti')
+        self.assertEqual(tit.patrimonio, 0)
 
 
 class TestMetodoPorDefecto(TestCase):
