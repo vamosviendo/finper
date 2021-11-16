@@ -136,6 +136,18 @@ class TestMetodoDividirEntre(TestCase):
 
         self.assertEqual(list(self.cta1.subcuentas.all()), [cta2, cta3, ])
 
+    def test_titular_de_cuenta_madre_es_por_defecto_el_titular_de_cuentas_generadas(self):
+        self.titular = Titular.crear(titname='tito', nombre='Tito Titi')
+        self.cta1.titular = self.titular
+        self.cta1.save()
+
+        self.cta1.dividir_entre(*self.subcuentas)
+        cta2 = Cuenta.tomar(slug='ebil')
+        cta3 = Cuenta.tomar(slug='ecaj')
+
+        self.assertEqual(cta2.titular, self.titular)
+        self.assertEqual(cta3.titular, self.titular)
+
     def test_devuelve_lista_con_subcuentas_creadas(self):
         self.assertEqual(
             self.cta1.dividir_entre(*self.subcuentas),
