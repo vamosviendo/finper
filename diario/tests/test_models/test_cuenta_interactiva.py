@@ -148,6 +148,18 @@ class TestMetodoDividirEntre(TestCase):
         self.assertEqual(cta2.titular, self.titular)
         self.assertEqual(cta3.titular, self.titular)
 
+    def test_permite_asignar_otros_titulares_a_cuentas_generadas(self):
+        self.titular1 = Titular.crear(titname='tito', nombre='Tito Titi')
+        self.titular2 = Titular.crear(titname='pipo', nombre='Pipo Pippi')
+        self.cta1.titular = self.titular1
+        self.cta1.save()
+        self.subcuentas[1].update({'titular': self.titular2})
+
+        self.cta1.dividir_entre(*self.subcuentas)
+        cta2 = Cuenta.tomar(slug='ecaj')
+
+        self.assertEqual(cta2.titular, self.titular2)
+
     def test_devuelve_lista_con_subcuentas_creadas(self):
         self.assertEqual(
             self.cta1.dividir_entre(*self.subcuentas),
