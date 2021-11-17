@@ -13,6 +13,12 @@ class Titular(MiModel):
     def patrimonio(self):
         return self.cuentas.all().aggregate(Sum('_saldo'))['_saldo__sum'] or 0
 
+    def movimientos(self):
+        lista_movimientos = list()
+        for cuenta in self.cuentas.all():
+            lista_movimientos += cuenta.movs()
+        return lista_movimientos
+
     def full_clean(self, exclude=None, validate_unique=True):
         self.nombre = self.nombre or self.titname
         super().full_clean(exclude=None, validate_unique=True)

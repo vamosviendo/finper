@@ -1,8 +1,9 @@
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
-from diario.models import Titular, CuentaInteractiva
+from diario.models import Titular, CuentaInteractiva, Cuenta, Movimiento
 from diario.settings_app import TITULAR_PRINCIPAL
+from utils.helpers_tests import dividir_en_dos_subcuentas
 
 
 class TestModelTitular(TestCase):
@@ -77,6 +78,27 @@ class TestTitularPatrimonio(TestCase):
     def test_devuelve_cero_si_titular_no_tiene_cuentas(self):
         tit = Titular.crear(titname='Toti')
         self.assertEqual(tit.patrimonio, 0)
+
+
+class TestTitularMovimientos(TestCase):
+
+    def setUp(self):
+        self.tit = Titular.crear(titname='tito', nombre='Tito Gómez')
+        self.cuenta1 = Cuenta.crear(nombre='cuenta1', slug='cta1', titular=self.tit)
+        self.cuenta2 = Cuenta.crear(nombre='cuenta2', slug='cta2')
+        self.mov1 = Movimiento.crear('Movimiento 1', 120, self.cuenta1)
+        self.mov2 = Movimiento.crear('Movimiento 2', 65, None, self.cuenta2)
+        self.mov3 = Movimiento.crear('Movimiento 3', 35, self.cuenta1, self.cuenta2)
+
+    def test_devuelve_movimientos_relacionados_con_cuentas_del_titular(self):
+        self.assertEqual(self.tit.movimientos(), [self.mov1, self.mov3])
+
+    def test_no_incluye_movimientos_no_relacionados_con_cuentas_del_titular(self):
+        self.assertNotIn(self.mov2, self.tit.movimientos())
+
+    def test_incluye_movimientos_de_cuentas_convertidas_en_acumulativas(self):
+        dividir_en_dos_subcuentas(self.cuenta1, saldo=15)
+        self.assertIn(self.mov1, self.tit.movimientos())
 
 
 class TestMetodoPorDefecto(TestCase):
