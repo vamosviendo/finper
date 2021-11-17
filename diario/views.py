@@ -212,6 +212,7 @@ class TitDetalleView(DetailView):
         context.update({
             'subcuentas': self.object.cuentas.all(),
             'saldo_pag': self.object.patrimonio,
+            'movimientos': self.object.movimientos(),
         })
         return context
 

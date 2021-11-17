@@ -4,7 +4,7 @@ from pathlib import Path
 from unittest.mock import patch, MagicMock, PropertyMock
 
 from django.http import HttpRequest
-from django.test import TestCase, RequestFactory
+from django.test import TestCase
 from django.urls import reverse
 
 from diario.forms import FormCuentaInt, FormCuentaAcu, FormCrearSubcuenta
@@ -58,6 +58,21 @@ class TestTitularDetalle(TestCase):
         response = self.client.get(reverse('tit_detalle', args=[self.tit.pk]))
 
         self.assertEqual(response.context['saldo_pag'], 250)
+
+    @patch('diario.views.Titular.movimientos')
+    def test_pasa_movimientos_relacionados_con_cuentas_del_titular_al_template(self, mock_movimientos):
+        cuenta1 = Cuenta.crear(nombre='cuenta1', slug='cta1', titular=self.tit)
+        cuenta2 = Cuenta.crear(nombre='cuenta2', slug='cta2')
+        mov1 = Movimiento.crear('Movimiento 1', 120, cuenta1)
+        mov2 = Movimiento.crear('Movimiento 2', 65, None, cuenta2)
+        mov3 = Movimiento.crear('Movimiento 3', 35, cuenta1, cuenta2)
+
+        mock_movimientos.return_value = [mov1, mov3]
+
+        response = self.client.get(reverse('tit_detalle', args=[self.tit.pk]))
+
+        self.assertIn('movimientos', response.context.keys())
+        self.assertEqual(list(response.context['movimientos']), [mov1, mov3])
 
 
 class TestHomePage(TestCase):
@@ -446,20 +461,6 @@ class TestCtaMod(TestCase):
             (self.cuenta.nombre, self.cuenta.slug),
             ('cuenta', 'cta')
         )
-
-    def test_post_permite_cambiar_titular_de_cuenta_interactiva(self):
-        self.client.post(
-            reverse('cta_mod', args=[self.cuenta.slug]),
-            data={
-                'nombre': self.cuenta.nombre,
-                'slug': self.cuenta.slug,
-                'titular': self.tit.pk
-            }
-        )
-
-        self.cuenta.refresh_from_db()
-
-        self.assertEqual(self.cuenta.titular, self.tit)
 
     def test_redirige_a_home_despues_de_post(self):
         response = self.client.post(
