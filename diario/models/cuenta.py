@@ -29,6 +29,11 @@ class Cuenta(PolymorphModel):
         on_delete=models.CASCADE,
     )
     _saldo = models.FloatField(default=0)
+    titular = models.ForeignKey('diario.Titular',
+                                related_name='cuentas',
+                                on_delete=models.CASCADE,
+                                null=True, blank=True,
+                                default=Titular.por_defecto)
 
     class Meta:
         ordering = ('nombre', )
@@ -145,11 +150,6 @@ class Cuenta(PolymorphModel):
 
 
 class CuentaInteractiva(Cuenta):
-    titular = models.ForeignKey('diario.Titular',
-                                related_name='cuentas',
-                                on_delete=models.CASCADE,
-                                null=True, blank=True,
-                                default=Titular.por_defecto)
 
     @classmethod
     def crear(cls, nombre, slug, cta_madre=None, saldo=None, **kwargs):
