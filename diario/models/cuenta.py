@@ -70,15 +70,9 @@ class Cuenta(PolymorphModel):
         self._saldo = round(valor, 2)
 
     def full_clean(self, *args, **kwargs):
-        if self.slug:
-            self.slug = self.slug.lower()
-        if self.nombre:
-            self.nombre = self.nombre.lower()
-        if self.es_acumulativa and self.como_subclase().subcuentas.count()== 0:
-            raise errors.ErrorTipo('Cuenta caja debe tener subcuentas')
-        if self.cta_madre and self.cta_madre.es_interactiva:
-            raise errors.ErrorTipo(f'Cuenta interactiva "{self.cta_madre }" '
-                                   f'no puede ser madre')
+        self._pasar_nombre_y_slug_a_minuscula()
+        self._chequear_incongruencias_de_clase()
+        self._impedir_cambio_de_titular()
 
         super().full_clean(*args, **kwargs)
 
@@ -147,6 +141,27 @@ class Cuenta(PolymorphModel):
             self.cta_madre.save()
         if self.cta_madre and self.cta_madre != cta_madre_guardada:
             self.cta_madre.saldo += self.saldo
+
+    def _pasar_nombre_y_slug_a_minuscula(self):
+        if self.slug:
+            self.slug = self.slug.lower()
+        if self.nombre:
+            self.nombre = self.nombre.lower()
+
+    def _chequear_incongruencias_de_clase(self):
+        if self.es_acumulativa and self.como_subclase().subcuentas.count()== 0:
+            raise errors.ErrorTipo('Cuenta acumulativa debe tener subcuentas')
+        if self.cta_madre and self.cta_madre.es_interactiva:
+            raise errors.ErrorTipo(f'Cuenta interactiva "{self.cta_madre }" '
+                                   f'no puede ser madre')
+
+    def _impedir_cambio_de_titular(self):
+        try:
+            titular_guardado = Cuenta.tomar(slug=self.slug).titular
+            if self.titular != titular_guardado:
+                raise errors.CambioDeTitularException
+        except Cuenta.DoesNotExist:
+            pass
 
 
 class CuentaInteractiva(Cuenta):

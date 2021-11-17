@@ -1,13 +1,12 @@
 from datetime import date
-from unittest import skip
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
-from diario.models import Cuenta, CuentaInteractiva, Movimiento
+from diario.models import Cuenta, CuentaInteractiva, Movimiento, Titular
 
 from utils.errors import SaldoNoCeroException, ErrorTipo, \
-    ErrorDependenciaCircular
+    ErrorDependenciaCircular, CambioDeTitularException
 from utils.helpers_tests import dividir_en_dos_subcuentas
 
 
@@ -158,6 +157,19 @@ class TestModelCuentaCrear(TestCase):
     def test_puede_pasarse_saldo_en_formato_str(self):
         cuenta = Cuenta.crear('Efectivo', 'e', saldo='354.42')
         self.assertEqual(cuenta.saldo, 354.42)
+
+
+class TestModelCuentaTitular(TestCase):
+
+    def test_cuenta_no_puede_cambiar_de_titular(self):
+        titular1 = Titular.crear(titname='tito', nombre='Tito Titi')
+        titular2 = Titular.crear(titname='pipo', nombre='Pipo Pippi')
+        self.cuenta = Cuenta.crear('cuenta propia', 'cp', titular=titular1)
+
+        self.cuenta.titular = titular2
+
+        with self.assertRaises(CambioDeTitularException):
+            self.cuenta.full_clean()
 
 
 class TestModelCuentaPropiedadSaldo(TestCase):

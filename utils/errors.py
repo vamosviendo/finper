@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 CAMPO_VACIO = 'Este campo es obligatorio.'
 CAMBIO_IMPORTE_CON_CUENTA_ACUMULATIVA = \
     'Movimiento tiene cuenta acumulativa. No puede modificarse el importe'
+CAMBIO_TITULAR = 'Las cuentas no pueden cambiar de titular.'
 CUENTA_ACUMULATIVA_EN_MOVIMIENTO = \
     'No puede usarse cuenta acumulativa en movimiento'
 CUENTA_ACUMULATIVA_AGREGADA = \
@@ -17,6 +18,12 @@ FECHA_POSTERIOR_A_CONVERSION = 'Fecha del movimiento debe ser anterior a '
 SALDO_NO_CERO = 'No se puede eliminar cuenta con saldo distinto de cero'
 SALDO_NO_COINCIDE = 'El saldo de la cuenta no coincide con sus movimientos'
 SUBCUENTAS_SIN_SALDO = 'Sólo se permite una subcuenta sin saldo'
+
+
+class CambioDeTitularException(ValueError):
+    """ Se intentó cambiar el titular de una cuenta"""
+    def __init__(self, message=CAMBIO_TITULAR):
+        super().__init__(message)
 
 
 class SaldoNoCeroException(ValueError):
