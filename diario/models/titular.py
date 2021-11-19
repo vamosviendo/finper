@@ -33,3 +33,10 @@ class Titular(MiModel):
             nombre=TITULAR_PRINCIPAL['nombre'],
         )
         return titular.pk
+
+    @classmethod
+    def tomar_o_default(cls, **kwargs):
+        try:
+            return cls.tomar(**kwargs)
+        except cls.DoesNotExist:
+            return cls.tomar(pk=cls.por_defecto())

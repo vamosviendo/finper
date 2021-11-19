@@ -5,6 +5,7 @@ Característica: Recorrido
     quiero poder crear cuentas y movimientos
     y ver los cambios reflejados en la página
 
+    @no_default_tit
     Escenario: Crear una cuenta y verla en la homepage
         Dada una cuenta
 

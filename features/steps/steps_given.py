@@ -124,7 +124,7 @@ def hay_n_cuentas(context, n):
     for fila in context.table:
         Cuenta.crear(
             fila['nombre'], fila['slug'],
-            titular=Titular.tomar_o_nada(titname=fila.get('titular')),
+            titular=Titular.tomar_o_default(titname=fila.get('titular')),
             saldo=fila.get('saldo', 0.0)
         )
 

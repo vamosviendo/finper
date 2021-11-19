@@ -124,3 +124,21 @@ class TestMetodoPorDefecto(TestCase):
             Titular.primere(),
             Titular.tomar(pk=pk_titular_principal)
         )
+
+
+class TestTomarODefault(TestCase):
+
+    def setUp(self):
+        self.titular=Titular.crear(titname='tito', nombre='Tito Gomez')
+
+    def test_devuelve_titular_si_existe(self):
+        self.assertEqual(
+            Titular.tomar_o_default(titname='tito'),
+            self.titular
+        )
+
+    def test_devuelve_titular_por_defecto_si_no_encuentra_titular(self):
+        self.assertEqual(
+            Titular.tomar_o_default(titname='pipo'),
+            Titular.tomar(pk=Titular.por_defecto())
+        )
