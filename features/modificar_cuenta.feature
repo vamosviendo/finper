@@ -19,17 +19,13 @@ Escenario: Modificar cuenta interactiva
 
 
 @no_default_tit
-Escenario: Cambiar titular de cuenta interactiva
-    Dados dos titulares
-    Y una cuenta con los siguientes valores:
+Escenario: No se puede cambiar titular de cuenta interactiva
+    Dada una cuenta con los siguientes valores:
         | nombre   | slug | saldo | titular |
         | Efectivo | e    | 100   | juan    |
 
     Cuando voy a la página "cta_mod" de la cuenta "efectivo"
-    Y selecciono "Tito Gómez" en el campo "titular"
-    Y cliqueo en el botón
-    Y voy a la página "cta_detalle" de la cuenta "efectivo"
-    Entonces veo que el titular de la cuenta es "Tito Gómez"
+    Entonces veo que el campo "titular" está deshabilitado
 
 
 Escenario: Modificar cuenta acumulativa

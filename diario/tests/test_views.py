@@ -433,6 +433,13 @@ class TestCtaMod(TestCase):
         )
         self.assertIsInstance(response.context['form'], FormCuenta)
 
+    def test_no_permite_modificar_titular(self):
+        response = self.client.get(
+            reverse('cta_mod', args=[self.cuenta.slug])
+        )
+        self.assertTrue(
+            response.context['form'].fields['titular'].disabled)
+
     def test_post_puede_guardar_cambios_en_cuenta_interactiva(self):
         self.client.post(
             reverse('cta_mod', args=[self.cuenta.slug]),

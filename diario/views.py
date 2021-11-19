@@ -114,6 +114,11 @@ class CtaModView(UpdateView):
         else:
             return CuentaAcumulativa.todes()
 
+    def get_form(self, *args, **kwargs):
+        formu = super().get_form(*args, **kwargs)
+        formu.fields['titular'].disabled = True
+        return formu
+
 
 def cta_div_view(request, slug):
     global formset
