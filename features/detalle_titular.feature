@@ -15,12 +15,52 @@ Escenario: Ver detalles de un titular
         | cta1efectivo | c1e  | tito    |   500 |
         | cta2banco    | c2b  | juan    |   200 |
         | cta3credito  | c3c  | tito    |   150 |
+    Y movimientos con estos valores:
+        | concepto             | importe | cta_entrada | cta_salida |
+        | 1Entrada de efectivo | 50      | c1e         |            |
+        | 2Depósito en banco   | 25      | c2b         | c1e        |
+        | 3Transferencia       | 20      |             | c2b        |
 
     Cuando voy a la página principal
     Y cliqueo en el titular "Tito Gómez"
     Entonces soy dirigido a la página "tit_detalle" del titular "Tito Gómez"
     Y veo un "div" de clase "nombre_titular" con texto "Tito Gómez"
-    Y veo que el patrimonio de "Tito Gómez" es 650 pesos
+    Y veo que el patrimonio de "Tito Gómez" es 675 pesos
     Y veo una cuenta en la grilla con nombre "cta1efectivo"
     Y veo una cuenta en la grilla con nombre "cta3credito"
     Y no veo una cuenta "cta2banco" en la grilla
+    Y veo la siguiente lista de movimientos:
+        | concepto                      | importe | cuentas   |
+        | Saldo inicial de cta1efectivo |  500,00 | +c1e      |
+        | 1Entrada de efectivo          |   50,00 | +c1e      |
+        | 2Depósito en banco            |   25,00 | +c2b -c1e |
+
+
+@no_default_tit
+Escenario: Se muestran movimientos de cuentas acumulativas en página de titular
+    Dados dos titulares
+    Y dos cuentas con los siguientes valores:
+        | nombre       | slug | titular | saldo |
+        | cta1efectivo | c1e  | tito    |   500 |
+        | cta2banco    | c2b  | juan    |   200 |
+    Y la cuenta "cta1efectivo" dividida en subcuentas:
+        | nombre   | slug | titular | saldo |
+        | sc1efect | sc1e | tito    | 230   |
+        | sc2efect | sc2e | juan    |       |
+    Y movimientos con estos valores:
+        | concepto             | importe | cta_entrada | cta_salida |
+        | 1Entrada de efectivo | 50      | sc1e        |            |
+        | 2Entrada de efectivo | 70      | sc2e        |            |
+        | 3Depósito en banco   | 25      | c2b         | sc1e       |
+        | 4Transferencia       | 20      |             | c2b        |
+    
+    Cuando voy a la página "tit_detalle" del titular "Tito Gómez"
+
+    Entonces veo la siguiente lista de movimientos:
+        | concepto                      | importe | cuentas    |
+        | Saldo inicial de cta1efectivo |  500,00 | +c1e       |
+        | Traspaso de saldo             |  230,00 | +sc1e -c1e |
+        | Traspaso de saldo             |  270,00 | +sc2e -c1e |
+        | 1Entrada de efectivo          |   50,00 | +sc1e      |
+        | 3Depósito en banco            |   25,00 | +c2b -sc1e |
+

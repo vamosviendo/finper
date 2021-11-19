@@ -180,6 +180,17 @@ def el_nombre_es_tal(context, nombre):
     context.test.assertEqual(nombre_en_pag, nombre)
 
 
+@then('veo la siguiente lista de movimientos')
+def veo_lista_de_movimientos(context):
+    movs_pag = context.browser.esperar_elementos('class_row_mov')
+    for i, fila in enumerate(context.table):
+        for k in fila.headings:
+            context.test.assertEqual(
+                movs_pag[i].esperar_elemento(f'class_td_{k}', By.CLASS_NAME).text,
+                fila[k],
+            )
+
+
 @then('veo sólo los movimientos relacionados con "{nombre_cta}" o con sus subcuentas')
 def veo_solo_movimientos_relacionados_con_cta_o_subctas(context, nombre_cta):
     cta = Cuenta.tomar(nombre=nombre_cta.lower())
@@ -195,6 +206,19 @@ def veo_solo_movimientos_relacionados_con(context, nombre_cta):
     context.execute_steps(
         f'Entonces veo sólo los movimientos relacionados con "{nombre_cta}" '
         f'o con sus subcuentas'
+    )
+
+
+@then('veo sólo los movimientos relacionados con cuentas de "{nombre_titular}"')
+def veo_solo_movimientos_relacionados_con(context, nombre_titular):
+    titular = Titular.tomar(nombre=nombre_titular)
+    movs_pag = [x.text for x in context.browser.esperar_elementos(
+        '.class_row_mov td.class_td_concepto',
+        By.CSS_SELECTOR
+    )]
+    context.test.assertEqual(
+        movs_pag,
+        [x.concepto for x in titular.movimientos()]
     )
 
 

@@ -47,9 +47,10 @@ def cuenta_dividida(context, nombre):
 def hay_n_movimientos(context):
     for fila in context.table:
         ce = cs = None
-        if fila.get('cta_entrada') is not None:
+
+        if fila.get('cta_entrada'):
             ce = Cuenta.tomar(slug=fila.get('cta_entrada'))
-        if fila.get('cta_salida') is not None:
+        if fila.get('cta_salida'):
             cs = Cuenta.tomar(slug=fila.get('cta_salida'))
         Movimiento.crear(
             concepto=fila['concepto'],

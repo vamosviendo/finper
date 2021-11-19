@@ -13,7 +13,7 @@ from django.urls import reverse
 from selenium.webdriver.common.by import By
 
 from consts import NOMBRES_URL
-from diario.models import Cuenta, Movimiento
+from diario.models import Cuenta, Movimiento, Titular
 from utils.archivos import fijar_mtime
 
 
@@ -145,3 +145,13 @@ def ir_a_pag_de_coso(context, pag, coso):
     cuenta = Cuenta.tomar(nombre=coso.lower()).slug
     context.execute_steps(
         f'Cuando voy a la página "{pag}" con el argumento "{cuenta}"')
+
+
+# TODO: Este step y el anterior son prácticamente el mismo. Seguro que se
+#       pueden unificar
+@when('voy a la página "{pag}" del titular "{coso}"')
+def ir_a_pag_de_coso(context, pag, coso):
+    id_titular = Titular.tomar(nombre=coso).id
+    context.execute_steps(
+        f'cuando voy a la página "{pag}" con el argumento "{id_titular}"'
+    )
