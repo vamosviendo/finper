@@ -4,11 +4,11 @@ from pathlib import Path
 from django.db.models import Sum
 from django.shortcuts import render, redirect
 from django.urls import reverse, reverse_lazy
-from django.views.generic import \
-    CreateView, DeleteView, DetailView, FormView, TemplateView, UpdateView
+from django.views.generic import CreateView, DeleteView, DetailView, \
+    TemplateView, UpdateView
 
-from diario.forms import FormCuentaInt, FormCuentaAcu, FormMovimiento, \
-    FormSubcuentas, FormCrearSubcuenta
+from diario.forms import FormCuenta, FormMovimiento, FormSubcuentas, \
+    FormCrearSubcuenta
 from diario.models import Cuenta, CuentaInteractiva, CuentaAcumulativa, \
     Movimiento, Titular
 from diario.utils import verificar_saldos
@@ -68,7 +68,7 @@ class CtaDetalleView(DetailView):
 
 class CtaNuevaView(CreateView):
     model = CuentaInteractiva
-    form_class = FormCuentaInt
+    form_class = FormCuenta
     template_name = 'diario/cta_form.html'
     success_url = reverse_lazy('home')
 
@@ -102,6 +102,7 @@ class CtaModView(UpdateView):
     template_name = 'diario/cta_form.html'
     success_url = reverse_lazy('home')
     context_object_name = 'cta'
+    form_class = FormCuenta
 
     def setup(self, request, *args, **kwargs):
         super().setup(request, *args, **kwargs)
@@ -112,12 +113,6 @@ class CtaModView(UpdateView):
             return CuentaInteractiva.todes()
         else:
             return CuentaAcumulativa.todes()
-
-    def get_form_class(self):
-        if self.cuenta.es_interactiva:
-            return FormCuentaInt
-        else:
-            return FormCuentaAcu
 
 
 def cta_div_view(request, slug):

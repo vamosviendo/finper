@@ -7,7 +7,7 @@ from django.http import HttpRequest
 from django.test import TestCase
 from django.urls import reverse
 
-from diario.forms import FormCuentaInt, FormCuentaAcu, FormCrearSubcuenta
+from diario.forms import FormCuenta, FormCrearSubcuenta
 from diario.models import Cuenta, CuentaAcumulativa, CuentaInteractiva, \
     Movimiento, Titular
 from diario.views import cta_div_view
@@ -426,21 +426,15 @@ class TestCtaMod(TestCase):
             reverse('cta_mod', args=[self.cuenta.slug]))
         self.assertTemplateUsed(response, 'diario/cta_form.html')
 
-    def test_usa_form_cuenta_int_con_cuenta_interactiva(self):
+    def test_usa_form_cuenta(self):
         response = self.client.get(
             reverse('cta_mod', args=[self.cuenta.slug]),
             data={'nombre': 'Nombro', 'slug': 'Slag'}
         )
-        self.assertIsInstance(response.context['form'], FormCuentaInt)
-
-    def test_usa_form_cuenta_acu_con_cuenta_acumulativa(self):
-        self.cuenta = dividir_en_dos_subcuentas(self.cuenta)
-        response = self.client.get(
-            reverse('cta_mod', args=[self.cuenta.slug]))
-        self.assertIsInstance(response.context['form'], FormCuentaAcu)
+        self.assertIsInstance(response.context['form'], FormCuenta)
 
     def test_post_puede_guardar_cambios_en_cuenta_interactiva(self):
-        response = self.client.post(
+        self.client.post(
             reverse('cta_mod', args=[self.cuenta.slug]),
             data={'nombre': 'Nombro', 'slug': 'Slag'}
         )
