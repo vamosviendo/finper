@@ -84,7 +84,8 @@ class TestTitulares(TestCase):
 class TestAgregarSubcuenta(TestCase):
 
     def setUp(self):
-        self.cta_acum = Cuenta.crear('cta acum', 'ca')
+        self.titular = Titular.crear(titname='tito', nombre='Titi Titini')
+        self.cta_acum = Cuenta.crear('cta acum', 'ca', titular=self.titular)
         Movimiento.crear('entrada', 200, cta_entrada=self.cta_acum)
         Movimiento.crear('salida', 100, cta_salida=self.cta_acum)
         self.cta_acum = dividir_en_dos_subcuentas(self.cta_acum, saldo=100)
@@ -97,6 +98,17 @@ class TestAgregarSubcuenta(TestCase):
         self.cta_acum.agregar_subcuenta(['subc3', 'sc3'])
         subcuenta = Cuenta.tomar(slug='sc3')
         self.assertEqual(subcuenta.saldo, 0)
+
+    def test_por_defecto_asigna_titular_de_cuenta_madre_a_subcuenta_agregada(self):
+        self.cta_acum.agregar_subcuenta(['subc3', 'sc3'])
+        subcuenta = Cuenta.tomar(slug='sc3')
+        self.assertEqual(subcuenta.titular, self.titular)
+
+    def test_permite_asignar_titular_distinto_del_de_cuenta_madre(self):
+        titular2 = Titular.crear(titname='Pipo', nombre='Pipo Poppo')
+        self.cta_acum.agregar_subcuenta(['subc3', 'sc3'], titular=titular2)
+        subcuenta = Cuenta.tomar(slug='sc3')
+        self.assertEqual(subcuenta.titular, titular2)
 
 
 class TestSaldoOk(TestCase):
