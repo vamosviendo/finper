@@ -32,7 +32,7 @@ class Cuenta(PolymorphModel):
     titular = models.ForeignKey('diario.Titular',
                                 related_name='cuentas',
                                 on_delete=models.CASCADE,
-                                null=True, blank=True,
+                                blank=True,
                                 default=Titular.por_defecto)
 
     class Meta:
