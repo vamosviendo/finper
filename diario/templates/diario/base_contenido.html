@@ -82,7 +82,7 @@
       <th>Importe</th>
       <th>Cuentas</th>
     </tr></thead>
-    {% for mov in movimientos %}
+    {% for mov in movimientos reversed %}
     <tr class="class_row_mov">
       <td class="align-middle class_td_fecha" style="width: 8%;">{{ mov.fecha|date:'Y-m-d' }}</td>
       <td class="align-middle class_td_concepto"  style="width: 50ch" title="{{ mov.detalle }}" >

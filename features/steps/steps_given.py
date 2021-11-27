@@ -10,8 +10,8 @@ from diario.models import Cuenta, Movimiento, Titular
 from helpers import table_to_str
 
 
-@given('{n} movimientos con los siguientes valores')
-def hay_n_movimientos(context, n):
+@given('movimientos con los siguientes valores')
+def hay_movimientos(context):
     for fila in context.table:
         slug_entrada = fila.get('cta_entrada')
         slug_salida = fila.get('cta_salida')
@@ -22,12 +22,25 @@ def hay_n_movimientos(context, n):
         if slug_salida:
             cta_salida = Cuenta.tomar(slug=slug_salida)
 
-        Movimiento.crear(
+        mov = Movimiento(
             concepto=fila['concepto'],
             importe=fila['importe'],
             cta_entrada=cta_entrada,
             cta_salida=cta_salida,
         )
+
+        fecha = fila.get('fecha')
+
+        if fecha:
+            mov.fecha = fecha
+
+        mov.save()
+
+
+@given('{n} movimientos con los siguientes valores')
+def hay_n_movimientos(context, n):
+    context.execute_steps('Dados movimientos con los siguientes valores\n' +
+                          table_to_str(context.table))
 
 
 @given('la cuenta "{nombre}" dividida en subcuentas')

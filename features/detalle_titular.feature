@@ -31,9 +31,10 @@ Escenario: Ver detalles de un titular
     Y no veo una cuenta "cta2banco" en la grilla
     Y veo la siguiente lista de movimientos:
         | concepto                      | importe | cuentas   |
-        | Saldo inicial de cta1efectivo |  500,00 | +c1e      |
-        | 1Entrada de efectivo          |   50,00 | +c1e      |
         | 2Depósito en banco            |   25,00 | +c2b -c1e |
+        | 1Entrada de efectivo          |   50,00 | +c1e      |
+        | Saldo inicial de cta3credito  |  150,00 | +c3c      |
+        | Saldo inicial de cta1efectivo |  500,00 | +c1e      |
 
 
 @no_default_tit
@@ -58,9 +59,9 @@ Escenario: Se muestran movimientos de cuentas acumulativas en página de titular
 
     Entonces veo la siguiente lista de movimientos:
         | concepto                      | importe | cuentas    |
-        | Saldo inicial de cta1efectivo |  500,00 | +c1e       |
-        | Traspaso de saldo             |  230,00 | +sc1e -c1e |
-        | Traspaso de saldo             |  270,00 | +sc2e -c1e |
-        | 1Entrada de efectivo          |   50,00 | +sc1e      |
         | 3Depósito en banco            |   25,00 | +c2b -sc1e |
+        | 1Entrada de efectivo          |   50,00 | +sc1e      |
+        | Traspaso de saldo             |  270,00 | +sc2e -c1e |
+        | Traspaso de saldo             |  230,00 | +sc1e -c1e |
+        | Saldo inicial de cta1efectivo |  500,00 | +c1e       |
 

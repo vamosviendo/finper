@@ -95,13 +95,13 @@ class Cuenta(PolymorphModel):
         """
         return self.entradas.all() | self.salidas.all()
 
-    def movs(self):
+    def movs(self, order_by='fecha'):
         """ Devuelve movimientos propios y de sus subcuentas
             ordenados por fecha.
             Antes de protestar que devuelve lo mismo que movs_directos()
             tener en cuenta que está sobrescrita en CuentaAcumulativa
             """
-        return self.movs_directos().order_by('fecha')
+        return self.movs_directos().order_by(order_by)
 
     def cantidad_movs(self):
         return self.entradas.count() + self.salidas.count()
@@ -403,13 +403,13 @@ class CuentaAcumulativa(Cuenta):
             )
         super().full_clean(*args, **kwargs)
 
-    def movs(self):
+    def movs(self, order_by='fecha'):
         """ Devuelve movimientos propios y de sus subcuentas
             ordenados por fecha."""
-        result = super().movs()
+        result = super().movs(order_by=order_by)
         for sc in self.subcuentas.all():
-            result = result | sc.movs()
-        return result.order_by('fecha')
+            result = result | sc.movs(order_by=order_by)
+        return result.order_by(order_by)
 
     def total_subcuentas(self):
         return self.subcuentas.all().aggregate(Sum('_saldo'))['_saldo__sum']

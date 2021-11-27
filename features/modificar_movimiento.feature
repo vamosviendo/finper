@@ -34,7 +34,7 @@ Escenario: Modificar importe o cuentas de movimiento
         | cDepósito   |  70     | b           | a          |
 
     Cuando voy a la página principal
-        Y cliqueo en el botón de clase "link_mod_mov"
+        Y cliqueo en el tercer botón de clase "link_mod_mov"
         Y escribo "100" en el campo "importe"
         Y cliqueo en el botón
     Entonces veo que el saldo de Aefectivo es 30 pesos

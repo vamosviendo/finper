@@ -24,7 +24,7 @@ CARDINALES = dict(
 ORDINALES = dict(
     primer=0, primero=0, primera=0, primere=1,
     segundo=1, segunda=1,
-    tercero=2, tercera=2,
+    tercer=2, tercero=2, tercera=2,
     cuarto=3, cuarta=3,
     quinto=4, quinta=4,
 )

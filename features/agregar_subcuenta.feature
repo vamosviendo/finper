@@ -33,6 +33,6 @@ Escenario: Agregar subcuenta a cuenta
     Y veo 3 movimientos en la página
     Y los movimientos en la página tienen estos valores:
         | concepto                  | importe | cuentas  |
-        | Saldo inicial de efectivo | 200,00  | +e       |
-        | Traspaso de saldo         | 130,00  | +ecaj -e |
         | Traspaso de saldo         |  70,00  | +ebil -e |
+        | Traspaso de saldo         | 130,00  | +ecaj -e |
+        | Saldo inicial de efectivo | 200,00  | +e       |
