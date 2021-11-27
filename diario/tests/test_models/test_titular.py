@@ -1,3 +1,6 @@
+import datetime
+from unittest import skip
+
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
@@ -99,6 +102,26 @@ class TestTitularMovimientos(TestCase):
     def test_incluye_movimientos_de_cuentas_convertidas_en_acumulativas(self):
         dividir_en_dos_subcuentas(self.cuenta1, saldo=15)
         self.assertIn(self.mov1, self.tit.movimientos())
+
+    def test_incluye_una_sola_vez_traspaso_entre_cuentas_del_mismo_titular(self):
+        cuenta3 = Cuenta.crear(nombre='cuenta3', slug='cta3', titular=self.tit)
+        self.mov3.cta_salida = cuenta3
+        self.mov3.save()
+        self.assertEqual(len(self.tit.movimientos()), 2)
+
+    def test_devuelve_movimientos_ordenados_por_fecha(self):
+        cuenta3 = Cuenta.crear(nombre='cuenta3', slug='cta3', titular=self.tit)
+
+        self.mov1.fecha = datetime.date(2021, 11, 1)
+        self.mov2.fecha = datetime.date(2020, 5, 6)
+        self.mov2.cta_salida = cuenta3
+        self.mov3.fecha = datetime.date(2021, 11, 22)
+        self.mov3.cta_salida = cuenta3
+        for mov in (self.mov1, self.mov2, self.mov3):
+            mov.save()
+
+        self.assertEqual(
+            self.tit.movimientos(), [self.mov2, self.mov1, self.mov3])
 
 
 class TestMetodoPorDefecto(TestCase):

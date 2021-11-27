@@ -17,6 +17,8 @@ class Titular(MiModel):
         lista_movimientos = list()
         for cuenta in self.cuentas.all():
             lista_movimientos += cuenta.movs()
+        lista_movimientos = list(set(lista_movimientos))
+        lista_movimientos.sort(key=lambda x: x.fecha)
         return lista_movimientos
 
     def full_clean(self, exclude=None, validate_unique=True):

@@ -183,8 +183,7 @@ def el_nombre_es_tal(context, nombre):
 @then('veo la siguiente lista de movimientos')
 def veo_lista_de_movimientos(context):
     movs_pag = context.browser.esperar_elementos('class_row_mov')
-    titu = Titular.tomar(titname='tito')
-    print('movimientos tito', titu.movimientos())
+
     for i, fila in enumerate(context.table):
         for k in fila.headings:
             context.test.assertEqual(
