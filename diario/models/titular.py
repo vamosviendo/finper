@@ -16,7 +16,7 @@ class Titular(MiModel):
     def movimientos(self):
         lista_movimientos = list()
         for cuenta in self.cuentas.all():
-            lista_movimientos += cuenta.movs()
+            lista_movimientos += cuenta.movs_directos()
         lista_movimientos = list(set(lista_movimientos))
         lista_movimientos.sort(key=lambda x: x.fecha)
         return lista_movimientos

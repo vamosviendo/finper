@@ -109,6 +109,27 @@ class TestTitularMovimientos(TestCase):
         self.mov3.save()
         self.assertEqual(len(self.tit.movimientos()), 2)
 
+    def test_no_incluye_movimientos_de_subcuentas_de_otro_titular_de_cuentas_que_eran_del_titular_originalmente(self):
+        tit2 = Titular.crear(titname='juancha', nombre='Juancha Juanchini')
+        self.cuenta1.dividir_entre(
+            {
+                'nombre': 'subcuenta ajena',
+                'slug': 'scaj',
+                'saldo': 30,
+                'titular': tit2
+            },
+            {'nombre': 'subcuenta propia', 'slug': 'scpr'},
+        )
+        sc_ajena = CuentaInteractiva.tomar(slug='scaj')
+        mov_sc_ajena = Movimiento.crear(
+            concepto='Movimiento de subcuenta de otro titular '
+                     'de cuenta que era mía',
+            importe=10,
+            cta_salida=sc_ajena
+        )
+
+        self.assertNotIn(mov_sc_ajena, self.tit.movimientos())
+
     def test_devuelve_movimientos_ordenados_por_fecha(self):
         cuenta3 = Cuenta.crear(nombre='cuenta3', slug='cta3', titular=self.tit)
 
