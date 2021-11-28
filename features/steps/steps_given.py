@@ -48,12 +48,14 @@ def cuenta_dividida(context, nombre):
     cta = Cuenta.tomar(nombre=nombre.lower())
     subcuentas = list()
     for fila in context.table:
-        subcuentas.append(dict(
+        titname = fila.get('titular', None)
+        subcuenta = dict(
                 nombre=fila['nombre'],
                 slug=fila['slug'],
-                saldo=fila['saldo'] or None,
-                titular=Titular.tomar(titname=fila['titular']) or None,
-        ))
+                saldo=fila['saldo'] or None,)
+        if titname:
+            subcuenta.update({'titular': Titular.tomar(titname=titname)})
+        subcuentas.append(subcuenta)
     cta.dividir_entre(*subcuentas)
 
 
