@@ -74,6 +74,9 @@
 </section>
 
 <section id="id_lista_ult_movs">
+  <a href="{% url 'mov_nuevo' %}" id="id_btn_mov_nuevo" class="btn my-3 btn-primary">
+    Movimiento nuevo
+  </a>
   <table class="table table-sm">
     <thead><tr>
       <th>Fecha</th>
@@ -116,9 +119,6 @@
     </tr>
     {% endfor %}
   </table>
-  <a href="{% url 'mov_nuevo' %}" id="id_btn_mov_nuevo" class="btn btn-primary">
-    Movimiento nuevo
-  </a>
 </section>
 
 {% endblock contenido %}
