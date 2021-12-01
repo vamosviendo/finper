@@ -193,6 +193,35 @@ class TestModelMovimientoBasic(TestModelMovimiento):
 
         self.assertEqual(list(Movimiento.todes()), [mov3, mov2, mov1])
 
+    def test_dentro_de_fecha_movimientos_se_ordenan_por_campo_orden_dia(self):
+        mov1 = Movimiento.crear(
+            fecha=date(2021, 5, 3),
+            concepto='Mov1',
+            importe=100,
+            cta_salida=self.cuenta1,
+        )
+        mov2 = Movimiento.crear(
+            fecha=date(2021, 5, 3),
+            concepto='Mov2',
+            importe=100,
+            cta_entrada=self.cuenta1,
+        )
+        mov3 = Movimiento.crear(
+            fecha=date(2021, 5, 3),
+            concepto='Mov3',
+            importe=243,
+            cta_entrada=self.cuenta1,
+        )
+
+        mov3.orden_dia = 0
+        mov3.full_clean()
+        mov3.save()
+        mov1.refresh_from_db()
+        mov2.refresh_from_db()
+
+        self.assertEqual(list(Movimiento.todes()), [mov3, mov1, mov2])
+
+
 
 class TestModelMovimientoCrear(TestModelMovimiento):
 

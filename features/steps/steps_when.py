@@ -99,12 +99,18 @@ def agregar_movimiento(context):
     context.browser.pulsar()
 
 
-@when('voy a la página "{pag}" del último movimiento')
-def ir_a_pag_ult_mov(context, pag):
+@when('voy a la página "{pag}" del {orden} movimiento')
+def ir_a_pag_ult_mov(context, pag, orden):
+    if orden in ["último", "ultimo"]:
+        mov_pk = Movimiento.ultime().pk
+    elif orden == "primer":
+        mov_pk = Movimiento.primere().pk
+    else:
+        raise ValueError(f'Opción "{orden}" no implementada')
     nombre = NOMBRES_URL.get(pag) or pag
     context.execute_steps(
         f'Cuando voy a la página "{nombre}" '
-        f'con el argumento "{Movimiento.ultime().pk}"'
+        f'con el argumento "{mov_pk}"'
     )
 
 

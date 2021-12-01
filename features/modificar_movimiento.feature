@@ -59,7 +59,7 @@ Escenario: Se modifica movimiento con cuenta acumulativa
         | subcuenta 1 efectivo | sc1e | 43180.67 |
         | subcuenta 2 efectivo | sc2e |          |
 
-    Cuando voy a la página "modificar movimiento" del último movimiento
+    Cuando voy a la página "modificar movimiento" del primer movimiento
     Entonces veo que el campo "cta_salida" está deshabilitado
     Y veo que entre las opciones del campo "cta_entrada" figuran:
         | nombre               |

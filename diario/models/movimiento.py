@@ -3,6 +3,8 @@ from datetime import date
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from django_ordered_field import OrderedCollectionField
+
 from utils import errors
 from vvmodel.models import MiModel
 
@@ -23,6 +25,7 @@ class MiDateField(models.DateField):
 
 class Movimiento(MiModel):
     fecha = MiDateField(default=date.today)
+    orden_dia = OrderedCollectionField(collection='fecha')
     concepto = models.CharField(max_length=120)
     detalle = models.TextField(blank=True, null=True)
     _importe = models.FloatField()
@@ -36,7 +39,7 @@ class Movimiento(MiModel):
     )
 
     class Meta:
-        ordering = ('fecha', )
+        ordering = ('fecha', 'orden_dia')
 
     @property
     def importe(self):
