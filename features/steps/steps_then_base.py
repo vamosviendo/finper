@@ -6,7 +6,7 @@ from behave import then
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 
-from features.steps.consts_base import BYS
+from features.steps.consts_base import BYS, ORDINALES
 from features.steps.helpers import espacios_a_snake, espera, tomar_atributo, \
     fijar_atributo
 
@@ -336,22 +336,30 @@ def menu_no_aparece(context, menu):
     context.execute_steps(f'Entonces no veo un menú de id "{menu}"')
 
 
-@then('no veo un elemento de {atributo} "{nombre}"')
-def elemento_no_aparece(context, atributo, nombre):
-    atr = BYS.get(atributo, By.LINK_TEXT)
+@then('no veo un elemento de {atributo_in} "{nombre_in}" dentro del {orden} elemento de {atributo_out} "{nombre_out}"')
+def elemento_no_aparece_en_elemento(
+        context, atributo_in, nombre_in, orden, atributo_out, nombre_out):
+    atrib_out = BYS.get(atributo_out, By.LINK_TEXT)
+    atrib_in = BYS.get(atributo_in, By.LINK_TEXT)
+    ord = ORDINALES[orden]
+
+    continente = context.browser.esperar_elementos(nombre_out, atrib_out)[ord]
     context.test.assertEqual(
-        len(context.browser.esperar_elementos(nombre, atr, fail=False)), 0,
-        f'Aparece elemento de {atributo} "{nombre}" que no debería aparecer'
+        len(continente.esperar_elementos(nombre_in, atrib_in, fail=False)),
+        0,
+        f'Aparece elemento de {atributo_in} "{nombre_in}" que no debería '
+        f'aparecer como hijo del {orden} elemento de {atributo_out} '
+        f'"{nombre_out}"'
     )
 
 
-@then('no veo el campo "{campo}" entre los campos del form "{nombre_form}"')
-def campo_no_aparece_en_form(context, campo, nombre_form):
-    form = context.browser.esperar_elemento(f'id_form_{nombre_form}')
+@then('no veo un elemento de {atributo} "{nombre}"')
+def elemento_no_aparece(context, atributo, nombre):
+    atrib = BYS.get(atributo, By.LINK_TEXT)
     context.test.assertEqual(
-        len(form.esperar_elementos(f'id_{campo}', By.ID, fail=False)), 0,
-        f'Aparece en form "{nombre_form}" campo "{campo}" '
-        f'que no debería aparecer'
+        len(context.browser.esperar_elementos(nombre, atrib, fail=False)),
+        0,
+        f'Aparece elemento de {atributo} "{nombre}" que no debería aparecer'
     )
 
 
