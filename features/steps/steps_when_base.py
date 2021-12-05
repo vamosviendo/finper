@@ -5,7 +5,7 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 
 from consts_base import BYS, ORDINALES
-from features.steps.helpers import tomar_atributo
+from features.steps.helpers import tomar_atributo, fijar_atributo
 
 
 @when('cliqueo en el {orden} botón de texto "{texto}"')
@@ -99,7 +99,7 @@ def cliquear_en_opcion(context, opcion, nombre):
     opcion.click()
 
 
-@when('cliqueo en el elemento "{elemento}"')
+@when('cliqueo en el elemento encontrado "{elemento}"')
 def cliquear_en_elemento_guardado(context, elemento):
     tomar_atributo(context, elemento).click()
 
@@ -170,6 +170,12 @@ def completar_campo(context, accion, texto, campo):
             f'select[name="{campo}"', texto, By.CSS_SELECTOR)
     else:
         raise ValueError('La acción debe ser "escribo" o "selecciono')
+
+
+@when('tomo las medidas del elemento encontrado "{nombre_elemento}"')
+def tomar_medidas(context, nombre_elemento):
+    elemento = tomar_atributo(context, nombre_elemento)
+    fijar_atributo(context, f'{nombre_elemento}_medidas', elemento.size)
 
 
 @when('voy a la página principal')

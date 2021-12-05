@@ -115,6 +115,11 @@ def elemento_tiene_texto(context, tag, tipo, nombre, texto):
         )
 
 
+@then('veo una "{tag}" de {tipo} "{nombre}"')
+def veo_tag(context, tag, tipo, nombre):
+    context.execute_steps(f'Entonces veo un "{tag}" de {tipo} "{nombre}"')
+
+
 @then('veo un "{tag}" de {tipo} "{nombre}"')
 def elemento_aparece(context, tag, tipo, nombre):
     by = BYS.get(tipo, tipo)
@@ -305,9 +310,26 @@ def veo_formulario(context, elem):
     context.browser.esperar_elemento(f'id_form_{elem}')
 
 
+@then('veo un elemento de id "{id}" y clase "{clase}" dentro del elemento encontrado "{nombre}"')
+def veo_elemento_en_elemento(context, id, clase, nombre):
+    continente = tomar_atributo(context, nombre)
+    elemento = continente.esperar_elemento(f'#{id}.{clase}', By.CSS_SELECTOR)
+    print('NOMBRE:', f'{id}_{clase}')
+    fijar_atributo(context, f'{id}_{clase}', elemento)
+    print('ATRIBUTO:', tomar_atributo(context, f'{id}_{clase}'))
+
+
+@then('veo un elemento de id "{id}" y clase "{clase}"')
+def veo_elemento(context, id, clase):
+    elemento = context.browser.esperar_elemento(
+        f'#{id}.{clase}', By.CSS_SELECTOR
+    )
+    fijar_atributo(context, f'{id}_{clase}', elemento)
+
+
 @then('veo un elemento de {atributo} "{nombre}"')
 def veo_elemento(context, atributo, nombre):
-    atributo = "class_name" if atributo == "clase" else atributo
+    atributo = BYS[atributo]
     elemento = context.browser.esperar_elemento(nombre, atributo)
     fijar_atributo(context, nombre, elemento)
 
@@ -353,6 +375,13 @@ def elemento_no_aparece_en_elemento(
     )
 
 
+@then('no veo un elemento de id "{id}" y clase "{clase}"')
+def elemento_no_aparece(context, id, clase):
+    context.execute_steps(
+        f'Entonces no veo un elemento de selector css "#{id}.{clase}"'
+    )
+
+
 @then('no veo un elemento de {atributo} "{nombre}"')
 def elemento_no_aparece(context, atributo, nombre):
     atrib = BYS.get(atributo, By.LINK_TEXT)
@@ -369,6 +398,37 @@ def mismo_tamanio(context, comparado, patron):
     context.test.assertEqual(
         tomar_atributo(context, comparado).size,
         tomar_atributo(context, patron).size
+    )
+
+
+@then('veo que el elemento encontrado "{nombre_elemento}" '
+      'ajusta su tamaño al de la pantalla')
+def elemento_ajusta_a_pantalla(context, nombre_elemento):
+    elemento = tomar_atributo(context, nombre_elemento)
+    try:
+        context.test.assertEqual(
+            round(elemento.size['height']),
+            round(context.browser.get_window_size()['height']),
+            'La altura no coincide con la de la pantalla'
+        )
+    except AssertionError:
+        context.test.assertEqual(
+            round(elemento.size['width']),
+            round(context.browser.get_window_size()['width']),
+            'Ni ancho ni altura coinciden con las de la pantalla:\n'
+            f'Altura: {elemento.size["height"]} '
+            f'vs {context.browser.get_window_size()["height"]}\n'
+            f'Ancho: {elemento.size["width"]} '
+            f'vs {context.browser.get_window_size()["width"]}'
+        )
+
+
+@then('Veo que el tamaño del elemento encontrado "{atrib}" '
+      'coincide con las medidas tomadas a "{elemento_medido}"')
+def medidas_coinciden(context, atrib, elemento_medido):
+    context.test.assertEqual(
+        tomar_atributo(context, atrib).size,
+        tomar_atributo(context, f'{elemento_medido}_medidas')
     )
 
 
@@ -392,3 +452,8 @@ def cierra_sesion(context):
 @then('me detengo')
 def detenerse(context):
     input()
+
+
+@then('fallo')
+def fallar(context):
+    context.test.fail()
