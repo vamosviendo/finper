@@ -1,7 +1,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
 
-from diario.models import CuentaAcumulativa, CuentaInteractiva, Movimiento
+from diario.models import CuentaAcumulativa, CuentaInteractiva, Movimiento, Titular
 from utils.iterables import hay_mas_de_un_none_en
 
 
@@ -28,6 +28,11 @@ class FormSubcuenta(forms.Form):
     nombre = forms.CharField()
     slug = forms.CharField()
     saldo = forms.FloatField(required=False)
+    titular = forms.ModelChoiceField(
+        queryset=Titular.todes(),
+        required=False,
+        empty_label=None,
+    )
 
 
 CuentaFormset = forms.formset_factory(form=FormSubcuenta, extra=2)
@@ -38,18 +43,21 @@ class FormSubcuentas(CuentaFormset):
     def __init__(self, *args, **kwargs):
         self.cuenta = kwargs.pop('cuenta')
         super().__init__(*args, **kwargs)
+        tit_default = CuentaInteractiva.tomar(slug=self.cuenta).titular
+        for form in list(self):
+            form.fields['titular'].initial = tit_default
 
     def clean(self):
-        cleaned_data = self.cleaned_data
-        saldos = [dicc['saldo'] for dicc in cleaned_data]
+        self.subcuentas = [form.cleaned_data for form in list(self)]
+        saldos = [dicc['saldo'] for dicc in self.subcuentas]
         if hay_mas_de_un_none_en(saldos):
             raise ValidationError('Sólo se permite una cuenta sin saldo')
 
-        return cleaned_data
+        return self.subcuentas
 
     def save(self):
         cta = CuentaInteractiva.tomar(slug=self.cuenta)
-        cta = cta.dividir_y_actualizar(*self.cleaned_data)
+        cta = cta.dividir_y_actualizar(*self.subcuentas)
         return cta
 
 

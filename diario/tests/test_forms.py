@@ -6,7 +6,7 @@ from django.test import TestCase
 
 from diario.forms import FormMovimiento, FormCuenta, \
     FormSubcuentas, FormCrearSubcuenta
-from diario.models import Cuenta, CuentaInteractiva, Movimiento
+from diario.models import Cuenta, CuentaInteractiva, Movimiento, Titular
 from utils import errors
 from utils.helpers_tests import dividir_en_dos_subcuentas
 
@@ -38,17 +38,32 @@ class TestFormSubcuentas(TestCase):
             },
             cuenta=self.cta.slug,
         )
+        self.subcuentas = [
+            {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 50.0, 'titular': None},
+            {'nombre': 'Cajón de arriba', 'slug': 'ecaj', 'saldo': 200.0, 'titular': None},
+        ]
 
     @patch('diario.forms.CuentaInteractiva.dividir_entre')
     def test_save_divide_cuenta(self, mockCuenta_dividir):
         self.form.is_valid()
         self.form.save()
-        mockCuenta_dividir.assert_called_once_with(
-            {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 50.0},
-            {'nombre': 'Cajón de arriba', 'slug': 'ecaj', 'saldo': 200.0},
-        )
+        mockCuenta_dividir.assert_called_once_with(*self.subcuentas)
 
-    def test_save_devuelve_cuenta_madre(self):
+    @patch('diario.forms.FormSubcuentas.clean')
+    @patch('diario.forms.CuentaInteractiva.dividir_y_actualizar')
+    def test_llama_a_clean_al_salvar(self, mock_dividir_y_actualizar, mock_clean):
+        def se():
+            self.form.subcuentas = self.subcuentas
+
+        mock_clean.side_effect = se
+        self.form.is_valid()
+        self.form.save()
+        mock_clean.assert_called_once()
+
+    @patch('diario.forms.CuentaInteractiva.dividir_y_actualizar')
+    def test_save_devuelve_cuenta_madre(self, mock_dividir_y_actualizar):
+        mock_dividir_y_actualizar.return_value = self.cta
+        self.form.is_valid()
         cuenta = self.form.save()
         self.assertEqual(cuenta, Cuenta.tomar(pk=self.cta.pk))
 
@@ -60,6 +75,33 @@ class TestFormSubcuentas(TestCase):
         self.form.data.pop('form-0-saldo')
         self.form.data.pop('form-1-saldo')
         self.assertFalse(self.form.is_valid())
+
+    def test_muestra_campo_titular(self):
+        self.assertIn('titular', self.form.forms[0].fields.keys())
+
+    def test_muestra_todos_los_titulares_en_campo_titular(self):
+        Titular.crear(titname='tito', nombre='Tito Gómez')
+        Titular.crear(titname='juana', nombre='Juana Juani')
+
+        self.assertEqual(
+            [x[1] for x in self.form.forms[0].fields['titular'].choices],
+            [tit.nombre for tit in Titular.todes()]
+        )
+
+    def test_muestra_por_defecto_titular_de_cuenta_madre(self):
+        Titular.crear(titname='tito', nombre='Tito Gómez')
+        Titular.crear(titname='juana', nombre='Juana Juani')
+
+        self.assertEqual(
+            self.form.forms[0].fields['titular'].initial,
+            self.cta.titular
+        )
+
+    def test_no_muestra_opcion_nula_en_campo_titular(self):
+        self.assertNotIn(
+            '',
+            [x[0] for x in self.form.forms[0].fields['titular'].choices]
+        )
 
 
 class TestFormCrearSubcuenta(TestCase):
