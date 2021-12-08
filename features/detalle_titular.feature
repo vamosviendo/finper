@@ -5,6 +5,11 @@ Característica: Detalles titular
     en una página propia.
     Quiero que todas las cuentas de un titular sumen al saldo de ese titular, 
     y no al de otro.
+    Quiero que en la página de detalles del titular se muestren solamente los 
+    movimientos que involucren a las cuentas de ese titular.
+    Quiero que entre los movimientos que se muestran estén también los que
+    involucren a las cuentas acumulativas cuando éstas formaban parte del 
+    patrimonio del titular.
 
 
 @no_default_tit

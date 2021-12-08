@@ -31,3 +31,26 @@ Escenario: Dividir una cuenta en subcuentas
         | Traspaso de saldo         | Saldo pasado por Efectivo a nueva subcuenta Billetera       |  50,00  | +ebil -e |
         | Traspaso de saldo         | Saldo pasado por Efectivo a nueva subcuenta Cajón de arriba | 150,00  | +ecar -e |
         | Saldo inicial de efectivo |                                                             | 200,00  | +e       |
+
+
+Escenario: Asignar subcuenta a un titular distinto al dividir cuenta
+    Dada una cuenta con los siguientes valores:
+        | nombre   | slug | saldo |
+        | Efectivo | e    | 200   |
+    Y un titular con los siguientes valores:
+        | titname | nombre       |
+        | tit2    | Otro Titular |
+
+    Cuando voy a la página "cta_div" de la cuenta "Efectivo"
+
+    Entonces veo un campo "form-0-titular" en el form de id "dividir_cta"
+
+    Cuando completo el form de dividir cuenta con estos valores:
+        | nombre          | slug | saldo | titular      |
+        | Cajón de arriba | ecar | 150   | Otro Titular |
+        | Billetera       | ebil |       |              |
+    Y voy a la página "tit_detalle" del titular "Otro Titular"
+
+    Entonces veo una cuenta en la grilla con nombre "Cajón de arriba"
+    Y no veo una cuenta "Billetera" en la grilla
+    Y veo que el patrimonio de "Otro Titular" es 150 pesos

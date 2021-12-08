@@ -13,6 +13,22 @@ from features.steps.helpers import espacios_a_snake, espera, tomar_atributo, \
 
 # FORMS Y CARGA DE DATOS
 
+@then('veo un campo "{campo_name}" en el form de id "{form_id}"')
+def veo_campo_en_form(context, campo_name, form_id):
+    form = context.browser.esperar_elemento(f'id-form-{form_id}')
+    try:
+        campo = form.esperar_elemento(
+            f'input[name="{campo_name}"]',
+            By.CSS_SELECTOR
+        )
+    except NoSuchElementException:
+        campo = form.esperar_elemento(
+            f'select[name="{campo_name}"]',
+            By.CSS_SELECTOR
+        )
+    fijar_atributo(context, campo_name, campo)
+
+
 @then('veo que entre las opciones del campo "{campo}" figura "{opcion}"')
 def select_muestra_opcion(context, campo, opcion):
     try:

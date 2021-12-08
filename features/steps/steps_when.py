@@ -69,10 +69,11 @@ def cliquear_en_boton_cuenta(context, boton, cuenta):
 @when('completo el form de dividir cuenta con estos valores')
 def completar_form_dividir_cuenta(context):
     for ind, fila in enumerate(context.table):
-        context.browser.completar(f'id_form-{ind}-nombre', fila['nombre'])
-        context.browser.completar(f'id_form-{ind}-slug', fila['slug'])
-        if fila.get('saldo') is not None:
-            context.browser.completar(f'id_form-{ind}-saldo', fila['saldo'])
+        for campo in fila.headings:
+            if fila[campo]:
+                context.browser.completar(
+                    f'id_form-{ind}-{campo}', fila[campo])
+
     context.browser.pulsar()
 
 
