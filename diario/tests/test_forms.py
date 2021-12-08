@@ -39,8 +39,17 @@ class TestFormSubcuentas(TestCase):
             cuenta=self.cta.slug,
         )
         self.subcuentas = [
-            {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 50.0, 'titular': None},
-            {'nombre': 'Cajón de arriba', 'slug': 'ecaj', 'saldo': 200.0, 'titular': None},
+            {
+                'nombre': 'Billetera',
+                'slug': 'ebil',
+                'saldo': 50.0,
+                'titular': self.cta.titular
+            }, {
+                'nombre': 'Cajón de arriba',
+                'slug': 'ecaj',
+                'saldo': 200.0,
+                'titular': self.cta.titular
+            },
         ]
 
     @patch('diario.forms.CuentaInteractiva.dividir_entre')
@@ -48,6 +57,22 @@ class TestFormSubcuentas(TestCase):
         self.form.is_valid()
         self.form.save()
         mockCuenta_dividir.assert_called_once_with(*self.subcuentas)
+
+    @patch('diario.forms.CuentaInteractiva.dividir_y_actualizar')
+    def test_pasa_titulares_correctamente_al_salvar_form(self, mock_dividir_y_actualizar):
+        titular2 = Titular.crear(titname='tito', nombre='Tito Gómez')
+        self.form.data.update({'form-1-titular': titular2})
+        self.form.data.update({'form-1-saldo': 500.0})
+        self.form.is_valid()
+        self.form.save()
+        self.assertEqual(
+            mock_dividir_y_actualizar.call_args[0][1]['saldo'],
+            500.0
+        )
+        self.assertEqual(
+            mock_dividir_y_actualizar.call_args[0][1]['titular'],
+            titular2
+        )
 
     @patch('diario.forms.FormSubcuentas.clean')
     @patch('diario.forms.CuentaInteractiva.dividir_y_actualizar')

@@ -7,7 +7,7 @@
 
 {% block contenido %}
 <h4>Dividir cuenta {{cta}} </h4>
-<form method="post">
+<form method="post" id="id-form-dividir_cta">
   {{ formset.non_form_errors.as_ul }}
   {{ formset.management_form }}
   <table>

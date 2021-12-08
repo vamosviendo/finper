@@ -253,7 +253,8 @@ class CuentaInteractiva(Cuenta):
 
             dic_subcuenta = self._asegurar_dict(subcuenta)
 
-            if 'titular' not in dic_subcuenta.keys():
+            if ('titular' not in dic_subcuenta.keys()
+                or dic_subcuenta['titular'] is None):
                 dic_subcuenta.update({'titular': self.titular})
 
             # Completar subcuenta sin saldo

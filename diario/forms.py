@@ -43,12 +43,15 @@ class FormSubcuentas(CuentaFormset):
     def __init__(self, *args, **kwargs):
         self.cuenta = kwargs.pop('cuenta')
         super().__init__(*args, **kwargs)
-        tit_default = CuentaInteractiva.tomar(slug=self.cuenta).titular
+        self.tit_default = CuentaInteractiva.tomar(slug=self.cuenta).titular
         for form in list(self):
-            form.fields['titular'].initial = tit_default
+            form.fields['titular'].initial = self.tit_default
 
     def clean(self):
         self.subcuentas = [form.cleaned_data for form in list(self)]
+        for subcuenta in self.subcuentas:
+            subcuenta['titular'] = subcuenta['titular'] or self.tit_default
+
         saldos = [dicc['saldo'] for dicc in self.subcuentas]
         if hay_mas_de_un_none_en(saldos):
             raise ValidationError('Sólo se permite una cuenta sin saldo')

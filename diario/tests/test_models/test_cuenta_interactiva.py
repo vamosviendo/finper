@@ -160,6 +160,16 @@ class TestMetodoDividirEntre(TestCase):
 
         self.assertEqual(cta2.titular, self.titular2)
 
+    def test_si_recibe_titular_none_usa_titular_por_defecto(self):
+        for dic in self.subcuentas:
+            dic.update({'titular': None})
+
+        self.cta1.dividir_entre(*self.subcuentas)
+        sub1 = Cuenta.tomar(slug='ecaj')
+
+        self.assertEqual(sub1.titular, self.cta1.titular)
+
+
     def test_devuelve_lista_con_subcuentas_creadas(self):
         self.assertEqual(
             self.cta1.dividir_entre(*self.subcuentas),
