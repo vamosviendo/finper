@@ -57,7 +57,7 @@ class FormSubcuentas(CuentaFormset):
 
     def clean(self):
         self.subcuentas = [form.cleaned_data for form in list(self)]
-        saldos = [dicc['saldo'] for dicc in self.subcuentas]
+        saldos = [dicc.get('saldo') for dicc in self.subcuentas]
         if hay_mas_de_un_none_en(saldos):
             raise ValidationError('Sólo se permite una cuenta sin saldo')
 
