@@ -34,6 +34,12 @@ class FormSubcuenta(forms.Form):
         empty_label=None,
     )
 
+    def clean(self):
+        self.cleaned_data = super().clean()
+        self.cleaned_data['titular'] = \
+            self.cleaned_data['titular'] or self.cuenta_madre.titular
+        return self.cleaned_data
+
 
 CuentaFormset = forms.formset_factory(form=FormSubcuenta, extra=2)
 
@@ -43,15 +49,14 @@ class FormSubcuentas(CuentaFormset):
     def __init__(self, *args, **kwargs):
         self.cuenta = kwargs.pop('cuenta')
         super().__init__(*args, **kwargs)
-        self.tit_default = CuentaInteractiva.tomar(slug=self.cuenta).titular
+        self.cuenta_madre = CuentaInteractiva.tomar(slug=self.cuenta)
+        self.tit_default = self.cuenta_madre.titular
         for form in list(self):
             form.fields['titular'].initial = self.tit_default
+            form.cuenta_madre = self.cuenta_madre
 
     def clean(self):
         self.subcuentas = [form.cleaned_data for form in list(self)]
-        for subcuenta in self.subcuentas:
-            subcuenta['titular'] = subcuenta['titular'] or self.tit_default
-
         saldos = [dicc['saldo'] for dicc in self.subcuentas]
         if hay_mas_de_un_none_en(saldos):
             raise ValidationError('Sólo se permite una cuenta sin saldo')
@@ -59,9 +64,7 @@ class FormSubcuentas(CuentaFormset):
         return self.subcuentas
 
     def save(self):
-        cta = CuentaInteractiva.tomar(slug=self.cuenta)
-        cta = cta.dividir_y_actualizar(*self.subcuentas)
-        return cta
+        return self.cuenta_madre.dividir_y_actualizar(*self.subcuentas)
 
 
 class FormCrearSubcuenta(forms.Form):
