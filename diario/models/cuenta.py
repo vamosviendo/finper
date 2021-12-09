@@ -415,6 +415,6 @@ class CuentaAcumulativa(Cuenta):
     def total_subcuentas(self):
         return self.subcuentas.all().aggregate(Sum('_saldo'))['_saldo__sum']
 
-    def agregar_subcuenta(self, lista_subcuenta, titular=None):
+    def agregar_subcuenta(self, nombre, slug, titular=None):
         titular = titular or self.titular
-        Cuenta.crear(*lista_subcuenta, cta_madre=self, titular=titular)
+        Cuenta.crear(nombre, slug, cta_madre=self, titular=titular)

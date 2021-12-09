@@ -87,10 +87,8 @@ class FormCrearSubcuenta(forms.Form):
         return self.cleaned_data
 
     def save(self):
-        titular = self.cleaned_data.pop('titular')
         self.cuenta.agregar_subcuenta(
-            [self.cleaned_data[x] for x in self.cleaned_data.keys()],
-            titular
+            *[self.cleaned_data[x] for x in self.cleaned_data.keys()],
         )
         return self.cuenta
 

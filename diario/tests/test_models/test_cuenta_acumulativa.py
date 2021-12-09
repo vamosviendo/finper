@@ -51,7 +51,7 @@ class TestTitulares(TestCase):
         self.assertEqual(self.cta_acum.titulares, [self.tit1, self.tit2])
 
     def test_no_incluye_titulares_repetidos(self):
-        self.cta_acum.agregar_subcuenta(['subcuenta 3', 'sc3'])
+        self.cta_acum.agregar_subcuenta('subcuenta 3', 'sc3')
         self.subcuentas.append(Cuenta.tomar(slug='sc3'))
         self.subcuentas[0].titular = self.tit1
         self.subcuentas[0].save()
@@ -91,22 +91,22 @@ class TestAgregarSubcuenta(TestCase):
         self.cta_acum = dividir_en_dos_subcuentas(self.cta_acum, saldo=100)
 
     def test_agregar_subcuenta_crea_nueva_subcuenta(self):
-        self.cta_acum.agregar_subcuenta(['subc3', 'sc3'])
+        self.cta_acum.agregar_subcuenta('subc3', 'sc3')
         self.assertEqual(self.cta_acum.subcuentas.count(), 3)
 
     def test_subcuenta_agregadada_tiene_saldo_cero(self):
-        self.cta_acum.agregar_subcuenta(['subc3', 'sc3'])
+        self.cta_acum.agregar_subcuenta('subc3', 'sc3')
         subcuenta = Cuenta.tomar(slug='sc3')
         self.assertEqual(subcuenta.saldo, 0)
 
     def test_por_defecto_asigna_titular_de_cuenta_madre_a_subcuenta_agregada(self):
-        self.cta_acum.agregar_subcuenta(['subc3', 'sc3'])
+        self.cta_acum.agregar_subcuenta('subc3', 'sc3')
         subcuenta = Cuenta.tomar(slug='sc3')
         self.assertEqual(subcuenta.titular, self.titular)
 
     def test_permite_asignar_titular_distinto_del_de_cuenta_madre(self):
         titular2 = Titular.crear(titname='Pipo', nombre='Pipo Poppo')
-        self.cta_acum.agregar_subcuenta(['subc3', 'sc3'], titular=titular2)
+        self.cta_acum.agregar_subcuenta('subc3', 'sc3', titular=titular2)
         subcuenta = Cuenta.tomar(slug='sc3')
         self.assertEqual(subcuenta.titular, titular2)
 

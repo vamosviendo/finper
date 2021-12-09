@@ -180,8 +180,7 @@ class TestFormCrearSubcuenta(TestCase):
         self.formsubcuenta.save()
 
         mock_agregar_subcuenta.assert_called_once_with(
-            ['subcuenta nueva', 'sn'],
-            titular2
+            'subcuenta nueva', 'sn', titular2
         )
 
 
