@@ -58,22 +58,6 @@ class TestFormSubcuentas(TestCase):
         self.form.save()
         mockCuenta_dividir.assert_called_once_with(*self.subcuentas)
 
-    @patch('diario.forms.CuentaInteractiva.dividir_y_actualizar')
-    def test_pasa_titulares_correctamente_al_salvar_form(self, mock_dividir_y_actualizar):
-        titular2 = Titular.crear(titname='tito', nombre='Tito Gómez')
-        self.form.data.update({'form-1-titular': titular2})
-        self.form.data.update({'form-1-saldo': 500.0})
-        self.form.is_valid()
-        self.form.save()
-        self.assertEqual(
-            mock_dividir_y_actualizar.call_args[0][1]['saldo'],
-            500.0
-        )
-        self.assertEqual(
-            mock_dividir_y_actualizar.call_args[0][1]['titular'],
-            titular2
-        )
-
     @patch('diario.forms.FormSubcuentas.clean')
     @patch('diario.forms.CuentaInteractiva.dividir_y_actualizar')
     def test_llama_a_clean_al_salvar(self, mock_dividir_y_actualizar, mock_clean):
@@ -128,6 +112,18 @@ class TestFormSubcuentas(TestCase):
             [x[0] for x in self.form.forms[0].fields['titular'].choices]
         )
 
+    @patch('diario.forms.CuentaInteractiva.dividir_y_actualizar')
+    def test_pasa_titulares_correctamente_al_salvar_form(self, mock_dividir_y_actualizar):
+        titular2 = Titular.crear(titname='tito', nombre='Tito Gómez')
+        self.form.data.update({'form-1-titular': titular2})
+        self.form.is_valid()
+        self.form.save()
+
+        self.assertEqual(
+            mock_dividir_y_actualizar.call_args[0][1]['titular'],
+            titular2
+        )
+
 
 class TestFormCrearSubcuenta(TestCase):
 
@@ -135,26 +131,58 @@ class TestFormCrearSubcuenta(TestCase):
         self.cuenta = dividir_en_dos_subcuentas(Cuenta.crear('cuenta', 'cta'))
         self.formsubcuenta = FormCrearSubcuenta(data={
             'nombre': 'subcuenta nueva',
-            'slug': 'sn'
+            'slug': 'sn',
         }, cuenta=self.cuenta.slug)
-        self.formsubcuenta.is_valid()
 
     @patch('diario.forms.CuentaAcumulativa.agregar_subcuenta')
-    def test_llama_a_agregar_subcuenta(self, falso_agregar_subcuenta):
+    def test_llama_a_agregar_subcuenta(self, mock_agregar_subcuenta):
+        self.formsubcuenta.is_valid()
         self.formsubcuenta.save()
-        falso_agregar_subcuenta.assert_called_once_with(
-            ['subcuenta nueva', 'sn']
-        )
+        mock_agregar_subcuenta.assert_called_once()
 
     def test_cuenta_creada_es_subcuenta_de_cuenta(self):
+        self.formsubcuenta.is_valid()
         self.formsubcuenta.save()
         subcuenta = CuentaInteractiva.tomar(slug='sn')
         self.assertEqual(subcuenta.cta_madre, self.cuenta)
 
     def test_devuelve_cuenta_madre(self):
+        self.formsubcuenta.is_valid()
         cuenta = self.formsubcuenta.save()
         self.assertEqual(cuenta, self.cuenta)
 
+    def test_muestra_campo_titular(self):
+        self.assertIn('titular', self.formsubcuenta.fields.keys())
+
+    def test_muestra_todos_los_titulares_en_campo_titular(self):
+        Titular.crear(titname='tito', nombre='Tito Gómez')
+        Titular.crear(titname='juana', nombre='Juana Juani')
+
+        self.assertEqual(
+            [x[1] for x in self.formsubcuenta.fields['titular'].choices],
+            [tit.nombre for tit in Titular.todes()]
+        )
+
+    def test_muestra_por_defecto_titular_de_cuenta_madre(self):
+        Titular.crear(titname='aalb', nombre='Aabab Aabibi')
+        Titular.crear(titname='juana', nombre='Juana Juani')
+
+        self.assertEqual(
+            self.formsubcuenta.fields['titular'].initial,
+            self.cuenta.titular
+        )
+
+    @patch('diario.forms.CuentaAcumulativa.agregar_subcuenta')
+    def test_pasa_datos_correctamente_al_salvar_form(self, mock_agregar_subcuenta):
+        titular2 = Titular.crear(titname='tito', nombre='Tito Gómez')
+        self.formsubcuenta.data['titular'] = titular2
+        self.formsubcuenta.is_valid()
+        self.formsubcuenta.save()
+
+        mock_agregar_subcuenta.assert_called_once_with(
+            ['subcuenta nueva', 'sn'],
+            titular2
+        )
 
 
 class TestFormMovimiento(TestCase):

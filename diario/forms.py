@@ -70,14 +70,28 @@ class FormSubcuentas(CuentaFormset):
 class FormCrearSubcuenta(forms.Form):
     nombre = forms.CharField()
     slug = forms.CharField()
+    titular = forms.ModelChoiceField(
+        queryset=Titular.todes(),
+        empty_label=None,
+    )
 
     def __init__(self, *args, **kwargs):
         self.cuenta = CuentaAcumulativa.tomar(slug=kwargs.pop('cuenta'))
         super().__init__(*args, **kwargs)
+        self.fields['titular'].initial = self.cuenta.titular
+
+    def clean(self):
+        self.cleaned_data = super().clean()
+        self.cleaned_data['titular'] = \
+            self.cleaned_data.get('titular') or self.cuenta.titular
+        return self.cleaned_data
 
     def save(self):
+        titular = self.cleaned_data.pop('titular')
         self.cuenta.agregar_subcuenta(
-            [self.cleaned_data[x] for x in self.cleaned_data.keys()])
+            [self.cleaned_data[x] for x in self.cleaned_data.keys()],
+            titular
+        )
         return self.cuenta
 
 
