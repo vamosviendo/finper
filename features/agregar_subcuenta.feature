@@ -36,3 +36,27 @@ Escenario: Agregar subcuenta a cuenta
         | Traspaso de saldo         |  70,00  | +ebil -e |
         | Traspaso de saldo         | 130,00  | +ecaj -e |
         | Saldo inicial de efectivo | 200,00  | +e       |
+
+
+Escenario: Asignar subcuenta a un titular distinto al agregar
+    Dada una cuenta con los siguientes valores:
+        | nombre   | slug | saldo |
+        | Efectivo | e    | 200   |
+    Y un titular con los siguientes valores:
+        | titname | nombre       |
+        | tit2    | Otro Titular |
+    Y la cuenta "efectivo" dividida en subcuentas:
+        | nombre    | slug | saldo |
+        | Cajón     | ecaj | 130   |
+        | Billetera | ebil |       |
+
+    Cuando voy a la página "cta_agregar_subc" de la cuenta "efectivo"
+
+    Entonces veo un campo "titular" en el form de id "agregar_subcuenta"
+
+    Cuando completo el form de agregar subcuenta con estos valores:
+        | nombre   | slug | titular      |
+        | Bolsillo | ebol | Otro Titular |
+    Y voy a la página "tit_detalle" del titular "Otro Titular"
+
+    Entonces veo una cuenta en la grilla con el nombre "Bolsillo"

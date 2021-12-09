@@ -22,10 +22,15 @@ def veo_campo_en_form(context, campo_name, form_id):
             By.CSS_SELECTOR
         )
     except NoSuchElementException:
-        campo = form.esperar_elemento(
-            f'select[name="{campo_name}"]',
-            By.CSS_SELECTOR
-        )
+        try:
+            campo = form.esperar_elemento(
+                f'select[name="{campo_name}"]',
+                By.CSS_SELECTOR
+            )
+        except NoSuchElementException:
+            raise NoSuchElementException(
+                f'No se encontró ningún campo de nombre "{campo_name}".'
+            )
     fijar_atributo(context, campo_name, campo)
 
 
