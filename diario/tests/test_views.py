@@ -695,7 +695,11 @@ class TestCtaAgregarSubc(TestCase):
 
         self.assertFalse(falso_form.save.called)
 
-    def test_redirige_a_pag_de_cuenta_con_form_valido(self):
+    @patch('diario.views.FormCrearSubcuenta', new_callable=patch_save)
+    def test_redirige_a_pag_de_cuenta_con_form_valido(self, falso_FormCrearSubcuenta):
+        falso_form = falso_FormCrearSubcuenta.return_value
+        falso_form.is_valid.return_value = True
+        falso_form.save.return_value = self.cuenta
 
         response = self.client.post(
             reverse('cta_agregar_subc', args=[self.cuenta.slug]),
