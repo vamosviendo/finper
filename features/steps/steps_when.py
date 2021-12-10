@@ -79,8 +79,10 @@ def completar_form_dividir_cuenta(context):
 
 @when('completo el form de agregar subcuenta con estos valores')
 def completar_form_agregar_subcuenta(context):
-    context.browser.completar('id_nombre', context.table[0]['nombre'])
-    context.browser.completar('id_slug', context.table[0]['slug'])
+    valores = context.table[0]
+    for campo in valores.headings:
+        context.browser.completar(f'id_{campo}', valores[campo])
+
     context.browser.pulsar()
 
 

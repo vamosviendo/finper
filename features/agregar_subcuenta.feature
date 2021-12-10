@@ -59,4 +59,4 @@ Escenario: Asignar subcuenta a un titular distinto al agregar
         | Bolsillo | ebol | Otro Titular |
     Y voy a la página "tit_detalle" del titular "Otro Titular"
 
-    Entonces veo una cuenta en la grilla con el nombre "Bolsillo"
+    Entonces veo una cuenta en la grilla con nombre "Bolsillo"
