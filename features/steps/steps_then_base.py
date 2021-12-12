@@ -15,7 +15,7 @@ from features.steps.helpers import espacios_a_snake, espera, tomar_atributo, \
 
 @then('veo un campo "{campo_name}" en el form de id "{form_id}"')
 def veo_campo_en_form(context, campo_name, form_id):
-    form = context.browser.esperar_elemento(f'id-form-{form_id}')
+    form = context.browser.esperar_elemento(f'id_form_{form_id}')
     try:
         campo = form.esperar_elemento(
             f'input[name="{campo_name}"]',
