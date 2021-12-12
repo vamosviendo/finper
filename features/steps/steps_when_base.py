@@ -60,7 +60,7 @@ def cliquear_en_opcion(context, opcion, orden, tipo, menu):
 
     context.execute_steps(f'''
         Entonces veo varios "nav" de {tipo} "{menu}"
-        Cuando cliqueo en la opción "{opcion}" del {orden} elemento "{tipo}_nav_{menu}"
+        Cuando cliqueo en la opción "{opcion}" del {orden} elemento dado "{tipo}_nav_{menu}"
     ''')
 
 
@@ -69,7 +69,7 @@ def cliquear_en_opcion(context, opcion, tipo, menu):
     tipo = "class" if tipo == "clase" else tipo
     context.execute_steps(f'''
         Entonces veo un menú de {tipo} "{menu}"
-        Cuando cliqueo en la opción "{opcion}" del elemento "{tipo}_nav_{menu}"        
+        Cuando cliqueo en la opción "{opcion}" del elemento dado "{tipo}_nav_{menu}"        
     ''')
 
 
@@ -79,19 +79,19 @@ def cliquear_en_opcion(context, opcion, menu):
         f'Cuando cliqueo en la opción "{opcion}" del menú de id "{menu}"')
 
 
-@when('cliqueo en la opción "{opcion}" del {orden} elemento "{nombre}"')
+@when('cliqueo en la opción "{opcion}" del {orden} elemento dado "{nombre}"')
 def cliquear_en_opcion_de_elemento(context, opcion, orden, nombre):
-    menues = getattr(context, nombre)
+    menues = tomar_atributo(context, nombre)
     indice = ORDINALES[orden]
-    setattr(context, f'{nombre}_{indice}', menues[indice])
+    fijar_atributo(context, f'{nombre}_{indice}', menues[indice])
     context.execute_steps(
-        f'Cuando cliqueo en la opción "{opcion}" del elemento "{nombre}_{indice}"'
+        f'Cuando cliqueo en la opción "{opcion}" del elemento dado "{nombre}_{indice}"'
     )
 
 
-@when('cliqueo en la opción "{opcion}" del elemento "{nombre}"')
+@when('cliqueo en la opción "{opcion}" del elemento dado "{nombre}"')
 def cliquear_en_opcion(context, opcion, nombre):
-    menu = getattr(context, nombre)
+    menu = tomar_atributo(context, nombre)
     try:
         opcion = menu.find_element_by_link_text(opcion)
     except NoSuchElementException:
@@ -99,8 +99,8 @@ def cliquear_en_opcion(context, opcion, nombre):
     opcion.click()
 
 
-@when('cliqueo en el elemento encontrado "{elemento}"')
-def cliquear_en_elemento_guardado(context, elemento):
+@when('cliqueo en el elemento dado "{elemento}"')
+def cliquear_en_elemento_dado(context, elemento):
     tomar_atributo(context, elemento).click()
 
 
@@ -172,7 +172,7 @@ def completar_campo(context, accion, texto, campo):
         raise ValueError('La acción debe ser "escribo" o "selecciono')
 
 
-@when('tomo las medidas del elemento encontrado "{nombre_elemento}"')
+@when('tomo las medidas del elemento dado "{nombre_elemento}"')
 def tomar_medidas(context, nombre_elemento):
     elemento = tomar_atributo(context, nombre_elemento)
     fijar_atributo(context, f'{nombre_elemento}_medidas', elemento.size)

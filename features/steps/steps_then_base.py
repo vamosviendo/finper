@@ -205,7 +205,7 @@ def veo_un_tag_en_una_clase(context, tag, clase):
     )
 
 
-@then('veo que el elemento "{elemento}" '
+@then('veo que el elemento dado "{elemento}" '
       'incluye un "{tag}" de {tipo} "{nombre}" en la posición {pos}')
 def veo_que_elemento_incluye(context, elemento, tag, tipo, nombre, pos):
     i = int(pos)-1
@@ -213,7 +213,7 @@ def veo_que_elemento_incluye(context, elemento, tag, tipo, nombre, pos):
     nombre_contenidos = f'{tipo}_{tag}_{nombre}'
 
     context.execute_steps(
-        f'Entonces veo que el elemento "{elemento}" incluye varios "{tag}"'
+        f'Entonces veo que el elemento dado "{elemento}" incluye varios "{tag}"'
     )
     contenidos = tomar_atributo(context, f'tags_{tag}')
     context.test.assertTrue(
@@ -226,10 +226,10 @@ def veo_que_elemento_incluye(context, elemento, tag, tipo, nombre, pos):
         contenidos[i].get_attribute(tipo)
     )
 
-    setattr(context, f'{nombre_contenidos}_{pos}', contenidos[i])
+    fijar_atributo(context, f'{nombre_contenidos}_{pos}', contenidos[i])
 
 
-@then('veo que el elemento "{elemento}" '
+@then('veo que el elemento dado "{elemento}" '
       'incluye un "{tag}" de {tipo} "{nombre}"')
 def veo_que_elemento_incluye(context, elemento, tag, tipo, nombre):
     tipo = "class" if tipo == "clase" else tipo
@@ -241,7 +241,7 @@ def veo_que_elemento_incluye(context, elemento, tag, tipo, nombre):
     fijar_atributo(context, nombre_contenido, contenido)
 
 
-@then('veo que el elemento "{elemento}" '
+@then('veo que el elemento dado "{elemento}" '
       'incluye varios "{tag}" de clase "{clase}"')
 def veo_que_elemento_incluye(context, elemento, tag, clase):
     nombre_contenidos = f'class_{tag}_{clase}'
@@ -251,7 +251,7 @@ def veo_que_elemento_incluye(context, elemento, tag, clase):
     fijar_atributo(context, nombre_contenidos, contenidos)
 
 
-@then('veo que el elemento "{elemento}" incluye varios "{tag}"')
+@then('veo que el elemento dado "{elemento}" incluye varios "{tag}"')
 def veo_que_elemento_incluye(context, elemento, tag):
     nombre_tag = 'a' if tag == 'link' else tag
     contenedor = tomar_atributo(context, elemento)
@@ -260,11 +260,11 @@ def veo_que_elemento_incluye(context, elemento, tag):
     fijar_atributo(context, f'tags_{tag}', contenidos)
 
 
-@then('veo que el elemento "{elemento}" '
+@then('veo que el elemento dado "{elemento}" '
       'incluye {tantos} "{tag}" de clase "{clase}"')
 def veo_que_elemento_incluye(context, elemento, tantos, tag, clase):
     context.execute_steps(
-        f'Entonces veo que el elemento "{elemento}" '
+        f'Entonces veo que el elemento dado "{elemento}" '
         f'incluye varios "{tag}" de clase "{clase}"'
     )
     contenidos = tomar_atributo(context, f'class_{tag}_{clase}')
@@ -272,16 +272,17 @@ def veo_que_elemento_incluye(context, elemento, tantos, tag, clase):
     context.test.assertEqual(len(contenidos), int(tantos))
 
 
-@then('veo que el elemento "{elemento}" incluye el texto "{texto}"')
+@then('veo que el elemento dado "{elemento}" incluye el texto "{texto}"')
 def veo_que_elemento_incluye_texto(context, elemento, texto):
     contenedor = tomar_atributo(context, elemento)
     context.test.assertIn(texto, contenedor.text)
 
 
-@then('veo que el elemento "{elemento}" incluye {tantos} "{tag}"')
+@then('veo que el elemento dado "{elemento}" incluye {tantos} "{tag}"')
 def veo_que_elemento_incluye(context, elemento, tantos, tag):
     context.execute_steps(
-        f'Entonces veo que el elemento "{elemento}" incluye varios "{tag}"'
+        f'Entonces veo que el elemento dado "{elemento}" '
+        f'incluye varios "{tag}"'
     )
     contenidos = tomar_atributo(context, f'tags_{tag}')
 
@@ -293,7 +294,7 @@ def veo_que_tag_incluye_texto(context, tag, tipo, nombre, texto):
     tipo = "class" if tipo == "clase" else tipo
     context.execute_steps(f'''
         Entonces veo un "{tag}" de {tipo} "{nombre}"
-        Y veo que el elemento "{tipo}_{tag}_{nombre}" incluye el texto "{texto}"
+        Y veo que el elemento dado "{tipo}_{tag}_{nombre}" incluye el texto "{texto}"
     ''')
 
 
@@ -331,13 +332,11 @@ def veo_formulario(context, elem):
     context.browser.esperar_elemento(f'id_form_{elem}')
 
 
-@then('veo un elemento de id "{id}" y clase "{clase}" dentro del elemento encontrado "{nombre}"')
+@then('veo un elemento de id "{id}" y clase "{clase}" dentro del elemento dado "{nombre}"')
 def veo_elemento_en_elemento(context, id, clase, nombre):
     continente = tomar_atributo(context, nombre)
     elemento = continente.esperar_elemento(f'#{id}.{clase}', By.CSS_SELECTOR)
-    print('NOMBRE:', f'{id}_{clase}')
     fijar_atributo(context, f'{id}_{clase}', elemento)
-    print('ATRIBUTO:', tomar_atributo(context, f'{id}_{clase}'))
 
 
 @then('veo un elemento de id "{id}" y clase "{clase}"')
@@ -413,8 +412,8 @@ def elemento_no_aparece(context, atributo, nombre):
     )
 
 
-@then('el tamaño del elemento "{comparado}" '
-      'es igual al tamaño del elemento "{patron}"')
+@then('el tamaño del elemento dado "{comparado}" '
+      'es igual al tamaño del elemento dado "{patron}"')
 def mismo_tamanio(context, comparado, patron):
     context.test.assertEqual(
         tomar_atributo(context, comparado).size,
@@ -422,7 +421,7 @@ def mismo_tamanio(context, comparado, patron):
     )
 
 
-@then('veo que el elemento encontrado "{nombre_elemento}" '
+@then('veo que el elemento dado "{nombre_elemento}" '
       'ajusta su tamaño al de la pantalla')
 def elemento_ajusta_a_pantalla(context, nombre_elemento):
     elemento = tomar_atributo(context, nombre_elemento)
@@ -444,8 +443,8 @@ def elemento_ajusta_a_pantalla(context, nombre_elemento):
         )
 
 
-@then('Veo que el tamaño del elemento encontrado "{atrib}" '
-      'coincide con las medidas tomadas a "{elemento_medido}"')
+@then('Veo que el tamaño del elemento dado "{atrib}" '
+      'coincide con las medidas tomadas al elemento dado "{elemento_medido}"')
 def medidas_coinciden(context, atrib, elemento_medido):
     context.test.assertEqual(
         tomar_atributo(context, atrib).size,
