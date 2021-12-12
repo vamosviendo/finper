@@ -1,5 +1,4 @@
 import datetime
-from unittest import skip
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -143,6 +142,16 @@ class TestTitularMovimientos(TestCase):
 
         self.assertEqual(
             self.tit.movimientos(), [self.mov2, self.mov1, self.mov3])
+
+    def test_dentro_de_la_fecha_ordena_los_movimientos_por_orden_dia(self):
+        mov4 = Movimiento.crear('Movimiento 4', 50, self.cuenta1)
+        mov4.orden_dia = 1
+        mov4.save()
+
+        self.assertEqual(
+            self.tit.movimientos(),
+            [self.mov1, mov4, self.mov3]
+        )
 
 
 class TestMetodoPorDefecto(TestCase):
