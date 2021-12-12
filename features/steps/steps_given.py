@@ -7,7 +7,7 @@
 from behave import given
 
 from diario.models import Cuenta, Movimiento, Titular
-from helpers import table_to_str
+from helpers import table_to_str, fijar_atributo
 
 
 @given('movimientos con los siguientes valores')
@@ -95,9 +95,13 @@ def hay_un_error_en_el_saldo(context, cantidad, nombre):
 @given('{n} titulares con los siguientes valores')
 def hay_n_titulares(context, n):
     for fila in context.table:
-        Titular.crear(
-            titname=fila['titname'],
-            nombre=fila.get('nombre') or fila['titname']
+        fijar_atributo(
+            context,
+            fila['titname'],
+            Titular.crear(
+                titname=fila['titname'],
+                nombre=fila.get('nombre') or fila['titname']
+            )
         )
 
 
