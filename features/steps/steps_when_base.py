@@ -1,3 +1,5 @@
+from random import randrange
+
 from django.urls import reverse
 
 from behave import when
@@ -89,6 +91,14 @@ def cliquear_en_opcion_de_elemento(context, opcion, orden, nombre):
     )
 
 
+@when('cliqueo en la opción "{opcion}" del {orden} elemento "{nombre}"')
+def cliquear_en_opcion_de_elemento(context, opcion, orden, nombre):
+    context.execute_steps(f'''
+        Entonces veo varios elementos de clase "{nombre}"
+        Cuando cliqueo en la opción "{opcion}" del {orden} elemento dado "{nombre}"
+    ''')
+
+
 @when('cliqueo en la opción "{opcion}" del elemento dado "{nombre}"')
 def cliquear_en_opcion(context, opcion, nombre):
     menu = tomar_atributo(context, nombre)
@@ -132,6 +142,29 @@ def cliquear_en(context, tag, clase, atributo, valor):
         print([x.get_attribute("href") for x in elementos])
 
     next(x for x in elementos if x.get_attribute(atributo) == valor).click()
+
+
+@when('elijo al azar y guardo un elemento de clase "{clase}"')
+def elegir_y_guardar(context, clase):
+    elementos = context.browser.esperar_elementos(clase)
+    indice = randrange(len(elementos))
+    elegido = elementos[indice]
+    fijar_atributo(context, clase, elegido)
+    fijar_atributo(context, 'indice', indice)
+
+
+@when('elijo al azar un elemento de clase "{clase}" '
+      'y guardo su atributo "{atributo}"')
+def elegir_y_guardar_atributo(context, clase, atributo):
+    context.execute_steps(
+        f'Cuando elijo al azar y guardo un elemento de clase {clase}'
+    )
+    elemento = tomar_atributo(context, clase)
+    fijar_atributo(
+        context,
+        f'{clase}_{atributo}',
+        elemento.get_attribute(atributo)
+    )
 
 
 @when('completo y envío el formulario de login')

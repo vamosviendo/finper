@@ -162,6 +162,12 @@ def veo_varios_elementos(context, tag, tipo, nombre):
     fijar_atributo(context, nombre_elementos, elementos)
 
 
+@then('veo varios elementos de clase "{clase}"')
+def veo_varios_elementos(context, clase):
+    elementos = context.browser.esperar_elementos(clase, By.CLASS_NAME)
+    fijar_atributo(context, clase, elementos)
+
+
 @then('veo un link de texto "{texto}"')
 def veo_un_link(context, texto):
     nombre = f'a_text_{espacios_a_snake(texto)}'
