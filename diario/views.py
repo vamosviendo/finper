@@ -219,6 +219,7 @@ class TitDetalleView(DetailView):
 
 class TitElimView(DeleteView):
     model = Titular
+    success_url = reverse_lazy('home')
 
 
 class CorregirSaldo(TemplateView):

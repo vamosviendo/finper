@@ -77,12 +77,29 @@ class TestTitularDetalle(TestCase):
 
 class TestTitularElim(TestCase):
 
+    def setUp(self):
+        super().setUp()
+        self.titular = Titular.crear(titname='Tito')
+        self.cuenta = Cuenta.crear('cuenta', 'cta')
+
     def test_get_usa_template_titular_confirm_delete(self):
-        titular = Titular.crear(titname='Tito')
         response = self.client.get(
-            reverse('tit_elim', args=[titular.pk])
+            reverse('tit_elim', args=[self.titular.pk])
         )
         self.assertTemplateUsed(response, 'diario/titular_confirm_delete.html')
+
+    def test_redirige_a_home_despues_de_borrar(self):
+        response = self.client.post(
+            reverse('tit_elim', args=[self.titular.pk])
+        )
+        self.assertRedirects(response, reverse('home'))
+
+    @patch('diario.views.Titular.delete')
+    def test_post_elimina_titular(self, mock_delete):
+        self.client.post(
+            reverse('tit_elim', args=[self.titular.pk])
+        )
+        mock_delete.assert_called_once()
 
 
 class TestHomePage(TestCase):
