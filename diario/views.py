@@ -217,6 +217,10 @@ class TitDetalleView(DetailView):
         return context
 
 
+class TitElimView(DeleteView):
+    model = Titular
+
+
 class CorregirSaldo(TemplateView):
     template_name = 'diario/corregir_saldo.html'
 

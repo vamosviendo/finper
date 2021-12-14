@@ -75,6 +75,16 @@ class TestTitularDetalle(TestCase):
         self.assertEqual(list(response.context['movimientos']), [mov1, mov3])
 
 
+class TestTitularElim(TestCase):
+
+    def test_get_usa_template_titular_confirm_delete(self):
+        titular = Titular.crear(titname='Tito')
+        response = self.client.get(
+            reverse('tit_elim', args=[titular.pk])
+        )
+        self.assertTemplateUsed(response, 'diario/titular_confirm_delete.html')
+
+
 class TestHomePage(TestCase):
 
     def setUp(self):
