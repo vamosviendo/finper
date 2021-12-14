@@ -275,6 +275,26 @@ def veo_un_titular(context):
     context.test.assertEqual(len(titulares), 1)
 
 
+@then('veo un titular en la grilla con nombre "{nombre}"')
+def veo_una_cuenta(context, nombre):
+    titulares = context.browser.esperar_elementos('class_div_titular')
+    context.test.assertIn(
+        nombre,
+        [x.find_element_by_class_name('class_link_titular').text
+            for x in titulares]
+    )
+
+
+@then('no veo un titular "{nombre}" en la grilla')
+def titular_no_esta_en_grilla(context, nombre):
+    titulares = context.browser.esperar_elementos('class_div_titular')
+    context.test.assertNotIn(
+        nombre,
+        [x.find_element_by_class_name('class_link_titular').text
+         for x in titulares]
+    )
+
+
 @then('veo que el patrimonio de "{titular}" es {tantos} pesos')
 def el_patrimonio_es_tanto(context, titular, tantos):
     titname = Titular.tomar(nombre=titular).titname
