@@ -17,7 +17,7 @@ Escenario: Agregar subcuenta a cuenta
         | Billetera | ebil |       |
 
     Cuando voy a la página principal
-    Y cliqueo en el botón "Edit"
+    Y cliqueo en el botón "Edit" de la cuenta "Efectivo"
     Y cliqueo en el botón "Agregar subcuenta"
     Y completo el form de agregar subcuenta con estos valores:
         | nombre   | slug |

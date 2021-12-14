@@ -83,16 +83,6 @@ def subcuentas_de_detalle_cuenta_coinciden_con(context, cuenta):
         )
 
 
-@then('no veo una cuenta {nombre} en la grilla')
-def cuenta_no_esta_en_grilla(context, nombre):
-    cuentas = context.browser.esperar_elementos('class_div_cuenta')
-    context.test.assertNotIn(
-        nombre.lower(),
-        [x.find_element_by_class_name('class_nombre_cuenta').text
-         for x in cuentas]
-    )
-
-
 @then('veo {x} subcuentas en la página {cuenta}')
 def detalle_cuenta_tiene_subcuentas(context, cuenta, x):
     nombre_cta_main = context.browser.esperar_elemento('id_div_titulo_pag')
@@ -251,6 +241,17 @@ def veo_una_cuenta(context, nombre):
         [x.find_element_by_class_name('class_link_cuenta')
              .get_attribute('title') for x in cuentas]
     )
+
+
+@then('no veo una cuenta {nombre} en la grilla')
+def cuenta_no_esta_en_grilla(context, nombre):
+    cuentas = context.browser.esperar_elementos('class_div_cuenta')
+    context.test.assertNotIn(
+        nombre.lower(),
+        [x.find_element_by_class_name('class_link_cuenta')
+             .get_attribute('title') for x in cuentas]
+    )
+
 
 
 @then('veo una cuenta en la grilla con slug "{nombre}"')

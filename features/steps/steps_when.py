@@ -62,7 +62,7 @@ def entrar_en_cuenta(context, nombre):
 @when('cliqueo en el botón "{boton}" de la cuenta "{cuenta}"')
 def cliquear_en_boton_cuenta(context, boton, cuenta):
     cuenta_pag = context.browser.esperar_elemento(
-        f'id_div_cta_{Cuenta.tomar(nombre=cuenta).slug}')
+        f'id_div_cta_{Cuenta.tomar(nombre=cuenta.lower()).slug}')
     cuenta_pag.find_element_by_link_text(boton).click()
 
 

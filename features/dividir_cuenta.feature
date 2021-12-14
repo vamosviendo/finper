@@ -12,7 +12,7 @@ Escenario: Dividir una cuenta en subcuentas
         | Efectivo | e    | 200   |
 
     Cuando voy a la página principal
-    Y cliqueo en el botón "Edit"
+    Y cliqueo en el botón "Edit" de la cuenta "Efectivo"
     Y cliqueo en el botón "Dividir en subcuentas"
     Y completo el form de dividir cuenta con estos valores:
         | nombre          | slug | saldo |
