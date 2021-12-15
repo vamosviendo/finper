@@ -18,11 +18,6 @@ class HomeView(TemplateView):
     template_name = 'diario/home.html'
 
     def get(self, request, *args, **kwargs):
-        if Titular.cantidad() == 0:
-            return redirect('tit_nuevo')
-        if Cuenta.cantidad() == 0:
-            return redirect('cta_nueva')
-
         hoy = Path('hoy.mark')
         if (datetime.date.today() >
                 datetime.date.fromtimestamp(hoy.stat().st_mtime)):
@@ -93,8 +88,6 @@ class CtaElimView(DeleteView):
         return super().get(request, *args, **kwargs)
 
     def get_success_url(self):
-        if Cuenta.cantidad() == 1:      # Es la última cuenta que queda
-            return reverse('cta_nueva')
         return reverse('home')
 
 

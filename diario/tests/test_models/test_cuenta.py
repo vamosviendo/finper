@@ -208,6 +208,7 @@ class TestMetodosMovsYSaldos(TestCase):
                 Cuenta.saldo_ok()
                 Cuenta.corregir_saldo()
                 Cuenta.agregar_movimiento_correctivo()
+                ...
         Saldos después del setUp:
         self.cta1.saldo == 100-70+80 = 110
         self.cta2.saldo == 70+50 = 120

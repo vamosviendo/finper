@@ -80,7 +80,6 @@ class TestTitularElim(TestCase):
     def setUp(self):
         super().setUp()
         self.titular = Titular.crear(titname='Tito')
-        self.cuenta = Cuenta.crear('cuenta', 'cta')
 
     def test_get_usa_template_titular_confirm_delete(self):
         response = self.client.get(
@@ -103,11 +102,6 @@ class TestTitularElim(TestCase):
 
 
 class TestHomePage(TestCase):
-
-    def setUp(self):
-        super().setUp()
-        Titular.crear(titname='juan')
-        Cuenta.crear(nombre='cuenta', slug='cta')
 
     def test_usa_template_home(self):
         response = self.client.get('/')
@@ -213,19 +207,6 @@ class TestHomePage(TestCase):
 
         self.assertEqual(response.context['saldo_gral'], 350)
 
-    def test_si_no_hay_titulares_redirige_a_crear_titular(self):
-        Titular.todes().delete()
-
-        response = self.client.get(reverse('home'))
-        self.assertRedirects(response, reverse('tit_nuevo'))
-
-    def test_si_no_hay_cuentas_redirige_a_crear_cuenta(self):
-        for cta in Cuenta.todes():
-            cta.delete()
-
-        response = self.client.get(reverse('home'))
-        self.assertRedirects(response, reverse('cta_nueva'))
-
     def test_si_no_hay_movimientos_pasa_0_a_saldo_general(self):
         response = self.client.get(reverse('home'))
         self.assertEqual(response.context['saldo_gral'], 0)
@@ -235,8 +216,6 @@ class TestHomePageVerificarSaldo(TestCase):
 
     def setUp(self):
         super().setUp()
-        Titular.crear(titname='tito')
-        Cuenta.crear(nombre='cuenta', slug='cta')
 
         self.fecha = datetime.date(2021, 4, 4)
         self.hora = datetime.datetime(2021, 4, 4)
@@ -405,9 +384,8 @@ class TestCtaNueva(TestCase):
 
     def setUp(self):
         super().setUp()
-        Titular.crear(titname='tito')
 
-    def test_si_no_hay_titulares_redirige_a_crear_titular(self):
+    def test_si_no_hay_titulares_redirige_a_crear_titular_con_get(self):
         Titular.todes().delete()
         response = self.client.get(reverse('cta_nueva'))
         self.assertRedirects(response, reverse('tit_nuevo'))
@@ -445,7 +423,6 @@ class TestCtaMod(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.tit = Titular.crear(titname='tito')
         self.cuenta = Cuenta.crear(nombre='Nombre', slug='slug')
 
     def test_usa_template_cta_form(self):
@@ -502,8 +479,6 @@ class TestCtaElim(TestCase):
 
     def setUp(self):
         super().setUp()
-        Titular.crear(titname='tito')
-        Cuenta.crear('cuenta', 'cta')
         self.cuenta = Cuenta.crear('Efectivo', 'E')
 
     def test_get_usa_template_cuenta_confirm_delete(self):
@@ -516,20 +491,13 @@ class TestCtaElim(TestCase):
         self.client.post(
             reverse('cta_elim', args=[self.cuenta.slug])
         )
-        self.assertEqual(Cuenta.cantidad(), 1)
+        self.assertEqual(Cuenta.cantidad(), 0)
 
     def test_redirige_a_home_despues_de_borrar(self):
         response = self.client.post(
             reverse('cta_elim', args=[self.cuenta.slug])
         )
         self.assertRedirects(response, reverse('home'))
-
-    def test_redirige_a_crear_cuenta_si_no_hay_mas_cuentas(self):
-        Cuenta.tomar(slug='cta').delete()
-        response = self.client.post(
-            reverse('cta_elim', args=[self.cuenta.slug])
-        )
-        self.assertRedirects(response, reverse('cta_nueva'))
 
     def test_muestra_mensaje_de_error_si_se_elimina_cuenta_con_saldo(self):
         Movimiento.crear(
@@ -745,7 +713,6 @@ class TestCtaAgregarSubc(TestCase):
 class TestMovNuevo(TestCase):
 
     def setUp(self):
-        Titular.crear(titname='tito')
         Cuenta.crear(nombre='cuenta', slug='cta')
 
     def test_usa_template_mov_form(self):
@@ -821,7 +788,6 @@ class TestMovElim(TestCase):
 
     def setUp(self):
         super().setUp()
-        Titular.crear(titname='Tito')
         self.cuenta = Cuenta.crear(nombre='Efectivo', slug='E')
         self.mov = Movimiento.crear(
             concepto='saldo', importe=166, cta_entrada=self.cuenta)
@@ -844,7 +810,6 @@ class TestMovMod(TestCase):
 
     def setUp(self):
         super().setUp()
-        Titular.crear(titname='tito')
         self.cuenta = Cuenta.crear(nombre='Efectivo', slug='E')
         self.mov = Movimiento.crear(
             concepto='saldo', importe=166, cta_entrada=self.cuenta)
@@ -976,11 +941,6 @@ class TestMovMod(TestCase):
 @patch('diario.views.verificar_saldos')
 class TestVerificarSaldo(TestCase):
 
-    def setUp(self):
-        super().setUp()
-        Titular.crear(titname='tito')
-        Cuenta.crear(nombre='cuenta', slug='cta')
-
     def test_verifica_saldo_de_cuentas(self, mock_verificar_saldos):
         self.client.get(reverse('verificar_saldos'))
         mock_verificar_saldos.assert_called_once()
@@ -1017,7 +977,6 @@ class TestCorregirSaldo(TestCase):
 
     def setUp(self):
         super().setUp()
-        Titular.crear(titname='titu')
         self.cta1 = Cuenta.crear('Efectivo', 'E')
         self.cta2 = Cuenta.crear('Banco', 'B')
         self.full_url = f"{reverse('corregir_saldo')}?ctas=e!b"
@@ -1046,7 +1005,6 @@ class TestModificarSaldo(TestCase):
 
     def setUp(self):
         super().setUp()
-        Titular.crear(titname='tito')
         self.cta1 = Cuenta.crear('Efectivo', 'E')
         self.cta2 = Cuenta.crear('Banco', 'B')
         self.full_url = f"{reverse('modificar_saldo', args=[self.cta1.slug])}"\
@@ -1079,7 +1037,6 @@ class TestAgregarMovimiento(TestCase):
 
     def setUp(self):
         super().setUp()
-        Titular.crear(titname='titu')
         self.cta1 = Cuenta.crear('Efectivo', 'E')
         self.cta2 = Cuenta.crear('Banco', 'B')
         self.full_url = \
@@ -1112,8 +1069,3 @@ class TestAgregarMovimiento(TestCase):
 
         self.assertEqual(self.cta2.cantidad_movs(), cant_movs+1)
         self.assertEqual(self.cta2.saldo, 135)
-
-
-"""
-(1) Acá debería haber un comentario explicando por qué está esto.
-"""

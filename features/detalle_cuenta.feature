@@ -6,7 +6,6 @@ Característica: detalle_cuenta
     y los movimientos relacionados con ella o con sus subcuentas
 
 
-    @no_default_tit
     Escenario: Detalle de cuenta muestra saldo, titulares, subcuentas y movimientos
         Dados 3 titulares con los siguientes valores:
             | titname | nombre       |

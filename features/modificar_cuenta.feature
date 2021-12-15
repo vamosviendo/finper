@@ -18,7 +18,6 @@ Escenario: Modificar cuenta interactiva
     Entonces veo que el nombre de la cuenta es "nombre modificado"
 
 
-@no_default_tit
 Escenario: No se puede cambiar titular de cuenta interactiva
     Dada una cuenta con los siguientes valores:
         | nombre   | slug | saldo | titular |

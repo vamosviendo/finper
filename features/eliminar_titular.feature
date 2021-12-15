@@ -7,7 +7,6 @@ Característica: Eliminar titular
     interactivas o acumulativas.
 
 
-@no_default_tit
 Escenario: Eliminar titular sin cuentas
     Dada una cuenta
     Y dos titulares

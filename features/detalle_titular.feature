@@ -12,7 +12,6 @@ Característica: Detalles titular
     patrimonio del titular.
 
 
-@no_default_tit
 Escenario: Ver detalles de un titular
     Dados dos titulares
     Y tres cuentas con los siguientes valores:
@@ -42,7 +41,6 @@ Escenario: Ver detalles de un titular
         | Saldo inicial de cta1efectivo |  500,00 | +c1e      |
 
 
-@no_default_tit
 Escenario: Se muestran movimientos de cuentas acumulativas en página de titular
     Dados dos titulares
     Y dos cuentas con los siguientes valores:

@@ -25,7 +25,4 @@ def before_feature(context, feature):
 
 
 def before_scenario(context, scenario):
-
-    if not ("no_default_tit" in scenario.tags or
-            "no_default_tit" in scenario.feature.tags):
-        Titular.crear(titname='tito', nombre='Tito Gómez')
+    pass
