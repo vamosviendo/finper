@@ -5,8 +5,7 @@ from django.test import TestCase
 
 from diario.models import Cuenta, CuentaInteractiva, Movimiento, Titular
 
-from utils.errors import SaldoNoCeroException, ErrorTipo, \
-    ErrorDependenciaCircular, CambioDeTitularException
+from utils.errors import SaldoNoCeroException, CambioDeTitularException
 from utils.helpers_tests import dividir_en_dos_subcuentas
 
 
@@ -47,6 +46,11 @@ class TestModelCuenta(TestCase):
         with self.assertRaises(ValidationError):
             cuenta2.full_clean()
 
+    def test_nombre_se_guarda_en_minusculas(self):
+        Cuenta.crear(nombre='Efectivo', slug='Efec')
+        cuenta = Cuenta.primere()
+        self.assertEqual(cuenta.nombre, 'efectivo')
+
     def test_no_permite_slugs_duplicados(self):
         Cuenta.crear(nombre='Caja de ahorro', slug='CA')
         with self.assertRaises(ValidationError):
@@ -62,11 +66,6 @@ class TestModelCuenta(TestCase):
         Cuenta.crear(nombre='Efectivo', slug='Efec')
         cuenta = Cuenta.primere()
         self.assertEqual(cuenta.slug, 'efec')
-
-    def test_nombre_se_guarda_en_minusculas(self):
-        Cuenta.crear(nombre='Efectivo', slug='Efec')
-        cuenta = Cuenta.primere()
-        self.assertEqual(cuenta.nombre, 'efectivo')
 
     def test_slug_no_permite_caracteres_no_alfanumericos(self):
         with self.assertRaises(ValidationError):
@@ -448,10 +447,16 @@ class TestSubcuentas(TestCase):
         self.cta3 = Cuenta.tomar(slug='sc2')
 
     def test_cuenta_caja_debe_tener_subcuentas(self):
-        self.cta2.saldo = 0.0
-        self.cta2 = self.cta2._convertirse_en_acumulativa()
-        with self.assertRaises(ErrorTipo):
-            self.cta2.full_clean()
+        cuenta = Cuenta.crear('cuenta acum', 'ctaa')
+        cuenta = cuenta.dividir_y_actualizar(
+            ['subc 1', 'suc1', 0], ['subc 2', 'suc2'])
+        Cuenta.tomar(slug='suc1').delete()
+        Cuenta.tomar(slug='suc2').delete()
+        with self.assertRaisesMessage(
+            ValidationError,
+            'Cuenta acumulativa debe tener subcuentas'
+        ):
+            cuenta.full_clean()
 
     def test_cuenta_interactiva_no_puede_tener_subcuentas(self):
         subcuenta = Cuenta.crear("Bolsillos", "ebol")
@@ -509,7 +514,7 @@ class TestSubcuentas(TestCase):
         cta4.save()
         self.cta1.cta_madre = cta4
         with self.assertRaisesMessage(
-                ErrorDependenciaCircular,
+                ValidationError,
                 'Cuenta madre Bolsillos está entre las subcuentas de Efectivo '
                 'o entre las de una de sus subcuentas'
         ):
@@ -535,7 +540,7 @@ class TestSubcuentas(TestCase):
 
         self.cta1.cta_madre = cta5
         with self.assertRaisesMessage(
-                ErrorDependenciaCircular,
+                ValidationError,
                 'Cuenta madre Bolsillo pantalón está entre las subcuentas '
                 'de Efectivo o entre las de una de sus subcuentas'
         ):

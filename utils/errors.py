@@ -18,6 +18,7 @@ FECHA_POSTERIOR_A_CONVERSION = 'Fecha del movimiento debe ser anterior a '
 SALDO_NO_CERO = 'No se puede eliminar cuenta con saldo distinto de cero'
 SALDO_NO_COINCIDE = 'El saldo de la cuenta no coincide con sus movimientos'
 SUBCUENTAS_SIN_SALDO = 'Sólo se permite una subcuenta sin saldo'
+SLUG_MAX_LENGTH = 'Longitud máxima de 4 caracteres para slug no automático'
 
 
 class CambioDeTitularException(ValueError):

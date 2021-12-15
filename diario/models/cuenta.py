@@ -69,12 +69,13 @@ class Cuenta(PolymorphModel):
     def saldo(self, valor):
         self._saldo = round(valor, 2)
 
-    def full_clean(self, *args, **kwargs):
+    def clean_fields(self, exclude=None):
         self._pasar_nombre_y_slug_a_minuscula()
-        self._chequear_incongruencias_de_clase()
         self._impedir_cambio_de_titular()
+        super().clean_fields(exclude=exclude)
 
-        super().full_clean(*args, **kwargs)
+    def clean(self, *args, **kwargs):
+        self._chequear_incongruencias_de_clase()
 
     def save(self, *args, **kwargs):
         if self.tiene_madre():
@@ -395,14 +396,15 @@ class CuentaAcumulativa(Cuenta):
     def saldo_ok(self):
         return self.saldo == self.total_subcuentas()
 
-    def full_clean(self, *args, **kwargs):
+    def clean(self, *args, **kwargs):
         if self.cta_madre in self.arbol_de_subcuentas():
             raise errors.ErrorDependenciaCircular(
                 f'Cuenta madre {self.cta_madre.nombre.capitalize()} está '
                 f'entre las subcuentas de {self.nombre.capitalize()} o entre '
                 f'las de una de sus subcuentas'
             )
-        super().full_clean(*args, **kwargs)
+        super().clean(*args, **kwargs)
+        super().full_clean
 
     def movs(self, order_by='fecha'):
         """ Devuelve movimientos propios y de sus subcuentas
