@@ -29,6 +29,14 @@ def saldo_general_es(context, cta1, cta2):
     )
 
 
+@then('el saldo general es {tantos} pesos')
+def saldo_general_es(context, tantos):
+    context.test.assertEqual(
+        context.browser.esperar_elemento('id_div_importe_saldo_pag').text,
+        tantos
+    )
+
+
 @then('la grilla de cuentas está vacia')
 def grilla_cuentas_vacia(context):
     cuentas = context.browser.esperar_elementos('class_div_cuenta', fail=False)
@@ -341,6 +349,7 @@ def soy_dirigido_a_pagina_de_titular(context, pag, nombre):
         f'Entonces soy dirigido a la página "{pag}" '
         f'con el argumento "{titular}"'
     )
+
 
 # CONSTATACIONES DE MOVIMIENTO
 
