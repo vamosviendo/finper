@@ -19,7 +19,7 @@
   {% block grid_titulares %}
     <div id="id_grid_titulares" class="card-deck mt-3">
     {% for tit in titulares %}
-      <div class="card border-success class_div_titular">
+      <div id="id_div_titular_{{ tit.titname|lower }}" class="card border-success class_div_titular">
         <div class="card-header bg-success text-light class_div_nombre_titular">
           <a href="{% url 'tit_detalle' tit.pk %}" class="text-light class_link_titular" >
             {{ tit.nombre }}

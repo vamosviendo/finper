@@ -195,8 +195,14 @@ def completar_campo(context, accion, texto, campo):
             context.browser.completar(
                 f'input[name="{campo}"]', texto, By.CSS_SELECTOR)
         except NoSuchElementException:
-            context.browser.completar(
-                f'textarea[name="{campo}"', texto, By.CSS_SELECTOR)
+            try:
+                context.browser.completar(
+                    f'textarea[name="{campo}"]', texto, By.CSS_SELECTOR)
+            except NoSuchElementException:
+                raise NoSuchElementException(
+                    f'No se encontró campo de texto ni textarea '
+                    f'con nombre "{campo}"'
+                )
     elif accion == 'selecciono':
         texto = '---------' if texto == 'nada' else texto
         context.browser.completar(

@@ -66,6 +66,13 @@ def cliquear_en_boton_cuenta(context, boton, cuenta):
     cuenta_pag.find_element_by_link_text(boton).click()
 
 
+@when('cliqueo en el botón "{boton}" del titular "{titular}"')
+def cliquear_en_boton_titular(context, boton, titular):
+    titular_pag = context.browser.esperar_elemento(
+        f'id_div_titular_{Titular.tomar(nombre=titular).titname}')
+    titular_pag.find_element_by_link_text(boton).click()
+
+
 @when('completo el form de dividir cuenta con estos valores')
 def completar_form_dividir_cuenta(context):
     for ind, fila in enumerate(context.table):
