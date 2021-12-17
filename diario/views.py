@@ -215,6 +215,13 @@ class TitElimView(DeleteView):
     success_url = reverse_lazy('home')
 
 
+class TitModView(UpdateView):
+    model = Titular
+    template_name = 'diario/tit_form.html'
+    success_url = reverse_lazy('home')
+    fields = ['titname', 'nombre']
+
+
 class CorregirSaldo(TemplateView):
     template_name = 'diario/corregir_saldo.html'
 

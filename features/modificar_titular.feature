@@ -4,7 +4,7 @@ Característica: Modificar titular
     Quiero poder modificar el nombre o titname de un titular
 
 
-Escenario: Modificar nombre de titular
+Escenario: Modificar datos de titular
     Dado un titular con los siguientes valores:
         | titname | nombre     |
         | tito    | Tito Gómez |
@@ -12,5 +12,12 @@ Escenario: Modificar nombre de titular
     Y cliqueo en el botón "Edit" del titular "Tito Gómez"
     Y escribo "Tito Pérez" en el campo "nombre"
     Y cliqueo en el botón
+
     Entonces veo un titular en la grilla con nombre "Tito Pérez"
     Y no veo un titular "Tito Gómez" en la grilla
+
+    Cuando cliqueo en el botón "Edit" del titular "Tito Pérez"
+    Y escribo "titu" en el campo "titname"
+    Y cliqueo en el botón
+
+    Entonces veo un elemento de id "id_div_titular_titu"

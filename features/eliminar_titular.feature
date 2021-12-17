@@ -51,7 +51,6 @@ Escenario: Eliminar titular con cuentas con saldo
     Y no veo una cuenta "cuenta 1" en la grilla
     Y no veo una cuenta "cuenta 2" en la grilla
     Y el saldo general es 66,00 pesos
-    Y me detengo
     Y veo un movimiento con los siguientes valores:
         | concepto                           | importe | cta_entrada | cta_salida |
         | Retiro de patrimonio de Tito Gómez | 50      | cta1        |            |

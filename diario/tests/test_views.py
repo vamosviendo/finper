@@ -101,6 +101,37 @@ class TestTitularElim(TestCase):
         mock_delete.assert_called_once()
 
 
+class TestTitularMod(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.titular = Titular.crear(nombre='Nombre', titname='titname')
+
+    def test_usa_template_cta_form(self):
+        response = self.client.get(
+            reverse('tit_mod', args=[self.titular.pk]))
+        self.assertTemplateUsed(response, 'diario/tit_form.html')
+
+    def test_muestra_campo_nombre(self):
+        response = self.client.get(
+            reverse('tit_mod', args=[self.titular.pk]),
+        )
+        self.assertIn('nombre', response.context['form'].fields.keys())
+
+    def test_muestra_campo_titname(self):
+        response = self.client.get(
+            reverse('tit_mod', args=[self.titular.pk]),
+        )
+        self.assertIn('titname', response.context['form'].fields.keys())
+
+    def test_redirige_a_home_despues_de_post(self):
+        response = self.client.post(
+            reverse('tit_mod', args=[self.titular.pk]),
+            data={'titname': 'nuevo'}
+        )
+        self.assertRedirects(response, reverse('home'))
+
+
 class TestHomePage(TestCase):
 
     def test_usa_template_home(self):
