@@ -1,4 +1,5 @@
 from datetime import date
+from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -100,6 +101,12 @@ class TestModelCuentaCrear(TestCase):
         Cuenta.crear(nombre='Efectivo', slug='E')
         self.assertEqual(Cuenta.cantidad(), 1)
 
+    @patch('diario.models.cuenta.CuentaInteractiva.crear')
+    def test_llama_a_metodo_crear_de_clase_cuentainteractiva(self, mock_crear):
+        Cuenta.crear(nombre='Efectivo', slug='e')
+        mock_crear.assert_called_once_with(
+            nombre='Efectivo', slug='e', cta_madre=None)
+
     def test_cuenta_creada_es_interactiva(self):
         cuenta = Cuenta.crear(nombre='Efectivo', slug='E')
         self.assertIsInstance(cuenta, CuentaInteractiva)
@@ -115,51 +122,6 @@ class TestModelCuentaCrear(TestCase):
     def test_crear_no_permite_slug_vacio(self):
         with self.assertRaises(ValidationError):
             Cuenta.crear(nombre='Efectivo', slug=None)
-
-    def test_genera_movimiento_inicial_si_se_pasa_argumento_saldo(self):
-        cuenta = Cuenta.crear(nombre='Efectivo', slug='e', saldo=155)
-        self.assertEqual(Movimiento.cantidad(), 1)
-        mov = Movimiento.primere()
-        self.assertEqual(mov.concepto, f'Saldo inicial de {cuenta.nombre}')
-
-    def test_no_genera_movimiento_si_no_se_pasa_argumento_saldo(self):
-        Cuenta.crear('Efectivo', 'e')
-        self.assertEqual(Movimiento.cantidad(), 0)
-
-    def test_no_genera_movimiento_si_argumento_saldo_es_igual_a_cero(self):
-        Cuenta.crear('Efectivo', 'e', saldo=0)
-        self.assertEqual(Movimiento.cantidad(), 0)
-
-    def test_no_genera_movimiento_con_saldo_cero_en_formato_string(self):
-        Cuenta.crear('Efectivo', 'e', saldo='0')
-        self.assertEqual(Movimiento.cantidad(), 0)
-
-    def test_importe_de_movimiento_generado_coincide_con_argumento_saldo(self):
-        Cuenta.crear('Efectivo', 'e', saldo=232.24)
-        mov = Movimiento.primere()
-        self.assertEqual(mov.importe, 232.24)
-
-    def test_cuenta_creada_con_saldo_positivo_es_cta_entrada_del_movimiento_generado(self):
-        cuenta = Cuenta.crear('Efectivo', 'e', saldo=234)
-        mov = Movimiento.primere()
-        self.assertEqual(
-            mov.cta_entrada,
-            Cuenta.tomar(polymorphic=False, pk=cuenta.pk)
-        )
-
-    def test_cuenta_creada_con_saldo_negativo_es_cta_salida_del_movimiento_generado(self):
-        cuenta = Cuenta.crear('Efectivo', 'e', saldo=-354)
-        mov = Movimiento.primere()
-        self.assertIsNone(mov.cta_entrada)
-        self.assertEqual(
-            mov.cta_salida,
-            Cuenta.tomar(polymorphic=False, pk=cuenta.pk)
-        )
-        self.assertEqual(mov.importe, 354)
-
-    def test_puede_pasarse_saldo_en_formato_str(self):
-        cuenta = Cuenta.crear('Efectivo', 'e', saldo='354.42')
-        self.assertEqual(cuenta.saldo, 354.42)
 
 
 class TestModelCuentaTitular(TestCase):

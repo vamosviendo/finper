@@ -35,18 +35,24 @@ class TestModelCuentaInteractiva(TestCase):
 
 class TestModelCuentaInteractivaCrear(TestCase):
 
+    @patch('diario.models.cuenta.Cuenta.crear')
+    def test_llama_a_metodo_crear_de_clase_cuenta(self, mock_crear):
+        CuentaInteractiva.crear('Efectivo', 'e')
+        mock_crear.assert_called_once_with(
+            nombre='Efectivo', slug='e', cta_madre=None, finalizar=True)
+
     def test_genera_movimiento_inicial_si_se_pasa_argumento_saldo(self):
-        cuenta = Cuenta.crear(nombre='Efectivo', slug='e', saldo=155)
+        cuenta = CuentaInteractiva.crear(nombre='Efectivo', slug='e', saldo=155)
         self.assertEqual(Movimiento.cantidad(), 1)
         mov = Movimiento.primere()
         self.assertEqual(mov.concepto, f'Saldo inicial de {cuenta.nombre}')
 
     def test_no_genera_movimiento_si_no_se_pasa_argumento_saldo(self):
-        Cuenta.crear('Efectivo', 'e')
+        CuentaInteractiva.crear('Efectivo', 'e')
         self.assertEqual(Movimiento.cantidad(), 0)
 
     def test_no_genera_movimiento_si_argumento_saldo_es_igual_a_cero(self):
-        Cuenta.crear('Efectivo', 'e', saldo=0)
+        CuentaInteractiva.crear('Efectivo', 'e', saldo=0)
         self.assertEqual(Movimiento.cantidad(), 0)
 
     def test_importe_de_movimiento_generado_coincide_con_argumento_saldo(self):
@@ -55,7 +61,7 @@ class TestModelCuentaInteractivaCrear(TestCase):
         self.assertEqual(mov.importe, 232)
 
     def test_cuenta_creada_con_saldo_positivo_es_cta_entrada_del_movimiento_generado(self):
-        cuenta = Cuenta.crear('Efectivo', 'e', saldo=234)
+        cuenta = CuentaInteractiva.crear('Efectivo', 'e', saldo=234)
         mov = Movimiento.primere()
         self.assertEqual(
             mov.cta_entrada,
@@ -63,7 +69,7 @@ class TestModelCuentaInteractivaCrear(TestCase):
         )
 
     def test_cuenta_creada_con_saldo_negativo_es_cta_salida_del_movimiento_generado(self):
-        cuenta = Cuenta.crear('Efectivo', 'e', saldo=-354)
+        cuenta = CuentaInteractiva.crear('Efectivo', 'e', saldo=-354)
         mov = Movimiento.primere()
         self.assertIsNone(mov.cta_entrada)
         self.assertEqual(
@@ -73,8 +79,12 @@ class TestModelCuentaInteractivaCrear(TestCase):
         self.assertEqual(mov.importe, 354)
 
     def test_puede_pasarse_saldo_en_formato_str(self):
-        cuenta = Cuenta.crear('Efectivo', 'e', saldo='354')
+        cuenta = CuentaInteractiva.crear('Efectivo', 'e', saldo='354')
         self.assertEqual(cuenta.saldo, 354)
+
+    def test_no_genera_movimiento_con_saldo_cero_en_formato_str(self):
+        CuentaInteractiva.crear('Efectivo', 'e', saldo='0')
+        self.assertEqual(Movimiento.cantidad(), 0)
 
 
 class TestMetodoDividirEntre(TestCase):
