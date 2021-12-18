@@ -174,7 +174,7 @@ class CuentaInteractiva(Cuenta):
                                      cta_madre=cta_madre, finalizar=True,
                                      **kwargs)
 
-        if saldo:
+        if saldo and float(saldo) != 0.0:
             Movimiento.crear(
                 concepto=f'Saldo inicial de {cuenta_nueva.nombre}',
                 importe=saldo,

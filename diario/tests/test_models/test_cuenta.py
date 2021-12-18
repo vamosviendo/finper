@@ -130,6 +130,10 @@ class TestModelCuentaCrear(TestCase):
         Cuenta.crear('Efectivo', 'e', saldo=0)
         self.assertEqual(Movimiento.cantidad(), 0)
 
+    def test_no_genera_movimiento_con_saldo_cero_en_formato_string(self):
+        Cuenta.crear('Efectivo', 'e', saldo='0')
+        self.assertEqual(Movimiento.cantidad(), 0)
+
     def test_importe_de_movimiento_generado_coincide_con_argumento_saldo(self):
         Cuenta.crear('Efectivo', 'e', saldo=232.24)
         mov = Movimiento.primere()
