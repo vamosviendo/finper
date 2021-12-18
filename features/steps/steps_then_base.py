@@ -353,6 +353,19 @@ def veo_elemento(context, id, clase):
     fijar_atributo(context, f'{id}_{clase}', elemento)
 
 
+@then('veo un elemento de {atributo_in} "{nombre_in}" '
+      'dentro del {orden} elemento de {atributo_out} "{nombre_out}"')
+def veo_elemento_en_elemento(
+        context, atributo_in, nombre_in, orden, atributo_out, nombre_out):
+    atrib_out = BYS.get(atributo_out, By.LINK_TEXT)
+    atrib_in = BYS.get(atributo_in, By.LINK_TEXT)
+    ord = ORDINALES[orden]
+
+    continente = context.browser.esperar_elementos(nombre_out, atrib_out)[ord]
+    contenido = continente.esperar_elemento(nombre_in, atrib_in)
+    fijar_atributo(context, nombre_in, contenido)
+
+
 @then('veo un elemento de {atributo} "{nombre}"')
 def veo_elemento(context, atributo, nombre):
     atributo = BYS[atributo]
@@ -384,7 +397,27 @@ def menu_no_aparece(context, menu):
     context.execute_steps(f'Entonces no veo un menú de id "{menu}"')
 
 
-@then('no veo un elemento de {atributo_in} "{nombre_in}" dentro del {orden} elemento de {atributo_out} "{nombre_out}"')
+@then('no veo un elemento de {atributo_in} "{nombre_in}" '
+      'dentro de ningún elemento de {atributo_out} "{nombre_out}"')
+def elemento_no_aparece_en_ningun_elemento(
+        context, atributo_in, nombre_in, atributo_out, nombre_out):
+    # TODO: ¿no debería ser por default By.CLASS_NAME?
+    atrib_out = BYS.get(atributo_out, By.LINK_TEXT)
+    atrib_in = BYS.get(atributo_in, By.LINK_TEXT)
+
+    continentes = context.browser.esperar_elementos(nombre_out, atrib_out)
+    for ind, continente in enumerate(continentes):
+        context.test.assertEqual(
+            len(continente.esperar_elementos(nombre_in, atrib_in, fail=False)),
+            0,
+            f'Aparece elemento de {atributo_in} "{nombre_in}" que no debería '
+            f'aparecer como hijo del elemento {ind} de {atributo_out} '
+            f'"{nombre_out}"'
+        )
+
+
+@then('no veo un elemento de {atributo_in} "{nombre_in}" '
+      'dentro del {orden} elemento de {atributo_out} "{nombre_out}"')
 def elemento_no_aparece_en_elemento(
         context, atributo_in, nombre_in, orden, atributo_out, nombre_out):
     atrib_out = BYS.get(atributo_out, By.LINK_TEXT)
