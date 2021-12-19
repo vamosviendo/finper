@@ -36,6 +36,7 @@ Escenario: Eliminar titular con cuentas sin saldo
     Y no veo una cuenta "cuenta 2" en la grilla
 
 
+@skip
 Escenario: Eliminar titular con cuentas con saldo
     Dados dos titulares
     Y 3 cuentas con los siguientes valores:
