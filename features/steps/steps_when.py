@@ -102,11 +102,30 @@ def introducir_saldo_erroneo(context, importe, nombre):
 
 # ACCIONES DE MOVIMIENTO
 
+# TODO: este step es apropiado para completar forms en general (para steps base)
+#       En este caso, podemos personalizarlo llamando a las columnas con los
+#       nombres de los campos del form de movimiento.
+#       (Afecta al step 'Cuando genero un movimiento "{concepto}" de {importe} pesos '
+#       'de "{cta_salida}" a "{cta_entrada}"'
 @when('agrego un movimiento con campos')
 def agregar_movimiento(context):
     for fila in context.table:
         context.browser.completar(f"id_{fila['nombre']}", fila['valor'])
     context.browser.pulsar()
+
+
+@when('genero un movimiento "{concepto}" de {importe} pesos '
+      'de "{cta_salida}" a "{cta_entrada}"')
+def generar_movimiento(context, concepto, importe, cta_salida, cta_entrada):
+    context.execute_steps(f'''
+        Cuando voy a la página "mov_nuevo"
+        Y agrego un movimiento con campos
+            | nombre      | valor         |
+            | concepto    | {concepto}    |
+            | importe     | {importe}     |
+            | cta_entrada | {cta_entrada} |
+            | cta_salida  | {cta_salida}  |
+    ''')
 
 
 @when('voy a la página "{pag}" del {orden} movimiento')

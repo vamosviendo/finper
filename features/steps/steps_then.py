@@ -10,6 +10,7 @@ from selenium.webdriver.common.by import By
 from consts import LISTAS_DE_ENTIDADES
 from consts_base import CARDINALES
 from diario.models import Cuenta, Titular
+from features.steps.helpers import table_to_str
 from utils import errors
 from utils.fechas import hoy
 from utils.numeros import float_str_coma
@@ -353,8 +354,8 @@ def soy_dirigido_a_pagina_de_titular(context, pag, nombre):
 
 # CONSTATACIONES DE MOVIMIENTO
 
-@then('veo un movimiento con los siguientes valores')
-def veo_un_movimiento(context):
+@then('veo movimientos con los siguientes valores')
+def veo_movimientos(context):
     movs_concepto = [
         c.text for c in context.browser.esperar_elementos('class_td_concepto')
     ]
@@ -375,6 +376,13 @@ def veo_un_movimiento(context):
             context.test.assertIn(
                 fila['cta_salida'].lower(), movs_ctas[indice])
 
+
+@then('veo un movimiento con los siguientes valores')
+def veo_un_movimiento(context):
+    context.execute_steps(f'''
+        Entonces veo movimientos con los siguientes valores
+        {table_to_str(context.table)}
+    ''')
 
 @then('veo {num} movimient{os} en la página')
 def veo_movimiento(context, num, os):
