@@ -21,7 +21,7 @@ alfaminusculas = RegexValidator(
 class Cuenta(PolymorphModel):
     nombre = models.CharField(max_length=50, unique=True)
     slug = models.CharField(
-        max_length=4, unique=True, validators=[alfaminusculas])
+        max_length=20, unique=True, validators=[alfaminusculas])
     cta_madre = models.ForeignKey(
         'CuentaAcumulativa',
         related_name='subcuentas',
