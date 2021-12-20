@@ -2,7 +2,6 @@ from datetime import date
 
 from django.core.exceptions import ValidationError
 from django.db import models
-
 from django_ordered_field import OrderedCollectionField
 
 from utils import errors
@@ -73,7 +72,8 @@ class Movimiento(MiModel):
 
     @classmethod
     def crear(cls, concepto, importe, cta_entrada=None, cta_salida=None,
-              **kwargs):
+              esgratis=False, **kwargs):
+
         importe = float(importe)
 
         if importe < 0:
@@ -82,13 +82,51 @@ class Movimiento(MiModel):
             cta_salida = cta_entrada
             cta_entrada = cuenta
 
-        return super().crear(
+        movimiento = super().crear(
             concepto=concepto,
             importe=importe,
             cta_entrada=cta_entrada,
             cta_salida=cta_salida,
             **kwargs
         )
+
+        if (cta_entrada is not None and cta_salida is not None and
+            cta_entrada.titular != cta_salida.titular and
+            not esgratis):
+            # TODO: método generar_cuentas_credito, que también podrías ser una
+            #       función externa a ver si con eso solucionamos el tema del
+            #       circular import
+            from diario.models import Cuenta
+            cuenta_relacion = Cuenta.crear(
+                nombre=f'Relación crediticia {cta_salida.titular.nombre} '
+                       f'- {cta_entrada.titular.nombre}',
+                slug=cta_salida.titular.titname + cta_entrada.titular.titname
+            )
+            cuenta_acreedora, cuenta_deudora = cuenta_relacion.dividir_entre({
+                'nombre': f'Préstamo de {cta_salida.titular.titname} '
+                          f'a {cta_entrada.titular.titname}',
+                'slug': f'cr{cta_salida.titular.titname}'
+                        f'{cta_entrada.titular.titname}',
+                'titular': cta_salida.titular,
+                'saldo': 0
+            }, {
+                'nombre': f'Deuda de {cta_entrada.titular.titname} '
+                          f'con {cta_salida.titular.titname}',
+                'slug': f'db{cta_entrada.titular.titname}'
+                        f'{cta_salida.titular.titname}',
+                'titular': cta_entrada.titular
+            })
+            Movimiento.crear(
+                concepto='Constitución de crédito',
+                detalle=f'de {cta_salida.titular.nombre} '
+                        f'a {cta_entrada.titular.nombre}',
+                importe=importe,
+                cta_entrada=cuenta_acreedora,
+                cta_salida=cuenta_deudora,
+                esgratis=True
+            )
+
+        return movimiento
 
     @classmethod
     def tomar(cls, **kwargs):

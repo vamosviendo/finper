@@ -86,11 +86,13 @@ class TestTitularMovimientos(TestCase):
 
     def setUp(self):
         self.tit = Titular.crear(titname='tito', nombre='Tito Gómez')
-        self.cuenta1 = Cuenta.crear(nombre='cuenta1', slug='cta1', titular=self.tit)
+        self.cuenta1 = Cuenta.crear(
+            nombre='cuenta1', slug='cta1', titular=self.tit)
         self.cuenta2 = Cuenta.crear(nombre='cuenta2', slug='cta2')
         self.mov1 = Movimiento.crear('Movimiento 1', 120, self.cuenta1)
         self.mov2 = Movimiento.crear('Movimiento 2', 65, None, self.cuenta2)
-        self.mov3 = Movimiento.crear('Movimiento 3', 35, self.cuenta1, self.cuenta2)
+        self.mov3 = Movimiento.crear(
+            'Movimiento 3', 35, self.cuenta1, self.cuenta2, esgratis=True)
 
     def test_devuelve_movimientos_relacionados_con_cuentas_del_titular(self):
         self.assertEqual(self.tit.movimientos(), [self.mov1, self.mov3])

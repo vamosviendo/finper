@@ -1,10 +1,10 @@
 from datetime import date, timedelta
-from unittest import skip
+from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
-from diario.models import Cuenta, Movimiento
+from diario.models import Cuenta, CuentaInteractiva, Movimiento, Titular
 from utils import errors
 from utils.helpers_tests import dividir_en_dos_subcuentas
 
@@ -286,6 +286,116 @@ class TestModelMovimientoCrear(TestModelMovimiento):
     def test_acepta_importe_en_formato_str(self):
         mov = Movimiento.crear('Pago', '200', cta_entrada=self.cuenta1)
         self.assertEqual(mov.importe, 200.0)
+
+
+class TestModelMovimientoEntreCuentasDeDistintoTitular(TestCase):
+
+    def setUp(self):
+        self.titular1 = Titular.crear(titname='tit1', nombre='Titular 1')
+        self.titular2 = Titular.crear(titname='tit2', nombre='Titular 2')
+        self.cuenta1 = Cuenta.crear(
+            'Cuenta titular 1', 'ct1', titular=self.titular1)
+        self.cuenta2 = Cuenta.crear(
+            'Cuenta titular 2', 'ct2', titular=self.titular2)
+
+    @patch('diario.models.cuenta.CuentaInteractiva.dividir_entre')
+    @patch('diario.models.cuenta.Cuenta.crear')
+    def test_genera_cuenta_credito_si_no_existe(self, mock_crear, mock_dividir_entre):
+        mock_crear.return_value = CuentaInteractiva(
+            nombre='mock0', slug='mock0')
+        mock_dividir_entre.return_value = (
+            CuentaInteractiva(nombre='mock1', slug='mock1'),
+            CuentaInteractiva(nombre='mock2', slug='mock2')
+        )
+
+        Movimiento.crear(
+            'Prestamo', 10, cta_entrada=self.cuenta1, cta_salida=self.cuenta2)
+
+        mock_crear.assert_called_once_with(
+            nombre='Relación crediticia Titular 2 - Titular 1',
+            slug='tit2tit1'
+        )
+
+    @patch('diario.models.cuenta.Cuenta.crear')
+    def test_no_genera_nada_si_esgratis(self, mock_crear):
+        Movimiento.crear(
+            'Prestamo', 10,
+            cta_entrada=self.cuenta1,
+            cta_salida=self.cuenta2,
+            esgratis=True
+        )
+        mock_crear.assert_not_called()
+
+    @patch('diario.models.cuenta.CuentaInteractiva.dividir_entre')
+    def test_genera_subcuentas_de_cuenta_credito(self, mock_dividir_entre):
+        mock_dividir_entre.return_value = (
+            CuentaInteractiva(nombre='mock1', slug='mock1'),
+            CuentaInteractiva(nombre='mock2', slug='mock2')
+        )
+
+        Movimiento.crear(
+            'Prestamo', 10, cta_entrada=self.cuenta1, cta_salida=self.cuenta2)
+
+        mock_dividir_entre.assert_called_once_with({
+            'nombre': 'Préstamo de tit2 a tit1',
+            'slug': 'crtit2tit1',
+            'titular': self.titular2,
+            'saldo': 0
+        }, {
+            'nombre': 'Deuda de tit1 con tit2',
+            'slug': 'dbtit1tit2',
+            'titular': self.titular1
+        })
+
+    def test_genera_movimiento_contrario_entre_subcuentas_de_cuenta_credito(self):
+        Movimiento.crear(
+            'Prestamo', 10, cta_entrada=self.cuenta1, cta_salida=self.cuenta2)
+        self.assertEqual(Movimiento.cantidad(), 2)
+
+        cuenta_deudora = Cuenta.tomar(slug='dbtit1tit2')
+        cuenta_acreedora = Cuenta.tomar(slug='crtit2tit1')
+        mov_credito = Movimiento.tomar(concepto='Constitución de crédito')
+        self.assertEqual(mov_credito.detalle, 'de Titular 2 a Titular 1')
+        self.assertEqual(mov_credito.importe, 10)
+        self.assertEqual(mov_credito.cta_entrada, cuenta_acreedora)
+        self.assertEqual(mov_credito.cta_salida, cuenta_deudora)
+
+    def test_integrativo_genera_cuenta_credito_y_subcuentas_y_movimiento(self):
+        movimiento = Movimiento.crear(
+            'Prestamo', 10, cta_entrada=self.cuenta1, cta_salida=self.cuenta2)
+        self.assertEqual(Cuenta.cantidad(), 5)
+        self.assertEqual(Movimiento.cantidad(), 2)
+
+        cuenta_credito = Cuenta.tomar(slug='tit2tit1')
+        cuenta_deudora = Cuenta.tomar(slug='dbtit1tit2')
+        cuenta_acreedora = Cuenta.tomar(slug='crtit2tit1')
+        self.assertTrue(cuenta_credito.es_acumulativa)
+        self.assertEqual(cuenta_credito.subcuentas.count(), 2)
+        self.assertEqual(cuenta_credito.saldo, 0)
+        self.assertEqual(cuenta_deudora.cta_madre, cuenta_credito)
+        self.assertEqual(cuenta_acreedora.cta_madre, cuenta_credito)
+        self.assertEqual(cuenta_acreedora.saldo, movimiento.importe)
+        self.assertEqual(cuenta_deudora.saldo, -cuenta_acreedora.saldo)
+
+        mov_credito = Movimiento.tomar(concepto='Constitución de crédito')
+        self.assertEqual(mov_credito.importe, movimiento.importe)
+        self.assertEqual(
+            mov_credito.cta_entrada.titular,
+            movimiento.cta_salida.titular
+        )
+        self.assertEqual(
+            mov_credito.cta_salida.titular,
+            movimiento.cta_entrada.titular
+        )
+
+    def test_integrativo_no_genera_nada_si_esgratis(self):
+        Movimiento.crear(
+            'Prestamo', 10,
+            cta_entrada=self.cuenta1, cta_salida=self.cuenta2,
+            esgratis=True
+        )
+        self.assertEqual(Cuenta.cantidad(), 2)
+        self.assertEqual(Movimiento.cantidad(), 1)
 
 
 class TestModelMovimientoPropiedades(TestModelMovimiento):

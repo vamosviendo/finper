@@ -65,7 +65,8 @@ class TestTitularDetalle(TestCase):
         cuenta2 = Cuenta.crear(nombre='cuenta2', slug='cta2')
         mov1 = Movimiento.crear('Movimiento 1', 120, cuenta1)
         mov2 = Movimiento.crear('Movimiento 2', 65, None, cuenta2)
-        mov3 = Movimiento.crear('Movimiento 3', 35, cuenta1, cuenta2)
+        mov3 = Movimiento.crear(
+            'Movimiento 3', 35, cuenta1, cuenta2, esgratis=True)
 
         mock_movimientos.return_value = [mov1, mov3]
 

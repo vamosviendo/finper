@@ -18,7 +18,7 @@ Escenario: Traspaso de saldo entre cuentas de distintos titulares
     Cuando voy a la página de detalles de "Tito Gómez"
 
     Entonces veo que hay una cuenta "crtitojuan" con saldo 30 en la grilla
-    Y veo que el nombre de la cuenta "crtitojuan" es "Crédito de tito a juan"
+    Y veo que el nombre de la cuenta "crtitojuan" es "Préstamo de tito a juan"
 
     Cuando voy a la página de detalles de "Juan Juánez"
 
