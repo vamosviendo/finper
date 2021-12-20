@@ -36,6 +36,7 @@ class Movimiento(MiModel):
         'diario.Cuenta', related_name='salidas', null=True, blank=True,
         on_delete=models.CASCADE
     )
+    id_contramov = models.IntegerField(null=True, blank=True)
 
     class Meta:
         ordering = ('fecha', 'orden_dia')
@@ -116,15 +117,17 @@ class Movimiento(MiModel):
                         f'{cta_salida.titular.titname}',
                 'titular': cta_entrada.titular
             })
-            Movimiento.crear(
+            contramov = Movimiento.crear(
                 concepto='Constitución de crédito',
                 detalle=f'de {cta_salida.titular.nombre} '
                         f'a {cta_entrada.titular.nombre}',
                 importe=importe,
                 cta_entrada=cuenta_acreedora,
                 cta_salida=cuenta_deudora,
+                id_contramov=movimiento.id,
                 esgratis=True
             )
+            movimiento.id_contramov = contramov.id
 
         return movimiento
 
