@@ -815,6 +815,20 @@ class TestMovNuevo(TestCase):
         )
         self.assertEqual(Movimiento.cantidad(), 0)
 
+    # @patch('diario.views.Movimiento.crear')
+    # def test_llama_a_metodo_crear(self, mock_crear):
+    #     cuenta = Cuenta.crear(nombre='Efectivo', slug='E')
+    #     self.client.post(
+    #         reverse('mov_nuevo'),
+    #         data={
+    #             'fecha': date.today(),
+    #             'concepto': 'entrada de efectivo',
+    #             'importe': 100,
+    #             'cta_entrada': cuenta.id
+    #         }
+    #     )
+    #     mock_crear.assert_called_once()
+
 
 class TestMovElim(TestCase):
 

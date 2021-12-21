@@ -366,12 +366,6 @@ class TestModelMovimientoEntreCuentasDeDistintoTitular(TestCase):
         mov_credito = Movimiento.tomar(concepto='Constitución de crédito')
         self.assertEqual(movimiento.id_contramov, mov_credito.id)
 
-    def test_movimiento_de_credito_generado_guarda_marcador_al_movimiento_originante(self):
-        movimiento = Movimiento.crear(
-            'Prestamo', 10, cta_entrada=self.cuenta1, cta_salida=self.cuenta2)
-        mov_credito = Movimiento.tomar(concepto='Constitución de crédito')
-        self.assertEqual(mov_credito.id_contramov, movimiento.id)
-
     def test_integrativo_genera_cuenta_credito_y_subcuentas_y_movimiento(self):
         movimiento = Movimiento.crear(
             'Prestamo', 10, cta_entrada=self.cuenta1, cta_salida=self.cuenta2)
