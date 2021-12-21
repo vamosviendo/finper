@@ -200,50 +200,17 @@ class Movimiento(MiModel):
         # Movimiento nuevo
         if self._state.adding:
 
-            if (self.cta_entrada is not None and self.cta_salida is not None and
-                    self.cta_entrada.titular != self.cta_salida.titular and
-                    not esgratis):
-                # TODO: método generar_cuentas_credito, que también podrías ser una
-                #       función externa a ver si con eso solucionamos el tema del
-                #       circular import
-                from diario.models import Cuenta
-                cuenta_relacion = Cuenta.crear(
-                    nombre=f'Relación crediticia {self.cta_salida.titular.nombre} '
-                           f'- {self.cta_entrada.titular.nombre}',
-                    slug=self.cta_salida.titular.titname + self.cta_entrada.titular.titname
-                )
-                cuenta_acreedora, cuenta_deudora = cuenta_relacion.dividir_entre({
-                    'nombre': f'Préstamo de {self.cta_salida.titular.titname} '
-                              f'a {self.cta_entrada.titular.titname}',
-                    'slug': f'cr{self.cta_salida.titular.titname}'
-                            f'{self.cta_entrada.titular.titname}',
-                    'titular': self.cta_salida.titular,
-                    'saldo': 0
-                }, {
-                    'nombre': f'Deuda de {self.cta_entrada.titular.titname} '
-                              f'con {self.cta_salida.titular.titname}',
-                    'slug': f'db{self.cta_entrada.titular.titname}'
-                            f'{self.cta_salida.titular.titname}',
-                    'titular': self.cta_entrada.titular
-                })
-                contramov = Movimiento.crear(
-                    concepto='Constitución de crédito',
-                    detalle=f'de {self.cta_salida.titular.nombre} '
-                            f'a {self.cta_entrada.titular.nombre}',
-                    importe=self.importe,
-                    cta_entrada=cuenta_acreedora,
-                    cta_salida=cuenta_deudora,
-                    # id_contramov=self.id,
-                    esgratis=True
-                )
-                self.id_contramov = contramov.id
-
             if self.cta_entrada:
                 self.cta_entrada.saldo += self.importe
                 self.cta_entrada.save()
             if self.cta_salida:
                 self.cta_salida.saldo -= self.importe
                 self.cta_salida.save()
+
+            if self.cta_entrada and self.cta_salida and \
+               self.cta_entrada.titular != self.cta_salida.titular and \
+               not esgratis:
+                self._registrar_credito()
 
         # Movimiento existente
         else:
@@ -326,3 +293,41 @@ class Movimiento(MiModel):
     def cambia_importe(self):
         importe_guardado = self.tomar_de_bd().importe
         return importe_guardado != self.importe
+
+    def _registrar_credito(self):
+        self._crear_movimiento_credito(*self._generar_cuentas_credito())
+
+    def _generar_cuentas_credito(self):
+        from diario.models import Cuenta
+        cuenta_relacion = Cuenta.crear(
+            nombre=f'Relación crediticia {self.cta_salida.titular.nombre} '
+                   f'- {self.cta_entrada.titular.nombre}',
+            slug=self.cta_salida.titular.titname + self.cta_entrada.titular.titname
+        )
+        return cuenta_relacion.dividir_entre({
+            'nombre': f'Préstamo de {self.cta_salida.titular.titname} '
+                      f'a {self.cta_entrada.titular.titname}',
+            'slug': f'cr{self.cta_salida.titular.titname}'
+                    f'{self.cta_entrada.titular.titname}',
+            'titular': self.cta_salida.titular,
+            'saldo': 0
+        }, {
+            'nombre': f'Deuda de {self.cta_entrada.titular.titname} '
+                      f'con {self.cta_salida.titular.titname}',
+            'slug': f'db{self.cta_entrada.titular.titname}'
+                    f'{self.cta_salida.titular.titname}',
+            'titular': self.cta_entrada.titular
+        })
+
+    def _crear_movimiento_credito(self, cuenta_acreedora, cuenta_deudora):
+        contramov = Movimiento.crear(
+            concepto='Constitución de crédito',
+            detalle=f'de {self.cta_salida.titular.nombre} '
+                    f'a {self.cta_entrada.titular.nombre}',
+            importe=self.importe,
+            cta_entrada=cuenta_acreedora,
+            cta_salida=cuenta_deudora,
+            esgratis=True
+        )
+        self.id_contramov = contramov.id
+

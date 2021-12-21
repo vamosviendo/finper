@@ -815,19 +815,23 @@ class TestMovNuevo(TestCase):
         )
         self.assertEqual(Movimiento.cantidad(), 0)
 
-    # @patch('diario.views.Movimiento.crear')
-    # def test_llama_a_metodo_crear(self, mock_crear):
-    #     cuenta = Cuenta.crear(nombre='Efectivo', slug='E')
-    #     self.client.post(
-    #         reverse('mov_nuevo'),
-    #         data={
-    #             'fecha': date.today(),
-    #             'concepto': 'entrada de efectivo',
-    #             'importe': 100,
-    #             'cta_entrada': cuenta.id
-    #         }
-    #     )
-    #     mock_crear.assert_called_once()
+    @patch('diario.views.Movimiento._registrar_credito')
+    def test_llama_a_metodo_crear(self, mock_registrar_credito):
+        tit1 = Titular.crear(titname='tit1', nombre='Titular 1')
+        tit2 = Titular.crear(titname='tit2', nombre='Titular 2')
+        cuenta1 = Cuenta.crear(nombre='Cuenta tit 1', slug='ct1', titular=tit1)
+        cuenta2 = Cuenta.crear(nombre='Cuenta tit 2', slug='ct2', titular=tit2)
+        self.client.post(
+            reverse('mov_nuevo'),
+            data={
+                'fecha': date.today(),
+                'concepto': 'entrada de efectivo',
+                'importe': 100,
+                'cta_entrada': cuenta1.id,
+                'cta_salida': cuenta2.id
+            }
+        )
+        mock_registrar_credito.assert_called_once()
 
 
 class TestMovElim(TestCase):
