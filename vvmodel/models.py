@@ -43,7 +43,7 @@ class MiModel(models.Model):
 
     @classmethod
     def crear(cls, **kwargs):
-        using = kwargs.pop('using') if 'using' in kwargs.keys() else 'default'
+        using = kwargs.pop('using', None)
         obj = cls(**kwargs)
         obj.full_clean()
         obj.save(using=using)

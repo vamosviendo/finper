@@ -83,12 +83,6 @@ class Movimiento(MiModel):
             cta_salida = cta_entrada
             cta_entrada = cuenta
 
-        # TODO: Esto reemplaza al llamado a super().crear(), a los efectos de
-        #       pasar a save el argumento esgratis. Si corregimos el método
-        #       crear de MiModel para que tome *args / **kwargs, podemos
-        #       volver a llamar a super().crear() pasándole el arguemtno
-        #       esgratis y que éste lo pase a save() entre los kwargs, y
-        #       que Movimiento.save() lo extraiga de los mismos.
         movimiento = cls(
             concepto=concepto,
             importe=importe,
