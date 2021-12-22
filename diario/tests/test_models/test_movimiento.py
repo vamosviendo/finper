@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from unittest import skip
 from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
@@ -288,7 +289,7 @@ class TestModelMovimientoCrear(TestModelMovimiento):
         self.assertEqual(mov.importe, 200.0)
 
 
-class TestModelMovimientoEntreCuentasDeDistintoTitular(TestCase):
+class TestModelMovimientoEntreTitulares(TestCase):
 
     def setUp(self):
         self.titular1 = Titular.crear(titname='tit1', nombre='Titular 1')
@@ -297,6 +298,9 @@ class TestModelMovimientoEntreCuentasDeDistintoTitular(TestCase):
             'Cuenta titular 1', 'ct1', titular=self.titular1)
         self.cuenta2 = Cuenta.crear(
             'Cuenta titular 2', 'ct2', titular=self.titular2)
+
+
+class TestPrimerMovimientoEntreTitulares(TestModelMovimientoEntreTitulares):
 
     @patch('diario.models.cuenta.CuentaInteractiva.dividir_entre')
     @patch('diario.models.cuenta.Cuenta.crear')
@@ -402,6 +406,25 @@ class TestModelMovimientoEntreCuentasDeDistintoTitular(TestCase):
         )
         self.assertEqual(Cuenta.cantidad(), 2)
         self.assertEqual(Movimiento.cantidad(), 1)
+
+
+class TestSegundoMovimientoEntreTitulares(TestModelMovimientoEntreTitulares):
+
+    def setUp(self):
+        super().setUp()
+        Movimiento.crear(
+            'Prestamo', 10, cta_entrada=self.cuenta1, cta_salida=self.cuenta2)
+
+    @skip
+    @patch('diario.models.Movimiento._generar_cuentas_credito')
+    def test_no_crea_cuentas_de_credito_si_ya_existen_entre_los_titulares(self, mock_generar_cuentas_credito):
+        mock_generar_cuentas_credito.return_value = (
+            Cuenta(nombre='mock1', slug='mock1'),
+            Cuenta(nombre='mock2', slug='mock2')
+        )
+        Movimiento.crear('Prestamo', 15, cta_entrada=self.cuenta1, cta_salida=self.cuenta2)
+        mock_generar_cuentas_credito.assert_not_called()
+
 
 
 class TestModelMovimientoPropiedades(TestModelMovimiento):
