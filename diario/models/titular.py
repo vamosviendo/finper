@@ -8,6 +8,7 @@ from vvmodel.models import MiModel
 class Titular(MiModel):
     titname = models.CharField(max_length=100, unique=True)
     nombre = models.CharField(max_length=100, blank=True)
+    deudores = models.ManyToManyField('Titular', related_name='acreedores')
 
     @property
     def patrimonio(self):

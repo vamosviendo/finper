@@ -1,5 +1,4 @@
 from datetime import date, timedelta
-from unittest import skip
 from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
@@ -398,6 +397,16 @@ class TestPrimerMovimientoEntreTitulares(TestModelMovimientoEntreTitulares):
             movimiento.cta_entrada.titular
         )
 
+    def test_incluye_titular_cta_receptora_entre_los_deudores_de_titular_cta_emisora(self):
+        Movimiento.crear(
+            'Prestamo', 10, cta_entrada=self.cuenta1, cta_salida=self.cuenta2)
+        self.assertIn(self.titular1, self.titular2.deudores.all())
+
+    def test_incluye_titular_cta_emisora_entre_los_acreedores_de_titular_cta_deudora(self):
+        Movimiento.crear(
+            'Prestamo', 10, cta_entrada=self.cuenta1, cta_salida=self.cuenta2)
+        self.assertIn(self.titular2, self.titular1.acreedores.all())
+
     def test_integrativo_no_genera_nada_si_esgratis(self):
         Movimiento.crear(
             'Prestamo', 10,
@@ -415,7 +424,6 @@ class TestSegundoMovimientoEntreTitulares(TestModelMovimientoEntreTitulares):
         Movimiento.crear(
             'Prestamo', 10, cta_entrada=self.cuenta1, cta_salida=self.cuenta2)
 
-    @skip
     @patch('diario.models.Movimiento._generar_cuentas_credito')
     def test_no_crea_cuentas_de_credito_si_ya_existen_entre_los_titulares(self, mock_generar_cuentas_credito):
         mock_generar_cuentas_credito.return_value = (
@@ -424,7 +432,6 @@ class TestSegundoMovimientoEntreTitulares(TestModelMovimientoEntreTitulares):
         )
         Movimiento.crear('Prestamo', 15, cta_entrada=self.cuenta1, cta_salida=self.cuenta2)
         mock_generar_cuentas_credito.assert_not_called()
-
 
 
 class TestModelMovimientoPropiedades(TestModelMovimiento):
