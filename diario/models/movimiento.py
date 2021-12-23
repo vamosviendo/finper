@@ -289,17 +289,18 @@ class Movimiento(MiModel):
         return importe_guardado != self.importe
 
     def _registrar_credito(self):
-        cuenta_acreedora, cuenta_deudora = self._generar_cuentas_credito() \
-            if self.cta_entrada.titular not in \
-               self.cta_salida.titular.deudores.all() \
-            else self._recuperar_cuentas_credito()
+        from diario.models import Cuenta
 
-        self._crear_movimiento_credito(cuenta_acreedora, cuenta_deudora)
+        try:
+            cuentas_cred = self._recuperar_cuentas_credito(Cuenta)
+        except Cuenta.DoesNotExist:
+            cuentas_cred = self._generar_cuentas_credito(Cuenta)
+
+        self._crear_movimiento_credito(*cuentas_cred)
         self.cta_salida.titular.deudores.add(self.cta_entrada.titular)
 
-    def _generar_cuentas_credito(self):
-        from diario.models import Cuenta
-        cuenta_relacion = Cuenta.crear(
+    def _generar_cuentas_credito(self, cls):
+        cuenta_relacion = cls.crear(
             nombre=f'Relación crediticia {self.cta_salida.titular.nombre} '
                    f'- {self.cta_entrada.titular.nombre}',
             slug=f'{self.cta_salida.titular.titname}-'
@@ -320,14 +321,12 @@ class Movimiento(MiModel):
             'titular': self.cta_entrada.titular
         })
 
-    def _recuperar_cuentas_credito(self):
-        from diario.models import Cuenta
-
+    def _recuperar_cuentas_credito(self, cls):
         return (
-            Cuenta.tomar(
+            cls.tomar(
                 slug=f'cr-{self.cta_salida.titular.titname}-'
                      f'{self.cta_entrada.titular.titname}'),
-            Cuenta.tomar(
+            cls.tomar(
                 slug=f'db-{self.cta_entrada.titular.titname}-'
                      f'{self.cta_salida.titular.titname}'))
 
