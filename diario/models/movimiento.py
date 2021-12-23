@@ -289,7 +289,13 @@ class Movimiento(MiModel):
         return importe_guardado != self.importe
 
     def _registrar_credito(self):
-        self._crear_movimiento_credito(*self._generar_cuentas_credito())
+        cuenta_acreedora, cuenta_deudora = self._generar_cuentas_credito() \
+            if self.cta_entrada.titular not in \
+               self.cta_salida.titular.deudores.all() \
+            else self._recuperar_cuentas_credito()
+
+        self._crear_movimiento_credito(cuenta_acreedora, cuenta_deudora)
+        self.cta_salida.titular.deudores.add(self.cta_entrada.titular)
 
     def _generar_cuentas_credito(self):
         from diario.models import Cuenta
@@ -312,6 +318,17 @@ class Movimiento(MiModel):
                     f'{self.cta_salida.titular.titname}',
             'titular': self.cta_entrada.titular
         })
+
+    def _recuperar_cuentas_credito(self):
+        from diario.models import Cuenta
+
+        return (
+            Cuenta.tomar(
+                slug=f'cr{self.cta_salida.titular.titname}'
+                     f'{self.cta_entrada.titular.titname}'),
+            Cuenta.tomar(
+                slug=f'db{self.cta_entrada.titular.titname}'
+                     f'{self.cta_salida.titular.titname}'))
 
     def _crear_movimiento_credito(self, cuenta_acreedora, cuenta_deudora):
         contramov = Movimiento.crear(
