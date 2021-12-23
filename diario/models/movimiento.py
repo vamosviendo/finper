@@ -302,19 +302,20 @@ class Movimiento(MiModel):
         cuenta_relacion = Cuenta.crear(
             nombre=f'Relación crediticia {self.cta_salida.titular.nombre} '
                    f'- {self.cta_entrada.titular.nombre}',
-            slug=self.cta_salida.titular.titname + self.cta_entrada.titular.titname
+            slug=f'{self.cta_salida.titular.titname}-'
+                 f'{self.cta_entrada.titular.titname}'
         )
         return cuenta_relacion.dividir_entre({
             'nombre': f'Préstamo de {self.cta_salida.titular.titname} '
                       f'a {self.cta_entrada.titular.titname}',
-            'slug': f'cr{self.cta_salida.titular.titname}'
+            'slug': f'cr-{self.cta_salida.titular.titname}-'
                     f'{self.cta_entrada.titular.titname}',
             'titular': self.cta_salida.titular,
             'saldo': 0
         }, {
             'nombre': f'Deuda de {self.cta_entrada.titular.titname} '
                       f'con {self.cta_salida.titular.titname}',
-            'slug': f'db{self.cta_entrada.titular.titname}'
+            'slug': f'db-{self.cta_entrada.titular.titname}-'
                     f'{self.cta_salida.titular.titname}',
             'titular': self.cta_entrada.titular
         })
@@ -324,10 +325,10 @@ class Movimiento(MiModel):
 
         return (
             Cuenta.tomar(
-                slug=f'cr{self.cta_salida.titular.titname}'
+                slug=f'cr-{self.cta_salida.titular.titname}-'
                      f'{self.cta_entrada.titular.titname}'),
             Cuenta.tomar(
-                slug=f'db{self.cta_entrada.titular.titname}'
+                slug=f'db-{self.cta_entrada.titular.titname}-'
                      f'{self.cta_salida.titular.titname}'))
 
     def _crear_movimiento_credito(self, cuenta_acreedora, cuenta_deudora):

@@ -15,7 +15,7 @@ from vvmodel.models import PolymorphModel
 
 
 alfaminusculas = RegexValidator(
-    r'^[0-9a-z]*$', 'Solamente caracteres alfanuméricos')
+    r'^[0-9a-z\-]*$', 'Solamente caracteres alfanuméricos y guiones')
 
 
 class Cuenta(PolymorphModel):

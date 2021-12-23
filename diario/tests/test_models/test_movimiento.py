@@ -316,7 +316,7 @@ class TestPrimerMovimientoEntreTitulares(TestModelMovimientoEntreTitulares):
 
         mock_crear.assert_called_once_with(
             nombre='Relación crediticia Titular 2 - Titular 1',
-            slug='tit2tit1'
+            slug='tit2-tit1'
         )
 
     @patch('diario.models.cuenta.Cuenta.crear')
@@ -341,12 +341,12 @@ class TestPrimerMovimientoEntreTitulares(TestModelMovimientoEntreTitulares):
 
         mock_dividir_entre.assert_called_once_with({
             'nombre': 'Préstamo de tit2 a tit1',
-            'slug': 'crtit2tit1',
+            'slug': 'cr-tit2-tit1',
             'titular': self.titular2,
             'saldo': 0
         }, {
             'nombre': 'Deuda de tit1 con tit2',
-            'slug': 'dbtit1tit2',
+            'slug': 'db-tit1-tit2',
             'titular': self.titular1
         })
 
@@ -355,8 +355,8 @@ class TestPrimerMovimientoEntreTitulares(TestModelMovimientoEntreTitulares):
             'Prestamo', 10, cta_entrada=self.cuenta1, cta_salida=self.cuenta2)
         self.assertEqual(Movimiento.cantidad(), 2)
 
-        cuenta_deudora = Cuenta.tomar(slug='dbtit1tit2')
-        cuenta_acreedora = Cuenta.tomar(slug='crtit2tit1')
+        cuenta_deudora = Cuenta.tomar(slug='db-tit1-tit2')
+        cuenta_acreedora = Cuenta.tomar(slug='cr-tit2-tit1')
         mov_credito = Movimiento.tomar(concepto='Constitución de crédito')
         self.assertEqual(mov_credito.detalle, 'de Titular 2 a Titular 1')
         self.assertEqual(mov_credito.importe, 10)
@@ -375,9 +375,9 @@ class TestPrimerMovimientoEntreTitulares(TestModelMovimientoEntreTitulares):
         self.assertEqual(Cuenta.cantidad(), 5)
         self.assertEqual(Movimiento.cantidad(), 2)
 
-        cuenta_credito = Cuenta.tomar(slug='tit2tit1')
-        cuenta_deudora = Cuenta.tomar(slug='dbtit1tit2')
-        cuenta_acreedora = Cuenta.tomar(slug='crtit2tit1')
+        cuenta_credito = Cuenta.tomar(slug='tit2-tit1')
+        cuenta_deudora = Cuenta.tomar(slug='db-tit1-tit2')
+        cuenta_acreedora = Cuenta.tomar(slug='cr-tit2-tit1')
         self.assertTrue(cuenta_credito.es_acumulativa)
         self.assertEqual(cuenta_credito.subcuentas.count(), 2)
         self.assertEqual(cuenta_credito.saldo, 0)
