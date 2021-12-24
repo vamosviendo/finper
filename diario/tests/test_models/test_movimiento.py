@@ -1,5 +1,4 @@
 from datetime import date, timedelta
-from unittest import skip
 from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
@@ -458,6 +457,17 @@ class TestSegundoMovimientoEntreTitulares(TestModelMovimientoEntreTitulares):
         Movimiento.crear(
             'Prestamo', 15, cta_entrada=self.cuenta1, cta_salida=self.cuenta2)
         self.assertEqual(Movimiento.todes()[2].concepto, 'Aumento de crédito')
+
+    def test_da_cuenta_en_el_concepto_de_una_devolucion_parcial(self):
+        Movimiento.crear(
+            'Devolución', 6, cta_entrada=self.cuenta2, cta_salida=self.cuenta1)
+        print('\n')
+        for mov in Movimiento.todes():
+            print(mov.concepto, mov.orden_dia)
+        self.assertEqual(
+            Movimiento.todes()[2].concepto,
+            'Pago a cuenta de crédito'
+        )
 
 
 class TestModelMovimientoPropiedades(TestModelMovimiento):

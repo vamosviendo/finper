@@ -62,8 +62,8 @@ Escenario: Traspaso de saldo entre cuentas de distintos titulares
 
     Entonces veo movimientos con los siguientes valores:
         | concepto                | detalle                     | importe | cta_entrada   | cta_salida   |
-        | Devolución              |                             | 25      | ctit          | cjua         |
-        | Cancelación de crédito  | de Juan Juánez a Tito Gómez | 25      | cr-tito-juan  | db-juan-tito |
+        | Devolución              |                             | 25,00   | ctit          | cjua         |
+        | Cancelación de crédito  | de Juan Juánez a Tito Gómez | 25,00   | cr-tito-juan  | db-juan-tito |
 
     Cuando voy a la página "tit_detalle" del titular "Tito Gómez"
 

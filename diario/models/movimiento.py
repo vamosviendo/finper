@@ -293,13 +293,36 @@ class Movimiento(MiModel):
 
         try:
             cta_acreed, cta_deud = self._recuperar_cuentas_credito(Cuenta)
-            concepto = 'Aumento de crédito'
+            if cta_acreed.slug.startswith('cr'):
+                concepto = 'Aumento de crédito'
+            elif cta_acreed.slug.startswith('db'):
+                concepto = 'Pago a cuenta de crédito'
+            else:
+                raise ValueError('Error en movimientod de crédito')
         except Cuenta.DoesNotExist:
             cta_acreed, cta_deud = self._generar_cuentas_credito(Cuenta)
             concepto = 'Constitución de crédito'
 
         self._crear_movimiento_credito(cta_acreed, cta_deud, concepto)
         self.cta_salida.titular.deudores.add(self.cta_entrada.titular)
+
+    def _recuperar_cuentas_credito(self, cls):
+        try:
+            return (
+                cls.tomar(
+                    slug=f'cr-{self.cta_salida.titular.titname}-'
+                         f'{self.cta_entrada.titular.titname}'),
+                cls.tomar(
+                    slug=f'db-{self.cta_entrada.titular.titname}-'
+                         f'{self.cta_salida.titular.titname}'))
+        except cls.DoesNotExist:
+            return (
+                cls.tomar(
+                    slug=f'db-{self.cta_salida.titular.titname}-'
+                         f'{self.cta_entrada.titular.titname}'),
+                cls.tomar(
+                    slug=f'cr-{self.cta_entrada.titular.titname}-'
+                         f'{self.cta_salida.titular.titname}'))
 
     def _generar_cuentas_credito(self, cls):
         cuenta_relacion = cls.crear(
@@ -322,24 +345,6 @@ class Movimiento(MiModel):
                     f'{self.cta_salida.titular.titname}',
             'titular': self.cta_entrada.titular
         })
-
-    def _recuperar_cuentas_credito(self, cls):
-        try:
-            return (
-                cls.tomar(
-                    slug=f'cr-{self.cta_salida.titular.titname}-'
-                         f'{self.cta_entrada.titular.titname}'),
-                cls.tomar(
-                    slug=f'db-{self.cta_entrada.titular.titname}-'
-                         f'{self.cta_salida.titular.titname}'))
-        except cls.DoesNotExist:
-            return (
-                cls.tomar(
-                    slug=f'db-{self.cta_salida.titular.titname}-'
-                         f'{self.cta_entrada.titular.titname}'),
-                cls.tomar(
-                    slug=f'cr-{self.cta_entrada.titular.titname}-'
-                         f'{self.cta_salida.titular.titname}'))
 
     def _crear_movimiento_credito(
             self, cuenta_acreedora, cuenta_deudora, concepto):
