@@ -430,8 +430,14 @@ class TestSegundoMovimientoEntreTitulares(TestModelMovimientoEntreTitulares):
             Cuenta(nombre='mock1', slug='mock1'),
             Cuenta(nombre='mock2', slug='mock2')
         )
-        Movimiento.crear('Prestamo', 15, cta_entrada=self.cuenta1, cta_salida=self.cuenta2)
+        Movimiento.crear(
+            'Prestamo', 15, cta_entrada=self.cuenta1, cta_salida=self.cuenta2)
         mock_generar_cuentas_credito.assert_not_called()
+
+    def test_da_cuenta_en_el_concepto_de_un_aumento_de_credito(self):
+        Movimiento.crear(
+            'Prestamo', 15, cta_entrada=self.cuenta1, cta_salida=self.cuenta2)
+        self.assertEqual(Movimiento.todes()[2].concepto, 'Aumento de crédito')
 
 
 class TestModelMovimientoPropiedades(TestModelMovimiento):

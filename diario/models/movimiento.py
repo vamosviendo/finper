@@ -292,11 +292,13 @@ class Movimiento(MiModel):
         from diario.models import Cuenta
 
         try:
-            cuentas_cred = self._recuperar_cuentas_credito(Cuenta)
+            cta_acreed, cta_deud = self._recuperar_cuentas_credito(Cuenta)
+            concepto = 'Aumento de crédito'
         except Cuenta.DoesNotExist:
-            cuentas_cred = self._generar_cuentas_credito(Cuenta)
+            cta_acreed, cta_deud = self._generar_cuentas_credito(Cuenta)
+            concepto = 'Constitución de crédito'
 
-        self._crear_movimiento_credito(*cuentas_cred)
+        self._crear_movimiento_credito(cta_acreed, cta_deud, concepto)
         self.cta_salida.titular.deudores.add(self.cta_entrada.titular)
 
     def _generar_cuentas_credito(self, cls):
@@ -330,9 +332,11 @@ class Movimiento(MiModel):
                 slug=f'db-{self.cta_entrada.titular.titname}-'
                      f'{self.cta_salida.titular.titname}'))
 
-    def _crear_movimiento_credito(self, cuenta_acreedora, cuenta_deudora):
+    def _crear_movimiento_credito(
+            self, cuenta_acreedora, cuenta_deudora, concepto):
+
         contramov = Movimiento.crear(
-            concepto='Constitución de crédito',
+            concepto=concepto,
             detalle=f'de {self.cta_salida.titular.nombre} '
                     f'a {self.cta_entrada.titular.nombre}',
             importe=self.importe,

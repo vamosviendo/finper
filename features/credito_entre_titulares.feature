@@ -31,7 +31,7 @@ Escenario: Traspaso de saldo entre cuentas de distintos titulares
     Entonces veo movimientos con los siguientes valores:
         | concepto                | detalle                     | importe | cta_entrada   | cta_salida     |
         | Préstamo                |                             | 10,00   | cjua          | ctit           |
-        | Constitución de crédito | de Tito Gómez a Juan Juánez | 10,00   | cr-tito-juan  | db-juan-tito   |
+        | Aumento de crédito      | de Tito Gómez a Juan Juánez | 10,00   | cr-tito-juan  | db-juan-tito   |
 
     Cuando voy a la página "tit_detalle" del titular "Tito Gómez"
 
@@ -45,9 +45,9 @@ Escenario: Traspaso de saldo entre cuentas de distintos titulares
     Cuando genero un movimiento "Devolución" de 15 pesos de "cuenta de juan" a "cuenta de tito"
 
     Entonces veo movimientos con los siguientes valores:
-        | concepto                | detalle                     | importe | cta_entrada   | cta_salida   |
-        | Devolución              |                             | 15,00   | ctit          | cjua         |
-        | Cancelación de crédito  | de Juan Juánez a Tito Gómez | 15,00   | cr-tito-juan  | db-juan-tito |
+        | concepto                 | detalle                     | importe | cta_entrada   | cta_salida   |
+        | Devolución               |                             | 15,00   | ctit          | cjua         |
+        | Pago a cuenta de crédito | de Juan Juánez a Tito Gómez | 15,00   | cr-tito-juan  | db-juan-tito |
 
     Cuando voy a la página "tit_detalle" del titular "Tito Gómez"
 
