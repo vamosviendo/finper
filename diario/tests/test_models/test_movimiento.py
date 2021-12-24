@@ -461,12 +461,17 @@ class TestSegundoMovimientoEntreTitulares(TestModelMovimientoEntreTitulares):
     def test_da_cuenta_en_el_concepto_de_una_devolucion_parcial(self):
         Movimiento.crear(
             'Devolución', 6, cta_entrada=self.cuenta2, cta_salida=self.cuenta1)
-        print('\n')
-        for mov in Movimiento.todes():
-            print(mov.concepto, mov.orden_dia)
         self.assertEqual(
             Movimiento.todes()[2].concepto,
             'Pago a cuenta de crédito'
+        )
+
+    def test_da_cuenta_en_el_concepto_de_una_cancelacion_de_credito(self):
+        Movimiento.crear(
+            'Devolución', 10, cta_entrada=self.cuenta2, cta_salida=self.cuenta1)
+        self.assertEqual(
+            Movimiento.todes()[2].concepto,
+            'Cancelación de crédito'
         )
 
 

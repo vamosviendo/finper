@@ -296,9 +296,11 @@ class Movimiento(MiModel):
             if cta_acreed.slug.startswith('cr'):
                 concepto = 'Aumento de crédito'
             elif cta_acreed.slug.startswith('db'):
-                concepto = 'Pago a cuenta de crédito'
+                concepto = 'Cancelación de crédito' \
+                    if self.importe == cta_deud.saldo \
+                    else 'Pago a cuenta de crédito'
             else:
-                raise ValueError('Error en movimientod de crédito')
+                raise ValueError('Error en movimiento de crédito')
         except Cuenta.DoesNotExist:
             cta_acreed, cta_deud = self._generar_cuentas_credito(Cuenta)
             concepto = 'Constitución de crédito'
