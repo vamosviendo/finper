@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from unittest import skip
 from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
@@ -433,6 +434,25 @@ class TestSegundoMovimientoEntreTitulares(TestModelMovimientoEntreTitulares):
         Movimiento.crear(
             'Prestamo', 15, cta_entrada=self.cuenta1, cta_salida=self.cuenta2)
         mock_generar_cuentas_credito.assert_not_called()
+
+    @patch('diario.models.Movimiento._generar_cuentas_credito')
+    def test_no_crea_cuentas_credito_en_movimiento_inverso_entre_titulares_con_credito_existente(
+            self, mock_generar_cuentas_credito):
+        mock_generar_cuentas_credito.return_value = (
+            Cuenta(nombre='mock1', slug='mock1'),
+            Cuenta(nombre='mock2', slug='mock2')
+        )
+        Movimiento.crear(
+            'Devolución', 6, cta_entrada=self.cuenta2, cta_salida=self.cuenta1)
+        mock_generar_cuentas_credito.assert_not_called()
+
+    def test_resta_importe_de_cuenta_credito_en_movimiento_inverso_entre_titulares_con_credito_existente(self):
+        Movimiento.crear('Devolución', 6, cta_entrada=self.cuenta2, cta_salida=self.cuenta1)
+        self.assertEqual(Cuenta.tomar(slug='cr-tit2-tit1').saldo, 4)
+
+    def test_suma_importe_a_cuenta_deuda_en_movimiento_inverso_entre_titulares_con_credito_existente(self):
+        Movimiento.crear('Devolución', 6, cta_entrada=self.cuenta2, cta_salida=self.cuenta1)
+        self.assertEqual(Cuenta.tomar(slug='db-tit1-tit2').saldo, -4)
 
     def test_da_cuenta_en_el_concepto_de_un_aumento_de_credito(self):
         Movimiento.crear(

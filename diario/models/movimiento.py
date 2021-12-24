@@ -324,13 +324,22 @@ class Movimiento(MiModel):
         })
 
     def _recuperar_cuentas_credito(self, cls):
-        return (
-            cls.tomar(
-                slug=f'cr-{self.cta_salida.titular.titname}-'
-                     f'{self.cta_entrada.titular.titname}'),
-            cls.tomar(
-                slug=f'db-{self.cta_entrada.titular.titname}-'
-                     f'{self.cta_salida.titular.titname}'))
+        try:
+            return (
+                cls.tomar(
+                    slug=f'cr-{self.cta_salida.titular.titname}-'
+                         f'{self.cta_entrada.titular.titname}'),
+                cls.tomar(
+                    slug=f'db-{self.cta_entrada.titular.titname}-'
+                         f'{self.cta_salida.titular.titname}'))
+        except cls.DoesNotExist:
+            return (
+                cls.tomar(
+                    slug=f'db-{self.cta_salida.titular.titname}-'
+                         f'{self.cta_entrada.titular.titname}'),
+                cls.tomar(
+                    slug=f'cr-{self.cta_entrada.titular.titname}-'
+                         f'{self.cta_salida.titular.titname}'))
 
     def _crear_movimiento_credito(
             self, cuenta_acreedora, cuenta_deudora, concepto):
