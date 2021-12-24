@@ -262,7 +262,6 @@ def cuenta_no_esta_en_grilla(context, nombre):
     )
 
 
-
 @then('veo una cuenta en la grilla con slug "{nombre}"')
 def veo_una_cuenta(context, nombre):
     cuentas = context.browser.esperar_elementos('class_div_cuenta')
@@ -384,6 +383,7 @@ def veo_un_movimiento(context):
         {table_to_str(context.table)}
     ''')
 
+
 @then('veo {num} movimient{os} en la página')
 def veo_movimiento(context, num, os):
     num = int(CARDINALES.get(num, num))
@@ -392,6 +392,14 @@ def veo_movimiento(context, num, os):
     ult_movs = lista_ult_movs.find_elements_by_tag_name('tr')
 
     context.test.assertEqual(len(ult_movs), num+1)  # El encabezado y un movimiento
+
+
+@then('no veo un movimiento "{concepto}" en la lista')
+def no_veo_movimiento(context, concepto):
+    movs_concepto = [
+        c.text for c in context.browser.esperar_elementos('class_td_concepto')
+    ]
+    context.test.assertNotIn(concepto, movs_concepto)
 
 
 @then('veo {num} "{entidades}" en la página')

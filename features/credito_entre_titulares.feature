@@ -72,3 +72,20 @@ Escenario: Traspaso de saldo entre cuentas de distintos titulares
     Cuando voy a la página "tit_detalle" del titular "Juan Juánez"
 
     Entonces no veo una cuenta "db-juan-tito" en la grilla
+    Y fallo
+
+
+Escenario: 'Al eliminarse un movimiento entre titulares se elimina el contramovimiento correspondiente'
+    Dados dos titulares
+    Y dos cuentas con los siguientes valores:
+        | nombre         | slug | saldo | titular |
+        | cuenta de tito | ctit | 100   | tito    |
+        | cuenta de juan | cjua |       | juan    |
+    Y un movimiento con los siguientes valores:
+        | concepto | importe | cta_entrada | cta_salida |
+        | Préstamo | 20      | cjua        | ctit       |
+
+    Cuando voy a la página "mov_elim" del último movimiento
+    Y cliqueo en el "btn" de id "confirm"
+
+    Entonces no veo un movimiento "Constitución de crédito" en la lista
