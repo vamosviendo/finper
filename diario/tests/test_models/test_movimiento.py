@@ -502,6 +502,9 @@ class TestModelMovimientoModificar(TestModelMovimiento):
         # TODO: Eliminar de este setUp lo que no se use (y recalcular importes)
         super().setUp()
         self.cuenta2 = Cuenta.crear('cuenta 2', 'c2', titular=self.titular1)
+        self.titular2 = Titular.crear(nombre='Titular 2', titname='tit2')
+        self.cuenta3 = Cuenta.crear(
+            nombre='Cuenta de tit2', slug='ct2', titular=self.titular2)
         self.mov1 = Movimiento.crear(
             fecha=date(2021, 1, 5),
             concepto='entrada',
@@ -528,6 +531,7 @@ class TestModelMovimientoModificar(TestModelMovimiento):
     def refresh_ctas(self, *args):
         self.cuenta1.refresh_from_db()
         self.cuenta2.refresh_from_db()
+        self.cuenta3.refresh_from_db()
         for arg in args:
             arg.refresh_from_db()
 
@@ -537,12 +541,6 @@ class TestModelMovimientoEliminar(TestModelMovimientoModificar):
         self.cuenta1: 125.0+50 = 175
         self.cuenta2: -35.0-50 = -85
     """
-
-    def setUp(self):
-        super().setUp()
-        self.titular2 = Titular.crear(nombre='Titular 2', titname='tit2')
-        self.cuenta3 = Cuenta.crear(
-            nombre='Cuenta de tit2', slug='ct2', titular=self.titular2)
 
     def test_eliminar_movimiento_resta_de_saldo_cta_entrada_y_suma_a_saldo_cta_salida(self):
 
@@ -623,6 +621,31 @@ class TestModelMovimientoModificarImporte(TestModelMovimientoModificar):
             self.cuenta1.saldo, self.saldo1-self.imp3+self.mov3.importe)
         self.assertEqual(
             self.cuenta2.saldo, self.saldo2+self.imp3-self.mov3.importe)
+
+    def test_en_mov_traspaso_con_contramov_modifica_importe_contramov(self):
+        movimiento = Movimiento.crear(
+            'Préstamo', 30, self.cuenta3, self.cuenta1)
+
+        movimiento.importe = 45
+        movimiento.save()
+
+        contramov = Movimiento.tomar(id=movimiento.id_contramov)
+        self.assertEqual(contramov.importe, 45)
+
+    def test_en_mov_traspaso_con_contramov_actua_sobre_las_cuentas_del_contramov(self):
+        movimiento = Movimiento.crear(
+            'Préstamo', 30, self.cuenta3, self.cuenta1)
+        contramov = Movimiento.tomar(id=movimiento.id_contramov)
+        cta_deudora = contramov.cta_salida
+        cta_acreedora = contramov.cta_entrada
+
+        movimiento.importe = 45
+        movimiento.save()
+
+        cta_deudora.refresh_from_db(fields=['_saldo'])
+        cta_acreedora.refresh_from_db(fields=['_saldo'])
+        self.assertEqual(cta_deudora.saldo, -45)
+        self.assertEqual(cta_acreedora.saldo, 45)
 
 
 class TestModelMovimientoModificarCuentas(TestModelMovimientoModificar):

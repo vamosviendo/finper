@@ -214,6 +214,11 @@ class Movimiento(MiModel):
         else:
             mov_guardado = self.tomar_de_bd()
 
+            if self.id_contramov:
+                contramov = Movimiento.tomar(id=self.id_contramov)
+                contramov.importe = self.importe
+                contramov.save()
+
             # No cambió la cuenta de entrada
             try:
                 entradas_iguales = self.cta_entrada.es_le_misme_que(
