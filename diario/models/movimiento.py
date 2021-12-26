@@ -187,6 +187,10 @@ class Movimiento(MiModel):
         if self.cta_salida:
             self.cta_salida.saldo += self.importe
             self.cta_salida.save()
+
+        if self.id_contramov:
+            Movimiento.tomar(id=self.id_contramov).delete()
+
         super().delete(*args, **kwargs)
 
     def save(self, esgratis=False, *args, **kwargs):

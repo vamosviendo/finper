@@ -538,6 +538,12 @@ class TestModelMovimientoEliminar(TestModelMovimientoModificar):
         self.cuenta2: -35.0-50 = -85
     """
 
+    def setUp(self):
+        super().setUp()
+        self.titular2 = Titular.crear(nombre='Titular 2', titname='tit2')
+        self.cuenta3 = Cuenta.crear(
+            nombre='Cuenta de tit2', slug='ct2', titular=self.titular2)
+
     def test_eliminar_movimiento_resta_de_saldo_cta_entrada_y_suma_a_saldo_cta_salida(self):
 
         self.mov1.delete()
@@ -552,6 +558,29 @@ class TestModelMovimientoEliminar(TestModelMovimientoModificar):
 
         self.assertEqual(self.cuenta2.saldo, self.saldo2+self.imp3)
         self.assertEqual(self.cuenta1.saldo, saldo1-self.imp3)
+
+    def test_eliminar_movimiento_con_contramovimiento_elimina_contramovimiento(self):
+        movimiento = Movimiento.crear(
+            'Préstamo', 30, self.cuenta3, self.cuenta1)
+        id_contramov = movimiento.id_contramov
+
+        movimiento.delete()
+
+        self.assertEqual(len(Movimiento.filtro(id=id_contramov)), 0)
+
+    def test_eliminar_movimiento_con_contramovimiento_repone_saldo_de_cuentas_credito(self):
+        movimiento = Movimiento.crear(
+            'Préstamo', 30, self.cuenta3, self.cuenta1)
+        contramov = Movimiento.tomar(id=movimiento.id_contramov)
+        cta_deudora = contramov.cta_salida
+        cta_acreedora = contramov.cta_entrada
+
+        movimiento.delete()
+
+        cta_deudora.refresh_from_db(fields=['_saldo'])
+        cta_acreedora.refresh_from_db(fields=['_saldo'])
+        self.assertEqual(cta_deudora.saldo, 0)
+        self.assertEqual(cta_acreedora.saldo, 0)
 
 
 class TestModelMovimientoModificarCamposVs(TestModelMovimientoModificar):
