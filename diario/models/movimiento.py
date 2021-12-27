@@ -298,23 +298,7 @@ class Movimiento(MiModel):
         return importe_guardado != self.importe
 
     def _registrar_credito(self):
-        from diario.models import Cuenta
-
-        try:
-            cta_acreed, cta_deud = self._recuperar_cuentas_credito(Cuenta)
-            if cta_acreed.slug.startswith('cr'):
-                concepto = 'Aumento de crédito'
-            elif cta_acreed.slug.startswith('db'):
-                concepto = 'Cancelación de crédito' \
-                    if self.importe == cta_deud.saldo \
-                    else 'Pago a cuenta de crédito'
-            else:
-                raise ValueError('Error en movimiento de crédito')
-        except Cuenta.DoesNotExist:
-            cta_acreed, cta_deud = self._generar_cuentas_credito(Cuenta)
-            concepto = 'Constitución de crédito'
-
-        self._crear_movimiento_credito(cta_acreed, cta_deud, concepto)
+        self._crear_movimiento_credito()
         self.cta_salida.titular.deudores.add(self.cta_entrada.titular)
 
     def _recuperar_cuentas_credito(self, cls):
@@ -357,8 +341,24 @@ class Movimiento(MiModel):
             'titular': self.cta_entrada.titular
         })
 
-    def _crear_movimiento_credito(
-            self, cuenta_acreedora, cuenta_deudora, concepto):
+    def _crear_movimiento_credito(self):
+        from diario.models import Cuenta
+
+        try:
+            cuenta_acreedora, cuenta_deudora = \
+                self._recuperar_cuentas_credito(Cuenta)
+            if cuenta_acreedora.slug.startswith('cr'):
+                concepto = 'Aumento de crédito'
+            elif cuenta_acreedora.slug.startswith('db'):
+                concepto = 'Cancelación de crédito' \
+                    if self.importe == cuenta_deudora.saldo \
+                    else 'Pago a cuenta de crédito'
+            else:
+                raise ValueError('Error en movimiento de crédito')
+        except Cuenta.DoesNotExist:
+            cuenta_acreedora, cuenta_deudora = \
+                self._generar_cuentas_credito(Cuenta)
+            concepto = 'Constitución de crédito'
 
         contramov = Movimiento.crear(
             concepto=concepto,
