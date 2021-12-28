@@ -129,7 +129,7 @@ class Movimiento(MiModel):
 
         if from_db is not None:
             if from_db.tiene_cuenta_acumulativa():
-                if self.cambia_importe():
+                if self._cambia_campo('importe'):
                     raise errors.ErrorCuentaEsAcumulativa(
                         errors.CAMBIO_IMPORTE_CON_CUENTA_ACUMULATIVA)
 
@@ -215,11 +215,7 @@ class Movimiento(MiModel):
             mov_guardado = self.tomar_de_bd()
 
             if self.id_contramov:
-                if (
-                        self.importe != mov_guardado.importe or
-                        self.cta_entrada != mov_guardado.cta_entrada or
-                        self.cta_salida != mov_guardado.cta_salida
-                ):
+                if self._cambia_campo('importe', 'cta_entrada', 'cta_salida'):
                     self._regenerar_contramovimiento()
 
             # No cambió la cuenta de entrada
@@ -296,9 +292,12 @@ class Movimiento(MiModel):
     def tiene_cta_salida_acumulativa(self):
         return self.cta_salida and self.cta_salida.es_acumulativa
 
-    def cambia_importe(self):
-        importe_guardado = self.tomar_de_bd().importe
-        return importe_guardado != self.importe
+    def _cambia_campo(self, *args):
+        mov_guardado = self.tomar_de_bd()
+        for campo in args:
+            if getattr(self, campo) != getattr(mov_guardado, campo):
+                return True
+        return False
 
     def _registrar_credito(self):
         self._crear_movimiento_credito()

@@ -1647,18 +1647,6 @@ class TestModelMovimientoMetodoTieneCuentaAcumulativa(TestModelMovimiento):
         self.assertFalse(mov.tiene_cuenta_acumulativa())
 
 
-class TestModelMovimientoMetodoCambiaImporte(TestModelMovimiento):
-
-    def test_devuelve_true_si_importe_es_distinto_del_guardado(self):
-        mov = Movimiento.crear('entrada', 100, self.cuenta1)
-        mov.importe = 200
-        self.assertTrue(mov.cambia_importe())
-
-    def test_devuelve_false_si_importe_es_igual_al_guardado(self):
-        mov = Movimiento.crear('entrada', 100, self.cuenta1)
-        self.assertFalse(mov.cambia_importe())
-
-
 class TestModelMovimientoMetodoRegenerarContramovimiento(TestModelMovimientoModificar):
 
     @patch('diario.models.Movimiento.delete')
@@ -1681,3 +1669,15 @@ class TestModelMovimientoMetodoRegenerarContramovimiento(TestModelMovimientoModi
 
             mock_crear_movimiento_credito.assert_called_once()
 
+
+class TestModelMovimientoMetodoCambiaCampo(TestModelMovimientoModificar):
+
+    def setUp(self):
+        super().setUp()
+        self.mov1.importe = 156
+
+    def test_devuelve_true_si_hay_cambio_en_alguno_de_los_campos_dados(self):
+        self.assertTrue(self.mov1._cambia_campo('importe', 'fecha'))
+
+    def test_devuelve_false_si_no_hay_cambio_en_ninguno_de_los_campos_dados(self):
+        self.assertFalse(self.mov1._cambia_campo('concepto', 'fecha'))
