@@ -215,7 +215,8 @@ class Movimiento(MiModel):
             mov_guardado = self.tomar_de_bd()
 
             if self.id_contramov:
-                if self._cambia_campo('importe', 'cta_entrada', 'cta_salida'):
+                if self._cambia_campo(
+                        'fecha', 'importe', 'cta_entrada', 'cta_salida'):
                     self._regenerar_contramovimiento()
 
             # No cambió la cuenta de entrada

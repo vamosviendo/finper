@@ -604,6 +604,39 @@ class TestModelMovimientoModificarGeneral(TestModelMovimientoModificar):
 
         mock_regenerar_contramovimiento.assert_not_called()
 
+    @patch('diario.models.Movimiento._regenerar_contramovimiento')
+    def test_en_movimiento_con_contramovimiento_no_regenera_contramovimiento_si_se_modifica_detalle(
+            self, mock_regenerar_contramovimiento):
+        movimiento = Movimiento.crear(
+            'Préstamo', 30, self.cuenta3, self.cuenta1)
+
+        movimiento.detalle = 'El titular 1 le presta al titular 2 30 pesotes'
+        movimiento.save()
+
+        mock_regenerar_contramovimiento.assert_not_called()
+
+    @patch('diario.models.Movimiento._regenerar_contramovimiento')
+    def test_en_movimiento_con_contramovimiento_no_regenera_contramovimiento_si_se_modifica_orden_dia(
+            self, mock_regenerar_contramovimiento):
+        movimiento = Movimiento.crear(
+            'Préstamo', 30, self.cuenta3, self.cuenta1)
+
+        movimiento.orden_dia -= 1
+        movimiento.save()
+
+        mock_regenerar_contramovimiento.assert_not_called()
+
+    @patch('diario.models.Movimiento._regenerar_contramovimiento')
+    def test_en_movimiento_con_contramovimiento_regenera_contramovimiento_si_se_modifica_fecha(
+            self, mock_regenerar_contramovimiento):
+        movimiento = Movimiento.crear(
+            'Préstamo', 30, self.cuenta3, self.cuenta1)
+
+        movimiento.fecha = date(2020, 2, 23)
+        movimiento.save()
+
+        mock_regenerar_contramovimiento.assert_called_once_with()
+
 
 class TestModelMovimientoModificarImporte(TestModelMovimientoModificar):
 
