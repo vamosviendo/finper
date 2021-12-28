@@ -215,9 +215,12 @@ class Movimiento(MiModel):
             mov_guardado = self.tomar_de_bd()
 
             if self.id_contramov:
-                contramov = Movimiento.tomar(id=self.id_contramov)
-                contramov.importe = self.importe
-                contramov.save()
+                if (
+                        self.importe != mov_guardado.importe or
+                        self.cta_entrada != mov_guardado.cta_entrada or
+                        self.cta_salida != mov_guardado.cta_salida
+                ):
+                    self._regenerar_contramovimiento()
 
             # No cambió la cuenta de entrada
             try:
@@ -370,4 +373,9 @@ class Movimiento(MiModel):
             esgratis=True
         )
         self.id_contramov = contramov.id
+
+    def _regenerar_contramovimiento(self):
+        Movimiento.tomar(id=self.id_contramov).delete()
+        self._crear_movimiento_credito()
+
 

@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from unittest import skip
 from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
@@ -499,7 +500,6 @@ class TestModelMovimientoModificar(TestModelMovimiento):
     """
 
     def setUp(self):
-        # TODO: Eliminar de este setUp lo que no se use (y recalcular importes)
         super().setUp()
         self.cuenta2 = Cuenta.crear('cuenta 2', 'c2', titular=self.titular1)
         self.titular2 = Titular.crear(nombre='Titular 2', titname='tit2')
@@ -581,18 +581,28 @@ class TestModelMovimientoEliminar(TestModelMovimientoModificar):
         self.assertEqual(cta_acreedora.saldo, 0)
 
 
-class TestModelMovimientoModificarCamposVs(TestModelMovimientoModificar):
+class TestModelMovimientoModificarGeneral(TestModelMovimientoModificar):
 
     def test_no_modifica_saldo_de_cuentas_si_no_se_modifica_importe_ni_cuentas(self):
-        mov = Movimiento.tomar(concepto='traspaso')
-        mov.concepto = 'Depósito en efectivo'
-        mov.save()
+        self.mov3.concepto = 'Depósito en efectivo'
+        self.mov3.save()
 
         self.cuenta1.refresh_from_db()
         self.cuenta2.refresh_from_db()
 
         self.assertEqual(self.cuenta1.saldo, self.saldo1)
         self.assertEqual(self.cuenta2.saldo, self.saldo2)
+
+    @patch('diario.models.Movimiento._regenerar_contramovimiento')
+    def test_en_movimiento_con_contramovimiento_no_regenera_contramovimiento_si_se_modifica_concepto(
+            self, mock_regenerar_contramovimiento):
+        movimiento = Movimiento.crear(
+            'Préstamo', 30, self.cuenta3, self.cuenta1)
+
+        movimiento.concepto = 'Prastamo'
+        movimiento.save()
+
+        mock_regenerar_contramovimiento.assert_not_called()
 
 
 class TestModelMovimientoModificarImporte(TestModelMovimientoModificar):
@@ -622,7 +632,18 @@ class TestModelMovimientoModificarImporte(TestModelMovimientoModificar):
         self.assertEqual(
             self.cuenta2.saldo, self.saldo2+self.imp3-self.mov3.importe)
 
-    def test_en_mov_traspaso_con_contramov_modifica_importe_contramov(self):
+    @patch('diario.models.Movimiento._regenerar_contramovimiento')
+    def test_en_movimientos_con_contramovimiento_elimina_contramovimiento_para_volver_a_generarlo(
+            self, mock_regenerar_contramovimiento):
+        movimiento = Movimiento.crear(
+            'Préstamo', 30, self.cuenta3, self.cuenta1)
+
+        movimiento.importe = 45
+        movimiento.save()
+
+        mock_regenerar_contramovimiento.assert_called_once()
+
+    def test_en_mov_traspaso_con_contramov_cambia_importe_contramov(self):
         movimiento = Movimiento.crear(
             'Préstamo', 30, self.cuenta3, self.cuenta1)
 
@@ -632,7 +653,7 @@ class TestModelMovimientoModificarImporte(TestModelMovimientoModificar):
         contramov = Movimiento.tomar(id=movimiento.id_contramov)
         self.assertEqual(contramov.importe, 45)
 
-    def test_en_mov_traspaso_con_contramov_actua_sobre_las_cuentas_del_contramov(self):
+    def test_en_mov_traspaso_con_contramov_cambia_saldo_en_las_cuentas_del_contramov(self):
         movimiento = Movimiento.crear(
             'Préstamo', 30, self.cuenta3, self.cuenta1)
         contramov = Movimiento.tomar(id=movimiento.id_contramov)
@@ -674,6 +695,79 @@ class TestModelMovimientoModificarCuentas(TestModelMovimientoModificar):
         self.refresh_ctas(cuenta3)
         self.assertEqual(self.cuenta1.saldo, self.saldo1-self.mov3.importe)
         self.assertEqual(cuenta3.saldo, saldo3+self.mov3.importe)
+
+    @patch('diario.models.Movimiento._regenerar_contramovimiento')
+    def test_cambiar_cta_entrada_por_cta_otro_titular_en_movimientos_con_contramovimiento_regenera_contramovimiento(
+            self, mock_regenerar_contramovimiento):
+        titular = Titular.crear(nombre='Titular 3', titname='tit3')
+        cuenta4 = Cuenta.crear(
+            nombre='Cuenta tit3', slug='ct3', titular=titular)
+        movimiento = Movimiento.crear(
+            'Préstamo', 30, self.cuenta3, self.cuenta1)
+
+        movimiento.cta_entrada = cuenta4
+        movimiento.save()
+
+        mock_regenerar_contramovimiento.assert_called_once_with()
+
+    def test_cambiar_cta_entrada_por_cta_otro_titular_en_movimiento_de_traspaso_con_contramovimiento_modifica_contramovimiento(self):
+        titular = Titular.crear(nombre='Titular 3', titname='tit3')
+        cuenta4 = Cuenta.crear(
+            nombre='Cuenta tit3', slug='ct3', titular=titular)
+        movimiento = Movimiento.crear(
+            'Préstamo', 30, self.cuenta3, self.cuenta1)
+        contramov = Movimiento.tomar(id=movimiento.id_contramov)
+        cta_deudora = contramov.cta_salida
+
+        movimiento.cta_entrada = cuenta4
+        movimiento.save()
+
+        contramov = Movimiento.tomar(id=movimiento.id_contramov)
+
+        self.assertNotEqual(contramov.cta_salida.id, cta_deudora.id)
+        self.assertEqual(contramov.cta_salida.slug, 'db-tit3-tit1')
+
+    @patch('diario.models.Movimiento._regenerar_contramovimiento')
+    def test_cambiar_cta_salida_por_cta_otro_titular_en_movimientos_con_contramovimiento_regenera_contramovimiento(
+            self, mock_regenerar_contramovimiento):
+        titular = Titular.crear(nombre='Titular 3', titname='tit3')
+        cuenta4 = Cuenta.crear(
+            nombre='Cuenta tit3', slug='ct3', titular=titular)
+        movimiento = Movimiento.crear(
+            'Préstamo', 30, self.cuenta3, self.cuenta1)
+
+        movimiento.cta_salida = cuenta4
+        movimiento.save()
+
+        mock_regenerar_contramovimiento.assert_called_once_with()
+
+    def test_cambiar_cta_salida_por_cta_otro_titular_en_movimiento_de_traspaso_con_contramovimiento_modifica_contramovimiento(self):
+        titular = Titular.crear(nombre='Titular 3', titname='tit3')
+        cuenta4 = Cuenta.crear(
+            nombre='Cuenta tit3', slug='ct3', titular=titular)
+        movimiento = Movimiento.crear(
+            'Préstamo', 30, self.cuenta3, self.cuenta1)
+        contramov = Movimiento.tomar(id=movimiento.id_contramov)
+        cta_deudora = contramov.cta_salida
+
+        movimiento.cta_salida = cuenta4
+        movimiento.save()
+
+        contramov = Movimiento.tomar(id=movimiento.id_contramov)
+
+        self.assertNotEqual(contramov.cta_entrada.id, cta_deudora.id)
+        self.assertEqual(contramov.cta_entrada.slug, 'cr-tit3-tit2')
+
+    @skip
+    def test_cambiar_cta_entrada_por_cta_otro_titular_en_movimiento_de_traspaso_sin_contramovimiento_genera_contramovimiento(self):
+        self.mov3.cta_entrada = self.cuenta3
+        self.mov3.save()
+        self.refresh_ctas()
+
+    @skip
+    def test_cambiar_cta_entrada_por_cta_mismo_titular_de_cta_salida_en_movimiento_de_traspaso_con_contramovimiento_destruye_contramovimiento(self):
+        pass
+
 
     def test_modificar_cta_salida_funciona_en_movimientos_de_traspaso(self):
         """ Suma importe a cta_salida vieja y lo suma a la nueva"""
@@ -1563,4 +1657,27 @@ class TestModelMovimientoMetodoCambiaImporte(TestModelMovimiento):
     def test_devuelve_false_si_importe_es_igual_al_guardado(self):
         mov = Movimiento.crear('entrada', 100, self.cuenta1)
         self.assertFalse(mov.cambia_importe())
+
+
+class TestModelMovimientoMetodoRegenerarContramovimiento(TestModelMovimientoModificar):
+
+    @patch('diario.models.Movimiento.delete')
+    def test_elimina_contramovimiento(self, mock_delete):
+        movimiento = Movimiento.crear(
+            'Préstamo', 30, self.cuenta3, self.cuenta1)
+
+        movimiento._regenerar_contramovimiento()
+
+        mock_delete.assert_called_once_with()
+
+    def test_regenera_contramovimiento(self):
+        movimiento = Movimiento.crear(
+            'Préstamo', 30, self.cuenta3, self.cuenta1)
+
+        with patch.object(Movimiento, '_crear_movimiento_credito') \
+                as mock_crear_movimiento_credito:
+
+            movimiento._regenerar_contramovimiento()
+
+            mock_crear_movimiento_credito.assert_called_once()
 
