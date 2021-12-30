@@ -219,8 +219,7 @@ class Movimiento(MiModel):
                         'fecha', 'importe', 'cta_entrada', 'cta_salida'):
                     self._regenerar_contramovimiento()
             else:
-                if (self.cta_entrada and self.cta_salida
-                        and self.cta_entrada.titular != self.cta_salida.titular):
+                if self.es_prestamo():
                     self._crear_movimiento_credito()
 
             # No cambió la cuenta de entrada
@@ -296,6 +295,10 @@ class Movimiento(MiModel):
 
     def tiene_cta_salida_acumulativa(self):
         return self.cta_salida and self.cta_salida.es_acumulativa
+
+    def es_prestamo(self):
+        return (self.cta_entrada and self.cta_salida and
+                self.cta_entrada.titular != self.cta_salida.titular)
 
     def _cambia_campo(self, *args):
         mov_guardado = self.tomar_de_bd()
