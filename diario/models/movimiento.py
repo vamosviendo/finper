@@ -218,6 +218,10 @@ class Movimiento(MiModel):
                 if self._cambia_campo(
                         'fecha', 'importe', 'cta_entrada', 'cta_salida'):
                     self._regenerar_contramovimiento()
+            else:
+                if (self.cta_entrada and self.cta_salida
+                        and self.cta_entrada.titular != self.cta_salida.titular):
+                    self._crear_movimiento_credito()
 
             # No cambió la cuenta de entrada
             try:

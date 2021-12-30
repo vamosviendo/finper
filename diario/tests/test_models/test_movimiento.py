@@ -791,11 +791,21 @@ class TestModelMovimientoModificarCuentas(TestModelMovimientoModificar):
         self.assertNotEqual(contramov.cta_entrada.id, cta_deudora.id)
         self.assertEqual(contramov.cta_entrada.slug, 'cr-tit3-tit2')
 
-    @skip
-    def test_cambiar_cta_entrada_por_cta_otro_titular_en_movimiento_de_traspaso_sin_contramovimiento_genera_contramovimiento(self):
+    @patch('diario.models.Movimiento._crear_movimiento_credito')
+    def test_cambiar_cta_entrada_por_cta_otro_titular_en_movimiento_de_traspaso_sin_contramovimiento_genera_contramovimiento(
+            self, mock_crear_movimiento_credito):
         self.mov3.cta_entrada = self.cuenta3
         self.mov3.save()
-        self.refresh_ctas()
+
+        mock_crear_movimiento_credito.assert_called_once()
+
+    @patch('diario.models.Movimiento._crear_movimiento_credito')
+    def test_cambiar_cta_salida_por_cta_otro_titular_en_movimiento_de_traspaso_sin_contramovimiento_genera_contramovimiento(
+            self, mock_crear_movimiento_credito):
+        self.mov3.cta_salida = self.cuenta3
+        self.mov3.save()
+
+        mock_crear_movimiento_credito.assert_called_once()
 
     @skip
     def test_cambiar_cta_entrada_por_cta_mismo_titular_de_cta_salida_en_movimiento_de_traspaso_con_contramovimiento_destruye_contramovimiento(self):
@@ -1678,6 +1688,20 @@ class TestModelMovimientoMetodoTieneCuentaAcumulativa(TestModelMovimiento):
             'traspaso', 100, cta_entrada=self.cuenta1, cta_salida=cuenta2)
         mov.refresh_from_db()
         self.assertFalse(mov.tiene_cuenta_acumulativa())
+
+
+class TestModelMovimientoMetodoEsPrestamo(TestModelMovimientoModificar):
+
+    def test_devuelve_true_si_mov_es_traspaso_entre_cuentas_de_distinto_titular(self):
+        mov = Movimiento.crear(
+            'traspaso', 100, cta_entrada=self.cuenta1, cta_salida=self.cuenta3)
+        self.assertTrue(mov.es_prestamo())
+
+    def test_devuelve_false_si_mov_no_es_traspaso(self):
+        self.assertFalse(self.mov1.es_prestamo())
+
+    def test_devuelve_false_si_cuentas_pertenecen_al_mismo_titular(self):
+        self.assertFalse(self.mov3.es_prestamo())
 
 
 class TestModelMovimientoMetodoRegenerarContramovimiento(TestModelMovimientoModificar):
