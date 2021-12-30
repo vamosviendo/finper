@@ -214,13 +214,16 @@ class Movimiento(MiModel):
         else:
             mov_guardado = self.tomar_de_bd()
 
-            if self.id_contramov:
-                if self._cambia_campo(
-                        'fecha', 'importe', 'cta_entrada', 'cta_salida'):
-                    self._regenerar_contramovimiento()
-            else:
-                if self.es_prestamo():
+            if self.es_prestamo():
+                if self.id_contramov:
+                    if self._cambia_campo(
+                            'fecha', 'importe', 'cta_entrada', 'cta_salida'):
+                        self._regenerar_contramovimiento()
+                else:
                     self._crear_movimiento_credito()
+            else:
+                if self.id_contramov:
+                    Movimiento.tomar(id=self.id_contramov).delete()
 
             # No cambió la cuenta de entrada
             try:

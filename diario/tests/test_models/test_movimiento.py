@@ -807,10 +807,51 @@ class TestModelMovimientoModificarCuentas(TestModelMovimientoModificar):
 
         mock_crear_movimiento_credito.assert_called_once()
 
-    @skip
     def test_cambiar_cta_entrada_por_cta_mismo_titular_de_cta_salida_en_movimiento_de_traspaso_con_contramovimiento_destruye_contramovimiento(self):
-        pass
+        movimiento = Movimiento.crear(
+            'Préstamo', 30, self.cuenta3, self.cuenta1)
+        id_contramovimiento = movimiento.id_contramov
 
+        movimiento.cta_entrada = self.cuenta2
+        movimiento.save()
+
+        with self.assertRaises(Movimiento.DoesNotExist):
+            Movimiento.tomar(id=id_contramovimiento)
+
+    def test_cambiar_cta_entrada_por_cta_mismo_titular_de_cta_salida_en_movimiento_de_traspaso_con_contramovimiento_no_regenera_contramovimiento_destruido(
+            self):
+        movimiento = Movimiento.crear(
+            'Préstamo', 30, self.cuenta3, self.cuenta1)
+
+        with patch.object(Movimiento, '_crear_movimiento_credito') \
+                as mock_crear_movimiento_credito:
+            movimiento.cta_entrada = self.cuenta2
+            movimiento.save()
+
+            mock_crear_movimiento_credito.assert_not_called()
+
+    def test_cambiar_cta_salida_por_cta_mismo_titular_de_cta_entrada_en_movimiento_de_traspaso_con_contramovimiento_destruye_contramovimiento(self):
+        movimiento = Movimiento.crear(
+            'Préstamo', 30, self.cuenta1, self.cuenta3)
+        id_contramovimiento = movimiento.id_contramov
+
+        movimiento.cta_salida = self.cuenta2
+        movimiento.save()
+
+        with self.assertRaises(Movimiento.DoesNotExist):
+            Movimiento.tomar(id=id_contramovimiento)
+
+    def test_cambiar_cta_salida_por_cta_mismo_titular_de_cta_entrada_en_movimiento_de_traspaso_con_contramovimiento_no_regenera_contramovimiento_destruido(
+            self):
+        movimiento = Movimiento.crear(
+            'Préstamo', 30, self.cuenta1, self.cuenta3)
+
+        with patch.object(Movimiento, '_crear_movimiento_credito') \
+                as mock_crear_movimiento_credito:
+            movimiento.cta_salida = self.cuenta2
+            movimiento.save()
+
+            mock_crear_movimiento_credito.assert_not_called()
 
     def test_modificar_cta_salida_funciona_en_movimientos_de_traspaso(self):
         """ Suma importe a cta_salida vieja y lo suma a la nueva"""
