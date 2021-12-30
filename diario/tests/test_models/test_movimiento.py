@@ -1742,6 +1742,16 @@ class TestModelMovimientoMetodoEsPrestamo(TestModelMovimientoModificar):
     def test_devuelve_false_si_cuentas_pertenecen_al_mismo_titular(self):
         self.assertFalse(self.mov3.es_prestamo())
 
+    def test_devuelve_false_si_mov_es_gratis(self):
+        mov = Movimiento.crear(
+            concepto='traspaso',
+            importe=100,
+            cta_entrada=self.cuenta1,
+            cta_salida=self.cuenta3,
+        )
+        self.assertFalse(mov.es_prestamo(esgratis=True))
+
+
 
 class TestModelMovimientoMetodoEliminarContramovimiento(TestModelMovimientoModificar):
 

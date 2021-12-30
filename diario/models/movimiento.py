@@ -205,9 +205,7 @@ class Movimiento(MiModel):
                 self.cta_salida.saldo -= self.importe
                 self.cta_salida.save()
 
-            if self.cta_entrada and self.cta_salida and \
-               self.cta_entrada.titular != self.cta_salida.titular and \
-               not esgratis:
+            if self.es_prestamo(esgratis=esgratis):
                 self._registrar_credito()
 
         # Movimiento existente
@@ -299,9 +297,10 @@ class Movimiento(MiModel):
     def tiene_cta_salida_acumulativa(self):
         return self.cta_salida and self.cta_salida.es_acumulativa
 
-    def es_prestamo(self):
+    def es_prestamo(self, esgratis=False):
         return (self.cta_entrada and self.cta_salida and
-                self.cta_entrada.titular != self.cta_salida.titular)
+                self.cta_entrada.titular != self.cta_salida.titular and
+                not esgratis)
 
     def _cambia_campo(self, *args):
         mov_guardado = self.tomar_de_bd()
