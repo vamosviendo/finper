@@ -1784,6 +1784,13 @@ class TestModelMovimientoMetodoRegenerarContramovimiento(TestModelMovimientoModi
 
             mock_crear_movimiento_credito.assert_called_once()
 
+    def test_actualiza_id_contramovimiento(self):
+        movimiento = Movimiento.crear(
+            'Préstamo', 30, self.cuenta3, self.cuenta1)
+        movimiento._regenerar_contramovimiento()
+        contramov = Movimiento.ultime()
+        self.assertEqual(movimiento.id_contramov, contramov.id)
+
 
 class TestModelMovimientoMetodoCambiaCampo(TestModelMovimientoModificar):
 
