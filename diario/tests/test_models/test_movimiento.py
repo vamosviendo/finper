@@ -557,14 +557,12 @@ class TestModelMovimientoEliminar(TestModelMovimientoModificar):
         self.assertEqual(self.cuenta2.saldo, self.saldo2+self.imp3)
         self.assertEqual(self.cuenta1.saldo, saldo1-self.imp3)
 
-    def test_eliminar_movimiento_con_contramovimiento_elimina_contramovimiento(self):
+    @patch('diario.models.Movimiento._eliminar_contramovimiento')
+    def test_eliminar_movimiento_con_contramovimiento_elimina_contramovimiento(self, mock_eliminar_contramovimiento):
         movimiento = Movimiento.crear(
             'Préstamo', 30, self.cuenta3, self.cuenta1)
-        id_contramov = movimiento.id_contramov
-
         movimiento.delete()
-
-        self.assertEqual(len(Movimiento.filtro(id=id_contramov)), 0)
+        mock_eliminar_contramovimiento.assert_called_once()
 
     def test_eliminar_movimiento_con_contramovimiento_repone_saldo_de_cuentas_credito(self):
         movimiento = Movimiento.crear(
@@ -807,16 +805,16 @@ class TestModelMovimientoModificarCuentas(TestModelMovimientoModificar):
 
         mock_crear_movimiento_credito.assert_called_once()
 
-    def test_cambiar_cta_entrada_por_cta_mismo_titular_de_cta_salida_en_movimiento_de_traspaso_con_contramovimiento_destruye_contramovimiento(self):
+    @patch('diario.models.Movimiento._eliminar_contramovimiento')
+    def test_cambiar_cta_entrada_por_cta_mismo_titular_de_cta_salida_en_movimiento_de_traspaso_con_contramovimiento_destruye_contramovimiento(
+            self, mock_eliminar_contramovimiento):
         movimiento = Movimiento.crear(
             'Préstamo', 30, self.cuenta3, self.cuenta1)
-        id_contramovimiento = movimiento.id_contramov
 
         movimiento.cta_entrada = self.cuenta2
         movimiento.save()
 
-        with self.assertRaises(Movimiento.DoesNotExist):
-            Movimiento.tomar(id=id_contramovimiento)
+        mock_eliminar_contramovimiento.assert_called_once()
 
     def test_cambiar_cta_entrada_por_cta_mismo_titular_de_cta_salida_en_movimiento_de_traspaso_con_contramovimiento_no_regenera_contramovimiento_destruido(
             self):
@@ -1745,16 +1743,35 @@ class TestModelMovimientoMetodoEsPrestamo(TestModelMovimientoModificar):
         self.assertFalse(self.mov3.es_prestamo())
 
 
+class TestModelMovimientoMetodoEliminarContramovimiento(TestModelMovimientoModificar):
+
+    def test_elimina_contramovimiento(self):
+        movimiento = Movimiento.crear(
+            'Préstamo', 30, self.cuenta3, self.cuenta1)
+        id_contramovimiento = movimiento.id_contramov
+
+        movimiento._eliminar_contramovimiento()
+
+        with self.assertRaises(Movimiento.DoesNotExist):
+            Movimiento.tomar(id=id_contramovimiento)
+
+    def test_elimina_id_contramov(self):
+        movimiento = Movimiento.crear(
+            'Préstamo', 30, self.cuenta3, self.cuenta1)
+        movimiento._eliminar_contramovimiento()
+        self.assertIsNone(movimiento.id_contramov)
+
+
 class TestModelMovimientoMetodoRegenerarContramovimiento(TestModelMovimientoModificar):
 
-    @patch('diario.models.Movimiento.delete')
-    def test_elimina_contramovimiento(self, mock_delete):
+    @patch('diario.models.Movimiento._eliminar_contramovimiento')
+    def test_elimina_contramovimiento(self, mock_eliminar_contramovimiento):
         movimiento = Movimiento.crear(
             'Préstamo', 30, self.cuenta3, self.cuenta1)
 
         movimiento._regenerar_contramovimiento()
 
-        mock_delete.assert_called_once_with()
+        mock_eliminar_contramovimiento.assert_called_once_with()
 
     def test_regenera_contramovimiento(self):
         movimiento = Movimiento.crear(

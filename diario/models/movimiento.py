@@ -189,7 +189,7 @@ class Movimiento(MiModel):
             self.cta_salida.save()
 
         if self.id_contramov:
-            Movimiento.tomar(id=self.id_contramov).delete()
+            self._eliminar_contramovimiento()
 
         super().delete(*args, **kwargs)
 
@@ -223,7 +223,7 @@ class Movimiento(MiModel):
                     self._crear_movimiento_credito()
             else:
                 if self.id_contramov:
-                    Movimiento.tomar(id=self.id_contramov).delete()
+                    self._eliminar_contramovimiento()
 
             # No cambió la cuenta de entrada
             try:
@@ -384,8 +384,12 @@ class Movimiento(MiModel):
         )
         self.id_contramov = contramov.id
 
-    def _regenerar_contramovimiento(self):
+    def _eliminar_contramovimiento(self):
         Movimiento.tomar(id=self.id_contramov).delete()
+        self.id_contramov = None
+
+    def _regenerar_contramovimiento(self):
+        self._eliminar_contramovimiento()
         self._crear_movimiento_credito()
 
 
