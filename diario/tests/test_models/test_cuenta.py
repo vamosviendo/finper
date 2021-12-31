@@ -2,7 +2,7 @@ from datetime import date
 from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
-from django.test import TestCase
+from django.test import TestCase, tag
 
 from diario.models import Cuenta, CuentaInteractiva, Movimiento, Titular
 
@@ -163,7 +163,7 @@ class TestModelCuentaPropiedadSaldo(TestCase):
         self.assertEqual(self.cta1._saldo, 354.45)
 
 
-class TestMetodosMovsYSaldos(TestCase):
+class TestModelCuentaMetodos(TestCase):
     """ Testea: Cuenta.movs_directos()
                 Cuenta.movs()
                 Cuenta.cantidad_movs()
@@ -202,7 +202,11 @@ class TestMetodosMovsYSaldos(TestCase):
             cta_entrada=self.cta2, fecha=date(2021, 8, 1)
         )
 
-    def test_movs_directos_devuelve_todos_los_movimientos_de_una_cuenta(self):
+
+@tag('metodos')
+class TestModelCuentaMetodosMovsDirectos(TestModelCuentaMetodos):
+
+    def test_devuelve_todos_los_movimientos_de_una_cuenta(self):
         movs_cta1 = [
             Movimiento.tomar(concepto='00000'),
             Movimiento.tomar(concepto='mov2'),
@@ -214,7 +218,7 @@ class TestMetodosMovsYSaldos(TestCase):
         for mov in movs_cta1:
             self.assertIn(mov, movs_directos)
 
-    def test_movs_directos_no_incluye_los_movimientos_de_subcuentas(self):
+    def test_no_incluye_los_movimientos_de_subcuentas(self):
         subcuentas = self.cta1.dividir_entre(
             {'nombre': 'Billetera', 'slug': 'eb', 'saldo': 30, },
             {'nombre': 'Cajoncito', 'slug': 'ec', }
@@ -225,7 +229,11 @@ class TestMetodosMovsYSaldos(TestCase):
 
         self.assertNotIn(mov_subcuenta, self.cta1.movs_directos())
 
-    def test_movs_devuelve_todos_los_movimientos_de_una_cuenta(self):
+
+@tag('metodos')
+class TestModelCuentaMetodosMovs(TestModelCuentaMetodos):
+
+    def test_devuelve_todos_los_movimientos_de_una_cuenta(self):
         movs_cta1 = [
             Movimiento.tomar(concepto='00000'),
             Movimiento.tomar(concepto='mov2'),
@@ -234,7 +242,7 @@ class TestMetodosMovsYSaldos(TestCase):
         for mov in movs_cta1:
             self.assertIn(mov, self.cta1.movs())
 
-    def test_movs_incluye_movimientos_de_subcuentas(self):
+    def test_incluye_movimientos_de_subcuentas(self):
         subcuentas = self.cta1.dividir_entre(
             {'nombre': 'Billetera', 'slug': 'eb', 'saldo': 30, },
             {'nombre': 'Cajoncito', 'slug': 'ec', }
@@ -254,7 +262,7 @@ class TestMetodosMovsYSaldos(TestCase):
 
         self.assertIn(mov_subsubc, self.cta1.movs())
 
-    def test_movs_devuelve_movimientos_ordenados_por_fecha(self):
+    def test_devuelve_movimientos_ordenados_por_fecha(self):
         m1 = Movimiento.tomar(concepto='00000')
         m2 = Movimiento.tomar(concepto='mov2')
         m3 = Movimiento.tomar(concepto='mov3')
@@ -264,29 +272,41 @@ class TestMetodosMovsYSaldos(TestCase):
             [m1, m3, m2]
         )
 
-    def test_cantidad_movs_devuelve_entradas_mas_salidas(self):
+
+@tag('metodos')
+class TestModelCuentaMetodosCantidadMovs(TestModelCuentaMetodos):
+
+    def test_devuelve_cantidad_de_entradas_mas_cantidad_de_salidas(self):
         self.assertEqual(self.cta1.cantidad_movs(), 3)
 
-    def test_total_movs_devuelve_suma_importes_entradas_menos_salidas(self):
+
+@tag('metodos')
+class TestModelCuentaMetodosTotalMovs(TestModelCuentaMetodos):
+
+    def test_devuelve_suma_de_importes_de_entradas_menos_suma_de_importes_de_salidas(self):
         self.assertEqual(self.cta1.total_movs(), 110)
 
-    def test_total_movs_funciona_correctamente_con_decimales(self):
+    def test_funciona_correctamente_con_decimales(self):
         Movimiento.crear(
             'Movimiento con decimales', cta_salida=self.cta1, importe=50.32)
 
         self.assertEqual(self.cta1.total_movs(), round(110-50.32, 2))
 
-    def test_fecha_ultimo_mov_directo_devuelve_fecha_ultimo_mov(self):
+
+@tag('metodos')
+class TestModelCuentaMetodosFechaUltimoMovDirecto(TestModelCuentaMetodos):
+
+    def test_devuelve_fecha_ultimo_movimiento(self):
         self.assertEqual(
             self.cta1.fecha_ultimo_mov_directo(),
             date(2021, 8, 10)
         )
 
-    def test_fecha_ultimo_mov_directo_devuelve_none_si_no_hay_movimientos(self):
+    def test__devuelve_none_si_no_hay_movimientos(self):
         Movimiento.todes().delete()
         self.assertIsNone(self.cta1.fecha_ultimo_mov_directo())
 
-    def test_fecha_ultimo_mov_directo_en_cta_acumulativa_devuelve_ultimo_mov_directo(self):
+    def test_en_cta_acumulativa_devuelve_ultimo_mov_directo(self):
 
         subcuenta1 = self.cta1.dividir_entre(
             ['subcuenta1', 'sc1', 100],
@@ -295,7 +315,7 @@ class TestMetodosMovsYSaldos(TestCase):
         )[0]
         self.cta1 = Cuenta.tomar(slug=self.cta1.slug)
 
-        m4 = Movimiento.crear(
+        Movimiento.crear(
             'cuarto movimiento', 100, subcuenta1, fecha=date(2021, 8, 20))
 
         self.assertEqual(
@@ -303,7 +323,11 @@ class TestMetodosMovsYSaldos(TestCase):
             date(2021, 8, 11)
         )
 
-    def test_total_subcuentas_devuelve_suma_saldos_subcuentas(self):
+
+@tag('metodos')
+class TestModelCuentaMetodosTotalSubcuentas(TestModelCuentaMetodos):
+
+    def test_devuelve_suma_saldos_subcuentas(self):
         self.cta1 = self.cta1.dividir_y_actualizar(
             {'nombre': 'Billetera', 'slug': 'eb', 'saldo': 15},
             {'nombre': 'Cajón', 'slug': 'ec', 'saldo': 65},
@@ -319,7 +343,11 @@ class TestMetodosMovsYSaldos(TestCase):
             'No funciona correctamente con decimales'
         )
 
-    def test_corregir_saldo_no_agrega_movimientos(self):
+
+@tag('metodos')
+class TestModelCuentaMetodosCorregirSaldo(TestModelCuentaMetodos):
+
+    def test_no_agrega_movimientos(self):
         self.cta1.saldo = 345
         self.cta1.save()
         entradas = self.cta1.entradas.count()
@@ -329,7 +357,11 @@ class TestMetodosMovsYSaldos(TestCase):
         self.assertEqual(self.cta1.entradas.count(), entradas)
         self.assertEqual(self.cta1.salidas.count(), salidas)
 
-    def test_agregar_mov_correctivo_agrega_un_movimiento(self):
+
+@tag('metodos')
+class TestModelCuentaMetodosAgregarMovCorrectivo(TestModelCuentaMetodos):
+
+    def test_agrega_un_movimiento(self):
         self.cta1.saldo = 880
         self.cta1.save()
         cant_movs = self.cta1.cantidad_movs()
@@ -337,12 +369,12 @@ class TestMetodosMovsYSaldos(TestCase):
         self.cta1.refresh_from_db()
         self.assertEqual(self.cta1.cantidad_movs(), cant_movs+1)
 
-    def test_agregar_mov_correctivo_devuelve_un_movimiento(self):
+    def test_devuelve_un_movimiento(self):
         self.cta1.saldo = 880
         self.cta1.save()
         self.assertIsInstance(self.cta1.agregar_mov_correctivo(), Movimiento)
 
-    def test_agregar_mov_correctivo_no_acepta_ctas_acumulativas(self):
+    def test_no_acepta_ctas_acumulativas(self):
         self.cta1 = dividir_en_dos_subcuentas(self.cta1)
         self.cta1.saldo = 945
         self.cta1.save()
@@ -355,13 +387,13 @@ class TestMetodosMovsYSaldos(TestCase):
         mov = self.cta1.agregar_mov_correctivo()
         self.assertEqual(mov.importe, 770)
 
-    def test_mov_correctivo_importe_es_siempre_positivo(self):
+    def test_importe_es_siempre_positivo(self):
         self.cta2.saldo = 70
         self.cta2.save()
         mov = self.cta2.agregar_mov_correctivo()
         self.assertGreater(mov.importe, 0)
 
-    def test_mov_correctivo_cuenta_es_de_entrada_o_salida_segun_signo_de_la_diferencia(self):
+    def test_cuenta_es_de_entrada_o_salida_segun_signo_de_la_diferencia(self):
         self.cta1.saldo = 880
         self.cta1.save()
         mov1 = self.cta1.agregar_mov_correctivo()
@@ -372,13 +404,13 @@ class TestMetodosMovsYSaldos(TestCase):
         mov2 = self.cta2.agregar_mov_correctivo()
         self.assertEqual(mov2.cta_salida, self.cta2)
 
-    def test_mov_correctivo_no_modifica_saldo(self):
+    def test_no_modifica_saldo(self):
         self.cta1.saldo = 880
         self.cta1.save()
         mov1 = self.cta1.agregar_mov_correctivo()
         self.assertEqual(self.cta1.saldo, 880)
 
-    def test_mov_correctivo_no_agrega_movimiento_si_saldo_es_correcto(self):
+    def test_no_agrega_movimiento_si_saldo_es_correcto(self):
         cant_movs = self.cta1.cantidad_movs()
         mov = self.cta1.agregar_mov_correctivo()
         self.assertEqual(self.cta1.cantidad_movs(), cant_movs)
