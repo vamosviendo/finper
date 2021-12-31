@@ -206,7 +206,10 @@ class Movimiento(MiModel):
                 self.cta_salida.save()
 
             if self.es_prestamo(esgratis=esgratis):
-                self._registrar_credito()
+                if self.cta_entrada.titular not in self.cta_salida.titular.acreedores.all():
+                    self._registrar_credito()
+                else:
+                    self._crear_movimiento_credito()
 
         # Movimiento existente
         else:

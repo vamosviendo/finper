@@ -452,6 +452,16 @@ class TestModelMovimientoCrearMasMovimientosEntreTitulares(
             'Cancelación de crédito'
         )
 
+    def test_si_es_un_pago_a_cuenta_no_incluye_emisor_entre_acreedores_de_receptor(self):
+        Movimiento.crear(
+            'A cuenta', 3, cta_entrada=self.cuenta2, cta_salida=self.cuenta1)
+        self.assertNotIn(self.titular1, self.titular2.acreedores.all())
+
+    def test_si_es_un_pago_a_cuenta_mantiene_emisor_entre_deudores_de_receptor(self):
+        Movimiento.crear(
+            'A cuenta', 3, cta_entrada=self.cuenta2, cta_salida=self.cuenta1)
+        self.assertIn(self.titular1, self.titular2.deudores.all())
+
 
 class TestModelMovimientoClean(TestModelMovimiento):
 
