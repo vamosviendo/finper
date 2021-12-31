@@ -125,6 +125,11 @@ class Cuenta(PolymorphModel):
     def tiene_madre(self):
         return self.cta_madre is not None
 
+    def hermanas(self):
+        if self.cta_madre:
+            return self.cta_madre.subcuentas.all().exclude(pk=self.pk)
+        return None
+
     # Métodos protegidos
 
     def _actualizar_madre(self):

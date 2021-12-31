@@ -417,6 +417,40 @@ class TestModelCuentaMetodosAgregarMovCorrectivo(TestModelCuentaMetodos):
         self.assertIsNone(mov)
 
 
+@tag('metodos')
+class TestModelCuentaMetodosHermanas(TestModelCuentaMetodos):
+
+    def test_devuelve_hijas_de_la_misma_madre(self):
+        subc1, subc2, subc3 = self.cta1.dividir_entre(
+            {'nombre': 'Billetera', 'slug': 'eb', 'saldo': 30, },
+            {'nombre': 'Cajoncito', 'slug': 'ec', 'saldo': 1},
+            {'nombre': 'Bolsillo', 'slug': 'ebo'}
+        )
+        for subc in [subc2, subc3]:
+            self.assertIn(subc, subc1.hermanas())
+
+    def test_cuenta_no_se_incluye_a_si_misma_entre_sus_hermanas(self):
+        subc1, subc2, subc3 = self.cta1.dividir_entre(
+            {'nombre': 'Billetera', 'slug': 'eb', 'saldo': 30, },
+            {'nombre': 'Cajoncito', 'slug': 'ec', 'saldo': 1},
+            {'nombre': 'Bolsillo', 'slug': 'ebo'}
+        )
+        self.assertNotIn(subc1, subc1.hermanas())
+
+    def test_devuelve_lista_vacia_si_no_tiene_hermanas(self):
+        subc1, subc2, subc3 = self.cta1.dividir_entre(
+            {'nombre': 'Billetera', 'slug': 'eb', 'saldo': 110, },
+            {'nombre': 'Cajoncito', 'slug': 'ec', 'saldo': 0},
+            {'nombre': 'Bolsillo', 'slug': 'ebo', 'saldo': 0}
+        )
+        subc2.delete()
+        subc3.delete()
+        self.assertEqual(list(subc1.hermanas()), [])
+
+    def test_devuelve_none_si_cuenta_no_tiene_madre(self):
+        self.assertIsNone(self.cta2.hermanas())
+
+
 class TestCuentaPolymorphic(TestCase):
 
     def test_tomar_devuelve_cuenta_de_la_clase_correcta(self):
