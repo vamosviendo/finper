@@ -462,6 +462,11 @@ class TestModelMovimientoCrearMasMovimientosEntreTitulares(
             'A cuenta', 3, cta_entrada=self.cuenta2, cta_salida=self.cuenta1)
         self.assertIn(self.titular1, self.titular2.deudores.all())
 
+    def test_si_cancela_deuda_elimina_emisor_de_deudores_de_receptor(self):
+        Movimiento.crear(
+            'Devolución', 10, cta_entrada=self.cuenta2, cta_salida=self.cuenta1)
+        self.assertNotIn(self.titular1, self.titular2.deudores.all())
+
 
 class TestModelMovimientoClean(TestModelMovimiento):
 

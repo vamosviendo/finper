@@ -211,6 +211,17 @@ class Movimiento(MiModel):
                 else:
                     self._crear_movimiento_credito()
 
+                    deuda = [
+                        x for x in self.cta_entrada.titular.cuentas.all()
+                        if x.cta_madre
+                        and x.cta_madre.subcuentas.exclude(
+                            pk=self.pk
+                        )[0].titular == self.cta_salida.titular
+                    ][0]
+
+                    if deuda.saldo == 0:
+                        self.cta_entrada.titular.deudores.remove(self.cta_salida.titular)
+
         # Movimiento existente
         else:
             mov_guardado = self.tomar_de_bd()
