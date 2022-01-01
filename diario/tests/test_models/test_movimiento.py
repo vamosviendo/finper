@@ -1680,6 +1680,23 @@ class TestModelMovimientoPropiedadImporte(TestModelMovimiento):
         self.assertEqual(self.mov._importe, 222.22)
 
 
+class TestModelMovimientoPropiedadesEmisorReceptor(TestModelMovimiento):
+
+    def setUp(self):
+        super().setUp()
+        self.titular2 = Titular.crear(nombre='Titular 2', titname='tit2')
+        self.cuenta2 = Cuenta.crear(
+            nombre='Cuenta titular 2', slug='ct2', titular=self.titular2)
+        self.mov1 = Movimiento.crear(
+            'Traspaso', 100, self.cuenta1, self.cuenta2, esgratis=True)
+
+    def test_emisor_devuelve_titular_de_cuenta_de_salida_del_movimiento(self):
+        self.assertEqual(self.mov1.emisor, self.titular2)
+
+    def test_receptor_devuelve_titular_de_cuenta_de_entrada_del_movimiento(self):
+        self.assertEqual(self.mov1.receptor, self.titular1)
+
+
 class TestModelMovimientoMetodoStr(TestModelMovimiento):
 
     def setUp(self):

@@ -57,6 +57,14 @@ class Movimiento(MiModel):
             return 'e'
         return 's'
 
+    @property
+    def emisor(self):
+        return self.cta_salida.titular
+
+    @property
+    def receptor(self):
+        return self.cta_entrada.titular
+
     def __str__(self):
         importe = self.importe \
             if self.importe != round(self.importe) \
@@ -206,21 +214,16 @@ class Movimiento(MiModel):
                 self.cta_salida.save()
 
             if self.es_prestamo(esgratis=esgratis):
-                if self.cta_entrada.titular not in self.cta_salida.titular.acreedores.all():
+                if self.receptor not in self.emisor.acreedores.all():
                     self._registrar_credito()
                 else:
                     self._crear_movimiento_credito()
-
-                    deuda = [
-                        x for x in self.cta_entrada.titular.cuentas.all()
-                        if x.cta_madre
-                        and x.cta_madre.subcuentas.exclude(
-                            pk=self.pk
-                        )[0].titular == self.cta_salida.titular
-                    ][0]
-
-                    if deuda.saldo == 0:
-                        self.cta_entrada.titular.deudores.remove(self.cta_salida.titular)
+                    if (self.receptor.cuentas.get(
+                            slug=f'cr-{self.receptor.titname}'
+                                 f'-{self.emisor.titname}'
+                    ).saldo == 0):
+                        self.receptor.deudores.remove(
+                            self.emisor)
 
         # Movimiento existente
         else:
@@ -313,7 +316,7 @@ class Movimiento(MiModel):
 
     def es_prestamo(self, esgratis=False):
         return (self.cta_entrada and self.cta_salida and
-                self.cta_entrada.titular != self.cta_salida.titular and
+                self.receptor != self.emisor and
                 not esgratis)
 
     def _cambia_campo(self, *args):
@@ -325,46 +328,46 @@ class Movimiento(MiModel):
 
     def _registrar_credito(self):
         self._crear_movimiento_credito()
-        self.cta_salida.titular.deudores.add(self.cta_entrada.titular)
+        self.emisor.deudores.add(self.receptor)
 
     def _recuperar_cuentas_credito(self, cls):
         try:
             return (
                 cls.tomar(
-                    slug=f'cr-{self.cta_salida.titular.titname}-'
-                         f'{self.cta_entrada.titular.titname}'),
+                    slug=f'cr-{self.emisor.titname}-'
+                         f'{self.receptor.titname}'),
                 cls.tomar(
-                    slug=f'db-{self.cta_entrada.titular.titname}-'
-                         f'{self.cta_salida.titular.titname}'))
+                    slug=f'db-{self.receptor.titname}-'
+                         f'{self.emisor.titname}'))
         except cls.DoesNotExist:
             return (
                 cls.tomar(
-                    slug=f'db-{self.cta_salida.titular.titname}-'
-                         f'{self.cta_entrada.titular.titname}'),
+                    slug=f'db-{self.emisor.titname}-'
+                         f'{self.receptor.titname}'),
                 cls.tomar(
-                    slug=f'cr-{self.cta_entrada.titular.titname}-'
-                         f'{self.cta_salida.titular.titname}'))
+                    slug=f'cr-{self.receptor.titname}-'
+                         f'{self.emisor.titname}'))
 
     def _generar_cuentas_credito(self, cls):
         cuenta_relacion = cls.crear(
-            nombre=f'Relación crediticia {self.cta_salida.titular.nombre} '
-                   f'- {self.cta_entrada.titular.nombre}',
-            slug=f'{self.cta_salida.titular.titname}-'
-                 f'{self.cta_entrada.titular.titname}'
+            nombre=f'Relación crediticia {self.emisor.nombre} '
+                   f'- {self.receptor.nombre}',
+            slug=f'{self.emisor.titname}-'
+                 f'{self.receptor.titname}'
         )
         return cuenta_relacion.dividir_entre({
-            'nombre': f'Préstamo de {self.cta_salida.titular.titname} '
-                      f'a {self.cta_entrada.titular.titname}',
-            'slug': f'cr-{self.cta_salida.titular.titname}-'
-                    f'{self.cta_entrada.titular.titname}',
-            'titular': self.cta_salida.titular,
+            'nombre': f'Préstamo de {self.emisor.titname} '
+                      f'a {self.receptor.titname}',
+            'slug': f'cr-{self.emisor.titname}-'
+                    f'{self.receptor.titname}',
+            'titular': self.emisor,
             'saldo': 0
         }, {
-            'nombre': f'Deuda de {self.cta_entrada.titular.titname} '
-                      f'con {self.cta_salida.titular.titname}',
-            'slug': f'db-{self.cta_entrada.titular.titname}-'
-                    f'{self.cta_salida.titular.titname}',
-            'titular': self.cta_entrada.titular
+            'nombre': f'Deuda de {self.receptor.titname} '
+                      f'con {self.emisor.titname}',
+            'slug': f'db-{self.receptor.titname}-'
+                    f'{self.emisor.titname}',
+            'titular': self.receptor
         })
 
     def _crear_movimiento_credito(self):
@@ -388,8 +391,8 @@ class Movimiento(MiModel):
 
         contramov = Movimiento.crear(
             concepto=concepto,
-            detalle=f'de {self.cta_salida.titular.nombre} '
-                    f'a {self.cta_entrada.titular.nombre}',
+            detalle=f'de {self.emisor.nombre} '
+                    f'a {self.receptor.nombre}',
             importe=self.importe,
             cta_entrada=cuenta_acreedora,
             cta_salida=cuenta_deudora,
