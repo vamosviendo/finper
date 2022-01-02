@@ -222,8 +222,7 @@ class Movimiento(MiModel):
                             slug=f'cr-{self.receptor.titname}'
                                  f'-{self.emisor.titname}'
                     ).saldo == 0):
-                        self.receptor.deudores.remove(
-                            self.emisor)
+                        self.receptor.cancelar_deuda_de(self.emisor)
 
         # Movimiento existente
         else:

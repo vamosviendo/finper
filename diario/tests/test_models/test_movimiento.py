@@ -463,9 +463,11 @@ class TestModelMovimientoCrearMasMovimientosEntreTitulares(
         self.assertIn(self.titular1, self.titular2.deudores.all())
 
     def test_si_cancela_deuda_elimina_emisor_de_deudores_de_receptor(self):
+        from unittest.mock import MagicMock
+        self.titular2.cancelar_deuda_de = MagicMock(name='cancelar_deuda_de')
         Movimiento.crear(
             'Devolución', 10, cta_entrada=self.cuenta2, cta_salida=self.cuenta1)
-        self.assertNotIn(self.titular1, self.titular2.deudores.all())
+        self.titular2.cancelar_deuda_de.assert_called_once_with(self.titular1)
 
 
 class TestModelMovimientoClean(TestModelMovimiento):

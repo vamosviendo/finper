@@ -181,15 +181,23 @@ class TestMetodoPorDefecto(TestCase):
         )
 
 
-class TestTomarODefault(TestCase):
+class TestTitularMetodo(TestCase):
 
     def setUp(self):
-        self.titular=Titular.crear(titname='tito', nombre='Tito Gomez')
+        self.titular1 = Titular.crear(titname='tito', nombre='Tito Gomez')
+        self.titular2 = Titular.crear(titname='cuco', nombre='Cuco Cuqui')
+        self.cuenta1 = Cuenta.crear(
+            'Cuenta tito', 'ctito', titular=self.titular1)
+        self.cuenta2 = Cuenta.crear(
+            'Cuenta cuco', 'ccuco', titular=self.titular2)
+
+
+class TestTitularMetodoTomarODefault(TestTitularMetodo):
 
     def test_devuelve_titular_si_existe(self):
         self.assertEqual(
             Titular.tomar_o_default(titname='tito'),
-            self.titular
+            self.titular1
         )
 
     def test_devuelve_titular_por_defecto_si_no_encuentra_titular(self):
@@ -197,3 +205,20 @@ class TestTomarODefault(TestCase):
             Titular.tomar_o_default(titname='pipo'),
             Titular.tomar(pk=Titular.por_defecto())
         )
+
+
+class TestTitularMetodoCancelarDeudaDe(TestTitularMetodo):
+
+    def test_retira_otro_de_deudores_del_titular(self):
+        Movimiento.crear('Prestamo', 10, self.cuenta2, self.cuenta1)
+        self.titular1.cancelar_deuda_de(self.titular2)
+        self.assertNotIn(self.titular2, self.titular1.deudores.all())
+
+    def test_si_otro_no_esta_entre_deudores_del_titular_que_hace(self):
+        Movimiento.crear('Prestamo', 10, self.cuenta2, self.cuenta1)
+        tit3 = Titular.crear(nombre='Pipo Pippi', titname='pipo')
+        with self.assertRaisesMessage(
+            Titular.DoesNotExist,
+            'Pipo Pippi no figura entre los deudores de Tito Gomez'
+        ):
+            self.titular1.cancelar_deuda_de(tit3)

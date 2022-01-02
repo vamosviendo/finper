@@ -43,3 +43,10 @@ class Titular(MiModel):
             return cls.tomar(**kwargs)
         except cls.DoesNotExist:
             return cls.tomar(pk=cls.por_defecto())
+
+    def cancelar_deuda_de(self, otro):
+        if otro not in self.deudores.all():
+            raise self.get_class().DoesNotExist(
+                f'{otro} no figura entre los deudores de {self}'
+            )
+        self.deudores.remove(otro)
