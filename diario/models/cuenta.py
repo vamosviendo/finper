@@ -409,7 +409,6 @@ class CuentaAcumulativa(Cuenta):
                 f'las de una de sus subcuentas'
             )
         super().clean(*args, **kwargs)
-        super().full_clean
 
     def movs(self, order_by='fecha'):
         """ Devuelve movimientos propios y de sus subcuentas

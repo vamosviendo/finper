@@ -219,7 +219,7 @@ class Movimiento(MiModel):
                 else:
                     self._crear_movimiento_credito()
                     if (self.receptor.cuentas.get(
-                            slug=f'cr-{self.receptor.titname}'
+                            slug=f'{self.receptor.titname}'
                                  f'-{self.emisor.titname}'
                     ).saldo == 0):
                         self.receptor.cancelar_deuda_de(self.emisor)
@@ -333,51 +333,46 @@ class Movimiento(MiModel):
         try:
             return (
                 cls.tomar(
-                    slug=f'cr-{self.emisor.titname}-'
+                    slug=f'{self.emisor.titname}-'
                          f'{self.receptor.titname}'),
                 cls.tomar(
-                    slug=f'db-{self.receptor.titname}-'
+                    slug=f'{self.receptor.titname}-'
                          f'{self.emisor.titname}'))
         except cls.DoesNotExist:
             return (
                 cls.tomar(
-                    slug=f'db-{self.emisor.titname}-'
+                    slug=f'{self.emisor.titname}-'
                          f'{self.receptor.titname}'),
                 cls.tomar(
-                    slug=f'cr-{self.receptor.titname}-'
+                    slug=f'{self.receptor.titname}-'
                          f'{self.emisor.titname}'))
 
     def _generar_cuentas_credito(self, cls):
-        cuenta_relacion = cls.crear(
-            nombre=f'Relación crediticia {self.emisor.nombre} '
-                   f'- {self.receptor.nombre}',
-            slug=f'{self.emisor.titname}-'
-                 f'{self.receptor.titname}'
+        return (
+            cls.crear(
+                nombre=f'Préstamo entre {self.emisor.titname} '
+                       f'y {self.receptor.titname}',
+                slug=f'{self.emisor.titname}-{self.receptor.titname}',
+                titular=self.emisor
+            ),
+            cls.crear(
+                nombre=f'Préstamo entre {self.receptor.titname} '
+                       f'y {self.emisor.titname}',
+                slug=f'{self.receptor.titname}-{self.emisor.titname}',
+                titular=self.receptor
+            )
         )
-        return cuenta_relacion.dividir_entre({
-            'nombre': f'Préstamo de {self.emisor.titname} '
-                      f'a {self.receptor.titname}',
-            'slug': f'cr-{self.emisor.titname}-'
-                    f'{self.receptor.titname}',
-            'titular': self.emisor,
-            'saldo': 0
-        }, {
-            'nombre': f'Deuda de {self.receptor.titname} '
-                      f'con {self.emisor.titname}',
-            'slug': f'db-{self.receptor.titname}-'
-                    f'{self.emisor.titname}',
-            'titular': self.receptor
-        })
 
     def _crear_movimiento_credito(self):
         from diario.models import Cuenta
 
         try:
+            # TODO: Terminar de reformular esto. Funciona pero es un escracho
             cuenta_acreedora, cuenta_deudora = \
                 self._recuperar_cuentas_credito(Cuenta)
-            if cuenta_acreedora.slug.startswith('cr'):
+            if cuenta_acreedora.saldo >= 0:
                 concepto = 'Aumento de crédito'
-            elif cuenta_acreedora.slug.startswith('db'):
+            elif cuenta_acreedora.saldo < 0:
                 concepto = 'Cancelación de crédito' \
                     if self.importe == cuenta_deudora.saldo \
                     else 'Pago a cuenta de crédito'

@@ -1,5 +1,4 @@
 import datetime
-from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -226,50 +225,6 @@ class TestTitularMetodoEsAcreedorDe(TestTitularMetodo):
     def test_devuelve_true_si_titular_esta_entre_acreedores_de_otro(self):
         Movimiento.crear('Prestamo', 10, self.cuenta2, self.cuenta1)
         self.assertTrue(self.titular1.es_acreedor_de(self.titular2))
-
-
-class TestTitularMetodoDeudaCon(TestTitularMetodo):
-
-    def test_devuelve_cuenta_de_deuda_de_titular_con_otro(self):
-        Movimiento.crear('Prestamo', 10, self.cuenta2, self.cuenta1)
-        self.assertEqual(
-            self.titular2.deuda_con(self.titular1),
-            Cuenta.tomar(slug='db-cuco-tito')
-        )
-
-    def test_si_titular_no_le_debe_a_otro_devuelve_none(self):
-        self.assertIsNone(self.titular2.deuda_con(self.titular1))
-
-
-class TestTitularMetodoDeudaDe(TestTitularMetodo):
-
-    @patch.object(Titular, 'deuda_con', autospec=True)
-    def test_devuelve_cuenta_de_deuda_de_otro_con_titular(self, mock_deuda_con):
-        Movimiento.crear('Prestamo', 19, self.cuenta2, self.cuenta1)
-        self.titular1.deuda_de(self.titular2)
-        mock_deuda_con.assert_called_once_with(self.titular2, self.titular1)
-
-
-class TestTitularMetodoPrestamoA(TestTitularMetodo):
-
-    def test_devuelve_cuenta_de_prestamo_de_titular_a_otro(self):
-        Movimiento.crear('Prestamo', 10, self.cuenta2, self.cuenta1)
-        self.assertEqual(
-            self.titular1.prestamo_a(self.titular2),
-            Cuenta.tomar(slug='cr-tito-cuco')
-        )
-
-    def test_si_titular_no_le_debe_a_otro_devuelve_none(self):
-        self.assertIsNone(self.titular1.prestamo_a(self.titular2))
-
-
-class TestTitularMetodoPrestamoDe(TestTitularMetodo):
-
-    @patch.object(Titular, 'prestamo_a', autospec=True)
-    def test_devuelve_cuenta_de_prestamo_otro_a_titular(self, mock_prestamo_a):
-        Movimiento.crear('Prestamo', 19, self.cuenta2, self.cuenta1)
-        self.titular2.prestamo_de(self.titular1)
-        mock_prestamo_a.assert_called_once_with(self.titular1, self.titular2)
 
 
 class TestTitularMetodoCancelarDeudaDe(TestTitularMetodo):

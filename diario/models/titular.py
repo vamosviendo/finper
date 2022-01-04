@@ -55,31 +55,6 @@ class Titular(MiModel):
     def modelo_relacionado_con(cls, campo):
         return cls._meta.get_field(campo).related_model
 
-    def deuda_con(self, otro):
-        Cuenta = self.get_class().modelo_relacionado_con('cuentas')
-
-        try:
-            return Cuenta.tomar(
-                slug=f'db-{self.titname}-{otro.titname}', titular=self)
-        except Cuenta.DoesNotExist:
-            return None
-
-    def deuda_de(self, otro):
-        return otro.deuda_con(self)
-
-    def prestamo_a(self, otro):
-        Cuenta = self.get_class().modelo_relacionado_con('cuentas')
-
-        try:
-            return Cuenta.tomar(
-                slug=f'cr-{self.titname}-{otro.titname}', titular=self)
-        except Cuenta.DoesNotExist:
-            return None
-        pass
-
-    def prestamo_de(self, otro):
-        return otro.prestamo_a(self)
-
     def cancelar_deuda_de(self, otro):
         if otro not in self.deudores.all():
             raise self.get_class().DoesNotExist(
