@@ -265,7 +265,7 @@ class TestModelMovimientoCrearModificaSaldosDeCuentas(TestModelMovimiento):
         self.assertEqual(self.cuenta1.saldo, saldo1-mov3.importe)
 
 
-class TestModelMovimientoCrearMovimientoEntreTitulares(TestModelMovimiento):
+class TestModelMovimientoEntreTitulares(TestModelMovimiento):
 
     def setUp(self):
         super().setUp()
@@ -274,8 +274,8 @@ class TestModelMovimientoCrearMovimientoEntreTitulares(TestModelMovimiento):
             'Cuenta titular 2', 'ct2', titular=self.titular2)
 
 
-class TestModelModelMovimientoCrearPrimerMovimientoEntreTitulares(
-        TestModelMovimientoCrearMovimientoEntreTitulares):
+class TestModelModelMovimientoEntreTitularesPrimero(
+        TestModelMovimientoEntreTitulares):
 
     @patch.object(Cuenta, 'crear')
     def test_genera_cuentas_credito_si_no_existen(self, mock_crear):
@@ -371,8 +371,8 @@ class TestModelModelMovimientoCrearPrimerMovimientoEntreTitulares(
         self.assertEqual(Movimiento.cantidad(), 1)
 
 
-class TestModelMovimientoCrearMasMovimientosEntreTitulares(
-        TestModelMovimientoCrearMovimientoEntreTitulares):
+class TestModelMovimientoEntreTitularesSiguientes(
+        TestModelMovimientoEntreTitulares):
 
     def setUp(self):
         super().setUp()
@@ -439,12 +439,21 @@ class TestModelMovimientoCrearMasMovimientosEntreTitulares(
             'A cuenta', 3, cta_entrada=self.cuenta2, cta_salida=self.cuenta1)
         self.assertIn(self.titular1, self.titular2.deudores.all())
 
-    def test_si_cancela_deuda_elimina_emisor_de_deudores_de_receptor(self):
-        from unittest.mock import MagicMock
-        self.titular2.cancelar_deuda_de = MagicMock(name='cancelar_deuda_de')
+    @patch.object(Titular, 'cancelar_deuda_de', autospec=True)
+    def test_si_cancela_deuda_elimina_emisor_de_deudores_de_receptor(self, mock_cancelar_deuda_de):
         Movimiento.crear(
             'Devolución', 10, cta_entrada=self.cuenta2, cta_salida=self.cuenta1)
-        self.titular2.cancelar_deuda_de.assert_called_once_with(self.titular1)
+        mock_cancelar_deuda_de.assert_called_once_with(self.titular2, self.titular1)
+
+    def test_si_paga_mas_de_lo_que_debe_elimina_emisor_de_deudores_de_receptor(self):
+        Movimiento.crear(
+            'Devolución', 16, cta_entrada=self.cuenta2, cta_salida=self.cuenta1)
+        self.assertNotIn(self.titular1, self.titular2.deudores.all())
+
+    def test_si_paga_mas_de_lo_que_debe_incluye_receptor_entre_deudores_de_emisor(self):
+        Movimiento.crear(
+            'Devolución', 16, cta_entrada=self.cuenta2, cta_salida=self.cuenta1)
+        self.assertIn(self.titular2, self.titular1.deudores.all())
 
 
 class TestModelMovimientoClean(TestModelMovimiento):

@@ -218,11 +218,14 @@ class Movimiento(MiModel):
                     self._registrar_credito()
                 else:
                     self._crear_movimiento_credito()
-                    if (self.receptor.cuentas.get(
-                            slug=f'{self.receptor.titname}'
-                                 f'-{self.emisor.titname}'
-                    ).saldo == 0):
+                    cuenta_credito = self.receptor.cuentas.get(
+                        slug=f'{self.receptor.titname}'
+                             f'-{self.emisor.titname}'
+                    )
+                    if cuenta_credito.saldo <= 0:
                         self.receptor.cancelar_deuda_de(self.emisor)
+                        if cuenta_credito.saldo < 0:
+                            self.emisor.deudores.add(self.receptor)
 
         # Movimiento existente
         else:
