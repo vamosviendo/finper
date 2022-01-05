@@ -227,6 +227,22 @@ class TestTitularMetodoEsAcreedorDe(TestTitularMetodo):
         self.assertTrue(self.titular1.es_acreedor_de(self.titular2))
 
 
+class TestTitularMetodoCuentaCreditoCon(TestTitularMetodo):
+
+    def test_devuelve_cuenta_correspondiente_al_credito_con_otro_titular(self):
+        Movimiento.crear('Prestamo', 10, self.cuenta2, self.cuenta1)
+        self.assertEqual(
+            self.titular1.cuenta_credito_con(self.titular2),
+            Cuenta.tomar(slug='tito-cuco')
+        )
+        self.assertEqual(
+            self.titular2.cuenta_credito_con(self.titular1),
+            Cuenta.tomar(slug='cuco-tito')
+        )
+
+    def test_devuelve_none_si_no_hay_relacion_crediticia_con_otro_titular(self):
+        self.assertIsNone(self.titular1.cuenta_credito_con((self.titular2)))
+
 class TestTitularMetodoCancelarDeudaDe(TestTitularMetodo):
 
     def test_retira_otro_de_deudores_del_titular(self):

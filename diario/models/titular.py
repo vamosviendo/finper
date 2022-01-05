@@ -50,6 +50,12 @@ class Titular(MiModel):
     def es_deudor_de(self, otro):
         return self in otro.deudores.all()
 
+    def cuenta_credito_con(self, otro):
+        try:
+            return self.cuentas.get(slug=f'{self.titname}-{otro.titname}')
+        except self.modelo_relacionado_con('cuentas').DoesNotExist:
+            return None
+
     # TODO: Pasar a MiModel
     @classmethod
     def modelo_relacionado_con(cls, campo):
