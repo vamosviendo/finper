@@ -22,9 +22,9 @@ class Titular(MiModel):
         lista_movimientos.sort(key=lambda x: (x.fecha, x.orden_dia))
         return lista_movimientos
 
-    def full_clean(self, exclude=None, validate_unique=True):
+    def clean(self):
+        super().clean()
         self.nombre = self.nombre or self.titname
-        super().full_clean(exclude=None, validate_unique=True)
 
     def __str__(self):
         return self.nombre
