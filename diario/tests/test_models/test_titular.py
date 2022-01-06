@@ -243,6 +243,7 @@ class TestTitularMetodoCuentaCreditoCon(TestTitularMetodo):
     def test_devuelve_none_si_no_hay_relacion_crediticia_con_otro_titular(self):
         self.assertIsNone(self.titular1.cuenta_credito_con((self.titular2)))
 
+
 class TestTitularMetodoCancelarDeudaDe(TestTitularMetodo):
 
     def test_retira_otro_de_deudores_del_titular(self):
@@ -258,3 +259,11 @@ class TestTitularMetodoCancelarDeudaDe(TestTitularMetodo):
             'Pipo Pippi no figura entre los deudores de Tito Gomez'
         ):
             self.titular1.cancelar_deuda_de(tit3)
+
+
+class TestTitularValidacion(TestCase):
+
+    def test_no_admite_guion_en_titname(self):
+        titular = Titular(nombre='Titular Titularini', titname='ti-ti')
+        with self.assertRaises(ValidationError):
+            titular.full_clean()

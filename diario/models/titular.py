@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Sum
 
@@ -25,6 +26,7 @@ class Titular(MiModel):
     def clean(self):
         super().clean()
         self.nombre = self.nombre or self.titname
+        self._validar_titname()
 
     def __str__(self):
         return self.nombre
@@ -67,3 +69,7 @@ class Titular(MiModel):
                 f'{otro} no figura entre los deudores de {self}'
             )
         self.deudores.remove(otro)
+
+    def _validar_titname(self):
+        if '-' in self.titname:
+            raise ValidationError('No se admite guión en titname')
