@@ -17,6 +17,10 @@ class TestFormCuenta(TestCase):
         formcta = FormCuenta(data={'nombre': 'Efectivo'})
         self.assertFalse(formcta.is_valid())
 
+    def test_no_acepta_guion_bajo_inicial_en_slug(self):
+        formcta = FormCuenta(data={'nombre': '_Efectivo', 'slug': '_efe'})
+        self.assertFalse(formcta.is_valid())
+
 
 class TestFormSubcuentas(TestCase):
 

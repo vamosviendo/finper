@@ -23,6 +23,14 @@ class FormCuenta(forms.ModelForm):
         model = CuentaInteractiva
         fields = ('nombre', 'slug', 'titular', )
 
+    def clean_slug(self):
+        data = self.cleaned_data.get('slug')
+        if data.startswith('_'):
+            raise forms.ValidationError(
+                'No se permite guión bajo inicial en slug', code='guionbajo')
+
+        return data
+
 
 class FormSubcuenta(forms.Form):
     nombre = forms.CharField()
