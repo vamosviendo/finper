@@ -219,7 +219,7 @@ class Movimiento(MiModel):
                 else:
                     self._crear_movimiento_credito()
                     cuenta_credito = self.receptor.cuentas.get(
-                        slug=f'{self.receptor.titname}'
+                        slug=f'_{self.receptor.titname}'
                              f'-{self.emisor.titname}'
                     )
                     if cuenta_credito.saldo <= 0:
@@ -335,24 +335,24 @@ class Movimiento(MiModel):
     def _recuperar_cuentas_credito(self, cls):
         return (
             cls.tomar(
-                slug=f'{self.emisor.titname}-'
-                     f'{self.receptor.titname}'),
+                slug=f'_{self.emisor.titname}'
+                     f'-{self.receptor.titname}'),
             cls.tomar(
-                slug=f'{self.receptor.titname}-'
-                     f'{self.emisor.titname}'))
+                slug=f'_{self.receptor.titname}'
+                     f'-{self.emisor.titname}'))
 
     def _generar_cuentas_credito(self, cls):
         return (
             cls.crear(
                 nombre=f'Préstamo entre {self.emisor.titname} '
                        f'y {self.receptor.titname}',
-                slug=f'{self.emisor.titname}-{self.receptor.titname}',
+                slug=f'_{self.emisor.titname}-{self.receptor.titname}',
                 titular=self.emisor
             ),
             cls.crear(
                 nombre=f'Préstamo entre {self.receptor.titname} '
                        f'y {self.emisor.titname}',
-                slug=f'{self.receptor.titname}-{self.emisor.titname}',
+                slug=f'_{self.receptor.titname}-{self.emisor.titname}',
                 titular=self.receptor
             )
         )

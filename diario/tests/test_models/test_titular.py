@@ -233,11 +233,11 @@ class TestTitularMetodoCuentaCreditoCon(TestTitularMetodo):
         Movimiento.crear('Prestamo', 10, self.cuenta2, self.cuenta1)
         self.assertEqual(
             self.titular1.cuenta_credito_con(self.titular2),
-            Cuenta.tomar(slug='tito-cuco')
+            Cuenta.tomar(slug='_tito-cuco')
         )
         self.assertEqual(
             self.titular2.cuenta_credito_con(self.titular1),
-            Cuenta.tomar(slug='cuco-tito')
+            Cuenta.tomar(slug='_cuco-tito')
         )
 
     def test_devuelve_none_si_no_hay_relacion_crediticia_con_otro_titular(self):

@@ -54,7 +54,7 @@ class Titular(MiModel):
 
     def cuenta_credito_con(self, otro):
         try:
-            return self.cuentas.get(slug=f'{self.titname}-{otro.titname}')
+            return self.cuentas.get(slug=f'_{self.titname}-{otro.titname}')
         except self.modelo_relacionado_con('cuentas').DoesNotExist:
             return None
 

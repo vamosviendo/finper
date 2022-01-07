@@ -291,11 +291,11 @@ class TestModelModelMovimientoEntreTitularesPrimero(
             mock_crear.call_args_list,
             [call(
                 nombre='Préstamo entre tit2 y tit1',
-                slug='tit2-tit1',
+                slug='_tit2-tit1',
                 titular=self.titular2
             ), call(
                 nombre='Préstamo entre tit1 y tit2',
-                slug='tit1-tit2',
+                slug='_tit1-tit2',
                 titular=self.titular1
             )]
         )
@@ -315,8 +315,8 @@ class TestModelModelMovimientoEntreTitularesPrimero(
             'Prestamo', 10, cta_entrada=self.cuenta1, cta_salida=self.cuenta2)
         self.assertEqual(Movimiento.cantidad(), 2)
 
-        cuenta_deudora = Cuenta.tomar(slug='tit1-tit2')
-        cuenta_acreedora = Cuenta.tomar(slug='tit2-tit1')
+        cuenta_deudora = Cuenta.tomar(slug='_tit1-tit2')
+        cuenta_acreedora = Cuenta.tomar(slug='_tit2-tit1')
         mov_credito = Movimiento.tomar(concepto='Constitución de crédito')
         self.assertEqual(mov_credito.detalle, 'de Titular 2 a Titular 1')
         self.assertEqual(mov_credito.importe, 10)
@@ -335,8 +335,8 @@ class TestModelModelMovimientoEntreTitularesPrimero(
         self.assertEqual(Cuenta.cantidad(), 4)
         self.assertEqual(Movimiento.cantidad(), 2)
 
-        cuenta_deudora = Cuenta.tomar(slug='tit1-tit2')
-        cuenta_acreedora = Cuenta.tomar(slug='tit2-tit1')
+        cuenta_deudora = Cuenta.tomar(slug='_tit1-tit2')
+        cuenta_acreedora = Cuenta.tomar(slug='_tit2-tit1')
         self.assertEqual(cuenta_acreedora.saldo, movimiento.importe)
         self.assertEqual(cuenta_deudora.saldo, -cuenta_acreedora.saldo)
 
@@ -402,11 +402,11 @@ class TestModelMovimientoEntreTitularesSiguientes(
 
     def test_resta_importe_de_cuenta_credito_en_movimiento_inverso_entre_titulares_con_credito_existente(self):
         Movimiento.crear('Devolución', 6, cta_entrada=self.cuenta2, cta_salida=self.cuenta1)
-        self.assertEqual(Cuenta.tomar(slug='tit2-tit1').saldo, 4)
+        self.assertEqual(Cuenta.tomar(slug='_tit2-tit1').saldo, 4)
 
     def test_suma_importe_a_cuenta_deuda_en_movimiento_inverso_entre_titulares_con_credito_existente(self):
         Movimiento.crear('Devolución', 6, cta_entrada=self.cuenta2, cta_salida=self.cuenta1)
-        self.assertEqual(Cuenta.tomar(slug='tit1-tit2').saldo, -4)
+        self.assertEqual(Cuenta.tomar(slug='_tit1-tit2').saldo, -4)
 
     def test_da_cuenta_en_el_concepto_de_un_aumento_de_credito(self):
         Movimiento.crear(
@@ -760,7 +760,7 @@ class TestModelMovimientoModificarCuentas(TestModelMovimientoModificar):
         contramov = Movimiento.tomar(id=movimiento.id_contramov)
 
         self.assertNotEqual(contramov.cta_salida.id, cta_deudora.id)
-        self.assertEqual(contramov.cta_salida.slug, 'tit3-tit1')
+        self.assertEqual(contramov.cta_salida.slug, '_tit3-tit1')
 
     @patch.object(Movimiento, '_regenerar_contramovimiento', autospec=True)
     def test_cambiar_cta_salida_por_cta_otro_titular_en_movimientos_con_contramovimiento_regenera_contramovimiento(
@@ -791,7 +791,7 @@ class TestModelMovimientoModificarCuentas(TestModelMovimientoModificar):
         contramov = Movimiento.tomar(id=movimiento.id_contramov)
 
         self.assertNotEqual(contramov.cta_entrada.id, cta_deudora.id)
-        self.assertEqual(contramov.cta_entrada.slug, 'tit3-tit2')
+        self.assertEqual(contramov.cta_entrada.slug, '_tit3-tit2')
 
     @patch.object(Movimiento, '_crear_movimiento_credito', autospec=True)
     def test_cambiar_cta_entrada_por_cta_otro_titular_en_movimiento_de_traspaso_sin_contramovimiento_genera_contramovimiento(
