@@ -333,22 +333,13 @@ class Movimiento(MiModel):
         self.emisor.deudores.add(self.receptor)
 
     def _recuperar_cuentas_credito(self, cls):
-        try:
-            return (
-                cls.tomar(
-                    slug=f'{self.emisor.titname}-'
-                         f'{self.receptor.titname}'),
-                cls.tomar(
-                    slug=f'{self.receptor.titname}-'
-                         f'{self.emisor.titname}'))
-        except cls.DoesNotExist:
-            return (
-                cls.tomar(
-                    slug=f'{self.emisor.titname}-'
-                         f'{self.receptor.titname}'),
-                cls.tomar(
-                    slug=f'{self.receptor.titname}-'
-                         f'{self.emisor.titname}'))
+        return (
+            cls.tomar(
+                slug=f'{self.emisor.titname}-'
+                     f'{self.receptor.titname}'),
+            cls.tomar(
+                slug=f'{self.receptor.titname}-'
+                     f'{self.emisor.titname}'))
 
     def _generar_cuentas_credito(self, cls):
         return (
