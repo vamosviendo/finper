@@ -107,3 +107,12 @@ class ErrorOpcionInexistente(ValidationError):
             message="Opción inexistente"
     ):
         super().__init__(message)
+
+
+class ErrorMovimientoNoPrestamo(ValidationError):
+
+    def __init__(
+            self,
+            message='Movimiento no es un préstamo'
+    ):
+        super().__init__(message)

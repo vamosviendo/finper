@@ -1682,8 +1682,16 @@ class TestModelMovimientoPropiedadesEmisorReceptor(TestModelMovimiento):
     def test_emisor_devuelve_titular_de_cuenta_de_salida_del_movimiento(self):
         self.assertEqual(self.mov1.emisor, self.titular2)
 
+    def test_emisor_devuelve_none_si_movimiento_no_tiene_cuenta_de_salida(self):
+        mov = Movimiento.crear('Entrada', 100, self.cuenta1)
+        self.assertIsNone(mov.emisor)
+
     def test_receptor_devuelve_titular_de_cuenta_de_entrada_del_movimiento(self):
         self.assertEqual(self.mov1.receptor, self.titular1)
+
+    def test_receptor_devuelve_none_si_movimiento_no_tiene_cuenta_de_entrada(self):
+        mov = Movimiento.crear('Entrada', 100, cta_salida=self.cuenta1)
+        self.assertIsNone(mov.receptor)
 
 
 class TestModelMovimientoMetodoStr(TestModelMovimiento):
@@ -1772,6 +1780,29 @@ class TestModelMovimientoMetodoEsPrestamo(TestModelMovimientoModificar):
         )
         self.assertFalse(mov.es_prestamo(esgratis=True))
 
+
+class TestModelMovimientoMetodoGenerarCuentasCredito(TestModelMovimientoEntreTitulares):
+
+    def test_crea_dos_cuentas_credito(self):
+        movimiento = Movimiento.crear(
+            'Préstamo', 30, self.cuenta1, self.cuenta2, esgratis=True)
+        movimiento._generar_cuentas_credito(Cuenta)
+        self.assertEqual(Cuenta.cantidad(), 4)
+        cc1 = list(Cuenta.todes())[-2]
+        cc2 = list(Cuenta.todes())[-1]
+        self.assertEqual(cc1.slug, '_tit1-tit2')
+        self.assertEqual(cc2.slug, '_tit2-tit1')
+
+    def test_no_funciona_en_movimiento_que_no_sea_entre_titulares(self):
+        self.cuenta3 = Cuenta.crear('Cuenta 3', 'c3', titular=self.titular1)
+        movimiento = Movimiento.crear('Traspaso', 10, self.cuenta3, self.cuenta1)
+        with self.assertRaises(errors.ErrorMovimientoNoPrestamo):
+            movimiento._generar_cuentas_credito(Cuenta)
+
+    def test_no_funciona_en_movimiento_que_no_sea_de_traspaso(self):
+        movimiento = Movimiento.crear('Traspaso', 10, self.cuenta1)
+        with self.assertRaises(errors.ErrorMovimientoNoPrestamo):
+            movimiento._generar_cuentas_credito(Cuenta)
 
 
 class TestModelMovimientoMetodoEliminarContramovimiento(TestModelMovimientoModificar):

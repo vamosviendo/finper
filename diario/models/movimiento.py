@@ -59,11 +59,13 @@ class Movimiento(MiModel):
 
     @property
     def emisor(self):
-        return self.cta_salida.titular
+        if self.cta_salida:
+            return self.cta_salida.titular
 
     @property
     def receptor(self):
-        return self.cta_entrada.titular
+        if self.cta_entrada:
+            return self.cta_entrada.titular
 
     def __str__(self):
         importe = self.importe \
@@ -342,6 +344,8 @@ class Movimiento(MiModel):
                      f'-{self.emisor.titname}'))
 
     def _generar_cuentas_credito(self, cls):
+        if not self.emisor or not self.receptor or self.emisor == self.receptor:
+            raise errors.ErrorMovimientoNoPrestamo
         return (
             cls.crear(
                 nombre=f'Préstamo entre {self.emisor.titname} '
