@@ -172,6 +172,13 @@ class Cuenta(PolymorphModel):
 
 class CuentaInteractiva(Cuenta):
 
+    _contracuenta = models.OneToOneField(
+        'diario.CuentaInteractiva',
+        null=True, blank=True,
+        related_name='_cuentacontra',
+        on_delete=models.CASCADE
+    )
+
     @classmethod
     def crear(cls, nombre, slug, cta_madre=None, saldo=None, **kwargs):
 
@@ -187,6 +194,20 @@ class CuentaInteractiva(Cuenta):
             )
 
         return cuenta_nueva
+
+    @property
+    def contracuenta(self):
+        if self._contracuenta:
+            return self._contracuenta
+
+        try:
+            return self._cuentacontra
+        except CuentaInteractiva._cuentacontra.RelatedObjectDoesNotExist:
+            return None
+
+    @contracuenta.setter
+    def contracuenta(self, cuenta):
+        self._contracuenta = cuenta
 
     def corregir_saldo(self):
         self.saldo = self.total_movs()

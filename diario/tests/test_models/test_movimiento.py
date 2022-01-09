@@ -288,16 +288,22 @@ class TestModelModelMovimientoEntreTitularesPrimero(
             'Prestamo', 10, cta_entrada=self.cuenta1, cta_salida=self.cuenta2)
 
         self.assertEqual(
-            mock_crear.call_args_list,
-            [call(
+            mock_crear.call_args_list[0],
+            call(
                 nombre='Préstamo entre tit2 y tit1',
                 slug='_tit2-tit1',
                 titular=self.titular2
-            ), call(
+            )
+        )
+        args2 = mock_crear.call_args_list[1][1]
+        args2.pop('contracuenta')
+        self.assertEqual(
+            args2,
+            dict(
                 nombre='Préstamo entre tit1 y tit2',
                 slug='_tit1-tit2',
-                titular=self.titular1
-            )]
+                titular=self.titular1,
+            )
         )
 
     @patch.object(Cuenta, 'crear')
@@ -1803,6 +1809,18 @@ class TestModelMovimientoMetodoGenerarCuentasCredito(TestModelMovimientoEntreTit
         movimiento = Movimiento.crear('Traspaso', 10, self.cuenta1)
         with self.assertRaises(errors.ErrorMovimientoNoPrestamo):
             movimiento._generar_cuentas_credito(Cuenta)
+
+    def test_guarda_cuenta_credito_acreedor_como_contracuenta_de_cuenta_credito_deudor(self):
+        movimiento = Movimiento.crear(
+            'Préstamo', 30, self.cuenta1, self.cuenta2, esgratis=True)
+        cc2, cc1 = movimiento._generar_cuentas_credito(Cuenta)
+        self.assertEqual(cc1._contracuenta, cc2)
+
+    def test_guarda_cuenta_credito_deudor_como_contracuenta_de_cuenta_credito_acreedor(self):
+        movimiento = Movimiento.crear(
+            'Préstamo', 30, self.cuenta1, self.cuenta2, esgratis=True)
+        cc2, cc1 = movimiento._generar_cuentas_credito(Cuenta)
+        self.assertEqual(cc2._cuentacontra, cc1)
 
 
 class TestModelMovimientoMetodoEliminarContramovimiento(TestModelMovimientoModificar):

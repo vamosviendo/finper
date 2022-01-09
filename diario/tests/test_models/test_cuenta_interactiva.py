@@ -87,6 +87,29 @@ class TestModelCuentaInteractivaCrear(TestCase):
         self.assertEqual(Movimiento.cantidad(), 0)
 
 
+class TestModelCuentaPropiedadContracuenta(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.titular1 = Titular.crear(nombre='Titular 1', titname='tit1')
+        self.titular2 = Titular.crear(nombre='Titular 2', titname='tit2')
+        self.cuenta1 = Cuenta.crear(
+            nombre='Cuenta titular 1', slug='ct1', titular=self.titular1)
+        self.cuenta2 = Cuenta.crear(
+            nombre='Cuenta titular 2', slug='ct2', titular=self.titular2)
+        self.mov1 = Movimiento.crear('Traspaso', 100, self.cuenta1, self.cuenta2)
+        self.ccacr, self.ccdeu = self.mov1._recuperar_cuentas_credito(Cuenta)
+
+    def test_devuelve_campo_contracuenta_en_cuenta_credito_de_deudor(self):
+        self.assertEqual(self.ccdeu.contracuenta, self.ccdeu._contracuenta)
+
+    def test_devuelve_campo_relacionado_con_contracuenta_en_cuenta_credito_de_acreedor(self):
+        self.assertEqual(self.ccacr.contracuenta, self.ccacr._cuentacontra)
+
+    def test_devuelve_none_si_cuenta_no_es_de_credito(self):
+        self.assertIsNone(self.cuenta2.contracuenta)
+
+
 class TestMetodoDividirEntre(TestCase):
     """ Saldos después de setUp:
         self.cta1: 100+150 = 250

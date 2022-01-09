@@ -346,20 +346,20 @@ class Movimiento(MiModel):
     def _generar_cuentas_credito(self, cls):
         if not self.emisor or not self.receptor or self.emisor == self.receptor:
             raise errors.ErrorMovimientoNoPrestamo
-        return (
-            cls.crear(
-                nombre=f'Préstamo entre {self.emisor.titname} '
-                       f'y {self.receptor.titname}',
-                slug=f'_{self.emisor.titname}-{self.receptor.titname}',
-                titular=self.emisor
-            ),
-            cls.crear(
-                nombre=f'Préstamo entre {self.receptor.titname} '
-                       f'y {self.emisor.titname}',
-                slug=f'_{self.receptor.titname}-{self.emisor.titname}',
-                titular=self.receptor
-            )
+        cc1 = cls.crear(
+            nombre=f'Préstamo entre {self.emisor.titname} '
+                   f'y {self.receptor.titname}',
+            slug=f'_{self.emisor.titname}-{self.receptor.titname}',
+            titular=self.emisor
         )
+        cc2 = cls.crear(
+            nombre=f'Préstamo entre {self.receptor.titname} '
+                   f'y {self.emisor.titname}',
+            slug=f'_{self.receptor.titname}-{self.emisor.titname}',
+            titular=self.receptor,
+            contracuenta=cc1
+        )
+        return (cc1, cc2)
 
     def _crear_movimiento_credito(self):
         from diario.models import Cuenta
