@@ -464,6 +464,15 @@ class TestModelMovimientoEntreTitularesSiguientes(
 
 class TestModelMovimientoClean(TestModelMovimiento):
 
+    def setUp(self):
+        super().setUp()
+        self.titular2 = Titular.crear(nombre='Titular 2', titname='tit2')
+        self.cuenta2 = Cuenta.crear(
+            nombre='Cuenta titular 2', slug='ct2', titular=self.titular2)
+        movimiento = Movimiento.crear('Préstamo', 100, self.cuenta2, self.cuenta1)
+        self.cc1, self.cc2 = movimiento._recuperar_cuentas_credito(Cuenta)
+
+
     def test_requiere_al_menos_una_cuenta(self):
         mov = Movimiento(
             fecha=date.today(),
@@ -500,6 +509,30 @@ class TestModelMovimientoClean(TestModelMovimiento):
             cta_entrada=self.cuenta1
         )
         mov.full_clean()    # No debe dar error
+
+    def test_movimiento_de_entrada_o_salida_no_admite_cuenta_credito(self):
+        mov_no_e = Movimiento(
+            concepto='Movimiento prohibido',
+            importe=50,
+            cta_entrada=self.cc2,
+        )
+        mov_no_s = Movimiento(
+            concepto='También prohibido',
+            importe=50,
+            cta_salida=self.cc1
+        )
+
+        with self.assertRaisesMessage(
+            ValidationError,
+            'No se permite cuenta crédito en movimiento de entrada o salida'
+        ):
+            mov_no_e.full_clean()
+
+        with self.assertRaisesMessage(
+            ValidationError,
+            'No se permite cuenta crédito en movimiento de entrada o salida'
+        ):
+            mov_no_s.full_clean()
 
 
 class TestModelMovimientoModificar(TestModelMovimiento):
