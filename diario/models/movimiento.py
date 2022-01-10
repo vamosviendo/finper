@@ -185,21 +185,27 @@ class Movimiento(MiModel):
             raise ValidationError(
                 message=errors.CUENTA_ACUMULATIVA_EN_MOVIMIENTO)
 
-        # TODO: reemplazar por self.cta_entrada.es_cuenta_credito()
         if self.cta_entrada:
-            if not self.cta_salida:
-                # TODO: MyModel.has_not_none_attr('atributo')
-                if hasattr(self.cta_entrada, 'contracuenta') and self.cta_entrada.contracuenta is not None:
+            if self.cta_entrada.es_cuenta_credito:
+                if not self.cta_salida:
                     raise ValidationError(
                         'No se permite cuenta crédito en movimiento '
                         'de entrada o salida')
+                if not self.cta_salida.es_cuenta_credito:
+                    raise ValidationError(
+                        'No se permite traspaso '
+                        'entre cuenta crédito y cuenta normal')
 
         if self.cta_salida:
-            if not self.cta_entrada:
-                if hasattr(self.cta_salida, 'contracuenta') and self.cta_salida.contracuenta is not None:
+            if self.cta_salida.es_cuenta_credito:
+                if not self.cta_entrada:
                     raise ValidationError(
                         'No se permite cuenta crédito en movimiento '
                         'de entrada o salida')
+                if not self.cta_entrada.es_cuenta_credito:
+                    raise ValidationError(
+                        'No se permite traspaso '
+                        'entre cuenta crédito y cuenta normal')
 
     def delete(self, *args, **kwargs):
         self.refresh_from_db()

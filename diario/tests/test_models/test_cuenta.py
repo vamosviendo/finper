@@ -163,6 +163,31 @@ class TestModelCuentaPropiedadSaldo(TestCase):
         self.assertEqual(self.cta1._saldo, 354.45)
 
 
+class TestModelCuentaPropiedadEsCuentaCredito(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.titular1 = Titular.crear(nombre='Titular 1', titname='tit1')
+        self.titular2 = Titular.crear(nombre='Titular 2', titname='tit2')
+        self.cuenta1 = Cuenta.crear(
+            'Cuenta titular 1', 'ct1', titular=self.titular1)
+        self.cuenta2 = Cuenta.crear(
+            'Cuenta titular 2', 'ct2', titular=self.titular2)
+        self.mov = Movimiento.crear(
+            'tit2 a tit1', 100, self.cuenta1, self.cuenta2)
+
+    def test_devuelve_false_si_cuenta_no_es_cuenta_credito(self):
+        self.assertFalse(self.cuenta1.es_cuenta_credito)
+
+    def test_devuelve_true_si_cuenta_es_cuenta_credito(self):
+        cc2, cc1 = self.mov._recuperar_cuentas_credito(Cuenta)
+        self.assertTrue(cc2.es_cuenta_credito)
+
+    def test_devuelve_false_si_cuenta_no_es_interactiva(self):
+        self.cuenta1 = dividir_en_dos_subcuentas(self.cuenta1)
+        self.assertFalse(self.cuenta1.es_cuenta_credito)
+
+
 class TestModelCuentaMetodos(TestCase):
     """ Testea: Cuenta.movs_directos()
                 Cuenta.movs()

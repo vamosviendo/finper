@@ -97,6 +97,9 @@ class MiModel(models.Model):
 
         return self
 
+    def has_not_none_attr(self, atributo):
+        return hasattr(self, atributo) and getattr(self, atributo) is not None
+
 
 class PolymorphModel(MiModel):
     """ Agrega polimorfismo a MiModel."""

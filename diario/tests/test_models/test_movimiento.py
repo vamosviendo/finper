@@ -510,12 +510,19 @@ class TestModelMovimientoClean(TestModelMovimiento):
         )
         mov.full_clean()    # No debe dar error
 
-    def test_movimiento_de_entrada_o_salida_no_admite_cuenta_credito(self):
+    def test_movimiento_de_entrada_no_admite_cuenta_credito(self):
         mov_no_e = Movimiento(
             concepto='Movimiento prohibido',
             importe=50,
             cta_entrada=self.cc2,
         )
+        with self.assertRaisesMessage(
+            ValidationError,
+            'No se permite cuenta crédito en movimiento de entrada o salida'
+        ):
+            mov_no_e.full_clean()
+
+    def test_movimiento_de_salida_no_admite_cuenta_credito(self):
         mov_no_s = Movimiento(
             concepto='También prohibido',
             importe=50,
@@ -526,13 +533,35 @@ class TestModelMovimientoClean(TestModelMovimiento):
             ValidationError,
             'No se permite cuenta crédito en movimiento de entrada o salida'
         ):
-            mov_no_e.full_clean()
+            mov_no_s.full_clean()
+
+    def test_cuenta_credito_no_puede_ser_cta_entrada_contra_cta_salida_normal(self):
+        mov_no = Movimiento(
+            concepto='Movimiento prohibido',
+            importe=50,
+            cta_entrada=self.cc2,
+            cta_salida=self.cuenta1
+        )
 
         with self.assertRaisesMessage(
             ValidationError,
-            'No se permite cuenta crédito en movimiento de entrada o salida'
+            'No se permite traspaso entre cuenta crédito y cuenta normal'
         ):
-            mov_no_s.full_clean()
+            mov_no.full_clean()
+
+    def test_cuenta_credito_no_puede_ser_cta_salida_contra_cta_entrada_normal(self):
+        mov_no = Movimiento(
+            concepto='Movimiento prohibido',
+            importe=50,
+            cta_entrada=self.cuenta1,
+            cta_salida=self.cc1
+        )
+
+        with self.assertRaisesMessage(
+                ValidationError,
+                'No se permite traspaso entre cuenta crédito y cuenta normal'
+        ):
+            mov_no.full_clean()
 
 
 class TestModelMovimientoModificar(TestModelMovimiento):

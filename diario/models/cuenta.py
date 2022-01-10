@@ -62,6 +62,10 @@ class Cuenta(PolymorphModel):
         return str(self.content_type) == 'diario | cuenta acumulativa'
 
     @property
+    def es_cuenta_credito(self):
+        return self.has_not_none_attr('contracuenta')
+
+    @property
     def saldo(self):
         return self._saldo
 
