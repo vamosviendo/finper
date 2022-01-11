@@ -195,6 +195,11 @@ class Movimiento(MiModel):
                     raise ValidationError(
                         'No se permite traspaso '
                         'entre cuenta crédito y cuenta normal')
+                if self.cta_salida != self.cta_entrada.contracuenta:
+                    raise ValidationError(
+                        f'"{self.cta_salida.nombre}" no es la contrapartida '
+                        f'de "{self.cta_entrada.nombre}"'
+                    )
 
         if self.cta_salida:
             if self.cta_salida.es_cuenta_credito:

@@ -470,7 +470,7 @@ class TestModelMovimientoClean(TestModelMovimiento):
         self.cuenta2 = Cuenta.crear(
             nombre='Cuenta titular 2', slug='ct2', titular=self.titular2)
         movimiento = Movimiento.crear('Préstamo', 100, self.cuenta2, self.cuenta1)
-        self.cc1, self.cc2 = movimiento._recuperar_cuentas_credito(Cuenta)
+        self.cc12, self.cc21 = movimiento._recuperar_cuentas_credito(Cuenta)
 
 
     def test_requiere_al_menos_una_cuenta(self):
@@ -514,7 +514,7 @@ class TestModelMovimientoClean(TestModelMovimiento):
         mov_no_e = Movimiento(
             concepto='Movimiento prohibido',
             importe=50,
-            cta_entrada=self.cc2,
+            cta_entrada=self.cc21,
         )
         with self.assertRaisesMessage(
             ValidationError,
@@ -526,7 +526,7 @@ class TestModelMovimientoClean(TestModelMovimiento):
         mov_no_s = Movimiento(
             concepto='También prohibido',
             importe=50,
-            cta_salida=self.cc1
+            cta_salida=self.cc12
         )
 
         with self.assertRaisesMessage(
@@ -539,7 +539,7 @@ class TestModelMovimientoClean(TestModelMovimiento):
         mov_no = Movimiento(
             concepto='Movimiento prohibido',
             importe=50,
-            cta_entrada=self.cc2,
+            cta_entrada=self.cc21,
             cta_salida=self.cuenta1
         )
 
@@ -554,12 +554,33 @@ class TestModelMovimientoClean(TestModelMovimiento):
             concepto='Movimiento prohibido',
             importe=50,
             cta_entrada=self.cuenta1,
-            cta_salida=self.cc1
+            cta_salida=self.cc12
         )
 
         with self.assertRaisesMessage(
                 ValidationError,
                 'No se permite traspaso entre cuenta crédito y cuenta normal'
+        ):
+            mov_no.full_clean()
+
+    def test_cuenta_credito_solo_puede_moverse_contra_su_contracuenta(self):
+        self.titular3 = Titular.crear(nombre='Titular 3', titname='tit3')
+        self.cuenta3 = Cuenta.crear(
+            nombre='Cuenta titular 3', slug='ct3', titular=self.titular3)
+        movimiento2 = Movimiento.crear(
+            'Otro préstamo', 70, self.cuenta2, self.cuenta3)
+        cc32, cc23 = movimiento2._recuperar_cuentas_credito(Cuenta)
+        mov_no = Movimiento(
+            concepto='Movimiento prohibido',
+            importe=50,
+            cta_entrada=self.cc21,
+            cta_salida=cc32
+        )
+
+        with self.assertRaisesMessage(
+            ValidationError,
+            '"préstamo entre tit3 y tit2" no es la contrapartida '
+            'de "préstamo entre tit2 y tit1"'
         ):
             mov_no.full_clean()
 
