@@ -420,8 +420,15 @@ class Movimiento(MiModel):
         self.id_contramov = contramov.id
 
     def _eliminar_contramovimiento(self):
-        Movimiento.tomar(id=self.id_contramov).delete()
+        contramov = Movimiento.tomar(id=self.id_contramov)
+        cta1 = contramov.cta_entrada
+        tit1 = cta1.titular
+        tit2 = contramov.cta_salida.titular
+        contramov.delete()
+        cta1.refresh_from_db(fields=['_saldo'])
         self.id_contramov = None
+        if cta1.saldo == 0:
+            tit2.acreedores.remove(tit1)
 
     def _regenerar_contramovimiento(self):
         self._eliminar_contramovimiento()

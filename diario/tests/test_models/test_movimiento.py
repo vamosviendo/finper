@@ -1924,6 +1924,13 @@ class TestModelMovimientoMetodoEliminarContramovimiento(TestModelMovimientoModif
         movimiento._eliminar_contramovimiento()
         self.assertIsNone(movimiento.id_contramov)
 
+    def test_si_al_eliminar_contramovimiento_se_cancela_deuda_retira_titular_cta_entrada_de_acreedores_de_titular_cta_salida_y_viceversa(self):
+        movimiento = Movimiento.crear(
+            'Préstamo', 30, self.cuenta3, self.cuenta1)
+        movimiento._eliminar_contramovimiento()
+        self.assertNotIn(self.titular1, self.titular2.acreedores.all())
+        self.assertNotIn(self.titular2, self.titular1.deudores.all())
+
 
 class TestModelMovimientoMetodoRegenerarContramovimiento(TestModelMovimientoModificar):
 
