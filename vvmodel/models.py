@@ -69,6 +69,10 @@ class MiModel(models.Model):
         return cls.get_class_name().lower()
 
     @classmethod
+    def get_related_class(cls, campo):
+        return cls._meta.get_field(campo).related_model
+
+    @classmethod
     def get_max_length(cls, campo):
         return cls._meta.get_field(campo).max_length
 

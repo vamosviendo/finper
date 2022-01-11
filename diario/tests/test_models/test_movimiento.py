@@ -470,7 +470,7 @@ class TestModelMovimientoClean(TestModelMovimiento):
         self.cuenta2 = Cuenta.crear(
             nombre='Cuenta titular 2', slug='ct2', titular=self.titular2)
         movimiento = Movimiento.crear('Préstamo', 100, self.cuenta2, self.cuenta1)
-        self.cc12, self.cc21 = movimiento._recuperar_cuentas_credito(Cuenta)
+        self.cc12, self.cc21 = movimiento._recuperar_cuentas_credito()
 
 
     def test_requiere_al_menos_una_cuenta(self):
@@ -569,7 +569,7 @@ class TestModelMovimientoClean(TestModelMovimiento):
             nombre='Cuenta titular 3', slug='ct3', titular=self.titular3)
         movimiento2 = Movimiento.crear(
             'Otro préstamo', 70, self.cuenta2, self.cuenta3)
-        cc32, cc23 = movimiento2._recuperar_cuentas_credito(Cuenta)
+        cc32, cc23 = movimiento2._recuperar_cuentas_credito()
         mov_no = Movimiento(
             concepto='Movimiento prohibido',
             importe=50,
@@ -1875,7 +1875,7 @@ class TestModelMovimientoMetodoGenerarCuentasCredito(TestModelMovimientoEntreTit
     def test_crea_dos_cuentas_credito(self):
         movimiento = Movimiento.crear(
             'Préstamo', 30, self.cuenta1, self.cuenta2, esgratis=True)
-        movimiento._generar_cuentas_credito(Cuenta)
+        movimiento._generar_cuentas_credito()
         self.assertEqual(Cuenta.cantidad(), 4)
         cc1 = list(Cuenta.todes())[-2]
         cc2 = list(Cuenta.todes())[-1]
@@ -1886,23 +1886,23 @@ class TestModelMovimientoMetodoGenerarCuentasCredito(TestModelMovimientoEntreTit
         self.cuenta3 = Cuenta.crear('Cuenta 3', 'c3', titular=self.titular1)
         movimiento = Movimiento.crear('Traspaso', 10, self.cuenta3, self.cuenta1)
         with self.assertRaises(errors.ErrorMovimientoNoPrestamo):
-            movimiento._generar_cuentas_credito(Cuenta)
+            movimiento._generar_cuentas_credito()
 
     def test_no_funciona_en_movimiento_que_no_sea_de_traspaso(self):
         movimiento = Movimiento.crear('Traspaso', 10, self.cuenta1)
         with self.assertRaises(errors.ErrorMovimientoNoPrestamo):
-            movimiento._generar_cuentas_credito(Cuenta)
+            movimiento._generar_cuentas_credito()
 
     def test_guarda_cuenta_credito_acreedor_como_contracuenta_de_cuenta_credito_deudor(self):
         movimiento = Movimiento.crear(
             'Préstamo', 30, self.cuenta1, self.cuenta2, esgratis=True)
-        cc2, cc1 = movimiento._generar_cuentas_credito(Cuenta)
+        cc2, cc1 = movimiento._generar_cuentas_credito()
         self.assertEqual(cc1._contracuenta, cc2)
 
     def test_guarda_cuenta_credito_deudor_como_contracuenta_de_cuenta_credito_acreedor(self):
         movimiento = Movimiento.crear(
             'Préstamo', 30, self.cuenta1, self.cuenta2, esgratis=True)
-        cc2, cc1 = movimiento._generar_cuentas_credito(Cuenta)
+        cc2, cc1 = movimiento._generar_cuentas_credito()
         self.assertEqual(cc2._cuentacontra, cc1)
 
 

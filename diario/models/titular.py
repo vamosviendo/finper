@@ -55,13 +55,8 @@ class Titular(MiModel):
     def cuenta_credito_con(self, otro):
         try:
             return self.cuentas.get(slug=f'_{self.titname}-{otro.titname}')
-        except self.modelo_relacionado_con('cuentas').DoesNotExist:
+        except self.get_related_class('cuentas').DoesNotExist:
             return None
-
-    # TODO: Pasar a MiModel
-    @classmethod
-    def modelo_relacionado_con(cls, campo):
-        return cls._meta.get_field(campo).related_model
 
     def cancelar_deuda_de(self, otro):
         if otro not in self.deudores.all():

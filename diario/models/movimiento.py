@@ -361,7 +361,8 @@ class Movimiento(MiModel):
         self._crear_movimiento_credito()
         self.emisor.deudores.add(self.receptor)
 
-    def _recuperar_cuentas_credito(self, cls):
+    def _recuperar_cuentas_credito(self):
+        cls = self.get_related_class('cta_entrada')
         return (
             cls.tomar(
                 slug=f'_{self.emisor.titname}'
@@ -370,7 +371,8 @@ class Movimiento(MiModel):
                 slug=f'_{self.receptor.titname}'
                      f'-{self.emisor.titname}'))
 
-    def _generar_cuentas_credito(self, cls):
+    def _generar_cuentas_credito(self):
+        cls = self.get_related_class('cta_entrada')
         if not self.emisor or not self.receptor or self.emisor == self.receptor:
             raise errors.ErrorMovimientoNoPrestamo
         cc1 = cls.crear(
@@ -389,12 +391,12 @@ class Movimiento(MiModel):
         return (cc1, cc2)
 
     def _crear_movimiento_credito(self):
-        from diario.models import Cuenta
+        Cuenta = self.get_related_class('cta_entrada')
 
         try:
             # TODO: Terminar de reformular esto. Funciona pero es un escracho
             cuenta_acreedora, cuenta_deudora = \
-                self._recuperar_cuentas_credito(Cuenta)
+                self._recuperar_cuentas_credito()
             if cuenta_acreedora.saldo >= 0:
                 concepto = 'Aumento de crédito'
             elif cuenta_acreedora.saldo < 0:
@@ -405,7 +407,7 @@ class Movimiento(MiModel):
                 raise ValueError('Error en movimiento de crédito')
         except Cuenta.DoesNotExist:
             cuenta_acreedora, cuenta_deudora = \
-                self._generar_cuentas_credito(Cuenta)
+                self._generar_cuentas_credito()
             concepto = 'Constitución de crédito'
 
         contramov = Movimiento.crear(

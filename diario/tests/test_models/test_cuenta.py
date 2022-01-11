@@ -180,7 +180,7 @@ class TestModelCuentaPropiedadEsCuentaCredito(TestCase):
         self.assertFalse(self.cuenta1.es_cuenta_credito)
 
     def test_devuelve_true_si_cuenta_es_cuenta_credito(self):
-        cc2, cc1 = self.mov._recuperar_cuentas_credito(Cuenta)
+        cc2, cc1 = self.mov._recuperar_cuentas_credito()
         self.assertTrue(cc2.es_cuenta_credito)
 
     def test_devuelve_false_si_cuenta_no_es_interactiva(self):
