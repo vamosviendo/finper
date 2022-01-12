@@ -98,7 +98,7 @@ class TestModelCuentaPropiedadContracuenta(TestCase):
         self.cuenta2 = Cuenta.crear(
             nombre='Cuenta titular 2', slug='ct2', titular=self.titular2)
         self.mov1 = Movimiento.crear('Traspaso', 100, self.cuenta1, self.cuenta2)
-        self.ccacr, self.ccdeu = self.mov1._recuperar_cuentas_credito()
+        self.ccacr, self.ccdeu = self.mov1.recuperar_cuentas_credito()
 
     def test_devuelve_campo_contracuenta_en_cuenta_credito_de_deudor(self):
         self.assertEqual(self.ccdeu.contracuenta, self.ccdeu._contracuenta)

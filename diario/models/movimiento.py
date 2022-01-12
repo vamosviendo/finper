@@ -350,6 +350,16 @@ class Movimiento(MiModel):
                 self.receptor != self.emisor and
                 not esgratis)
 
+    def recuperar_cuentas_credito(self):
+        cls = self.get_related_class('cta_entrada')
+        return (
+            cls.tomar(
+                slug=f'_{self.emisor.titname}'
+                     f'-{self.receptor.titname}'),
+            cls.tomar(
+                slug=f'_{self.receptor.titname}'
+                     f'-{self.emisor.titname}'))
+
     def _cambia_campo(self, *args):
         mov_guardado = self.tomar_de_bd()
         for campo in args:
@@ -360,16 +370,6 @@ class Movimiento(MiModel):
     def _registrar_credito(self):
         self._crear_movimiento_credito()
         self.emisor.deudores.add(self.receptor)
-
-    def _recuperar_cuentas_credito(self):
-        cls = self.get_related_class('cta_entrada')
-        return (
-            cls.tomar(
-                slug=f'_{self.emisor.titname}'
-                     f'-{self.receptor.titname}'),
-            cls.tomar(
-                slug=f'_{self.receptor.titname}'
-                     f'-{self.emisor.titname}'))
 
     def _generar_cuentas_credito(self):
         cls = self.get_related_class('cta_entrada')
@@ -396,7 +396,7 @@ class Movimiento(MiModel):
         try:
             # TODO: Terminar de reformular esto. Funciona pero es un escracho
             cuenta_acreedora, cuenta_deudora = \
-                self._recuperar_cuentas_credito()
+                self.recuperar_cuentas_credito()
             if cuenta_acreedora.saldo >= 0:
                 concepto = 'Aumento de crédito'
             elif cuenta_acreedora.saldo < 0:

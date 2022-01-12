@@ -470,7 +470,7 @@ class TestModelMovimientoClean(TestModelMovimiento):
         self.cuenta2 = Cuenta.crear(
             nombre='Cuenta titular 2', slug='ct2', titular=self.titular2)
         movimiento = Movimiento.crear('Préstamo', 100, self.cuenta2, self.cuenta1)
-        self.cc12, self.cc21 = movimiento._recuperar_cuentas_credito()
+        self.cc12, self.cc21 = movimiento.recuperar_cuentas_credito()
 
 
     def test_requiere_al_menos_una_cuenta(self):
@@ -569,7 +569,7 @@ class TestModelMovimientoClean(TestModelMovimiento):
             nombre='Cuenta titular 3', slug='ct3', titular=self.titular3)
         movimiento2 = Movimiento.crear(
             'Otro préstamo', 70, self.cuenta2, self.cuenta3)
-        cc32, cc23 = movimiento2._recuperar_cuentas_credito()
+        cc32, cc23 = movimiento2.recuperar_cuentas_credito()
         mov_no = Movimiento(
             concepto='Movimiento prohibido',
             importe=50,
