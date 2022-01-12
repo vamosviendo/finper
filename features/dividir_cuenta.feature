@@ -53,4 +53,5 @@ Escenario: Asignar subcuenta a un titular distinto al dividir cuenta
 
     Entonces veo una cuenta en la grilla con nombre "Cajón de arriba"
     Y no veo una cuenta "Billetera" en la grilla
+    Y me detengo
     Y veo que el patrimonio de "Otro Titular" es 150 pesos
