@@ -2,6 +2,7 @@ from datetime import date
 from unittest.mock import patch
 
 from django.core.exceptions import NON_FIELD_ERRORS
+from django.forms import fields
 from django.test import TestCase
 
 from diario.forms import FormMovimiento, FormCuenta, \
@@ -268,3 +269,13 @@ class TestFormMovimiento(TestCase):
             'cta_entrada': cuenta
         })
         self.assertEqual(formmov.fields['fecha'].initial(), date.today())
+
+    def test_muestra_campo_esgratis(self):
+        formmov = FormMovimiento()
+        self.assertIn('esgratis', formmov.fields.keys())
+        print(formmov.fields['esgratis'].initial)
+        self.assertIsInstance(formmov.fields['esgratis'], fields.BooleanField)
+
+    def test_campo_esgratis_seleccionado_por_defecto(self):
+        formmov = FormMovimiento()
+        self.assertEqual(formmov.fields['esgratis'].initial, True)
