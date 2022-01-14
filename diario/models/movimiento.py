@@ -38,6 +38,10 @@ class Movimiento(MiModel):
     )
     id_contramov = models.IntegerField(null=True, blank=True)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.esgratis = False
+
     class Meta:
         ordering = ('fecha', 'orden_dia')
 
@@ -100,8 +104,9 @@ class Movimiento(MiModel):
             cta_salida=cta_salida,
             **kwargs
         )
+        movimiento.esgratis = esgratis
         movimiento.full_clean()
-        movimiento.save(esgratis=esgratis)
+        movimiento.save()
 
         return movimiento
 
@@ -230,7 +235,7 @@ class Movimiento(MiModel):
 
         super().delete(*args, **kwargs)
 
-    def save(self, esgratis=False, *args, **kwargs):
+    def save(self, *args, **kwargs):
 
         # Movimiento nuevo
         if self._state.adding:
@@ -242,7 +247,7 @@ class Movimiento(MiModel):
                 self.cta_salida.saldo -= self.importe
                 self.cta_salida.save()
 
-            if self.es_prestamo(esgratis=esgratis):
+            if self.es_prestamo():
                 if self.receptor not in self.emisor.acreedores.all():
                     self._registrar_credito()
                 else:
@@ -345,10 +350,10 @@ class Movimiento(MiModel):
     def tiene_cta_salida_acumulativa(self):
         return self.cta_salida and self.cta_salida.es_acumulativa
 
-    def es_prestamo(self, esgratis=False):
+    def es_prestamo(self):
         return (self.cta_entrada and self.cta_salida and
                 self.receptor != self.emisor and
-                not esgratis)
+                not self.esgratis)
 
     def recuperar_cuentas_credito(self):
         cls = self.get_related_class('cta_entrada')
@@ -435,5 +440,3 @@ class Movimiento(MiModel):
     def _regenerar_contramovimiento(self):
         self._eliminar_contramovimiento()
         self._crear_movimiento_credito()
-
-

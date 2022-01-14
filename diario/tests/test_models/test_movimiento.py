@@ -1867,7 +1867,8 @@ class TestModelMovimientoMetodoEsPrestamo(TestModelMovimientoModificar):
             cta_entrada=self.cuenta1,
             cta_salida=self.cuenta3,
         )
-        self.assertFalse(mov.es_prestamo(esgratis=True))
+        mov.esgratis=True
+        self.assertFalse(mov.es_prestamo())
 
 
 class TestModelMovimientoMetodoGenerarCuentasCredito(TestModelMovimientoEntreTitulares):
