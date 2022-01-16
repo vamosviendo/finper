@@ -370,6 +370,7 @@ class CuentaInteractiva(Cuenta):
                             f'{subcuenta["nombre"].lower().capitalize()}',
                     importe=subcuenta.pop('saldo'),
                     cta_salida=self,
+                    esgratis=subcuenta.pop('esgratis', False),
                 ))
             except errors.ErrorImporteCero:
                 # Si el saldo de la subcuenta es 0, no generar movimiento

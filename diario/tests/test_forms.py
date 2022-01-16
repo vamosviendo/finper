@@ -48,12 +48,14 @@ class TestFormSubcuentas(TestCase):
                 'nombre': 'Billetera',
                 'slug': 'ebil',
                 'saldo': 50.0,
-                'titular': self.cta.titular
+                'titular': self.cta.titular,
+                'esgratis': False,
             }, {
                 'nombre': 'Cajón de arriba',
                 'slug': 'ecaj',
                 'saldo': 200.0,
-                'titular': self.cta.titular
+                'titular': self.cta.titular,
+                'esgratis': False,
             },
         ]
 
@@ -128,6 +130,36 @@ class TestFormSubcuentas(TestCase):
             mock_dividir_y_actualizar.call_args[0][1]['titular'],
             titular2
         )
+
+    def test_muestra_campo_esgratis(self):
+        self.assertIn('esgratis', self.form.forms[0].fields.keys())
+        self.assertIsInstance(
+            self.form.forms[0].fields['esgratis'],
+            fields.BooleanField
+        )
+
+    def test_campo_esgratis_no_seleccionado_por_defecto(self):
+        self.assertEqual(self.form.forms[0].fields['esgratis'].initial, False)
+
+    @patch('diario.forms.Movimiento._crear_movimiento_credito')
+    def test_campo_esgratis_seleccionado_en_subcuenta_con_otro_titular_no_genera_movimiento_credito(
+            self, mock_crear_movimiento_credito):
+        titular2 = Titular.crear(titname='tito', nombre='Tito Gómez')
+        self.form.data.update({'form-1-titular': titular2})
+        self.form.data.update({'form-1-esgratis': True})
+        self.form.full_clean()
+        self.form.save()
+        mock_crear_movimiento_credito.assert_not_called()
+
+    @patch('diario.forms.Movimiento._crear_movimiento_credito', autospec=True)
+    def test_campo_esgratis_no_seleccionado_en_subcuenta_con_otro_titular_genera_movimiento_credito(
+            self, mock_crear_movimiento_credito):
+        titular2 = Titular.crear(titname='tito', nombre='Tito Gómez')
+        self.form.data.update({'form-1-titular': titular2})
+        self.form.data.update({'form-1-esgratis': False})
+        self.form.full_clean()
+        mov = self.form.save().subcuentas.last().movs()[0]
+        mock_crear_movimiento_credito.assert_called_once_with(mov)
 
 
 class TestFormCrearSubcuenta(TestCase):

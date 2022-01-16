@@ -1,5 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
+from django.forms import BaseFormSet
 
 from diario.models import CuentaAcumulativa, CuentaInteractiva, Movimiento, Titular
 from utils.iterables import hay_mas_de_un_none_en
@@ -49,7 +50,16 @@ class FormSubcuenta(forms.Form):
         return self.cleaned_data
 
 
-CuentaFormset = forms.formset_factory(form=FormSubcuenta, extra=2)
+class CuentaBaseFormset(BaseFormSet):
+    def add_fields(self, form, index):
+        super().add_fields(form, index)
+        form.fields['esgratis'] = forms.BooleanField(
+            required=False,
+            initial=False
+        )
+
+
+CuentaFormset = forms.formset_factory(form=FormSubcuenta, formset=CuentaBaseFormset, extra=2)
 
 
 class FormSubcuentas(CuentaFormset):
