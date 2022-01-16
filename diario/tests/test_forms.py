@@ -273,9 +273,27 @@ class TestFormMovimiento(TestCase):
     def test_muestra_campo_esgratis(self):
         formmov = FormMovimiento()
         self.assertIn('esgratis', formmov.fields.keys())
-        print(formmov.fields['esgratis'].initial)
         self.assertIsInstance(formmov.fields['esgratis'], fields.BooleanField)
 
-    def test_campo_esgratis_seleccionado_por_defecto(self):
+    def test_campo_esgratis_no_seleccionado_por_defecto(self):
         formmov = FormMovimiento()
-        self.assertEqual(formmov.fields['esgratis'].initial, True)
+        self.assertEqual(formmov.fields['esgratis'].initial, False)
+
+    @patch('diario.forms.Movimiento._crear_movimiento_credito')
+    def test_campo_esgratis_seleccionado_en_movimiento_entre_titulares_no_genera_movimiento_credito(
+            self, mock_crear_movimiento_credito):
+        titular1 = Titular.crear(nombre='Titular 1', titname='tit1')
+        titular2 = Titular.crear(nombre='Titular 2', titname='tit2')
+        cuenta1 = Cuenta.crear(nombre='Cuenta titular 1', slug='ct1', titular=titular1)
+        cuenta2 = Cuenta.crear(nombre='Cuenta titular 2', slug='ct2', titular=titular2)
+        formmov = FormMovimiento(data={
+            'fecha': date.today(),
+            'concepto': 'Pago',
+            'importe': 150,
+            'cta_entrada': cuenta1,
+            'cta_salida': cuenta2,
+            'esgratis': True
+        })
+        formmov.full_clean()
+        formmov.save()
+        mock_crear_movimiento_credito.assert_not_called()

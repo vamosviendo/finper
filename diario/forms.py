@@ -104,7 +104,7 @@ class FormCrearSubcuenta(forms.Form):
 class FormMovimiento(forms.ModelForm):
 
     importe = forms.FloatField()
-    esgratis = forms.BooleanField(required=False, initial=True)
+    esgratis = forms.BooleanField(required=False, initial=False)
 
     def __init__(self, *args, **kwargs):
         instance = kwargs.get('instance')
@@ -140,4 +140,5 @@ class FormMovimiento(forms.ModelForm):
 
     def save(self, *args, **kwargs):
         self.instance.importe = self.cleaned_data['importe']
+        self.instance.esgratis = self.cleaned_data['esgratis']
         return super().save(*args, **kwargs)
