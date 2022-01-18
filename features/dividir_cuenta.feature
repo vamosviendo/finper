@@ -52,6 +52,29 @@ Escenario: Asignar subcuenta a un titular distinto al dividir cuenta
     Y voy a la página "tit_detalle" del titular "Otro Titular"
 
     Entonces veo una cuenta en la grilla con nombre "Cajón de arriba"
+    Y veo una cuenta en la grilla con nombre "Préstamo entre tit2 y default"
     Y no veo una cuenta "Billetera" en la grilla
-    Y me detengo
+    Y veo que el patrimonio de "Otro Titular" es cero pesos
+
+
+Escenario: Asignar subcuenta a un titular distinto al dividir cuenta sin generar deuda
+    Dada una cuenta con los siguientes valores:
+        | nombre   | slug | saldo |
+        | Efectivo | e    | 200   |
+    Y un titular con los siguientes valores:
+        | titname | nombre       |
+        | tit2    | Otro Titular |
+
+    Cuando voy a la página "cta_div" de la cuenta "Efectivo"
+
+    Entonces veo un campo "form-0-titular" en el form de id "dividir_cta"
+
+    Cuando completo el form de dividir cuenta con estos valores:
+        | nombre          | slug | saldo | titular      | esgratis |
+        | Cajón de arriba | ecar | 150   | Otro Titular | True     |
+        | Billetera       | ebil |       |              |          |
+    Y voy a la página "tit_detalle" del titular "Otro Titular"
+
+    Entonces veo una cuenta en la grilla con nombre "Cajón de arriba"
+    Y no veo una cuenta "Billetera" en la grilla
     Y veo que el patrimonio de "Otro Titular" es 150 pesos

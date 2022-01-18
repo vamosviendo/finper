@@ -2,7 +2,7 @@ from urllib.parse import urlparse
 
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, \
-    InvalidElementStateException
+    InvalidElementStateException, UnexpectedTagNameException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.select import Select
@@ -129,6 +129,10 @@ class MiFirefox(webdriver.Firefox):
         """ Elimina el valor de un campo de form."""
         self.find_element_by_id(id_campo).clear()
 
+    def completar_checkbox(self, checkbox, boolvalue):
+        if checkbox.is_selected() != boolvalue:
+            checkbox.click()
+
     def completar(self, id_campo, texto, criterio=By.ID):
         """ Completa un campo de texto en un form, o selecciona un valor
             de un campo select."""
@@ -137,7 +141,16 @@ class MiFirefox(webdriver.Firefox):
             campo.clear()
             campo.send_keys(str(texto))
         except InvalidElementStateException:
-            Select(campo).select_by_visible_text(texto)
+            try:
+                Select(campo).select_by_visible_text(texto)
+            except UnexpectedTagNameException:
+                if type(texto) == bool:
+                    valor = texto
+                elif texto.lower() == 'true':
+                    valor = True
+                else:
+                    valor = False
+                self.completar_checkbox(campo, valor)
 
     def pulsar(self, boton="id_btn_submit", crit=By.ID):
         """ Busca un botón y lo pulsa."""

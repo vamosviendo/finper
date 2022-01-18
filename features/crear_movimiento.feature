@@ -6,6 +6,12 @@ Característica: Ingresar movimiento
         de las cuentas involucradas
     y que entre las opciones de cuenta de entrada y de cuenta de cta_salida
         no aparezcan cuentas acumulativas.
+    Quiero que si el movimiento que genero se da entre cuentas de distintos
+        titulares, genere un movimiento en contrario que de cuenta de la deuda
+        contraída por el titular de la cuenta receptora con el titular de la
+        cuenta emisora
+    Quiero poder determinar que un movimiento entre cuentas de distintos
+        titulares no genere deuda del receptor para con el emisor.
 
 Escenario: Ingresar movimiento
     Dada una cuenta
@@ -40,3 +46,111 @@ Escenario: Cuentas acumulativas no aparecen en formulario de carga de movimiento
         | efect_sub1 |
         | efect_sub2 |
     Y veo que entre las opciones del campo "cta_salida" no figura "efectivo acumulativa"
+
+
+Escenario: Crear traspaso entre cuentas de distintos titulares
+    Dados dos titulares
+    Y dos cuentas con los siguientes valores:
+        | nombre         | slug | saldo | titular |
+        | cuenta de tito | ctit | 100   | tito    |
+        | cuenta de juan | cjua |       | juan    |
+
+    Cuando genero un movimiento "Préstamo" de 30 pesos de "cuenta de tito" a "cuenta de juan"
+
+    Entonces veo movimientos con los siguientes valores:
+        | concepto                | detalle                     | importe | cta_entrada | cta_salida |
+        | Préstamo                |                             | 30,00   | cjua        | ctit       |
+        | Constitución de crédito | de Tito Gómez a Juan Juánez | 30,00   | _tito-juan  | _juan-tito |
+
+    Cuando voy a la página "tit_detalle" del titular "Tito Gómez"
+
+    Entonces veo una cuenta en la grilla con slug "_tito-juan" y nombre "Préstamo entre tito y juan"
+    Y veo que el saldo de "Préstamo entre tito y juan" es 30 pesos
+
+    Cuando voy a la página "tit_detalle" del titular "Juan Juánez"
+
+    Entonces veo una cuenta en la grilla con slug "_juan-tito" y nombre "Préstamo entre juan y tito"
+    Y veo que el saldo de "Préstamo entre juan y tito" es -30 pesos
+
+
+    Cuando genero un movimiento "Préstamo" de 10 pesos de "cuenta de tito" a "cuenta de juan"
+
+    Entonces veo movimientos con los siguientes valores:
+        | concepto                | detalle                     | importe | cta_entrada | cta_salida   |
+        | Préstamo                |                             | 10,00   | cjua        | ctit         |
+        | Aumento de crédito      | de Tito Gómez a Juan Juánez | 10,00   | _tito-juan  | _juan-tito   |
+
+    Cuando voy a la página "tit_detalle" del titular "Tito Gómez"
+
+    Entonces veo que el saldo de "Préstamo entre tito y juan" es 40 pesos
+
+    Cuando voy a la página "tit_detalle" del titular "Juan Juánez"
+
+    Entonces veo que el saldo de "Préstamo entre juan y tito" es -40 pesos
+
+
+    Cuando genero un movimiento "Devolución" de 15 pesos de "cuenta de juan" a "cuenta de tito"
+
+    Entonces veo movimientos con los siguientes valores:
+        | concepto                 | detalle                     | importe | cta_entrada | cta_salida |
+        | Devolución               |                             | 15,00   | ctit        | cjua       |
+        | Pago a cuenta de crédito | de Juan Juánez a Tito Gómez | 15,00   | _tito-juan  | _juan-tito |
+
+    Cuando voy a la página "tit_detalle" del titular "Tito Gómez"
+
+    Entonces veo que el saldo de "Préstamo entre tito y juan" es 25 pesos
+
+    Cuando voy a la página "tit_detalle" del titular "Juan Juánez"
+
+    Entonces veo que el saldo de "Préstamo entre juan y tito" es -25 pesos
+
+
+    Cuando genero un movimiento "Devolución" de 25 pesos de "cuenta de juan" a "cuenta de tito"
+
+    Entonces veo movimientos con los siguientes valores:
+        | concepto                | detalle                     | importe | cta_entrada | cta_salida |
+        | Devolución              |                             | 25,00   | ctit        | cjua       |
+        | Cancelación de crédito  | de Juan Juánez a Tito Gómez | 25,00   | _tito-juan  | _juan-tito |
+
+    Cuando voy a la página "tit_detalle" del titular "Tito Gómez"
+
+    Entonces no veo una cuenta "_tito-juan" en la grilla
+
+    Cuando voy a la página "tit_detalle" del titular "Juan Juánez"
+
+    Entonces no veo una cuenta "_juan-tito" en la grilla
+
+
+Escenario: Crear traspaso entre cuentas de distintos titulares sin generar deuda
+    Dados dos titulares
+    Y dos cuentas con los siguientes valores:
+        | nombre         | slug | saldo | titular |
+        | cuenta de tito | ctit | 100   | tito    |
+        | cuenta de juan | cjua |       | juan    |
+
+    Cuando voy a la página "mov_nuevo"
+    Entonces veo un campo "esgratis" en el form de id "movimiento"
+
+    Cuando agrego un movimiento con campos
+        | nombre      | valor          |
+        | concepto    | Préstamo       |
+        | importe     | 30             |
+        | cta_entrada | cuenta de juan |
+        | cta_salida  | cuenta de tito |
+        | esgratis    | True           |
+
+    Entonces veo movimientos con los siguientes valores:
+        | concepto                | detalle                     | importe | cta_entrada | cta_salida |
+        | Préstamo                |                             | 30,00   | cjua        | ctit       |
+
+    Y no veo movimientos con concepto "Constitución de crédito"
+
+    Cuando voy a la página "tit_detalle" del titular "Tito Gómez"
+
+    Entonces no veo una cuenta en la grilla con slug "_tito-juan"
+    Y veo que el patrimonio de "Tito Gómez" es 70 pesos
+
+    Cuando voy a la página "tit_detalle" del titular "Juan Juánez"
+
+    Entonces no veo una cuenta en la grilla con slug "_juan-tito"
+    Y veo que el patrimonio de "Juan Juánez" es 30 pesos

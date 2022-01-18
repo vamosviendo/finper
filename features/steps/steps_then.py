@@ -228,9 +228,6 @@ def veo_solo_movimientos_relacionados_con(context, nombre_titular):
 @then('veo una cuenta en la grilla con slug "{slug}" y nombre "{nombre}"')
 def veo_una_cuenta(context, slug, nombre):
     cuentas = context.browser.esperar_elementos('class_div_cuenta')
-    print('SLUG, NOMBRE:', slug, nombre)
-    for cta in cuentas:
-        print(cta.get_attribute('id'))
     div_cuenta = next(x
                       for x in cuentas
                       if x.get_attribute('id') == f'id_div_cta_{slug.lower()}')
@@ -262,11 +259,21 @@ def cuenta_no_esta_en_grilla(context, nombre):
     )
 
 
-@then('veo una cuenta en la grilla con slug "{nombre}"')
-def veo_una_cuenta(context, nombre):
+@then('veo una cuenta en la grilla con slug "{slug}"')
+def veo_una_cuenta(context, slug):
     cuentas = context.browser.esperar_elementos('class_div_cuenta')
     context.test.assertIn(
-        nombre.lower(),
+        slug.upper(),
+        [x.find_element_by_class_name('class_nombre_cuenta').text
+         for x in cuentas]
+    )
+
+
+@then('no veo una cuenta en la grilla con slug "{slug}"')
+def cuenta_no_esta_en_grilla(context, slug):
+    cuentas = context.browser.esperar_elementos('class_div_cuenta')
+    context.test.assertNotIn(
+        slug.upper(),
         [x.find_element_by_class_name('class_nombre_cuenta').text
          for x in cuentas]
     )
@@ -375,6 +382,13 @@ def veo_movimientos(context):
             context.test.assertIn(
                 fila['cta_salida'].lower(), movs_ctas[indice])
 
+
+@then('no veo movimientos con concepto "{concepto}"')
+def no_veo_movimientos(context, concepto):
+    movs_concepto = [
+        c.text for c in context.browser.esperar_elementos('class_td_concepto')
+    ]
+    context.test.assertNotIn(concepto, movs_concepto)
 
 @then('veo un movimiento con los siguientes valores')
 def veo_un_movimiento(context):
