@@ -10,7 +10,7 @@ Escenario: Agregar subcuenta a cuenta
     Dada una cuenta con los siguientes valores:
         | nombre   | slug | saldo |
         | Efectivo | e    | 200   |
-    
+
     Y la cuenta "efectivo" dividida en subcuentas:
         | nombre    | slug | saldo |
         | Cajón     | ecaj | 130   |
