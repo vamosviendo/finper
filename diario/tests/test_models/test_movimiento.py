@@ -1419,6 +1419,21 @@ class TestModelMovimientoModificarVariosCampos(TestModelMovimientoModificar):
         self.assertEqual(self.cuenta1.saldo, self.saldo1+self.imp2)
 
 
+class TestModelMovimientoModificarEsGratis(TestModelMovimientoModificar):
+
+    def setUp(self):
+        super().setUp()
+        self.mov4 = Movimiento.crear(
+            'traspaso entre titulares', 120, self.cuenta3, self.cuenta1)
+
+    def test_mov_esgratis_false_elimina_contramovimiento(self):
+        id_contramov = self.mov4.id_contramov
+        self.mov4.esgratis = True
+        self.mov4.full_clean()
+        self.mov4.save()
+        self.assertEqual(Movimiento.filtro(id=id_contramov).count(), 0)
+
+
 class TestModelMovimientoConCuentaAcumulativaModificar(TestModelMovimientoModificar):
 
     def setUp(self):

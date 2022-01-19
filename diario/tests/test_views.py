@@ -987,6 +987,30 @@ class TestMovMod(TestCase):
 
         self.assertEqual(self.cuenta.saldo, saldo)
 
+    def test_si_se_selecciona_esgratis_en_movimiento_entre_titulares_desaparece_contramovimiento(self):
+        titular2 = Titular.crear(nombre="Titular 2", titname="tit2")
+        cta_ajena = Cuenta.crear(
+            nombre="Cuenta de tit2",
+            slug="ctit2",
+            titular=titular2
+        )
+        movimiento = Movimiento.crear('Préstamo', 50, cta_ajena, self.cuenta)
+        id_contramov = movimiento.id_contramov
+
+        response = self.client.post(
+            reverse('mov_mod', args=[movimiento.pk]),
+            {
+                'fecha': date.today(),
+                'concepto': 'Préstamo',
+                'importe': 50,
+                'cta_entrada': cta_ajena.pk,
+                'cta_salida': self.cuenta.pk,
+                'esgratis': True
+            }
+        )
+
+        self.assertEqual(Movimiento.filtro(id=id_contramov).count(), 0)
+
 
 @patch('diario.views.verificar_saldos')
 class TestVerificarSaldo(TestCase):
