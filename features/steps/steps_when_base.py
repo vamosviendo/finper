@@ -188,7 +188,8 @@ def ingresar_password(context):
         f'Cuando escribo "{context.test_password}" en el campo "password"')
 
 
-@when('{accion} "{texto}" en el campo "{campo}"') # acción=escribo, selecciono
+# acción=escribo, selecciono, elijo (para bool)
+@when('{accion} "{texto}" en el campo "{campo}"')
 def completar_campo(context, accion, texto, campo):
     if accion == 'escribo':
         try:
@@ -207,8 +208,12 @@ def completar_campo(context, accion, texto, campo):
         texto = '---------' if texto == 'nada' else texto
         context.browser.completar(
             f'select[name="{campo}"', texto, By.CSS_SELECTOR)
+    elif accion == 'elijo':
+        valor = True if texto.lower() == 'true' else False
+        context.browser.completar(
+            f'input[name="{campo}"', valor, By.CSS_SELECTOR)
     else:
-        raise ValueError('La acción debe ser "escribo" o "selecciono')
+        raise ValueError('La acción debe ser "escribo", "selecciono" o "elijo"')
 
 
 @when('tomo las medidas del elemento dado "{nombre_elemento}"')

@@ -6,7 +6,7 @@ Característica: Modificar movimiento
         a menos que se modifiquen importes o cuentas
     y que si alguna de las cuentas involucradas es acumulativa
         no se la pueda cambiar
-        y si es interactiva, no aparezcan cuentas acumulativas entre las 
+        y si es interactiva, no aparezcan cuentas acumulativas entre las
             opciones para cambiarla.
 
 Escenario: Modificar movimiento
@@ -67,4 +67,26 @@ Escenario: Se modifica movimiento con cuenta acumulativa
         | subcuenta 1 efectivo |
         | subcuenta 2 efectivo |
     Y veo que entre las opciones del campo "cta_entrada" no figura "cta 1 efectivo"
-    
+
+
+Escenario: Se modifica gratuidad de movimiento entre cuentas de distinto titular
+    Dados dos titulares
+    Y 2 cuentas con los siguientes valores:
+        | nombre         | slug  | titular |
+        | cuenta de tito | ctito | tito    |
+        | cuenta de juan | cjuan | juan    |
+    Y un movimiento con los siguientes valores:
+        | concepto                | importe | cta_entrada | cta_salida |
+        | préstamo de juan a tito |     100 | ctito       | cjuan      |
+
+    Cuando voy a la página "modificar movimiento" del último movimiento
+    Y elijo "True" en el campo "esgratis"
+    Y cliqueo en el botón
+
+    Entonces no veo movimientos con concepto "Constitución de crédito"
+
+    Cuando voy a la página "modificar movimiento" del último movimiento
+    Y elijo "False" en el campo "esgratis"
+    Y cliqueo en el botón
+
+    Entonces veo un movimiento con concepto "Constitución de crédito"

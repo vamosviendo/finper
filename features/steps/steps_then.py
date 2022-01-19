@@ -390,6 +390,15 @@ def no_veo_movimientos(context, concepto):
     ]
     context.test.assertNotIn(concepto, movs_concepto)
 
+
+@then('veo un movimiento con concepto "{concepto}"')
+def veo_movimientos(context, concepto):
+    movs_concepto = [
+        c.text for c in context.browser.esperar_elementos('class_td_concepto')
+    ]
+    context.test.assertIn(concepto, movs_concepto)
+
+
 @then('veo un movimiento con los siguientes valores')
 def veo_un_movimiento(context):
     context.execute_steps(f'''
