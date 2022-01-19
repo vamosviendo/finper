@@ -461,6 +461,21 @@ class TestModelMovimientoEntreTitularesSiguientes(
             'Devolución', 16, cta_entrada=self.cuenta2, cta_salida=self.cuenta1)
         self.assertIn(self.titular2, self.titular1.deudores.all())
 
+    def test_si_toma_credito_despues_de_cancelarlo_asunto_del_movimiento_es_Constitucion_de_credito(self):
+        Movimiento.crear(
+            'Devolución', 10, cta_entrada=self.cuenta2, cta_salida=self.cuenta1)
+
+        mov = Movimiento.crear(
+            'Nuevo préstamo',
+            10,
+            cta_entrada=self.cuenta1,
+            cta_salida=self.cuenta2
+        )
+        self.assertEqual(
+            Movimiento.tomar(id=mov.id_contramov).concepto,
+            'Constitución de crédito'
+        )
+
 
 class TestModelMovimientoClean(TestModelMovimiento):
 

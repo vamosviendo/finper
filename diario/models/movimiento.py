@@ -357,13 +357,16 @@ class Movimiento(MiModel):
 
     def recuperar_cuentas_credito(self):
         cls = self.get_related_class('cta_entrada')
-        return (
-            cls.tomar(
-                slug=f'_{self.emisor.titname}'
-                     f'-{self.receptor.titname}'),
-            cls.tomar(
-                slug=f'_{self.receptor.titname}'
-                     f'-{self.emisor.titname}'))
+        try:
+            return (
+                cls.tomar(
+                    slug=f'_{self.emisor.titname}'
+                         f'-{self.receptor.titname}'),
+                cls.tomar(
+                    slug=f'_{self.receptor.titname}'
+                         f'-{self.emisor.titname}'))
+        except cls.DoesNotExist:
+            return None, None
 
     def _cambia_campo(self, *args):
         mov_guardado = self.tomar_de_bd()
@@ -396,24 +399,12 @@ class Movimiento(MiModel):
         return (cc1, cc2)
 
     def _crear_movimiento_credito(self):
-        Cuenta = self.get_related_class('cta_entrada')
+        cuenta_acreedora, cuenta_deudora = self.recuperar_cuentas_credito()
+        if cuenta_acreedora is None:
+            cuenta_acreedora, cuenta_deudora = self._generar_cuentas_credito()
 
-        try:
-            # TODO: Terminar de reformular esto. Funciona pero es un escracho
-            cuenta_acreedora, cuenta_deudora = \
-                self.recuperar_cuentas_credito()
-            if cuenta_acreedora.saldo >= 0:
-                concepto = 'Aumento de crédito'
-            elif cuenta_acreedora.saldo < 0:
-                concepto = 'Cancelación de crédito' \
-                    if self.importe == cuenta_deudora.saldo \
-                    else 'Pago a cuenta de crédito'
-            else:
-                raise ValueError('Error en movimiento de crédito')
-        except Cuenta.DoesNotExist:
-            cuenta_acreedora, cuenta_deudora = \
-                self._generar_cuentas_credito()
-            concepto = 'Constitución de crédito'
+        concepto = self._concepto_movimiento_credito(
+            cuenta_acreedora, cuenta_deudora)
 
         contramov = Movimiento.crear(
             concepto=concepto,
@@ -440,3 +431,23 @@ class Movimiento(MiModel):
     def _regenerar_contramovimiento(self):
         self._eliminar_contramovimiento()
         self._crear_movimiento_credito()
+
+    def _concepto_movimiento_credito(self, cuenta_acreedora, cuenta_deudora):
+
+        if cuenta_acreedora.saldo > 0:  # (1)
+            concepto = 'Aumento de crédito'
+        elif cuenta_acreedora.saldo < 0:
+            concepto = 'Cancelación de crédito' \
+                if self.importe == cuenta_deudora.saldo \
+                else 'Pago a cuenta de crédito'
+        else:
+            concepto = 'Constitución de crédito'
+
+        return concepto
+
+'''
+(1) cuenta_acreedora y cuenta_deudora lo son con respecto al movimiento, no en
+    esencia. cuenta_acreedora es la cuenta del que entrega el dinero y 
+    cuenta_deudora la del que lo recibe. cuenta_acreedora puede pertenecer a un
+    deudor, y su saldo en ese caso será negativo.
+'''
