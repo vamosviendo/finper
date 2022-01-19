@@ -311,6 +311,22 @@ class TestFormMovimiento(TestCase):
         formmov = FormMovimiento()
         self.assertEqual(formmov.fields['esgratis'].initial, False)
 
+    def test_campo_esgratis_aparece_seleccionado_si_instancia_no_tiene_contramovimiento(self):
+        cta1 = Cuenta.crear('Cuenta 1', slug='cta1')
+        tit = Titular.crear(nombre='Titular 2', titname='tit2')
+        cta2 = Cuenta.crear(nombre='Cuenta titular 2', slug='ctit2', titular=tit)
+        mov = Movimiento.crear('Traspaso', 100, cta2, cta1, esgratis=True)
+        formmov = FormMovimiento(instance=mov)
+        self.assertEqual(formmov.fields['esgratis'].initial, True)
+
+    def test_campo_esgratis_aparece_deseleccionado_si_instancia_tiene_contramovimiento(self):
+        cta1 = Cuenta.crear('Cuenta 1', slug='cta1')
+        tit = Titular.crear(nombre='Titular 2', titname='tit2')
+        cta2 = Cuenta.crear(nombre='Cuenta titular 2', slug='ctit2', titular=tit)
+        mov = Movimiento.crear('Traspaso', 100, cta2, cta1)
+        formmov = FormMovimiento(instance=mov)
+        self.assertEqual(formmov.fields['esgratis'].initial, False)
+
     @patch('diario.forms.Movimiento._crear_movimiento_credito')
     def test_campo_esgratis_seleccionado_en_movimiento_entre_titulares_no_genera_movimiento_credito(
             self, mock_crear_movimiento_credito):

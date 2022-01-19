@@ -119,11 +119,19 @@ class FormMovimiento(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         instance = kwargs.get('instance')
         if instance:
-            kwargs['initial'].update({'importe': instance.importe})
+            kwargs['initial'] = {
+                'importe': instance.importe,
+            }
 
         super().__init__(*args, **kwargs)
 
-        for _, campo in self.fields.items():
+        try:
+            if instance.id_contramov is None:
+                self.fields['esgratis'].initial = True
+        except AttributeError:  # form not bound - instance = None
+            pass
+
+        for campo in self.fields.values():
             agregar_clase(campo, 'form-control')
 
     class Meta:
