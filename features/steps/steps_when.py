@@ -144,6 +144,16 @@ def ir_a_pag_ult_mov(context, pag, orden):
     )
 
 
+@when('voy a la página "{pag}" del movimiento de concepto "{concepto}"')
+def ir_a_pag_mov(context, pag, concepto):
+    mov_pk = Movimiento.tomar(concepto=concepto).pk
+    nombre = NOMBRES_URL.get(pag, pag)
+    context.execute_steps(
+        f'Cuando voy a la página "{nombre}" '
+        f'con el argumento "{mov_pk}"'
+    )
+
+
 # NAVEGACIÓN
 
 @when('voy a la página principal por primera vez en el día')

@@ -70,6 +70,18 @@ def campo_deshabilitado(context, campo):
     context.test.assertFalse(elemento.is_enabled())
 
 
+@then('veo que el checkbox "{checkbox}" está {estado}')
+def estado_checkbox(context, checkbox, estado):
+    elemento = context.browser.esperar_elemento(checkbox, By.NAME)
+    if estado == 'seleccionado':
+        context.test.assertTrue(elemento.is_selected())
+    elif estado == 'deseleccionado':
+        context.test.assertFalse(elemento.is_selected())
+    else:
+        raise ValueError(f'No se acepta {estado}. '
+                         f'Opciones válidas: seleccionado - deseleccionado')
+
+
 #  NAVEGACION
 
 @then('soy dirigido a la página "{pagina}" con el argumento "{argumento}"')

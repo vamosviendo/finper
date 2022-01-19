@@ -79,14 +79,23 @@ Escenario: Se modifica gratuidad de movimiento entre cuentas de distinto titular
         | concepto                | importe | cta_entrada | cta_salida |
         | préstamo de juan a tito |     100 | ctito       | cjuan      |
 
-    Cuando voy a la página "modificar movimiento" del último movimiento
-    Y elijo "True" en el campo "esgratis"
+    Cuando voy a la página "modificar movimiento" del movimiento de concepto "préstamo de juan a tito"
+
+    Entonces veo que el checkbox "esgratis" está deseleccionado
+
+    Cuando elijo "True" en el campo "esgratis"
     Y cliqueo en el botón
 
     Entonces no veo movimientos con concepto "Constitución de crédito"
 
-    Cuando voy a la página "modificar movimiento" del último movimiento
-    Y elijo "False" en el campo "esgratis"
+    Cuando voy a la página "modificar movimiento" del movimiento de concepto "préstamo de juan a tito"
+    Entonces veo que el checkbox "esgratis" está seleccionado
+
+    Cuando elijo "False" en el campo "esgratis"
+    Y me detengo
     Y cliqueo en el botón
 
     Entonces veo un movimiento con concepto "Constitución de crédito"
+
+    Cuando voy a la página "modificar movimiento" del movimiento de concepto "préstamo de juan a tito"
+    Entonces veo que el checkbox "esgratis" está deseleccionado
