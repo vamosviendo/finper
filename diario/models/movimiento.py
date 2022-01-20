@@ -407,6 +407,7 @@ class Movimiento(MiModel):
             cuenta_acreedora, cuenta_deudora)
 
         contramov = Movimiento.crear(
+            fecha=self.fecha,
             concepto=concepto,
             detalle=f'de {self.emisor.nombre} '
                     f'a {self.receptor.nombre}',

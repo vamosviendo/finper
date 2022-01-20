@@ -476,6 +476,23 @@ class TestModelMovimientoEntreTitularesSiguientes(
             'Constitución de crédito'
         )
 
+    def test_si_se_genera_contramovimiento_en_fecha_distinta_de_movimiento_toma_fecha_de_movimiento(self):
+        movi = Movimiento.crear(
+            'Traspaso', 10,
+            cta_entrada=self.cuenta1,
+            cta_salida=self.cuenta2,
+            fecha=date(2020, 10, 2),
+            esgratis=True
+        )
+        movi.esgratis = False
+        movi.full_clean()
+        movi.save()
+
+        self.assertEqual(
+            Movimiento.tomar(id=movi.id_contramov).fecha,
+            date(2020, 10, 2)
+        )
+
 
 class TestModelMovimientoClean(TestModelMovimiento):
 
