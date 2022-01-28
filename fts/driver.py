@@ -129,6 +129,7 @@ class MiFirefox(webdriver.Firefox):
         """ Elimina el valor de un campo de form."""
         self.find_element_by_id(id_campo).clear()
 
+    @staticmethod
     def completar_checkbox(self, checkbox, boolvalue):
         if checkbox.is_selected() != boolvalue:
             checkbox.click()
