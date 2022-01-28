@@ -132,6 +132,11 @@ class Movimiento(MiModel):
                     or (self.cta_salida and self.cta_salida.es_acumulativa):
                 raise errors.ErrorCuentaEsAcumulativa(
                     errors.CUENTA_ACUMULATIVA_EN_MOVIMIENTO)
+        else:
+            # No se permite modificar movimientos automáticos
+            if self.es_automatico and self.any_field_changed():
+                raise errors.ErrorMovimientoAutomatico(
+                    'No se puede modificar movimiento automático')
 
         if self.importe == 0:
             raise errors.ErrorImporteCero(
@@ -218,7 +223,10 @@ class Movimiento(MiModel):
                         'No se permite traspaso '
                         'entre cuenta crédito y cuenta normal')
 
-    def delete(self, *args, **kwargs):
+    def delete(self, force=False, *args, **kwargs):
+        if self.es_automatico and not force:
+            raise errors.ErrorMovimientoAutomatico('No se puede eliminar movimiento automático')
+
         self.refresh_from_db()
         if self.tiene_cuenta_acumulativa():
             raise errors.ErrorCuentaEsAcumulativa(
@@ -425,7 +433,7 @@ class Movimiento(MiModel):
         cta1 = contramov.cta_entrada
         tit1 = cta1.titular
         tit2 = contramov.cta_salida.titular
-        contramov.delete()
+        contramov.delete(force=True)
         cta1.refresh_from_db(fields=['_saldo'])
         self.id_contramov = None
         if cta1.saldo == 0:

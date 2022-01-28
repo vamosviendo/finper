@@ -712,6 +712,25 @@ class TestModelMovimientoEliminar(TestModelMovimientoModificar):
         self.assertEqual(cta_deudora.saldo, 0)
         self.assertEqual(cta_acreedora.saldo, 0)
 
+    def test_no_permite_eliminar_contramovimientos(self):
+        movimiento = Movimiento.crear(
+            'Préstamo', 30, self.cuenta3, self.cuenta1)
+        contramov = Movimiento.tomar(id=movimiento.id_contramov)
+        with self.assertRaisesMessage(
+                ValidationError,
+                'No se puede eliminar movimiento automático'):
+            contramov.delete()
+
+    def test_permite_eliminar_contramovimiento_con_force_true(self):
+        movimiento = Movimiento.crear(
+            'Préstamo', 30, self.cuenta3, self.cuenta1)
+        contramov = Movimiento.tomar(id=movimiento.id_contramov)
+        try:
+            contramov.delete(force=True)
+        except errors.ErrorMovimientoAutomatico:
+            raise AssertionError(
+                'No se eliminó contramovimiento a pesar de force=True')
+
 
 class TestModelMovimientoModificarGeneral(TestModelMovimientoModificar):
 
@@ -768,6 +787,16 @@ class TestModelMovimientoModificarGeneral(TestModelMovimientoModificar):
         movimiento.save()
 
         mock_regenerar_contramovimiento.assert_called_once_with(movimiento)
+
+    def test_no_permite_modificar_contramovimientos(self):
+        movimiento = Movimiento.crear(
+            'Préstamo', 30, self.cuenta3, self.cuenta1)
+        contramov = Movimiento.tomar(id=movimiento.id_contramov)
+        contramov.concepto = 'Dádiva'
+        with self.assertRaisesMessage(
+                ValidationError,
+                'No se puede modificar movimiento automático'):
+            contramov.full_clean()
 
 
 class TestModelMovimientoModificarImporte(TestModelMovimientoModificar):

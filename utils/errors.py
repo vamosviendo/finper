@@ -116,3 +116,12 @@ class ErrorMovimientoNoPrestamo(ValidationError):
             message='Movimiento no es un préstamo'
     ):
         super().__init__(message)
+
+
+class ErrorMovimientoAutomatico(ValidationError):
+
+    def __init__(
+            self,
+            message='No se puede modificar o eliminar movimiento automático'
+    ):
+        super().__init__(message)

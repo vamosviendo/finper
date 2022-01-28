@@ -104,6 +104,14 @@ class MiModel(models.Model):
     def has_not_none_attr(self, atributo):
         return hasattr(self, atributo) and getattr(self, atributo) is not None
 
+    def any_field_changed(self):
+        fields = [f.name for f in self.get_class()._meta.fields]
+        for field in fields:
+            if getattr(self, field) != getattr(self.tomar_de_bd(), field):
+                return True
+
+        return False
+
 
 class PolymorphModel(MiModel):
     """ Agrega polimorfismo a MiModel."""
