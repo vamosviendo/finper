@@ -37,6 +37,7 @@ class Movimiento(MiModel):
         on_delete=models.CASCADE
     )
     id_contramov = models.IntegerField(null=True, blank=True)
+    es_automatico = models.BooleanField(default=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -414,6 +415,7 @@ class Movimiento(MiModel):
             importe=self.importe,
             cta_entrada=cuenta_acreedora,
             cta_salida=cuenta_deudora,
+            es_automatico=True,
             esgratis=True
         )
         self.id_contramov = contramov.id

@@ -220,6 +220,10 @@ class TestModelMovimientoCrear(TestModelMovimiento):
         mov = Movimiento.crear('Pago', '200', cta_entrada=self.cuenta1)
         self.assertEqual(mov.importe, 200.0)
 
+    def test_movimiento_se_guarda_como_no_automatico_por_defecto(self):
+        mov = Movimiento.crear('Pago', '200', cta_entrada=self.cuenta1)
+        self.assertFalse(mov.es_automatico)
+
 
 class TestModelMovimientoCrearModificaSaldosDeCuentas(TestModelMovimiento):
     """ Saldos después de setUp:
@@ -334,6 +338,12 @@ class TestModelModelMovimientoEntreTitularesPrimero(
             'Prestamo', 10, cta_entrada=self.cuenta1, cta_salida=self.cuenta2)
         mov_credito = Movimiento.tomar(concepto='Constitución de crédito')
         self.assertEqual(movimiento.id_contramov, mov_credito.id)
+
+    def test_movimiento_generado_se_marca_como_automatico(self):
+        movimiento = Movimiento.crear(
+            'Prestamo', 10, cta_entrada=self.cuenta1, cta_salida=self.cuenta2)
+        mov_credito = Movimiento.tomar(id=movimiento.id_contramov)
+        self.assertTrue(mov_credito.es_automatico)
 
     def test_integrativo_genera_cuenta_credito_y_subcuentas_y_movimiento(self):
         movimiento = Movimiento.crear(
@@ -503,7 +513,6 @@ class TestModelMovimientoClean(TestModelMovimiento):
             nombre='Cuenta titular 2', slug='ct2', titular=self.titular2)
         movimiento = Movimiento.crear('Préstamo', 100, self.cuenta2, self.cuenta1)
         self.cc12, self.cc21 = movimiento.recuperar_cuentas_credito()
-
 
     def test_requiere_al_menos_una_cuenta(self):
         mov = Movimiento(
