@@ -15,7 +15,7 @@ Escenario: Modificar movimiento
             | concepto | importe | cta_entrada | cta_salida |
             | aSaldo   | 200     | e           |            |
     Cuando voy a la página principal
-        Y cliqueo en el botón de clase "link_mod_mov"
+        Y cliqueo en el botón de clase "class_link_mod_mov"
         Y escribo "Saldo inicial" en el campo "concepto"
         Y cliqueo en el botón
     Entonces veo que el concepto del movimiento es "Saldo inicial"
@@ -34,12 +34,12 @@ Escenario: Modificar importe o cuentas de movimiento
         | cDepósito   |  70     | b           | a          |
 
     Cuando voy a la página principal
-        Y cliqueo en el tercer botón de clase "link_mod_mov"
+        Y cliqueo en el tercer botón de clase "class_link_mod_mov"
         Y escribo "100" en el campo "importe"
         Y cliqueo en el botón
     Entonces veo que el saldo de Aefectivo es 30 pesos
 
-    Cuando cliqueo en el segundo botón de clase "link_mod_mov"
+    Cuando cliqueo en el segundo botón de clase "class_link_mod_mov"
         Y selecciono "aefectivo" en el campo "cta_salida"
         Y cliqueo en el botón
     Entonces veo que el saldo de Aefectivo es -120 pesos

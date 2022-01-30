@@ -116,14 +116,16 @@
         {% if mov.cta_salida %}-{{ mov.cta_salida.slug }}{% endif %}
       </td>
       <td class="align-middle class_td_menu">
+      {% if not mov.es_automatico %}
         <a href="{% url 'mov_elim' mov.id %}"
-           class="btn btn-danger btn-sm link_elim_mov">
+           class="btn btn-danger btn-sm class_link_elim_mov">
           Borrar
         </a>
         <a href="{% url 'mov_mod' mov.id %}"
-           class="btn btn-primary btn-sm link_mod_mov">
+           class="btn btn-primary btn-sm class_link_mod_mov">
           Edit
         </a>
+      {% endif %}
       </td>
     </tr>
     {% endfor %}

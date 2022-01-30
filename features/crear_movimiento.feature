@@ -9,7 +9,8 @@ Característica: Ingresar movimiento
     Quiero que si el movimiento que genero se da entre cuentas de distintos
         titulares, genere un movimiento en contrario que de cuenta de la deuda
         contraída por el titular de la cuenta receptora con el titular de la
-        cuenta emisora
+        cuenta emisora, y quiero que el movimiento generado no pueda
+        modificarse ni eliminarse.
     Quiero poder determinar que un movimiento entre cuentas de distintos
         titulares no genere deuda del receptor para con el emisor.
 
@@ -48,7 +49,7 @@ Escenario: Cuentas acumulativas no aparecen en formulario de carga de movimiento
     Y veo que entre las opciones del campo "cta_salida" no figura "efectivo acumulativa"
 
 
-Escenario: Crear traspaso entre cuentas de distintos titulares
+Escenario: Crear traspaso entre cuentas de distintos titulares con deuda
     Dados dos titulares
     Y dos cuentas con los siguientes valores:
         | nombre         | slug | saldo | titular |
@@ -61,6 +62,11 @@ Escenario: Crear traspaso entre cuentas de distintos titulares
         | concepto                | detalle                     | importe | cta_entrada | cta_salida |
         | Préstamo                |                             | 30,00   | cjua        | ctit       |
         | Constitución de crédito | de Tito Gómez a Juan Juánez | 30,00   | _tito-juan  | _juan-tito |
+
+    Y veo que el primer elemento dado "movimientos" incluye un "link" de clase "elim_mov"
+    Y veo que el primer elemento dado "movimientos" incluye un "link" de clase "mod_mov"
+    Y veo que el segundo elemento dado "movimientos" no incluye un "link" de clase "elim_mov"
+    Y veo que el segundo elemento dado "movimientos" no incluye un "link" de clase "mod_mov"
 
     Cuando voy a la página "tit_detalle" del titular "Tito Gómez"
 
@@ -80,6 +86,9 @@ Escenario: Crear traspaso entre cuentas de distintos titulares
         | Préstamo                |                             | 10,00   | cjua        | ctit         |
         | Aumento de crédito      | de Tito Gómez a Juan Juánez | 10,00   | _tito-juan  | _juan-tito   |
 
+    Y veo que el segundo elemento dado "movimientos" no incluye un "link" de clase "elim_mov"
+    Y veo que el segundo elemento dado "movimientos" no incluye un "link" de clase "mod_mov"
+
     Cuando voy a la página "tit_detalle" del titular "Tito Gómez"
 
     Entonces veo que el saldo de "Préstamo entre tito y juan" es 40 pesos
@@ -96,6 +105,9 @@ Escenario: Crear traspaso entre cuentas de distintos titulares
         | Devolución               |                             | 15,00   | ctit        | cjua       |
         | Pago a cuenta de crédito | de Juan Juánez a Tito Gómez | 15,00   | _tito-juan  | _juan-tito |
 
+    Y veo que el segundo elemento dado "movimientos" no incluye un "link" de clase "elim_mov"
+    Y veo que el segundo elemento dado "movimientos" no incluye un "link" de clase "mod_mov"
+
     Cuando voy a la página "tit_detalle" del titular "Tito Gómez"
 
     Entonces veo que el saldo de "Préstamo entre tito y juan" es 25 pesos
@@ -111,6 +123,9 @@ Escenario: Crear traspaso entre cuentas de distintos titulares
         | concepto                | detalle                     | importe | cta_entrada | cta_salida |
         | Devolución              |                             | 25,00   | ctit        | cjua       |
         | Cancelación de crédito  | de Juan Juánez a Tito Gómez | 25,00   | _tito-juan  | _juan-tito |
+
+    Y veo que el segundo elemento dado "movimientos" no incluye un "link" de clase "elim_mov"
+    Y veo que el segundo elemento dado "movimientos" no incluye un "link" de clase "mod_mov"
 
     Cuando voy a la página "tit_detalle" del titular "Tito Gómez"
 

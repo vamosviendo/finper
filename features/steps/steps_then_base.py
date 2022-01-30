@@ -259,6 +259,45 @@ def veo_que_elemento_incluye(context, elemento, tag, tipo, nombre):
     fijar_atributo(context, nombre_contenido, contenido)
 
 
+@then('veo que el elemento dado "{elemento}" no incluye un "{tag}" de {tipo} "{nombre}"')
+def veo_que_elemento_no_incluye(context, elemento, tag, tipo, nombre):
+    tipo = "class" if tipo == "clase" else tipo
+    by = BYS.get(tipo, tipo)
+    nombre_contenido = f'{tipo}_{tag}_{espacios_a_snake(nombre)}'
+    contenedor = tomar_atributo(context, elemento)
+
+    contenido = contenedor.esperar_elementos(nombre_contenido, by, fail=False)
+    context.test.assertEqual(
+        len(contenido),
+        0,
+        f'Hay un {nombre_contenido} dentro del elemento "{elemento}"'
+    )
+
+
+@then('veo que el {orden} elemento dado "{elemento}" '
+      'incluye un "{tag}" de {tipo} "{nombre}"')
+def veo_que_elemento_incluye(context, orden, elemento, tag, tipo, nombre):
+    ord = ORDINALES[orden]
+    elementos = tomar_atributo(context, elemento)
+    fijar_atributo(context, 'elem_dado', elementos[ord])
+    context.execute_steps(
+        f'entonces veo que el elemento dado "elem_dado" '
+        f'incluye un "{tag}" de {tipo} "{nombre}"'
+    )
+
+
+@then('veo que el {orden} elemento dado "{elemento}" '
+      'no incluye un "{tag}" de {tipo} "{nombre}"')
+def veo_que_elemento_no_incluye(context, orden, elemento, tag, tipo, nombre):
+    ord = ORDINALES[orden]
+    elementos = tomar_atributo(context, elemento)
+    fijar_atributo(context, 'elem_dado', elementos[ord])
+    context.execute_steps(
+        f'entonces veo que el elemento dado "elem_dado" '
+        f'no incluye un "{tag}" de {tipo} "{nombre}"'
+    )
+
+
 @then('veo que el elemento dado "{elemento}" '
       'incluye varios "{tag}" de clase "{clase}"')
 def veo_que_elemento_incluye(context, elemento, tag, clase):

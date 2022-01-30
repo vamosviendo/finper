@@ -16,13 +16,13 @@ Escenario: Eliminar movimiento
         | entrada de efectivo | 45      | a           | ca         |
 
     Cuando voy a la página principal
-        Y cliqueo en el tercer botón de clase "link_elim_mov"
+        Y cliqueo en el tercer botón de clase "class_link_elim_mov"
         Y cliqueo en el botón de id "id_btn_confirm"
 
     Entonces veo 2 movimientos en la página
         Y veo que el saldo de "Afectivo" es 45 pesos
 
-    Cuando cliqueo en el primer botón de clase "link_elim_mov"
+    Cuando cliqueo en el primer botón de clase "class_link_elim_mov"
         Y cliqueo en el botón de id "id_btn_confirm"
     Entonces veo que el saldo de "Afectivo" es cero pesos
         Y veo que el saldo de "Caja de ahorro" es 200 pesos

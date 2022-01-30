@@ -10,7 +10,7 @@ from selenium.webdriver.common.by import By
 from consts import LISTAS_DE_ENTIDADES
 from consts_base import CARDINALES
 from diario.models import Cuenta, Titular
-from features.steps.helpers import table_to_str
+from features.steps.helpers import table_to_str, fijar_atributo
 from utils import errors
 from utils.fechas import hoy
 from utils.numeros import float_str_coma
@@ -362,14 +362,15 @@ def soy_dirigido_a_pagina_de_titular(context, pag, nombre):
 
 @then('veo movimientos con los siguientes valores')
 def veo_movimientos(context):
+    movimientos = context.browser.esperar_elementos('class_row_mov')
     movs_concepto = [
-        c.text for c in context.browser.esperar_elementos('class_td_concepto')
+        c.find_element_by_class_name('class_td_concepto').text for c in movimientos
     ]
     movs_importe = [
-        c.text for c in context.browser.esperar_elementos('class_td_importe')
+        c.find_element_by_class_name('class_td_importe').text for c in movimientos
     ]
     movs_ctas = [
-        c.text for c in context.browser.esperar_elementos('class_td_cuentas')
+        c.find_element_by_class_name('class_td_cuentas').text for c in movimientos
     ]
     for fila in context.table:
         context.test.assertIn(fila['concepto'], movs_concepto)
@@ -381,6 +382,8 @@ def veo_movimientos(context):
         if fila.get('cta_salida'):
             context.test.assertIn(
                 fila['cta_salida'].lower(), movs_ctas[indice])
+
+    fijar_atributo(context, "movimientos", movimientos)
 
 
 @then('no veo movimientos con concepto "{concepto}"')
