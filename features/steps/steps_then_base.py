@@ -346,6 +346,24 @@ def veo_que_elemento_incluye(context, elemento, tantos, tag):
     context.test.assertEqual(len(contenidos), int(tantos))
 
 
+@then('veo que el {orden} "{tag_out}" de {tipo_out} "{nombre_out}" '
+      'incluye un "{tag_in}" de {tipo_in} "{nombre_in}"')
+def veo_que_elemento_incluye_elemento(
+        context, orden,
+        tag_out, tipo_out, nombre_out,
+        tag_in, tipo_in, nombre_in):
+    tipo_out = "class" if tipo_out == "clase" else tipo_out
+    tipo_in = "class" if tipo_in == "clase" else tipo_in
+    context.execute_steps(
+        f'Entonces veo varios "{tag_out}" de {tipo_out} "{nombre_out}"'
+    )
+    elemento_out = tomar_atributo(
+        context, f'{tipo_out}_{tag_out}_{nombre_out}'
+    )[ORDINALES[orden]]
+    elemento_in = elemento_out.find_element(BYS[tipo_in], f'{tipo_in}_{tag_in}_{nombre_in}')
+    fijar_atributo(context, f'{tipo_in}_{tag_in}_{nombre_in}', elemento_in)
+
+
 @then('veo que el "{tag}" de {tipo} "{nombre}" incluye el texto "{texto}"')
 def veo_que_tag_incluye_texto(context, tag, tipo, nombre, texto):
     tipo = "class" if tipo == "clase" else tipo
@@ -430,12 +448,12 @@ def elemento_no_aparece(context, tag, tipo, nombre):
     tipo = "class" if tipo == "clase" else tipo
     nombre_elemento = f'{tipo}_{tag}_{nombre}'
 
-    try:
-        elemento = context.browser.esperar_elemento(nombre_elemento, by)
-    except NoSuchElementException:
+    elementos = context.browser.esperar_elementos(
+        nombre_elemento, by, fail=False)
+    if len(elementos) == 0:
         return
-
-    context.test.assertFalse(elemento.es_visible())
+    for elemento in elementos:
+        context.test.assertFalse(elemento.es_visible())
 
 
 @then('no veo un menú de {tipo} "{menu}"')
@@ -499,6 +517,15 @@ def elemento_no_aparece(context, atributo, nombre):
         len(context.browser.esperar_elementos(nombre, atrib, fail=False)),
         0,
         f'Aparece elemento de {atributo} "{nombre}" que no debería aparecer'
+    )
+
+
+@then('no detecto ningún script de src {src}')
+def script_no_aparece(context, src):
+    scripts = context.browser.find_elements_by_tag_name('script')
+    context.test.assertNotIn(
+        f'{context.test.live_server_url}{src}',
+        [script.get_attribute('src') for script in scripts]
     )
 
 
