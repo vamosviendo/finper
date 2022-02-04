@@ -14,7 +14,7 @@ Escenario: Modificar datos de titular
     Y cliqueo en el botón
 
     Entonces veo un titular en la grilla con nombre "Tito Pérez"
-    Y no veo un titular "Tito Gómez" en la grilla
+    Y no veo un titular con nombre "Tito Gómez" en la grilla
 
     Cuando cliqueo en el botón "Edit" del titular "Tito Pérez"
     Y escribo "titu" en el campo "titname"

@@ -23,25 +23,25 @@ Escenario: Verificar saldos de cuentas interactivas
     # Cuando voy a la página principal por primera vez en el día
     Cuando voy a la página principal
     Y cliqueo en el botón de id "id_btn_verificar_saldos"
-    
+
     Entonces soy dirigido a la página "corregir saldo"
     Y veo un mensaje de saldos erróneos que incluye las cuentas:
         | nombre         |
         | Aefectivo      |
         | Caja de ahorro |
-    
+
     Cuando cliqueo en el botón de clase "class_btn_corregir"
     Y cliqueo en el botón de clase "class_btn_agregar"
 
     Entonces veo que el saldo de "Aefectivo" es 200 pesos
     Y veo que el saldo de "Caja de ahorro" es 400 pesos
     Y veo un movimiento con los siguientes valores:
-        | concepto              | importe | cta_entrada |
-        | Movimiento correctivo | 600,00  | b           |
+        | concepto              | importe | cuentas |
+        | Movimiento correctivo | 600,00  | +b      |
 
     Cuando introduzco un error de 50 pesos en el saldo de la cuenta "Aefectivo"
     Y voy a la página principal sin que haya cambiado el día
-    
+
     Entonces veo que el saldo de "Aefectivo" es 250 pesos
 
 

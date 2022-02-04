@@ -32,7 +32,7 @@ Escenario: Ver detalles de un titular
     Y veo que el patrimonio de "Tito Gómez" es 700 pesos
     Y veo una cuenta en la grilla con nombre "cta1efectivo"
     Y veo una cuenta en la grilla con nombre "cta3credito"
-    Y no veo una cuenta "cta2banco" en la grilla
+    Y no veo una cuenta con nombre "cta2banco" en la grilla
     Y veo la siguiente lista de movimientos:
         | concepto                      | importe | cuentas                 |
         | 2Depósito en banco            |   25,00 | +c2b -c1e               |

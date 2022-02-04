@@ -31,11 +31,12 @@ Escenario: Agregar subcuenta a cuenta
         | Bolsillo  | ebol |     0 |
         | Cajón     | ecaj |   130 |
     Y veo 3 movimientos en la página
-    Y los movimientos en la página tienen estos valores:
+    Y veo que los movimientos en la página son los siguientes:
         | concepto                  | importe | cuentas  |
         | Traspaso de saldo         |  70,00  | +ebil -e |
         | Traspaso de saldo         | 130,00  | +ecaj -e |
         | Saldo inicial de efectivo | 200,00  | +e       |
+
 
 
 Escenario: Asignar subcuenta a un titular distinto al agregar

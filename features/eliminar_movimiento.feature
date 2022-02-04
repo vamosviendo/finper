@@ -41,4 +41,4 @@ Escenario: 'Al eliminarse un movimiento entre titulares se elimina el contramovi
     Cuando voy a la página "mov_elim" del último movimiento
     Y cliqueo en el "btn" de id "confirm"
 
-    Entonces no veo un movimiento "Constitución de crédito" en la lista
+    Entonces no veo movimientos con concepto "Constitución de crédito"

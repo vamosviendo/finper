@@ -28,3 +28,12 @@ ORDINALES = dict(
     cuarto=3, cuarta=3,
     quinto=4, quinta=4,
 )
+
+TERMINOS_TRUE = (
+    'seleccionado', 'activado', 'habilitado', 'on', 'encendido', 'sí',
+    'true', 'True',
+)
+TERMINOS_FALSE = (
+    'deseleccionado', 'desactivado', 'deshabilitado', 'off', 'apagado',
+    'no', 'false', 'False',
+)

@@ -6,9 +6,112 @@ from behave import then
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 
-from features.steps.consts_base import BYS, ORDINALES
+from features.steps.consts_base import BYS, ORDINALES, TERMINOS_TRUE, \
+    TERMINOS_FALSE
 from features.steps.helpers import espacios_a_snake, espera, tomar_atributo, \
     fijar_atributo
+""" Steps en el archivo:
+@then('soy dirigido a la página "{pagina}" con el argumento "{argumento}"')
+@then('soy dirigido a la página "{pagina}" con los argumentos')
+@then('soy dirigido a la página principal')
+@then('soy dirigido a la página "{pagina}"')
+
+@then('veo un campo "{campo_name}" en el form de id "{form_id}"')
+@then('veo que entre las opciones del campo "{campo}" figura "{opcion}"')
+@then('veo que entre las opciones del campo "{campo}" figuran')
+@then('veo que entre las opciones del campo "{campo}" no figura "{opcion}"')
+@then('veo que el campo "{campo}" está deshabilitado')
+@then('veo que el checkbox "{checkbox}" está {estado}')
+@then('veo un mensaje de error: "{mensaje}"')
+
+@then('veo un "{tag}" de {tipo} "{nombre}" con texto "{texto}"')
+@then('veo una "{tag}" de {tipo} "{nombre}"')
+@then('veo un "{tag}" de {tipo} "{nombre}"')
+@then('veo varios elementos de clase "{clase}"')
+@then('veo varios "{tag}" de {tipo} "{nombre}"')
+@then('veo un link de texto "{texto}"')
+@then('veo un menú de {tipo} "{menu}"')
+@then('veo un menú "{menu}"')
+@then('veo un botón de {texto}')
+@then('veo un formulario de {elem}')
+@then('veo elementos de clase "{clase}"')
+@then('veo un tag "{tag}" dentro de un elemento de clase "{clase}"')
+@then('veo que el elemento dado "{elemento}" incluye un elemento de id "{id}" y clase "{clase}"'
+@then('veo que el elemento dado "{elemento}" incluye un "{tag}" de {tipo} "{nombre}" en la posición {pos}'
+@then('veo que el elemento dado "{elemento}" incluye un "{tag}" de {tipo} "{nombre}"'
+@then('veo que el elemento dado "{elemento}" no incluye un "{tag}" de {tipo} "{nombre}"')
+@then('veo que el elemento dado "{elemento}" incluye varios "{tag}" de clase "{clase}"'
+@then('veo que el elemento dado "{elemento}" incluye varios "{tag}"')
+@then('veo que el elemento dado "{elemento}" incluye {tantos} "{tag}" de clase "{clase}"'
+@then('veo que el elemento dado "{elemento}" incluye el texto "{texto}"')
+@then('veo que el elemento dado "{elemento}" incluye {tantos} "{tag}"')
+@then('veo que el {orden} elemento dado "{elemento}" incluye un "{tag}" de {tipo} "{nombre}"'
+@then('veo que el {orden} elemento dado "{elemento}" no incluye un "{tag}" de {tipo} "{nombre}"'
+@then('veo que el {orden} "{tag_out}" de {tipo_out} "{nombre_out}" incluye un "{tag_in}" de {tipo_in} "{nombre_in}"'
+@then('veo que el {orden} elemento de {atributo_out} "{nombre_out}" incluye un elemento de {atributo_in} "{nombre_in}"'
+@then('veo que el {orden} elemento de {atributo_out} "{nombre_out}" no incluye ningún elemento de {atributo_in} "{nombre_in}"'
+@then('veo que ningún elemento de {atributo_out} "{nombre_out}" incluye un elemento de {atributo_in} "{nombre_in}"'
+@then('veo que el "{tag}" de {tipo} "{nombre}" incluye el texto "{texto}"')
+@then('veo que entre los "{tag}" de clase "{clase}" no está el de {atributo} "{valor}"'
+@then('veo que entre los "{tag}" de clase "{clase}" está el de {atributo} "{valor}"'
+@then('veo un elemento de id "{id}" y clase "{clase}"')
+@then('veo un elemento de {atributo} "{nombre}"')
+@then('no veo un "{tag}" de {tipo} "{nombre}"')
+@then('no veo un menú de {tipo} "{menu}"')
+@then('no veo un menú "{menu}"')
+@then('no veo un elemento de id "{id}" y clase "{clase}"')
+@then('no veo un elemento de {atributo} "{nombre}"')
+
+@then('no detecto ningún script de src {src}')
+@then('el tamaño del elemento dado "{comparado}" es igual al tamaño del elemento dado "{patron}"'
+@then('veo que el elemento dado "{nombre_elemento}" ajusta su tamaño al de la pantalla'
+@then('Veo que el tamaño del elemento dado "{atrib}" coincide con las medidas tomadas al elemento dado "{elemento_medido}"'
+@then('se inicia una sesión con mi nombre')
+@then('se cierra la sesión')
+
+@then('me detengo')
+@then('fallo')
+"""
+
+#  NAVEGACIÓN
+
+@then('soy dirigido a la página "{pagina}" con el argumento "{argumento}"')
+def soy_dirigido_a(context, pagina, argumento):
+    pagina = espacios_a_snake(pagina)
+    espera(
+        lambda: context.test.assertURLEqual(
+            reverse(pagina, args=[argumento]),
+            urlparse(context.browser.current_url).path
+        )
+    )
+
+
+@then('soy dirigido a la página "{pagina}" con los argumentos')
+def soy_dirigido_a(context, pagina):
+    pagina = espacios_a_snake(pagina)
+    args = [row['argumento'] for row in context.table]
+    espera(
+        lambda: context.test.assertURLEqual(
+            reverse(pagina, args=args),
+            urlparse(context.browser.current_url).path
+        )
+    )
+
+
+@then('soy dirigido a la página principal')
+def soy_dirigido_a(context):
+    context.execute_steps('Entonces soy dirigido a la página "home"')
+
+
+@then('soy dirigido a la página "{pagina}"')
+def soy_dirigido_a(context, pagina):
+    pagina = espacios_a_snake(pagina)
+    espera(
+        lambda: context.test.assertURLEqual(
+            reverse(pagina),
+            urlparse(context.browser.current_url).path
+        )
+    )
 
 
 # FORMS Y CARGA DE DATOS
@@ -73,54 +176,13 @@ def campo_deshabilitado(context, campo):
 @then('veo que el checkbox "{checkbox}" está {estado}')
 def estado_checkbox(context, checkbox, estado):
     elemento = context.browser.esperar_elemento(checkbox, By.NAME)
-    if estado == 'seleccionado':
+    if estado in TERMINOS_TRUE:
         context.test.assertTrue(elemento.is_selected())
-    elif estado == 'deseleccionado':
+    elif estado in TERMINOS_FALSE:
         context.test.assertFalse(elemento.is_selected())
     else:
         raise ValueError(f'No se acepta {estado}. '
                          f'Opciones válidas: seleccionado - deseleccionado')
-
-
-#  NAVEGACION
-
-@then('soy dirigido a la página "{pagina}" con el argumento "{argumento}"')
-def soy_dirigido_a(context, pagina, argumento):
-    pagina = espacios_a_snake(pagina)
-    espera(
-        lambda: context.test.assertURLEqual(
-            reverse(pagina, args=[argumento]),
-            urlparse(context.browser.current_url).path
-        )
-    )
-
-
-@then('soy dirigido a la página "{pagina}" con los argumentos')
-def soy_dirigido_a(context, pagina):
-    pagina = espacios_a_snake(pagina)
-    args = [row['argumento'] for row in context.table]
-    espera(
-        lambda: context.test.assertURLEqual(
-            reverse(pagina, args=args),
-            urlparse(context.browser.current_url).path
-        )
-    )
-
-
-@then('soy dirigido a la página principal')
-def soy_dirigido_a(context):
-    context.execute_steps('Entonces soy dirigido a la página "home"')
-
-
-@then('soy dirigido a la página "{pagina}"')
-def soy_dirigido_a(context, pagina):
-    pagina = espacios_a_snake(pagina)
-    espera(
-        lambda: context.test.assertURLEqual(
-            reverse(pagina),
-            urlparse(context.browser.current_url).path
-        )
-    )
 
 
 # ELEMENTOS
@@ -165,6 +227,12 @@ def elemento_aparece(context, tag, tipo, nombre):
     fijar_atributo(context, nombre_elemento, elemento)
 
 
+@then('veo varios elementos de clase "{clase}"')
+def veo_varios_elementos(context, clase):
+    elementos = context.browser.esperar_elementos(clase, By.CLASS_NAME)
+    fijar_atributo(context, clase, elementos)
+
+
 @then('veo varios "{tag}" de {tipo} "{nombre}"')
 def veo_varios_elementos(context, tag, tipo, nombre):
     by = BYS.get(tipo, tipo)
@@ -172,12 +240,6 @@ def veo_varios_elementos(context, tag, tipo, nombre):
     nombre_elementos = f'{tipo}_{tag}_{nombre}'
     elementos = context.browser.esperar_elementos(nombre_elementos, by)
     fijar_atributo(context, nombre_elementos, elementos)
-
-
-@then('veo varios elementos de clase "{clase}"')
-def veo_varios_elementos(context, clase):
-    elementos = context.browser.esperar_elementos(clase, By.CLASS_NAME)
-    fijar_atributo(context, clase, elementos)
 
 
 @then('veo un link de texto "{texto}"')
@@ -197,12 +259,22 @@ def veo_un_menu(context, menu):
     context.execute_steps(f'Entonces veo un menú de id "{menu}"')
 
 
-@then('veo una clase "{clase}"')
+@then('veo un botón de {texto}')
+def veo_un_boton(context, texto):
+    context.browser.esperar_elemento(texto, By.LINK_TEXT)
+
+
+@then('veo un formulario de {elem}')
+def veo_formulario(context, elem):
+    context.browser.esperar_elemento(f'id_form_{elem}')
+
+
+@then('veo elementos de clase "{clase}"')
 def veo_una_clase(context, clase):
     fijar_atributo(context, clase, context.browser.esperar_elementos(clase))
 
 
-@then('veo un tag "{tag}" dentro de una clase "{clase}"')
+@then('veo un tag "{tag}" dentro de un elemento de clase "{clase}"')
 def veo_un_tag_en_una_clase(context, tag, clase):
     elementos = context.browser.esperar_elementos(clase)
 
@@ -221,6 +293,14 @@ def veo_un_tag_en_una_clase(context, tag, clase):
         f'No se encontró un tag "{tag}" '
         f'dentro de ningún elemento de clase "{clase}"'
     )
+
+
+@then('veo que el elemento dado "{elemento}" '
+      'incluye un elemento de id "{id}" y clase "{clase}"')
+def veo_elemento_en_elemento(context, id, clase, elemento):
+    continente = tomar_atributo(context, elemento)
+    elemento_buscado = continente.esperar_elemento(f'#{id}.{clase}', By.CSS_SELECTOR)
+    fijar_atributo(context, f'{id}_{clase}', elemento_buscado)
 
 
 @then('veo que el elemento dado "{elemento}" '
@@ -274,30 +354,6 @@ def veo_que_elemento_no_incluye(context, elemento, tag, tipo, nombre):
     )
 
 
-@then('veo que el {orden} elemento dado "{elemento}" '
-      'incluye un "{tag}" de {tipo} "{nombre}"')
-def veo_que_elemento_incluye(context, orden, elemento, tag, tipo, nombre):
-    ord = ORDINALES[orden]
-    elementos = tomar_atributo(context, elemento)
-    fijar_atributo(context, 'elem_dado', elementos[ord])
-    context.execute_steps(
-        f'entonces veo que el elemento dado "elem_dado" '
-        f'incluye un "{tag}" de {tipo} "{nombre}"'
-    )
-
-
-@then('veo que el {orden} elemento dado "{elemento}" '
-      'no incluye un "{tag}" de {tipo} "{nombre}"')
-def veo_que_elemento_no_incluye(context, orden, elemento, tag, tipo, nombre):
-    ord = ORDINALES[orden]
-    elementos = tomar_atributo(context, elemento)
-    fijar_atributo(context, 'elem_dado', elementos[ord])
-    context.execute_steps(
-        f'entonces veo que el elemento dado "elem_dado" '
-        f'no incluye un "{tag}" de {tipo} "{nombre}"'
-    )
-
-
 @then('veo que el elemento dado "{elemento}" '
       'incluye varios "{tag}" de clase "{clase}"')
 def veo_que_elemento_incluye(context, elemento, tag, clase):
@@ -346,6 +402,30 @@ def veo_que_elemento_incluye(context, elemento, tantos, tag):
     context.test.assertEqual(len(contenidos), int(tantos))
 
 
+@then('veo que el {orden} elemento dado "{elemento}" '
+      'incluye un "{tag}" de {tipo} "{nombre}"')
+def veo_que_elemento_incluye(context, orden, elemento, tag, tipo, nombre):
+    ord = ORDINALES[orden]
+    elementos = tomar_atributo(context, elemento)
+    fijar_atributo(context, 'elem_dado', elementos[ord])
+    context.execute_steps(
+        f'entonces veo que el elemento dado "elem_dado" '
+        f'incluye un "{tag}" de {tipo} "{nombre}"'
+    )
+
+
+@then('veo que el {orden} elemento dado "{elemento}" '
+      'no incluye un "{tag}" de {tipo} "{nombre}"')
+def veo_que_elemento_no_incluye(context, orden, elemento, tag, tipo, nombre):
+    ord = ORDINALES[orden]
+    elementos = tomar_atributo(context, elemento)
+    fijar_atributo(context, 'elem_dado', elementos[ord])
+    context.execute_steps(
+        f'entonces veo que el elemento dado "elem_dado" '
+        f'no incluye un "{tag}" de {tipo} "{nombre}"'
+    )
+
+
 @then('veo que el {orden} "{tag_out}" de {tipo_out} "{nombre_out}" '
       'incluye un "{tag_in}" de {tipo_in} "{nombre_in}"')
 def veo_que_elemento_incluye_elemento(
@@ -362,6 +442,56 @@ def veo_que_elemento_incluye_elemento(
     )[ORDINALES[orden]]
     elemento_in = elemento_out.find_element(BYS[tipo_in], f'{tipo_in}_{tag_in}_{nombre_in}')
     fijar_atributo(context, f'{tipo_in}_{tag_in}_{nombre_in}', elemento_in)
+
+
+@then('veo que el {orden} elemento de {atributo_out} "{nombre_out}" '
+      'incluye un elemento de {atributo_in} "{nombre_in}"')
+def veo_elemento_en_elemento(
+        context, orden, atributo_out, nombre_out, atributo_in, nombre_in):
+    atrib_out = BYS.get(atributo_out, By.LINK_TEXT)
+    atrib_in = BYS.get(atributo_in, By.LINK_TEXT)
+    ord = ORDINALES[orden]
+
+    continente = context.browser.esperar_elementos(nombre_out, atrib_out)[ord]
+    contenido = continente.esperar_elemento(nombre_in, atrib_in)
+    fijar_atributo(context, nombre_in, contenido)
+
+
+@then('veo que el {orden} elemento de {atributo_out} "{nombre_out}" '
+      'no incluye ningún elemento de {atributo_in} "{nombre_in}"')
+def elemento_no_aparece_en_elemento(
+        context, orden, atributo_out, nombre_out, atributo_in, nombre_in):
+    atrib_out = BYS.get(atributo_out, By.LINK_TEXT)
+    atrib_in = BYS.get(atributo_in, By.LINK_TEXT)
+    ord = ORDINALES[orden]
+
+    continente = context.browser.esperar_elementos(nombre_out, atrib_out)[ord]
+    context.test.assertEqual(
+        len(continente.esperar_elementos(nombre_in, atrib_in, fail=False)),
+        0,
+        f'Aparece elemento de {atributo_in} "{nombre_in}" que no debería '
+        f'aparecer como hijo del {orden} elemento de {atributo_out} '
+        f'"{nombre_out}"'
+    )
+
+
+@then('veo que ningún elemento de {atributo_out} "{nombre_out}" '
+      'incluye un elemento de {atributo_in} "{nombre_in}"')
+def elemento_no_aparece_en_ningun_elemento(
+        context, atributo_in, nombre_in, atributo_out, nombre_out):
+    # TODO: ¿no debería ser por default By.CLASS_NAME?
+    atrib_out = BYS.get(atributo_out, By.LINK_TEXT)
+    atrib_in = BYS.get(atributo_in, By.LINK_TEXT)
+
+    continentes = context.browser.esperar_elementos(nombre_out, atrib_out)
+    for ind, continente in enumerate(continentes):
+        context.test.assertEqual(
+            len(continente.esperar_elementos(nombre_in, atrib_in, fail=False)),
+            0,
+            f'Aparece elemento de {atributo_in} "{nombre_in}" que no debería '
+            f'aparecer como hijo del elemento {ind} de {atributo_out} '
+            f'"{nombre_out}"'
+        )
 
 
 @then('veo que el "{tag}" de {tipo} "{nombre}" incluye el texto "{texto}"')
@@ -397,42 +527,12 @@ def entre_elementos_no_esta_el_elemento(context, tag, clase, atributo, valor):
     )
 
 
-@then('veo un botón de {texto}')
-def veo_un_boton(context, texto):
-    context.browser.esperar_elemento(texto, By.LINK_TEXT)
-
-
-@then('veo un formulario de {elem}')
-def veo_formulario(context, elem):
-    context.browser.esperar_elemento(f'id_form_{elem}')
-
-
-@then('veo un elemento de id "{id}" y clase "{clase}" dentro del elemento dado "{nombre}"')
-def veo_elemento_en_elemento(context, id, clase, nombre):
-    continente = tomar_atributo(context, nombre)
-    elemento = continente.esperar_elemento(f'#{id}.{clase}', By.CSS_SELECTOR)
-    fijar_atributo(context, f'{id}_{clase}', elemento)
-
-
 @then('veo un elemento de id "{id}" y clase "{clase}"')
 def veo_elemento(context, id, clase):
     elemento = context.browser.esperar_elemento(
         f'#{id}.{clase}', By.CSS_SELECTOR
     )
     fijar_atributo(context, f'{id}_{clase}', elemento)
-
-
-@then('veo un elemento de {atributo_in} "{nombre_in}" '
-      'dentro del {orden} elemento de {atributo_out} "{nombre_out}"')
-def veo_elemento_en_elemento(
-        context, atributo_in, nombre_in, orden, atributo_out, nombre_out):
-    atrib_out = BYS.get(atributo_out, By.LINK_TEXT)
-    atrib_in = BYS.get(atributo_in, By.LINK_TEXT)
-    ord = ORDINALES[orden]
-
-    continente = context.browser.esperar_elementos(nombre_out, atrib_out)[ord]
-    contenido = continente.esperar_elemento(nombre_in, atrib_in)
-    fijar_atributo(context, nombre_in, contenido)
 
 
 @then('veo un elemento de {atributo} "{nombre}"')
@@ -464,43 +564,6 @@ def menu_no_aparece(context, tipo, menu):
 @then('no veo un menú "{menu}"')
 def menu_no_aparece(context, menu):
     context.execute_steps(f'Entonces no veo un menú de id "{menu}"')
-
-
-@then('no veo un elemento de {atributo_in} "{nombre_in}" '
-      'dentro de ningún elemento de {atributo_out} "{nombre_out}"')
-def elemento_no_aparece_en_ningun_elemento(
-        context, atributo_in, nombre_in, atributo_out, nombre_out):
-    # TODO: ¿no debería ser por default By.CLASS_NAME?
-    atrib_out = BYS.get(atributo_out, By.LINK_TEXT)
-    atrib_in = BYS.get(atributo_in, By.LINK_TEXT)
-
-    continentes = context.browser.esperar_elementos(nombre_out, atrib_out)
-    for ind, continente in enumerate(continentes):
-        context.test.assertEqual(
-            len(continente.esperar_elementos(nombre_in, atrib_in, fail=False)),
-            0,
-            f'Aparece elemento de {atributo_in} "{nombre_in}" que no debería '
-            f'aparecer como hijo del elemento {ind} de {atributo_out} '
-            f'"{nombre_out}"'
-        )
-
-
-@then('no veo un elemento de {atributo_in} "{nombre_in}" '
-      'dentro del {orden} elemento de {atributo_out} "{nombre_out}"')
-def elemento_no_aparece_en_elemento(
-        context, atributo_in, nombre_in, orden, atributo_out, nombre_out):
-    atrib_out = BYS.get(atributo_out, By.LINK_TEXT)
-    atrib_in = BYS.get(atributo_in, By.LINK_TEXT)
-    ord = ORDINALES[orden]
-
-    continente = context.browser.esperar_elementos(nombre_out, atrib_out)[ord]
-    context.test.assertEqual(
-        len(continente.esperar_elementos(nombre_in, atrib_in, fail=False)),
-        0,
-        f'Aparece elemento de {atributo_in} "{nombre_in}" que no debería '
-        f'aparecer como hijo del {orden} elemento de {atributo_out} '
-        f'"{nombre_out}"'
-    )
 
 
 @then('no veo un elemento de id "{id}" y clase "{clase}"')

@@ -26,7 +26,7 @@ Escenario: Dividir una cuenta en subcuentas
         | Billetera       | ebil | 50    |
         | Cajón de arriba | ecar | 150   |
     Y veo 3 movimientos en la página
-    Y los movimientos en la página tienen estos valores:
+    Y veo que los movimientos en la página son los siguientes:
         | concepto                  | detalle                                                     | importe | cuentas  |
         | Traspaso de saldo         | Saldo pasado por Efectivo a nueva subcuenta Billetera       |  50,00  | +ebil -e |
         | Traspaso de saldo         | Saldo pasado por Efectivo a nueva subcuenta Cajón de arriba | 150,00  | +ecar -e |
@@ -53,7 +53,7 @@ Escenario: Asignar subcuenta a un titular distinto al dividir cuenta
 
     Entonces veo una cuenta en la grilla con nombre "Cajón de arriba"
     Y veo una cuenta en la grilla con nombre "Préstamo entre tit2 y default"
-    Y no veo una cuenta "Billetera" en la grilla
+    Y no veo una cuenta con nombre "Billetera" en la grilla
     Y veo que el patrimonio de "Otro Titular" es cero pesos
 
 
@@ -76,5 +76,5 @@ Escenario: Asignar subcuenta a un titular distinto al dividir cuenta sin generar
     Y voy a la página "tit_detalle" del titular "Otro Titular"
 
     Entonces veo una cuenta en la grilla con nombre "Cajón de arriba"
-    Y no veo una cuenta "Billetera" en la grilla
+    Y no veo una cuenta con nombre "Billetera" en la grilla
     Y veo que el patrimonio de "Otro Titular" es 150 pesos

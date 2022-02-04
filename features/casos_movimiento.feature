@@ -1,6 +1,5 @@
 # language: es
 
-@sec
 Característica: Casos de creación, modificación y eliminación de movimientos
 
 
@@ -53,9 +52,9 @@ Escenario: Casos movimiento: Modificar importe en movimiento de entrada
     Y un movimiento con los siguientes valores:
         | concepto | importe | cta_entrada | cta_salida |
         | aSaldo   | 200     | e           |            |
-    
+
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y escribo "150" en el campo "importe"
     Y cliqueo en el botón
 
@@ -69,9 +68,9 @@ Escenario: Casos movimiento: Modificar importe en movimiento de salida
     Y un movimiento con los siguientes valores:
         | concepto | importe | cta_entrada | cta_salida |
         | aSaldo   | 200     |             | e          |
-    
+
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y escribo "150" en el campo "importe"
     Y cliqueo en el botón
 
@@ -85,9 +84,9 @@ Escenario: Casos movimiento: Modificar importe en movimiento de traspaso
     Y un movimiento con los siguientes valores
         | concepto | importe | cta_entrada | cta_salida |
         | traspaso | 200     | e           | b          |
-    
+
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y escribo "150" en el campo "importe"
     Y cliqueo en el botón
 
@@ -104,7 +103,7 @@ Escenario: Casos movimiento: Agregar cuenta de salida a movimiento de entrada
         | traspaso | 200     | e           |            |
 
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y selecciono "banco" en el campo "cta_salida"
     Y cliqueo en el botón
 
@@ -121,7 +120,7 @@ Escenario: Casos movimiento: Agregar cuenta de entrada a movimiento de salida
         | traspaso | 200     |             | b          |
 
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y selecciono "efectivo" en el campo "cta_entrada"
     Y cliqueo en el botón
 
@@ -131,14 +130,14 @@ Escenario: Casos movimiento: Agregar cuenta de entrada a movimiento de salida
     Y veo que el saldo general es 0 pesos
 
 
-Escenario: Casos movimiento: Agregar cuenta de salida y modificar importe en movimiento de entrada 
+Escenario: Casos movimiento: Agregar cuenta de salida y modificar importe en movimiento de entrada
     Dadas dos cuentas
     Y un movimiento con los siguientes valores
         | concepto | importe | cta_entrada | cta_salida |
         | traspaso | 200     | e           |            |
 
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y selecciono "banco" en el campo "cta_salida"
     Y escribo "150" en el campo "importe"
     Y cliqueo en el botón
@@ -149,14 +148,14 @@ Escenario: Casos movimiento: Agregar cuenta de salida y modificar importe en mov
     Y veo que el saldo general es 0 pesos
 
 
-Escenario: Casos movimiento: Agregar cuenta de entrada y modificar importe en movimiento de salida 
+Escenario: Casos movimiento: Agregar cuenta de entrada y modificar importe en movimiento de salida
     Dadas dos cuentas
     Y un movimiento con los siguientes valores
         | concepto | importe | cta_entrada | cta_salida |
         | traspaso | 200     |             | b          |
 
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y selecciono "efectivo" en el campo "cta_entrada"
     Y escribo "150" en el campo "importe"
     Y cliqueo en el botón
@@ -174,7 +173,7 @@ Escenario: Casos movimiento: Convertir movimiento de entrada en movimiento de sa
         | entrada  | 200     | e           |            |
 
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y selecciono "nada" en el campo "cta_entrada"
     Y selecciono "efectivo" en el campo "cta_salida"
     Y cliqueo en el botón
@@ -192,7 +191,7 @@ Escenario: Casos movimiento: Convertir movimiento de salida en movimiento de ent
         | salida   | 200     |             | e          |
 
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y selecciono "efectivo" en el campo "cta_entrada"
     Y selecciono "nada" en el campo "cta_salida"
     Y cliqueo en el botón
@@ -210,7 +209,7 @@ Escenario: Casos movimiento: Convertir movimiento de entrada en movimiento de sa
         | entrada  | 200     | e           |            |
 
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y selecciono "nada" en el campo "cta_entrada"
     Y selecciono "efectivo" en el campo "cta_salida"
     Y escribo "150" en el campo "importe"
@@ -229,7 +228,7 @@ Escenario: Casos movimiento: Convertir movimiento de salida en movimiento de ent
         | salida   | 200     |             | e          |
 
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y selecciono "efectivo" en el campo "cta_entrada"
     Y selecciono "nada" en el campo "cta_salida"
     Y escribo "150" en el campo "importe"
@@ -248,7 +247,7 @@ Escenario: Casos movimiento: Convertir movimiento de entrada en movimiento de sa
         | entrada  | 200     | e           |            |
 
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y selecciono "nada" en el campo "cta_entrada"
     Y selecciono "banco" en el campo "cta_salida"
     Y cliqueo en el botón
@@ -267,7 +266,7 @@ Escenario: Casos movimiento: Convertir movimiento de salida en movimiento de ent
         | salida   | 200     |             | e          |
 
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y selecciono "banco" en el campo "cta_entrada"
     Y selecciono "nada" en el campo "cta_salida"
     Y cliqueo en el botón
@@ -286,7 +285,7 @@ Escenario: Casos movimiento: Convertir movimiento de entrada en movimiento de sa
         | entrada  | 200     | e           |            |
 
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y selecciono "nada" en el campo "cta_entrada"
     Y selecciono "banco" en el campo "cta_salida"
     Y escribo "150" en el campo "importe"
@@ -306,7 +305,7 @@ Escenario: Casos movimiento: Convertir movimiento de salida en movimiento de ent
         | salida   | 200     |             | e          |
 
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y selecciono "banco" en el campo "cta_entrada"
     Y selecciono "nada" en el campo "cta_salida"
     Y escribo "150" en el campo "importe"
@@ -319,14 +318,14 @@ Escenario: Casos movimiento: Convertir movimiento de salida en movimiento de ent
     Y veo que el saldo general es 150 pesos
 
 
-Escenario: Casos movimiento: Retirar cuenta de salida de movimiento de traspaso 
+Escenario: Casos movimiento: Retirar cuenta de salida de movimiento de traspaso
     Dadas dos cuentas
     Y un movimiento con los siguientes valores
         | concepto | importe | cta_entrada | cta_salida |
         | traspaso | 200     | e           | b          |
 
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y selecciono "---------" en el campo "cta_salida"
     Y cliqueo en el botón
 
@@ -337,14 +336,14 @@ Escenario: Casos movimiento: Retirar cuenta de salida de movimiento de traspaso
     Y veo que el saldo general es 200 pesos
 
 
-Escenario: Casos movimiento: Retirar cuenta de entrada de movimiento de traspaso 
+Escenario: Casos movimiento: Retirar cuenta de entrada de movimiento de traspaso
     Dadas dos cuentas
     Y un movimiento con los siguientes valores
         | concepto | importe | cta_entrada | cta_salida |
         | traspaso | 200     | e           | b          |
 
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y selecciono "---------" en el campo "cta_entrada"
     Y cliqueo en el botón
 
@@ -355,14 +354,14 @@ Escenario: Casos movimiento: Retirar cuenta de entrada de movimiento de traspaso
     Y veo que el saldo general es -200 pesos
 
 
-Escenario: Casos movimiento: Retirar cuenta de salida y modificar importe en movimiento de traspaso 
+Escenario: Casos movimiento: Retirar cuenta de salida y modificar importe en movimiento de traspaso
     Dadas dos cuentas
     Y un movimiento con los siguientes valores
         | concepto | importe | cta_entrada | cta_salida |
         | traspaso | 200     | e           | b          |
 
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y selecciono "---------" en el campo "cta_salida"
     Y escribo "150" en el campo "importe"
     Y cliqueo en el botón
@@ -374,14 +373,14 @@ Escenario: Casos movimiento: Retirar cuenta de salida y modificar importe en mov
     Y veo que el saldo general es 150 pesos
 
 
-Escenario: Casos movimiento: Retirar cuenta de entrada y modificar importe en movimiento de traspaso 
+Escenario: Casos movimiento: Retirar cuenta de entrada y modificar importe en movimiento de traspaso
     Dadas dos cuentas
     Y un movimiento con los siguientes valores
         | concepto | importe | cta_entrada | cta_salida |
         | traspaso | 200     | e           | b          |
 
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y selecciono "---------" en el campo "cta_entrada"
     Y escribo "150" en el campo "importe"
     Y cliqueo en el botón
@@ -398,9 +397,9 @@ Escenario: Casos movimiento: Cambiar cuenta en movimiento de entrada
     Y un movimiento con los siguientes valores
         | concepto | importe | cta_entrada | cta_salida |
         | entrada  | 200     | e           |            |
-    
+
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y selecciono "banco" en el campo "cta_entrada"
     Y cliqueo en el botón
 
@@ -415,9 +414,9 @@ Escenario: Casos movimiento: Cambiar cuenta en movimiento de salida
     Y un movimiento con los siguientes valores
         | concepto | importe | cta_entrada | cta_salida |
         | salida   | 200     |             | b          |
-    
+
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y selecciono "efectivo" en el campo "cta_salida"
     Y cliqueo en el botón
 
@@ -432,9 +431,9 @@ Escenario: Casos movimiento: Cambiar cuenta y modificar importe en movimiento de
     Y un movimiento con los siguientes valores
         | concepto | importe | cta_entrada | cta_salida |
         | entrada  | 200     | e           |            |
-    
+
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y selecciono "banco" en el campo "cta_entrada"
     Y escribo "150" en el campo "importe"
     Y cliqueo en el botón
@@ -450,9 +449,9 @@ Escenario: Casos movimiento: Cambiar cuenta y modificar importe en movimiento de
     Y un movimiento con los siguientes valores
         | concepto | importe | cta_entrada | cta_salida |
         | salida   | 200     |             | b          |
-    
+
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y selecciono "efectivo" en el campo "cta_salida"
     Y escribo "150" en el campo "importe"
     Y cliqueo en el botón
@@ -468,9 +467,9 @@ Escenario: Casos movimiento: Cambiar cuenta de entrada en movimiento de traspaso
     Y un movimiento con los siguientes valores
         | concepto | importe | cta_entrada | cta_salida |
         | traspaso | 200     | e           | b          |
-    
+
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y selecciono "caja" en el campo "cta_entrada"
     Y cliqueo en el botón
 
@@ -486,9 +485,9 @@ Escenario: Casos movimiento: Cambiar cuenta de salida en movimiento de traspaso
     Y un movimiento con los siguientes valores
         | concepto | importe | cta_entrada | cta_salida |
         | traspaso | 200     | e           | b          |
-    
+
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y selecciono "caja" en el campo "cta_salida"
     Y cliqueo en el botón
 
@@ -504,9 +503,9 @@ Escenario: Casos movimiento: Cambiar cuenta de entrada y modificar importe en mo
     Y un movimiento con los siguientes valores
         | concepto | importe | cta_entrada | cta_salida |
         | traspaso | 200     | e           | b          |
-    
+
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y selecciono "caja" en el campo "cta_entrada"
     Y escribo "150" en el campo "importe"
     Y cliqueo en el botón
@@ -523,9 +522,9 @@ Escenario: Casos movimiento: Cambiar cuenta de salida y modificar importe en mov
     Y un movimiento con los siguientes valores
         | concepto | importe | cta_entrada | cta_salida |
         | traspaso | 200     | e           | b          |
-    
+
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y selecciono "caja" en el campo "cta_salida"
     Y escribo "150" en el campo "importe"
     Y cliqueo en el botón
@@ -542,9 +541,9 @@ Escenario: Casos movimiento: Cambiar cuenta de entrada y cuenta de salida en mov
     Y un movimiento con los siguientes valores
         | concepto | importe | cta_entrada | cta_salida |
         | traspaso | 200     | e           | b          |
-    
+
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y selecciono "caja" en el campo "cta_entrada"
     Y selecciono "crédito" en el campo "cta_salida"
     Y cliqueo en el botón
@@ -563,9 +562,9 @@ Escenario: Casos movimiento: Cambiar cuenta de entrada y cuenta de salida y modi
     Y un movimiento con los siguientes valores
         | concepto | importe | cta_entrada | cta_salida |
         | traspaso | 200     | e           | b          |
-    
+
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y selecciono "caja" en el campo "cta_entrada"
     Y selecciono "crédito" en el campo "cta_salida"
     Y escribo "150" en el campo "importe"
@@ -584,9 +583,9 @@ Escenario: Casos movimiento: Retirar cuenta de entrada y cambiar cuenta de salid
     Y un movimiento con los siguientes valores
         | concepto | importe | cta_entrada | cta_salida |
         | traspaso | 200     | e           | b          |
-    
+
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y selecciono "nada" en el campo "cta_entrada"
     Y selecciono "caja" en el campo "cta_salida"
     Y cliqueo en el botón
@@ -605,9 +604,9 @@ Escenario: Casos movimiento: Retirar cuenta de salida y cambiar cuenta de entrad
     Y un movimiento con los siguientes valores
         | concepto | importe | cta_entrada | cta_salida |
         | traspaso | 200     | e           | b          |
-    
+
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y selecciono "caja" en el campo "cta_entrada"
     Y selecciono "nada" en el campo "cta_salida"
     Y cliqueo en el botón
@@ -626,9 +625,9 @@ Escenario: Casos movimiento: Retirar cuenta de entrada y cambiar cuenta de salid
     Y un movimiento con los siguientes valores
         | concepto | importe | cta_entrada | cta_salida |
         | traspaso | 200     | e           | b          |
-    
+
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y selecciono "nada" en el campo "cta_entrada"
     Y selecciono "caja" en el campo "cta_salida"
     Y escribo "150" en el campo "importe"
@@ -647,9 +646,9 @@ Escenario: Casos movimiento: Retirar cuenta de salida y cambiar cuenta de entrad
     Y un movimiento con los siguientes valores
         | concepto | importe | cta_entrada | cta_salida |
         | traspaso | 200     | e           | b          |
-    
+
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y selecciono "caja" en el campo "cta_entrada"
     Y selecciono "nada" en el campo "cta_salida"
     Y escribo "150" en el campo "importe"
@@ -668,9 +667,9 @@ Escenario: Casos movimiento: Intercambiar lugar de cuentas en movimiento de tras
     Y un movimiento con los siguientes valores
         | concepto | importe | cta_entrada | cta_salida |
         | traspaso | 200     | e           | b          |
-    
+
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y selecciono "banco" en el campo "cta_entrada"
     Y selecciono "efectivo" en el campo "cta_salida"
     Y cliqueo en el botón
@@ -687,9 +686,9 @@ Escenario: Casos movimiento: Intercambiar lugar de cuentas y modificar importe e
     Y un movimiento con los siguientes valores
         | concepto | importe | cta_entrada | cta_salida |
         | traspaso | 200     | e           | b          |
-    
+
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y selecciono "banco" en el campo "cta_entrada"
     Y selecciono "efectivo" en el campo "cta_salida"
     Y escribo "150" en el campo "importe"
@@ -707,9 +706,9 @@ Escenario: Casos movimiento: Pasar cuenta de entrada a cuenta de salida y cambia
     Y un movimiento con los siguientes valores
         | concepto | importe | cta_entrada | cta_salida |
         | traspaso | 200     | e           | b          |
-    
+
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y selecciono "caja" en el campo "cta_entrada"
     Y selecciono "efectivo" en el campo "cta_salida"
     Y cliqueo en el botón
@@ -727,9 +726,9 @@ Escenario: Casos movimiento: Pasar cuenta de salida a cuenta de entrada, cambiar
     Y un movimiento con los siguientes valores
         | concepto | importe | cta_entrada | cta_salida |
         | traspaso | 200     | e           | b          |
-    
+
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y selecciono "banco" en el campo "cta_entrada"
     Y selecciono "caja" en el campo "cta_salida"
     Y cliqueo en el botón
@@ -747,9 +746,9 @@ Escenario: Casos movimiento: Pasar cuenta de entrada a cuenta de salida, cambiar
     Y un movimiento con los siguientes valores
         | concepto | importe | cta_entrada | cta_salida |
         | traspaso | 200     | e           | b          |
-    
+
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y selecciono "caja" en el campo "cta_entrada"
     Y selecciono "efectivo" en el campo "cta_salida"
     Y escribo "150" en el campo "importe"
@@ -768,9 +767,9 @@ Escenario: Casos movimiento: Pasar cuenta de salida a cuenta de entrada, cambiar
     Y un movimiento con los siguientes valores
         | concepto | importe | cta_entrada | cta_salida |
         | traspaso | 200     | e           | b          |
-    
+
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_mod_mov"
+    Y cliqueo en el botón de clase "class_link_mod_mov"
     Y selecciono "banco" en el campo "cta_entrada"
     Y selecciono "caja" en el campo "cta_salida"
     Y escribo "150" en el campo "importe"
@@ -791,7 +790,7 @@ Escenario: Casos movimiento: Eliminar movimiento de entrada
         | aSaldo   | 200     | e           |            |
 
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_elim_mov"
+    Y cliqueo en el botón de clase "class_link_elim_mov"
     Y cliqueo en el botón de id "id_btn_confirm"
 
     Entonces veo 0 movimientos en la página
@@ -806,7 +805,7 @@ Escenario: Casos movimiento: Eliminar movimiento de salida
         | aSaldo   | 200     |             | e          |
 
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_elim_mov"
+    Y cliqueo en el botón de clase "class_link_elim_mov"
     Y cliqueo en el botón de id "id_btn_confirm"
 
     Entonces veo 0 movimientos en la página
@@ -821,7 +820,7 @@ Escenario: Casos movimiento: Eliminar movimiento de traspaso
         | aSaldo   | 200     | e           | b          |
 
     Cuando voy a la página principal
-    Y cliqueo en el botón de clase "link_elim_mov"
+    Y cliqueo en el botón de clase "class_link_elim_mov"
     Y cliqueo en el botón de id "id_btn_confirm"
 
     Entonces veo 0 movimientos en la página

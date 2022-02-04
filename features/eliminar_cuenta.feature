@@ -11,10 +11,10 @@ Escenario: Eliminar cuenta
         | Efectivo       | e    |
         | Caja de ahorro | b    |
     Cuando voy a la página principal
-        Y cliqueo en el botón de clase "link_elim_cuenta" 
+        Y cliqueo en el botón de clase "link_elim_cuenta"
         Y cliqueo en el botón de id "id_btn_confirm"
     Entonces veo una cuenta en la grilla con nombre "Efectivo"
-        Y no veo una cuenta "Caja de ahorro" en la grilla
+        Y no veo una cuenta con nombre "Caja de ahorro" en la grilla
 
 
 Escenario: Eliminar cuenta con saldo
@@ -22,6 +22,5 @@ Escenario: Eliminar cuenta con saldo
         | nombre         | slug | saldo |
         | aEfectivo      | a    | 100   |
     Cuando voy a la página principal
-        Y cliqueo en el botón de clase "link_elim_cuenta" 
+        Y cliqueo en el botón de clase "link_elim_cuenta"
     Entonces veo un mensaje de error: "No se puede eliminar cuenta con saldo"
-    
