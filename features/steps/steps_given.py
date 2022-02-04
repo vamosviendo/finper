@@ -8,6 +8,27 @@ from behave import given
 
 from diario.models import Cuenta, Movimiento, Titular
 from helpers import table_to_str, fijar_atributo
+""" Steps en el archivo:
+@given('movimientos con los siguientes valores')
+@given('{n} movimientos con los siguientes valores')
+@given('movimientos con estos valores')
+@given('un movimiento con los siguientes valores')
+
+@given('{n} titulares con los siguientes valores')
+@given('un titular con los siguientes valores')
+@given('un titular')
+@given('dos titulares')
+
+@given('{n} cuentas con los siguientes valores')
+@given('una cuenta con los siguientes valores')
+@given('una cuenta')
+@given('dos cuentas')
+@given('tres cuentas')
+@given('cuatro cuentas')
+@given('una cuenta acumulativa')
+@given('la cuenta "{nombre}" dividida en subcuentas')
+@given('un error de {cantidad} pesos en el saldo de la cuenta "{nombre}"')
+"""
 
 
 @given('movimientos con los siguientes valores')
@@ -43,22 +64,6 @@ def hay_n_movimientos(context, n):
                           table_to_str(context.table))
 
 
-@given('la cuenta "{nombre}" dividida en subcuentas')
-def cuenta_dividida(context, nombre):
-    cta = Cuenta.tomar(nombre=nombre.lower())
-    subcuentas = list()
-    for fila in context.table:
-        titname = fila.get('titular', None)
-        subcuenta = dict(
-                nombre=fila['nombre'],
-                slug=fila['slug'],
-                saldo=fila['saldo'] or None,)
-        if titname:
-            subcuenta.update({'titular': Titular.tomar(titname=titname)})
-        subcuentas.append(subcuenta)
-    cta.dividir_entre(*subcuentas)
-
-
 @given('movimientos con estos valores')
 def hay_n_movimientos(context):
     for fila in context.table:
@@ -82,14 +87,6 @@ def hay_un_movimiento(context):
         'Dados 1 movimientos con los siguientes valores\n ' +
         table_to_str(context.table)
     )
-
-
-@given('un error de {cantidad} pesos en el saldo de la cuenta "{nombre}"')
-def hay_un_error_en_el_saldo(context, cantidad, nombre):
-    cta = Cuenta.tomar(nombre=nombre.lower())
-    cta.saldo += float(cantidad)
-    cta.save()
-    context.test.assertNotEqual(cta.saldo, cta.total_movs())
 
 
 @given('{n} titulares con los siguientes valores')
@@ -218,3 +215,27 @@ def hay_una_cuenta_acumulativa(context):
         '| efect_sub1 | es1  | 0.0   |\n'
         '| efect_sub2 | es2  | 0.0   |'
     )
+
+
+@given('la cuenta "{nombre}" dividida en subcuentas')
+def cuenta_dividida(context, nombre):
+    cta = Cuenta.tomar(nombre=nombre.lower())
+    subcuentas = list()
+    for fila in context.table:
+        titname = fila.get('titular', None)
+        subcuenta = dict(
+                nombre=fila['nombre'],
+                slug=fila['slug'],
+                saldo=fila['saldo'] or None,)
+        if titname:
+            subcuenta.update({'titular': Titular.tomar(titname=titname)})
+        subcuentas.append(subcuenta)
+    cta.dividir_entre(*subcuentas)
+
+
+@given('un error de {cantidad} pesos en el saldo de la cuenta "{nombre}"')
+def hay_un_error_en_el_saldo(context, cantidad, nombre):
+    cta = Cuenta.tomar(nombre=nombre.lower())
+    cta.saldo += float(cantidad)
+    cta.save()
+    context.test.assertNotEqual(cta.saldo, cta.total_movs())

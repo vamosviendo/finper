@@ -9,12 +9,35 @@ from pathlib import Path
 from unittest.mock import patch
 
 from behave import when
-from django.urls import reverse
 from selenium.webdriver.common.by import By
 
 from consts import NOMBRES_URL
 from diario.models import Cuenta, Movimiento, Titular
 from utils.archivos import fijar_mtime
+"""Steps en el archivo:
+@when('cliqueo en el titular "{nombre}"')
+@when('agrego una cuenta con nombre "{nombre}" y slug "{slug}"')
+@when('agrego una cuenta con nombre "{nombre}"')
+@when('agrego una cuenta')
+@when('entro en la cuenta "{nombre}"')
+@when('cliqueo en el botón "{boton}" de la cuenta "{cuenta}"')
+@when('cliqueo en el botón "{boton}" del titular "{titular}"')
+
+@when('completo el form de dividir cuenta con estos valores')
+@when('completo el form de agregar subcuenta con estos valores')
+
+@when('introduzco un error de {importe} pesos en el saldo de la cuenta "{nombre}"')
+
+@when('agrego un movimiento con campos')
+@when('genero un movimiento "{concepto}" de {importe} pesos de "{cta_salida}" a "{cta_entrada}"'
+
+@when('voy a la página "{pag}" del {orden} movimiento')
+@when('voy a la página "{pag}" del movimiento de concepto "{concepto}"')
+@when('voy a la página principal por primera vez en el día')
+@when('voy a la página principal sin que haya cambiado el día')
+@when('voy a la página "{pag}" de la cuenta "{coso}"')
+@when('voy a la página "{pag}" del titular "{coso}"')
+"""
 
 
 # ACCIONES DE TITULAR
