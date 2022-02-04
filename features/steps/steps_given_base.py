@@ -1,5 +1,12 @@
 from behave import given
 from selenium.common.exceptions import NoSuchElementException
+""" Steps en el archivo:
+@given('un "{tag}" de {tipo} "{nombre}"')
+@given('un link de texto "{texto}"')
+@given('un elemento de {atributo} "{nombre}"')
+@given('un usuario identificado')
+@given('un usuario no identificado')
+"""
 
 
 @given('un "{tag}" de {tipo} "{nombre}"')

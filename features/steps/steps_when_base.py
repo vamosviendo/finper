@@ -8,6 +8,44 @@ from selenium.webdriver.common.by import By
 
 from consts_base import BYS, ORDINALES
 from features.steps.helpers import tomar_atributo, fijar_atributo
+""" Steps en el archivo:
+@when('cliqueo en el {orden} botón de texto "{texto}"')
+@when('cliqueo en el botón de texto "{texto}"')
+@when('cliqueo en el {orden} botón de {atributo} "{texto}"')
+@when('cliqueo en el botón de {atributo} "{texto}"')
+@when('cliqueo en el botón "{texto}"')
+@when('cliqueo en el botón')
+@when('cliqueo en el link de texto "{texto}"')
+@when('cliqueo en la opción "{opcion}" del {orden} menú de {tipo} "{menu}"')
+@when('cliqueo en la opción "{opcion}" del menú de {tipo} "{menu}"')
+@when('cliqueo en la opción "{opcion}" del menú "{menu}"')
+@when('cliqueo en la opción "{opcion}" del {orden} elemento dado "{nombre}"')
+@when('cliqueo en la opción "{opcion}" del {orden} elemento de clase "{nombre}"')
+@when('cliqueo en la opción "{opcion}" del elemento dado "{nombre}"')
+@when('cliqueo en el elemento dado "{elemento}"')
+@when('cliqueo en el "{tag}" de id "{id}"')
+@when('cliqueo en un "{tag}" de clase "{clase}"')
+@when('cliqueo en el {orden} "{tag}" de clase "{clase}"')
+@when('cliqueo en el "{tag}" de clase "{clase}" con {atributo} "{valor}"')
+
+@when('elijo al azar y guardo un elemento de clase "{clase}"')
+@when('elijo al azar un elemento de clase "{clase}" y guardo su atributo "{atributo}"'
+
+@when('completo y envío el formulario de login')
+@when('ingreso el nombre de usuario')
+@when('ingreso el password')
+@when('{accion} "{texto}" en el campo "{campo}"')
+
+@when('tomo las medidas del elemento dado "{nombre_elemento}"')
+
+@when('voy a la página principal')
+@when('voy a la página "{nombre}" con el argumento "{arg}"')
+@when('voy a la página "{nombre}" con los argumentos')
+@when('voy a la página "{nombre}"')
+
+@when('me detengo')
+@when('fallo')
+"""
 
 
 @when('cliqueo en el {orden} botón de texto "{texto}"')
@@ -91,7 +129,7 @@ def cliquear_en_opcion_de_elemento(context, opcion, orden, nombre):
     )
 
 
-@when('cliqueo en la opción "{opcion}" del {orden} elemento "{nombre}"')
+@when('cliqueo en la opción "{opcion}" del {orden} elemento de clase "{nombre}"')
 def cliquear_en_opcion_de_elemento(context, opcion, orden, nombre):
     context.execute_steps(f'''
         Entonces veo varios elementos de clase "{nombre}"
