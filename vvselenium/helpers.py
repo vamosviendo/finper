@@ -1,9 +1,31 @@
-from django.contrib.auth import get_user_model
+import time
 
-from utils.helpers_tests import esperar
+from selenium.common.exceptions import WebDriverException
+
+from django.contrib.auth import get_user_model
 
 
 User = get_user_model()
+
+def esperar(condicion, tiempo=2):
+    """ Devuelve una función que espera un tiempo
+        que se cumpla una condición.
+        Requiere: time
+                  selenium.common.exceptions.WebDriverException
+    """
+
+    def condicion_modificada(*args, **kwargs):
+        arranque = time.time()
+        while True:
+            try:
+                return condicion(*args, **kwargs)
+            except (AssertionError, WebDriverException) as noesperomas:
+                if time.time() - arranque > tiempo:
+                    raise noesperomas
+                time.sleep(0.2)
+
+    return condicion_modificada
+
 
 
 def table_to_str(tabla):

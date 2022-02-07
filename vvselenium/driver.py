@@ -9,7 +9,7 @@ from selenium.webdriver.support.select import Select
 
 from django.contrib.auth import get_user_model
 
-from utils.helpers_tests import esperar
+from .helpers import esperar
 
 User = get_user_model()
 
