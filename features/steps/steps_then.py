@@ -8,13 +8,13 @@ from behave import then
 from selenium.webdriver.common.by import By
 
 from consts import LISTAS_DE_ENTIDADES
-from consts_base import CARDINALES
+from vvselenium.consts_base import CARDINALES
 from diario.models import Cuenta, Titular
-from features.steps.helpers import table_to_str, fijar_atributo
 from utils import errors
 from utils.fechas import hoy
 from utils.numeros import float_str_coma
 from utils.texto import truncar
+from vvselenium.helpers import table_to_str, fijar_atributo
 """ Steps en el archivo:
 @then('el saldo general es {tantos} pesos')
 @then('la cuenta "{slug}" tiene saldo {monto}')

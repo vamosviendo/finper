@@ -6,9 +6,9 @@ from behave import then
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 
-from features.steps.consts_base import BYS, ORDINALES, TERMINOS_TRUE, \
+from vvselenium.consts_base import BYS, ORDINALES, TERMINOS_TRUE, \
     TERMINOS_FALSE
-from features.steps.helpers import espacios_a_snake, espera, tomar_atributo, \
+from vvselenium.helpers import espacios_a_snake, espera, tomar_atributo, \
     fijar_atributo
 """ Steps en el archivo:
 @then('soy dirigido a la página "{pagina}" con el argumento "{argumento}"')

@@ -6,9 +6,22 @@ from selenium.webdriver.common.by import By
 from django.contrib.auth import get_user_model
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 
-from .driver import esperar, MiFirefox
+from vvselenium.driver import esperar, MiFirefox
 
 User = get_user_model()
+
+
+class FinperFirefox(MiFirefox):
+
+    def esperar_movimiento(self, concepto):
+        movimientos = self.esperar_elementos('class_row_mov', By.CLASS_NAME)
+        try:
+            return next(
+                x for x in movimientos
+                if x.find_element_by_class_name('class_td_concepto').text == concepto
+            )
+        except StopIteration:
+            raise ValueError(f'Concepto {concepto} no encontrado')
 
 
 class FunctionalTest(StaticLiveServerTestCase):
@@ -28,9 +41,9 @@ class FunctionalTest(StaticLiveServerTestCase):
         if headless:
             FirefoxOptions = webdriver.FirefoxOptions()
             FirefoxOptions.headless = True
-            self.browser = MiFirefox(firefox_options=FirefoxOptions)
+            self.browser = FinperFirefox(firefox_options=FirefoxOptions)
         else:
-            self.browser = MiFirefox()
+            self.browser = FinperFirefox()
         # Verifica si se está ejecutando en un entorno local o en un server
         # externo-
         self.staging_server = os.environ.get('STAGING_SERVER')
