@@ -47,6 +47,7 @@ from features.steps.helpers import espacios_a_snake, espera, tomar_atributo, \
 @then('veo que el elemento dado "{elemento}" incluye {tantos} "{tag}"')
 @then('veo que el {orden} elemento dado "{elemento}" incluye un "{tag}" de {tipo} "{nombre}"'
 @then('veo que el {orden} elemento dado "{elemento}" no incluye un "{tag}" de {tipo} "{nombre}"'
+@then('veo que el "{tag_out}" de {tipo_out} "{nombre_out}" incluye tantos "{tag_in}" de clase "{nombre_in}" como "{elementos}" hay'
 @then('veo que el {orden} "{tag_out}" de {tipo_out} "{nombre_out}" incluye un "{tag_in}" de {tipo_in} "{nombre_in}"'
 @then('veo que el {orden} elemento de {atributo_out} "{nombre_out}" incluye un elemento de {atributo_in} "{nombre_in}"'
 @then('veo que el {orden} elemento de {atributo_out} "{nombre_out}" no incluye ningún elemento de {atributo_in} "{nombre_in}"'
@@ -120,16 +121,11 @@ def soy_dirigido_a(context, pagina):
 def veo_campo_en_form(context, campo_name, form_id):
     form = context.browser.esperar_elemento(f'id_form_{form_id}')
     try:
-        campo = form.esperar_elemento(
-            f'input[name="{campo_name}"]',
-            By.CSS_SELECTOR
-        )
+        campo = form.find_element_by_css_selector(f'input[name="{campo_name}"]')
     except NoSuchElementException:
         try:
-            campo = form.esperar_elemento(
-                f'select[name="{campo_name}"]',
-                By.CSS_SELECTOR
-            )
+            campo = form.find_element_by_css_selector(
+                f'select[name="{campo_name}"]')
         except NoSuchElementException:
             raise NoSuchElementException(
                 f'No se encontró ningún campo de nombre "{campo_name}".'
@@ -139,10 +135,11 @@ def veo_campo_en_form(context, campo_name, form_id):
 
 @then('veo que entre las opciones del campo "{campo}" figura "{opcion}"')
 def select_muestra_opcion(context, campo, opcion):
+    form = context.browser.esperar_elemento('form', By.TAG_NAME)
     try:
-        select = context.browser.esperar_elemento(f'id_{campo}')
+        select = form.find_element_by_id(f'id_{campo}')
     except NoSuchElementException:
-        select = context.browser.esperar_elemento(f'id_select_{campo}')
+        select = form.find_element_by_id(f'id_select_{campo}')
     opciones = [x.text for x in select.find_elements_by_tag_name('option')]
     context.test.assertIn(opcion, opciones)
 
@@ -423,6 +420,20 @@ def veo_que_elemento_no_incluye(context, orden, elemento, tag, tipo, nombre):
     context.execute_steps(
         f'entonces veo que el elemento dado "elem_dado" '
         f'no incluye un "{tag}" de {tipo} "{nombre}"'
+    )
+
+
+@then('veo que el "{tag_out}" de {tipo_out} "{nombre_out}" incluye '
+      'tantos "{tag_in}" de clase "{nombre_in}" como "{elementos}" hay')
+def elemento_incluye_tantos_elementos(
+        context, tag_out, tipo_out, nombre_out, tag_in, nombre_in, elementos):
+    context.execute_steps(
+        f'Entonces veo un "{tag_out}" de {tipo_out} "{nombre_out}"\n'
+        f'Y veo que el elemento dado "{tipo_out}_{tag_out}_{nombre_out}" '
+            f'incluye varios "{tag_in}" de clase "{nombre_in}"')
+    context.test.assertEqual(
+        len(tomar_atributo(context, f'class_{tag_in}_{nombre_in}')),
+        len(tomar_atributo(context, elementos))
     )
 
 
