@@ -125,6 +125,14 @@ class MiFirefox(webdriver.Firefox):
                 f'no se encontraron elementos coincidentes con {search_str}'
         return elementos
 
+    def esperar_opciones_de_campo(self, campo, form=None):
+        form = form or self.esperar_elemento('form', By.TAG_NAME)
+        try:
+            select = form.find_element_by_id(f'id_{campo}')
+        except NoSuchElementException:
+            select = form.find_element_by_id(f'id_select_{campo}')
+        return [x.text for x in select.find_elements_by_tag_name('option')]
+
     def limpiar_campo(self, id_campo):
         """ Elimina el valor de un campo de form."""
         self.find_element_by_id(id_campo).clear()

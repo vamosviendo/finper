@@ -74,7 +74,6 @@ from features.steps.helpers import espacios_a_snake, espera, tomar_atributo, \
 @then('fallo')
 """
 
-#  NAVEGACIÓN
 
 @then('soy dirigido a la página "{pagina}" con el argumento "{argumento}"')
 def soy_dirigido_a(context, pagina, argumento):
@@ -115,8 +114,6 @@ def soy_dirigido_a(context, pagina):
     )
 
 
-# FORMS Y CARGA DE DATOS
-
 @then('veo un campo "{campo_name}" en el form de id "{form_id}"')
 def veo_campo_en_form(context, campo_name, form_id):
     form = context.browser.esperar_elemento(f'id_form_{form_id}')
@@ -135,12 +132,7 @@ def veo_campo_en_form(context, campo_name, form_id):
 
 @then('veo que entre las opciones del campo "{campo}" figura "{opcion}"')
 def select_muestra_opcion(context, campo, opcion):
-    form = context.browser.esperar_elemento('form', By.TAG_NAME)
-    try:
-        select = form.find_element_by_id(f'id_{campo}')
-    except NoSuchElementException:
-        select = form.find_element_by_id(f'id_select_{campo}')
-    opciones = [x.text for x in select.find_elements_by_tag_name('option')]
+    opciones = context.browser.esperar_opciones_de_campo(campo)
     context.test.assertIn(opcion, opciones)
 
 
@@ -156,11 +148,7 @@ def select_muestra_opciones(context, campo):
 
 @then('veo que entre las opciones del campo "{campo}" no figura "{opcion}"')
 def select_muestra_opcion(context, campo, opcion):
-    try:
-        select = context.browser.esperar_elemento(f'id_{campo}')
-    except NoSuchElementException:
-        select = context.browser.esperar_elemento(f'id_select_{campo}')
-    opciones = [x.text for x in select.find_elements_by_tag_name('option')]
+    opciones = context.browser.esperar_opciones_de_campo(campo)
     context.test.assertNotIn(opcion, opciones)
 
 
@@ -181,8 +169,6 @@ def estado_checkbox(context, checkbox, estado):
         raise ValueError(f'No se acepta {estado}. '
                          f'Opciones válidas: seleccionado - deseleccionado')
 
-
-# ELEMENTOS
 
 @then('veo un mensaje de error: "{mensaje}"')
 def veo_mensaje_de_error(context, mensaje):
@@ -643,7 +629,6 @@ def medidas_coinciden(context, atrib, elemento_medido):
     )
 
 
-# LOGIN / LOGOUT
 @then('se inicia una sesión con mi nombre')
 def inicia_sesion(context):
     div = context.browser.esperar_elemento('id_div_login')
@@ -657,8 +642,6 @@ def cierra_sesion(context):
     context.test.assertNotIn(
         context.test_username, div.get_attribute('innerHTML'))
 
-
-# MISC
 
 @then('me detengo')
 def detenerse(context):
