@@ -61,10 +61,6 @@ class FunctionalTest(StaticLiveServerTestCase):
 
     ### MÉTODOS DE MANEJO DE FORMULARIOS
 
-    def limpiar_campo(self, id_campo):
-        """ Elimina el valor de un campo de form."""
-        self.browser.limpiar_campo(id_campo)
-
     def completar(self, id_campo, texto, criterio=By.ID):
         """ Completa un campo de texto en un form, o selecciona un valor
             de un campo select."""

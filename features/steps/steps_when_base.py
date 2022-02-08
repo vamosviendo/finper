@@ -6,7 +6,7 @@ from behave import when
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 
-from vvselenium.consts_base import BYS, ORDINALES
+from vvselenium.consts import BYS, ORDINALES
 from vvselenium.helpers import tomar_atributo, fijar_atributo
 """ Steps en el archivo:
 @when('cliqueo en el {orden} botón de texto "{texto}"')
