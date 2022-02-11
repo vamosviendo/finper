@@ -68,7 +68,7 @@ class TestVerificarSaldo(FunctionalTest):
         self.assertIn('Movimiento correctivo', [c.text for c in movs_concepto])
         self.assertIn('600.00', [i.text for i in movs_importe])
 
-    def test_cuenta_caja_no_muestra_movimiento_correctivo(self):
+    def test_cuenta_acumulativa_no_muestra_movimiento_correctivo(self):
         # Dada una cuenta con dos subcuentas y saldo erróneo
         self.cuenta1.corregir_saldo()
         self.cuenta2.corregir_saldo()

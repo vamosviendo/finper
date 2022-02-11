@@ -503,7 +503,7 @@ class TestSubcuentas(TestCase):
         self.cta2 = Cuenta.tomar(slug='sc1')
         self.cta3 = Cuenta.tomar(slug='sc2')
 
-    def test_cuenta_caja_debe_tener_subcuentas(self):
+    def test_cuenta_acumulativa_debe_tener_subcuentas(self):
         cuenta = Cuenta.crear('cuenta acum', 'ctaa')
         cuenta = cuenta.dividir_y_actualizar(
             ['subc 1', 'suc1', 0], ['subc 2', 'suc2'])
@@ -520,13 +520,13 @@ class TestSubcuentas(TestCase):
         with self.assertRaises(ValueError):
             subcuenta.cta_madre = self.cta2  # cta2 interactiva
 
-    def test_se_puede_asignar_cta_interactiva_a_cta_caja(self):
+    def test_se_puede_asignar_cta_interactiva_a_cta_acumulativa(self):
         cta4 = Cuenta.crear("Bolsillo", "ebol")
         cta4.cta_madre = self.cta1
         cta4.save()
         self.assertEqual(self.cta1.subcuentas.count(), 3)
 
-    def test_se_puede_asignar_cta_caja_a_otra_cta_caja(self):
+    def test_se_puede_asignar_cta_acumulativa_a_otra_cta_acumulativa(self):
         cta4 = Cuenta.crear("Bolsillos", "ebol")
         cta4.dividir_entre(
             {'nombre': 'Bolsillo campera', 'slug': 'ebca', 'saldo': 0},
@@ -536,7 +536,7 @@ class TestSubcuentas(TestCase):
         cta4.save()
         self.assertEqual(self.cta1.subcuentas.count(), 3)
 
-    def test_si_se_asigna_cta_interactiva_con_saldo_a_cta_caja_se_suma_el_saldo(self):
+    def test_si_se_asigna_cta_interactiva_con_saldo_a_cta_acumulativa_se_suma_el_saldo(self):
         saldo_cta1 = self.cta1.saldo    # 100
         cta4 = Cuenta.crear("Bolsillo", "ebol", saldo=50)
 
@@ -546,7 +546,7 @@ class TestSubcuentas(TestCase):
         self.assertEqual(cta4.saldo, 50)
         self.assertEqual(self.cta1.saldo, saldo_cta1 + 50)
 
-    def test_si_se_asigna_cta_caja_con_saldo_a_cta_caja_se_suma_el_saldo(self):
+    def test_si_se_asigna_cta_acumulativa_con_saldo_a_cta_acumulativa_se_suma_el_saldo(self):
         saldo_cta1 = self.cta1.saldo    # 100
         cta4 = Cuenta.crear("Bolsillos", "ebol", saldo=50)
 
