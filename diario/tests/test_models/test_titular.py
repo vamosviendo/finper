@@ -261,9 +261,15 @@ class TestTitularMetodoCancelarDeudaDe(TestTitularMetodo):
             self.titular1.cancelar_deuda_de(tit3)
 
 
-class TestTitularValidacion(TestCase):
+class TestTitularValidarTitname(TestCase):
 
     def test_no_admite_guion_en_titname(self):
         titular = Titular(nombre='Titular Titularini', titname='ti-ti')
         with self.assertRaises(ValidationError):
             titular.full_clean()
+
+    def test_reemplaza_espacios_por_guiones_bajos(self):
+        titular = Titular(nombre='Titular Titularini', titname='ti ti')
+        titular.full_clean()
+        titular.save()
+        self.assertEqual(titular.titname, 'ti_ti')

@@ -4,6 +4,7 @@ from django.db.models import Sum
 
 from diario.settings_app import TITULAR_PRINCIPAL
 from vvmodel.models import MiModel
+from vvutils.text import mi_slugify
 
 
 class Titular(MiModel):
@@ -66,5 +67,7 @@ class Titular(MiModel):
         self.deudores.remove(otro)
 
     def _validar_titname(self):
+        self.titname = mi_slugify(
+            self.titname, reemplazo='_')
         if '-' in self.titname:
             raise ValidationError('No se admite guión en titname')
