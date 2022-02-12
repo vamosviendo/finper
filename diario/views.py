@@ -199,6 +199,8 @@ class TitularNuevoView(CreateView):
 class TitDetalleView(DetailView):
     model = Titular
     template_name = 'diario/tit_detalle.html'
+    slug_url_kwarg = 'titname'
+    slug_field = 'titname'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -212,12 +214,16 @@ class TitDetalleView(DetailView):
 
 class TitElimView(DeleteView):
     model = Titular
+    slug_url_kwarg = 'titname'
+    slug_field = 'titname'
     success_url = reverse_lazy('home')
 
 
 class TitModView(UpdateView):
     model = Titular
     template_name = 'diario/tit_form.html'
+    slug_url_kwarg = 'titname'
+    slug_field = 'titname'
     success_url = reverse_lazy('home')
     fields = ['titname', 'nombre']
 

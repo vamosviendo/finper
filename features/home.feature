@@ -2,11 +2,11 @@
 
 Característica: Vista de la página principal
     Como consultante del sitio
-    Quiero acceder a información general lo más completa posible en la página 
+    Quiero acceder a información general lo más completa posible en la página
         principal
 
 
-@sec
+@skip
 Escenario: Vistazo a la página principal
     Dado un titular con los siguientes valores:
     Y tres cuentas con los siguientes valores:
@@ -22,4 +22,4 @@ Escenario: Vistazo a la página principal
     Y veo cuentas en la grilla con los nombres "EFEC, BCO, CAJA"
     Y veo que el saldo de "efectivo" es "tantos pesos"
     Y veo que el titular de "efectivo" es "titular por defecto"
-    
+

@@ -7,6 +7,7 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
+
 def esperar(condicion, tiempo=2):
     """ Devuelve una función que espera un tiempo
         que se cumpla una condición.
@@ -25,7 +26,6 @@ def esperar(condicion, tiempo=2):
                 time.sleep(0.2)
 
     return condicion_modificada
-
 
 
 def table_to_str(tabla):

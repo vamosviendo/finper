@@ -1,10 +1,10 @@
 # language: es
 
+@sec
 Característica: Casos de creación, modificación y eliminación de movimientos
 
 
 
-@sec
 Escenario: Casos movimiento: Crear un movimiento con cuenta de entrada
     Dada una cuenta
     Cuando voy a la página principal

@@ -25,10 +25,9 @@ urlpatterns = [
     path('cta_div/<slug:slug>', views.cta_div_view, name='cta_div'),
     path('cta_agregar_subc/<slug:slug>', views.cta_agregar_subc_view, name='cta_agregar_subc'),
     path('tit_nuevo', views.TitularNuevoView.as_view(), name='tit_nuevo'),
-    # TODO: usar titname para páginas de titular
-    path('tit_detalle/<int:pk>', views.TitDetalleView.as_view(), name='tit_detalle'),
-    path('tit_elim/<int:pk>', views.TitElimView.as_view(), name='tit_elim'),
-    path('tit_mod/<int:pk>', views.TitModView.as_view(), name='tit_mod'),
+    path('tit_detalle/<slug:titname>/', views.TitDetalleView.as_view(), name='tit_detalle'),
+    path('tit_elim/<slug:titname>', views.TitElimView.as_view(), name='tit_elim'),
+    path('tit_mod/<slug:titname>', views.TitModView.as_view(), name='tit_mod'),
     path('mov_nuevo', views.MovNuevoView.as_view(), name='mov_nuevo'),
     path('mov_elim/<int:pk>', views.MovElimView.as_view(), name='mov_elim'),
     path('mov_mod/<int:pk>', views.MovModView.as_view(), name='mov_mod'),

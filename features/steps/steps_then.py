@@ -174,7 +174,6 @@ def veo_titulares_de(context, nombre_cta):
 
 @then('veo que el saldo {tal} es {tantos} pesos')
 def el_saldo_tal_es_tanto(context, tal, tantos):
-    # TODO: Refactor
     if tal in ('general', 'de la página'):
         total = context.browser.esperar_elemento(
             'id_div_importe_saldo_pag').text
@@ -534,7 +533,7 @@ def soy_dirigido_a_pagina_de_cuenta(context, pag, nombre):
 
 @then('soy dirigido a la página "{pag}" del titular "{nombre}"')
 def soy_dirigido_a_pagina_de_titular(context, pag, nombre):
-    titular = Titular.tomar(nombre=nombre).pk
+    titular = Titular.tomar(nombre=nombre).titname
     context.execute_steps(
         f'Entonces soy dirigido a la página "{pag}" '
         f'con el argumento "{titular}"'

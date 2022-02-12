@@ -36,7 +36,7 @@ class TestTitularDetalle(TestCase):
         self.tit = Titular.crear(titname='tito', nombre='Tito Gómez')
 
     def test_usa_template_tit_detalle(self):
-        response = self.client.get(reverse('tit_detalle', args=[self.tit.pk]))
+        response = self.client.get(reverse('tit_detalle', args=[self.tit.titname]))
         self.assertTemplateUsed(response, 'diario/tit_detalle.html')
 
     def test_pasa_cuentas_del_titular_al_template(self):
@@ -44,7 +44,7 @@ class TestTitularDetalle(TestCase):
         cuenta2 = Cuenta.crear(nombre='cuenta2', slug='cta2', titular=self.tit)
         cuenta3 = Cuenta.crear(nombre='cuenta3', slug='cta3')
 
-        response = self.client.get(reverse('tit_detalle', args=[self.tit.pk]))
+        response = self.client.get(reverse('tit_detalle', args=[self.tit.titname]))
 
         self.assertEqual(
             list(response.context['subcuentas']),
@@ -55,7 +55,7 @@ class TestTitularDetalle(TestCase):
     def test_pasa_patrimonio_del_titular_al_template(self, mock_patrimonio):
         mock_patrimonio.return_value = 250
 
-        response = self.client.get(reverse('tit_detalle', args=[self.tit.pk]))
+        response = self.client.get(reverse('tit_detalle', args=[self.tit.titname]))
 
         self.assertEqual(response.context['saldo_pag'], 250)
 
@@ -70,7 +70,7 @@ class TestTitularDetalle(TestCase):
 
         mock_movimientos.return_value = [mov1, mov3]
 
-        response = self.client.get(reverse('tit_detalle', args=[self.tit.pk]))
+        response = self.client.get(reverse('tit_detalle', args=[self.tit.titname]))
 
         self.assertIn('movimientos', response.context.keys())
         self.assertEqual(list(response.context['movimientos']), [mov1, mov3])
@@ -84,20 +84,20 @@ class TestTitularElim(TestCase):
 
     def test_get_usa_template_titular_confirm_delete(self):
         response = self.client.get(
-            reverse('tit_elim', args=[self.titular.pk])
+            reverse('tit_elim', args=[self.titular.titname])
         )
         self.assertTemplateUsed(response, 'diario/titular_confirm_delete.html')
 
     def test_redirige_a_home_despues_de_borrar(self):
         response = self.client.post(
-            reverse('tit_elim', args=[self.titular.pk])
+            reverse('tit_elim', args=[self.titular.titname])
         )
         self.assertRedirects(response, reverse('home'))
 
     @patch('diario.views.Titular.delete')
     def test_post_elimina_titular(self, mock_delete):
         self.client.post(
-            reverse('tit_elim', args=[self.titular.pk])
+            reverse('tit_elim', args=[self.titular.titname])
         )
         mock_delete.assert_called_once()
 
@@ -110,24 +110,24 @@ class TestTitularMod(TestCase):
 
     def test_usa_template_cta_form(self):
         response = self.client.get(
-            reverse('tit_mod', args=[self.titular.pk]))
+            reverse('tit_mod', args=[self.titular.titname]))
         self.assertTemplateUsed(response, 'diario/tit_form.html')
 
     def test_muestra_campo_nombre(self):
         response = self.client.get(
-            reverse('tit_mod', args=[self.titular.pk]),
+            reverse('tit_mod', args=[self.titular.titname]),
         )
         self.assertIn('nombre', response.context['form'].fields.keys())
 
     def test_muestra_campo_titname(self):
         response = self.client.get(
-            reverse('tit_mod', args=[self.titular.pk]),
+            reverse('tit_mod', args=[self.titular.titname]),
         )
         self.assertIn('titname', response.context['form'].fields.keys())
 
     def test_redirige_a_home_despues_de_post(self):
         response = self.client.post(
-            reverse('tit_mod', args=[self.titular.pk]),
+            reverse('tit_mod', args=[self.titular.titname]),
             data={'titname': 'nuevo'}
         )
         self.assertRedirects(response, reverse('home'))

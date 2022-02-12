@@ -220,7 +220,7 @@ def ir_a_pag_de_coso(context, pag, coso):
 #       pueden unificar
 @when('voy a la página "{pag}" del titular "{coso}"')
 def ir_a_pag_de_coso(context, pag, coso):
-    id_titular = Titular.tomar(nombre=coso).id
+    id_titular = Titular.tomar(nombre=coso).titname
     context.execute_steps(
         f'cuando voy a la página "{pag}" con el argumento "{id_titular}"'
     )

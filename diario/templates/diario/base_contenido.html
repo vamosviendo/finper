@@ -21,7 +21,7 @@
     {% for tit in titulares %}
       <div id="id_div_titular_{{ tit.titname|lower }}" class="card border-success class_div_titular">
         <div class="card-header bg-success text-light class_div_nombre_titular">
-          <a href="{% url 'tit_detalle' tit.pk %}" class="text-light class_link_titular" >
+          <a href="{% url 'tit_detalle' tit.titname %}" class="text-light class_link_titular" >
             {{ tit.nombre }}
           </a>
         </div>
@@ -29,9 +29,9 @@
           {{ tit.patrimonio|floatformat:2 }}
         </div>
         <div class="card-footer">
-          <a href="{% url 'tit_elim' tit.pk %}"
+          <a href="{% url 'tit_elim' tit.titname %}"
              class="btn btn-danger btn-sm link_elim_titular">Borrar</a>
-          <a href="{% url 'tit_mod' tit.pk %}"
+          <a href="{% url 'tit_mod' tit.titname %}"
              class="btn btn-primary btn-sm link_mod_titular">
             Edit
           </a>
