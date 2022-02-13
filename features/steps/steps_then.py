@@ -8,6 +8,7 @@ from behave import then
 from selenium.webdriver.common.by import By
 
 from consts import LISTAS_DE_ENTIDADES
+from features.steps.helpers.helpers import formatear_importe
 from vvselenium.consts import CARDINALES
 from diario.models import Cuenta, Titular
 from utils import errors
@@ -187,10 +188,7 @@ def el_saldo_tal_es_tanto(context, tal, tantos):
             slug = Cuenta.tomar(nombre=tal.lower()).slug
         total = context.browser.esperar_elemento(f'id_saldo_cta_{slug}').text
 
-    if tantos == 'cero':
-        tantos = '0,00'
-    elif tantos.find('.') == -1:
-        tantos += ',00'
+    tantos = formatear_importe(tantos)
 
     context.test.assertEqual(total, tantos)
 
@@ -497,11 +495,7 @@ def titular_no_esta_en_grilla(context, nombre):
 def el_patrimonio_es_tanto(context, titular, tantos):
     titname = Titular.tomar(nombre=titular).titname
 
-    # TODO: Unificar esta "adaptación" con la de saldo de cuenta
-    if tantos == 'cero':
-        tantos = '0,00'
-    elif tantos.find('.') == -1:
-        tantos += ',00'
+    tantos = formatear_importe(tantos)
 
     patri = context.browser.esperar_elemento(f'id_patrimonio_{titname}')
     context.test.assertEqual(patri.text, tantos)
