@@ -68,14 +68,14 @@ class TestMiModelCrear(TestMiModel):
         self.assertEqual(obj3.numero, 10.0)
         self.assertEqual(obj3.related, self.ro)
 
-    @patch('vvmodel.tests.models.MiTestModel.full_clean')
+    @patch('vvmodel.diario.models.MiTestModel.full_clean')
     def test_verifica_objeto(self, falso_full_clean):
         MiTestModel.crear(
             nombre='obj3', numero=10.0, related=self.ro
         )
         falso_full_clean.assert_called_once()
 
-    @patch('vvmodel.tests.models.MiTestModel.save')
+    @patch('vvmodel.diario.models.MiTestModel.save')
     def test_guarda_objeto(self, falso_save):
         MiTestModel.crear(
             nombre='obj3', numero=10.0, related=self.ro

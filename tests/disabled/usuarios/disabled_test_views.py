@@ -1,15 +1,12 @@
-import os
-
-# from crispy_forms.utils import render_crispy_form
 from django.contrib import auth
 from django.urls import reverse
 
-# from sda.models import Foto
+from vvutils.os import env_or_input
 from usuarios.forms import LoginForm
 from .base import UsuarioUnitTest
 
-TEST_USERNAME = os.environ['TEST_USERNAME']
-TEST_PASSWORD = os.environ['TEST_PASSWORD']
+TEST_USERNAME = env_or_input('TEST_USERNAME')
+TEST_PASSWORD = env_or_input('TEST_PASSWORD')
 
 
 class TestLogin(UsuarioUnitTest):
@@ -34,12 +31,6 @@ class TestLogin(UsuarioUnitTest):
     def test_usa_form_LoginForm(self):
         response = self.client.get(reverse('login'))
         self.assertIsInstance(response.context['form'], LoginForm)
-    #
-    # def test_muestra_form_en_template(self):
-    #     crispy_form = render_crispy_form(LoginForm())
-    #     crispy_form_apertura = crispy_form[:crispy_form.index('>')]
-    #     response = self.client.get(reverse('login'))
-    #     self.assertContains(response, crispy_form_apertura)
 
     def test_comprueba_usuario_y_password(self):
         self.postear(TEST_USERNAME, TEST_PASSWORD)
@@ -52,11 +43,6 @@ class TestLogin(UsuarioUnitTest):
     def test_no_admite_password_incorrecta(self):
         self.postear(TEST_USERNAME, 'passwordincorrecta')
         self.assertFalse(auth.get_user(self.client).is_authenticated)
-    #
-    # def test_redirige_a_pag_anterior_despues_de_admitir_usuario(self):
-    #     response = self.postear(
-    #         TEST_USERNAME, TEST_PASSWORD, reverse('obras', args=[Foto]))
-    #     self.assertRedirects(response, reverse('obras', args=[Foto]))
 
     def test_redirige_a_login_despues_de_rechazar_usuario(self):
         response = self.postear('usuariono', 'passwordno')

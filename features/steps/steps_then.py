@@ -8,7 +8,7 @@ from behave import then
 from selenium.webdriver.common.by import By
 
 from consts import LISTAS_DE_ENTIDADES
-from features.steps.helpers.helpers import formatear_importe
+from features.helpers import formatear_importe
 from vvselenium.consts import CARDINALES
 from diario.models import Cuenta, Titular
 from utils import errors

@@ -12,7 +12,7 @@ def before_all(context):
     #       Aparentemente, se estaría llamando a esa función y generando un
     #       titular antes de before_all.
     #       Mientras no lo resolvamos, habrá que limpiar la base de datos
-    #       antes de los tests.
+    #       antes de los diario.
     Titular.todes().delete()
 
 

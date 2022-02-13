@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 
-from features.steps.helpers.helpers import formatear_importe
+from features.helpers import formatear_importe
 
 
 class TestFormatearImporte(TestCase):
