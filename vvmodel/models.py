@@ -2,6 +2,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
 from .managers import PolymorphManager
+from vvutils.objetos import has_not_none_attr
 
 
 class MiModel(models.Model):
@@ -102,7 +103,7 @@ class MiModel(models.Model):
         return self
 
     def has_not_none_attr(self, atributo):
-        return hasattr(self, atributo) and getattr(self, atributo) is not None
+        return has_not_none_attr(self, atributo)
 
     def any_field_changed(self):
         fields = [f.name for f in self.get_class()._meta.fields]
