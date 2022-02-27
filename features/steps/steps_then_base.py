@@ -28,6 +28,7 @@ from vvselenium.helpers import espacios_a_snake, espera, tomar_atributo, \
 @then('veo una "{tag}" de {tipo} "{nombre}"')
 @then('veo un "{tag}" de {tipo} "{nombre}"')
 @then('veo varios elementos de clase "{clase}"')
+@then('veo varios "{tag}" de {tipo} "{nombre}" y guardo el {orden}')
 @then('veo varios "{tag}" de {tipo} "{nombre}"')
 @then('veo un link de texto "{texto}"')
 @then('veo un menú de {tipo} "{menu}"')
@@ -74,6 +75,7 @@ from vvselenium.helpers import espacios_a_snake, espera, tomar_atributo, \
 @then('fallo')
 """
 
+#  NAVEGACIÓN
 
 @then('soy dirigido a la página "{pagina}" con el argumento "{argumento}"')
 def soy_dirigido_a(context, pagina, argumento):
@@ -113,6 +115,8 @@ def soy_dirigido_a(context, pagina):
         )
     )
 
+
+# FORMS Y CARGA DE DATOS
 
 @then('veo un campo "{campo_name}" en el form de id "{form_id}"')
 def veo_campo_en_form(context, campo_name, form_id):
@@ -170,6 +174,8 @@ def estado_checkbox(context, checkbox, estado):
                          f'Opciones válidas: seleccionado - deseleccionado')
 
 
+# ELEMENTOS
+
 @then('veo un mensaje de error: "{mensaje}"')
 def veo_mensaje_de_error(context, mensaje):
     errores = context.browser.esperar_elemento('id_errores').text
@@ -214,6 +220,14 @@ def elemento_aparece(context, tag, tipo, nombre):
 def veo_varios_elementos(context, clase):
     elementos = context.browser.esperar_elementos(clase, By.CLASS_NAME)
     fijar_atributo(context, clase, elementos)
+
+
+@then('veo varios "{tag}" de {tipo} "{nombre}" y guardo el {orden}')
+def veo_varios_elementos_y_guardo_uno(context, tag, tipo, nombre, orden):
+    context.execute_steps(f'''
+        Entonces veo varios "{tag}" de {tipo} "{nombre}"
+        Cuando elijo y guardo el {orden} elemento dado "{tipo}_{tag}_{nombre}"
+    ''')
 
 
 @then('veo varios "{tag}" de {tipo} "{nombre}"')
@@ -629,6 +643,7 @@ def medidas_coinciden(context, atrib, elemento_medido):
     )
 
 
+# LOGIN / LOGOUT
 @then('se inicia una sesión con mi nombre')
 def inicia_sesion(context):
     div = context.browser.esperar_elemento('id_div_login')
@@ -642,6 +657,8 @@ def cierra_sesion(context):
     context.test.assertNotIn(
         context.test_username, div.get_attribute('innerHTML'))
 
+
+# MISC
 
 @then('me detengo')
 def detenerse(context):

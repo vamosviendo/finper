@@ -30,6 +30,7 @@ from vvselenium.helpers import tomar_atributo, fijar_atributo
 
 @when('elijo al azar y guardo un elemento de clase "{clase}"')
 @when('elijo al azar un elemento de clase "{clase}" y guardo su atributo "{atributo}"'
+@when('elijo y guardo el {orden} elemento dado "{nombre}"') 
 
 @when('completo y envío el formulario de login')
 @when('ingreso el nombre de usuario')
@@ -184,11 +185,10 @@ def cliquear_en(context, tag, clase, atributo, valor):
 
 @when('elijo al azar y guardo un elemento de clase "{clase}"')
 def elegir_y_guardar(context, clase):
-    elementos = context.browser.esperar_elementos(clase)
-    indice = randrange(len(elementos))
-    elegido = elementos[indice]
-    fijar_atributo(context, clase, elegido)
-    fijar_atributo(context, 'indice', indice)
+    context.execute_steps(f'''
+        Entonces veo varios elementos de clase "{clase}"
+        Cuando elijo y guardo el enésimo elemento dado "{clase}"
+    ''')
 
 
 @when('elijo al azar un elemento de clase "{clase}" '
@@ -202,6 +202,25 @@ def elegir_y_guardar_atributo(context, clase, atributo):
         context,
         f'{clase}_{atributo}',
         elemento.get_attribute(atributo)
+    )
+
+
+@when('elijo y guardo el {orden} elemento dado "{nombre}"')
+def elegir_y_guardar_elemento(context, orden, nombre):
+    elementos = tomar_atributo(context, nombre)
+
+    if orden.isnumeric():
+        orden = int(orden)
+    elif orden in ['enésimo', 'enésima', 'n-ésimo', 'n-ésima']:
+        from random import randrange
+        orden = randrange(len(elementos))
+    else:
+        orden = ORDINALES[orden]
+
+    fijar_atributo(
+        context,
+        f'{nombre}_00',
+        elementos[int(orden)]
     )
 
 
