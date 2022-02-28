@@ -1,5 +1,14 @@
+.table td {
+  font-size: 11pt;
+}
+
 .numero {
   font-family: monospace;
+}
+
+.class_td_saldo,
+.class_th_saldo {
+  font-size: 9pt !important;
 }
 
 @media(max-width: 576px) {

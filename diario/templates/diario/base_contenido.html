@@ -1,5 +1,7 @@
 {% extends 'diario/base.html' %}
 {% load static %}
+{% block extra-css %}
+{% endblock extra-css %}
 
 {% block contenido %}
 
@@ -86,50 +88,72 @@
   <a href="{% url 'mov_nuevo' %}" id="id_btn_mov_nuevo" class="btn my-3 btn-primary">
     Movimiento nuevo
   </a>
-  <table class="table table-sm">
-    <thead><tr>
-      <th>Fecha</th>
-      <th>Concepto</th>
-      <th class="d-none d-md-table-cell">Detalle</th>
-      <th>Importe</th>
-      <th>Cuentas</th>
-    </tr></thead>
-    {% for mov in movimientos reversed %}
-    <tr class="class_row_mov">
-      <td class="align-middle class_td_fecha" style="width: 8%;">{{ mov.fecha|date:'Y-m-d' }}</td>
-      <td class="align-middle class_td_concepto"  style="width: 50ch" title="{{ mov.detalle }}" >
+  <div class="table-responsive">
+    <table id="disenio-provisorio" class="table table-sm text-nowrap">
+      <thead><tr>
+        <th id="id_th_fecha ">Fecha</th>
+        <th id="id_th_concepto">Concepto</th>
+        <th class="d-none d-lg-table-cell" id="id_th_detalle">Detalle</th>
+        <th id="id_th_importe">Importe</th>
+        <th id="id_th_cuentas">Cuentas</th>
+        {% for subc in subcuentas %}
+        <th class="class_th_saldo" id="id_th_{{ subc.slug }}">
+          {{ subc.slug }}
+        </th>
+        {% endfor %}
+        <th>Menu</th>
+      </tr></thead>
+
+      {% for mov in movimientos reversed %}
+      <tr class="class_row_mov">
+        <td class="class_td_fecha">{{ mov.fecha|date:'Y-m-d' }}</td>
+
+        <td class="class_td_concepto" title="{{ mov.detalle }}">
           {{ mov.concepto }}
-      </td>
-      <td class="d-none d-md-table-cell align-middle class_td_detalle" title="{{mov.detalle}}" style="width: 30%;">
-        {{ mov.detalle|default_if_none:""|truncatechars:50 }}
-      </td>
-      <td class="align-middle text-right
-                 {% include './snippets/color_saldo.html' %}
-                 numero class_td_importe"
-          style="width: 9%;">
-        {{ mov.importe|floatformat:2 }}
-      </td>
-      <td class="small align-middle class_td_cuentas"
-          title="{% include './snippets/cuentas_mov.html' %}"
-          style="width: 9%;">
-        {% if mov.cta_entrada %}+{{ mov.cta_entrada.slug }}{% endif %}
-        {% if mov.cta_salida %}-{{ mov.cta_salida.slug }}{% endif %}
-      </td>
-      <td class="align-middle class_td_menu">
-      {% if not mov.es_automatico %}
-        <a href="{% url 'mov_elim' mov.id %}"
-           class="btn btn-danger btn-sm class_link_elim_mov">
-          Borrar
-        </a>
-        <a href="{% url 'mov_mod' mov.id %}"
-           class="btn btn-primary btn-sm class_link_mod_mov">
-          Edit
-        </a>
-      {% endif %}
-      </td>
-    </tr>
-    {% endfor %}
-  </table>
+        </td>
+
+        <td class="d-none d-lg-table-cell class_td_detalle">
+          {{ mov.detalle|default_if_none:""|truncatechars:50 }}
+        </td>
+
+        <td class="text-right
+                  {% include './snippets/color_importe.html' %}
+                  numero
+                  class_td_importe"
+            title="{% include './snippets/cuentas_mov.html' %}"
+        >
+          {{ mov.importe|floatformat:2 }}
+        </td>
+
+        <td class="small class_td_cuentas">
+          {% include './snippets/cuentas_mov.html' %}
+        </td>
+
+        {% for subc in subcuentas %}
+        <td class="text-right
+                  {% include './snippets/color_saldos.html' %}
+                  numero class_td_saldo class_td_{{ subc.slug }}"
+        >
+          {{ subc.saldo|floatformat:2 }}
+        </td>
+        {% endfor %}
+
+        <td class="class_td_menu">
+          {% if not mov.es_automatico %}
+          <a href="{% url 'mov_elim' mov.id %}"
+             class="btn btn-danger btn-sm class_link_elim_mov">
+            B
+          </a>
+          <a href="{% url 'mov_mod' mov.id %}"
+             class="btn btn-primary btn-sm class_link_mod_mov">
+            E
+          </a>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
 </section>
 
 {% endblock contenido %}

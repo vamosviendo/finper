@@ -1,7 +1,7 @@
 # language: es
 
 Característica: Lista de movimientos
-    Quiero poder ver una lista de movimientos ordenados por fecha 
+    Quiero poder ver una lista de movimientos ordenados por fecha
     con los movimientos más recientes primeros
 
 
@@ -16,7 +16,7 @@ Escenario: Mostrar lista de movimientos
     Cuando voy a la página principal
 
     Entonces veo la siguiente lista de movimientos:
-        | fecha      | concepto | importe | cuentas |
-        | 2021-06-15 | Depósito |   25,43 | +b -e   |
-        | 2021-05-23 | Compra   |  155,00 | -e      |
-        | 2020-11-25 | Ingreso  |  254,00 | +e      |
+        | fecha      | concepto | importe | b     | e        |
+        | 2021-06-15 | Depósito |   25,43 | 25,43 |    73,57 |
+        | 2021-05-23 | Compra   |  155,00 |  0,00 |    99,00 |
+        | 2020-11-25 | Ingreso  |  254,00 |  0,00 |   254,00 |

@@ -1,0 +1,5 @@
+{% if subc.slug == mov.cta_salida.slug %}
+  text-danger bg-gray font-weight-bold
+{% elif subc.slug == mov.cta_entrada.slug %}
+  text-success font-weight-bold
+{% endif %}
