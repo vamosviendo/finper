@@ -11,3 +11,7 @@
 
 {% block verificar_saldos %}
 {% endblock verificar_saldos %}
+
+{% block general %}
+  {{ cuenta.saldo|floatformat:2 }}
+{% endblock general %}

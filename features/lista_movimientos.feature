@@ -16,7 +16,7 @@ Escenario: Mostrar lista de movimientos
     Cuando voy a la página principal
 
     Entonces veo la siguiente lista de movimientos:
-        | fecha      | concepto | importe | b     | e        |
-        | 2021-06-15 | Depósito |   25,43 | 25,43 |    73,57 |
-        | 2021-05-23 | Compra   |  155,00 |  0,00 |    99,00 |
-        | 2020-11-25 | Ingreso  |  254,00 |  0,00 |   254,00 |
+        | fecha      | concepto | importe | general | b     | e        |
+        | 2021-06-15 | Depósito |   25,43 |   99,00 | 25,43 |    73,57 |
+        | 2021-05-23 | Compra   |  155,00 |   99,00 |  0,00 |    99,00 |
+        | 2020-11-25 | Ingreso  |  254,00 |  254,00 |  0,00 |   254,00 |

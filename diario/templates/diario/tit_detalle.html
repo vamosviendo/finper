@@ -23,3 +23,7 @@
 
 {% block verificar_saldos %}
 {% endblock verificar_saldos %}
+
+{% block general %}
+  {{ titular.patrimonio|floatformat:2 }}
+{% endblock general %}

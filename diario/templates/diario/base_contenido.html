@@ -96,8 +96,9 @@
         <th class="d-none d-lg-table-cell" id="id_th_detalle">Detalle</th>
         <th id="id_th_importe">Importe</th>
         <th id="id_th_cuentas">Cuentas</th>
+        <th class="chico fondo_resaltado" id="id_th_general">General</th>
         {% for subc in subcuentas %}
-        <th class="class_th_saldo" id="id_th_{{ subc.slug }}">
+        <th class="chico" id="id_th_{{ subc.slug }}">
           {{ subc.slug }}
         </th>
         {% endfor %}
@@ -129,10 +130,14 @@
           {% include './snippets/cuentas_mov.html' %}
         </td>
 
+        <td class="text-right numero chico fondo_resaltado class_td_general">
+          {% block general %}{% endblock general %}
+        </td>
+
         {% for subc in subcuentas %}
         <td class="text-right
                   {% include './snippets/color_saldos.html' %}
-                  numero class_td_saldo class_td_{{ subc.slug }}"
+                  numero chico class_td_saldo class_td_{{ subc.slug }}"
         >
           {{ subc.saldo|floatformat:2 }}
         </td>

@@ -6,9 +6,12 @@
   font-family: monospace;
 }
 
-.class_td_saldo,
-.class_th_saldo {
+.chico {
   font-size: 9pt !important;
+}
+
+.fondo_resaltado {
+  background-color: lightgray;
 }
 
 @media(max-width: 576px) {
