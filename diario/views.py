@@ -34,7 +34,7 @@ class HomeView(TemplateView):
 
         context.update({
             'titulares': Titular.todes(),
-            'subcuentas': Cuenta.filtro(cta_madre=None),
+            'subcuentas': Cuenta.filtro(cta_madre=None).order_by('slug'),
             'movimientos': Movimiento.todes(),
             'saldo_gral': saldo_gral or 0,
         })
@@ -51,11 +51,13 @@ class CtaDetalleView(DetailView):
         cuenta = self.object.como_subclase()
 
         context.update({
-            'subcuentas': cuenta.subcuentas.all() if cuenta.es_acumulativa
-                                                  else [],
+            'subcuentas': cuenta.subcuentas.order_by('slug')
+                if cuenta.es_acumulativa
+                else [],
             'movimientos': cuenta.movs(),
-            'titulares': cuenta.titulares if cuenta.es_acumulativa
-                                          else [cuenta.titular],
+            'titulares': cuenta.titulares
+                if cuenta.es_acumulativa
+                else [cuenta.titular],
         })
 
         return context
@@ -205,7 +207,7 @@ class TitDetalleView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({
-            'subcuentas': self.object.cuentas.all(),
+            'subcuentas': self.object.cuentas.order_by('slug'),
             'saldo_pag': self.object.patrimonio,
             'movimientos': self.object.movimientos(),
         })

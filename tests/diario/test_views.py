@@ -36,7 +36,8 @@ class TestTitularDetalle(TestCase):
         self.tit = Titular.crear(titname='tito', nombre='Tito Gómez')
 
     def test_usa_template_tit_detalle(self):
-        response = self.client.get(reverse('tit_detalle', args=[self.tit.titname]))
+        response = self.client.get(
+            reverse('tit_detalle', args=[self.tit.titname]))
         self.assertTemplateUsed(response, 'diario/tit_detalle.html')
 
     def test_pasa_cuentas_del_titular_al_template(self):
@@ -44,11 +45,24 @@ class TestTitularDetalle(TestCase):
         cuenta2 = Cuenta.crear(nombre='cuenta2', slug='cta2', titular=self.tit)
         cuenta3 = Cuenta.crear(nombre='cuenta3', slug='cta3')
 
-        response = self.client.get(reverse('tit_detalle', args=[self.tit.titname]))
+        response = self.client.get(
+            reverse('tit_detalle', args=[self.tit.titname]))
 
         self.assertEqual(
             list(response.context['subcuentas']),
             [cuenta1, cuenta2]
+        )
+
+    def test_pasa_cuentas_ordenadas_por_slug(self):
+        cuenta1 = Cuenta.crear(nombre='a', slug='z', titular=self.tit)
+        cuenta2 = Cuenta.crear(nombre='b', slug='y', titular=self.tit)
+
+        response = self.client.get(
+            reverse('tit_detalle', args=[self.tit.titname]))
+
+        self.assertEqual(
+            list(response.context['subcuentas']),
+            [cuenta2, cuenta1]
         )
 
     @patch('diario.views.Titular.patrimonio', new_callable=PropertyMock)
@@ -156,6 +170,17 @@ class TestHomePage(TestCase):
 
         self.assertIn(cta1, response.context.get('subcuentas'))
         self.assertIn(cta2, response.context.get('subcuentas'))
+
+    def test_pasa_cuentas_ordenadas_por_slug(self):
+        cta1 = Cuenta.crear(nombre='a', slug='z')
+        cta2 = Cuenta.crear(nombre='b', slug='y')
+
+        response = self.client.get(reverse('home'))
+
+        self.assertEqual(
+            list(response.context.get('subcuentas')),
+            [cta2, cta1]
+        )
 
     def test_pasa_movimientos_a_template(self):
         cuenta = Cuenta.crear(nombre='Efectivo', slug='E')
@@ -334,6 +359,21 @@ class TestCtaDetalle(TestCase):
         self.assertEqual(
             list(response.context['subcuentas']),
             list(self.cta.subcuentas.all())
+        )
+
+    def test_pasa_subcuentas_ordenadas_por_slug(self):
+        self.cta = self.cta.dividir_y_actualizar(
+            ['aa', 'zz', 40],
+            ['bb', 'yy']
+        )
+        subcuentas = list(self.cta.subcuentas.order_by('slug'))
+
+        response = self.client.get(
+            reverse('cta_detalle', args=[self.cta.slug]))
+
+        self.assertEqual(
+            list(response.context['subcuentas']),
+            subcuentas
         )
 
     def test_cuenta_interactiva_pasa_titular_a_template(self):
