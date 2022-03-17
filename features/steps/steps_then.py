@@ -218,6 +218,13 @@ def veo_lista_de_movimientos(context):
             )
 
 
+@then('veo movimientos con los siguientes valores')
+def veo_valores_de_movimientos(context):
+    context.execute_steps(
+        f'entonces veo la siguiente lista de movimientos:\n {table_to_str(context.table)}'
+    )
+
+
 @then('veo sólo los movimientos relacionados con "{nombre_cta}" o con sus subcuentas')
 def veo_solo_movimientos_relacionados_con_cta_o_subctas(context, nombre_cta):
     cta = Cuenta.tomar(nombre=nombre_cta.lower())
