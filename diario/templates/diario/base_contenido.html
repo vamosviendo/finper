@@ -1,5 +1,7 @@
 {% extends 'diario/base.html' %}
 {% load static %}
+{% load historico %}
+
 {% block extra-css %}
 {% endblock extra-css %}
 
@@ -139,7 +141,7 @@
                   {% include './snippets/color_saldos.html' %}
                   numero chico class_td_saldo class_td_{{ subc.slug }}"
         >
-          {{ subc.saldo|floatformat:2 }}
+          {% historico subc mov %}
         </td>
         {% endfor %}
 
