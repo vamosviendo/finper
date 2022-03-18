@@ -469,10 +469,6 @@ class TestModelCuentaMetodosHermanas(TestModelCuentaMetodos):
 @patch('diario.models.cuenta.Saldo.tomar', autospec=True)
 class TestModelCuentaMetodosSaldoHistorico(TestModelCuentaMetodos):
 
-    def test_test(self, mock_tomar):
-        for mov in Movimiento.todes():
-            print(mov)
-
     def test_recupera_saldo_a_la_fecha_del_movimiento(self, mock_tomar):
         self.cta1.saldo_historico(self.mov1)
         mock_tomar.assert_called_once_with(cuenta=self.cta1, fecha=self.mov1.fecha)
@@ -480,6 +476,89 @@ class TestModelCuentaMetodosSaldoHistorico(TestModelCuentaMetodos):
     def test_primer_mov_de_fecha_con_mov_unico_devuelve_saldo_a_la_fecha_del_movimiento(self, mock_tomar):
         mock_tomar.return_value = 100
         self.assertEqual(self.cta1.saldo_historico(self.mov1), 100)
+
+    def test_primer_mov_de_fecha_con_2_movs_devuelve_saldo_a_la_fecha_menos_importe_2do_mov_si_cta_es_cta_entrada_del_2do_mov(self, mock_tomar):
+        mock_tomar.return_value = 160
+        Movimiento.crear(
+            concepto='otro mov del 1/1/2021',
+            importe=60,
+            cta_entrada=self.cta1,
+            fecha=date(2019, 1, 1),
+        )
+        self.assertEqual(self.cta1.saldo_historico(self.mov1), 100)
+
+    def test_primer_mov_de_fecha_con_2_movs_devuelve_saldo_a_la_fecha_mas_importe_2do_mov_si_cta_es_cta_salida_del_2do_mov(self, mock_tomar):
+        mock_tomar.return_value = 40
+        Movimiento.crear(
+            concepto='otro mov del 1/1/2021',
+            importe=60,
+            cta_salida=self.cta1,
+            fecha=date(2019, 1, 1),
+        )
+        self.assertEqual(self.cta1.saldo_historico(self.mov1), 100)
+
+    def test_primer_mov_de_fecha_con_2_movs_devuelve_saldo_a_la_fecha_si_cta_no_interviene_en_el_2do_mov(self, mock_tomar):
+        mock_tomar.return_value = 100
+        Movimiento.crear(
+            concepto='otro mov del 1/1/2021',
+            importe=60,
+            cta_entrada=self.cta2,
+            fecha=date(2019, 1, 1),
+        )
+        self.assertEqual(self.cta1.saldo_historico(self.mov1), 100)
+
+    def test_saldo_historico_primer_mov_de_fecha_resta_importes_de_movs_en_los_que_la_cuenta_es_cta_entrada_y_suma_importes_de_movs_en_los_que_es_cta_salida(self, mock_tomar):
+        mock_tomar.return_value = 170
+        Movimiento.crear(
+            concepto='otro mov del 1/1/2021',
+            importe=60,
+            cta_entrada=self.cta1,
+            fecha=date(2019, 1, 1),
+        )
+        Movimiento.crear(
+            concepto='tercer mov del 1/1/2021',
+            importe=80,
+            cta_entrada=self.cta2,
+            fecha=date(2019, 1, 1),
+        )
+        Movimiento.crear(
+            concepto='cuarto mov del 1/1/2021',
+            importe=40,
+            cta_entrada=self.cta1,
+            cta_salida=self.cta2,
+            fecha=date(2019, 1, 1)
+        )
+        Movimiento.crear(
+            concepto='quinto mov del 1/1/2021',
+            importe=30,
+            cta_entrada=self.cta2,
+            cta_salida=self.cta1,
+            fecha=date(2019, 1, 1)
+        )
+        self.assertEqual(self.cta1.saldo_historico(self.mov1), 100)
+
+    def test_saldo_historico_segundo_mov_de_fecha_solo_toma_en_cuenta_importes_de_movs_posteriores(self, mock_tomar):
+        mock_tomar.return_value = 150
+        mov2 = Movimiento.crear(
+            concepto='otro mov del 1/1/2021',
+            importe=60,
+            cta_entrada=self.cta1,
+            fecha=date(2019, 1, 1),
+        )
+        Movimiento.crear(
+            concepto='tercer mov del 1/1/2021',
+            importe=80,
+            cta_entrada=self.cta1,
+            fecha=date(2019, 1, 1),
+        )
+        Movimiento.crear(
+            concepto='quinto mov del 1/1/2021',
+            importe=30,
+            cta_entrada=self.cta2,
+            cta_salida=self.cta1,
+            fecha=date(2019, 1, 1)
+        )
+        self.assertEqual(self.cta1.saldo_historico(mov2), 100)
 
 
 class TestCuentaPolymorphic(TestCase):

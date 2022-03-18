@@ -74,7 +74,9 @@ class TestTitularDetalle(TestCase):
         self.assertEqual(response.context['saldo_pag'], 250)
 
     @patch('diario.views.Titular.movimientos')
-    def test_pasa_movimientos_relacionados_con_cuentas_del_titular_al_template(self, mock_movimientos):
+    @patch('diario.models.cuenta.Saldo.tomar')
+    def test_pasa_movimientos_relacionados_con_cuentas_del_titular_al_template(self, mock_tomar, mock_movimientos):
+        mock_tomar.return_value = 0
         cuenta1 = Cuenta.crear(nombre='cuenta1', slug='cta1', titular=self.tit)
         cuenta2 = Cuenta.crear(nombre='cuenta2', slug='cta2')
         mov1 = Movimiento.crear('Movimiento 1', 120, cuenta1)
@@ -182,7 +184,9 @@ class TestHomePage(TestCase):
             [cta2, cta1]
         )
 
-    def test_pasa_movimientos_a_template(self):
+    @patch('diario.models.cuenta.Saldo.tomar')
+    def test_pasa_movimientos_a_template(self, mock_tomar):
+        mock_tomar.return_value = 0
         cuenta = Cuenta.crear(nombre='Efectivo', slug='E')
         Movimiento.crear(
             fecha=date.today(),
@@ -202,7 +206,9 @@ class TestHomePage(TestCase):
         self.assertContains(response, 'movimiento 1')
         self.assertContains(response, 'movimiento 2')
 
-    def test_pasa_saldo_de_cuentas_a_template(self):
+    @patch('diario.models.cuenta.Saldo.tomar')
+    def test_pasa_saldo_de_cuentas_a_template(self, mock_tomar):
+        mock_tomar.return_value = 0
         cta1 = Cuenta.crear(nombre='Efectivo', slug='E')
         cta2 = Cuenta.crear(nombre='Banco', slug='B')
         Movimiento.crear(
@@ -240,7 +246,9 @@ class TestHomePage(TestCase):
         for cta in subctas:
             self.assertNotIn(cta, response.context['subcuentas'])
 
-    def test_pasa_saldos_generales_a_template(self):
+    @patch('diario.models.cuenta.Saldo.tomar')
+    def test_pasa_saldos_generales_a_template(self, mock_tomar):
+        mock_tomar.return_value = 0
         cta1 = Cuenta.crear(nombre='Efectivo', slug='E')
         cta2 = Cuenta.crear(nombre='Banco', slug='B')
         Movimiento.crear(concepto='m1', importe=125, cta_entrada=cta1)
@@ -250,7 +258,9 @@ class TestHomePage(TestCase):
 
         self.assertContains(response, '350,00')
 
-    def test_considera_solo_cuentas_independientes_para_calcular_saldo_gral(self):
+    @patch('diario.models.cuenta.Saldo.tomar')
+    def test_considera_solo_cuentas_independientes_para_calcular_saldo_gral(self, mock_tomar):
+        mock_tomar.return_value = 0
         cta1 = Cuenta.crear(nombre='Efectivo', slug='E')
         cta2 = Cuenta.crear(nombre='Banco', slug='B')
         Movimiento.crear(concepto='m1', importe=125, cta_entrada=cta1)
@@ -347,7 +357,9 @@ class TestCtaDetalle(TestCase):
         )
         self.assertContains(response, self.cta.nombre)
 
-    def test_pasa_subcuentas_a_template(self):
+    @patch('diario.models.cuenta.Saldo.tomar')
+    def test_pasa_subcuentas_a_template(self, mock_tomar):
+        mock_tomar.return_value = 0
         self.cta.dividir_entre(['ea', 'ea', 40], ['eb', 'eb'])
         self.cta = Cuenta.tomar(slug=self.cta.slug)
         self.assertTrue(self.cta.es_acumulativa)
@@ -361,7 +373,9 @@ class TestCtaDetalle(TestCase):
             list(self.cta.subcuentas.all())
         )
 
-    def test_pasa_subcuentas_ordenadas_por_slug(self):
+    @patch('diario.models.cuenta.Saldo.tomar')
+    def test_pasa_subcuentas_ordenadas_por_slug(self, mock_tomar):
+        mock_tomar.return_value = 0
         self.cta = self.cta.dividir_y_actualizar(
             ['aa', 'zz', 40],
             ['bb', 'yy']
@@ -382,8 +396,10 @@ class TestCtaDetalle(TestCase):
         self.assertEqual(response.context['titulares'], [self.cta.titular])
 
     @patch('diario.views.CuentaAcumulativa.titulares', new_callable=PropertyMock)
+    @patch('diario.models.cuenta.Saldo.tomar')
     def test_cuenta_acumulativa_pasa_titulares_de_subcuentas_a_template(
-            self, falso_titulares):
+            self, mock_tomar, falso_titulares):
+        mock_tomar.return_value = 0
         tit1 = Titular.crear(titname='juan', nombre='Juan Gómez')
         tit2 = Titular.crear(titname='tita', nombre='Tita Pérez')
 
@@ -426,7 +442,9 @@ class TestCtaDetalle(TestCase):
 
         self.assertEqual(list(response.context['movimientos']), movs)
 
-    def test_pasa_movimientos_de_subcuentas(self):
+    @patch('diario.models.cuenta.Saldo.tomar')
+    def test_pasa_movimientos_de_subcuentas(self, mock_tomar):
+        mock_tomar.return_value = 0
         subcus = self.cta.dividir_entre(
             ['subcuenta1', 'sc1', 40], ['subcuenta2', 'sc2'])
         Movimiento.crear('c tercer movimiento', 30, cta_entrada=subcus[0])
@@ -701,7 +719,9 @@ class TestCtaDivIntegration(TestCase):
         self.assertEqual(
             len([x for x in Cuenta.todes() if x.es_acumulativa]), 1)
 
-    def test_redirige_a_pagina_de_cuenta(self):
+    @patch('diario.models.cuenta.Saldo.tomar')
+    def test_redirige_a_pagina_de_cuenta(self, mock_tomar):
+        mock_tomar.return_value = 0
         self.assertRedirects(
             self.response,
             reverse('cta_detalle', args=[self.cta.slug]),
