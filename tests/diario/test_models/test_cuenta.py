@@ -189,17 +189,7 @@ class TestModelCuentaPropiedadEsCuentaCredito(TestCase):
 
 
 class TestModelCuentaMetodos(TestCase):
-    """ Testea: Cuenta.movs_directos()
-                Cuenta.movs()
-                Cuenta.cantidad_movs()
-                Cuenta.total_movs()
-                Cuenta.total_subcuentas()
-                Cuenta.fecha_ultimo_mov_directo()
-                Cuenta.saldo_ok()
-                Cuenta.corregir_saldo()
-                Cuenta.agregar_movimiento_correctivo()
-                ...
-        Saldos después del setUp:
+    """ Saldos después del setUp:
         self.cta1.saldo == 100-70+80 = 110
         self.cta2.saldo == 70+50 = 120
     """
@@ -207,22 +197,22 @@ class TestModelCuentaMetodos(TestCase):
     def setUp(self):
         self.cta1 = Cuenta.crear('Efectivo', 'E')
         self.cta2 = Cuenta.crear('Banco', 'B')
-        Movimiento.crear(
+        self.mov1 = Movimiento.crear(
             concepto='00000',
             importe=100,
             cta_entrada=self.cta1,
             fecha=date(2019, 1, 1)
         )
-        Movimiento.crear(
+        self.mov2 = Movimiento.crear(
             concepto='mov2', importe=70,
             cta_entrada= self.cta2, cta_salida=self.cta1,
             fecha=date(2021, 8, 10)
         )
-        Movimiento.crear(
+        self.mov3 = Movimiento.crear(
             concepto='mov3', importe=80,
             cta_entrada=self.cta1, fecha=date(2021, 8, 5)
         )
-        Movimiento.crear(
+        self.mov4 = Movimiento.crear(
             concepto='mov4', importe=50,
             cta_entrada=self.cta2, fecha=date(2021, 8, 1)
         )
@@ -474,6 +464,22 @@ class TestModelCuentaMetodosHermanas(TestModelCuentaMetodos):
 
     def test_devuelve_none_si_cuenta_no_tiene_madre(self):
         self.assertIsNone(self.cta2.hermanas())
+
+
+@patch('diario.models.cuenta.Saldo.tomar', autospec=True)
+class TestModelCuentaMetodosSaldoHistorico(TestModelCuentaMetodos):
+
+    def test_test(self, mock_tomar):
+        for mov in Movimiento.todes():
+            print(mov)
+
+    def test_recupera_saldo_a_la_fecha_del_movimiento(self, mock_tomar):
+        self.cta1.saldo_historico(self.mov1)
+        mock_tomar.assert_called_once_with(cuenta=self.cta1, fecha=self.mov1.fecha)
+
+    def test_primer_mov_de_fecha_con_mov_unico_devuelve_saldo_a_la_fecha_del_movimiento(self, mock_tomar):
+        mock_tomar.return_value = 100
+        self.assertEqual(self.cta1.saldo_historico(self.mov1), 100)
 
 
 class TestCuentaPolymorphic(TestCase):

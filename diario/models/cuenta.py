@@ -9,6 +9,7 @@ from django.urls import reverse
 
 from diario.models.titular import Titular
 from diario.models.movimiento import Movimiento
+from diario.models.saldo import Saldo
 from utils import errors
 from utils.iterables import remove_duplicates
 from vvmodel.models import PolymorphModel
@@ -72,6 +73,9 @@ class Cuenta(PolymorphModel):
     @saldo.setter
     def saldo(self, valor):
         self._saldo = round(valor, 2)
+
+    def saldo_historico(self, movimiento):
+        return Saldo.tomar(cuenta=self, fecha=movimiento.fecha)
 
     def clean_fields(self, exclude=None):
         self._pasar_nombre_y_slug_a_minuscula()
