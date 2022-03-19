@@ -141,6 +141,20 @@ class TestModelMovimientoCrear(TestModelMovimiento):
         super().setUp()
         self.cuenta2 = Cuenta.crear(
             nombre='Banco', slug='b', titular=self.titular1)
+        self.saldo1 = self.cuenta1.saldo
+        self.saldo2 = self.cuenta2.saldo
+        self.mov1 = Movimiento.crear(
+            fecha=date(2011, 11, 12),
+            concepto='Carga de saldo',
+            importe=125,
+            cta_entrada=self.cuenta1
+        )
+        self.mov2 = Movimiento.crear(
+            fecha=date(2011, 11, 12),
+            concepto='Transferencia a otra cuenta',
+            importe=35,
+            cta_salida=self.cuenta2
+        )
 
     def test_no_admite_cuenta_acumulativa(self):
         self.cuenta1 = self.cuenta1.dividir_y_actualizar(
@@ -223,31 +237,6 @@ class TestModelMovimientoCrear(TestModelMovimiento):
     def test_movimiento_se_guarda_como_no_automatico_por_defecto(self):
         mov = Movimiento.crear('Pago', '200', cta_entrada=self.cuenta1)
         self.assertFalse(mov.es_automatico)
-
-
-class TestModelMovimientoCrearModificaSaldosDeCuentas(TestModelMovimiento):
-    """ Saldos después de setUp:
-        self.cuenta1: 125.0
-        self.cuenta2: -35.0
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.cuenta2 = Cuenta.crear('Banco', 'B', titular=self.titular1)
-        self.saldo1 = self.cuenta1.saldo
-        self.saldo2 = self.cuenta2.saldo
-        self.mov1 = Movimiento.crear(
-            fecha=date.today(),
-            concepto='Carga de saldo',
-            importe=125,
-            cta_entrada=self.cuenta1
-        )
-        self.mov2 = Movimiento.crear(
-            fecha=date.today(),
-            concepto='Transferencia a otra cuenta',
-            importe=35,
-            cta_salida=self.cuenta2
-        )
 
     def test_suma_importe_a_cta_entrada(self):
         self.assertEqual(self.cuenta1.saldo, self.saldo1+self.mov1.importe)
