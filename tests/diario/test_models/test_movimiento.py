@@ -257,6 +257,16 @@ class TestModelMovimientoCrear(TestModelMovimiento):
         self.assertEqual(self.cuenta2.saldo, saldo2+mov3.importe)
         self.assertEqual(self.cuenta1.saldo, saldo1-mov3.importe)
 
+    @patch('diario.models.movimiento.Saldo.registrar')
+    def test_registra_movimiento_en_saldos_historicos(self, mock_registrar):
+        Movimiento.crear(
+            'Nuevo mov', 20, self.cuenta1, fecha=date(2011, 11, 15))
+        mock_registrar.assert_called_once_with(
+            cuenta=self.cuenta1,
+            fecha=date(2011, 11, 15),
+            importe=20
+        )
+
 
 class TestModelMovimientoEntreTitulares(TestModelMovimiento):
 

@@ -7,6 +7,8 @@ from django_ordered_field import OrderedCollectionField
 from utils import errors
 from vvmodel.models import MiModel
 
+from diario.models.saldo import Saldo
+
 
 class MiDateField(models.DateField):
     """ Todavía no entiendo por qué tengo que hacer esto para pasar el
@@ -108,6 +110,11 @@ class Movimiento(MiModel):
         movimiento.esgratis = esgratis
         movimiento.full_clean()
         movimiento.save()
+        Saldo.registrar(
+            cuenta=movimiento.cta_entrada,
+            fecha=movimiento.fecha,
+            importe=movimiento.importe
+        )
 
         return movimiento
 
