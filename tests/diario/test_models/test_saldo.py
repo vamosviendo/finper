@@ -100,3 +100,16 @@ class TestSaldoMetodoRegistrar(TestCase):
         mock_len.return_value = 1
         Saldo.registrar(self.cuenta, date(2010, 11, 11), 100)
         mock_crear.assert_not_called()
+
+    def test_segundo_registro_en_fecha_con_otra_cuenta_genera_nuevo_saldo(self):
+        cuenta2 = Cuenta.crear('cuenta2', 'c2')
+        Saldo.registrar(self.cuenta, date(2010, 11, 11), 10)
+
+        with patch('diario.models.Saldo.crear') as mock_crear:
+            Saldo.registrar(cuenta2, date(2010, 11, 11), 10)
+            mock_crear.assert_called_once_with(
+                cuenta=cuenta2,
+                fecha=date(2010, 11, 11),
+                importe=10
+            )
+
