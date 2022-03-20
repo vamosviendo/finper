@@ -4,7 +4,7 @@ from unittest.mock import patch
 from django.core.exceptions import ValidationError
 from django.test import TestCase, tag
 
-from diario.models import Cuenta, CuentaInteractiva, Movimiento, Titular
+from diario.models import Cuenta, CuentaInteractiva, Movimiento, Saldo, Titular
 
 from utils.errors import SaldoNoCeroException, CambioDeTitularException
 from utils.helpers_tests import dividir_en_dos_subcuentas
@@ -559,6 +559,11 @@ class TestModelCuentaMetodosSaldoHistorico(TestModelCuentaMetodos):
             fecha=date(2019, 1, 1)
         )
         self.assertEqual(self.cta1.saldo_historico(mov2), 100)
+
+    def test_si_no_encuentra_saldo_de_cuenta_en_fecha_de_mov_devuelve_0(self, mock_tomar):
+        mock_tomar.side_effect = Saldo.DoesNotExist
+        cuenta = Cuenta.crear('cuenta sin movimientos', 'csm')
+        self.assertEqual(cuenta.saldo_historico(self.mov1), 0)
 
 
 class TestCuentaPolymorphic(TestCase):

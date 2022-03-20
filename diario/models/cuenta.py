@@ -75,17 +75,21 @@ class Cuenta(PolymorphModel):
         self._saldo = round(valor, 2)
 
     def saldo_historico(self, movimiento):
-        result = Saldo.tomar(cuenta=self, fecha=movimiento.fecha)
-        movs_posteriores_del_dia = Movimiento.filtro(
-            fecha=movimiento.fecha, orden_dia__gt=movimiento.orden_dia)
+        try:
+            result = Saldo.tomar(cuenta=self, fecha=movimiento.fecha)
+            movs_posteriores_del_dia = Movimiento.filtro(
+                fecha=movimiento.fecha, orden_dia__gt=movimiento.orden_dia)
 
-        for mov in movs_posteriores_del_dia:
-            if mov.cta_entrada and mov.cta_entrada.pk == self.pk:
-                result -= mov.importe
-            elif mov.cta_salida and mov.cta_salida.pk == self.pk:
-                result += mov.importe
+            for mov in movs_posteriores_del_dia:
+                if mov.cta_entrada and mov.cta_entrada.pk == self.pk:
+                    result -= mov.importe
+                elif mov.cta_salida and mov.cta_salida.pk == self.pk:
+                    result += mov.importe
 
-        return result
+            return result
+
+        except Saldo.DoesNotExist:
+            return 0
 
     def clean_fields(self, exclude=None):
         self._pasar_nombre_y_slug_a_minuscula()
