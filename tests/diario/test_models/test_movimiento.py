@@ -267,6 +267,16 @@ class TestModelMovimientoCrear(TestModelMovimiento):
             importe=20
         )
 
+    @patch('diario.models.movimiento.Saldo.registrar')
+    def test_pasa_importe_en_negativo_a_registrar_saldo_si_cuenta_es_de_salida(self, mock_registrar):
+        Movimiento.crear(
+            'Nuevo mov', 20, cta_salida=self.cuenta1, fecha=date(2011, 11, 15))
+        mock_registrar.assert_called_once_with(
+            cuenta=self.cuenta1,
+            fecha=date(2011, 11, 15),
+            importe=-20
+        )
+
 
 class TestModelMovimientoEntreTitulares(TestModelMovimiento):
 

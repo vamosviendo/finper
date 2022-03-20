@@ -110,11 +110,6 @@ class Movimiento(MiModel):
         movimiento.esgratis = esgratis
         movimiento.full_clean()
         movimiento.save()
-        Saldo.registrar(
-            cuenta=movimiento.cta_entrada,
-            fecha=movimiento.fecha,
-            importe=movimiento.importe
-        )
 
         return movimiento
 
@@ -256,12 +251,30 @@ class Movimiento(MiModel):
         # Movimiento nuevo
         if self._state.adding:
 
+            # TODO: convertir esto en método efectos_colaterales, con
+            #       métodos menores que manejen cada uno de los efectos:
+            #       - modificar_saldos
+            #       - registrar_saldos_historicos
+            #  def _efectos_colaterales()
             if self.cta_entrada:
                 self.cta_entrada.saldo += self.importe
                 self.cta_entrada.save()
+
+                Saldo.registrar(
+                    cuenta=self.cta_entrada,
+                    fecha=self.fecha,
+                    importe=self.importe
+                )
+
             if self.cta_salida:
                 self.cta_salida.saldo -= self.importe
                 self.cta_salida.save()
+
+                Saldo.registrar(
+                    cuenta=self.cta_salida,
+                    fecha=self.fecha,
+                    importe=-self.importe
+                )
 
             if self.es_prestamo():
                 if self.receptor not in self.emisor.acreedores.all():
