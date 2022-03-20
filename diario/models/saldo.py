@@ -13,6 +13,16 @@ class Saldo(MiModel):
         unique_together = ['cuenta', 'fecha']
 
     @classmethod
+    def tomar(cls, **kwargs):
+        try:
+            return super().tomar(**kwargs)
+        except cls.DoesNotExist:
+            return Saldo.filtro(
+                cuenta=kwargs['cuenta'],
+                fecha__lt=kwargs['fecha']
+            ).last()
+
+    @classmethod
     def registrar(cls, cuenta, fecha, importe):
         if len(cls.filtro(fecha=fecha)) == 0:
             cls.crear(cuenta=cuenta, fecha=fecha, importe=importe)
