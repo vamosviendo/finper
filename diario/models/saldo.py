@@ -11,6 +11,7 @@ class Saldo(MiModel):
 
     class Meta:
         unique_together = ['cuenta', 'fecha']
+        ordering = ['fecha', 'cuenta']
 
     @classmethod
     def tomar(cls, **kwargs):

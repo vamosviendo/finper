@@ -36,13 +36,39 @@ class TestSaldoBasic(TestCase):
         with self.assertRaises(ValidationError):
             saldo.full_clean()
 
+    def test_saldos_se_ordenan_por_fecha(self):
+        saldo1 = Saldo.crear(
+            cuenta=self.cuenta, fecha=date(2010, 11, 10), importe=10)
+        saldo2 = Saldo.crear(
+            cuenta=self.cuenta, fecha=date(2010, 11, 2), importe=15)
+        saldo3 = Saldo.crear(
+            cuenta=self.cuenta, fecha=date(2010, 11, 5), importe=5)
+        self.assertEqual(
+            list(Saldo.todes()),
+            [saldo2, saldo3, saldo1]
+        )
+
+    def test_dentro_de_fecha_saldos_se_ordenan_por_cuenta(self):
+        cuenta2 = Cuenta.crear('cuenta 2', 'c2')
+        cuenta3 = Cuenta.crear('cuenta 3', 'c3')
+        saldo1 = Saldo.crear(
+            cuenta=self.cuenta, fecha=date(2010, 11, 1), importe=10)
+        saldo2 = Saldo.crear(
+            cuenta=cuenta3, fecha=date(2010, 11, 1), importe=10)
+        saldo3 = Saldo.crear(
+            cuenta=cuenta2, fecha=date(2010, 11, 1), importe=10)
+        self.assertEqual(
+            list(Saldo.todes()),
+            [saldo3, saldo2, saldo1]
+        )
+
 
 class TestSaldoTomar(TestCase):
 
     def test_si_no_encuentra_saldo_de_cuenta_en_fecha_busca_saldo_de_ultima_fecha_anterior(self):
         cuenta1 = Cuenta.crear('cuenta 1', 'c1')
-        Saldo.crear(cuenta=cuenta1, fecha=date(2020, 1, 1), importe=100)
         saldo2 = Saldo.crear(cuenta=cuenta1, fecha=date(2020, 1, 2), importe=150)
+        Saldo.crear(cuenta=cuenta1, fecha=date(2020, 1, 1), importe=100)
         self.assertEqual(
             Saldo.tomar(cuenta=cuenta1, fecha=date(2020, 1, 10)),
             saldo2
