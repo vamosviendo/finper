@@ -48,6 +48,11 @@ class TestSaldoTomar(TestCase):
             saldo2
         )
 
+    def test_si_no_encuentra_saldo_de_cuenta_en_fecha_ni_en_fechas_anteriores_lanza_excepcion(self):
+        cuenta1 = Cuenta.crear('cuenta 1', 'c1')
+        with self.assertRaises(Saldo.DoesNotExist):
+            Saldo.tomar(cuenta=cuenta1, fecha=date(2020, 1, 10))
+
 
 class TestSaldoMetodoRegistrar(TestCase):
 

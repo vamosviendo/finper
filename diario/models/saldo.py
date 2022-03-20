@@ -17,10 +17,15 @@ class Saldo(MiModel):
         try:
             return super().tomar(**kwargs)
         except cls.DoesNotExist:
-            return Saldo.filtro(
+            result = Saldo.filtro(
                 cuenta=kwargs['cuenta'],
                 fecha__lt=kwargs['fecha']
             ).last()
+
+            if result is None:
+                raise cls.DoesNotExist
+
+            return result
 
     @classmethod
     def registrar(cls, cuenta, fecha, importe):
