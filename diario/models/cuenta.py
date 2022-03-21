@@ -76,7 +76,7 @@ class Cuenta(PolymorphModel):
 
     def saldo_historico(self, movimiento):
         try:
-            result = Saldo.tomar(cuenta=self, fecha=movimiento.fecha)
+            result = Saldo.tomar(cuenta=self, fecha=movimiento.fecha).importe
             movs_posteriores_del_dia = Movimiento.filtro(
                 fecha=movimiento.fecha, orden_dia__gt=movimiento.orden_dia)
 

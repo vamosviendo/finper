@@ -96,26 +96,22 @@ class TestSaldoMetodoRegistrar(TestCase):
 
     def test_segundo_registro_en_fecha_no_genera_nuevo_saldo(self):
         Saldo.registrar(self.cuenta, date(2010, 11, 11), 100)
+        Saldo.registrar(self.cuenta, date(2010, 11, 11), 10)
 
-        with patch('diario.models.Saldo.crear') as mock_crear:
-            Saldo.registrar(self.cuenta, date(2010, 11, 11), 10)
-            mock_crear.assert_not_called()
+        self.assertEqual(Saldo.cantidad(), 1)
 
     def test_segundo_registro_en_fecha_con_otra_cuenta_genera_nuevo_saldo(self):
         cuenta2 = Cuenta.crear('cuenta2', 'c2')
-        Saldo.registrar(self.cuenta, date(2010, 11, 11), 10)
 
-        with patch('diario.models.Saldo.crear') as mock_crear:
-            Saldo.registrar(cuenta2, date(2010, 11, 11), 10)
-            mock_crear.assert_called_once_with(
-                cuenta=cuenta2,
-                fecha=date(2010, 11, 11),
-                importe=10
-            )
+        Saldo.registrar(self.cuenta, date(2010, 11, 11), 10)
+        Saldo.registrar(cuenta2, date(2010, 11, 11), 10)
+
+        self.assertEqual(Saldo.cantidad(), 2)
 
     def test_segundo_registro_en_fecha_suma_importe_a_saldo(self):
         Saldo.registrar(self.cuenta, date(2010, 11, 11), 10)
         Saldo.registrar(self.cuenta, date(2010, 11, 11), 5)
+
         self.assertEqual(
             Saldo.tomar(cuenta=self.cuenta, fecha=date(2010, 11, 11)).importe,
             15
