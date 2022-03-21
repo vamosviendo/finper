@@ -33,4 +33,7 @@ class Saldo(MiModel):
     def registrar(cls, cuenta, fecha, importe):
         if len(cls.filtro(cuenta=cuenta, fecha=fecha)) == 0:
             cls.crear(cuenta=cuenta, fecha=fecha, importe=importe)
-
+        else:
+            saldo = Saldo.tomar(cuenta=cuenta, fecha=fecha)
+            saldo.importe += importe
+            saldo.save()

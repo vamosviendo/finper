@@ -94,12 +94,12 @@ class TestSaldoMetodoRegistrar(TestCase):
             importe=100
         )
 
-    @patch('diario.models.Saldo.crear')
-    @patch('diario.models.saldo.len')
-    def test_segundo_registro_en_fecha_no_genera_nuevo_saldo(self, mock_len, mock_crear):
-        mock_len.return_value = 1
+    def test_segundo_registro_en_fecha_no_genera_nuevo_saldo(self):
         Saldo.registrar(self.cuenta, date(2010, 11, 11), 100)
-        mock_crear.assert_not_called()
+
+        with patch('diario.models.Saldo.crear') as mock_crear:
+            Saldo.registrar(self.cuenta, date(2010, 11, 11), 10)
+            mock_crear.assert_not_called()
 
     def test_segundo_registro_en_fecha_con_otra_cuenta_genera_nuevo_saldo(self):
         cuenta2 = Cuenta.crear('cuenta2', 'c2')
@@ -113,3 +113,10 @@ class TestSaldoMetodoRegistrar(TestCase):
                 importe=10
             )
 
+    def test_segundo_registro_en_fecha_suma_importe_a_saldo(self):
+        Saldo.registrar(self.cuenta, date(2010, 11, 11), 10)
+        Saldo.registrar(self.cuenta, date(2010, 11, 11), 5)
+        self.assertEqual(
+            Saldo.tomar(cuenta=self.cuenta, fecha=date(2010, 11, 11)).importe,
+            15
+        )
