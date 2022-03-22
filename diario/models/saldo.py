@@ -1,4 +1,3 @@
-from django.core.exceptions import ValidationError
 from django.db import models
 
 from vvmodel.models import MiModel
@@ -31,9 +30,10 @@ class Saldo(MiModel):
 
     @classmethod
     def registrar(cls, cuenta, fecha, importe):
-        if len(cls.filtro(cuenta=cuenta, fecha=fecha)) == 0:
-            cls.crear(cuenta=cuenta, fecha=fecha, importe=importe)
-        else:
-            saldo = Saldo.tomar(cuenta=cuenta, fecha=fecha)
+
+        try:
+            saldo = super().tomar(cuenta=cuenta, fecha=fecha)
             saldo.importe += importe
             saldo.save()
+        except cls.DoesNotExist:
+            cls.crear(cuenta=cuenta, fecha=fecha, importe=importe)
