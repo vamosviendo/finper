@@ -94,6 +94,17 @@ class TestSaldoMetodoRegistrar(TestCase):
             importe=100
         )
 
+    def test_saldo_creado_suma_importe_recibido_a_ultimo_saldo_anterior_de_cuenta(self):
+        Saldo.registrar(self.cuenta, date(2010, 11, 1), 100)
+
+        with patch('diario.models.Saldo.crear') as mock_crear:
+            Saldo.registrar(self.cuenta, date(2010, 11, 11), 100)
+            mock_crear.assert_called_once_with(
+                cuenta=self.cuenta,
+                fecha=date(2010, 11, 11),
+                importe=200
+            )
+
     def test_segundo_registro_en_fecha_no_genera_nuevo_saldo(self):
         Saldo.registrar(self.cuenta, date(2010, 11, 11), 100)
         Saldo.registrar(self.cuenta, date(2010, 11, 11), 10)

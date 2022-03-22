@@ -36,4 +36,13 @@ class Saldo(MiModel):
             saldo.importe += importe
             saldo.save()
         except cls.DoesNotExist:
-            cls.crear(cuenta=cuenta, fecha=fecha, importe=importe)
+            saldo_anterior = cls.filtro(cuenta=cuenta, fecha__lt=fecha).last()
+            try:
+                importe_anterior = saldo_anterior.importe
+            except AttributeError:
+                importe_anterior = 0
+            cls.crear(
+                cuenta=cuenta,
+                fecha=fecha,
+                importe=importe_anterior+importe
+            )
