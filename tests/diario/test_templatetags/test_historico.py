@@ -13,10 +13,10 @@ class TestHistorico(TestCase):
         self.cuenta = Cuenta.crear('cuenta', 'cta')
         self.mov = Movimiento.crear('Ingreso', 100, self.cuenta)
 
-    def test_devuelve_saldo_historico_de_cuenta_al_momento_del_movimiento(self, mock_saldo_historico):
+    def test_devuelve_string_con_saldo_historico_de_cuenta_al_momento_del_movimiento(self, mock_saldo_historico):
         mock_saldo_historico.return_value = 255.54
 
         result = historico(self.cuenta, self.mov)
 
         mock_saldo_historico.assert_called_once_with(self.cuenta, self.mov)
-        self.assertEqual(result, 255.54)
+        self.assertEqual(result, '255,54')

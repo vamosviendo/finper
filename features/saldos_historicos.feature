@@ -15,7 +15,6 @@ Escenario: Mostrar saldos históricos de cuentas en movimientos
         | 2021-06-15 | Depósito | 5.43    | b           | e          |
 
     Cuando voy a la página principal
-    Y me detengo
     Entonces veo movimientos con los siguientes valores:
         | fecha      | concepto | importe | e      | b     |
         | 2021-06-15 | Depósito | 5,43    |  73,57 | 25,43 |
