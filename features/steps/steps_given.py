@@ -11,7 +11,6 @@ from vvselenium.helpers import table_to_str, fijar_atributo
 """ Steps en el archivo:
 @given('movimientos con los siguientes valores')
 @given('{n} movimientos con los siguientes valores')
-@given('movimientos con estos valores')
 @given('un movimiento con los siguientes valores')
 
 @given('{n} titulares con los siguientes valores')
@@ -62,23 +61,6 @@ def hay_movimientos(context):
 def hay_n_movimientos(context, n):
     context.execute_steps('Dados movimientos con los siguientes valores\n' +
                           table_to_str(context.table))
-
-
-@given('movimientos con estos valores')
-def hay_n_movimientos(context):
-    for fila in context.table:
-        ce = cs = None
-
-        if fila.get('cta_entrada'):
-            ce = Cuenta.tomar(slug=fila.get('cta_entrada'))
-        if fila.get('cta_salida'):
-            cs = Cuenta.tomar(slug=fila.get('cta_salida'))
-        Movimiento.crear(
-            concepto=fila['concepto'],
-            importe=fila['importe'],
-            cta_entrada=ce,
-            cta_salida=cs,
-        )
 
 
 @given('un movimiento con los siguientes valores')

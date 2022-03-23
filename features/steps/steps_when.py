@@ -14,6 +14,8 @@ from selenium.webdriver.common.by import By
 from consts import NOMBRES_URL
 from diario.models import Cuenta, Movimiento, Titular
 from utils.archivos import fijar_mtime
+from vvselenium.helpers import table_to_str
+
 """Steps en el archivo:
 @when('cliqueo en el titular "{nombre}"')
 @when('agrego una cuenta con nombre "{nombre}" y slug "{slug}"')
@@ -29,6 +31,7 @@ from utils.archivos import fijar_mtime
 @when('introduzco un error de {importe} pesos en el saldo de la cuenta "{nombre}"')
 
 @when('agrego un movimiento con campos')
+@when('genero un movimiento con los siguientes valores')
 @when('genero un movimiento "{concepto}" de {importe} pesos de "{cta_salida}" a "{cta_entrada}"'
 
 @when('voy a la página "{pag}" del {orden} movimiento')
@@ -125,16 +128,28 @@ def introducir_saldo_erroneo(context, importe, nombre):
 
 # ACCIONES DE MOVIMIENTO
 
-# TODO: este step es apropiado para completar forms en general (para steps base)
-#       En este caso, podemos personalizarlo llamando a las columnas con los
-#       nombres de los campos del form de movimiento.
-#       (Afecta al step 'Cuando genero un movimiento "{concepto}" de {importe} pesos '
-#       'de "{cta_salida}" a "{cta_entrada}"'
 @when('agrego un movimiento con campos')
 def agregar_movimiento(context):
-    for fila in context.table:
-        context.browser.completar(f"id_{fila['nombre']}", fila['valor'])
-    context.browser.pulsar()
+    context.execute_steps(
+        f'Cuando completo y envío formulario con los siguientes valores'
+        f'\n{table_to_str(context.table)}'
+    )
+
+
+@when('genero movimientos con los siguientes valores')
+def generar_movimiento(context):
+    context.execute_steps(
+        f'Dados movimientos con los siguientes valores'
+        f'\n{table_to_str(context.table)}'
+    )
+
+
+@when('genero un movimiento con los siguientes valores')
+def generar_movimiento(context):
+    context.execute_steps(
+        f'Cuando genero movimientos con los siguientes valores'
+        f'\n{table_to_str((context.table))}'
+    )
 
 
 @when('genero un movimiento "{concepto}" de {importe} pesos '

@@ -19,7 +19,7 @@ Escenario: Ver detalles de un titular
         | cta1efectivo | c1e  | tito    |   500 |
         | cta2banco    | c2b  | juan    |   200 |
         | cta3credito  | c3c  | tito    |   150 |
-    Y movimientos con estos valores:
+    Y movimientos con los siguientes valores:
         | concepto             | importe | cta_entrada | cta_salida |
         | 1Entrada de efectivo | 50      | c1e         |            |
         | 2Depósito en banco   | 25      | c2b         | c1e        |
@@ -52,7 +52,7 @@ Escenario: Se muestran movimientos de cuentas acumulativas en página de titular
         | nombre   | slug | titular | saldo |
         | sc1efect | sc1e | tito    | 230   |
         | sc2efect | sc2e | juan    |       |
-    Y movimientos con estos valores:
+    Y movimientos con los siguientes valores:
         | concepto             | importe | cta_entrada | cta_salida |
         | 1Entrada de efectivo | 50      | sc1e        |            |
         | 2Entrada de efectivo | 70      | sc2e        |            |

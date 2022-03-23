@@ -20,7 +20,7 @@ Característica: detalle_cuenta
             | nombre           | slug | saldo | titular |
             | Caja de ahorro   | bca  | 100   |         |
             | Cuenta corriente | bcc  | 200   | cecilia |
-        Y movimientos con estos valores:
+        Y movimientos con los siguientes valores:
             | concepto            | importe | cta_entrada | cta_salida |
             | Extracción bancaria | 50      | bca         | bcc        |
 

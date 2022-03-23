@@ -33,6 +33,7 @@ from vvselenium.helpers import tomar_atributo, fijar_atributo
 @when('elijo y guardo el {orden} elemento dado "{nombre}"') 
 
 @when('completo y envío el formulario de login')
+@when('completo y envío formulario con los siguientes valores')
 @when('ingreso el nombre de usuario')
 @when('ingreso el password')
 @when('{accion} "{texto}" en el campo "{campo}"')
@@ -231,6 +232,13 @@ def ingresar_nombre_y_password(context):
         Y ingreso el password
         Y cliqueo en el botón de id "id_btn_login"
     ''')
+
+
+@when('completo y envío formulario con los siguientes valores')
+def completar_y_enviar(context):
+    for fila in context.table:
+        context.browser.completar(f"id_{fila['nombre']}", fila['valor'])
+    context.browser.pulsar()
 
 
 @when('ingreso el nombre de usuario')
