@@ -46,3 +46,8 @@ class Saldo(MiModel):
                 fecha=fecha,
                 importe=importe_anterior+importe
             )
+
+        # Actualizar saldos posteriores de cuenta
+        for saldo in cls.filtro(cuenta=cuenta, fecha__gt=fecha):
+            saldo.importe += importe
+            saldo.save()

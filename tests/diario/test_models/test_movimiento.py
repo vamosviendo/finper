@@ -4,7 +4,7 @@ from unittest.mock import patch, call
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
-from diario.models import Cuenta, CuentaInteractiva, Movimiento, Titular
+from diario.models import Cuenta, CuentaInteractiva, Movimiento, Titular, Saldo
 from utils import errors
 from utils.helpers_tests import dividir_en_dos_subcuentas
 
@@ -275,6 +275,15 @@ class TestModelMovimientoCrear(TestModelMovimiento):
             cuenta=self.cuenta1,
             fecha=date(2011, 11, 15),
             importe=-20
+        )
+
+    def test_integrativo_crear_movimiento_en_fecha_antigua_modifica_saldos_de_fechas_posteriores(self):
+        Movimiento.crear(
+            'Movimiento anterior', 30, self.cuenta1, fecha=date(2011, 11, 11))
+
+        self.assertEqual(
+            Saldo.tomar(cuenta=self.cuenta1, fecha=date(2011, 11, 15)).importe,
+            155
         )
 
 
