@@ -33,6 +33,7 @@ from vvselenium.helpers import table_to_str
 @when('agrego un movimiento con campos')
 @when('genero un movimiento con los siguientes valores')
 @when('genero un movimiento "{concepto}" de {importe} pesos de "{cta_salida}" a "{cta_entrada}"'
+@when('elimino movimientos con los siguientes valores')
 
 @when('voy a la página "{pag}" del {orden} movimiento')
 @when('voy a la página "{pag}" del movimiento de concepto "{concepto}"')
@@ -164,6 +165,16 @@ def generar_movimiento(context, concepto, importe, cta_salida, cta_entrada):
             | cta_entrada | {cta_entrada} |
             | cta_salida  | {cta_salida}  |
     ''')
+
+
+@when('elimino movimientos con los siguientes valores')
+def eliminar_movimiento(context):
+    for fila in context.table:
+        kwargs = dict()
+        for heading in context.table.headings:
+            kwargs.update({heading: fila[heading]})
+        Movimiento.tomar(**kwargs).delete()
+
 
 
 @when('voy a la página "{pag}" del {orden} movimiento')

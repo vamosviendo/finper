@@ -646,8 +646,8 @@ class TestModelMovimientoClean(TestModelMovimiento):
 
 class TestModelMovimientoModificar(TestModelMovimiento):
     """ Saldos después de setUp:
-        self.cuenta1: 125.0+50 = 175
-        self.cuenta2: -35.0-50 = -85
+        self.cuenta1: 125.0-35+50 = 140
+        self.cuenta2: = -50
     """
 
     def setUp(self):
@@ -663,11 +663,13 @@ class TestModelMovimientoModificar(TestModelMovimiento):
             cta_entrada=self.cuenta1,
         )
         self.mov2 = Movimiento.crear(
+            fecha=date(2021, 1, 10),
             concepto='salida',
             importe=35,
             cta_salida=self.cuenta1
         )
         self.mov3 = Movimiento.crear(
+            fecha=date(2021, 1, 11),
             concepto='traspaso',
             importe=50,
             cta_entrada=self.cuenta1,
@@ -689,8 +691,8 @@ class TestModelMovimientoModificar(TestModelMovimiento):
 
 class TestModelMovimientoEliminar(TestModelMovimientoModificar):
     """ Saldos después de setUp:
-        self.cuenta1: 125.0+50 = 175
-        self.cuenta2: -35.0-50 = -85
+        self.cuenta1: 125.0-35+50 = 140
+        self.cuenta2: = -50
     """
 
     def test_eliminar_movimiento_resta_de_saldo_cta_entrada_y_suma_a_saldo_cta_salida(self):
@@ -707,6 +709,54 @@ class TestModelMovimientoEliminar(TestModelMovimientoModificar):
 
         self.assertEqual(self.cuenta2.saldo, self.saldo2+self.imp3)
         self.assertEqual(self.cuenta1.saldo, saldo1-self.imp3)
+
+    def test_eliminar_ultimo_movimiento_de_cuenta_entrada_resta_importe_de_su_ultimo_saldo_historico(self):
+        self.mov3.delete()
+        self.assertEqual(
+            Saldo.tomar(cuenta=self.cuenta1, fecha=date(2021, 1, 11)).importe,
+            90
+        )
+
+    def test_eliminar_ultimo_movimiento_de_cuenta_salida_suma_importe_a_su_ultimo_saldo_historico(self):
+        self.mov3.delete()
+        self.assertEqual(
+            Saldo.tomar(cuenta=self.cuenta2, fecha=date(2021, 1, 11)).importe,
+            0
+        )
+
+    def test_eliminar_movimiento_resta_importe_de_saldo_de_cta_entrada_de_la_fecha_del_mov_eliminado(self):
+        fecha_mov = self.mov1.fecha
+        self.mov1.delete()
+        self.assertEqual(
+            Saldo.tomar(cuenta=self.cuenta1, fecha=fecha_mov).importe,
+            0
+        )
+
+    def test_eliminar_movimiento_suma_importe_a_saldo_de_cta_salida_de_la_fecha_del_mov_eliminado(self):
+        fecha_mov = self.mov2.fecha
+        self.mov2.delete()
+        self.assertEqual(
+            Saldo.tomar(cuenta=self.cuenta1, fecha=fecha_mov).importe,
+            125
+        )
+
+    def test_eliminar_movimiento_resta_importe_de_saldos_de_cta_entrada_posteriores_a_la_fecha_del_mov_eliminado(self):
+        self.mov1.delete()
+        self.assertEqual(
+            Saldo.tomar(cuenta=self.cuenta1, fecha=date(2021, 1, 10)).importe,
+            -35
+        )
+        self.assertEqual(
+            Saldo.tomar(cuenta=self.cuenta1, fecha=date(2021, 1, 11)).importe,
+            15
+        )
+
+    def test_eliminar_movimiento_suma_importe_a_saldos_de_cta_salida_posteriores_a_la_fecha_del_mov_eliminado(self):
+        self.mov2.delete()
+        self.assertEqual(
+            Saldo.tomar(cuenta=self.cuenta1, fecha=date(2021, 1, 11)).importe,
+            175
+        )
 
     @patch.object(Movimiento, '_eliminar_contramovimiento', autospec=True)
     def test_eliminar_movimiento_con_contramovimiento_elimina_contramovimiento(
