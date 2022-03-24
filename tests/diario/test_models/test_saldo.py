@@ -165,6 +165,13 @@ class TestSaldoMetodoRegistrar(TestCase):
             90
         )
 
+    @patch('diario.models.Saldo._actualizar_posteriores')
+    def test_llama_a_actualizar_posteriores(self, mock_actualizar_posteriores):
+        Saldo.registrar(self.cuenta, date(2010, 11, 11), 30)
+        mock_actualizar_posteriores.assert_called_once_with(
+            self.cuenta, date(2010, 11, 11), 30)
+
+
 
 class TestSaldoMetodoEliminar(TestCase):
 
@@ -184,3 +191,49 @@ class TestSaldoMetodoEliminar(TestCase):
         saldo.eliminar()
         saldo_post.refresh_from_db()
         self.assertEqual(saldo_post.importe, 50)
+
+    @patch('diario.models.Saldo._actualizar_posteriores')
+    def test_llama_a_actualizar_posteriores_con_importe_en_negativo(self, mock_actualizar_posteriores):
+        saldo = Saldo.crear(
+            cuenta=self.cuenta, fecha=date(2010, 11, 11), importe=100)
+        saldo.eliminar()
+        mock_actualizar_posteriores.assert_called_once_with(
+            self.cuenta, date(2010, 11, 11), -100)
+
+
+class TestSaldoMetodoActualizarPosteriores(TestCase):
+
+    def setUp(self):
+        self.cuenta = Cuenta.crear('cuenta normal', 'cn')
+
+    def test_suma_importe_a_saldos_de_cuenta_posteriores_a_fecha_del_saldo(self):
+        saldo2 = Saldo.crear(
+            cuenta=self.cuenta, fecha=date(2011, 12, 15), importe=150)
+        saldo3 = Saldo.crear(
+            cuenta=self.cuenta, fecha=date(2012, 5, 6), importe=200)
+
+        Saldo._actualizar_posteriores(self.cuenta, date(2010, 11, 11), 100)
+        saldo2.refresh_from_db(fields=['importe'])
+        saldo3.refresh_from_db(fields=['importe'])
+
+        self.assertEqual(saldo2.importe, 250)
+        self.assertEqual(saldo3.importe, 300)
+
+    def test_no_suma_importe_a_saldos_posteriores_de_otras_cuentas(self):
+        cuenta2 = Cuenta.crear('otra cuenta', 'oc')
+        saldo2 = Saldo.crear(
+            cuenta=cuenta2, fecha=date(2011, 12, 15), importe=200)
+
+        Saldo._actualizar_posteriores(self.cuenta, date(2010, 11, 11), 100)
+        saldo2.refresh_from_db(fields=['importe'])
+
+        self.assertEqual(saldo2.importe, 200)
+
+    def test_no_suma_importe_a_saldos_anteriores_de_la_cuenta(self):
+        saldo2 = Saldo.crear(
+            cuenta=self.cuenta, fecha=date(2010, 11, 10), importe=200)
+
+        Saldo._actualizar_posteriores(self.cuenta, date(2010, 11, 11), 100)
+        saldo2.refresh_from_db(fields=['importe'])
+
+        self.assertEqual(saldo2.importe, 200)

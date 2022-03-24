@@ -47,20 +47,18 @@ class Saldo(MiModel):
                 importe=importe_anterior+importe
             )
 
-        # Actualizar saldos posteriores de cuenta
-        for saldo_post in cls.filtro(cuenta=cuenta, fecha__gt=fecha):
-            saldo_post.importe += importe
-            saldo_post.save()
+        cls._actualizar_posteriores(cuenta, fecha, importe)
 
         return saldo
 
     def eliminar(self):
-        cuenta = self.cuenta
-        fecha = self.fecha
-        importe = self.importe
+        saldo = self
         self.delete()
+        Saldo._actualizar_posteriores(saldo.cuenta, saldo.fecha, -saldo.importe)
 
-        # TODO: Refactor - repetido de Saldo.registrar()
+    @staticmethod
+    def _actualizar_posteriores(cuenta, fecha, importe):
+
         for saldo_post in Saldo.filtro(cuenta=cuenta, fecha__gt=fecha):
-            saldo_post.importe -= importe
+            saldo_post.importe += importe
             saldo_post.save()
