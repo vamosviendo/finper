@@ -237,19 +237,29 @@ class Movimiento(MiModel):
         if self.cta_entrada:
             self.cta_entrada.saldo -= self.importe
             self.cta_entrada.save()
-            Saldo.registrar(
-                cuenta=self.cta_entrada,
-                fecha=self.fecha,
-                importe=-self.importe
-            )
+
+            # TODO: refactor (repetido para cta entrada y salida)
+            if len(Movimiento.filtro(fecha=self.fecha).exclude(pk=self.pk)) > 0:
+                Saldo.registrar(
+                    cuenta=self.cta_entrada,
+                    fecha=self.fecha,
+                    importe=-self.importe
+                )
+            else:
+                Saldo.tomar(cuenta=self.cta_entrada, fecha=self.fecha).eliminar()
+
         if self.cta_salida:
             self.cta_salida.saldo += self.importe
             self.cta_salida.save()
-            Saldo.registrar(
-                cuenta=self.cta_salida,
-                fecha=self.fecha,
-                importe=self.importe
-            )
+
+            if len(Movimiento.filtro(fecha=self.fecha).exclude(pk=self.pk)) > 0:
+                Saldo.registrar(
+                    cuenta=self.cta_salida,
+                    fecha=self.fecha,
+                    importe=self.importe
+                )
+            else:
+                Saldo.tomar(cuenta=self.cta_salida, fecha=self.fecha).eliminar()
 
         if self.id_contramov:
             self._eliminar_contramovimiento()

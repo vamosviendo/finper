@@ -51,3 +51,6 @@ class Saldo(MiModel):
         for saldo in cls.filtro(cuenta=cuenta, fecha__gt=fecha):
             saldo.importe += importe
             saldo.save()
+
+    def eliminar(self):
+        pass

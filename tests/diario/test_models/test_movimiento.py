@@ -710,56 +710,88 @@ class TestModelMovimientoEliminar(TestModelMovimientoModificar):
         self.assertEqual(self.cuenta2.saldo, self.saldo2+self.imp3)
         self.assertEqual(self.cuenta1.saldo, saldo1-self.imp3)
 
-    @patch('diario.models.movimiento.Saldo.registrar')
-    def test_eliminar_movimiento_pasa_importe_en_negativo_a_registrar_saldo_cta_entrada(self, mock_registrar):
+    def test_eliminar_movimiento_no_unico_de_cuenta_en_fecha_pasa_importe_en_negativo_a_registrar_saldo_cta_entrada(self):
+        fecha_mov = self.mov1.fecha
+        Movimiento.crear(
+            'Otro mov en fecha', 100, self.cuenta1, fecha=fecha_mov)
+        with patch(
+                'diario.models.movimiento.Saldo.registrar') as mock_registrar:
+            self.mov1.delete()
+            mock_registrar.assert_called_once_with(
+                cuenta=Cuenta.objects.get_no_poly(pk=self.cuenta1.pk),
+                fecha=fecha_mov,
+                importe=-125
+            )
+
+    def test_eliminar_movimiento_no_unico_de_cuenta_en_fecha_pasa_importe_en_positivo_a_registrar_saldo_cta_salida(self):
+        fecha_mov = self.mov2.fecha
+        Movimiento.crear(
+            'Otro mov en fecha', 100, self.cuenta1, fecha=fecha_mov)
+        with patch('diario.models.movimiento.Saldo.registrar') as mock_registrar:
+            self.mov2.delete()
+            mock_registrar.assert_called_once_with(
+                cuenta=Cuenta.objects.get_no_poly(pk=self.cuenta1.pk),
+                fecha=fecha_mov,
+                importe=35
+            )
+
+    def test_eliminar_movimiento_no_unico_de_cuenta_en_fecha_resta_importe_de_saldo_de_cta_entrada_de_la_fecha_del_mov_eliminado(self):
+        fecha_mov = self.mov1.fecha
+        Movimiento.crear(
+            'Otro mov en fecha', 100, self.cuenta1, fecha=fecha_mov)
         self.mov1.delete()
-        mock_registrar.assert_called_once_with(
-            cuenta=Cuenta.objects.get_no_poly(pk=self.cuenta1.pk),
-            fecha=date(2021, 1, 5),
-            importe=-125
+        self.assertEqual(
+            Saldo.tomar(cuenta=self.cuenta1, fecha=fecha_mov).importe,
+            100
         )
 
-    @patch('diario.models.movimiento.Saldo.registrar')
-    def test_eliminar_movimiento_pasa_importe_en_positivo_a_registrar_saldo_cta_salida(self, mock_registrar):
+    def test_eliminar_movimiento_no_unico_de_cuenta_en_fecha_suma_importe_a_saldo_de_cta_salida_de_la_fecha_del_mov_eliminado(self):
+        fecha_mov = self.mov2.fecha
+        Movimiento.crear(
+            'Otro mov en fecha', 100, self.cuenta1, fecha=fecha_mov)
         self.mov2.delete()
-        mock_registrar.assert_called_once_with(
-            cuenta=Cuenta.objects.get_no_poly(pk=self.cuenta1.pk),
-            fecha=date(2021, 1, 10),
-            importe=35
+        self.assertEqual(
+            Saldo.tomar(cuenta=self.cuenta1, fecha=fecha_mov).importe,
+            225
         )
 
-    def test_eliminar_movimiento_resta_importe_de_saldo_de_cta_entrada_de_la_fecha_del_mov_eliminado(self):
+    def test_eliminar_movimiento_no_unico_de_cuenta_en_fecha_resta_importe_de_saldos_de_cta_entrada_posteriores_a_la_fecha_del_mov_eliminado(self):
+        fecha_mov = self.mov1.fecha
+        Movimiento.crear(
+            'Otro mov en fecha', 100, self.cuenta1, fecha=fecha_mov)
+        self.mov1.delete()
+        self.assertEqual(
+            Saldo.tomar(cuenta=self.cuenta1, fecha=self.mov2.fecha).importe,
+            65
+        )
+        self.assertEqual(
+            Saldo.tomar(cuenta=self.cuenta1, fecha=self.mov3.fecha).importe,
+            115
+        )
+
+    def test_eliminar_movimiento_no_unico_de_cuenta_en_fecha_suma_importe_a_saldos_de_cta_salida_posteriores_a_la_fecha_del_mov_eliminado(self):
+        fecha_mov = self.mov2.fecha
+        Movimiento.crear('Otro mov en fecha', 100, self.cuenta1, fecha=fecha_mov)
+        self.mov2.delete()
+        self.assertEqual(
+            Saldo.tomar(cuenta=self.cuenta1, fecha=self.mov3.fecha).importe,
+            275
+        )
+
+    @patch('diario.models.movimiento.Saldo.eliminar', autospec=True)
+    def test_eliminar_unico_movimiento_de_cta_entrada_en_fecha_elimina_saldo_de_cuenta_en_fecha(self, mock_eliminar):
         fecha_mov = self.mov1.fecha
         self.mov1.delete()
-        self.assertEqual(
-            Saldo.tomar(cuenta=self.cuenta1, fecha=fecha_mov).importe,
-            0
+        mock_eliminar.assert_called_once_with(
+            Saldo.tomar(cuenta=self.cuenta1, fecha=fecha_mov)
         )
 
-    def test_eliminar_movimiento_suma_importe_a_saldo_de_cta_salida_de_la_fecha_del_mov_eliminado(self):
+    @patch('diario.models.movimiento.Saldo.eliminar', autospec=True)
+    def test_eliminar_unico_movimiento_de_cta_salida_en_fecha_elimina_saldo_de_cuenta_en_fecha(self, mock_eliminar):
         fecha_mov = self.mov2.fecha
         self.mov2.delete()
-        self.assertEqual(
-            Saldo.tomar(cuenta=self.cuenta1, fecha=fecha_mov).importe,
-            125
-        )
-
-    def test_eliminar_movimiento_resta_importe_de_saldos_de_cta_entrada_posteriores_a_la_fecha_del_mov_eliminado(self):
-        self.mov1.delete()
-        self.assertEqual(
-            Saldo.tomar(cuenta=self.cuenta1, fecha=date(2021, 1, 10)).importe,
-            -35
-        )
-        self.assertEqual(
-            Saldo.tomar(cuenta=self.cuenta1, fecha=date(2021, 1, 11)).importe,
-            15
-        )
-
-    def test_eliminar_movimiento_suma_importe_a_saldos_de_cta_salida_posteriores_a_la_fecha_del_mov_eliminado(self):
-        self.mov2.delete()
-        self.assertEqual(
-            Saldo.tomar(cuenta=self.cuenta1, fecha=date(2021, 1, 11)).importe,
-            175
+        mock_eliminar.assert_called_once_with(
+            Saldo.tomar(cuenta=self.cuenta1, fecha=fecha_mov)
         )
 
     @patch.object(Movimiento, '_eliminar_contramovimiento', autospec=True)
