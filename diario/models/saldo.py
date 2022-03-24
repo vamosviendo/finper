@@ -55,4 +55,12 @@ class Saldo(MiModel):
         return saldo
 
     def eliminar(self):
-        pass
+        cuenta = self.cuenta
+        fecha = self.fecha
+        importe = self.importe
+        self.delete()
+
+        # TODO: Refactor - repetido de Saldo.registrar()
+        for saldo_post in Saldo.filtro(cuenta=cuenta, fecha__gt=fecha):
+            saldo_post.importe -= importe
+            saldo_post.save()

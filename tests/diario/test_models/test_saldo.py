@@ -164,3 +164,23 @@ class TestSaldoMetodoRegistrar(TestCase):
             Saldo.tomar(cuenta=self.cuenta, fecha=date(2010, 11, 15)).importe,
             90
         )
+
+
+class TestSaldoMetodoEliminar(TestCase):
+
+    def setUp(self):
+        self.cuenta = Cuenta.crear('cuenta normal', 'cn')
+
+    def test_elimina_saldo(self):
+        saldo = Saldo.registrar(self.cuenta, date(2010, 11, 11), 100)
+        saldo.eliminar()
+        self.assertEqual(saldo.cantidad(), 0)
+        with self.assertRaises(Saldo.DoesNotExist):
+            Saldo.tomar(cuenta=saldo.cuenta, fecha=saldo.fecha)
+
+    def test_modifica_saldos_posteriores(self):
+        saldo = Saldo.registrar(self.cuenta, date(2010, 11, 11), 100)
+        saldo_post = Saldo.registrar(self.cuenta, date(2010, 11, 15), 50)
+        saldo.eliminar()
+        saldo_post.refresh_from_db()
+        self.assertEqual(saldo_post.importe, 50)
