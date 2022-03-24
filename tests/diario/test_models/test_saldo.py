@@ -128,6 +128,22 @@ class TestSaldoMetodoRegistrar(TestCase):
             15
         )
 
+    def test_devuelve_saldo_creado(self):
+        saldo = Saldo.registrar(self.cuenta, date(2010, 11, 1), 100)
+        self.assertEqual(
+            saldo,
+            Saldo.tomar(cuenta=self.cuenta, fecha=date(2010, 11, 1))
+        )
+
+    def test_devuelve_saldo_actualizado(self):
+        Saldo.registrar(self.cuenta, date(2010, 11, 11), 10)
+        saldo = Saldo.registrar(self.cuenta, date(2010, 11, 11), 5)
+
+        self.assertEqual(
+            saldo,
+            Saldo.tomar(cuenta=self.cuenta, fecha=date(2010, 11, 11))
+        )
+
     def test_saldo_registrado_en_fecha_antigua_modifica_saldos_de_fechas_posteriores(self):
         Saldo.registrar(self.cuenta, date(2010, 11, 15), 20)
         Saldo.registrar(self.cuenta, date(2010, 11, 11), 30)

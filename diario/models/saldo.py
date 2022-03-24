@@ -41,16 +41,18 @@ class Saldo(MiModel):
                 importe_anterior = saldo_anterior.importe
             except AttributeError:
                 importe_anterior = 0
-            cls.crear(
+            saldo = cls.crear(
                 cuenta=cuenta,
                 fecha=fecha,
                 importe=importe_anterior+importe
             )
 
         # Actualizar saldos posteriores de cuenta
-        for saldo in cls.filtro(cuenta=cuenta, fecha__gt=fecha):
-            saldo.importe += importe
-            saldo.save()
+        for saldo_post in cls.filtro(cuenta=cuenta, fecha__gt=fecha):
+            saldo_post.importe += importe
+            saldo_post.save()
+
+        return saldo
 
     def eliminar(self):
         pass
