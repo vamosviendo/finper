@@ -710,18 +710,22 @@ class TestModelMovimientoEliminar(TestModelMovimientoModificar):
         self.assertEqual(self.cuenta2.saldo, self.saldo2+self.imp3)
         self.assertEqual(self.cuenta1.saldo, saldo1-self.imp3)
 
-    def test_eliminar_ultimo_movimiento_de_cuenta_entrada_resta_importe_de_su_ultimo_saldo_historico(self):
-        self.mov3.delete()
-        self.assertEqual(
-            Saldo.tomar(cuenta=self.cuenta1, fecha=date(2021, 1, 11)).importe,
-            90
+    @patch('diario.models.movimiento.Saldo.registrar')
+    def test_eliminar_movimiento_pasa_importe_en_negativo_a_registrar_saldo_cta_entrada(self, mock_registrar):
+        self.mov1.delete()
+        mock_registrar.assert_called_once_with(
+            cuenta=Cuenta.objects.get_no_poly(pk=self.cuenta1.pk),
+            fecha=date(2021, 1, 5),
+            importe=-125
         )
 
-    def test_eliminar_ultimo_movimiento_de_cuenta_salida_suma_importe_a_su_ultimo_saldo_historico(self):
-        self.mov3.delete()
-        self.assertEqual(
-            Saldo.tomar(cuenta=self.cuenta2, fecha=date(2021, 1, 11)).importe,
-            0
+    @patch('diario.models.movimiento.Saldo.registrar')
+    def test_eliminar_movimiento_pasa_importe_en_positivo_a_registrar_saldo_cta_salida(self, mock_registrar):
+        self.mov2.delete()
+        mock_registrar.assert_called_once_with(
+            cuenta=Cuenta.objects.get_no_poly(pk=self.cuenta1.pk),
+            fecha=date(2021, 1, 10),
+            importe=35
         )
 
     def test_eliminar_movimiento_resta_importe_de_saldo_de_cta_entrada_de_la_fecha_del_mov_eliminado(self):
