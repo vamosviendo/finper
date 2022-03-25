@@ -2164,3 +2164,28 @@ class TestModelMovimientoMetodoCambiaCampo(TestModelMovimientoModificar):
 
     def test_devuelve_false_si_no_hay_cambio_en_ninguno_de_los_campos_dados(self):
         self.assertFalse(self.mov1._cambia_campo('concepto', 'fecha'))
+
+
+class TestModelMovimientoMetodoHermanosDeFecha(TestModelMovimiento):
+
+    def setUp(self):
+        self.cuenta = Cuenta.crear('cuenta', 'c')
+        self.mov1 = Movimiento.crear(
+            'Movimiento 1', 100, self.cuenta, fecha=date(2011, 11, 11))
+        self.mov2 = Movimiento.crear(
+            'Movimiento 2', 200, self.cuenta, fecha=date(2011, 11, 11))
+        self.mov3 = Movimiento.crear(
+            'Movimiento 3', 300, self.cuenta, fecha=date(2011, 11, 11))
+        self.result = self.mov1.hermanos_de_fecha()
+
+    def test_devuelve_movimientos_de_la_fecha(self):
+        self.assertIn(self.mov2, self.result)
+        self.assertIn(self.mov3, self.result)
+
+    def test_no_incluye_instancia(self):
+        self.assertNotIn(self.mov1, self.result)
+
+    def test_no_incluye_movimientos_de_otra_fecha(self):
+        mov4 = Movimiento.crear(
+            'Movimiento 4', 400, self.cuenta, fecha=date(2011, 11, 12))
+        self.assertNotIn(mov4, self.result)

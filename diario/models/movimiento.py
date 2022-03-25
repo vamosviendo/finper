@@ -239,7 +239,9 @@ class Movimiento(MiModel):
             self.cta_entrada.save()
 
             # TODO: refactor (repetido para cta entrada y salida)
-            if len(Movimiento.filtro(fecha=self.fecha).exclude(pk=self.pk)) > 0:
+            # Si hay más movimientos en la fecha, retirar importe de saldo
+            # Si no hay más movimientos en la fecha, eliminar saldo
+            if self.hermanos_de_fecha().count() > 0:
                 Saldo.registrar(
                     cuenta=self.cta_entrada,
                     fecha=self.fecha,
@@ -252,7 +254,7 @@ class Movimiento(MiModel):
             self.cta_salida.saldo += self.importe
             self.cta_salida.save()
 
-            if len(Movimiento.filtro(fecha=self.fecha).exclude(pk=self.pk)) > 0:
+            if self.hermanos_de_fecha().count() > 0:
                 Saldo.registrar(
                     cuenta=self.cta_salida,
                     fecha=self.fecha,
@@ -416,6 +418,9 @@ class Movimiento(MiModel):
                          f'-{self.emisor.titname}'))
         except cls.DoesNotExist:
             return None, None
+
+    def hermanos_de_fecha(self):
+        return Movimiento.filtro(fecha=self.fecha).exclude(pk=self.pk)
 
     def _cambia_campo(self, *args):
         mov_guardado = self.tomar_de_bd()
