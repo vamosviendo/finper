@@ -357,31 +357,7 @@ class Movimiento(MiModel):
                     self.cta_entrada.saldo += self.importe
                     self.cta_entrada.save()
 
-                # Refrescar en caso de que la cuenta de salida se haya convertido
-                # en acumulativa.
-                # Necesario cuando se divide una cuenta en subcuentas convirtiéndola
-                # en acumulativa. Los movimientos que pasan el saldo de la cuenta
-                # madre a las subcuentas se generan en tres pasos:
-                # Primero, se crea un movimiento con la cuenta madre como cta_salida.
-                # Luego, se crean las subcuentas y se convierte la cuenta madre
-                # en acumulativa.
-                # Finalmente, se modifica el movimiento agregándole la subcuenta
-                # como cuenta de entrada.
-                # En este último paso, es necesario "informarle" al movimiento
-                # que su cuenta de salida se ha convertido en acumulativa, para
-                # que la trate como tal.
-                # Ahora bien, me preguto.
-                # ¿Está bien que esta "actualización" se haga acá, en medio del quilombo?
-                # ¿No podría estar en algún lugar más relajado?
-                # Pasan demasiadas cosas distintas en este save().
-                # Todas estas cosas, pelotudo, lo tendrías que haber aclarado en el momento
-                # en el que tuviste que agregar estas líneas, y me hubieras
-                # ahorrado un montón de trabajo tratando de descularlo.
-                # (Me parece que sí tiene que estar acá, al menos por el momento)
-                # (Tal vez encapsularlo en un método con un nombre descriptivo)
-                self.cta_salida = self.cta_salida.primer_ancestre()\
-                    .tomar(slug=self.cta_salida.slug) \
-                        if self.cta_salida else None
+                self._actualizar_cuenta_salida_convertida_en_acumulativa()
 
             # No cambió la cuenta de salida
             try:
@@ -477,6 +453,25 @@ class Movimiento(MiModel):
                 fecha=self.fecha,
                 importe=-self.importe
             )
+
+    def _actualizar_cuenta_salida_convertida_en_acumulativa(self):
+        """ Este paso es necesario para el caso en el que se divide una cuenta
+            en subcuentas convirtiéndola en acumulativa (ver
+            diario.models.cuenta.CuentaInteractiva.dividir_entre().
+            Para pasar el saldo de la cuenta madre a las subcuentas se crean
+            movimientos, los cuales se generan en tres pasos:
+            - por cada subcuenta se crea un movimiento con la cuenta madre
+              como cuenta de salida
+            - se crean las subcuentas y se convierte la cuenta madre en
+              acumulativa
+            - se modifican los movimientos recién creados agregándole la
+              subcuenta como cuenta de entrada.
+            En este último paso, es necesario "informarle" al movimiento que
+            su cuenta de salida se ha convertido en acumulativa, para que la
+            trate como tal.
+        """
+        self.cta_salida = self.cta_salida.tomar_de_bd() \
+            if self.cta_salida else None
 
     def _cambia_campo(self, *args):
         mov_guardado = self.tomar_de_bd()
