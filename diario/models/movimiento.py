@@ -295,31 +295,7 @@ class Movimiento(MiModel):
 
         # Movimiento nuevo
         if self._state.adding:
-
-            # TODO: convertir esto en método efectos_colaterales, con
-            #       métodos menores que manejen cada uno de los efectos:
-            #       - modificar_saldos
-            #       - registrar_saldos_historicos
-            #  def _efectos_colaterales()
-            if self.cta_entrada:
-                self.cta_entrada.saldo += self.importe
-                self.cta_entrada.save()
-
-                Saldo.registrar(
-                    cuenta=self.cta_entrada,
-                    fecha=self.fecha,
-                    importe=self.importe
-                )
-
-            if self.cta_salida:
-                self.cta_salida.saldo -= self.importe
-                self.cta_salida.save()
-
-                Saldo.registrar(
-                    cuenta=self.cta_salida,
-                    fecha=self.fecha,
-                    importe=-self.importe
-                )
+            self._actualizar_saldos_cuentas()
 
             if self.es_prestamo():
                 if self.receptor not in self.emisor.acreedores.all():
@@ -476,6 +452,35 @@ class Movimiento(MiModel):
 
     def hermanos_de_fecha(self):
         return Movimiento.filtro(fecha=self.fecha).exclude(pk=self.pk)
+
+    def _actualizar_saldos_cuentas(self):
+        """ Sumar importe a cuenta de entrada
+            Restar importe a cuenta de salida
+            Registrar importe en saldo de cuenta de entrada de fecha de la
+            instancia
+            Registrar negativo de importe en saldo de cuenta de salida de
+            fecha de la instancia
+        """
+
+        if self.cta_entrada:
+            self.cta_entrada.saldo += self.importe
+            self.cta_entrada.save()
+
+            Saldo.registrar(
+                cuenta=self.cta_entrada,
+                fecha=self.fecha,
+                importe=self.importe
+            )
+
+        if self.cta_salida:
+            self.cta_salida.saldo -= self.importe
+            self.cta_salida.save()
+
+            Saldo.registrar(
+                cuenta=self.cta_salida,
+                fecha=self.fecha,
+                importe=-self.importe
+            )
 
     def _cambia_campo(self, *args):
         mov_guardado = self.tomar_de_bd()
