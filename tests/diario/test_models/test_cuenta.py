@@ -588,6 +588,31 @@ class TestModelCuentaMetodosSaldoHistorico(TestCase):
         self.assertEqual(cuenta.saldo_historico(self.mov1), 0)
 
 
+class TestModelCuentaMetodosTomarDeBd(TestCase):
+
+    def test_actualiza_cambios_en_cuentas_interactivas(self):
+        cuenta = CuentaInteractiva.crear('cuenta', 'c')
+
+        variable = Cuenta.tomar(slug='c')
+        cuenta.nombre = 'kuenta'
+        cuenta.save()
+
+        variable = variable.tomar_de_bd()
+
+        self.assertEqual(variable.nombre, 'kuenta')
+
+    def test_actualiza_cambios_en_cuentas_acumulativas(self):
+        cuenta = Cuenta.crear('cuenta', 'c')
+        cuenta = cuenta._convertirse_en_acumulativa()
+        variable = Cuenta.tomar(slug='c')
+        cuenta.nombre = 'kuenta'
+        cuenta.save()
+
+        variable = variable.tomar_de_bd()
+
+        self.assertEqual(variable.nombre, 'kuenta')
+
+
 class TestCuentaPolymorphic(TestCase):
 
     def test_tomar_devuelve_cuenta_de_la_clase_correcta(self):
