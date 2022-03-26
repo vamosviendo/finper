@@ -269,6 +269,29 @@ class Movimiento(MiModel):
         super().delete(*args, **kwargs)
 
     def save(self, *args, **kwargs):
+        '''
+        Si el movimiento es nuevo (no existía antes, está siendo creado)
+        - sumar / restar importe de la/s cuenta/s interviniente/s
+        - EJECUTAR COMPROBACIONES Y ACCIONES EN REFERENCIA A CUENTAS DE DISTINTOS
+          TITULARES (A ser analizadas luego)
+        Si el movimiento existía (está siendo modificado)
+        - Chequear si cambió la cuenta de entrada.
+        - Si no cambió
+          - Tratar de sumar importe del movimiento nuevo y restar el del
+            movimiento anterior a la cuenta de entrada
+        - Si cambió
+          - Si antes había una cuenta de entrada, restar el importe del movimiento
+            anterior a la cuenta de entrada del movimiento anterior.
+          - Si ahora hay una cuenta de entrada, sumar el importe del movimiento
+            nuevo a la cuenta de entrada del movimiento nuevo.
+        - Antes de repetir el proceso con la cuenta de salida, actualizarla
+          por si pasa lo que estamos viendo ahora que pasa
+
+          - Chequear si cambió el importe
+          - Si cambió el importe, restar importe anterior y sumar importe nuevo
+            a cuenta de entrada
+
+        '''
 
         # Movimiento nuevo
         if self._state.adding:
@@ -331,11 +354,14 @@ class Movimiento(MiModel):
             try:
                 entradas_iguales = self.cta_entrada.es_le_misme_que(
                     mov_guardado.cta_entrada)
-            except AttributeError:
+            except AttributeError:  # no hay cuenta de entrada
                 entradas_iguales = False
 
             if entradas_iguales:
+                # Cambió el importe
                 try:
+                    # Restar de saldo de cuenta de entrada importe antiguo
+                    # y sumar el nuevo
                     self.cta_entrada.saldo = self.cta_entrada.saldo \
                                              - mov_guardado.importe \
                                              + self.importe
@@ -347,13 +373,38 @@ class Movimiento(MiModel):
             else:
                 # Había una cuenta de entrada
                 if mov_guardado.cta_entrada:
+                    # Restar importe antiguo de cuenta de entrada antigua
                     mov_guardado.cta_entrada.saldo -= mov_guardado.importe
                     mov_guardado.cta_entrada.save()
 
                 # Ahora hay una cuenta de entrada
                 if self.cta_entrada:
+                    # Sumar importe nuevo a cuenta de entrada nueva
                     self.cta_entrada.saldo += self.importe
                     self.cta_entrada.save()
+
+                # Refrescar en caso de que la cuenta de salida se haya convertido
+                # en acumulativa.
+                # Necesario cuando se divide una cuenta en subcuentas convirtiéndola
+                # en acumulativa. Los movimientos que pasan el saldo de la cuenta
+                # madre a las subcuentas se generan en tres pasos:
+                # Primero, se crea un movimiento con la cuenta madre como cta_salida.
+                # Luego, se crean las subcuentas y se convierte la cuenta madre
+                # en acumulativa.
+                # Finalmente, se modifica el movimiento agregándole la subcuenta
+                # como cuenta de entrada.
+                # En este último paso, es necesario "informarle" al movimiento
+                # que su cuenta de salida se ha convertido en acumulativa, para
+                # que la trate como tal.
+                # Ahora bien, me preguto.
+                # ¿Está bien que esta "actualización" se haga acá, en medio del quilombo?
+                # ¿No podría estar en algún lugar más relajado?
+                # Pasan demasiadas cosas distintas en este save().
+                # Todas estas cosas, pelotudo, lo tendrías que haber aclarado en el momento
+                # en el que tuviste que agregar estas líneas, y me hubieras
+                # ahorrado un montón de trabajo tratando de descularlo.
+                # (Me parece que sí tiene que estar acá, al menos por el momento)
+                # (Tal vez encapsularlo en un método con un nombre descriptivo)
                 self.cta_salida = self.cta_salida.primer_ancestre()\
                     .tomar(slug=self.cta_salida.slug) \
                         if self.cta_salida else None
@@ -362,11 +413,13 @@ class Movimiento(MiModel):
             try:
                 salidas_iguales = self.cta_salida.es_le_misme_que(
                     mov_guardado.cta_salida)
-            except AttributeError:
+            except AttributeError:  # no hay cuenta de salida
                 salidas_iguales = False
 
             if salidas_iguales:
+                # Cambió el importe
                 try:
+                    # Sumar importe antiguo a cuenta de salida y restar el nuevo
                     self.cta_salida.saldo = self.cta_salida.saldo \
                                             + mov_guardado.importe \
                                             - self.importe
@@ -378,11 +431,13 @@ class Movimiento(MiModel):
             else:
                 # Había una cuenta de salida
                 if mov_guardado.cta_salida:
+                    # Sumar importe antiguo a cuenta de salida antigua
                     mov_guardado.cta_salida.refresh_from_db()
                     mov_guardado.cta_salida.saldo += mov_guardado.importe
                     mov_guardado.cta_salida.save()
                 # Ahora hay una cuenta de salida
                 if self.cta_salida:
+                    # Restar importe nuevo a cuenta de salida nueva
                     self.cta_salida.saldo -= self.importe
                     self.cta_salida.save()
 
