@@ -334,16 +334,14 @@ class Movimiento(MiModel):
                 entradas_iguales = False
 
             if entradas_iguales:
-                # Cambió el importe
-                try:
+                if self.importe != mov_guardado.importe:
+                    # Cambió el importe
                     # Restar de saldo de cuenta de entrada importe antiguo
                     # y sumar el nuevo
                     self.cta_entrada.saldo = self.cta_entrada.saldo \
                                              - mov_guardado.importe \
                                              + self.importe
                     self.cta_entrada.save()
-                except AttributeError:
-                    pass
 
             # Cambió la cuenta de entrada
             else:
@@ -393,15 +391,13 @@ class Movimiento(MiModel):
                 salidas_iguales = False
 
             if salidas_iguales:
-                # Cambió el importe
-                try:
+                if self.importe != mov_guardado.importe:
+                    # Cambió el importe
                     # Sumar importe antiguo a cuenta de salida y restar el nuevo
                     self.cta_salida.saldo = self.cta_salida.saldo \
                                             + mov_guardado.importe \
                                             - self.importe
                     self.cta_salida.save()
-                except AttributeError:
-                    pass
 
             # Cambió la cuenta de salida
             else:
