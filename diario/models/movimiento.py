@@ -269,7 +269,7 @@ class Movimiento(MiModel):
         super().delete(*args, **kwargs)
 
     def save(self, *args, **kwargs):
-        '''
+        """
         Si el movimiento es nuevo (no existía antes, está siendo creado)
         - sumar / restar importe de la/s cuenta/s interviniente/s
         - EJECUTAR COMPROBACIONES Y ACCIONES EN REFERENCIA A CUENTAS DE DISTINTOS
@@ -291,7 +291,7 @@ class Movimiento(MiModel):
           - Si cambió el importe, restar importe anterior y sumar importe nuevo
             a cuenta de entrada
 
-        '''
+        """
 
         # Movimiento nuevo
         if self._state.adding:
@@ -326,14 +326,16 @@ class Movimiento(MiModel):
                 if self.id_contramov:
                     self._eliminar_contramovimiento()
 
-            # No cambió la cuenta de entrada
+            # Ver si cambió la cuenta de entrada
             try:
                 entradas_iguales = self.cta_entrada.es_le_misme_que(
                     mov_guardado.cta_entrada)
             except AttributeError:  # no hay cuenta de entrada
                 entradas_iguales = False
 
+            # if self._cambio_cuenta(mov_guardado, 'cta_entrada'):
             if entradas_iguales:
+                # No cambió la cuenta de entrada
                 if self.importe != mov_guardado.importe:
                     # Cambió el importe
                     # Restar de saldo de cuenta de entrada importe antiguo
@@ -343,30 +345,33 @@ class Movimiento(MiModel):
                                              + self.importe
                     self.cta_entrada.save()
 
-            # Cambió la cuenta de entrada
+
             else:
-                # Había una cuenta de entrada
+                # Cambió la cuenta de entrada
                 if mov_guardado.cta_entrada:
+                    # Había una cuenta de entrada
                     # Restar importe antiguo de cuenta de entrada antigua
                     mov_guardado.cta_entrada.saldo -= mov_guardado.importe
                     mov_guardado.cta_entrada.save()
 
-                # Ahora hay una cuenta de entrada
                 if self.cta_entrada:
+                    # Ahora hay una cuenta de entrada
                     # Sumar importe nuevo a cuenta de entrada nueva
                     self.cta_entrada.saldo += self.importe
                     self.cta_entrada.save()
 
                 self._actualizar_cuenta_salida_convertida_en_acumulativa()
 
-            # No cambió la cuenta de salida
+            # Ver si cambió la cuenta de salida
             try:
                 salidas_iguales = self.cta_salida.es_le_misme_que(
                     mov_guardado.cta_salida)
             except AttributeError:  # no hay cuenta de salida
                 salidas_iguales = False
 
+            # if self._cambio_cuenta(mov_guardado, 'cta_salida'):
             if salidas_iguales:
+                # No cambió la cuenta de salida
                 if self.importe != mov_guardado.importe:
                     # Cambió el importe
                     # Sumar importe antiguo a cuenta de salida y restar el nuevo
@@ -375,16 +380,27 @@ class Movimiento(MiModel):
                                             - self.importe
                     self.cta_salida.save()
 
-            # Cambió la cuenta de salida
+
             else:
-                # Había una cuenta de salida
+                # Cambió la cuenta de salida
+
                 if mov_guardado.cta_salida:
+                    # Había una cuenta de salida
+
+                    # Actualizar saldo de cta_salida antes de sumar importe
+                    # (Esto es necesario cuando la cuenta de salida pasa a
+                    # ser cuenta de entrada, porque el saldo de la cuenta
+                    # se modificó en el segmento anterior luego de que
+                    # se guardó el movimiento en mov_guardado. Probablemente
+                    # dejará de ser necesario cuando reemplacemos el campo
+                    # _saldo por el modelo relacionado Saldo)
+                    mov_guardado.cta_salida.refresh_from_db(fields=['_saldo'])
                     # Sumar importe antiguo a cuenta de salida antigua
-                    mov_guardado.cta_salida.refresh_from_db()
                     mov_guardado.cta_salida.saldo += mov_guardado.importe
                     mov_guardado.cta_salida.save()
-                # Ahora hay una cuenta de salida
+
                 if self.cta_salida:
+                    # Ahora hay una cuenta de salida
                     # Restar importe nuevo a cuenta de salida nueva
                     self.cta_salida.saldo -= self.importe
                     self.cta_salida.save()
