@@ -327,14 +327,7 @@ class Movimiento(MiModel):
                     self._eliminar_contramovimiento()
 
             # Ver si cambió la cuenta de entrada
-            try:
-                entradas_iguales = self.cta_entrada.es_le_misme_que(
-                    mov_guardado.cta_entrada)
-            except AttributeError:  # no hay cuenta de entrada
-                entradas_iguales = False
-
-            # if self._cambio_cuenta(mov_guardado, 'cta_entrada'):
-            if entradas_iguales:
+            if self._mantiene_foreignfield('cta_entrada', mov_guardado):
                 # No cambió la cuenta de entrada
                 if self.importe != mov_guardado.importe:
                     # Cambió el importe
@@ -363,14 +356,7 @@ class Movimiento(MiModel):
                 self._actualizar_cuenta_salida_convertida_en_acumulativa()
 
             # Ver si cambió la cuenta de salida
-            try:
-                salidas_iguales = self.cta_salida.es_le_misme_que(
-                    mov_guardado.cta_salida)
-            except AttributeError:  # no hay cuenta de salida
-                salidas_iguales = False
-
-            # if self._cambio_cuenta(mov_guardado, 'cta_salida'):
-            if salidas_iguales:
+            if self._mantiene_foreignfield('cta_salida', mov_guardado):
                 # No cambió la cuenta de salida
                 if self.importe != mov_guardado.importe:
                     # Cambió el importe
@@ -469,6 +455,17 @@ class Movimiento(MiModel):
                 fecha=self.fecha,
                 importe=-self.importe
             )
+
+    def _mantiene_foreignfield(self, campo, otro):
+        foreignobject = getattr(self, campo)
+
+        if foreignobject and not isinstance(foreignobject, models.Model):
+            raise AttributeError(f'El campo {campo} debe ser ForeignField')
+
+        try:
+            return foreignobject.es_le_misme_que(getattr(otro, campo))
+        except AttributeError:
+            return False
 
     def _actualizar_cuenta_salida_convertida_en_acumulativa(self):
         """ Este paso es necesario para el caso en el que se divide una cuenta

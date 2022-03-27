@@ -1,5 +1,5 @@
 from datetime import date, timedelta
-from unittest.mock import patch, call
+from unittest.mock import patch, call, MagicMock
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -837,6 +837,20 @@ class TestModelMovimientoEliminar(TestModelMovimientoModificar):
 
 
 class TestModelMovimientoModificarGeneral(TestModelMovimientoModificar):
+
+    @patch('diario.models.movimiento.Movimiento._mantiene_foreignfield')
+    def test_verifica_cambios_en_cuentas_de_entrada_y_salida(self, mock_mantiene_foreignfield):
+        self.mov3.save()
+        mock_mantiene_foreignfield.assert_called()
+        self.assertEqual(len(mock_mantiene_foreignfield.call_args_list), 2)
+        self.assertIn(
+            'cta_entrada',
+            mock_mantiene_foreignfield.call_args_list[0].args
+        )
+        self.assertIn(
+            'cta_salida',
+            mock_mantiene_foreignfield.call_args_list[1].args
+        )
 
     def test_no_modifica_saldo_de_cuentas_si_no_se_modifica_importe_ni_cuentas(self):
         self.mov3.concepto = 'Depósito en efectivo'
@@ -2060,6 +2074,31 @@ class TestModelMovimientoMetodoEsPrestamo(TestModelMovimientoModificar):
         self.assertFalse(mov.es_prestamo())
 
 
+class TestModelMovimientoMetodoHermanosDeFecha(TestModelMovimiento):
+
+    def setUp(self):
+        self.cuenta = Cuenta.crear('cuenta', 'c')
+        self.mov1 = Movimiento.crear(
+            'Movimiento 1', 100, self.cuenta, fecha=date(2011, 11, 11))
+        self.mov2 = Movimiento.crear(
+            'Movimiento 2', 200, self.cuenta, fecha=date(2011, 11, 11))
+        self.mov3 = Movimiento.crear(
+            'Movimiento 3', 300, self.cuenta, fecha=date(2011, 11, 11))
+        self.result = self.mov1.hermanos_de_fecha()
+
+    def test_devuelve_movimientos_de_la_fecha(self):
+        self.assertIn(self.mov2, self.result)
+        self.assertIn(self.mov3, self.result)
+
+    def test_no_incluye_instancia(self):
+        self.assertNotIn(self.mov1, self.result)
+
+    def test_no_incluye_movimientos_de_otra_fecha(self):
+        mov4 = Movimiento.crear(
+            'Movimiento 4', 400, self.cuenta, fecha=date(2011, 11, 12))
+        self.assertNotIn(mov4, self.result)
+
+
 class TestModelMovimientoMetodoGenerarCuentasCredito(TestModelMovimientoEntreTitulares):
 
     def test_crea_dos_cuentas_credito(self):
@@ -2166,26 +2205,42 @@ class TestModelMovimientoMetodoCambiaCampo(TestModelMovimientoModificar):
         self.assertFalse(self.mov1._cambia_campo('concepto', 'fecha'))
 
 
-class TestModelMovimientoMetodoHermanosDeFecha(TestModelMovimiento):
+@patch('diario.models.Cuenta.es_le_misme_que', autospec=True)
+class TestModelMovimientoMetodoMantieneForeignField(TestCase):
 
     def setUp(self):
-        self.cuenta = Cuenta.crear('cuenta', 'c')
-        self.mov1 = Movimiento.crear(
-            'Movimiento 1', 100, self.cuenta, fecha=date(2011, 11, 11))
-        self.mov2 = Movimiento.crear(
-            'Movimiento 2', 200, self.cuenta, fecha=date(2011, 11, 11))
-        self.mov3 = Movimiento.crear(
-            'Movimiento 3', 300, self.cuenta, fecha=date(2011, 11, 11))
-        self.result = self.mov1.hermanos_de_fecha()
+        self.cuenta1 = Cuenta.crear('cuenta 1', 'c1')
+        self.cuenta2 = Cuenta.crear('cuenta 2', 'c2')
+        self.cuenta3 = Cuenta.crear('cuenta 3', 'c3')
+        self.entrada = Movimiento.crear('entrada', 100, self.cuenta1)
+        self.salida = Movimiento.crear('salida', 100, None, self.cuenta1)
+        self.traspaso = Movimiento.crear(
+            'traspaso', 100, self.cuenta1, self.cuenta2)
 
-    def test_devuelve_movimientos_de_la_fecha(self):
-        self.assertIn(self.mov2, self.result)
-        self.assertIn(self.mov3, self.result)
+    def test_llama_a_es_le_misme_que_con_cuenta_y_movimiento(self, mock_es_le_misme_que):
+        mov_guardado = self.entrada
+        self.entrada._mantiene_foreignfield('cta_entrada', mov_guardado)
+        mock_es_le_misme_que.assert_called_once_with(
+            self.entrada.cta_entrada,
+            mov_guardado.cta_entrada
+        )
 
-    def test_no_incluye_instancia(self):
-        self.assertNotIn(self.mov1, self.result)
+    def test_devuelve_true_si_cuenta_es_la_misma_que_en_la_version_guardada(self, mock_es_le_misme_que):
+        mock_mov = MagicMock()
+        mock_es_le_misme_que.return_value = True
+        self.assertTrue(self.entrada._mantiene_foreignfield('cta_entrada', mock_mov))
 
-    def test_no_incluye_movimientos_de_otra_fecha(self):
-        mov4 = Movimiento.crear(
-            'Movimiento 4', 400, self.cuenta, fecha=date(2011, 11, 12))
-        self.assertNotIn(mov4, self.result)
+    def test_devuelve_false_si_cuenta_es_distinta_que_en_la_version_guardada(self, mock_es_le_misme_que):
+        mock_mov = MagicMock()
+        mock_es_le_misme_que.return_value = False
+        self.assertFalse(self.salida._mantiene_foreignfield('cta_salida', mock_mov))
+
+    def test_devuelve_false_si_cuenta_es_none(self, mock_es_le_misme_que):
+        mock_mov = MagicMock()
+        mock_mov.cta_entrada = None
+        self.assertFalse(self.entrada._mantiene_foreignfield('cta_salida', mock_mov))
+
+    def test_tira_error_si_cuenta_no_es_cuenta(self, mock_es_le_misme_que):
+        mock_mov = MagicMock()
+        with self.assertRaisesMessage(AttributeError, 'El campo concepto debe ser ForeignField'):
+            self.entrada._mantiene_foreignfield('concepto', mock_mov)
