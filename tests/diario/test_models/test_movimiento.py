@@ -838,18 +838,18 @@ class TestModelMovimientoEliminar(TestModelMovimientoModificar):
 
 class TestModelMovimientoModificarGeneral(TestModelMovimientoModificar):
 
-    @patch('diario.models.movimiento.Movimiento._mantiene_foreignfield')
-    def test_verifica_cambios_en_cuentas_de_entrada_y_salida(self, mock_mantiene_foreignfield):
+    @patch('diario.models.movimiento.Movimiento._mantiene_cuenta')
+    def test_verifica_cambios_en_cuentas_de_entrada_y_salida(self, mock_mantiene_cuenta):
         self.mov3.save()
-        mock_mantiene_foreignfield.assert_called()
-        self.assertEqual(len(mock_mantiene_foreignfield.call_args_list), 2)
+        mock_mantiene_cuenta.assert_called()
+        self.assertEqual(len(mock_mantiene_cuenta.call_args_list), 2)
         self.assertIn(
             'cta_entrada',
-            mock_mantiene_foreignfield.call_args_list[0].args
+            mock_mantiene_cuenta.call_args_list[0].args
         )
         self.assertIn(
             'cta_salida',
-            mock_mantiene_foreignfield.call_args_list[1].args
+            mock_mantiene_cuenta.call_args_list[1].args
         )
 
     def test_no_modifica_saldo_de_cuentas_si_no_se_modifica_importe_ni_cuentas(self):
@@ -2205,42 +2205,27 @@ class TestModelMovimientoMetodoCambiaCampo(TestModelMovimientoModificar):
         self.assertFalse(self.mov1._cambia_campo('concepto', 'fecha'))
 
 
-@patch('diario.models.Cuenta.es_le_misme_que', autospec=True)
-class TestModelMovimientoMetodoMantieneForeignField(TestCase):
+@patch('diario.models.Movimiento.mantiene_foreignfield', autospec=True)
+class TestModelMovimientoMetodoMantieneCuenta(TestCase):
 
     def setUp(self):
         self.cuenta1 = Cuenta.crear('cuenta 1', 'c1')
-        self.cuenta2 = Cuenta.crear('cuenta 2', 'c2')
-        self.cuenta3 = Cuenta.crear('cuenta 3', 'c3')
         self.entrada = Movimiento.crear('entrada', 100, self.cuenta1)
-        self.salida = Movimiento.crear('salida', 100, None, self.cuenta1)
-        self.traspaso = Movimiento.crear(
-            'traspaso', 100, self.cuenta1, self.cuenta2)
 
-    def test_llama_a_es_le_misme_que_con_cuenta_y_movimiento(self, mock_es_le_misme_que):
+    def test_llama_a_mantiene_foreignkey_con_cuenta_y_movimiento(self, mock_mantiene_foreignfield):
         mov_guardado = self.entrada
-        self.entrada._mantiene_foreignfield('cta_entrada', mov_guardado)
-        mock_es_le_misme_que.assert_called_once_with(
-            self.entrada.cta_entrada,
-            mov_guardado.cta_entrada
+        self.entrada._mantiene_cuenta('cta_entrada', mov_guardado)
+        mock_mantiene_foreignfield.assert_called_once_with(
+            self.entrada, 'cta_entrada', mov_guardado
         )
 
-    def test_devuelve_true_si_cuenta_es_la_misma_que_en_la_version_guardada(self, mock_es_le_misme_que):
-        mock_mov = MagicMock()
-        mock_es_le_misme_que.return_value = True
-        self.assertTrue(self.entrada._mantiene_foreignfield('cta_entrada', mock_mov))
-
-    def test_devuelve_false_si_cuenta_es_distinta_que_en_la_version_guardada(self, mock_es_le_misme_que):
-        mock_mov = MagicMock()
-        mock_es_le_misme_que.return_value = False
-        self.assertFalse(self.salida._mantiene_foreignfield('cta_salida', mock_mov))
-
-    def test_devuelve_false_si_cuenta_es_none(self, mock_es_le_misme_que):
-        mock_mov = MagicMock()
-        mock_mov.cta_entrada = None
-        self.assertFalse(self.entrada._mantiene_foreignfield('cta_salida', mock_mov))
-
-    def test_tira_error_si_cuenta_no_es_cuenta(self, mock_es_le_misme_que):
-        mock_mov = MagicMock()
-        with self.assertRaisesMessage(AttributeError, 'El campo concepto debe ser ForeignField'):
-            self.entrada._mantiene_foreignfield('concepto', mock_mov)
+    def test_devuelve_resultado_de_mantiene_foreignkey(self, mock_mantiene_foreignkey):
+        mov_guardado = self.entrada
+        mock_mantiene_foreignkey.return_value = True
+        self.assertTrue(
+            self.entrada._mantiene_cuenta('cta_entrada', mov_guardado)
+        )
+        mock_mantiene_foreignkey.return_value = False
+        self.assertFalse(
+            self.entrada._mantiene_cuenta('cta_entrada', mov_guardado)
+        )

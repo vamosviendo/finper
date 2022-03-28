@@ -277,20 +277,20 @@ class Movimiento(MiModel):
         Si el movimiento existía (está siendo modificado)
         - Chequear si cambió la cuenta de entrada.
         - Si no cambió
-          - Tratar de sumar importe del movimiento nuevo y restar el del
-            movimiento anterior a la cuenta de entrada
+          - Si cambió el importe, sumar importe del movimiento nuevo y
+            restar el del movimiento anterior a la cuenta de entrada
         - Si cambió
-          - Si antes había una cuenta de entrada, restar el importe del movimiento
-            anterior a la cuenta de entrada del movimiento anterior.
+          - Si antes había una cuenta de entrada, restar el importe del
+            movimiento anterior a la cuenta de entrada del movimiento anterior.
           - Si ahora hay una cuenta de entrada, sumar el importe del movimiento
             nuevo a la cuenta de entrada del movimiento nuevo.
         - Antes de repetir el proceso con la cuenta de salida, actualizarla
-          por si pasa lo que estamos viendo ahora que pasa
-
-          - Chequear si cambió el importe
-          - Si cambió el importe, restar importe anterior y sumar importe nuevo
-            a cuenta de entrada
-
+          para el caso especial de la división de una cuenta en subcuentas,
+          en el que se crea un movimiento de salida en la cuenta madre
+          (todavía interactiva), se convierte la cuenta en acumulativa al
+          crear las subcuentas y luego se modifica el movimiento para agregar
+          la subcuenta como cuenta de entrada. Es necesario actualizar la
+          cuenta de salida para dar cuenta de su conversión en acumulativa.
         """
 
         # Movimiento nuevo
@@ -327,7 +327,7 @@ class Movimiento(MiModel):
                     self._eliminar_contramovimiento()
 
             # Ver si cambió la cuenta de entrada
-            if self._mantiene_foreignfield('cta_entrada', mov_guardado):
+            if self._mantiene_cuenta('cta_entrada', mov_guardado):
                 # No cambió la cuenta de entrada
                 if self.importe != mov_guardado.importe:
                     # Cambió el importe
@@ -337,7 +337,6 @@ class Movimiento(MiModel):
                                              - mov_guardado.importe \
                                              + self.importe
                     self.cta_entrada.save()
-
 
             else:
                 # Cambió la cuenta de entrada
@@ -356,7 +355,7 @@ class Movimiento(MiModel):
                 self._actualizar_cuenta_salida_convertida_en_acumulativa()
 
             # Ver si cambió la cuenta de salida
-            if self._mantiene_foreignfield('cta_salida', mov_guardado):
+            if self._mantiene_cuenta('cta_salida', mov_guardado):
                 # No cambió la cuenta de salida
                 if self.importe != mov_guardado.importe:
                     # Cambió el importe
@@ -365,7 +364,6 @@ class Movimiento(MiModel):
                                             + mov_guardado.importe \
                                             - self.importe
                     self.cta_salida.save()
-
 
             else:
                 # Cambió la cuenta de salida
@@ -456,16 +454,8 @@ class Movimiento(MiModel):
                 importe=-self.importe
             )
 
-    def _mantiene_foreignfield(self, campo, otro):
-        foreignobject = getattr(self, campo)
-
-        if foreignobject and not isinstance(foreignobject, models.Model):
-            raise AttributeError(f'El campo {campo} debe ser ForeignField')
-
-        try:
-            return foreignobject.es_le_misme_que(getattr(otro, campo))
-        except AttributeError:
-            return False
+    def _mantiene_cuenta(self, campo, otro):
+        return self.mantiene_foreignfield(campo, otro)
 
     def _actualizar_cuenta_salida_convertida_en_acumulativa(self):
         """ Este paso es necesario para el caso en el que se divide una cuenta
