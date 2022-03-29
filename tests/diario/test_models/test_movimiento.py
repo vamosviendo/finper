@@ -1,19 +1,18 @@
-from datetime import date, timedelta
-from unittest.mock import patch, call, MagicMock
+from datetime import date
+from unittest import skip
+from unittest.mock import patch, call
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from diario.models import Cuenta, CuentaInteractiva, Movimiento, Titular, Saldo
 from utils import errors
-from utils.helpers_tests import dividir_en_dos_subcuentas
 
 
 class TestModelMovimiento(TestCase):
 
     def setUp(self):
-        self.titular1 = Titular.crear(nombre='Titular 1', titname='tit1')
-        self.cuenta1 = Cuenta.crear(nombre='Cuenta titular 1', slug='ct1', titular=self.titular1)
+        self.cuenta1 = Cuenta.crear(nombre='Cuenta titular 1', slug='ct1')
 
 
 class TestModelMovimientoBasic(TestModelMovimiento):
@@ -139,20 +138,17 @@ class TestModelMovimientoCrear(TestModelMovimiento):
 
     def setUp(self):
         super().setUp()
-        self.cuenta2 = Cuenta.crear(
-            nombre='Banco', slug='b', titular=self.titular1)
-        self.saldo1 = self.cuenta1.saldo
-        self.saldo2 = self.cuenta2.saldo
+        self.cuenta2 = Cuenta.crear(nombre='Cuenta 2', slug='ct2')
         self.mov1 = Movimiento.crear(
             fecha=date(2011, 11, 12),
             concepto='Carga de saldo',
-            importe=125,
+            importe=140,
             cta_entrada=self.cuenta1
         )
         self.mov2 = Movimiento.crear(
             fecha=date(2011, 11, 12),
             concepto='Transferencia a otra cuenta',
-            importe=35,
+            importe=50,
             cta_salida=self.cuenta2
         )
 
@@ -239,23 +235,20 @@ class TestModelMovimientoCrear(TestModelMovimiento):
         self.assertFalse(mov.es_automatico)
 
     def test_suma_importe_a_cta_entrada(self):
-        self.assertEqual(self.cuenta1.saldo, self.saldo1+self.mov1.importe)
+        self.assertEqual(self.cuenta1.saldo, 140)
 
     def test_resta_importe_de_cta_salida(self):
-        self.assertEqual(self.cuenta2.saldo, self.saldo2-self.mov2.importe)
+        self.assertEqual(self.cuenta2.saldo, -50)
 
     def test_puede_traspasar_saldo_de_una_cuenta_a_otra(self):
-        saldo1 = self.cuenta1.saldo
-        saldo2 = self.cuenta2.saldo
-
-        mov3 = Movimiento.crear(
+        Movimiento.crear(
             concepto='Depósito',
-            importe=50,
+            importe=60,
             cta_entrada=self.cuenta2,
             cta_salida=self.cuenta1
         )
-        self.assertEqual(self.cuenta2.saldo, saldo2+mov3.importe)
-        self.assertEqual(self.cuenta1.saldo, saldo1-mov3.importe)
+        self.assertEqual(self.cuenta2.saldo, -50+60)
+        self.assertEqual(self.cuenta1.saldo, 140-60)
 
     @patch('diario.models.movimiento.Saldo.registrar')
     def test_registra_movimiento_en_saldos_historicos(self, mock_registrar):
@@ -283,21 +276,22 @@ class TestModelMovimientoCrear(TestModelMovimiento):
 
         self.assertEqual(
             Saldo.tomar(cuenta=self.cuenta1, fecha=date(2011, 11, 15)).importe,
-            155
+            170
         )
 
 
-class TestModelMovimientoEntreTitulares(TestModelMovimiento):
+class TestModelMovimientoCrearEntreTitulares(TestModelMovimiento):
 
     def setUp(self):
         super().setUp()
-        self.titular2 = Titular.crear(titname='tit2', nombre='Titular 2')
+        self.titular1 = Titular.tomar(titname='default')
+        self.titular2 = Titular.crear(nombre='Titular 2', titname='tit2')
         self.cuenta2 = Cuenta.crear(
             'Cuenta titular 2', 'ct2', titular=self.titular2)
 
 
-class TestModelModelMovimientoEntreTitularesPrimero(
-        TestModelMovimientoEntreTitulares):
+class TestModelMovimientoCrearEntreTitularesPrimero(
+        TestModelMovimientoCrearEntreTitulares):
 
     @patch.object(Cuenta, 'crear')
     def test_genera_cuentas_credito_si_no_existen(self, mock_crear):
@@ -312,8 +306,8 @@ class TestModelModelMovimientoEntreTitularesPrimero(
         self.assertEqual(
             mock_crear.call_args_list[0],
             call(
-                nombre='Préstamo entre tit2 y tit1',
-                slug='_tit2-tit1',
+                nombre='Préstamo entre tit2 y default',
+                slug='_tit2-default',
                 titular=self.titular2
             )
         )
@@ -322,8 +316,8 @@ class TestModelModelMovimientoEntreTitularesPrimero(
         self.assertEqual(
             args2,
             dict(
-                nombre='Préstamo entre tit1 y tit2',
-                slug='_tit1-tit2',
+                nombre='Préstamo entre default y tit2',
+                slug='_default-tit2',
                 titular=self.titular1,
             )
         )
@@ -343,10 +337,13 @@ class TestModelModelMovimientoEntreTitularesPrimero(
             'Prestamo', 10, cta_entrada=self.cuenta1, cta_salida=self.cuenta2)
         self.assertEqual(Movimiento.cantidad(), 2)
 
-        cuenta_deudora = Cuenta.tomar(slug='_tit1-tit2')
-        cuenta_acreedora = Cuenta.tomar(slug='_tit2-tit1')
+        cuenta_deudora = Cuenta.tomar(slug='_default-tit2')
+        cuenta_acreedora = Cuenta.tomar(slug='_tit2-default')
         mov_credito = Movimiento.tomar(concepto='Constitución de crédito')
-        self.assertEqual(mov_credito.detalle, 'de Titular 2 a Titular 1')
+        self.assertEqual(
+            mov_credito.detalle,
+            'de Titular 2 a Titular por defecto'
+        )
         self.assertEqual(mov_credito.importe, 10)
         self.assertEqual(mov_credito.cta_entrada, cuenta_acreedora)
         self.assertEqual(mov_credito.cta_salida, cuenta_deudora)
@@ -369,8 +366,8 @@ class TestModelModelMovimientoEntreTitularesPrimero(
         self.assertEqual(Cuenta.cantidad(), 4)
         self.assertEqual(Movimiento.cantidad(), 2)
 
-        cuenta_deudora = Cuenta.tomar(slug='_tit1-tit2')
-        cuenta_acreedora = Cuenta.tomar(slug='_tit2-tit1')
+        cuenta_deudora = Cuenta.tomar(slug='_default-tit2')
+        cuenta_acreedora = Cuenta.tomar(slug='_tit2-default')
         self.assertEqual(cuenta_acreedora.saldo, movimiento.importe)
         self.assertEqual(cuenta_deudora.saldo, -cuenta_acreedora.saldo)
 
@@ -405,8 +402,8 @@ class TestModelModelMovimientoEntreTitularesPrimero(
         self.assertEqual(Movimiento.cantidad(), 1)
 
 
-class TestModelMovimientoEntreTitularesSiguientes(
-        TestModelMovimientoEntreTitulares):
+class TestModelMovimientoCrearEntreTitularesSiguientes(
+        TestModelMovimientoCrearEntreTitulares):
 
     def setUp(self):
         super().setUp()
@@ -436,11 +433,11 @@ class TestModelMovimientoEntreTitularesSiguientes(
 
     def test_resta_importe_de_cuenta_credito_en_movimiento_inverso_entre_titulares_con_credito_existente(self):
         Movimiento.crear('Devolución', 6, cta_entrada=self.cuenta2, cta_salida=self.cuenta1)
-        self.assertEqual(Cuenta.tomar(slug='_tit2-tit1').saldo, 4)
+        self.assertEqual(Cuenta.tomar(slug='_tit2-default').saldo, 4)
 
     def test_suma_importe_a_cuenta_deuda_en_movimiento_inverso_entre_titulares_con_credito_existente(self):
         Movimiento.crear('Devolución', 6, cta_entrada=self.cuenta2, cta_salida=self.cuenta1)
-        self.assertEqual(Cuenta.tomar(slug='_tit1-tit2').saldo, -4)
+        self.assertEqual(Cuenta.tomar(slug='_default-tit2').saldo, -4)
 
     def test_da_cuenta_en_el_concepto_de_un_aumento_de_credito(self):
         Movimiento.crear(
@@ -526,11 +523,16 @@ class TestModelMovimientoClean(TestModelMovimiento):
 
     def setUp(self):
         super().setUp()
+        self.titular1 = Titular.tomar(titname='default')
         self.titular2 = Titular.crear(nombre='Titular 2', titname='tit2')
         self.cuenta2 = Cuenta.crear(
             nombre='Cuenta titular 2', slug='ct2', titular=self.titular2)
-        movimiento = Movimiento.crear('Préstamo', 100, self.cuenta2, self.cuenta1)
-        self.cc12, self.cc21 = movimiento.recuperar_cuentas_credito()
+
+    def generar_cuentas_credito(self):
+        cta_otro_tit = Cuenta.crear(
+            'cuenta otro titular', 'cot', titular=self.titular2)
+        mov = Movimiento.crear('Préstamo', 100, cta_otro_tit, self.cuenta1)
+        return mov.recuperar_cuentas_credito()
 
     def test_requiere_al_menos_una_cuenta(self):
         mov = Movimiento(
@@ -570,10 +572,11 @@ class TestModelMovimientoClean(TestModelMovimiento):
         mov.full_clean()    # No debe dar error
 
     def test_movimiento_de_entrada_no_admite_cuenta_credito(self):
+        cc12, cc21 = self.generar_cuentas_credito()
         mov_no_e = Movimiento(
             concepto='Movimiento prohibido',
             importe=50,
-            cta_entrada=self.cc21,
+            cta_entrada=cc21,
         )
         with self.assertRaisesMessage(
             ValidationError,
@@ -582,10 +585,11 @@ class TestModelMovimientoClean(TestModelMovimiento):
             mov_no_e.full_clean()
 
     def test_movimiento_de_salida_no_admite_cuenta_credito(self):
+        cc12, cc21 = self.generar_cuentas_credito()
         mov_no_s = Movimiento(
             concepto='También prohibido',
             importe=50,
-            cta_salida=self.cc12
+            cta_salida=cc12
         )
 
         with self.assertRaisesMessage(
@@ -595,10 +599,11 @@ class TestModelMovimientoClean(TestModelMovimiento):
             mov_no_s.full_clean()
 
     def test_cuenta_credito_no_puede_ser_cta_entrada_contra_cta_salida_normal(self):
+        cc12, cc21 = self.generar_cuentas_credito()
         mov_no = Movimiento(
             concepto='Movimiento prohibido',
             importe=50,
-            cta_entrada=self.cc21,
+            cta_entrada=cc21,
             cta_salida=self.cuenta1
         )
 
@@ -609,11 +614,12 @@ class TestModelMovimientoClean(TestModelMovimiento):
             mov_no.full_clean()
 
     def test_cuenta_credito_no_puede_ser_cta_salida_contra_cta_entrada_normal(self):
+        cc12, cc21 = self.generar_cuentas_credito()
         mov_no = Movimiento(
             concepto='Movimiento prohibido',
             importe=50,
             cta_entrada=self.cuenta1,
-            cta_salida=self.cc12
+            cta_salida=cc12
         )
 
         with self.assertRaisesMessage(
@@ -623,28 +629,29 @@ class TestModelMovimientoClean(TestModelMovimiento):
             mov_no.full_clean()
 
     def test_cuenta_credito_solo_puede_moverse_contra_su_contracuenta(self):
-        self.titular3 = Titular.crear(nombre='Titular 3', titname='tit3')
-        self.cuenta3 = Cuenta.crear(
-            nombre='Cuenta titular 3', slug='ct3', titular=self.titular3)
+        cc12, cc21 = self.generar_cuentas_credito()
+        titular3 = Titular.crear(nombre='Titular 3', titname='tit3')
+        cuenta3 = Cuenta.crear(
+            nombre='Cuenta titular 3', slug='ct3', titular=titular3)
         movimiento2 = Movimiento.crear(
-            'Otro préstamo', 70, self.cuenta2, self.cuenta3)
+            'Otro préstamo', 70, self.cuenta2, cuenta3)
         cc32, cc23 = movimiento2.recuperar_cuentas_credito()
         mov_no = Movimiento(
             concepto='Movimiento prohibido',
             importe=50,
-            cta_entrada=self.cc21,
+            cta_entrada=cc21,
             cta_salida=cc32
         )
 
         with self.assertRaisesMessage(
             ValidationError,
             '"préstamo entre tit3 y tit2" no es la contrapartida '
-            'de "préstamo entre tit2 y tit1"'
+            'de "préstamo entre tit2 y default"'
         ):
             mov_no.full_clean()
 
 
-class TestModelMovimientoModificar(TestModelMovimiento):
+class TestModelMovimientoSave(TestModelMovimiento):
     """ Saldos después de setUp:
         self.cuenta1: 125.0-35+50 = 140
         self.cuenta2: = -50
@@ -652,34 +659,17 @@ class TestModelMovimientoModificar(TestModelMovimiento):
 
     def setUp(self):
         super().setUp()
-        self.cuenta2 = Cuenta.crear('cuenta 2', 'c2', titular=self.titular1)
         self.titular2 = Titular.crear(nombre='Titular 2', titname='tit2')
+        self.cuenta2 = Cuenta.crear('cuenta 2', 'c2')
         self.cuenta3 = Cuenta.crear(
-            nombre='Cuenta de tit2', slug='ct2', titular=self.titular2)
+            'Cuenta otro titular', 'ct2', titular=self.titular2)
         self.mov1 = Movimiento.crear(
-            fecha=date(2021, 1, 5),
-            concepto='entrada',
-            importe=125,
-            cta_entrada=self.cuenta1,
-        )
+            'entrada', 125, self.cuenta1, fecha=date(2021, 1, 5))
         self.mov2 = Movimiento.crear(
-            fecha=date(2021, 1, 10),
-            concepto='salida',
-            importe=35,
-            cta_salida=self.cuenta1
-        )
+            'salida', 35, None, self.cuenta1, fecha=date(2021, 1, 10))
         self.mov3 = Movimiento.crear(
-            fecha=date(2021, 1, 11),
-            concepto='traspaso',
-            importe=50,
-            cta_entrada=self.cuenta1,
-            cta_salida=self.cuenta2
+            'traspaso', 50, self.cuenta1, self.cuenta2, fecha=date(2021, 1, 11)
         )
-        self.saldo1 = self.cuenta1.saldo
-        self.saldo2 = self.cuenta2.saldo
-        self.imp1 = self.mov1.importe
-        self.imp2 = self.mov2.importe
-        self.imp3 = self.mov3.importe
 
     def refresh_ctas(self, *args):
         self.cuenta1.refresh_from_db()
@@ -689,26 +679,22 @@ class TestModelMovimientoModificar(TestModelMovimiento):
             arg.refresh_from_db()
 
 
-class TestModelMovimientoEliminar(TestModelMovimientoModificar):
-    """ Saldos después de setUp:
-        self.cuenta1: 125.0-35+50 = 140
-        self.cuenta2: = -50
-    """
+class TestModelMovimientoEliminar(TestModelMovimientoSave):
 
     def test_eliminar_movimiento_resta_de_saldo_cta_entrada_y_suma_a_saldo_cta_salida(self):
 
         self.mov1.delete()
         self.cuenta1.refresh_from_db(fields=['_saldo'])
 
-        self.assertEqual(self.cuenta1.saldo, self.saldo1-self.imp1)
+        self.assertEqual(self.cuenta1.saldo, 140-125)
         saldo1 = self.cuenta1.saldo
 
         self.mov3.delete()
         self.cuenta1.refresh_from_db(fields=['_saldo'])
         self.cuenta2.refresh_from_db(fields=['_saldo'])
 
-        self.assertEqual(self.cuenta2.saldo, self.saldo2+self.imp3)
-        self.assertEqual(self.cuenta1.saldo, saldo1-self.imp3)
+        self.assertEqual(self.cuenta2.saldo, -50+50)
+        self.assertEqual(self.cuenta1.saldo, 15-50)
 
     def test_eliminar_movimiento_no_unico_de_cuenta_en_fecha_pasa_importe_en_negativo_a_registrar_saldo_cta_entrada(self):
         fecha_mov = self.mov1.fecha
@@ -836,1071 +822,11 @@ class TestModelMovimientoEliminar(TestModelMovimientoModificar):
                 'No se eliminó contramovimiento a pesar de force=True')
 
 
-class TestModelMovimientoModificarGeneral(TestModelMovimientoModificar):
-
-    @patch('diario.models.movimiento.Movimiento._mantiene_cuenta')
-    def test_verifica_cambios_en_cuentas_de_entrada_y_salida(self, mock_mantiene_cuenta):
-        self.mov3.save()
-        mock_mantiene_cuenta.assert_called()
-        self.assertEqual(len(mock_mantiene_cuenta.call_args_list), 2)
-        self.assertIn(
-            'cta_entrada',
-            mock_mantiene_cuenta.call_args_list[0].args
-        )
-        self.assertIn(
-            'cta_salida',
-            mock_mantiene_cuenta.call_args_list[1].args
-        )
-
-    def test_no_modifica_saldo_de_cuentas_si_no_se_modifica_importe_ni_cuentas(self):
-        self.mov3.concepto = 'Depósito en efectivo'
-        self.mov3.save()
-
-        self.cuenta1.refresh_from_db()
-        self.cuenta2.refresh_from_db()
-
-        self.assertEqual(self.cuenta1.saldo, self.saldo1)
-        self.assertEqual(self.cuenta2.saldo, self.saldo2)
-
-    @patch.object(Movimiento, '_regenerar_contramovimiento')
-    def test_en_movimiento_con_contramovimiento_no_regenera_contramovimiento_si_se_modifica_concepto(
-            self, mock_regenerar_contramovimiento):
-        movimiento = Movimiento.crear(
-            'Préstamo', 30, self.cuenta3, self.cuenta1)
-
-        movimiento.concepto = 'Prastamo'
-        movimiento.save()
-
-        mock_regenerar_contramovimiento.assert_not_called()
-
-    @patch.object(Movimiento, '_regenerar_contramovimiento')
-    def test_en_movimiento_con_contramovimiento_no_regenera_contramovimiento_si_se_modifica_detalle(
-            self, mock_regenerar_contramovimiento):
-        movimiento = Movimiento.crear(
-            'Préstamo', 30, self.cuenta3, self.cuenta1)
-
-        movimiento.detalle = 'El titular 1 le presta al titular 2 30 pesotes'
-        movimiento.save()
-
-        mock_regenerar_contramovimiento.assert_not_called()
-
-    @patch.object(Movimiento, '_regenerar_contramovimiento')
-    def test_en_movimiento_con_contramovimiento_no_regenera_contramovimiento_si_se_modifica_orden_dia(
-            self, mock_regenerar_contramovimiento):
-        movimiento = Movimiento.crear(
-            'Préstamo', 30, self.cuenta3, self.cuenta1)
-
-        movimiento.orden_dia -= 1
-        movimiento.save()
-
-        mock_regenerar_contramovimiento.assert_not_called()
-
-    @patch.object(Movimiento, '_regenerar_contramovimiento', autospec=True)
-    def test_en_movimiento_con_contramovimiento_regenera_contramovimiento_si_se_modifica_fecha(
-            self, mock_regenerar_contramovimiento):
-        movimiento = Movimiento.crear(
-            'Préstamo', 30, self.cuenta3, self.cuenta1)
-
-        movimiento.fecha = date(2020, 2, 23)
-        movimiento.save()
-
-        mock_regenerar_contramovimiento.assert_called_once_with(movimiento)
-
-    def test_no_permite_modificar_contramovimientos(self):
-        movimiento = Movimiento.crear(
-            'Préstamo', 30, self.cuenta3, self.cuenta1)
-        contramov = Movimiento.tomar(id=movimiento.id_contramov)
-        contramov.concepto = 'Dádiva'
-        with self.assertRaisesMessage(
-                ValidationError,
-                'No se puede modificar movimiento automático'):
-            contramov.full_clean()
-
-
-class TestModelMovimientoModificarImporte(TestModelMovimientoModificar):
-
-    def test_resta_importe_antiguo_y_suma_el_nuevo_a_cta_entrada(self):
-        self.mov1.importe = 128
-        self.mov1.save()
-        self.cuenta1.refresh_from_db()
-        self.assertEqual(
-            self.cuenta1.saldo, self.saldo1-self.imp1+self.mov1.importe)
-
-    def test_suma_importe_antiguo_y_resta_el_nuevo_a_cta_salida(self):
-        self.mov2.importe = 37
-        self.mov2.save()
-        self.cuenta1.refresh_from_db()
-        self.assertEqual(
-            self.cuenta1.saldo, self.saldo1+self.imp2-self.mov2.importe)
-
-    def test_en_mov_traspaso_actua_sobre_las_dos_cuentas(self):
-        """ Resta importe antiguo y suma nuevo a cta_entrada
-            Suma importe antiguo y resta nuevo a cta_salida"""
-        self.mov3.importe = 60
-        self.mov3.save()
-        self.refresh_ctas()
-        self.assertEqual(
-            self.cuenta1.saldo, self.saldo1-self.imp3+self.mov3.importe)
-        self.assertEqual(
-            self.cuenta2.saldo, self.saldo2+self.imp3-self.mov3.importe)
-
-    @patch.object(Movimiento, '_regenerar_contramovimiento', autospec=True)
-    def test_en_movimientos_con_contramovimiento_elimina_contramovimiento_para_volver_a_generarlo(
-            self, mock_regenerar_contramovimiento):
-        movimiento = Movimiento.crear(
-            'Préstamo', 30, self.cuenta3, self.cuenta1)
-
-        movimiento.importe = 45
-        movimiento.save()
-
-        mock_regenerar_contramovimiento.assert_called_once_with(movimiento)
-
-    def test_en_mov_traspaso_con_contramov_cambia_importe_contramov(self):
-        movimiento = Movimiento.crear(
-            'Préstamo', 30, self.cuenta3, self.cuenta1)
-
-        movimiento.importe = 45
-        movimiento.save()
-
-        contramov = Movimiento.tomar(id=movimiento.id_contramov)
-        self.assertEqual(contramov.importe, 45)
-
-    def test_en_mov_traspaso_con_contramov_cambia_saldo_en_las_cuentas_del_contramov(self):
-        movimiento = Movimiento.crear(
-            'Préstamo', 30, self.cuenta3, self.cuenta1)
-        contramov = Movimiento.tomar(id=movimiento.id_contramov)
-        cta_deudora = contramov.cta_salida
-        cta_acreedora = contramov.cta_entrada
-
-        movimiento.importe = 45
-        movimiento.save()
-
-        cta_deudora.refresh_from_db(fields=['_saldo'])
-        cta_acreedora.refresh_from_db(fields=['_saldo'])
-        self.assertEqual(cta_deudora.saldo, -45)
-        self.assertEqual(cta_acreedora.saldo, 45)
-
-
-class TestModelMovimientoModificarCuentas(TestModelMovimientoModificar):
-
-    def test_modificar_cta_entrada_resta_importe_de_saldo_cuenta_anterior_y_lo_suma_a_cuenta_nueva(self):
-        self.mov1.cta_entrada = self.cuenta2
-        self.mov1.save()
-        self.refresh_ctas()
-
-        self.assertEqual(self.cuenta1.saldo, self.saldo1-self.mov1.importe)
-        self.assertEqual(self.cuenta2.saldo, self.saldo2+self.mov1.importe)
-
-    def test_modificar_cta_salida_suma_importe_a_saldo_cuenta_anterior_y_lo_resta_de_cuenta_nueva(self):
-        self.mov2.cta_salida = self.cuenta2
-        self.mov2.save()
-        self.refresh_ctas()
-        self.assertEqual(self.cuenta2.saldo, self.saldo2-self.mov2.importe)
-        self.assertEqual(self.cuenta1.saldo, self.saldo1+self.mov2.importe)
-
-    def test_modificar_cta_entrada_funciona_en_movimientos_de_traspaso(self):
-        """ Resta importe de cta_entrada vieja y lo suma a la nueva."""
-        cuenta3 = Cuenta.crear('Cuenta corriente', 'cc')
-        saldo3 = cuenta3.saldo
-        self.mov3.cta_entrada = cuenta3
-        self.mov3.save()
-        self.refresh_ctas(cuenta3)
-        self.assertEqual(self.cuenta1.saldo, self.saldo1-self.mov3.importe)
-        self.assertEqual(cuenta3.saldo, saldo3+self.mov3.importe)
-
-    @patch.object(Movimiento, '_regenerar_contramovimiento', autospec=True)
-    def test_cambiar_cta_entrada_por_cta_otro_titular_en_movimientos_con_contramovimiento_regenera_contramovimiento(
-            self, mock_regenerar_contramovimiento):
-        titular = Titular.crear(nombre='Titular 3', titname='tit3')
-        cuenta4 = Cuenta.crear(
-            nombre='Cuenta tit3', slug='ct3', titular=titular)
-        movimiento = Movimiento.crear(
-            'Préstamo', 30, self.cuenta3, self.cuenta1)
-
-        movimiento.cta_entrada = cuenta4
-        movimiento.save()
-
-        mock_regenerar_contramovimiento.assert_called_once_with(movimiento)
-
-    def test_cambiar_cta_entrada_por_cta_otro_titular_en_movimiento_de_traspaso_con_contramovimiento_modifica_contramovimiento(self):
-        titular = Titular.crear(nombre='Titular 3', titname='tit3')
-        cuenta4 = Cuenta.crear(
-            nombre='Cuenta tit3', slug='ct3', titular=titular)
-        movimiento = Movimiento.crear(
-            'Préstamo', 30, self.cuenta3, self.cuenta1)
-        contramov = Movimiento.tomar(id=movimiento.id_contramov)
-        cta_deudora = contramov.cta_salida
-
-        movimiento.cta_entrada = cuenta4
-        movimiento.save()
-
-        contramov = Movimiento.tomar(id=movimiento.id_contramov)
-
-        self.assertNotEqual(contramov.cta_salida.id, cta_deudora.id)
-        self.assertEqual(contramov.cta_salida.slug, '_tit3-tit1')
-
-    @patch.object(Movimiento, '_regenerar_contramovimiento', autospec=True)
-    def test_cambiar_cta_salida_por_cta_otro_titular_en_movimientos_con_contramovimiento_regenera_contramovimiento(
-            self, mock_regenerar_contramovimiento):
-        titular = Titular.crear(nombre='Titular 3', titname='tit3')
-        cuenta4 = Cuenta.crear(
-            nombre='Cuenta tit3', slug='ct3', titular=titular)
-        movimiento = Movimiento.crear(
-            'Préstamo', 30, self.cuenta3, self.cuenta1)
-
-        movimiento.cta_salida = cuenta4
-        movimiento.save()
-
-        mock_regenerar_contramovimiento.assert_called_once_with(movimiento)
-
-    def test_cambiar_cta_salida_por_cta_otro_titular_en_movimiento_de_traspaso_con_contramovimiento_modifica_contramovimiento(self):
-        titular = Titular.crear(nombre='Titular 3', titname='tit3')
-        cuenta4 = Cuenta.crear(
-            nombre='Cuenta tit3', slug='ct3', titular=titular)
-        movimiento = Movimiento.crear(
-            'Préstamo', 30, self.cuenta3, self.cuenta1)
-        contramov = Movimiento.tomar(id=movimiento.id_contramov)
-        cta_deudora = contramov.cta_salida
-
-        movimiento.cta_salida = cuenta4
-        movimiento.save()
-
-        contramov = Movimiento.tomar(id=movimiento.id_contramov)
-
-        self.assertNotEqual(contramov.cta_entrada.id, cta_deudora.id)
-        self.assertEqual(contramov.cta_entrada.slug, '_tit3-tit2')
-
-    @patch.object(Movimiento, '_crear_movimiento_credito', autospec=True)
-    def test_cambiar_cta_entrada_por_cta_otro_titular_en_movimiento_de_traspaso_sin_contramovimiento_genera_contramovimiento(
-            self, mock_crear_movimiento_credito):
-        self.mov3.cta_entrada = self.cuenta3
-        self.mov3.save()
-
-        mock_crear_movimiento_credito.assert_called_once_with(self.mov3)
-
-    @patch.object(Movimiento, '_crear_movimiento_credito', autospec=True)
-    def test_cambiar_cta_salida_por_cta_otro_titular_en_movimiento_de_traspaso_sin_contramovimiento_genera_contramovimiento(
-            self, mock_crear_movimiento_credito):
-        self.mov3.cta_salida = self.cuenta3
-        self.mov3.save()
-
-        mock_crear_movimiento_credito.assert_called_once_with(self.mov3)
-
-    @patch.object(Movimiento, '_eliminar_contramovimiento', autospec=True)
-    def test_cambiar_cta_entrada_por_cta_mismo_titular_de_cta_salida_en_movimiento_de_traspaso_con_contramovimiento_destruye_contramovimiento(
-            self, mock_eliminar_contramovimiento):
-        movimiento = Movimiento.crear(
-            'Préstamo', 30, self.cuenta3, self.cuenta1)
-
-        movimiento.cta_entrada = self.cuenta2
-        movimiento.save()
-
-        mock_eliminar_contramovimiento.assert_called_once_with(movimiento)
-
-    def test_cambiar_cta_entrada_por_cta_mismo_titular_de_cta_salida_en_movimiento_de_traspaso_con_contramovimiento_no_regenera_contramovimiento_destruido(
-            self):
-        movimiento = Movimiento.crear(
-            'Préstamo', 30, self.cuenta3, self.cuenta1)
-
-        with patch.object(Movimiento, '_crear_movimiento_credito') \
-                as mock_crear_movimiento_credito:
-            movimiento.cta_entrada = self.cuenta2
-            movimiento.save()
-
-            mock_crear_movimiento_credito.assert_not_called()
-
-    def test_cambiar_cta_salida_por_cta_mismo_titular_de_cta_entrada_en_movimiento_de_traspaso_con_contramovimiento_destruye_contramovimiento(self):
-        movimiento = Movimiento.crear(
-            'Préstamo', 30, self.cuenta1, self.cuenta3)
-        id_contramovimiento = movimiento.id_contramov
-
-        movimiento.cta_salida = self.cuenta2
-        movimiento.save()
-
-        with self.assertRaises(Movimiento.DoesNotExist):
-            Movimiento.tomar(id=id_contramovimiento)
-
-    def test_cambiar_cta_salida_por_cta_mismo_titular_de_cta_entrada_en_movimiento_de_traspaso_con_contramovimiento_no_regenera_contramovimiento_destruido(
-            self):
-        movimiento = Movimiento.crear(
-            'Préstamo', 30, self.cuenta1, self.cuenta3)
-
-        with patch.object(Movimiento, '_crear_movimiento_credito') \
-                as mock_crear_movimiento_credito:
-            movimiento.cta_salida = self.cuenta2
-            movimiento.save()
-
-            mock_crear_movimiento_credito.assert_not_called()
-
-    def test_modificar_cta_salida_funciona_en_movimientos_de_traspaso(self):
-        """ Suma importe a cta_salida vieja y lo suma a la nueva"""
-        cuenta3 = Cuenta.crear('Cuenta corriente', 'cc')
-        saldo3 = cuenta3.saldo
-        self.mov3.cta_salida = cuenta3
-        self.mov3.save()
-        self.refresh_ctas(cuenta3)
-        self.assertEqual(self.cuenta2.saldo, self.saldo2+self.mov3.importe)
-        self.assertEqual(cuenta3.saldo, saldo3-self.mov3.importe)
-
-    def test_modificar_ambas_cuentas_funciona_en_movimientos_de_traspaso(self):
-        """ Resta importe a cta_entrada vieja y lo suma a la nueva
-            Suma importe a cta_salida vieja y lo suma a la nueva"""
-        cuenta3 = Cuenta.crear('Cuenta corriente', 'cc')
-        cuenta4 = Cuenta.crear('Colchón', 'c')
-        saldo3 = cuenta3.saldo
-        saldo4 = cuenta4.saldo
-
-        self.mov3.cta_entrada = cuenta3
-        self.mov3.cta_salida = cuenta4
-        self.mov3.save()
-        self.refresh_ctas(cuenta3, cuenta4)
-
-        self.assertEqual(self.cuenta1.saldo, self.saldo1-self.mov3.importe)
-        self.assertEqual(cuenta3.saldo, saldo3+self.mov3.importe)
-        self.assertEqual(self.cuenta2.saldo, self.saldo2+self.mov3.importe)
-        self.assertEqual(cuenta4.saldo, saldo4-self.mov3.importe)
-
-    def test_intercambiar_cuentas_resta_importe_x2_de_cta_entrada_y_lo_suma_a_cta_salida(self):
-        """ Resta dos veces importe de vieja cta_entrada (ahora cta_salida)
-            Suma dos veces importe a vieja cta_salida (ahora cta_entrada)"""
-        self.mov3.cta_salida = self.cuenta1
-        self.mov3.cta_entrada = self.cuenta2
-        self.mov3.save()
-        self.refresh_ctas()
-
-        self.assertEqual(self.cuenta2.saldo, self.saldo2 + self.mov3.importe*2)
-        self.assertEqual(self.cuenta1.saldo, self.saldo1 - self.mov3.importe*2)
-
-    def test_cuenta_de_salida_pasa_a_ser_de_entrada(self):
-        """ Suma dos veces importe a vieja cta_salida (ahora cta_entrada)"""
-        self.mov2.cta_entrada = self.mov2.cta_salida
-        self.mov2.cta_salida = None
-        self.mov2.save()
-        self.cuenta1.refresh_from_db()
-
-        self.assertEqual(self.cuenta1.saldo, self.saldo1 + self.mov2.importe*2)
-
-    def test_cuenta_de_entrada_pasa_a_ser_de_salida(self):
-        """ Resta dos veces importe a vieja cta_entrada (ahora cta_salida)"""
-        self.mov1.cta_salida = self.mov1.cta_entrada
-        self.mov1.cta_entrada = None
-        self.mov1.save()
-        self.cuenta1.refresh_from_db()
-
-        self.assertEqual(self.cuenta1.saldo, self.saldo1 - self.mov1.importe*2)
-
-    def test_cuenta_de_salida_pasa_a_ser_de_entrada_y_cuenta_nueva_de_salida(self):
-        """ Suma dos veces importe a vieja cta_salida (ahora cta_entrada)
-            Resta importe de nueva cta_salida"""
-        cuenta3 = Cuenta.crear('Cuenta corriente', 'cc')
-        saldo3 = cuenta3.saldo
-
-        self.mov3.cta_entrada = self.mov3.cta_salida
-        self.mov3.cta_salida = cuenta3
-        self.mov3.save()
-        self.refresh_ctas(cuenta3)
-
-        self.assertEqual(self.cuenta1.saldo, self.saldo1-self.mov3.importe)
-        self.assertEqual(self.cuenta2.saldo, self.saldo2+self.mov3.importe*2)
-        self.assertEqual(cuenta3.saldo, saldo3-self.mov3.importe)
-
-    def test_cuenta_de_entrada_pasa_a_ser_de_salida_y_cuenta_nueva_de_entrada(self):
-        """ Resta dos veces importe a vieja cta_entrada (ahora cta_salida
-            Suma importe a nueva cta_entrada """
-        cuenta3 = Cuenta.crear('Cuenta corriente', 'cc')
-        saldo3 = cuenta3.saldo
-
-        self.mov3.cta_salida = self.mov3.cta_entrada
-        self.mov3.cta_entrada = cuenta3
-        self.mov3.save()
-        self.refresh_ctas(cuenta3)
-
-        self.assertEqual(self.cuenta1.saldo, self.saldo1-self.mov3.importe*2)
-        self.assertEqual(self.cuenta2.saldo, self.saldo2+self.mov3.importe)
-        self.assertEqual(cuenta3.saldo, saldo3+self.mov3.importe)
-
-    def test_cuenta_de_salida_desaparece(self):
-        """ Suma importe a cta_salida retirada"""
-        self.mov3.cta_salida = None
-        self.mov3.save()
-        self.cuenta2.refresh_from_db()
-
-        self.assertEqual(self.cuenta2.saldo, self.saldo2+self.mov3.importe)
-
-    def test_cuenta_de_entrada_desaparece(self):
-        """ Resta importe a cta_entrada retirada"""
-        self.mov3.cta_entrada = None
-        self.mov3.save()
-        self.cuenta1.refresh_from_db()
-
-        self.assertEqual(self.cuenta1.saldo, self.saldo1-self.mov3.importe)
-
-    def test_cuenta_de_salida_desaparece_y_cuenta_de_entrada_pasa_a_salida(self):
-        """ Suma importe a cta_salida retirada
-            Resta dos veces a vieja cta_entrada (ahora cta_salida) """
-        self.mov3.cta_salida = self.mov3.cta_entrada
-        self.mov3.cta_entrada = None
-        self.mov3.save()
-        self.refresh_ctas()
-
-        self.assertEqual(self.cuenta1.saldo, self.saldo1-self.mov3.importe*2)
-        self.assertEqual(self.cuenta2.saldo, self.saldo2+self.mov3.importe)
-
-    def test_cuenta_de_entrada_desaparece_y_cuenta_de_salida_pasa_a_entrada(self):
-        """ Resta importe a cta_entrada retirada
-            Suma dos veces importe a vieja cta_salida (ahora cta_entrada)"""
-        self.mov3.cta_entrada = self.mov3.cta_salida
-        self.mov3.cta_salida = None
-        self.mov3.save()
-        self.refresh_ctas()
-
-        self.assertEqual(self.cuenta1.saldo, self.saldo1-self.mov3.importe)
-        self.assertEqual(self.cuenta2.saldo, self.saldo2+self.mov3.importe*2)
-
-    def test_aparece_cuenta_de_salida(self):
-        """ Resta importe de nueva cta_salida """
-        self.mov1.cta_salida = self.cuenta2
-        self.mov1.save()
-        self.cuenta2.refresh_from_db()
-
-        self.assertEqual(self.cuenta2.saldo, self.saldo2-self.mov1.importe)
-
-    def test_aparece_cuenta_de_entrada(self):
-        """ Suma importe a nueva cta_entrada """
-        self.mov2.cta_entrada = self.cuenta1
-        self.mov2.save()
-        self.cuenta1.refresh_from_db()
-
-        self.assertEqual(self.cuenta1.saldo, self.saldo1+self.mov2.importe)
-
-    def test_cuenta_de_entrada_pasa_a_salida_y_aparece_nueva_cuenta_de_entrada(self):
-        """ Resta dos veces importe de vieja cta_entrada (ahora cta_salida)
-            Suma importe a nueva cta_entrada"""
-        self.mov1.cta_salida = self.mov1.cta_entrada
-        self.mov1.cta_entrada = self.cuenta2
-        self.mov1.save()
-        self.refresh_ctas()
-
-        self.assertEqual(self.cuenta1.saldo, self.saldo1-self.mov1.importe*2)
-        self.assertEqual(self.cuenta2.saldo, self.saldo2+self.mov1.importe)
-
-    def test_cuenta_de_salida_pasa_a_entrada_y_aparece_nueva_cuenta_de_salida(self):
-        """ Suma dos veces importe a vieja cta_salida (ahora cta_entrada)
-            Resta importe de nueva cta_salida """
-        self.mov2.cta_entrada = self.mov2.cta_salida
-        self.mov2.cta_salida = self.cuenta2
-        self.mov2.save()
-        self.refresh_ctas()
-
-        self.assertEqual(self.cuenta2.saldo, self.saldo2-self.mov2.importe)
-        self.assertEqual(self.cuenta1.saldo, self.saldo1+self.mov2.importe*2)
-
-    def test_desaparece_cta_entrada_y_aparece_cta_de_salida(self):
-        """ Resta importe de cta_entrada retirada
-            Resta importe de cta_salida agregada """
-        self.mov1.cta_entrada = None
-        self.mov1.cta_salida = self.cuenta2
-        self.mov1.save()
-        self.refresh_ctas()
-
-        self.assertEqual(self.cuenta1.saldo, self.saldo1-self.mov1.importe)
-        self.assertEqual(self.cuenta2.saldo, self.saldo2-self.mov1.importe)
-
-    def test_desaparece_cta_salida_y_aparece_cta_de_entrada(self):
-        """ Suma importe a cta_salida retirada
-            Suma importe a cta_entrada agregada"""
-        self.mov2.cta_entrada = self.cuenta2
-        self.mov2.cta_salida = None
-        self.mov2.save()
-        self.refresh_ctas()
-
-        self.assertEqual(self.cuenta2.saldo, self.saldo2+self.mov2.importe)
-        self.assertEqual(self.cuenta1.saldo, self.saldo1+self.mov2.importe)
-
-
-class TestModelMovimientoModificarVariosCampos(TestModelMovimientoModificar):
-
-    def test_cambia_cuenta_de_entrada_con_nuevo_importe(self):
-        """ Resta viejo importe de cta_entrada vieja
-            Suma nuevo importe a cta_entrada nueva """
-        self.mov1.cta_entrada = self.cuenta2
-        self.mov1.importe = 128
-        self.mov1.save()
-        self.refresh_ctas()
-
-        self.assertEqual(self.cuenta1.saldo, self.saldo1-self.imp1)
-        self.assertEqual(self.cuenta2.saldo, self.saldo2+self.mov1.importe)
-
-    def test_cambia_cuenta_de_salida_con_nuevo_importe(self):
-        """ Suma viejo importe a cta_salida vieja
-            Resta nuevo importe de cta_salida nueva """
-        self.mov2.cta_salida = self.cuenta2
-        self.mov2.importe = 63
-        self.mov2.save()
-        self.refresh_ctas()
-
-        self.assertEqual(self.cuenta2.saldo, self.saldo2-self.mov2.importe)
-        self.assertEqual(self.cuenta1.saldo, self.saldo1+self.imp2)
-
-    def test_cambia_cuenta_de_entrada_en_mov_de_traspaso_con_nuevo_importe(self):
-        """ Resta importe viejo de cta_entrada vieja
-            Suma importe nuevo a cta_entrada nueva
-            Suma importe viejo y resta importe nuevo a cta_salida """
-        cuenta3 = Cuenta.crear('Cuenta corriente', 'cc')
-        saldo3 = cuenta3.saldo
-
-        self.mov3.cta_entrada = cuenta3
-        self.mov3.importe = 56
-        self.mov3.save()
-        self.refresh_ctas(cuenta3)
-
-        self.assertEqual(self.cuenta1.saldo, self.saldo1-self.imp3)
-        self.assertEqual(cuenta3.saldo, saldo3+self.mov3.importe)
-        self.assertEqual(
-            self.cuenta2.saldo,
-            self.saldo2+self.imp3-self.mov3.importe
-        )
-
-    def test_cambia_cuenta_de_salida_en_mov_de_traspaso_con_nuevo_importe(self):
-        """ Suma importe viejo a cta_salida vieja
-            Resta importe nuevo de cta_salida nueva
-            Resta importe viejo y suma importe nuevo a cta_entrada """
-        cuenta3 = Cuenta.crear('Cuenta corriente', 'cc')
-        saldo3 = cuenta3.saldo
-
-        self.mov3.cta_salida = cuenta3
-        self.mov3.importe = 56
-        self.mov3.save()
-        self.refresh_ctas(cuenta3)
-
-        self.assertEqual(self.cuenta2.saldo, self.saldo2+self.imp3)
-        self.assertEqual(cuenta3.saldo, saldo3-self.mov3.importe)
-        self.assertEqual(
-            self.cuenta1.saldo,
-            self.saldo1-self.imp3+self.mov3.importe
-        )
-
-    def test_cambian_ambas_cuentas_en_mov_de_traspaso_con_nuevo_importe(self):
-        """ Resta importe viejo de cta_entrada vieja
-            Suma importe nuevo a cta_entrada nueva
-            Suma importe viejo a cta_salida vieja
-            Suma importe nuevo a cta_entrada nueva """
-        cuenta3 = Cuenta.crear('Cuenta corriente', 'cc')
-        saldo3 = cuenta3.saldo
-        cuenta4 = Cuenta.crear('Colchón', 'ch')
-        saldo4 = cuenta4.saldo
-
-        self.mov3.cta_entrada = cuenta3
-        self.mov3.cta_salida = cuenta4
-        self.mov3.importe = 56
-        self.mov3.save()
-        self.refresh_ctas(cuenta3, cuenta4)
-
-        self.assertEqual(self.cuenta1.saldo, self.saldo1-self.imp3)
-        self.assertEqual(self.cuenta2.saldo, self.saldo2+self.imp3)
-        self.assertEqual(cuenta3.saldo, saldo3+self.mov3.importe)
-        self.assertEqual(cuenta4.saldo, saldo4-self.mov3.importe)
-
-    def test_se_intercambian_cuentas_de_entrada_y_salida_con_nuevo_importe(self):
-        """ Resta importe viejo e importe nuevo de cta_entrada vieja
-                (ahora cta_salida)
-            Suma importe viejo e importe nuevo a cta_salida vieja
-                (ahora cta_entrada) """
-        self.mov3.cta_entrada = self.cuenta2
-        self.mov3.cta_salida = self.cuenta1
-        self.mov3.importe = 456
-        self.mov3.save()
-        self.refresh_ctas()
-
-        self.assertEqual(
-            self.cuenta1.saldo, self.saldo1-self.imp3-self.mov3.importe)
-        self.assertEqual(
-            self.cuenta2.saldo, self.saldo2+self.imp3+self.mov3.importe)
-
-    def test_cta_entrada_pasa_a_salida_con_nuevo_importe(self):
-        """ Resta importe viejo e importe nuevo a cta_entrada vieja
-                (ahora cta_salida)"""
-        self.mov1.cta_salida = self.mov1.cta_entrada
-        self.mov1.cta_entrada = None
-        self.mov1.importe = 128
-        self.mov1.save()
-        self.cuenta1.refresh_from_db()
-
-        self.assertEqual(
-            self.cuenta1.saldo, self.saldo1-self.imp1-self.mov1.importe)
-
-    def test_cta_salida_pasa_a_entrada_con_nuevo_importe(self):
-        """ Suma importe viejo e importe nuevo a cta_salida vieja
-                (ahora cta_entrada) """
-        self.mov2.cta_entrada = self.mov2.cta_salida
-        self.mov2.cta_salida = None
-        self.mov2.importe = 128
-        self.mov2.save()
-        self.cuenta1.refresh_from_db()
-
-        self.assertEqual(
-            self.cuenta1.saldo, self.saldo1+self.imp2+self.mov2.importe)
-
-    def test_cta_salida_pasa_entrada_y_cta_salida_nueva_con_nuevo_importe(self):
-        """ Suma importe viejo e importe nuevo a cta_salida vieja
-                (ahora cta_entrada)
-            Resta importe viejo de cta_entrada vieja
-            Suma importe nuevo a cta_entrada nueva """
-        cuenta3 = Cuenta.crear('Cuenta corriente', 'cc')
-        saldo3 = cuenta3.saldo
-
-        self.mov3.cta_entrada = self.mov3.cta_salida
-        self.mov3.cta_salida = cuenta3
-        self.mov3.importe = 252
-        self.mov3.save()
-        self.refresh_ctas(cuenta3)
-
-        self.assertEqual(self.cuenta1.saldo, self.saldo1-self.imp3)
-        self.assertEqual(
-            self.cuenta2.saldo, self.saldo2+self.imp3+self.mov3.importe)
-        self.assertEqual(cuenta3.saldo, saldo3-self.mov3.importe)
-
-    def test_cta_entrada_pasa_salida_y_cta_entrada_nueva_con_nuevo_importe(self):
-        """ Resta importe viejo e importe nuevo a cta_entrada vieja
-                (ahora cta_salida)
-            Resta importe viejo de cta_salida vieja
-            Suma importe nuevo a cta_entrada nueva"""
-        cuenta3 = Cuenta.crear('Cuenta corriente', 'cc')
-        saldo3 = cuenta3.saldo
-
-        self.mov3.cta_salida = self.mov3.cta_entrada
-        self.mov3.cta_entrada = cuenta3
-        self.mov3.importe = 165
-        self.mov3.save()
-        self.refresh_ctas(cuenta3)
-
-        self.assertEqual(self.cuenta1.saldo, self.saldo1-self.imp3-self.mov3.importe)
-        self.assertEqual(self.cuenta2.saldo, self.saldo2+self.imp3)
-        self.assertEqual(cuenta3.saldo, saldo3+self.mov3.importe)
-
-    def test_cuenta_de_salida_desaparece_con_nuevo_importe(self):
-        """ Suma importe viejo a cta_salida retirada
-            Resta importe viejo y suma importe nuevo a cta_entrada"""
-        self.mov3.cta_salida = None
-        self.mov3.importe = 234
-        self.mov3.save()
-        self.cuenta2.refresh_from_db()
-
-        self.assertEqual(
-            self.cuenta1.saldo, self.saldo1-self.imp3+self.mov3.importe)
-        self.assertEqual(self.cuenta2.saldo, self.saldo2+self.imp3)
-
-    def test_cuenta_de_entrada_desaparece_con_nuevo_importe(self):
-        """ Resta importe viejo a cta_entrada retirada
-            Suma importe viejo y resta importe nuevo a cta_salida"""
-        self.mov3.cta_entrada = None
-        self.mov3.importe = 234
-        self.mov3.save()
-        self.refresh_ctas()
-
-        self.assertEqual(self.cuenta1.saldo, self.saldo1-self.imp3)
-        self.assertEqual(
-            self.cuenta2.saldo, self.saldo2+self.imp3-self.mov3.importe)
-
-    def test_cuenta_de_salida_desaparece_y_cuenta_de_entrada_pasa_a_salida_con_nuevo_importe(self):
-        """ Resta importe viejo e importe nuevo a vieja cta_entrada
-                (ahora cta_salida)
-            Suma importe viejo a cta_salida retirada """
-        self.mov3.cta_salida = self.mov3.cta_entrada
-        self.mov3.cta_entrada = None
-        self.mov3.importe = 350
-        self.mov3.save()
-        self.refresh_ctas()
-
-        self.assertEqual(
-            self.cuenta1.saldo, self.saldo1-self.imp3-self.mov3.importe)
-        self.assertEqual(self.cuenta2.saldo, self.saldo2+self.imp3)
-
-    def test_cuenta_de_entrada_desaparece_y_cuenta_de_salida_pasa_a_entrada_con_nuevo_importe(self):
-        """ Suma importe viejo e importe nuevo a vieja cta_salida
-                (ahora cta_entrada)
-            Resta importe viejo a cta_entrada retirada """
-        self.mov3.cta_entrada = self.mov3.cta_salida
-        self.mov3.cta_salida = None
-        self.mov3.importe = 354
-        self.mov3.save()
-        self.refresh_ctas()
-
-        self.assertEqual(self.cuenta1.saldo, self.saldo1-self.imp3)
-        self.assertEqual(
-            self.cuenta2.saldo, self.saldo2+self.imp3+self.mov3.importe)
-
-    def test_aparece_cuenta_de_salida_con_nuevo_importe(self):
-        """ Resta importe viejo y suma importe nuevo a cta_entrada
-            Resta importe nuevo a cta_salida nueva"""
-        self.mov1.cta_salida = self.cuenta2
-        self.mov1.importe = 255
-        self.mov1.save()
-        self.refresh_ctas()
-
-        self.assertEqual(
-            self.cuenta1.saldo, self.saldo1-self.imp1+self.mov1.importe)
-        self.assertEqual(self.cuenta2.saldo, self.saldo2-self.mov1.importe)
-
-    def test_aparece_cuenta_de_entrada_con_nuevo_importe(self):
-        """ Suma importe viejo y resta importe nuevo a cta_salida
-            Suma importe nuevo a cta_entrada nueva"""
-        self.mov2.cta_entrada = self.cuenta2
-        self.mov2.importe = 446
-        self.mov2.save()
-        self.refresh_ctas()
-
-        self.assertEqual(self.cuenta2.saldo, self.saldo2+self.mov2.importe)
-        self.assertEqual(
-            self.cuenta1.saldo, self.saldo1+self.imp2-self.mov2.importe)
-
-    def test_cuenta_de_entrada_pasa_a_salida_y_aparece_nueva_cuenta_de_entrada_con_nuevo_importe(self):
-        """ Resta importe viejo e importe nuevo de antigua cta_entrada
-                (ahora cta_salida)
-            Suma importe nuevo a cta_entrada agregada"""
-        self.mov1.cta_salida = self.mov1.cta_entrada
-        self.mov1.cta_entrada = self.cuenta2
-        self.mov1.importe = 556
-        self.mov1.save()
-        self.refresh_ctas()
-
-        self.assertEqual(
-            self.cuenta1.saldo, self.saldo1-self.imp1-self.mov1.importe)
-        self.assertEqual(self.cuenta2.saldo, self.saldo2+self.mov1.importe)
-
-    def test_cuenta_de_salida_pasa_a_entrada_y_aparece_nueva_cuenta_de_salida_con_nuevo_importe(self):
-        """ Suma importe viejo e importe nuevo de antigua cta_salida
-                (ahora cta_entrada)
-            Resta importe nuevo de cta_salida nueva """
-        self.mov2.cta_entrada = self.mov2.cta_salida
-        self.mov2.cta_salida = self.cuenta2
-        self.mov2.importe = 445
-        self.mov2.save()
-        self.refresh_ctas()
-
-        self.assertEqual(self.cuenta2.saldo, self.saldo2-self.mov2.importe)
-        self.assertEqual(
-            self.cuenta1.saldo, self.saldo1+self.imp2+self.mov2.importe)
-
-    def test_desaparece_cta_entrada_y_aparece_otra_cta_de_salida_con_nuevo_importe(self):
-        """ Resta importe viejo de cta_entrada retirada
-            Resta importe nuevo de cta_salida agregada """
-        self.mov1.cta_entrada = None
-        self.mov1.cta_salida = self.cuenta2
-        self.mov1.importe = 565
-        self.mov1.save()
-        self.refresh_ctas()
-
-        self.assertEqual(self.cuenta1.saldo, self.saldo1-self.imp1)
-        self.assertEqual(self.cuenta2.saldo, self.saldo2-self.mov1.importe)
-
-    def test_desaparece_cta_salida_y_aparece_otra_cta_de_entrada_con_nuevo_importe(self):
-        """ Suma importe viejo a cta_salida retirada
-            Suma importe nuevo a cta_entrada agregada """
-        self.mov2.cta_entrada = self.cuenta2
-        self.mov2.cta_salida = None
-        self.mov2.importe = 675
-        self.mov2.save()
-        self.refresh_ctas()
-
-        self.assertEqual(self.cuenta2.saldo, self.saldo2+self.mov2.importe)
-        self.assertEqual(self.cuenta1.saldo, self.saldo1+self.imp2)
-
-
-class TestModelMovimientoModificarEsGratis(TestModelMovimientoModificar):
-
-    def setUp(self):
-        super().setUp()
-        self.mov4 = Movimiento.crear(
-            'traspaso entre titulares', 120, self.cuenta3, self.cuenta1)
-
-    def test_mov_esgratis_false_elimina_contramovimiento(self):
-        id_contramov = self.mov4.id_contramov
-        self.mov4.esgratis = True
-        self.mov4.full_clean()
-        self.mov4.save()
-        self.assertEqual(Movimiento.filtro(id=id_contramov).count(), 0)
-
-
-class TestModelMovimientoConCuentaAcumulativaModificar(TestModelMovimientoModificar):
-
-    def setUp(self):
-        super().setUp()
-        self.mov4 = Movimiento.crear(
-            'traspaso salida acum', 200, self.cuenta2, self.cuenta1)
-
-        self.cuenta1 = dividir_en_dos_subcuentas(self.cuenta1)
-        for mov in (self.mov1, self.mov2, self.mov3, self.mov4):
-            mov.refresh_from_db()
-
-    def test_no_puede_modificarse_importe_de_movimiento_con_cta_entrada_acumulativa(self):
-        self.mov1.importe = 300
-        with self.assertRaisesMessage(
-                errors.ErrorCuentaEsAcumulativa,
-                errors.CAMBIO_IMPORTE_CON_CUENTA_ACUMULATIVA):
-            self.mov1.full_clean()
-
-    def test_no_puede_modificarse_importe_de_movimiento_con_cta_salida_acumulativa(self):
-        self.mov2.importe = 300
-        with self.assertRaisesMessage(
-                errors.ErrorCuentaEsAcumulativa,
-                errors.CAMBIO_IMPORTE_CON_CUENTA_ACUMULATIVA):
-            self.mov2.full_clean()
-
-    def test_no_puede_modificarse_importe_de_mov_de_traspaso_con_una_cuenta_acumulativa(self):
-        self.mov3.importe = 500
-        with self.assertRaisesMessage(
-                errors.ErrorCuentaEsAcumulativa,
-                errors.CAMBIO_IMPORTE_CON_CUENTA_ACUMULATIVA):
-            self.mov3.full_clean()
-
-        self.mov4.importe = 500
-        with self.assertRaisesMessage(
-                errors.ErrorCuentaEsAcumulativa,
-                errors.CAMBIO_IMPORTE_CON_CUENTA_ACUMULATIVA):
-            self.mov4.full_clean()
-
-    def test_no_puede_modificarse_importe_de_mov_de_traspaso_con_ambas_cuentas_acumulativa(self):
-        self.cuenta2.dividir_entre(
-            ['cuenta2 subcuenta 1', 'c2s1', 100],
-            ['cuenta2 subcuenta2', 'c2s2']
-        )
-
-        self.mov3.importe = 600
-        with self.assertRaisesMessage(
-                errors.ErrorCuentaEsAcumulativa,
-                errors.CAMBIO_IMPORTE_CON_CUENTA_ACUMULATIVA):
-            self.mov3.full_clean()
-
-    def test_no_puede_retirarse_cta_entrada_de_movimiento_si_es_acumulativa(self):
-        self.mov1.cta_entrada = self.cuenta2
-        with self.assertRaisesMessage(
-                errors.ErrorCuentaEsAcumulativa,
-                errors.CUENTA_ACUMULATIVA_RETIRADA):
-            self.mov1.full_clean()
-
-    def test_no_puede_retirarse_cta_salida_de_movimiento_si_es_acumulativa(self):
-        self.mov2.cta_salida = self.cuenta2
-        with self.assertRaisesMessage(
-                errors.ErrorCuentaEsAcumulativa,
-                errors.CUENTA_ACUMULATIVA_RETIRADA):
-            self.mov2.full_clean()
-
-    def test_no_puede_retirarse_cuenta_de_traspaso_si_es_acumulativa(self):
-        cuenta3 = Cuenta.crear('cuenta3', 'c3')
-
-        self.mov3.cta_entrada = cuenta3
-        with self.assertRaisesMessage(
-                errors.ErrorCuentaEsAcumulativa,
-                errors.CUENTA_ACUMULATIVA_RETIRADA):
-            self.mov3.full_clean()
-
-        self.mov4.cta_salida = cuenta3
-        with self.assertRaisesMessage(
-                errors.ErrorCuentaEsAcumulativa,
-                errors.CUENTA_ACUMULATIVA_RETIRADA):
-            self.mov4.full_clean()
-
-    def test_no_puede_retirarse_cuenta_de_traspaso_si_ambas_son_acumulativas(self):
-        cuenta3 = Cuenta.crear('cuenta3', 'c3')
-        self.cuenta2.dividir_entre(
-            ['cuenta2 subcuenta 1', 'c2s1', 100],
-            ['cuenta2 subcuenta2', 'c2s2']
-        )
-
-        self.mov3.cta_entrada = cuenta3
-        with self.assertRaisesMessage(
-                errors.ErrorCuentaEsAcumulativa,
-                errors.CUENTA_ACUMULATIVA_RETIRADA):
-            self.mov3.full_clean()
-
-        self.mov4.cta_salida = cuenta3
-        with self.assertRaisesMessage(
-                errors.ErrorCuentaEsAcumulativa,
-                errors.CUENTA_ACUMULATIVA_RETIRADA):
-            self.mov4.full_clean()
-
-    def test_no_puede_agregarse_cta_entrada_acumulativa_a_movimiento(self):
-        mov1 = Movimiento.crear('entrada', 100, self.cuenta2)
-        mov2 = Movimiento.crear('salida', 100, None, self.cuenta2)
-
-        mov1.cta_entrada = self.cuenta1
-        with self.assertRaisesMessage(
-                errors.ErrorCuentaEsAcumulativa,
-                errors.CUENTA_ACUMULATIVA_AGREGADA):
-            mov1.full_clean()
-
-        mov2.cta_entrada = self.cuenta1
-        with self.assertRaisesMessage(
-                errors.ErrorCuentaEsAcumulativa,
-                errors.CUENTA_ACUMULATIVA_AGREGADA):
-            mov2.full_clean()
-
-    def test_puede_agregarse_contracuenta_interactiva_a_entrada_con_cta_acumulativa(self):
-        self.mov1.cta_salida = self.cuenta2
-        self.mov1.full_clean()
-        self.mov1.save()
-        self.assertEqual(self.mov1.cta_salida, self.cuenta2)
-
-    def test_puede_agregarse_contracuenta_interactiva_a_salida_con_cta_acumulativa(self):
-        self.mov2.cta_entrada = self.cuenta2
-        self.mov2.full_clean()
-        self.mov2.save()
-        self.assertEqual(self.mov2.cta_entrada, self.cuenta2)
-
-    def test_puede_modificarse_cta_interactiva_en_movimiento_con_cta_entrada_acumulativa(self):
-        self.mov3.cta_salida = self.cuenta2
-        self.mov3.full_clean()
-        self.mov3.save()
-        self.assertEqual(self.mov3.cta_salida, self.cuenta2)
-
-    def test_puede_modificarse_cta_interactiva_en_movimiento_con_cta_salida_acumulativa(self):
-        self.mov4.cta_entrada = self.cuenta2
-        self.mov4.full_clean()
-        self.mov4.save()
-        self.assertEqual(self.mov4.cta_entrada, self.cuenta2)
-
-    def test_puede_retirarse_cta_interactiva_en_movimiento_con_cta_entrada_acumulativa(self):
-        self.mov3.cta_salida = None
-        self.mov3.full_clean()
-        self.mov3.save()
-        self.assertIsNone(self.mov3.cta_salida)
-
-    def test_puede_retirarse_cta_interactiva_en_movimiento_con_cta_salida_acumulativa(self):
-        self.mov4.cta_entrada = None
-        self.mov4.full_clean()
-        self.mov4.save()
-        self.assertIsNone(self.mov4.cta_entrada)
-
-    def test_no_puede_agregarse_cta_salida_acumulativa_a_movimiento(self):
-        mov1 = Movimiento.crear('entrada', 100, self.cuenta2)
-        mov2 = Movimiento.crear('salida', 100, None, self.cuenta2)
-
-        mov1.cta_salida = self.cuenta1
-        with self.assertRaisesMessage(
-                errors.ErrorCuentaEsAcumulativa,
-                errors.CUENTA_ACUMULATIVA_AGREGADA):
-            mov1.full_clean()
-
-        mov2.cta_salida = self.cuenta1
-        with self.assertRaisesMessage(
-                errors.ErrorCuentaEsAcumulativa,
-                errors.CUENTA_ACUMULATIVA_AGREGADA):
-            mov2.full_clean()
-
-    def test_no_puede_eliminarse_movimiento_con_cuenta_acumulativa(self):
-        with self.assertRaisesMessage(
-            errors.ErrorCuentaEsAcumulativa,
-            errors.MOVIMIENTO_CON_CA_ELIMINADO
-        ):
-            self.mov1.delete()
-
-    def test_puede_modificarse_concepto_en_movimiento_de_entrada_con_cuenta_acumulativa(self):
-        self.mov1.concepto = 'entrada cambiada'
-        self.mov1.full_clean()
-        self.mov1.save()
-        self.assertEqual(self.mov1.concepto, 'entrada cambiada')
-
-    def test_puede_modificarse_concepto_en_movimiento_de_salida_con_cuenta_acumulativa(self):
-        self.mov2.concepto = 'salida cambiada'
-        self.mov2.full_clean()
-        self.mov2.save()
-        self.assertEqual(
-            self.mov2.concepto, 'salida cambiada')
-
-    def test_puede_modificarse_concepto_en_movimiento_de_traspaso_con_cuenta_acumulativa_en_entrada(self):
-        self.mov3.concepto = 'entrada cambiada en traspaso'
-        self.mov3.full_clean()
-        self.mov3.save()
-        self.assertEqual(
-            self.mov3.concepto, 'entrada cambiada en traspaso')
-
-    def test_puede_modificarse_concepto_en_movimiento_de_traspaso_con_cuenta_acumulativa_en_salida(self):
-        self.mov4.concepto = 'salida cambiada en traspaso'
-        self.mov4.full_clean()
-        self.mov4.save()
-        self.assertEqual(
-            self.mov4.concepto, 'salida cambiada en traspaso')
-
-    def test_puede_modificarse_concepto_en_movimiento_de_traspaso_con_ambas_cuentas_acumulativas(self):
-        self.cuenta2.dividir_entre(
-            ['cuenta2 subcuenta 1', 'c2s1', 100],
-            ['cuenta2 subcuenta2', 'c2s2']
-        )
-        self.mov4.concepto = 'concepto cambiado en traspaso'
-        self.mov4.full_clean()
-        self.mov4.save()
-        self.assertEqual(
-            self.mov4.concepto, 'concepto cambiado en traspaso')
-
-    def test_puede_modificarse_detalle_en_movimiento_de_entrada_con_cuenta_acumulativa(self):
-        self.mov1.detalle = 'entrada cambiada'
-        self.mov1.full_clean()
-        self.mov1.save()
-        self.assertEqual(self.mov1.detalle, 'entrada cambiada')
-
-    def test_puede_modificarse_detalle_en_movimiento_de_salida_con_cuenta_acumulativa(self):
-        self.mov2.detalle = 'salida cambiada'
-        self.mov2.full_clean()
-        self.mov2.save()
-        self.assertEqual(
-            self.mov2.detalle, 'salida cambiada')
-
-    def test_puede_modificarse_detalle_en_movimiento_de_traspaso_con_cuenta_acumulativa_en_entrada(self):
-        self.mov3.detalle = 'entrada cambiada en traspaso'
-        self.mov3.full_clean()
-        self.mov3.save()
-        self.assertEqual(
-            self.mov3.detalle, 'entrada cambiada en traspaso')
-
-    def test_puede_modificarse_detalle_en_movimiento_de_traspaso_con_cuenta_acumulativa_en_salida(self):
-        self.mov4.detalle = 'salida cambiada en traspaso'
-        self.mov4.full_clean()
-        self.mov4.save()
-        self.assertEqual(
-            self.mov4.detalle, 'salida cambiada en traspaso')
-
-    def test_puede_modificarse_detalle_en_movimiento_de_traspaso_con_ambas_cuentas_acumulativas(self):
-        self.cuenta2.dividir_entre(
-            ['cuenta2 subcuenta 1', 'c2s1', 100],
-            ['cuenta2 subcuenta2', 'c2s2']
-        )
-        self.mov4.detalle = 'detalle cambiado en traspaso'
-        self.mov4.full_clean()
-        self.mov4.save()
-        self.assertEqual(
-            self.mov4.detalle, 'detalle cambiado en traspaso')
-
-    def test_puede_modificarse_fecha_en_movimiento_con_cta_entrada_acumulativa_si_nueva_fecha_es_anterior_a_conversion(self):
-        self.mov1.fecha = date(2020, 1, 5)
-        self.mov1.full_clean()
-        self.mov1.save()
-        self.assertEqual(self.mov1.fecha, date(2020, 1, 5))
-
-    def test_puede_modificarse_fecha_en_movimiento_con_cta_salida_acumulativa_si_nueva_fecha_es_anterior_a_conversion(self):
-        self.mov2.fecha = date(2020, 1, 5)
-        self.mov2.full_clean()
-        self.mov2.save()
-        self.assertEqual(self.mov2.fecha, date(2020, 1, 5))
-
-    def test_no_puede_asignarse_fecha_posterior_a_conversion_en_mov_con_cta_entrada_acumulativa(self):
-        self.mov1.fecha = date.today() + timedelta(days=2)
-        with self.assertRaisesMessage(
-                errors.ErrorCuentaEsAcumulativa,
-                f'{errors.FECHA_POSTERIOR_A_CONVERSION}{date.today()}'
-        ):
-            self.mov1.full_clean()
-
-    def test_no_puede_asignarse_fecha_posterior_a_conversion_en_mov_con_cta_salida_acumulativa(self):
-        self.mov2.fecha = date.today() + timedelta(days=2)
-        with self.assertRaisesMessage(
-                errors.ErrorCuentaEsAcumulativa,
-                f'{errors.FECHA_POSTERIOR_A_CONVERSION}{date.today()}'
-        ):
-            self.mov2.full_clean()
-
-
 class TestModelMovimientoPropiedadSentido(TestModelMovimiento):
+
+    @skip
+    def test_eliminar(self):
+        self.fail('Eliminar')
 
     def test_devuelve_s_si_movimiento_tiene_solo_cuenta_de_salida(self):
         mov = Movimiento.crear(
@@ -1965,6 +891,7 @@ class TestModelMovimientoPropiedadesEmisorReceptor(TestModelMovimiento):
 
     def setUp(self):
         super().setUp()
+        self.titular1 = Titular.tomar(titname='default')
         self.titular2 = Titular.crear(nombre='Titular 2', titname='tit2')
         self.cuenta2 = Cuenta.crear(
             nombre='Cuenta titular 2', slug='ct2', titular=self.titular2)
@@ -1990,6 +917,7 @@ class TestModelMovimientoMetodoStr(TestModelMovimiento):
 
     def setUp(self):
         super().setUp()
+        self.titular1 = Titular.tomar(titname='default')
         self.cta2 = Cuenta.crear(
             nombre='Banco', slug='B', titular=self.titular1)
 
@@ -2050,18 +978,27 @@ class TestModelMovimientoMetodoTieneCuentaAcumulativa(TestModelMovimiento):
         self.assertFalse(mov.tiene_cuenta_acumulativa())
 
 
-class TestModelMovimientoMetodoEsPrestamo(TestModelMovimientoModificar):
+class TestModelMovimientoMetodoEsPrestamo(TestModelMovimiento):
+
+    def setUp(self):
+        super().setUp()
+        self.tit1 = Titular.tomar(titname='default')
+        self.tit2 = Titular.crear(nombre='Titular 2', titname='tit2')
+        self.cuenta2 = Cuenta.crear('cuenta tit 2', 'ct2', titular=self.tit2)
+        self.cuenta3 = Cuenta.crear('cuenta 2 tit 2', 'c2t2', titular=self.tit2)
 
     def test_devuelve_true_si_mov_es_traspaso_entre_cuentas_de_distinto_titular(self):
         mov = Movimiento.crear(
-            'traspaso', 100, cta_entrada=self.cuenta1, cta_salida=self.cuenta3)
+            'traspaso', 100, cta_entrada=self.cuenta1, cta_salida=self.cuenta2)
         self.assertTrue(mov.es_prestamo())
 
     def test_devuelve_false_si_mov_no_es_traspaso(self):
-        self.assertFalse(self.mov1.es_prestamo())
+        mov = Movimiento.crear('entrada', 100, self.cuenta1)
+        self.assertFalse(mov.es_prestamo())
 
     def test_devuelve_false_si_cuentas_pertenecen_al_mismo_titular(self):
-        self.assertFalse(self.mov3.es_prestamo())
+        mov = Movimiento.crear('traspaso', 100, self.cuenta2, self.cuenta3)
+        self.assertFalse(mov.es_prestamo())
 
     def test_devuelve_false_si_mov_es_gratis(self):
         mov = Movimiento.crear(
@@ -2069,21 +1006,21 @@ class TestModelMovimientoMetodoEsPrestamo(TestModelMovimientoModificar):
             importe=100,
             cta_entrada=self.cuenta1,
             cta_salida=self.cuenta3,
+            esgratis=True
         )
-        mov.esgratis=True
         self.assertFalse(mov.es_prestamo())
 
 
 class TestModelMovimientoMetodoHermanosDeFecha(TestModelMovimiento):
 
     def setUp(self):
-        self.cuenta = Cuenta.crear('cuenta', 'c')
+        super().setUp()
         self.mov1 = Movimiento.crear(
-            'Movimiento 1', 100, self.cuenta, fecha=date(2011, 11, 11))
+            'Movimiento 1', 100, self.cuenta1, fecha=date(2011, 11, 11))
         self.mov2 = Movimiento.crear(
-            'Movimiento 2', 200, self.cuenta, fecha=date(2011, 11, 11))
+            'Movimiento 2', 200, self.cuenta1, fecha=date(2011, 11, 11))
         self.mov3 = Movimiento.crear(
-            'Movimiento 3', 300, self.cuenta, fecha=date(2011, 11, 11))
+            'Movimiento 3', 300, self.cuenta1, fecha=date(2011, 11, 11))
         self.result = self.mov1.hermanos_de_fecha()
 
     def test_devuelve_movimientos_de_la_fecha(self):
@@ -2095,11 +1032,11 @@ class TestModelMovimientoMetodoHermanosDeFecha(TestModelMovimiento):
 
     def test_no_incluye_movimientos_de_otra_fecha(self):
         mov4 = Movimiento.crear(
-            'Movimiento 4', 400, self.cuenta, fecha=date(2011, 11, 12))
+            'Movimiento 4', 400, self.cuenta1, fecha=date(2011, 11, 12))
         self.assertNotIn(mov4, self.result)
 
 
-class TestModelMovimientoMetodoGenerarCuentasCredito(TestModelMovimientoEntreTitulares):
+class TestModelMovimientoMetodoGenerarCuentasCredito(TestModelMovimientoCrearEntreTitulares):
 
     def test_crea_dos_cuentas_credito(self):
         movimiento = Movimiento.crear(
@@ -2108,8 +1045,8 @@ class TestModelMovimientoMetodoGenerarCuentasCredito(TestModelMovimientoEntreTit
         self.assertEqual(Cuenta.cantidad(), 4)
         cc1 = list(Cuenta.todes())[-2]
         cc2 = list(Cuenta.todes())[-1]
-        self.assertEqual(cc1.slug, '_tit1-tit2')
-        self.assertEqual(cc2.slug, '_tit2-tit1')
+        self.assertEqual(cc1.slug, '_default-tit2')
+        self.assertEqual(cc2.slug, '_tit2-default')
 
     def test_no_funciona_en_movimiento_que_no_sea_entre_titulares(self):
         self.cuenta3 = Cuenta.crear('Cuenta 3', 'c3', titular=self.titular1)
@@ -2135,7 +1072,13 @@ class TestModelMovimientoMetodoGenerarCuentasCredito(TestModelMovimientoEntreTit
         self.assertEqual(cc2._cuentacontra, cc1)
 
 
-class TestModelMovimientoMetodoEliminarContramovimiento(TestModelMovimientoModificar):
+class TestModelMovimientoMetodoEliminarContramovimiento(TestModelMovimiento):
+
+    def setUp(self):
+        super().setUp()
+        self.tit2 = Titular.crear(nombre='Titular 2', titname='tit2')
+        self.cuenta2 = Cuenta.crear('Cuenta tit 2', 'ct2', titular=self.tit2)
+        self.cuenta3 = Cuenta.crear('Cuenta 2 tit 2', 'c2t2', titular=self.tit2)
 
     def test_elimina_contramovimiento(self):
         movimiento = Movimiento.crear(
@@ -2154,14 +1097,21 @@ class TestModelMovimientoMetodoEliminarContramovimiento(TestModelMovimientoModif
         self.assertIsNone(movimiento.id_contramov)
 
     def test_si_al_eliminar_contramovimiento_se_cancela_deuda_retira_titular_cta_entrada_de_acreedores_de_titular_cta_salida_y_viceversa(self):
+        tit1 = Titular.tomar(titname='default')
         movimiento = Movimiento.crear(
             'Préstamo', 30, self.cuenta3, self.cuenta1)
         movimiento._eliminar_contramovimiento()
-        self.assertNotIn(self.titular1, self.titular2.acreedores.all())
-        self.assertNotIn(self.titular2, self.titular1.deudores.all())
+        self.assertNotIn(tit1, self.tit2.acreedores.all())
+        self.assertNotIn(self.tit2, tit1.deudores.all())
 
 
-class TestModelMovimientoMetodoRegenerarContramovimiento(TestModelMovimientoModificar):
+class TestModelMovimientoMetodoRegenerarContramovimiento(TestModelMovimiento):
+
+    def setUp(self):
+        super().setUp()
+        tit2 = Titular.crear(nombre='Titular 2', titname='tit2')
+        self.cuenta2 = Cuenta.crear('Cuenta tit 2', 'ct2', titular=tit2)
+        self.cuenta3 = Cuenta.crear('Cuenta 2 tit 2', 'c2t2', titular=tit2)
 
     @patch.object(Movimiento, '_eliminar_contramovimiento', autospec=True)
     def test_elimina_contramovimiento(self, mock_eliminar_contramovimiento):
@@ -2192,10 +1142,11 @@ class TestModelMovimientoMetodoRegenerarContramovimiento(TestModelMovimientoModi
         self.assertEqual(movimiento.id_contramov, contramov.id)
 
 
-class TestModelMovimientoMetodoCambiaCampo(TestModelMovimientoModificar):
+class TestModelMovimientoMetodoCambiaCampo(TestModelMovimiento):
 
     def setUp(self):
         super().setUp()
+        self.mov1 = Movimiento.crear('Movimiento', 100, self.cuenta1)
         self.mov1.importe = 156
 
     def test_devuelve_true_si_hay_cambio_en_alguno_de_los_campos_dados(self):
@@ -2206,10 +1157,10 @@ class TestModelMovimientoMetodoCambiaCampo(TestModelMovimientoModificar):
 
 
 @patch('diario.models.Movimiento.mantiene_foreignfield', autospec=True)
-class TestModelMovimientoMetodoMantieneCuenta(TestCase):
+class TestModelMovimientoMetodoMantieneCuenta(TestModelMovimiento):
 
     def setUp(self):
-        self.cuenta1 = Cuenta.crear('cuenta 1', 'c1')
+        super().setUp()
         self.entrada = Movimiento.crear('entrada', 100, self.cuenta1)
 
     def test_llama_a_mantiene_foreignkey_con_cuenta_y_movimiento(self, mock_mantiene_foreignfield):
