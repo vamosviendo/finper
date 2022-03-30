@@ -1180,3 +1180,50 @@ class TestModelMovimientoMetodoMantieneCuenta(TestModelMovimiento):
         self.assertFalse(
             self.entrada._mantiene_cuenta('cta_entrada', mov_guardado)
         )
+
+
+class TestModelMovimientoMetodoGestionarTransferencia(TestModelMovimiento):
+
+    def setUp(self):
+        super().setUp()
+        self.tit1 = Titular.tomar(titname='default')
+        self.tit2 = Titular.crear(nombre='Titular 2', titname='tit2')
+        self.cuenta2 = Cuenta.crear('cuenta tit 2', 'ct2', titular=self.tit2)
+        self.mov = Movimiento(
+            concepto='traspaso',
+            importe=100,
+            cta_entrada=self.cuenta1,
+            cta_salida=self.cuenta2
+        )
+
+    @patch('diario.models.Movimiento._crear_movimiento_credito')
+    def test_crea_movimiento_credito(self, mock_crear_movimiento_credito):
+        self.mov._gestionar_transferencia()
+        mock_crear_movimiento_credito.assert_called_once()
+
+    def test_si_receptor_no_es_acreedor_de_emisor_agregar_receptor_como_deudor_de_emisor(self):
+        self.mov._gestionar_transferencia()
+        self.assertIn(self.tit1, self.tit2.deudores.all())
+
+    def test_si_receptor_es_acreedor_de_emisor_no_agregar_receptor_como_deudor_de_emisor(self):
+        Movimiento.crear('prestamo', 200, self.cuenta2, self.cuenta1)
+        self.mov._gestionar_transferencia()
+        self.assertNotIn(self.tit1, self.tit2.deudores.all())
+
+    @patch('diario.models.Titular.cancelar_deuda_de', autospec=True)
+    def test_si_receptor_es_acreedor_de_emisor_y_se_transfiere_el_total_adeudado_cancelar_deuda(self, mock_cancelar_deuda_de):
+        Movimiento.crear('prestamo', 100, self.cuenta2, self.cuenta1)
+        self.mov._gestionar_transferencia()
+        mock_cancelar_deuda_de.assert_called_once_with(self.tit1, self.tit2)
+
+    @patch('diario.models.Titular.cancelar_deuda_de')
+    def test_si_receptor_es_acreedor_de_emisor_y_no_se_transfiere_el_total_adeudado_no_cancelar_deuda(self, mock_cancelar_deuda_de):
+        Movimiento.crear('prestamo', 200, self.cuenta2, self.cuenta1)
+        self.mov._gestionar_transferencia()
+        mock_cancelar_deuda_de.assert_not_called()
+
+    def test_si_receptor_es_acreedor_de_emisor_y_se_transfiere_mas_del_total_adeudado_se_invierte_relacion_crediticia(self):
+        Movimiento.crear('prestamo', 50, self.cuenta2, self.cuenta1)
+        self.mov._gestionar_transferencia()
+        self.assertNotIn(self.tit2, self.tit1.deudores.all())
+        self.assertIn(self.tit1, self.tit2.deudores.all())

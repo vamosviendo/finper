@@ -293,26 +293,13 @@ class Movimiento(MiModel):
           cuenta de salida para dar cuenta de su conversión en acumulativa.
         """
 
-        # Movimiento nuevo
-        if self._state.adding:
+        if self._state.adding:   # Movimiento nuevo
             self._actualizar_saldos_cuentas()
 
             if self.es_prestamo():
-                if self.receptor not in self.emisor.acreedores.all():
-                    self._registrar_credito()
-                else:
-                    self._crear_movimiento_credito()
-                    cuenta_credito = self.receptor.cuentas.get(
-                        slug=f'_{self.receptor.titname}'
-                             f'-{self.emisor.titname}'
-                    )
-                    if cuenta_credito.saldo <= 0:
-                        self.receptor.cancelar_deuda_de(self.emisor)
-                        if cuenta_credito.saldo < 0:
-                            self.emisor.deudores.add(self.receptor)
+                self._gestionar_transferencia()
 
-        # Movimiento existente
-        else:
+        else:                    # Movimiento existente
             mov_guardado = self.tomar_de_bd()
 
             if self.es_prestamo():
@@ -405,6 +392,11 @@ class Movimiento(MiModel):
         return self.cta_salida and self.cta_salida.es_acumulativa
 
     def es_prestamo(self):
+        ''' Devuelve True si
+            - hay cuenta de entrada y cuenta de salida
+            - las cuentas de entrada y salida pertenecen a distinto titular
+            - el movimiento no se creó como "gratis" (es decir, genera deuda)
+        '''
         return (self.cta_entrada and self.cta_salida and
                 self.receptor != self.emisor and
                 not self.esgratis)
@@ -483,10 +475,6 @@ class Movimiento(MiModel):
                 return True
         return False
 
-    def _registrar_credito(self):
-        self._crear_movimiento_credito()
-        self.emisor.deudores.add(self.receptor)
-
     def _generar_cuentas_credito(self):
         cls = self.get_related_class('cta_entrada')
         if not self.emisor or not self.receptor or self.emisor == self.receptor:
@@ -526,6 +514,16 @@ class Movimiento(MiModel):
             esgratis=True
         )
         self.id_contramov = contramov.id
+
+    def _gestionar_transferencia(self):
+        if self.receptor not in self.emisor.acreedores.all():
+            self.emisor.deudores.add(self.receptor)
+        else:
+            if self.importe >= -self.emisor.cuenta_credito_con(self.receptor).saldo:
+                self.receptor.cancelar_deuda_de(self.emisor)
+                if self.importe > -self.emisor.cuenta_credito_con(self.receptor).saldo:
+                    self.emisor.deudores.add(self.receptor)
+        self._crear_movimiento_credito()
 
     def _eliminar_contramovimiento(self):
         contramov = Movimiento.tomar(id=self.id_contramov)

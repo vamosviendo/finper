@@ -855,8 +855,8 @@ class TestMovNuevo(TestCase):
         )
         self.assertEqual(Movimiento.cantidad(), 0)
 
-    @patch('diario.views.Movimiento._registrar_credito')
-    def test_llama_a_metodo_crear(self, mock_registrar_credito):
+    @patch('diario.views.Movimiento._gestionar_transferencia')
+    def test_movimiento_entre_titulares_llama_a_metodo_registrar_credito(self, mock_gestionar_transferencia):
         tit1 = Titular.crear(titname='tit1', nombre='Titular 1')
         tit2 = Titular.crear(titname='tit2', nombre='Titular 2')
         cuenta1 = Cuenta.crear(nombre='Cuenta tit 1', slug='ct1', titular=tit1)
@@ -871,7 +871,7 @@ class TestMovNuevo(TestCase):
                 'cta_salida': cuenta2.id
             }
         )
-        mock_registrar_credito.assert_called_once()
+        mock_gestionar_transferencia.assert_called_once()
 
 
 class TestMovElim(TestCase):
