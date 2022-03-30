@@ -495,6 +495,7 @@ class Movimiento(MiModel):
         return (cc1, cc2)
 
     def _crear_movimiento_credito(self):
+        # TODO: ¿manejar con try/except?
         cuenta_acreedora, cuenta_deudora = self.recuperar_cuentas_credito()
         if cuenta_acreedora is None:
             cuenta_acreedora, cuenta_deudora = self._generar_cuentas_credito()
@@ -519,9 +520,10 @@ class Movimiento(MiModel):
         if self.receptor not in self.emisor.acreedores.all():
             self.emisor.deudores.add(self.receptor)
         else:
-            if self.importe >= -self.emisor.cuenta_credito_con(self.receptor).saldo:
+            deuda = self.emisor.deuda_con(self.receptor)
+            if self.importe >= deuda:
                 self.receptor.cancelar_deuda_de(self.emisor)
-                if self.importe > -self.emisor.cuenta_credito_con(self.receptor).saldo:
+                if self.importe > deuda:
                     self.emisor.deudores.add(self.receptor)
         self._crear_movimiento_credito()
 

@@ -244,6 +244,26 @@ class TestTitularMetodoCuentaCreditoCon(TestTitularMetodo):
         self.assertIsNone(self.titular1.cuenta_credito_con((self.titular2)))
 
 
+class TestTitularMetodoDeudaCon(TestTitularMetodo):
+
+    def test_devuelve_deuda_con_otro_titular(self):
+        Movimiento.crear('Prestamo', 10, self.cuenta2, self.cuenta1)
+        self.assertEqual(self.titular2.deuda_con(self.titular1), 10)
+
+    def test_devuelve_0_si_no_hay_deuda(self):
+        self.assertEqual(self.titular2.deuda_con(self.titular1), 0)
+
+    def test_devuelve_0_si_el_titular_es_acreedor_del_otro(self):
+        Movimiento.crear('Prestamo', 10, self.cuenta2, self.cuenta1)
+        self.assertEqual(self.titular1.deuda_con(self.titular2), 0)
+
+    def test_devuelve_0_si_el_titular_es_deudor_de_otro_titular(self):
+        tit3 = Titular.crear(nombre='tercero', titname='t3')
+        cuenta3 = Cuenta.crear('cuenta tit3', 'ct3', titular=tit3)
+        Movimiento.crear('Préstamo', 10, self.cuenta2, cuenta3)
+        self.assertEqual(self.titular2.deuda_con(self.titular1), 0)
+
+
 class TestTitularMetodoCancelarDeudaDe(TestTitularMetodo):
 
     def test_retira_otro_de_deudores_del_titular(self):

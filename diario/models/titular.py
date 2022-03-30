@@ -59,6 +59,11 @@ class Titular(MiModel):
         except self.get_related_class('cuentas').DoesNotExist:
             return None
 
+    def deuda_con(self, otro):
+        if self in otro.deudores.all():
+            return -self.cuenta_credito_con(otro).saldo
+        return 0
+
     def cancelar_deuda_de(self, otro):
         if otro not in self.deudores.all():
             raise self.get_class().DoesNotExist(
