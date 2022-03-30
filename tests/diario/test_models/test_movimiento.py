@@ -990,15 +990,15 @@ class TestModelMovimientoMetodoEsPrestamo(TestModelMovimiento):
     def test_devuelve_true_si_mov_es_traspaso_entre_cuentas_de_distinto_titular(self):
         mov = Movimiento.crear(
             'traspaso', 100, cta_entrada=self.cuenta1, cta_salida=self.cuenta2)
-        self.assertTrue(mov.es_prestamo())
+        self.assertTrue(mov.es_prestamo_o_devolucion())
 
     def test_devuelve_false_si_mov_no_es_traspaso(self):
         mov = Movimiento.crear('entrada', 100, self.cuenta1)
-        self.assertFalse(mov.es_prestamo())
+        self.assertFalse(mov.es_prestamo_o_devolucion())
 
     def test_devuelve_false_si_cuentas_pertenecen_al_mismo_titular(self):
         mov = Movimiento.crear('traspaso', 100, self.cuenta2, self.cuenta3)
-        self.assertFalse(mov.es_prestamo())
+        self.assertFalse(mov.es_prestamo_o_devolucion())
 
     def test_devuelve_false_si_mov_es_gratis(self):
         mov = Movimiento.crear(
@@ -1008,7 +1008,7 @@ class TestModelMovimientoMetodoEsPrestamo(TestModelMovimiento):
             cta_salida=self.cuenta3,
             esgratis=True
         )
-        self.assertFalse(mov.es_prestamo())
+        self.assertFalse(mov.es_prestamo_o_devolucion())
 
 
 class TestModelMovimientoMetodoHermanosDeFecha(TestModelMovimiento):

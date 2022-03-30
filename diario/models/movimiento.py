@@ -296,13 +296,13 @@ class Movimiento(MiModel):
         if self._state.adding:   # Movimiento nuevo
             self._actualizar_saldos_cuentas()
 
-            if self.es_prestamo():
+            if self.es_prestamo_o_devolucion():
                 self._gestionar_transferencia()
 
         else:                    # Movimiento existente
             mov_guardado = self.tomar_de_bd()
 
-            if self.es_prestamo():
+            if self.es_prestamo_o_devolucion():
                 if self.id_contramov:
                     if self._cambia_campo(
                             'fecha', 'importe', 'cta_entrada', 'cta_salida'):
@@ -391,7 +391,7 @@ class Movimiento(MiModel):
     def tiene_cta_salida_acumulativa(self):
         return self.cta_salida and self.cta_salida.es_acumulativa
 
-    def es_prestamo(self):
+    def es_prestamo_o_devolucion(self):
         ''' Devuelve True si
             - hay cuenta de entrada y cuenta de salida
             - las cuentas de entrada y salida pertenecen a distinto titular
