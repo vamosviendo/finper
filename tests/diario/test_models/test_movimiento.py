@@ -1,6 +1,6 @@
 from datetime import date
 from unittest import skip
-from unittest.mock import patch, call
+from unittest.mock import patch, call, PropertyMock
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -293,46 +293,41 @@ class TestModelMovimientoCrearEntreTitulares(TestModelMovimiento):
 class TestModelMovimientoCrearEntreTitularesPrimero(
         TestModelMovimientoCrearEntreTitulares):
 
-    @patch.object(Cuenta, 'crear')
-    def test_genera_cuentas_credito_si_no_existen(self, mock_crear):
-        mock_crear.side_effect = [
-            CuentaInteractiva(nombre='mock0', slug='mock0'),
-            CuentaInteractiva(nombre='mock1', slug='mock1'),
-        ]
-
-        Movimiento.crear(
-            'Prestamo', 10, cta_entrada=self.cuenta1, cta_salida=self.cuenta2)
-
-        self.assertEqual(
-            mock_crear.call_args_list[0],
-            call(
-                nombre='Préstamo entre tit2 y default',
-                slug='_tit2-default',
-                titular=self.titular2
-            )
+    @patch('diario.models.Movimiento._gestionar_transferencia', autospec=True)
+    def test_movimiento_entre_titulares_gestiona_trasferencia(self, mock_gestionar_transferencia):
+        mov = Movimiento(
+            concepto='Préstamo',
+            importe=10,
+            cta_entrada=self.cuenta1,
+            cta_salida=self.cuenta2
         )
-        args2 = mock_crear.call_args_list[1][1]
-        args2.pop('contracuenta')
-        self.assertEqual(
-            args2,
-            dict(
-                nombre='Préstamo entre default y tit2',
-                slug='_default-tit2',
-                titular=self.titular1,
-            )
-        )
+        mov.save()
+        mock_gestionar_transferencia.assert_called_once_with(mov)
 
-    @patch.object(Cuenta, 'crear')
-    def test_no_genera_nada_si_esgratis(self, mock_crear):
-        Movimiento.crear(
-            'Prestamo', 10,
+    @patch('diario.models.Movimiento._gestionar_transferencia')
+    def test_movimiento_no_entre_titulares_no_gestiona_transferencia(self, mock_gestionar_transferencia):
+        cuenta3 = Cuenta.crear('cuenta 2 default', 'c2d')
+        mov = Movimiento(
+            concepto='Préstamo',
+            importe=10,
+            cta_entrada=self.cuenta1,
+            cta_salida=cuenta3
+        )
+        mov.save()
+        mock_gestionar_transferencia.assert_not_called()
+
+    @patch('diario.models.Movimiento._gestionar_transferencia')
+    def test_no_gestiona_transferencia_si_esgratis(self, mock_gestionar_transferencia):
+        mov = Movimiento(
+            concepto='Prestamo', importe=10,
             cta_entrada=self.cuenta1,
             cta_salida=self.cuenta2,
-            esgratis=True
         )
-        mock_crear.assert_not_called()
+        mov.esgratis = True
+        mov.save()
+        mock_gestionar_transferencia.assert_not_called()
 
-    def test_genera_movimiento_contrario_entre_cuentas_credito(self):
+    def test_integrativo_genera_contramovimiento(self):
         Movimiento.crear(
             'Prestamo', 10, cta_entrada=self.cuenta1, cta_salida=self.cuenta2)
         self.assertEqual(Movimiento.cantidad(), 2)
@@ -347,18 +342,6 @@ class TestModelMovimientoCrearEntreTitularesPrimero(
         self.assertEqual(mov_credito.importe, 10)
         self.assertEqual(mov_credito.cta_entrada, cuenta_acreedora)
         self.assertEqual(mov_credito.cta_salida, cuenta_deudora)
-
-    def test_guarda_marcador_al_movimiento_de_credito_generado(self):
-        movimiento = Movimiento.crear(
-            'Prestamo', 10, cta_entrada=self.cuenta1, cta_salida=self.cuenta2)
-        mov_credito = Movimiento.tomar(concepto='Constitución de crédito')
-        self.assertEqual(movimiento.id_contramov, mov_credito.id)
-
-    def test_movimiento_generado_se_marca_como_automatico(self):
-        movimiento = Movimiento.crear(
-            'Prestamo', 10, cta_entrada=self.cuenta1, cta_salida=self.cuenta2)
-        mov_credito = Movimiento.tomar(id=movimiento.id_contramov)
-        self.assertTrue(mov_credito.es_automatico)
 
     def test_integrativo_genera_cuenta_credito_y_subcuentas_y_movimiento(self):
         movimiento = Movimiento.crear(
@@ -382,16 +365,6 @@ class TestModelMovimientoCrearEntreTitularesPrimero(
             movimiento.cta_entrada.titular
         )
 
-    def test_incluye_titular_cta_receptora_entre_los_deudores_de_titular_cta_emisora(self):
-        Movimiento.crear(
-            'Prestamo', 10, cta_entrada=self.cuenta1, cta_salida=self.cuenta2)
-        self.assertIn(self.titular1, self.titular2.deudores.all())
-
-    def test_incluye_titular_cta_emisora_entre_los_acreedores_de_titular_cta_deudora(self):
-        Movimiento.crear(
-            'Prestamo', 10, cta_entrada=self.cuenta1, cta_salida=self.cuenta2)
-        self.assertIn(self.titular2, self.titular1.acreedores.all())
-
     def test_integrativo_no_genera_nada_si_esgratis(self):
         Movimiento.crear(
             'Prestamo', 10,
@@ -400,123 +373,6 @@ class TestModelMovimientoCrearEntreTitularesPrimero(
         )
         self.assertEqual(Cuenta.cantidad(), 2)
         self.assertEqual(Movimiento.cantidad(), 1)
-
-
-class TestModelMovimientoCrearEntreTitularesSiguientes(
-        TestModelMovimientoCrearEntreTitulares):
-
-    def setUp(self):
-        super().setUp()
-        Movimiento.crear(
-            'Prestamo', 10, cta_entrada=self.cuenta1, cta_salida=self.cuenta2)
-
-    @patch.object(Movimiento, '_generar_cuentas_credito')
-    def test_no_crea_cuentas_de_credito_si_ya_existen_entre_los_titulares(self, mock_generar_cuentas_credito):
-        mock_generar_cuentas_credito.return_value = (
-            Cuenta(nombre='mock1', slug='mock1'),
-            Cuenta(nombre='mock2', slug='mock2')
-        )
-        Movimiento.crear(
-            'Prestamo', 15, cta_entrada=self.cuenta1, cta_salida=self.cuenta2)
-        mock_generar_cuentas_credito.assert_not_called()
-
-    @patch.object(Movimiento, '_generar_cuentas_credito')
-    def test_no_crea_cuentas_credito_en_movimiento_inverso_entre_titulares_con_credito_existente(
-            self, mock_generar_cuentas_credito):
-        mock_generar_cuentas_credito.return_value = (
-            Cuenta(nombre='mock1', slug='mock1'),
-            Cuenta(nombre='mock2', slug='mock2')
-        )
-        Movimiento.crear(
-            'Devolución', 6, cta_entrada=self.cuenta2, cta_salida=self.cuenta1)
-        mock_generar_cuentas_credito.assert_not_called()
-
-    def test_resta_importe_de_cuenta_credito_en_movimiento_inverso_entre_titulares_con_credito_existente(self):
-        Movimiento.crear('Devolución', 6, cta_entrada=self.cuenta2, cta_salida=self.cuenta1)
-        self.assertEqual(Cuenta.tomar(slug='_tit2-default').saldo, 4)
-
-    def test_suma_importe_a_cuenta_deuda_en_movimiento_inverso_entre_titulares_con_credito_existente(self):
-        Movimiento.crear('Devolución', 6, cta_entrada=self.cuenta2, cta_salida=self.cuenta1)
-        self.assertEqual(Cuenta.tomar(slug='_default-tit2').saldo, -4)
-
-    def test_da_cuenta_en_el_concepto_de_un_aumento_de_credito(self):
-        Movimiento.crear(
-            'Prestamo', 15, cta_entrada=self.cuenta1, cta_salida=self.cuenta2)
-        self.assertEqual(Movimiento.todes()[2].concepto, 'Aumento de crédito')
-
-    def test_da_cuenta_en_el_concepto_de_una_devolucion_parcial(self):
-        Movimiento.crear(
-            'Devolución', 6, cta_entrada=self.cuenta2, cta_salida=self.cuenta1)
-        self.assertEqual(
-            Movimiento.todes()[2].concepto,
-            'Pago a cuenta de crédito'
-        )
-
-    def test_da_cuenta_en_el_concepto_de_una_cancelacion_de_credito(self):
-        Movimiento.crear(
-            'Devolución', 10, cta_entrada=self.cuenta2, cta_salida=self.cuenta1)
-        self.assertEqual(
-            Movimiento.todes()[2].concepto,
-            'Cancelación de crédito'
-        )
-
-    def test_si_es_un_pago_a_cuenta_no_incluye_emisor_entre_acreedores_de_receptor(self):
-        Movimiento.crear(
-            'A cuenta', 3, cta_entrada=self.cuenta2, cta_salida=self.cuenta1)
-        self.assertNotIn(self.titular1, self.titular2.acreedores.all())
-
-    def test_si_es_un_pago_a_cuenta_mantiene_emisor_entre_deudores_de_receptor(self):
-        Movimiento.crear(
-            'A cuenta', 3, cta_entrada=self.cuenta2, cta_salida=self.cuenta1)
-        self.assertIn(self.titular1, self.titular2.deudores.all())
-
-    @patch.object(Titular, 'cancelar_deuda_de', autospec=True)
-    def test_si_cancela_deuda_elimina_emisor_de_deudores_de_receptor(self, mock_cancelar_deuda_de):
-        Movimiento.crear(
-            'Devolución', 10, cta_entrada=self.cuenta2, cta_salida=self.cuenta1)
-        mock_cancelar_deuda_de.assert_called_once_with(self.titular2, self.titular1)
-
-    def test_si_paga_mas_de_lo_que_debe_elimina_emisor_de_deudores_de_receptor(self):
-        Movimiento.crear(
-            'Devolución', 16, cta_entrada=self.cuenta2, cta_salida=self.cuenta1)
-        self.assertNotIn(self.titular1, self.titular2.deudores.all())
-
-    def test_si_paga_mas_de_lo_que_debe_incluye_receptor_entre_deudores_de_emisor(self):
-        Movimiento.crear(
-            'Devolución', 16, cta_entrada=self.cuenta2, cta_salida=self.cuenta1)
-        self.assertIn(self.titular2, self.titular1.deudores.all())
-
-    def test_si_toma_credito_despues_de_cancelarlo_asunto_del_movimiento_es_Constitucion_de_credito(self):
-        Movimiento.crear(
-            'Devolución', 10, cta_entrada=self.cuenta2, cta_salida=self.cuenta1)
-
-        mov = Movimiento.crear(
-            'Nuevo préstamo',
-            10,
-            cta_entrada=self.cuenta1,
-            cta_salida=self.cuenta2
-        )
-        self.assertEqual(
-            Movimiento.tomar(id=mov.id_contramov).concepto,
-            'Constitución de crédito'
-        )
-
-    def test_si_se_genera_contramovimiento_en_fecha_distinta_de_movimiento_toma_fecha_de_movimiento(self):
-        movi = Movimiento.crear(
-            'Traspaso', 10,
-            cta_entrada=self.cuenta1,
-            cta_salida=self.cuenta2,
-            fecha=date(2020, 10, 2),
-            esgratis=True
-        )
-        movi.esgratis = False
-        movi.full_clean()
-        movi.save()
-
-        self.assertEqual(
-            Movimiento.tomar(id=movi.id_contramov).fecha,
-            date(2020, 10, 2)
-        )
 
 
 class TestModelMovimientoClean(TestModelMovimiento):
@@ -1182,6 +1038,186 @@ class TestModelMovimientoMetodoMantieneCuenta(TestModelMovimiento):
         )
 
 
+class TestModelMovimientoMetodoCrearMovimientoCredito(
+    TestModelMovimientoCrearEntreTitulares):
+
+    def setUp(self):
+        super().setUp()
+        self.mov = Movimiento(
+            concepto='Prestamo',
+            importe=10,
+            cta_entrada=self.cuenta1,
+            cta_salida=self.cuenta2
+        )
+
+    @patch('diario.models.Movimiento.recuperar_cuentas_credito', autospec=True)
+    def test_intent_recuperar_cuentas_credito(self, mock_recuperar_cuentas_credito):
+        mock_recuperar_cuentas_credito.return_value = (
+            Cuenta(nombre='mock1', slug='mock1'),
+            Cuenta(nombre='mock2', slug='mock2')
+        )
+        self.mov._crear_movimiento_credito()
+        mock_recuperar_cuentas_credito.assert_called_once_with(self.mov)
+
+    @patch('diario.models.Movimiento._generar_cuentas_credito', autospec=True)
+    def test_genera_cuentas_credito_si_no_existen(self, mock_generar_cuentas_credito):
+        mock_generar_cuentas_credito.return_value = (
+            Cuenta(nombre='mock1', slug='mock1'),
+            Cuenta(nombre='mock2', slug='mock2')
+        )
+        self.mov._crear_movimiento_credito()
+        mock_generar_cuentas_credito.assert_called_once_with(self.mov)
+
+    @patch('diario.models.Movimiento._generar_cuentas_credito')
+    def test_no_genera_cuentas_credito_si_existen(self, mock_generar_cuentas_credito):
+        Cuenta.crear('Préstamo entre tit2 y default', '_tit2-default')
+        Cuenta.crear('Preśtamo entre default y tit2', '_default-tit2')
+
+        self.mov._crear_movimiento_credito()
+
+        mock_generar_cuentas_credito.assert_not_called()
+
+    def test_no_genera_cuentas_credito_en_movimiento_inverso_entre_titulares_con_credito_existente(self):
+        Movimiento.crear('Préstamo', 10, self.cuenta2, self.cuenta1)
+
+        with patch('diario.models.Movimiento._generar_cuentas_credito') \
+                as mock_generar_cuentas_credito:
+            self.mov._crear_movimiento_credito()
+            mock_generar_cuentas_credito.assert_not_called()
+
+    def test_resta_importe_de_cuenta_credito_en_movimiento_inverso_entre_titulares_con_credito_existente(self):
+        Movimiento.crear('Préstamo', 14, self.cuenta2, self.cuenta1)
+
+        self.mov._crear_movimiento_credito()
+
+        self.assertEqual(Cuenta.tomar(slug='_default-tit2').saldo, 4)
+
+    def test_suma_importe_a_cuenta_deuda_en_movimiento_inverso_entre_titulares_con_credito_existente(self):
+        Movimiento.crear('Préstamo', 14, self.cuenta2, self.cuenta1)
+
+        self.mov._crear_movimiento_credito()
+
+        self.assertEqual(Cuenta.tomar(slug='_tit2-default').saldo, -4)
+
+    @patch('diario.models.Movimiento._concepto_movimiento_credito')
+    def test_determina_concepto_del_movimiento_de_credito_en_base_a_datos_de_las_cuentas_credito_creadas(self, mock_concepto_movimiento_credito):
+        self.mov._crear_movimiento_credito()
+        mock_concepto_movimiento_credito.assert_called_once_with(
+            *self.mov.recuperar_cuentas_credito()
+        )
+
+    @patch('diario.models.Cuenta.crear')
+    def test_integrativo_genera_cuentas_credito_si_no_existen(self, mock_crear):
+        mock_crear.side_effect = [
+            CuentaInteractiva(nombre='mock0', slug='mock0'),
+            CuentaInteractiva(nombre='mock1', slug='mock1'),
+        ]
+
+        Movimiento.crear(
+            'Prestamo', 10, cta_entrada=self.cuenta1, cta_salida=self.cuenta2)
+
+        self.assertEqual(
+            mock_crear.call_args_list[0],
+            call(
+                nombre='Préstamo entre tit2 y default',
+                slug='_tit2-default',
+                titular=self.titular2
+            )
+        )
+        args2 = mock_crear.call_args_list[1][1]
+        args2.pop('contracuenta')
+        self.assertEqual(
+            args2,
+            dict(
+                nombre='Préstamo entre default y tit2',
+                slug='_default-tit2',
+                titular=self.titular1,
+            )
+        )
+
+    @patch('diario.models.Movimiento.crear')
+    @patch('diario.models.Movimiento._generar_cuentas_credito')
+    def test_genera_contramovimiento(self, mock_generar_cuentas_credito, mock_crear):
+        cd = Cuenta.crear('cuenta crédito deudora', 'ccd')
+        ca = Cuenta.crear('cuenta crédito acreedora', 'cca')
+        mock_generar_cuentas_credito.return_value = cd, ca
+
+        self.mov._crear_movimiento_credito()
+
+        mock_crear.assert_called_once_with(
+            fecha=self.mov.fecha,
+            concepto='Constitución de crédito',
+            detalle='de Titular 2 a Titular por defecto',
+            importe=10,
+            cta_entrada=cd,
+            cta_salida=ca,
+            es_automatico=True,
+            esgratis=True
+        )
+
+    def test_guarda_id_de_contramovimiento_en_movimiento(self):
+        self.mov._crear_movimiento_credito()
+        mov_credito = Movimiento.tomar(concepto='Constitución de crédito')
+        self.assertEqual(self.mov.id_contramov, mov_credito.id)
+
+    def test_movimiento_generado_se_marca_como_automatico(self):
+        self.mov._crear_movimiento_credito()
+        mov_credito = Movimiento.tomar(id=self.mov.id_contramov)
+        self.assertTrue(mov_credito.es_automatico)
+
+
+class TestModelMovimientoMetodoConceptoMovimientoCredito(TestCase):
+
+    def setUp(self):
+        self.cuenta_acreedora = Cuenta.crear('cuenta acreedora', 'ca')
+        self.cuenta_deudora = Cuenta.crear('cuenta deudora', 'cd')
+        self.mov = Movimiento()
+
+    def test_si_cuenta_acreedora_tiene_saldo_positivo_devuelve_aumento_de_credito(self):
+        self.cuenta_acreedora.cargar_saldo(100)
+        self.assertEqual(
+            self.mov._concepto_movimiento_credito(
+                self.cuenta_acreedora,
+                self.cuenta_deudora
+            ),
+            'Aumento de crédito'
+        )
+
+    def test_si_cuenta_acreedora_tiene_saldo_negativo_e_importe_es_igual_a_saldo_de_cuenta_deudora_devuelve_cancelacion_de_credito(self):
+        self.cuenta_acreedora.cargar_saldo(-100)
+        self.cuenta_deudora.cargar_saldo(100)
+        self.mov.importe = 100
+        self.assertEqual(
+            self.mov._concepto_movimiento_credito(
+                self.cuenta_acreedora,
+                self.cuenta_deudora
+            ),
+            'Cancelación de crédito'
+        )
+
+    def test_si_cuenta_acreedora_tiene_saldo_negativo_e_importe_no_es_igual_a_saldo_de_cuenta_deudora_devuelve_pago_a_cuenta_de_credito(self):
+        self.cuenta_acreedora.cargar_saldo(-100)
+        self.cuenta_deudora.cargar_saldo(100)
+        self.mov.importe = 80
+        self.assertEqual(
+            self.mov._concepto_movimiento_credito(
+                self.cuenta_acreedora,
+                self.cuenta_deudora
+            ),
+            'Pago a cuenta de crédito'
+        )
+
+    def test_si_cuenta_acreedora_tiene_saldo_cero_devuelve_constitucion_de_credito(self):
+        self.assertEqual(
+            self.mov._concepto_movimiento_credito(
+                self.cuenta_acreedora,
+                self.cuenta_deudora
+            ),
+            'Constitución de crédito'
+        )
+
+
+
 class TestModelMovimientoMetodoGestionarTransferencia(TestModelMovimiento):
 
     def setUp(self):
@@ -1201,11 +1237,11 @@ class TestModelMovimientoMetodoGestionarTransferencia(TestModelMovimiento):
         self.mov._gestionar_transferencia()
         mock_crear_movimiento_credito.assert_called_once()
 
-    def test_si_receptor_no_es_acreedor_de_emisor_agregar_receptor_como_deudor_de_emisor(self):
+    def test_si_receptor_no_es_acreedor_de_emisor_agrega_receptor_como_deudor_de_emisor(self):
         self.mov._gestionar_transferencia()
         self.assertIn(self.tit1, self.tit2.deudores.all())
 
-    def test_si_receptor_es_acreedor_de_emisor_no_agregar_receptor_como_deudor_de_emisor(self):
+    def test_si_receptor_es_acreedor_de_emisor_no_agrega_receptor_como_deudor_de_emisor(self):
         Movimiento.crear('prestamo', 200, self.cuenta2, self.cuenta1)
         self.mov._gestionar_transferencia()
         self.assertNotIn(self.tit1, self.tit2.deudores.all())
@@ -1226,4 +1262,43 @@ class TestModelMovimientoMetodoGestionarTransferencia(TestModelMovimiento):
         Movimiento.crear('prestamo', 50, self.cuenta2, self.cuenta1)
         self.mov._gestionar_transferencia()
         self.assertNotIn(self.tit2, self.tit1.deudores.all())
+        self.assertIn(self.tit1, self.tit2.deudores.all())
+
+    def test_si_es_un_pago_a_cuenta_no_incluye_emisor_entre_acreedores_de_receptor(self):
+        Movimiento.crear('Préstamo', 115, self.cuenta2, self.cuenta1)
+
+        self.mov._gestionar_transferencia()
+
+        self.assertNotIn(self.tit2, self.tit1.acreedores.all())
+
+    def test_si_es_un_pago_a_cuenta_mantiene_emisor_entre_deudores_de_receptor(self):
+        Movimiento.crear('Préstamo', 115, self.cuenta2, self.cuenta1)
+
+        self.mov._gestionar_transferencia()
+
+        self.assertIn(self.tit2, self.tit1.deudores.all())
+
+    @patch('diario.models.Titular.cancelar_deuda_de', autospec=True)
+    def test_si_emisor_paga_la_totalidad_se_cancela_su_deuda(self, mock_cancelar_deuda_de):
+        Movimiento.crear(
+            'Préstamo', 100, cta_entrada=self.cuenta2, cta_salida=self.cuenta1)
+
+        self.mov._gestionar_transferencia()
+
+        mock_cancelar_deuda_de.assert_called_once_with(self.tit1, self.tit2)
+
+    def test_si_emisor_paga_mas_de_lo_que_debe_se_lo_elimina_de_deudores_de_receptor(self):
+        Movimiento.crear(
+            'Préstamo', 16, cta_entrada=self.cuenta2, cta_salida=self.cuenta1)
+
+        self.mov._gestionar_transferencia()
+
+        self.assertNotIn(self.tit2, self.tit1.deudores.all())
+
+    def test_si_emisor_paga_mas_de_lo_que_debe_se_incluye_a_receptor_entre_sus_deudores(self):
+        Movimiento.crear(
+            'Devolución', 16, cta_entrada=self.cuenta2, cta_salida=self.cuenta1)
+
+        self.mov._gestionar_transferencia()
+
         self.assertIn(self.tit1, self.tit2.deudores.all())
