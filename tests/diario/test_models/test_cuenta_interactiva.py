@@ -528,6 +528,44 @@ class TestVaciarSaldo(TestCase):
         )
 
 
+@patch('diario.models.cuenta.Movimiento.crear')
+class TestCargarSaldo(TestCase):
+
+    def setUp(self):
+        self.cuenta = Cuenta.crear('Cuenta sin saldo', 'css')
+
+    def test_genera_movimiento_con_importe_y_fecha_recibidas(self, mock_crear):
+        self.cuenta.cargar_saldo(100, date(2010, 11, 11))
+        mock_crear.assert_called_once_with(
+            concepto='Carga de saldo',
+            importe=100,
+            cta_entrada=self.cuenta,
+            fecha=date(2010, 11, 11)
+        )
+
+    def test_con_saldo_negativo_cuenta_es_cta_salida_del_movimiento(self, mock_crear):
+        self.cuenta.cargar_saldo(-100, date(2010, 11, 11))
+        mock_crear.assert_called_once_with(
+            concepto='Carga de saldo',
+            importe=100,
+            cta_salida=self.cuenta,
+            fecha=date(2010, 11, 11)
+        )
+
+    def test_con_saldo_cero_no_genera_movimiento(self, mock_crear):
+        self.cuenta.cargar_saldo(0, date(2010, 11, 11))
+        mock_crear.assert_not_called()
+
+    def test_si_no_recibe_fecha_usa_fecha_actual(self, mock_crear):
+        self.cuenta.cargar_saldo(100)
+        mock_crear.assert_called_once_with(
+            concepto='Carga de saldo',
+            importe=100,
+            cta_entrada=self.cuenta,
+            fecha=date.today()
+        )
+
+
 class TestSaldoOk(TestCase):
 
     def test_saldo_ok_devuelve_true_si_saldo_coincide_con_movimientos_en_cuenta_interactiva(self):

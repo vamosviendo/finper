@@ -234,6 +234,24 @@ class CuentaInteractiva(Cuenta):
     def contracuenta(self, cuenta):
         self._contracuenta = cuenta
 
+    def cargar_saldo(self, importe, fecha=None):
+        fecha = fecha or date.today()
+
+        if importe > 0:
+            Movimiento.crear(
+                concepto='Carga de saldo',
+                importe=importe,
+                cta_entrada=self,
+                fecha=fecha
+            )
+        elif importe < 0:
+            Movimiento.crear(
+                concepto='Carga de saldo',
+                importe=-importe,
+                cta_salida=self,
+                fecha=fecha
+            )
+
     def corregir_saldo(self):
         self.saldo = self.total_movs()
         self.save()
