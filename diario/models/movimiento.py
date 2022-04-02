@@ -303,21 +303,29 @@ class Movimiento(MiModel):
             mov_guardado = self.tomar_de_bd()
 
             if self.es_prestamo_o_devolucion():
+                # El mov es una transacción no gratuita entre titulares
                 if self.id_contramov:
+                    # El movimiento ya era una transacción no gratuita entre
+                    # titulares
                     if self._cambia_campo(
                             'fecha', 'importe', 'cta_entrada', 'cta_salida'):
                         self._regenerar_contramovimiento()
                 else:
+                    # El movimiento no era una transacción no gratuita entre
+                    # titulares
                     self._crear_movimiento_credito()
             else:
+                # El movimiento no es una transacción no gratuita entre
+                # titulares
                 if self.id_contramov:
+                    # El movimiento era una transacción no gratuita entre
+                    # titulares
                     self._eliminar_contramovimiento()
 
             # Ver si cambió la cuenta de entrada
             if self._mantiene_cuenta('cta_entrada', mov_guardado):
                 # No cambió la cuenta de entrada
-                if self.importe != mov_guardado.importe:
-                    # Cambió el importe
+                if self._cambia_campo('importe'):
                     # Restar de saldo de cuenta de entrada importe antiguo
                     # y sumar el nuevo
                     self.cta_entrada.saldo = self.cta_entrada.saldo \
@@ -344,8 +352,7 @@ class Movimiento(MiModel):
             # Ver si cambió la cuenta de salida
             if self._mantiene_cuenta('cta_salida', mov_guardado):
                 # No cambió la cuenta de salida
-                if self.importe != mov_guardado.importe:
-                    # Cambió el importe
+                if self._cambia_campo('importe'):
                     # Sumar importe antiguo a cuenta de salida y restar el nuevo
                     self.cta_salida.saldo = self.cta_salida.saldo \
                                             + mov_guardado.importe \
@@ -354,7 +361,6 @@ class Movimiento(MiModel):
 
             else:
                 # Cambió la cuenta de salida
-
                 if mov_guardado.cta_salida:
                     # Había una cuenta de salida
 
@@ -366,6 +372,7 @@ class Movimiento(MiModel):
                     # dejará de ser necesario cuando reemplacemos el campo
                     # _saldo por el modelo relacionado Saldo)
                     mov_guardado.cta_salida.refresh_from_db(fields=['_saldo'])
+
                     # Sumar importe antiguo a cuenta de salida antigua
                     mov_guardado.cta_salida.saldo += mov_guardado.importe
                     mov_guardado.cta_salida.save()
