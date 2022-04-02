@@ -57,14 +57,6 @@ class Movimiento(MiModel):
         self._importe = round(float(valor), 2)
 
     @property
-    def sentido(self):
-        if self.cta_entrada and self.cta_salida:
-            return 't'
-        if self.cta_entrada:
-            return 'e'
-        return 's'
-
-    @property
     def emisor(self):
         if self.cta_salida:
             return self.cta_salida.titular

@@ -678,39 +678,6 @@ class TestModelMovimientoEliminar(TestModelMovimientoSave):
                 'No se eliminó contramovimiento a pesar de force=True')
 
 
-class TestModelMovimientoPropiedadSentido(TestModelMovimiento):
-
-    @skip
-    def test_eliminar(self):
-        self.fail('Eliminar')
-
-    def test_devuelve_s_si_movimiento_tiene_solo_cuenta_de_salida(self):
-        mov = Movimiento.crear(
-            concepto='Pago en efectivo',
-            importe=100,
-            cta_salida=self.cuenta1,
-        )
-        self.assertEqual(mov.sentido, 's')
-
-    def test_devuelve_e_si_movimiento_tiene_solo_cuenta_de_entrada(self):
-        mov = Movimiento.crear(
-            concepto='Pago en efectivo',
-            importe=100,
-            cta_entrada=self.cuenta1,
-        )
-        self.assertEqual(mov.sentido, 'e')
-
-    def test_devuelve_t_si_novimiento_tiene_cuenta_de_entrada_y_salida(self):
-        cuenta2 = Cuenta.crear("Banco", "bco")
-        mov = Movimiento.crear(
-            concepto='Pago a cuenta',
-            importe=143,
-            cta_entrada=cuenta2,
-            cta_salida=self.cuenta1,
-        )
-        self.assertEqual(mov.sentido, 't')
-
-
 class TestModelMovimientoPropiedadImporte(TestModelMovimiento):
 
     def setUp(self):
