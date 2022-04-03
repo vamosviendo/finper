@@ -325,6 +325,11 @@ class Movimiento(MiModel):
                                              + self.importe
                     self.cta_entrada.save()
 
+                    Saldo.registrar(
+                        cuenta=self.cta_entrada,
+                        fecha=self.fecha,
+                        importe=self.importe-mov_guardado.importe
+                    )
             else:
                 # Cambió la cuenta de entrada
                 if mov_guardado.cta_entrada:
@@ -333,11 +338,29 @@ class Movimiento(MiModel):
                     mov_guardado.cta_entrada.saldo -= mov_guardado.importe
                     mov_guardado.cta_entrada.save()
 
+                    if mov_guardado.es_unico_del_dia_de_cuenta(
+                            mov_guardado.cta_entrada):
+                        mov_guardado.cta_entrada.saldo_set.get(
+                            fecha=mov_guardado.fecha
+                        ).eliminar()
+                    else:
+                        Saldo.registrar(
+                            cuenta=mov_guardado.cta_entrada,
+                            fecha=mov_guardado.fecha,
+                            importe=-mov_guardado.importe
+                        )
+
                 if self.cta_entrada:
                     # Ahora hay una cuenta de entrada
                     # Sumar importe nuevo a cuenta de entrada nueva
                     self.cta_entrada.saldo += self.importe
                     self.cta_entrada.save()
+
+                    Saldo.registrar(
+                        cuenta=self.cta_entrada,
+                        fecha=self.fecha,
+                        importe=self.importe
+                    )
 
                 self._actualizar_cuenta_salida_convertida_en_acumulativa()
 
@@ -350,6 +373,12 @@ class Movimiento(MiModel):
                                             + mov_guardado.importe \
                                             - self.importe
                     self.cta_salida.save()
+
+                    Saldo.registrar(
+                        cuenta=self.cta_salida,
+                        fecha=self.fecha,
+                        importe=mov_guardado.importe - self.importe
+                    )
 
             else:
                 # Cambió la cuenta de salida
@@ -369,11 +398,29 @@ class Movimiento(MiModel):
                     mov_guardado.cta_salida.saldo += mov_guardado.importe
                     mov_guardado.cta_salida.save()
 
+                    if mov_guardado.es_unico_del_dia_de_cuenta(
+                            mov_guardado.cta_salida):
+                        mov_guardado.cta_salida.saldo_set.get(
+                            fecha=mov_guardado.fecha
+                        ).eliminar()
+                    else:
+                        Saldo.registrar(
+                            cuenta=mov_guardado.cta_salida,
+                            fecha=mov_guardado.fecha,
+                            importe=mov_guardado.importe
+                        )
+
                 if self.cta_salida:
                     # Ahora hay una cuenta de salida
                     # Restar importe nuevo a cuenta de salida nueva
                     self.cta_salida.saldo -= self.importe
                     self.cta_salida.save()
+
+                    Saldo.registrar(
+                        cuenta=self.cta_salida,
+                        fecha=self.fecha,
+                        importe=-self.importe
+                    )
 
         super().save(*args, **kwargs)
 
@@ -415,6 +462,18 @@ class Movimiento(MiModel):
 
     def hermanos_de_fecha(self):
         return Movimiento.filtro(fecha=self.fecha).exclude(pk=self.pk)
+
+    def es_unico_del_dia(self):
+        return len(self.hermanos_de_fecha()) == 0
+
+    def es_unico_del_dia_de_cuenta(self, cuenta):
+        if cuenta not in (self.cta_entrada, self.cta_salida):
+            raise errors.ErrorCuentaNoFiguraEnMovimiento
+        hermanos = self.hermanos_de_fecha()
+        return len(
+            hermanos.filter(cta_entrada=cuenta) |
+            hermanos.filter(cta_salida=cuenta)
+        ) == 0
 
     def _actualizar_saldos_cuentas(self):
         """ Sumar importe a cuenta de entrada

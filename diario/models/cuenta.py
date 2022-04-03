@@ -118,6 +118,10 @@ class Cuenta(PolymorphModel):
         """
         return self.entradas.all() | self.salidas.all()
 
+    def movs_directos_en_fecha(self, fecha):
+        """ Devuelve movimientos directos de la cuenta en una fecha dada"""
+        return self.movs_directos().filter(fecha=fecha)
+
     def movs(self, order_by='fecha'):
         """ Devuelve movimientos propios y de sus subcuentas
             ordenados por fecha.

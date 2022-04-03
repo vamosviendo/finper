@@ -125,3 +125,12 @@ class ErrorMovimientoAutomatico(ValidationError):
             message='No se puede modificar o eliminar movimiento automático'
     ):
         super().__init__(message)
+
+
+class ErrorCuentaNoFiguraEnMovimiento(ValidationError):
+
+    def __init__(
+            self,
+            message='Cuenta no figura en movimiento'
+    ):
+        super().__init__(message)

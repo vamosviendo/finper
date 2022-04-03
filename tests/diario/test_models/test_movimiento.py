@@ -1,6 +1,5 @@
 from datetime import date
-from unittest import skip
-from unittest.mock import patch, call, PropertyMock
+from unittest.mock import patch, call
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -857,6 +856,57 @@ class TestModelMovimientoMetodoHermanosDeFecha(TestModelMovimiento):
         mov4 = Movimiento.crear(
             'Movimiento 4', 400, self.cuenta1, fecha=date(2011, 11, 12))
         self.assertNotIn(mov4, self.result)
+
+
+class TestModelMovimientoMetodoEsUnicoDelDia(TestModelMovimiento):
+
+    def setUp(self):
+        super().setUp()
+        self.mov1 = Movimiento.crear(
+            'Movimiento 1', 100, self.cuenta1, fecha=date(2011, 11, 11))
+
+    @patch('diario.models.Movimiento.hermanos_de_fecha')
+    def test_devuelve_true_si_es_el_unico_movimiento_del_dia(self, mock_hermanos_de_fecha):
+        mock_hermanos_de_fecha.return_value = []
+        self.assertTrue(self.mov1.es_unico_del_dia())
+
+    @patch('diario.models.Movimiento.hermanos_de_fecha')
+    def test_devuelve_false_si_no_es_el_unico_movimiento_del_dia(self, mock_hermanos_de_fecha):
+        mock_hermanos_de_fecha.return_value = [Movimiento()]
+        self.assertFalse(self.mov1.es_unico_del_dia())
+
+
+class TestModelMovimientoMetodoEsUnicoDelDiaDeCuenta(TestModelMovimiento):
+
+    def setUp(self):
+        super().setUp()
+        self.cuenta2 = Cuenta.crear('cuenta 2', 'c2')
+        self.mov1 = Movimiento.crear(
+            'Movimiento 1', 100, self.cuenta1, fecha=date(2011, 11, 11))
+
+    def test_devuelve_true_si_es_el_unico_movimiento_del_dia(self):
+        self.assertTrue(self.mov1.es_unico_del_dia_de_cuenta(self.cuenta1))
+
+    def test_devuelve_true_si_es_el_unico_movimiento_del_dia_de_la_cuenta_dada_como_cuenta_de_entrada(self):
+        Movimiento.crear('Movimiento 2', 100, self.cuenta2, fecha=self.mov1.fecha)
+        self.assertTrue(self.mov1.es_unico_del_dia_de_cuenta(self.cuenta1))
+
+    def test_devuelve_false_si_hay_mas_movimientos_del_dia_de_la_cuenta_dada_como_cuenta_de_entrada(self):
+        Movimiento.crear('Movimiento 2', 100, self.cuenta1, fecha=self.mov1.fecha)
+        self.assertFalse(self.mov1.es_unico_del_dia_de_cuenta(self.cuenta1))
+
+    def test_devuelve_true_si_es_el_unico_movimiento_del_dia_de_la_cuenta_dada_como_cuenta_de_salida(self):
+        # En el estado actual, debería fallar. No falla.
+        Movimiento.crear('Movimiento 2', 100, None, self.cuenta2, fecha=self.mov1.fecha)
+        self.assertTrue(self.mov1.es_unico_del_dia_de_cuenta(self.cuenta1))
+
+    def test_devuelve_false_si_hay_mas_movimientos_del_dia_de_la_cuenta_dada_como_cuenta_de_salida(self):
+        Movimiento.crear('Movimiento 2', 100, None, self.cuenta1, fecha=self.mov1.fecha)
+        self.assertFalse(self.mov1.es_unico_del_dia_de_cuenta(self.cuenta1))
+
+    def test_lanza_excepcion_si_cuenta_no_figura_en_movimiento(self):
+        with self.assertRaises(errors.ErrorCuentaNoFiguraEnMovimiento):
+            self.mov1.es_unico_del_dia_de_cuenta(self.cuenta2)
 
 
 class TestModelMovimientoMetodoGenerarCuentasCredito(TestModelMovimientoCrearEntreTitulares):

@@ -246,6 +246,17 @@ class TestModelCuentaMetodosMovsDirectos(TestModelCuentaMetodos):
 
 
 @tag('metodos')
+class TestModelCuentaMetodosMovsDirectosEnFecha(TestModelCuentaMetodos):
+
+    def test_devuelve_movs_de_cuenta_en_fecha(self):
+        mov5 = Movimiento.crear('otro mov', 100, self.cta1, fecha=self.mov1.fecha)
+        self.assertEqual(
+            list(self.cta1.movs_directos_en_fecha(self.mov1.fecha)),
+            [self.mov1, mov5]
+        )
+
+
+@tag('metodos')
 class TestModelCuentaMetodosMovs(TestModelCuentaMetodos):
 
     def test_devuelve_todos_los_movimientos_de_una_cuenta(self):
