@@ -338,8 +338,9 @@ class Movimiento(MiModel):
                     mov_guardado.cta_entrada.saldo -= mov_guardado.importe
                     mov_guardado.cta_entrada.save()
 
-                    if mov_guardado.es_unico_del_dia_de_cuenta(
-                            mov_guardado.cta_entrada):
+                    if mov_guardado.es_unico_del_dia_de_cuenta(     # (1)
+                            mov_guardado.cta_entrada) \
+                            and mov_guardado.cta_entrada != self.cta_salida:
                         mov_guardado.cta_entrada.saldo_set.get(
                             fecha=mov_guardado.fecha
                         ).eliminar()
@@ -398,8 +399,9 @@ class Movimiento(MiModel):
                     mov_guardado.cta_salida.saldo += mov_guardado.importe
                     mov_guardado.cta_salida.save()
 
-                    if mov_guardado.es_unico_del_dia_de_cuenta(
-                            mov_guardado.cta_salida):
+                    if mov_guardado.es_unico_del_dia_de_cuenta(     # (2)
+                            mov_guardado.cta_salida) \
+                            and mov_guardado.cta_salida != self.cta_entrada:
                         mov_guardado.cta_salida.saldo_set.get(
                             fecha=mov_guardado.fecha
                         ).eliminar()

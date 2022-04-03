@@ -486,6 +486,38 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
         self.assertEqual(self.cuenta2.saldo, -50 + 50*2)
         self.assertEqual(self.cuenta1.saldo, 140 - 50*2)
 
+    @patch('diario.models.movimiento.Saldo.eliminar')
+    @patch('diario.models.movimiento.Saldo.registrar')
+    def test_intercambiar_cuentas_resta_importe_x2_de_saldo_en_fecha_de_cta_entrada_y_lo_suma_a_saldo_en_fecha_de_cta_salida(self, mock_registrar, mock_eliminar):
+        self.mov3.cta_salida = self.cuenta1
+        self.mov3.cta_entrada = self.cuenta2
+        self.mov3.save()
+
+        mock_eliminar.assert_not_called()
+        self.assertEqual(
+            mock_registrar.call_args_list,
+            [
+                call(cuenta=self.cuenta1, fecha=self.mov3.fecha, importe=-50),
+                call(cuenta=self.cuenta2, fecha=self.mov3.fecha, importe=50),
+                call(cuenta=self.cuenta2, fecha=self.mov3.fecha, importe=50),
+                call(cuenta=self.cuenta1, fecha=self.mov3.fecha, importe=-50),
+            ]
+        )
+
+    def test_integrativo_intercambiar_cuentas_resta_importe_x2_de_saldo_en_fecha_de_cta_entrada_y_lo_suma_a_saldo_en_fecha_de_cta_salida(self):
+        self.mov3.cta_salida = self.cuenta1
+        self.mov3.cta_entrada = self.cuenta2
+        self.mov3.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(fecha=self.mov3.fecha).importe,
+            140-50*2
+        )
+        self.assertEqual(
+            self.cuenta2.saldo_set.get(fecha=self.mov3.fecha).importe,
+            -50 + 50*2
+        )
+
     def test_cuenta_de_salida_pasa_a_ser_de_entrada(self):
         """ Suma dos veces importe a vieja cta_salida (ahora cta_entrada)"""
         self.mov2.cta_entrada = self.mov2.cta_salida
