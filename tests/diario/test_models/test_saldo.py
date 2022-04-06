@@ -105,13 +105,13 @@ class TestSaldoMetodoRegistrar(TestCase):
                 importe=200
             )
 
-    def test_segundo_registro_en_fecha_no_genera_nuevo_saldo(self):
+    def test_segundo_registro_de_cuenta_en_fecha_no_genera_nuevo_saldo(self):
         Saldo.registrar(self.cuenta, date(2010, 11, 11), 100)
         Saldo.registrar(self.cuenta, date(2010, 11, 11), 10)
 
         self.assertEqual(Saldo.cantidad(), 1)
 
-    def test_segundo_registro_en_fecha_con_otra_cuenta_genera_nuevo_saldo(self):
+    def test_segundo_registro_de_otra_cuenta_en_fecha_genera_nuevo_saldo(self):
         cuenta2 = Cuenta.crear('cuenta2', 'c2')
 
         Saldo.registrar(self.cuenta, date(2010, 11, 11), 10)
@@ -170,7 +170,6 @@ class TestSaldoMetodoRegistrar(TestCase):
         Saldo.registrar(self.cuenta, date(2010, 11, 11), 30)
         mock_actualizar_posteriores.assert_called_once_with(
             self.cuenta, date(2010, 11, 11), 30)
-
 
 
 class TestSaldoMetodoEliminar(TestCase):
