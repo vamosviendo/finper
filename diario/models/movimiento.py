@@ -330,6 +330,7 @@ class Movimiento(MiModel):
                         fecha=self.fecha,
                         importe=self.importe-mov_guardado.importe
                     )
+
             else:
                 # Cambió la cuenta de entrada
                 if mov_guardado.cta_entrada:
@@ -418,6 +419,32 @@ class Movimiento(MiModel):
                     self.cta_salida.saldo -= self.importe
                     self.cta_salida.save()
 
+                    Saldo.registrar(
+                        cuenta=self.cta_salida,
+                        fecha=self.fecha,
+                        importe=-self.importe
+                    )
+
+            if self._cambia_campo('fecha'):
+                if mov_guardado.cta_entrada:
+                    Saldo.registrar(
+                        cuenta=mov_guardado.cta_entrada,
+                        fecha=mov_guardado.fecha,
+                        importe=-mov_guardado.importe
+                    )
+                if mov_guardado.cta_salida:
+                    Saldo.registrar(
+                        cuenta=mov_guardado.cta_salida,
+                        fecha=mov_guardado.fecha,
+                        importe=mov_guardado.importe
+                    )
+                if self.cta_entrada:
+                    Saldo.registrar(
+                        cuenta=self.cta_entrada,
+                        fecha=self.fecha,
+                        importe=self.importe
+                    )
+                if self.cta_salida:
                     Saldo.registrar(
                         cuenta=self.cta_salida,
                         fecha=self.fecha,

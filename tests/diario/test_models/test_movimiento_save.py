@@ -23,9 +23,13 @@ class TestModelMovimientoSaveGeneral(TestModelMovimientoSave):
         self.assertEqual(self.cuenta1.saldo, 140)
         self.assertEqual(self.cuenta2.saldo, -50)
 
-    @skip
-    def test_no_modifica_saldo_historico_si_no_se_modifica_importe_ni_cuentas_ni_fecha(self):
-        self.fail('escribir')
+    @patch('diario.models.movimiento.Saldo.save')
+    def test_no_modifica_saldo_historico_si_no_se_modifica_importe_ni_cuentas_ni_fecha(self, mock_save):
+        self.mov3.concepto = 'Depósito en efectivo'
+        self.mov3.save()
+
+        mock_save.assert_not_called()
+
 
     @skip
     def test_modifica_saldo_historico_si_se_modifica_fecha(self):
@@ -1606,6 +1610,59 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
             self.cuenta2.saldo_set.get(fecha=self.mov2.fecha).importe,
             0+675
         )
+
+
+class TestModelMovimientoSaveModificaFecha(TestModelMovimientoSave):
+
+    def test_si_cambia_fecha_de_mov_no_unico_de_cta_entrada_en_fecha_por_fecha_con_saldo_de_cuenta_en_fecha_registra_importe_en_negativo_en_fecha_antigua_y_en_positivo_en_fecha_nueva(self):
+
+        Movimiento.crear(
+            'otro en fecha', 100, self.cuenta1, fecha=self.mov1.fecha)
+
+        with patch('diario.models.movimiento.Saldo.registrar') as mock_registrar:
+            self.mov1.fecha = date(2021, 1, 10)
+            self.mov1.save()
+
+            self.assertEqual(
+                mock_registrar.call_args_list,
+                [
+                    call(
+                        cuenta=self.cuenta1,
+                        fecha=date(2021, 1, 5),
+                        importe=-125
+                    ),
+                    call(
+                        cuenta=self.cuenta1,
+                        fecha=date(2021, 1, 10),
+                        importe=125
+                    )
+                ]
+            )
+
+    def test_si_cambia_fecha_de_mov_no_unico_de_cta_salida_en_fecha_por_fecha_con_saldo_de_cuenta_en_fecha_registra_importe_en_positivo_en_fecha_antigua_y_en_negativo_en_fecha_nueva(self):
+
+        Movimiento.crear(
+            'otro en fecha', 100, self.cuenta1, fecha=self.mov1.fecha)
+
+        with patch('diario.models.movimiento.Saldo.registrar') as mock_registrar:
+            self.mov2.fecha = date(2021, 1, 5)
+            self.mov2.save()
+
+            self.assertEqual(
+                mock_registrar.call_args_list,
+                [
+                    call(
+                        cuenta=self.cuenta1,
+                        fecha=date(2021, 1, 10),
+                        importe=35
+                    ),
+                    call(
+                        cuenta=self.cuenta1,
+                        fecha=date(2021, 1, 5),
+                        importe=-35
+                    )
+                ]
+            )
 
 
 class TestModelMovimientoSaveModificaEsGratis(TestModelMovimientoSave):
