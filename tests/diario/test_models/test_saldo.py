@@ -171,6 +171,13 @@ class TestSaldoMetodoRegistrar(TestCase):
         mock_actualizar_posteriores.assert_called_once_with(
             self.cuenta, date(2010, 11, 11), 30)
 
+    def test_lanza_excepcion_si_no_recibe_cuenta(self):
+        with self.assertRaisesMessage(
+            TypeError,
+            'Primer argumento debe ser una instancia de la clase Cuenta'
+        ):
+            Saldo.registrar(None, date(2010, 11, 11), 30)
+
 
 class TestSaldoMetodoEliminar(TestCase):
 

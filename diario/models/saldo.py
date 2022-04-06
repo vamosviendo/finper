@@ -30,6 +30,11 @@ class Saldo(MiModel):
 
     @classmethod
     def registrar(cls, cuenta, fecha, importe):
+        if cuenta is None:
+            raise TypeError(
+                'Primer argumento debe ser una instancia de la clase Cuenta'
+            )
+
         try:
             # Buscar saldo existente de cuenta en fecha
             saldo = super().tomar(cuenta=cuenta, fecha=fecha)
