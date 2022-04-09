@@ -314,25 +314,9 @@ class Movimiento(MiModel):
                     # titulares
                     self._eliminar_contramovimiento()
 
-            # Ver si cambió la cuenta de entrada
-            if self._mantiene_cuenta('cta_entrada', mov_guardado):
-                # No cambió la cuenta de entrada
-                if self._cambia_campo('importe'):
-                    # Restar de saldo de cuenta de entrada importe antiguo
-                    # y sumar el nuevo
-                    self.cta_entrada.saldo = self.cta_entrada.saldo \
-                                             - mov_guardado.importe \
-                                             + self.importe
-                    self.cta_entrada.save()
+            if self._cambia_campo(
+                    'importe', 'cta_entrada', 'cta_salida', 'fecha'):
 
-                    Saldo.registrar(
-                        cuenta=self.cta_entrada,
-                        fecha=self.fecha,
-                        importe=self.importe-mov_guardado.importe
-                    )
-
-            else:
-                # Cambió la cuenta de entrada
                 if mov_guardado.cta_entrada:
                     # Había una cuenta de entrada
                     # Restar importe antiguo de cuenta de entrada antigua
@@ -353,6 +337,7 @@ class Movimiento(MiModel):
                         )
 
                 if self.cta_entrada:
+                    self.cta_entrada.refresh_from_db()
                     # Ahora hay una cuenta de entrada
                     # Sumar importe nuevo a cuenta de entrada nueva
                     self.cta_entrada.saldo += self.importe
@@ -366,24 +351,6 @@ class Movimiento(MiModel):
 
                 self._actualizar_cuenta_salida_convertida_en_acumulativa()
 
-            # Ver si cambió la cuenta de salida
-            if self._mantiene_cuenta('cta_salida', mov_guardado):
-                # No cambió la cuenta de salida
-                if self._cambia_campo('importe'):
-                    # Sumar importe antiguo a cuenta de salida y restar el nuevo
-                    self.cta_salida.saldo = self.cta_salida.saldo \
-                                            + mov_guardado.importe \
-                                            - self.importe
-                    self.cta_salida.save()
-
-                    Saldo.registrar(
-                        cuenta=self.cta_salida,
-                        fecha=self.fecha,
-                        importe=mov_guardado.importe - self.importe
-                    )
-
-            else:
-                # Cambió la cuenta de salida
                 if mov_guardado.cta_salida:
                     # Había una cuenta de salida
 
@@ -414,37 +381,12 @@ class Movimiento(MiModel):
                         )
 
                 if self.cta_salida:
+                    self.cta_salida.refresh_from_db()
                     # Ahora hay una cuenta de salida
                     # Restar importe nuevo a cuenta de salida nueva
                     self.cta_salida.saldo -= self.importe
                     self.cta_salida.save()
 
-                    Saldo.registrar(
-                        cuenta=self.cta_salida,
-                        fecha=self.fecha,
-                        importe=-self.importe
-                    )
-
-            if self._cambia_campo('fecha'):
-                if mov_guardado.cta_entrada:
-                    Saldo.registrar(
-                        cuenta=mov_guardado.cta_entrada,
-                        fecha=mov_guardado.fecha,
-                        importe=-mov_guardado.importe
-                    )
-                if mov_guardado.cta_salida:
-                    Saldo.registrar(
-                        cuenta=mov_guardado.cta_salida,
-                        fecha=mov_guardado.fecha,
-                        importe=mov_guardado.importe
-                    )
-                if self.cta_entrada:
-                    Saldo.registrar(
-                        cuenta=self.cta_entrada,
-                        fecha=self.fecha,
-                        importe=self.importe
-                    )
-                if self.cta_salida:
                     Saldo.registrar(
                         cuenta=self.cta_salida,
                         fecha=self.fecha,
