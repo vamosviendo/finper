@@ -1,5 +1,4 @@
 from datetime import date, timedelta
-from unittest import skip
 from unittest.mock import patch, call
 
 from django.core.exceptions import ValidationError
@@ -1866,6 +1865,86 @@ class TestModelMovimientoSaveModificaFecha(TestModelMovimientoSave):
         self.assertEqual(
             self.cuenta1.saldo_set.get(fecha=date(2021, 1, 10)).importe,
             190 + 35 - 35
+        )
+
+    @patch('diario.models.movimiento.Saldo.eliminar', autospec=True)
+    @patch('diario.models.movimiento.Saldo.registrar')
+    @patch('diario.models.Movimiento.es_unico_del_dia_de_cuenta')
+    def test_si_cambia_fecha_de_mov_unico_de_cta_entrada_en_fecha_por_fecha_posterior_con_saldo_de_cuenta_en_fecha_elimina_saldo_de_fecha_antigua_y_registra_importe_en_positivo_en_fecha_nueva(
+            self, mock_unico_del_dia, mock_registrar, mock_eliminar):
+        """ Si cambia la fecha de un movimiento único de la cuenta de entradaa
+            en una fecha por una fecha posterior en la cual ya haya al menos
+            un movimiento de dicha cuenta, se elimina el saldo de la cuenta
+            en la fecha original
+            y el saldo de la segunda fecha permanece igual, ya que el
+            importe se resta al eliminar el saldo anterior y se suma al
+            registrar el saldo.
+        """
+        saldo = Saldo.tomar(cuenta=self.cuenta1, fecha=self.mov1.fecha)
+
+        mock_unico_del_dia.side_effect = [True, False]
+
+        self.mov1.fecha = date(2021, 1, 10)
+        self.mov1.save()
+
+        mock_eliminar.assert_called_once_with(saldo)
+        mock_registrar.assert_called_once_with(
+            cuenta=self.cuenta1,
+            fecha=date(2021, 1, 10),
+            importe=125
+        )
+
+    def test_integrativo_si_cambia_fecha_de_mov_unico_de_cta_entrada_en_fecha_por_fecha_posterior_con_saldo_de_cuenta_en_fecha_elimina_saldo_de_fecha_antigua_y_registra_importe_en_positivo_en_fecha_nueva(
+            self):
+        self.mov1.fecha = date(2021, 1, 10)
+        self.mov1.save()
+
+        with self.assertRaises(Saldo.DoesNotExist):
+            self.cuenta1.saldo_set.get(fecha=date(2021, 1, 5))
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(fecha=date(2021, 1, 10)).importe,
+            90 - 125 + 125
+        )
+
+    @patch('diario.models.movimiento.Saldo.eliminar', autospec=True)
+    @patch('diario.models.movimiento.Saldo.registrar')
+    @patch('diario.models.Movimiento.es_unico_del_dia_de_cuenta')
+    def test_si_cambia_fecha_de_mov_unico_de_cta_salida_en_fecha_por_fecha_anterior_con_saldo_de_cuenta_en_fecha_elimina_saldo_de_fecha_antigua_y_registra_importe_en_negativo_en_fecha_nueva(
+            self, mock_unico_del_dia, mock_registrar, mock_eliminar):
+        """ Si cambia la fecha de un movimiento único de la cuenta de entradaa
+            en una fecha por una fecha posterior en la cual ya haya al menos
+            un movimiento de dicha cuenta, se elimina el saldo de la cuenta
+            en la fecha original
+            y el saldo de la segunda fecha permanece igual, ya que el
+            importe se resta al eliminar el saldo anterior y se suma al
+            registrar el saldo.
+        """
+        saldo = Saldo.tomar(cuenta=self.cuenta1, fecha=self.mov2.fecha)
+
+        mock_unico_del_dia.side_effect = [True, False]
+
+        self.mov2.fecha = date(2021, 1, 5)
+        self.mov2.save()
+
+        mock_eliminar.assert_called_once_with(saldo)
+        mock_registrar.assert_called_once_with(
+            cuenta=self.cuenta1,
+            fecha=date(2021, 1, 5),
+            importe=-35
+        )
+
+    def test_integrativo_si_cambia_fecha_de_mov_unico_de_cta_salida_en_fecha_por_fecha_anterior_con_saldo_de_cuenta_en_fecha_elimina_saldo_de_fecha_antigua_y_registra_importe_en_negativo_en_fecha_nueva(
+            self):
+        self.mov2.fecha = date(2021, 1, 5)
+        self.mov2.save()
+
+        with self.assertRaises(Saldo.DoesNotExist):
+            self.cuenta1.saldo_set.get(fecha=date(2021, 1, 10))
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(fecha=date(2021, 1, 5)).importe,
+            125-35
         )
 
 
