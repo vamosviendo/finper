@@ -1,5 +1,6 @@
 from datetime import date
 
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from diario.models import Cuenta, Movimiento, Titular
@@ -29,6 +30,225 @@ class TestCuentaAcumulativa(TestCase):
             ['subi1', 'si1', 0], ['subi2', 'si2']
         )
         self.assertEqual(cta_acum.fecha_conversion, fecha)
+
+
+class TestSubcuentas(TestCase):
+    """ Saldos después de setUp
+        self.cta1: 100
+        self.cta2: 25
+        self.cta3: 75
+    """
+
+    def setUp(self):
+        self.cta1 = Cuenta.crear('Efectivo', 'E')
+        Movimiento.crear(
+            concepto='00000',
+            importe=100,
+            cta_entrada=self.cta1,
+            fecha=date(2019, 1, 1)
+        )
+        self.cta1 = dividir_en_dos_subcuentas(self.cta1, saldo=25)
+        self.cta2 = Cuenta.tomar(slug='sc1')
+        self.cta3 = Cuenta.tomar(slug='sc2')
+
+    def test_cuenta_acumulativa_debe_tener_subcuentas(self):
+        cuenta = Cuenta.crear('cuenta acum', 'ctaa')
+        cuenta = cuenta.dividir_y_actualizar(
+            ['subc 1', 'suc1', 0], ['subc 2', 'suc2'])
+        Cuenta.tomar(slug='suc1').delete()
+        Cuenta.tomar(slug='suc2').delete()
+        with self.assertRaisesMessage(
+            ValidationError,
+            'Cuenta acumulativa debe tener subcuentas'
+        ):
+            cuenta.full_clean()
+
+    def test_cuenta_interactiva_no_puede_tener_subcuentas(self):
+        subcuenta = Cuenta.crear("Bolsillos", "ebol")
+        with self.assertRaises(ValueError):
+            subcuenta.cta_madre = self.cta2  # cta2 interactiva
+
+    def test_se_puede_asignar_cta_interactiva_a_cta_acumulativa(self):
+        cta4 = Cuenta.crear("Bolsillo", "ebol")
+        cta4.cta_madre = self.cta1
+        cta4.save()
+        self.assertEqual(self.cta1.subcuentas.count(), 3)
+
+    def test_se_puede_asignar_cta_acumulativa_a_otra_cta_acumulativa(self):
+        cta4 = Cuenta.crear("Bolsillos", "ebol")
+        cta4.dividir_entre(
+            {'nombre': 'Bolsillo campera', 'slug': 'ebca', 'saldo': 0},
+            {'nombre': 'Bolsillo pantalón', 'slug': 'ebpa'}
+        )
+        cta4.cta_madre = self.cta1
+        cta4.save()
+        self.assertEqual(self.cta1.subcuentas.count(), 3)
+
+    def test_si_se_asigna_cta_interactiva_con_saldo_a_cta_acumulativa_se_suma_el_saldo(self):
+        saldo_cta1 = self.cta1.saldo    # 100
+        cta4 = Cuenta.crear("Bolsillo", "ebol", saldo=50)
+
+        cta4.cta_madre = self.cta1
+        cta4.save()
+
+        self.assertEqual(cta4.saldo, 50)
+        self.assertEqual(self.cta1.saldo, saldo_cta1 + 50)
+
+    def test_si_se_asigna_cta_acumulativa_con_saldo_a_cta_acumulativa_se_suma_el_saldo(self):
+        saldo_cta1 = self.cta1.saldo    # 100
+        cta4 = Cuenta.crear("Bolsillos", "ebol", saldo=50)
+
+        cta4 = cta4.dividir_y_actualizar(
+            {'nombre': 'Bolsillo campera', 'slug': 'ebca', 'saldo': 30},
+            {'nombre': 'Bolsillo pantalón', 'slug': 'ebpa'}
+        )
+
+        cta4.cta_madre = self.cta1
+        cta4.save()
+
+        self.assertEqual(cta4.saldo, 50)
+        self.assertEqual(self.cta1.saldo, saldo_cta1 + 50)
+
+    def test_cuenta_no_puede_ser_subcuenta_de_una_de_sus_subcuentas(self):
+        cta4 = Cuenta.crear("Bolsillos", "ebol")
+        cta4 = cta4.dividir_y_actualizar(
+            {'nombre': 'Bolsillo campera', 'slug': 'ebca', 'saldo': 0},
+            {'nombre': 'Bolsillo pantalón', 'slug': 'ebpa'}
+        )
+        cta4.cta_madre = self.cta1
+        cta4.save()
+        self.cta1.cta_madre = cta4
+        with self.assertRaisesMessage(
+                ValidationError,
+                'Cuenta madre Bolsillos está entre las subcuentas de Efectivo '
+                'o entre las de una de sus subcuentas'
+        ):
+            self.cta1.full_clean()
+
+    def test_cuenta_no_puede_ser_subcuenta_de_una_subcuenta_de_una_de_sus_subcuentas(self):
+        cta4 = Cuenta.crear("Bolsillos", "ebol").dividir_y_actualizar(
+            {'nombre': 'Bolsillo campera', 'slug': 'ebca', 'saldo': 0},
+            {'nombre': 'Bolsillo pantalón', 'slug': 'ebpa'}
+        )
+
+        cta4.cta_madre = self.cta1
+        cta4.save()
+
+        cta5 = Cuenta.tomar(slug='ebpa').dividir_y_actualizar(
+            {
+                'nombre': 'Bolsillo delantero pantalón',
+                'slug': 'ebpd',
+                'saldo': 0
+            },
+            {'nombre': 'Bolsillo pantalón trasero', 'slug': 'ebpt'}
+        )
+
+        self.cta1.cta_madre = cta5
+        with self.assertRaisesMessage(
+                ValidationError,
+                'Cuenta madre Bolsillo pantalón está entre las subcuentas '
+                'de Efectivo o entre las de una de sus subcuentas'
+        ):
+            self.cta1.full_clean()
+
+    def test_movimiento_en_subcuenta_se_refleja_en_saldo_de_cta_madre(self):
+
+        saldo_cta1 = self.cta1.saldo
+
+        Movimiento.crear(concepto='mov', importe=45, cta_entrada=self.cta2)
+        self.cta1 = Cuenta.tomar(slug=self.cta1.slug)
+        self.assertEqual(
+            self.cta1.saldo, saldo_cta1+45,
+            'Mov de entrada en subcuenta no se refleja en saldo de cta madre'
+        )
+
+    def test_movimiento_entre_subcuenta_y_otra_cta_independiente_se_refleja_en_saldo_de_cta_madre(self):
+        saldo_cta1 = self.cta1.saldo
+        cta4 = Cuenta.crear('Caja de ahorro', 'ca')
+
+        Movimiento.crear(
+            concepto='Depósito', importe=20,
+            cta_entrada=cta4, cta_salida=self.cta2
+        )
+        self.cta1.refresh_from_db()
+        self.assertEqual(self.cta1.saldo, saldo_cta1-20)
+
+    def test_movimiento_en_subcuenta_se_refleja_en_saldo_de_cta_abuela(self):
+
+        self.cta3 = self.cta3.dividir_y_actualizar(
+            {'nombre': 'Cajita', 'slug': 'eccj', 'saldo': 22},
+            {'nombre': 'Sobre', 'slug': 'ecso', 'saldo': 53},
+        )
+        cta4 = Cuenta.tomar(slug='ecso')
+
+        saldo_cta1 = self.cta1.saldo
+        saldo_cta3 = self.cta3.saldo
+
+        Movimiento.crear(concepto='mov2', importe=31, cta_entrada=cta4)
+        self.cta3.refresh_from_db()
+        self.cta1.refresh_from_db()
+
+        self.assertEqual(
+            self.cta3.saldo, saldo_cta3+31,
+            'Mov de entada en subcuenta no se refleja en saldo de cta madre'
+        )
+        self.assertEqual(
+            self.cta1.saldo, saldo_cta1+31,
+            'Mov de entrada en subcuenta no se refleja en saldo de cta abuela'
+        )
+
+        cta5 = Cuenta.tomar(slug='eccj')
+
+        saldo_cta1 = self.cta1.saldo
+        saldo_cta3 = self.cta3.saldo
+
+        Movimiento.crear(concepto='mov3', importe=15, cta_salida=cta5)
+        self.cta3.refresh_from_db()
+        self.cta1.refresh_from_db()
+
+        self.assertEqual(
+            self.cta3.saldo, saldo_cta3-15,
+            'Mov de salida en subcuenta no se refleja en saldo de cta madre'
+        )
+        self.assertEqual(
+            self.cta1.saldo, saldo_cta1-15,
+            'Mov de salida en subcuenta no se refleja en saldo de cta abuela'
+        )
+
+    def test_movimiento_entre_subcuentas_no_afecta_saldo_de_cta_madre(self):
+        saldo_cta1 = self.cta1.saldo
+
+        Movimiento.crear(
+            concepto='mov', importe=45,
+            cta_entrada=self.cta2, cta_salida=self.cta3
+        )
+        self.cta1.refresh_from_db()
+        self.assertEqual(
+            self.cta1.saldo, saldo_cta1,
+            'Mov de entre subcuentas no debe modificar saldo de cuenta madre'
+        )
+
+    def test_modificacion_en_movimiento_modifica_saldo_de_cta_madre(self):
+        saldo_cta1 = self.cta1.saldo                        # 100
+        mov = Movimiento.crear('mov', 45, self.cta2)        # 70
+        self.cta1 = Cuenta.tomar(slug=self.cta1.slug)       # 145
+        self.assertEqual(self.cta1.saldo, saldo_cta1+45)
+
+        mov.importe = 55        # cta1 = 155 - cta2 = 80
+        mov.save()
+        self.cta1 = Cuenta.tomar(slug=self.cta1.slug)
+        self.assertEqual(self.cta1.saldo, saldo_cta1+55)
+
+        cta4 = Cuenta.crear('Otro banco', 'ob')
+        mov.cta_entrada = cta4
+        mov.save()
+        self.cta1 = Cuenta.tomar(slug=self.cta1.slug)
+        self.assertEqual(self.cta1.saldo, saldo_cta1)
+
+        mov.cta_entrada = self.cta2
+        mov.cta_salida = self.cta1
+        mov.importe = 40
+        self.assertEqual(self.cta1.saldo, saldo_cta1)
 
 
 class TestTitulares(TestCase):
