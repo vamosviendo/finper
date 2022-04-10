@@ -263,26 +263,38 @@ class Movimiento(MiModel):
     def save(self, *args, **kwargs):
         """
         Si el movimiento es nuevo (no existía antes, está siendo creado)
-        - sumar / restar importe de la/s cuenta/s interviniente/s
-        - EJECUTAR COMPROBACIONES Y ACCIONES EN REFERENCIA A CUENTAS DE DISTINTOS
-          TITULARES (A ser analizadas luego)
+        - sumar / restar importe del saldo la/s cuenta/s interviniente/s
+        - Gestionar movimiento entre cuentas de distintos titulares (
+          generar, ampliar o cancelar crédito)
+
         Si el movimiento existía (está siendo modificado)
-        - Chequear si cambió la cuenta de entrada.
-        - Si no cambió
-          - Si cambió el importe, sumar importe del movimiento nuevo y
-            restar el del movimiento anterior a la cuenta de entrada
-        - Si cambió
+        - Chequear si cambió alguno de los "campos sensibles" (fecha, importe,
+          cta_entrada, cta_salida).
+        - Si cambió alguno de estos campos:
           - Si antes había una cuenta de entrada, restar el importe del
             movimiento anterior a la cuenta de entrada del movimiento anterior.
+            Si en la fecha guardada había otros movimientos de la cuentaademás
+            de este, registrar importe en negativo en la fecha. Si no, eliminar
+            saldo de la cuenta en la fecha
+
           - Si ahora hay una cuenta de entrada, sumar el importe del movimiento
             nuevo a la cuenta de entrada del movimiento nuevo.
+            Registrar importe en la nueva fecha (*).
+
+          - Repetir estos pasos para el caso de la cuenta de salida,
+            invirtiendo los signos (registrar importe en positivo en fecha
+            guardada y en negativo en fecha nueva
+
         - Antes de repetir el proceso con la cuenta de salida, actualizarla
-          para el caso especial de la división de una cuenta en subcuentas,
-          en el que se crea un movimiento de salida en la cuenta madre
+          para el caso especial de la división de una cuenta en subcuentas.
+          En este caso se crea un movimiento de salida en la cuenta madre
           (todavía interactiva), se convierte la cuenta en acumulativa al
           crear las subcuentas y luego se modifica el movimiento para agregar
           la subcuenta como cuenta de entrada. Es necesario actualizar la
           cuenta de salida para dar cuenta de su conversión en acumulativa.
+
+        (*) Tener en cuenta que la fecha guardada y la fecha nueva pueden ser
+            la misma.
         """
 
         if self._state.adding:   # Movimiento nuevo
@@ -304,14 +316,14 @@ class Movimiento(MiModel):
                         self._regenerar_contramovimiento()
                 else:
                     # El movimiento no era una transacción no gratuita entre
-                    # titulares
+                    # titulares y ahora lo es
                     self._crear_movimiento_credito()
             else:
                 # El movimiento no es una transacción no gratuita entre
                 # titulares
                 if self.id_contramov:
                     # El movimiento era una transacción no gratuita entre
-                    # titulares
+                    # titulares y ahora ya no
                     self._eliminar_contramovimiento()
 
             if self._cambia_campo(

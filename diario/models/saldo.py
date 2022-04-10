@@ -1,3 +1,8 @@
+"""
+Hay un saldo por cuenta y por fecha.
+El saldo de la fecha de una cuenta se usa para calcular el saldo al momento
+de cada movimiento de la fecha.
+"""
 from django.db import models
 
 from vvmodel.models import MiModel
