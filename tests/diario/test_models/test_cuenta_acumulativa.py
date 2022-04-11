@@ -68,34 +68,28 @@ class TestSubcuentas(TestCase):
         with self.assertRaises(ValueError):
             subcuenta.cta_madre = self.cta2  # cta2 interactiva
 
-    def test_se_puede_asignar_cta_interactiva_a_cta_acumulativa(self):
-        cta4 = Cuenta.crear("Bolsillo", "ebol")
-        cta4.cta_madre = self.cta1
-        cta4.save()
-        self.assertEqual(self.cta1.subcuentas.count(), 3)
-
-    def test_se_puede_asignar_cta_acumulativa_a_otra_cta_acumulativa(self):
-        cta4 = Cuenta.crear("Bolsillos", "ebol")
-        cta4.dividir_entre(
-            {'nombre': 'Bolsillo campera', 'slug': 'ebca', 'saldo': 0},
-            {'nombre': 'Bolsillo pantalón', 'slug': 'ebpa'}
+    def test_no_se_puede_modificar_cuenta_madre_de_subcuenta(self):
+        cta4 = Cuenta.crear('cuenta 4', 'c4')
+        sc41, sc42 = cta4.dividir_entre(
+            ['subcuenta 4.1', 'sc41', 0],
+            ['subcuenta 4.2', 'sc42']
         )
-        cta4.cta_madre = self.cta1
-        cta4.save()
-        self.assertEqual(self.cta1.subcuentas.count(), 3)
+        sc41.cta_madre = self.cta1
+        with self.assertRaisesMessage(
+                ValidationError,
+                'No se puede modificar cuenta madre'
+        ):
+            sc41.full_clean()
 
-    def test_si_se_asigna_cta_interactiva_con_saldo_a_cta_acumulativa_se_suma_el_saldo(self):
-        saldo_cta1 = self.cta1.saldo    # 100
+    def test_no_se_puede_asignar_cta_madre_a_cta_interactiva_existente(self):
         cta4 = Cuenta.crear("Bolsillo", "ebol", saldo=50)
 
         cta4.cta_madre = self.cta1
-        cta4.save()
 
-        self.assertEqual(cta4.saldo, 50)
-        self.assertEqual(self.cta1.saldo, saldo_cta1 + 50)
+        with self.assertRaises(ValidationError):
+            cta4.full_clean()
 
-    def test_si_se_asigna_cta_acumulativa_con_saldo_a_cta_acumulativa_se_suma_el_saldo(self):
-        saldo_cta1 = self.cta1.saldo    # 100
+    def test_no_se_puede_asignar_cta_madre_a_cta_acumulativa_existente(self):
         cta4 = Cuenta.crear("Bolsillos", "ebol", saldo=50)
 
         cta4 = cta4.dividir_y_actualizar(
@@ -104,10 +98,9 @@ class TestSubcuentas(TestCase):
         )
 
         cta4.cta_madre = self.cta1
-        cta4.save()
 
-        self.assertEqual(cta4.saldo, 50)
-        self.assertEqual(self.cta1.saldo, saldo_cta1 + 50)
+        with self.assertRaises(ValidationError):
+            cta4.full_clean()
 
     def test_cuenta_no_puede_ser_subcuenta_de_una_de_sus_subcuentas(self):
         cta4 = Cuenta.crear("Bolsillos", "ebol")

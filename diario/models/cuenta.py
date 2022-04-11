@@ -97,6 +97,7 @@ class Cuenta(PolymorphModel):
 
     def clean(self, *args, **kwargs):
         self._impedir_cambio_de_titular()
+        self._impedir_cambio_de_cta_madre()
         self._chequear_incongruencias_de_clase()
 
     def save(self, *args, **kwargs):
@@ -162,20 +163,16 @@ class Cuenta(PolymorphModel):
     # Métodos protegidos
 
     def _actualizar_madre(self):
+
         try:
-            cta_guardada = Cuenta.tomar(slug=self.slug)
-            saldo_guardado = cta_guardada.saldo
-            cta_madre_guardada = cta_guardada.cta_madre
+            saldo_guardado = Cuenta.tomar(slug=self.slug).saldo
         except Cuenta.DoesNotExist:
             saldo_guardado = 0.0
-            cta_madre_guardada = None
 
         if self.saldo != saldo_guardado:
             self.cta_madre.saldo += self.saldo
             self.cta_madre.saldo -= saldo_guardado
             self.cta_madre.save()
-        if self.cta_madre and self.cta_madre != cta_madre_guardada:
-            self.cta_madre.saldo += self.saldo
 
     def _pasar_nombre_y_slug_a_minuscula(self):
         if self.slug:
@@ -189,6 +186,14 @@ class Cuenta(PolymorphModel):
         if self.cta_madre and self.cta_madre.es_interactiva:
             raise errors.ErrorTipo(f'Cuenta interactiva "{self.cta_madre }" '
                                    f'no puede ser madre')
+
+    def _impedir_cambio_de_cta_madre(self):
+        try:
+            cta_madre_guardada = Cuenta.tomar(slug=self.slug).cta_madre
+            if self.cta_madre != cta_madre_guardada:
+                raise ValidationError('No se puede modificar cuenta madre')
+        except Cuenta.DoesNotExist:
+            pass
 
     def _impedir_cambio_de_titular(self):
         try:
