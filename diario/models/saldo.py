@@ -62,6 +62,13 @@ class Saldo(MiModel):
 
         cls._actualizar_posteriores(cuenta, fecha, importe)
 
+        if cuenta.tiene_madre():
+            cls.registrar(
+                cuenta=cuenta.cta_madre,
+                fecha=fecha,
+                importe=importe,
+            )
+
         return saldo
 
     def eliminar(self):

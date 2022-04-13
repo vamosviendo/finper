@@ -3,7 +3,7 @@ from datetime import date
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
-from diario.models import Cuenta, Movimiento, Titular
+from diario.models import Cuenta, Movimiento, Titular, Saldo
 from utils.errors import ErrorCuentaEsAcumulativa, \
     CUENTA_ACUMULATIVA_EN_MOVIMIENTO
 from utils.helpers_tests import dividir_en_dos_subcuentas
@@ -47,7 +47,11 @@ class TestSubcuentas(TestCase):
             cta_entrada=self.cta1,
             fecha=date(2019, 1, 1)
         )
-        self.cta1 = dividir_en_dos_subcuentas(self.cta1, saldo=25)
+        self.cta1 = dividir_en_dos_subcuentas(
+            self.cta1,
+            saldo=25,
+            fecha=date(2019, 1, 5)
+        )
         self.cta2 = Cuenta.tomar(slug='sc1')
         self.cta3 = Cuenta.tomar(slug='sc2')
 
@@ -153,6 +157,42 @@ class TestSubcuentas(TestCase):
         self.assertEqual(
             self.cta1.saldo, saldo_cta1+45,
             'Mov de entrada en subcuenta no se refleja en saldo de cta madre'
+        )
+
+    def test_movimiento_en_subcuenta_se_refleja_en_saldo_de_cta_madre_en_fecha_del_movimiento(self):
+        saldo = Saldo.tomar(cuenta=self.cta1, fecha=date(2019, 1, 10)).importe
+
+        Movimiento.crear('mov subc', 45, self.cta2, fecha=date(2019, 1, 10))
+        self.assertEqual(
+            Saldo.tomar(cuenta=self.cta1, fecha=date(2019, 1, 10)).importe,
+            saldo+45
+        )
+
+    def test_movimiento_en_subcuenta_genera_saldo_en_cuenta_madre_en_fecha_sin_saldo(self):
+        self.assertEqual(
+            len(Saldo.filtro(cuenta=self.cta1, fecha=date(2019, 1, 10))),
+            0
+        )
+        Movimiento.crear('mov subc', 45, self.cta2, fecha=date(2019, 1, 10))
+        self.assertEqual(
+            len(Saldo.filtro(cuenta=self.cta1, fecha=date(2019, 1, 10))),
+            1
+        )
+
+    def test_movimiento_en_subcuenta_suma_importe_a_saldo_existente_en_fecha(self):
+        self.assertEqual(
+            len(Saldo.filtro(cuenta=self.cta1, fecha=date(2019, 1, 5))),
+            1
+        )
+        saldo = self.cta1.saldo_set.get(fecha=date(2019, 1, 5)).importe
+        Movimiento.crear('mov subc', 45, self.cta2, fecha=date(2019, 1, 5))
+        self.assertEqual(
+            len(Saldo.filtro(cuenta=self.cta1, fecha=date(2019, 1, 5))),
+            1
+        )
+        self.assertEqual(
+            self.cta1.saldo_set.get(fecha=date(2019, 1, 5)).importe,
+            saldo+45
         )
 
     def test_movimiento_entre_subcuenta_y_otra_cta_independiente_se_refleja_en_saldo_de_cta_madre(self):

@@ -1,10 +1,11 @@
 from datetime import date
-from unittest.mock import patch
+from unittest.mock import patch, call
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from diario.models import Cuenta, Movimiento, Saldo
+from utils import errors
 
 
 class TestSaldoBasic(TestCase):
@@ -177,6 +178,59 @@ class TestSaldoMetodoRegistrar(TestCase):
             'Primer argumento debe ser una instancia de la clase Cuenta'
         ):
             Saldo.registrar(None, date(2010, 11, 11), 30)
+
+    @patch('diario.models.Saldo._actualizar_posteriores')
+    def test_si_cuenta_tiene_cuenta_madre_registra_saldo_en_fecha_en_cuenta_madre(self, mock_act_pos):
+        sc1, sc2 = self.cuenta.dividir_entre(
+            ['subcuenta 1', 'sc1', 0],
+            ['subcuenta 2', 'sc2']
+        )
+        cuenta = Cuenta.tomar(slug=self.cuenta.slug)
+
+        Saldo.registrar(sc1,  date(2010, 11, 11), 30)
+
+        self.assertEqual(
+            mock_act_pos.call_args_list,
+            [
+                call(sc1, date(2010, 11, 11), 30),
+                call(cuenta, date(2010, 11, 11), 30)
+            ]
+        )
+
+    def test_integrativo_si_cuenta_tiene_cuenta_madre_registra_saldo_en_fecha_en_cuenta_madre(self):
+        sc1, sc2 = self.cuenta.dividir_entre(
+            ['subcuenta 1', 'sc1', 0],
+            ['subcuenta 2', 'sc2']
+        )
+        Saldo.registrar(sc1, date(2010, 11, 11), 30)
+        self.assertEqual(
+            Saldo.tomar(cuenta=self.cuenta, fecha=date(2010, 11, 11)).importe,
+            30
+        )
+
+    @patch('diario.models.Saldo._actualizar_posteriores')
+    def test_si_cuenta_tiene_cuenta_abuela_registra_saldo_en_fecha_en_cuenta_abuela(self, mock_act_pos):
+        sc1, sc2 = self.cuenta.dividir_entre(
+            ['subcuenta 1', 'sc1', 0],
+            ['subcuenta 2', 'sc2']
+        )
+        sc1_1, sc1_2 = sc1.dividir_entre(
+            ['subsubcuenta 1 1', 'sc11', 0],
+            ['subsubcuenta 1 2', 'sc12']
+        )
+        cuenta = Cuenta.tomar(slug=self.cuenta.slug)
+        sc1a = Cuenta.tomar(slug=sc1.slug)
+
+        Saldo.registrar(sc1_1, date(2010, 11, 11), 30)
+
+        self.assertEqual(
+            mock_act_pos.call_args_list,
+            [
+                call(sc1_1, date(2010, 11, 11), 30),
+                call(sc1a, date(2010, 11, 11), 30),
+                call(cuenta, date(2010, 11, 11), 30)
+            ]
+        )
 
 
 class TestSaldoMetodoEliminar(TestCase):
