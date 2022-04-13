@@ -240,7 +240,7 @@ class Movimiento(MiModel):
                     importe=-self.importe
                 )
             else:
-                Saldo.tomar(cuenta=self.cta_entrada, fecha=self.fecha).eliminar()
+                self.cta_entrada.saldo_set.get(fecha=self.fecha).eliminar()
 
         if self.cta_salida:
             self.cta_salida.saldo += self.importe
@@ -253,7 +253,7 @@ class Movimiento(MiModel):
                     importe=self.importe
                 )
             else:
-                Saldo.tomar(cuenta=self.cta_salida, fecha=self.fecha).eliminar()
+                self.cta_salida.saldo_set.get(fecha=self.fecha).eliminar()
 
         if self.id_contramov:
             self._eliminar_contramovimiento()
