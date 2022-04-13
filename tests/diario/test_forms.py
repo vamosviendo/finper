@@ -63,7 +63,7 @@ class TestFormSubcuentas(TestCase):
     def test_save_divide_cuenta(self, mockCuenta_dividir):
         self.form.is_valid()
         self.form.save()
-        mockCuenta_dividir.assert_called_once_with(*self.subcuentas)
+        mockCuenta_dividir.assert_called_once_with(*self.subcuentas, fecha=None)
 
     @patch('diario.forms.FormSubcuentas.clean')
     @patch('diario.forms.CuentaInteractiva.dividir_y_actualizar')

@@ -313,8 +313,8 @@ class CuentaInteractiva(Cuenta):
         )
         return cuentas_creadas
 
-    def dividir_y_actualizar(self, *subcuentas):
-        self.dividir_entre(*subcuentas)
+    def dividir_y_actualizar(self, *subcuentas, fecha=None):
+        self.dividir_entre(*subcuentas, fecha=fecha)
         return Cuenta.tomar(slug=self.slug)
 
     # Protected
