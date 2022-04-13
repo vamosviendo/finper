@@ -498,3 +498,12 @@ class CuentaAcumulativa(Cuenta):
     def agregar_subcuenta(self, nombre, slug, titular=None):
         titular = titular or self.titular
         Cuenta.crear(nombre, slug, cta_madre=self, titular=titular)
+
+    def tiene_saldo_subcuenta_en_fecha(self, fecha):
+        for subcuenta in self.arbol_de_subcuentas():
+            try:
+                subcuenta.saldo_set.get(fecha=fecha)
+                return True
+            except Saldo.DoesNotExist:
+                pass
+        return False

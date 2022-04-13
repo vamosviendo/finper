@@ -416,3 +416,28 @@ class TestCorregirSaldo(TestCase):
         cta1.corregir_saldo()
         cta1.refresh_from_db()
         self.assertEqual(cta1.saldo, cta1.total_subcuentas())
+
+
+class TestTieneSaldoSubcuentaEnFecha(TestCase):
+
+    def setUp(self):
+        cta_acum = Cuenta.crear('cta acumulativa', 'ca')
+        self.sc1, sc2 = cta_acum.dividir_entre(
+            ['subcuenta 1', 'sc1', 0],
+            ['subcuenta 2', 'sc2'],
+            fecha=date(2010, 1, 2)
+        )
+        self.cta_acum = Cuenta.tomar(slug=cta_acum.slug)
+
+    def test_devuelve_true_si_alguna_de_sus_subcuentas_tiene_saldo_en_la_fecha_dada(self):
+
+        Saldo.registrar(cuenta=self.sc1, fecha=date(2010, 1, 3), importe=30)
+
+        self.assertTrue(
+            self.cta_acum.tiene_saldo_subcuenta_en_fecha(date(2010, 1, 3))
+        )
+
+    def test_devuelve_false_si_ninguna_de_sus_subcuentas_tiene_saldo_en_la_fecha_dada(self):
+        self.assertFalse(
+            self.cta_acum.tiene_saldo_subcuenta_en_fecha(date(2010, 1, 3))
+        )
