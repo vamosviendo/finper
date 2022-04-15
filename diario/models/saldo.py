@@ -18,6 +18,9 @@ class Saldo(MiModel):
         unique_together = ['cuenta', 'fecha']
         ordering = ['fecha', 'cuenta']
 
+    def __str__(self):
+        return f'{self.cuenta} al {self.fecha}: {self.importe}'
+
     @classmethod
     def tomar(cls, **kwargs):
         try:
