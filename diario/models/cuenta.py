@@ -160,6 +160,16 @@ class Cuenta(PolymorphModel):
             return self.cta_madre.subcuentas.all().exclude(pk=self.pk)
         return None
 
+    def ancestros(self):
+        cta_madre = self.cta_madre
+        lista_ancestros = []
+
+        while cta_madre:
+            lista_ancestros.append(cta_madre)
+            cta_madre = cta_madre.cta_madre
+
+        return lista_ancestros
+
     # Métodos protegidos
 
     def _actualizar_madre(self):

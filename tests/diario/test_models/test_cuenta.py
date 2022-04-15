@@ -477,6 +477,32 @@ class TestModelCuentaMetodosHermanas(TestModelCuentaMetodos):
         self.assertIsNone(self.cta2.hermanas())
 
 
+@tag('metodos')
+class TestModelCuentaMetodosAncestros(TestModelCuentaMetodos):
+
+    def test_devuelve_lista_de_todas_las_cuentas_ancestro(self):
+        subc1, subc2 = self.cta1.dividir_entre(
+            ['subcuenta 1', 'sc1', 0],
+            ['subcuenta 2', 'sc2']
+        )
+        subsubc1, subsubc2 = subc1.dividir_entre(
+            ['subsubcuenta 1', 'ssc1', 0],
+            ['subsubcuenta 2', 'ssc2']
+        )
+        subsubsubc1, subsubsubc2 = subsubc1.dividir_entre(
+            ['subsubsubcuenta 1', 'sssc1', 0],
+            ['subsubsubcuenta 2', 'sssc2']
+        )
+        subsubc1 = Cuenta.tomar(slug=subsubc1.slug)
+        subc1 = Cuenta.tomar(slug=subc1.slug)
+        cta1 = Cuenta.tomar(slug=self.cta1.slug)
+
+        self.assertEqual(
+            subsubsubc1.ancestros(),
+            [subsubc1, subc1, cta1]
+        )
+
+
 @patch('diario.models.cuenta.Saldo.tomar', autospec=True)
 @patch('diario.models.cuenta.Movimiento.filtro')
 class TestModelCuentaMetodosSaldoHistorico(TestCase):
