@@ -79,15 +79,25 @@ class Saldo(MiModel):
         self.delete()
         Saldo._actualizar_posteriores(saldo.cuenta, saldo.fecha, -saldo.importe)
 
-        if self.cuenta.tiene_madre():
-            if self.cuenta.cta_madre.tiene_saldo_subcuenta_en_fecha(self.fecha):
+        ancestros = self.cuenta.ancestros()
+        for cta_madre in ancestros:
+            if cta_madre.tiene_saldo_subcuenta_en_fecha(self.fecha):
+                try:
+                    importe_a_restar = self.importe - Saldo.filtro(
+                                                          cuenta=self.cuenta,
+                                                          fecha__lt=self.fecha
+                                                      ).last().importe
+                except AttributeError:
+                    importe_a_restar = self.importe
                 Saldo.registrar(
-                    cuenta=self.cuenta.cta_madre,
+                    cuenta=cta_madre,
                     fecha=self.fecha,
-                    importe=-self.importe
+                    importe=-importe_a_restar
                 )
             else:
-                self.cuenta.cta_madre.saldo_set.get(fecha=saldo.fecha).eliminar()
+                saldo = cta_madre.saldo_set.get(fecha=self.fecha)
+                saldo.delete()
+                Saldo._actualizar_posteriores(saldo.cuenta, saldo.fecha, -saldo.importe)
 
     @staticmethod
     def _actualizar_posteriores(cuenta, fecha, importe):
