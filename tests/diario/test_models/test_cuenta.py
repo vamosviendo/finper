@@ -248,12 +248,37 @@ class TestModelCuentaMetodosMovsDirectos(TestModelCuentaMetodos):
 @tag('metodos')
 class TestModelCuentaMetodosMovsDirectosEnFecha(TestModelCuentaMetodos):
 
-    def test_devuelve_movs_de_cuenta_en_fecha(self):
+    def test_con_cuenta_interactiva_devuelve_movs_de_cuenta_en_fecha(self):
         mov5 = Movimiento.crear('otro mov', 100, self.cta1, fecha=self.mov1.fecha)
         self.assertEqual(
             list(self.cta1.movs_directos_en_fecha(self.mov1.fecha)),
             [self.mov1, mov5]
         )
+
+    def test_con_cuenta_acumulativa_devuelve_solo_movs_directos_de_cuenta_en_fecha(self):
+        fecha = date(2021, 8, 10)
+        self.cta1 = dividir_en_dos_subcuentas(self.cta1, fecha=fecha)
+        sc1 = Cuenta.tomar(slug='sc1')
+        mov = Movimiento.crear('mov subcuenta', 100, sc1, fecha=fecha)
+        self.assertNotIn(mov, self.cta1.movs_directos_en_fecha(fecha))
+
+
+@tag('metodos')
+class TestModelCuentaMetodosMovsEnFecha(TestModelCuentaMetodos):
+
+    def test_con_cuenta_interactiva_devuelve_lo_mismo_que_movs_directos_en_fecha(self):
+        mov5 = Movimiento.crear('otro mov', 100, self.cta1, fecha=self.mov1.fecha)
+        self.assertEqual(
+            list(self.cta1.movs_en_fecha(self.mov1.fecha)),
+            list(self.cta1.movs_directos_en_fecha(self.mov1.fecha))
+        )
+
+    def test_con_cuenta_acumulativa_devuelve_movs_propios_y_de_subcuentas_en_fecha(self):
+        fecha = date(2021, 8, 10)
+        self.cta1 = dividir_en_dos_subcuentas(self.cta1, fecha=fecha)
+        sc1 = Cuenta.tomar(slug='sc1')
+        mov = Movimiento.crear('mov subcuenta', 100, sc1, fecha=fecha)
+        self.assertIn(mov, self.cta1.movs_en_fecha(fecha))
 
 
 @tag('metodos')
