@@ -81,7 +81,7 @@ class Saldo(MiModel):
 
         ancestros = self.cuenta.ancestros()
         for cta_madre in ancestros:
-            if cta_madre.tiene_saldo_subcuenta_en_fecha(self.fecha):
+            if cta_madre.movs_en_fecha(self.fecha).count() > 0:
                 try:
                     importe_a_restar = self.importe - Saldo.filtro(
                                                           cuenta=self.cuenta,

@@ -226,6 +226,8 @@ class Movimiento(MiModel):
             raise errors.ErrorCuentaEsAcumulativa(
                 errors.MOVIMIENTO_CON_CA_ELIMINADO)
 
+        super().delete(*args, **kwargs)
+
         if self.cta_entrada:
             self.cta_entrada.saldo -= self.importe
             self.cta_entrada.save()
@@ -234,10 +236,7 @@ class Movimiento(MiModel):
             # Si hay más movimientos de la cuenta en la fecha,
             #   retirar importe de saldo
             # Si no hay más movimientos de la cuenta en la fecha, eliminar saldo
-            if self.cta_entrada.movs_directos_en_fecha(self.fecha)\
-                    .exclude(id=self.id)\
-                    .count() \
-                    > 0:
+            if self.cta_entrada.movs_en_fecha(self.fecha).count() > 0:
                 Saldo.registrar(
                     cuenta=self.cta_entrada,
                     fecha=self.fecha,
@@ -250,10 +249,7 @@ class Movimiento(MiModel):
             self.cta_salida.saldo += self.importe
             self.cta_salida.save()
 
-            if self.cta_salida.movs_directos_en_fecha(self.fecha)\
-                    .exclude(id=self.id)\
-                    .count() \
-                    > 0:
+            if self.cta_salida.movs_en_fecha(self.fecha).count() > 0:
                 Saldo.registrar(
                     cuenta=self.cta_salida,
                     fecha=self.fecha,
@@ -264,8 +260,6 @@ class Movimiento(MiModel):
 
         if self.id_contramov:
             self._eliminar_contramovimiento()
-
-        super().delete(*args, **kwargs)
 
     def save(self, *args, **kwargs):
         """
