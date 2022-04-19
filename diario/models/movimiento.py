@@ -244,6 +244,15 @@ class Movimiento(MiModel):
                 )
             else:
                 self.cta_entrada.saldo_set.get(fecha=self.fecha).eliminar()
+                for cta_madre in self.cta_entrada.ancestros():
+                    if cta_madre.movs_en_fecha(self.fecha).count() > 0:
+                        Saldo.registrar(
+                            cuenta=cta_madre,
+                            fecha=self.fecha,
+                            importe=-self.importe
+                        )
+                    else:
+                        cta_madre.saldo_set.get(fecha=self.fecha).eliminar()
 
         if self.cta_salida:
             self.cta_salida.saldo += self.importe
@@ -257,6 +266,15 @@ class Movimiento(MiModel):
                 )
             else:
                 self.cta_salida.saldo_set.get(fecha=self.fecha).eliminar()
+                for cta_madre in self.cta_salida.ancestros():
+                    if cta_madre.movs_en_fecha(self.fecha).count() > 0:
+                        Saldo.registrar(
+                            cuenta=cta_madre,
+                            fecha=self.fecha,
+                            importe=self.importe
+                        )
+                    else:
+                        cta_madre.saldo_set.get(fecha=self.fecha).eliminar()
 
         if self.id_contramov:
             self._eliminar_contramovimiento()

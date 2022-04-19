@@ -261,41 +261,6 @@ class TestSaldoMetodoEliminar(TestCase):
             self.cuenta, date(2010, 11, 11), -100)
 
     @patch('diario.models.Saldo.delete', autospec=True)
-    @patch('diario.models.cuenta.CuentaAcumulativa.tiene_saldo_subcuenta_en_fecha')
-    def test_si_cuenta_tiene_cuenta_madre_sin_saldo_de_otra_subcuenta_en_fecha_elimina_saldo_de_cta_madre_en_fecha(self, mock_saldo_subcuenta, mock_delete):
-        sc1, sc2 = self.cuenta.dividir_entre(
-            ['subcuenta 1', 'sc1', 0],
-            ['subcuenta 2', 'sc2']
-        )
-        cuenta = Cuenta.tomar(slug=self.cuenta.slug)
-        mock_saldo_subcuenta.return_value = False
-
-        Saldo.registrar(sc1, date(2010, 11, 11), 30)
-        saldo_cta = cuenta.saldo_set.get(fecha=date(2010, 11, 11))
-
-        sc1.saldo_set.get(fecha=date(2010, 11, 11)).eliminar()
-
-        self.assertEqual(
-            mock_delete.call_args_list[1],
-            call(saldo_cta)
-       )
-
-    def test_integrativo_si_cuenta_tiene_cuenta_madre_sin_saldo_de_otra_subcuenta_en_fecha_elimina_saldo_de_cta_madre_en_fecha(self):
-        sc1, sc2 = self.cuenta.dividir_entre(
-            ['subcuenta 1', 'sc1', 0],
-            ['subcuenta 2', 'sc2']
-        )
-        cuenta = Cuenta.tomar(slug=self.cuenta.slug)
-
-        Saldo.registrar(sc1, date(2010, 11, 11), 30)
-
-        sc1.saldo_set.get(fecha=date(2010, 11, 11)).eliminar()
-
-        with self.assertRaises(Saldo.DoesNotExist):
-            cuenta.saldo_set.get(fecha=date(2010, 11, 11))
-
-
-    @patch('diario.models.Saldo.delete', autospec=True)
     @patch('django.db.models.QuerySet.count')
     def test_si_cuenta_tiene_cuenta_madre_con_saldo_de_otra_subcuenta_en_fecha_no_elimina_saldo_de_cta_madre_en_fecha(self, mock_count, mock_delete):
         sc1, sc2 = self.cuenta.dividir_entre(
@@ -310,45 +275,6 @@ class TestSaldoMetodoEliminar(TestCase):
         self.assertEqual(
             len(mock_delete.call_args_list),
             1
-        )
-
-    @patch('django.db.models.QuerySet.count')
-    def test_si_cuenta_tiene_cuenta_madre_con_saldo_de_otra_subcuenta_en_fecha_registra_negativo_de_importe_de_saldo_eliminado_de_saldo_cta_madre_en_fecha(self, mock_count):
-        sc1, sc2 = self.cuenta.dividir_entre(
-            ['subcuenta 1', 'sc1', 0],
-            ['subcuenta 2', 'sc2']
-        )
-        cuenta = Cuenta.tomar(slug=self.cuenta.slug)
-        mock_count.return_value = 1
-
-        Saldo.registrar(sc1, date(2010, 11, 11), 30)
-
-        with patch('diario.models.Saldo.registrar') as mock_registrar:
-            sc1.saldo_set.get(fecha=date(2010, 11, 11)).eliminar()
-
-            mock_registrar.assert_called_once_with(
-                cuenta=cuenta,
-                fecha=date(2010, 11, 11),
-                importe=-30
-            )
-
-    def test_integrativo_si_cuenta_tiene_cuenta_madre_con_saldo_de_otra_subcuenta_en_fecha_no_elimina_saldo_de_cta_madre_en_fecha_y_resta_saldo_de_cuenta_eliminada(self):
-        sc1, sc2 = self.cuenta.dividir_entre(
-            ['subcuenta 1', 'sc1', 0],
-            ['subcuenta 2', 'sc2']
-        )
-        cuenta = Cuenta.tomar(slug=self.cuenta.slug)
-
-        Movimiento.crear('mov', 30, sc1, fecha=date(2010, 11, 11))
-        Movimiento.crear('mov', 40, sc2, fecha=date(2010, 11, 11))
-
-        saldo_cta_acum = cuenta.saldo_set.get(fecha=date(2010, 11, 11)).importe
-
-        sc1.saldo_set.get(fecha=date(2010, 11, 11)).eliminar()
-
-        self.assertEqual(
-            cuenta.saldo_set.get(fecha=date(2010, 11, 11)).importe,
-            saldo_cta_acum-30
         )
 
 

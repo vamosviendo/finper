@@ -75,29 +75,8 @@ class Saldo(MiModel):
         return saldo
 
     def eliminar(self):
-        saldo = self
         self.delete()
-        Saldo._actualizar_posteriores(saldo.cuenta, saldo.fecha, -saldo.importe)
-
-        ancestros = self.cuenta.ancestros()
-        for cta_madre in ancestros:
-            if cta_madre.movs_en_fecha(self.fecha).count() > 0:
-                try:
-                    importe_a_restar = self.importe - Saldo.filtro(
-                                                          cuenta=self.cuenta,
-                                                          fecha__lt=self.fecha
-                                                      ).last().importe
-                except AttributeError:
-                    importe_a_restar = self.importe
-                Saldo.registrar(
-                    cuenta=cta_madre,
-                    fecha=self.fecha,
-                    importe=-importe_a_restar
-                )
-            else:
-                saldo = cta_madre.saldo_set.get(fecha=self.fecha)
-                saldo.delete()
-                Saldo._actualizar_posteriores(saldo.cuenta, saldo.fecha, -saldo.importe)
+        Saldo._actualizar_posteriores(self.cuenta, self.fecha, -self.importe)
 
     @staticmethod
     def _actualizar_posteriores(cuenta, fecha, importe):
