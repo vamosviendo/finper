@@ -1,5 +1,6 @@
 {% extends 'diario/base_contenido.html' %}
 {% load static %}
+{% load historico_general %}
 
 {% block titulo_pag %}Saldo general{% endblock titulo_pag %}
 {% block importe_saldo_pag %}
@@ -13,5 +14,5 @@
 {% endblock verificar_saldos %}
 
 {% block general %}
-  {{ saldo_gral|floatformat:2 }}
+  {% historico_general mov %}
 {% endblock general %}

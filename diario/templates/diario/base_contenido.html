@@ -1,6 +1,7 @@
 {% extends 'diario/base.html' %}
 {% load static %}
 {% load historico %}
+{% load historico_general %}
 
 {% block extra-css %}
 {% endblock extra-css %}
@@ -133,7 +134,9 @@
         </td>
 
         <td class="text-right numero chico fondo_resaltado class_td_general">
-          {% block general %}{% endblock general %}
+          {% with mov as mov %}
+            {% block general %}{% endblock general %}
+          {% endwith %}
         </td>
 
         {% for subc in subcuentas %}
