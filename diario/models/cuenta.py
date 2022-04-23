@@ -35,6 +35,7 @@ class Cuenta(PolymorphModel):
                                 on_delete=models.CASCADE,
                                 blank=True,
                                 default=Titular.por_defecto)
+    fecha_creacion = models.DateField(default=date.today)
 
     class Meta:
         ordering = ('nombre', )

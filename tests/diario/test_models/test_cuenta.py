@@ -36,6 +36,20 @@ class TestModelCuenta(TestCase):
         self.assertEqual(segunda_cuenta_guardada.nombre, 'caja de ahorro')
         self.assertEqual(segunda_cuenta_guardada.slug, 'ca')
 
+    def test_guarda_fecha_de_creacion(self):
+        cuenta = Cuenta(nombre='Efectivo', slug='E', fecha_creacion=date(2010, 11, 12))
+        cuenta.full_clean()
+        cuenta.save()
+
+        self.assertEqual(cuenta.fecha_creacion, date(2010, 11, 12))
+
+    def test_guarda_fecha_actual_por_defecto(self):
+        cuenta = Cuenta(nombre='Efectivo', slug='E')
+        cuenta.full_clean()
+        cuenta.save()
+
+        self.assertEqual(cuenta.fecha_creacion, date.today())
+
     def test_cuenta_creada_tiene_saldo_cero_por_defecto(self):
         cuenta = Cuenta(nombre='Efectivo', slug='E')
         cuenta.save()
@@ -87,12 +101,6 @@ class TestModelCuenta(TestCase):
         cuenta3 = Cuenta.crear(nombre='Cuenta Corriente', slug='CC')
 
         self.assertEqual(list(Cuenta.todes()), [cuenta2, cuenta3, cuenta1])
-
-    def test_guarda_correctamente_valores_con_decimales(self):
-        cuenta = Cuenta(nombre='Efectivo', slug='E', saldo=132.25)
-        cuenta.full_clean()
-        cuenta.save()
-        self.assertEqual(cuenta.saldo, 132.25)
 
 
 class TestModelCuentaCrear(TestCase):
