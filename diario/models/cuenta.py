@@ -91,6 +91,13 @@ class Cuenta(PolymorphModel):
         except Saldo.DoesNotExist:
             return 0
 
+    @property
+    def ultimo_historico(self):
+        try:
+            return self.saldo_set.last().importe
+        except AttributeError:
+            return 0
+
     def clean_fields(self, exclude=None):
         self._pasar_nombre_y_slug_a_minuscula()
         super().clean_fields(exclude=exclude)

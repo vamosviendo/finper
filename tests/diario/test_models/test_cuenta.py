@@ -89,7 +89,7 @@ class TestModelCuenta(TestCase):
         self.assertEqual(list(Cuenta.todes()), [cuenta2, cuenta3, cuenta1])
 
     def test_guarda_correctamente_valores_con_decimales(self):
-        cuenta = Cuenta(nombre='Efectivo', slug='E', saldo= 132.25)
+        cuenta = Cuenta(nombre='Efectivo', slug='E', saldo=132.25)
         cuenta.full_clean()
         cuenta.save()
         self.assertEqual(cuenta.saldo, 132.25)
@@ -161,6 +161,37 @@ class TestModelCuentaPropiedadSaldo(TestCase):
     def test_redondea_saldo(self):
         self.cta1.saldo = 354.452
         self.assertEqual(self.cta1._saldo, 354.45)
+
+
+class TestModelCuentaPropiedadUltimoHistorico(TestCase):
+
+    def setUp(self):
+        self.cta1 = Cuenta.crear('cuenta 1', 'c1')
+
+    def test_si_cuenta_no_tiene_saldos_historicos_devuelve_cero(self):
+        self.assertEqual(
+            self.cta1.ultimo_historico,
+            0
+        )
+
+    def test_devuelve_importe_del_ultimo_saldo_historico_de_la_cuenta(self):
+        Movimiento.crear(
+            concepto='00000',
+            importe=100,
+            cta_entrada=self.cta1,
+            fecha=date(2019, 1, 1)
+        )
+        Movimiento.crear(
+            concepto='00001',
+            importe=70,
+            cta_salida=self.cta1,
+            fecha=date(2019, 2, 3)
+        )
+        self.assertEqual(
+            self.cta1.ultimo_historico,
+            # self.cta1.saldo_set.last().importe
+            30
+        )
 
 
 class TestModelCuentaPropiedadEsCuentaCredito(TestCase):
