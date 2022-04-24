@@ -151,7 +151,10 @@ class TestModelCuentaPropiedadSaldo(TestCase):
     """
 
     def setUp(self):
-        self.cta1 = Cuenta.crear('Efectivo', 'E')
+        self.cta1 = Cuenta.crear(
+            'Efectivo', 'E',
+            fecha_creacion=date(2019, 1, 1)
+        )
         Movimiento.crear(
             concepto='00000',
             importe=100,
@@ -174,7 +177,10 @@ class TestModelCuentaPropiedadSaldo(TestCase):
 class TestModelCuentaPropiedadUltimoHistorico(TestCase):
 
     def setUp(self):
-        self.cta1 = Cuenta.crear('cuenta 1', 'c1')
+        self.cta1 = Cuenta.crear(
+            'cuenta 1', 'c1',
+            fecha_creacion=date(2019, 1, 1)
+        )
 
     def test_si_cuenta_no_tiene_saldos_historicos_devuelve_cero(self):
         self.assertEqual(
@@ -234,8 +240,9 @@ class TestModelCuentaMetodos(TestCase):
     """
 
     def setUp(self):
-        self.cta1 = Cuenta.crear('Efectivo', 'E')
-        self.cta2 = Cuenta.crear('Banco', 'B')
+        self.cta1 = Cuenta.crear(
+            'Efectivo', 'E', fecha_creacion=date(2019, 1, 1))
+        self.cta2 = Cuenta.crear('Banco', 'B', fecha_creacion=date(2019, 1, 1))
         self.mov1 = Movimiento.crear(
             concepto='00000',
             importe=100,
@@ -572,9 +579,12 @@ class TestModelCuentaMetodosAncestros(TestModelCuentaMetodos):
 class TestModelCuentaMetodosSaldoHistorico(TestCase):
 
     def setUp(self):
-        self.cta1 = Cuenta.crear('cuenta1', 'c1')
-        self.cta2 = Cuenta.crear('cuenta2', 'c2')
-        self.mov1 = Movimiento.crear('Movimiento cero', 100, self.cta1, fecha=date(2019, 1, 1))
+        self.cta1 = Cuenta.crear(
+            'cuenta1', 'c1', fecha_creacion=date(2019, 1, 1))
+        self.cta2 = Cuenta.crear(
+            'cuenta2', 'c2', fecha_creacion=date(2019, 1, 1))
+        self.mov1 = Movimiento.crear(
+            'Movimiento cero', 100, self.cta1, fecha=date(2019, 1, 1))
 
     def test_recupera_saldo_a_la_fecha_del_movimiento(self, mock_filtro, mock_tomar):
         self.cta1.saldo_historico(self.mov1)
@@ -727,7 +737,8 @@ class TestMetodosSubcuentas(TestCase):
                 Cuenta.arbol_de_subcuentas()
     """
     def setUp(self):
-        self.cta1 = Cuenta.crear('Efectivo', 'E')
+        self.cta1 = Cuenta.crear(
+            'Efectivo', 'E', fecha_creacion=date(2019, 1, 1))
         Movimiento.crear(
             concepto='00000',
             importe=100,

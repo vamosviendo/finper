@@ -34,12 +34,15 @@ class TestVerificarSaldos(TestCase):
 class TestSaldoGeneralHistorico(TestCase):
 
     def setUp(self):
-        self.cuenta1 = Cuenta.crear('cuenta 1', 'c1')
-        self.cuenta2 = Cuenta.crear('cuenta 2', 'c2')
-        self.cuenta3 = Cuenta.crear('cuenta 3', 'c3')
         self.fecha1 = date(2020, 5, 2)
         self.fecha2 = date(2020, 5, 8)
         self.fecha3 = date(2020, 5, 10)
+        self.cuenta1 = Cuenta.crear(
+            'cuenta 1', 'c1', fecha_creacion=self.fecha1)
+        self.cuenta2 = Cuenta.crear(
+            'cuenta 2', 'c2', fecha_creacion=self.fecha1)
+        self.cuenta3 = Cuenta.crear(
+            'cuenta 3', 'c3', fecha_creacion=self.fecha1)
         self.mov1 = Movimiento.crear(
             'Mov cta 1', 10, self.cuenta1, fecha=self.fecha1)
         self.mov2 = Movimiento.crear(

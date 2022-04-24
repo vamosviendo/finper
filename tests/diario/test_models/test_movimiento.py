@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 from unittest.mock import patch, call
 
 from django.core.exceptions import ValidationError
@@ -12,7 +12,11 @@ from utils.helpers_tests import dividir_en_dos_subcuentas
 class TestModelMovimiento(TestCase):
 
     def setUp(self):
-        self.cuenta1 = Cuenta.crear(nombre='Cuenta titular 1', slug='ct1')
+        self.cuenta1 = Cuenta.crear(
+            nombre='Cuenta titular 1',
+            slug='ct1',
+            fecha_creacion=date(2011, 1, 1)
+        )
 
 
 class TestModelMovimientoBasic(TestModelMovimiento):
@@ -138,7 +142,11 @@ class TestModelMovimientoCrear(TestModelMovimiento):
 
     def setUp(self):
         super().setUp()
-        self.cuenta2 = Cuenta.crear(nombre='Cuenta 2', slug='ct2')
+        self.cuenta2 = Cuenta.crear(
+            nombre='Cuenta 2',
+            slug='ct2',
+            fecha_creacion=date(2011, 11, 12)
+        )
         self.mov1 = Movimiento.crear(
             fecha=date(2011, 11, 12),
             concepto='Carga de saldo',
@@ -427,6 +435,36 @@ class TestModelMovimientoClean(TestModelMovimiento):
         )
         mov.full_clean()    # No debe dar error
 
+    def test_no_permite_movimiento_anterior_a_creacion_cta_entrada(self):
+        fecha_mov = self.cuenta1.fecha_creacion-timedelta(1)
+        mov = Movimiento(
+            fecha=fecha_mov,
+            concepto = 'Movimiento anterior a creación de cuenta',
+            importe=100,
+            cta_entrada=self.cuenta1
+        )
+        with self.assertRaisesMessage(
+            ValidationError,
+            f'Fecha del movimiento ({fecha_mov}) es anterior a creación '
+            f'de la cuenta "cuenta titular 1" ({self.cuenta1.fecha_creacion})'
+        ):
+            mov.full_clean()
+
+    def test_no_permite_movimiento_anterior_a_creacion_cta_salida(self):
+        fecha_mov = self.cuenta1.fecha_creacion-timedelta(1)
+        mov = Movimiento(
+            fecha=fecha_mov,
+            concepto = 'Movimiento anterior a creación de cuenta',
+            importe=100,
+            cta_salida=self.cuenta1
+        )
+        with self.assertRaisesMessage(
+            ValidationError,
+            f'Fecha del movimiento ({fecha_mov}) es anterior a creación '
+            f'de la cuenta "cuenta titular 1" ({self.cuenta1.fecha_creacion})'
+        ):
+            mov.full_clean()
+
     def test_movimiento_de_entrada_no_admite_cuenta_credito(self):
         cc12, cc21 = self.generar_cuentas_credito()
         mov_no_e = Movimiento(
@@ -516,9 +554,15 @@ class TestModelMovimientoSave(TestModelMovimiento):
     def setUp(self):
         super().setUp()
         self.titular2 = Titular.crear(nombre='Titular 2', titname='tit2')
-        self.cuenta2 = Cuenta.crear('cuenta 2', 'c2')
+        self.cuenta2 = Cuenta.crear(
+            'cuenta 2', 'c2',
+            fecha_creacion=date(2020, 1, 5)
+        )
         self.cuenta3 = Cuenta.crear(
-            'Cuenta otro titular', 'ct2', titular=self.titular2)
+            'Cuenta otro titular', 'ct2',
+            titular=self.titular2,
+            fecha_creacion=date(2020, 1, 5)
+        )
         self.mov1 = Movimiento.crear(
             'entrada', 125, self.cuenta1, fecha=date(2021, 1, 5))
         self.mov2 = Movimiento.crear(
@@ -1079,7 +1123,10 @@ class TestModelMovimientoMetodoEsUnicoDelDiaDeCuenta(TestModelMovimiento):
 
     def setUp(self):
         super().setUp()
-        self.cuenta2 = Cuenta.crear('cuenta 2', 'c2')
+        self.cuenta2 = Cuenta.crear(
+            'cuenta 2', 'c2',
+            fecha_creacion=date(2011, 11, 11)
+        )
         self.mov1 = Movimiento.crear(
             'Movimiento 1', 100, self.cuenta1, fecha=date(2011, 11, 11))
 

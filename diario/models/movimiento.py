@@ -205,6 +205,12 @@ class Movimiento(MiModel):
                         f'"{self.cta_salida.nombre}" no es la contrapartida '
                         f'de "{self.cta_entrada.nombre}"'
                     )
+            if self.fecha < self.cta_entrada.fecha_creacion:
+                raise ValidationError(
+                    f'Fecha del movimiento ({self.fecha}) es anterior a '
+                    f'creación de la cuenta "{self.cta_entrada.nombre}" '
+                    f'({self.cta_entrada.fecha_creacion})'
+                )
 
         if self.cta_salida:
             if self.cta_salida.es_cuenta_credito:
@@ -216,6 +222,12 @@ class Movimiento(MiModel):
                     raise ValidationError(
                         'No se permite traspaso '
                         'entre cuenta crédito y cuenta normal')
+            if self.fecha < self.cta_salida.fecha_creacion:
+                raise ValidationError(
+                    f'Fecha del movimiento ({self.fecha}) es anterior a '
+                    f'creación de la cuenta "{self.cta_salida.nombre}" '
+                    f'({self.cta_salida.fecha_creacion})'
+                )
 
     def delete(self, force=False, *args, **kwargs):
         if self.es_automatico and not force:

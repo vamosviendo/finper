@@ -501,7 +501,10 @@ class TestVaciarSaldo(TestCase):
 
     def test_genera_movimientos_con_fecha_recibida(self):
         fecha = date(2020, 5, 4)
-        cta_int = CuentaInteractiva.crear('Efectivo', 'efec')
+        cta_int = CuentaInteractiva.crear(
+            'Efectivo', 'efec',
+            fecha_creacion=fecha
+        )
         ctas_limpias = cta_int._ajustar_subcuentas(
             [['subc1', 'sc1', 10], ['subc2', 'sc2']])
 
@@ -580,7 +583,7 @@ class TestCargarSaldo(TestCase):
 class TestSaldoOk(TestCase):
 
     def test_saldo_ok_devuelve_true_si_saldo_coincide_con_movimientos_en_cuenta_interactiva(self):
-        cta1 = Cuenta.crear('Efectivo', 'E')
+        cta1 = Cuenta.crear('Efectivo', 'E', fecha_creacion=date(2019, 1, 1))
         Movimiento.crear(
             concepto='00000',
             importe=100,
@@ -591,7 +594,10 @@ class TestSaldoOk(TestCase):
         self.assertTrue(cta1.saldo_ok())
 
     def test_saldo_ok_devuelve_false_si_saldo_cta_interactiva_no_coincide_con_movimientos(self):
-        cta1 = Cuenta.crear('Efectivo', 'E')
+        cta1 = Cuenta.crear(
+            'Efectivo', 'E',
+            fecha_creacion=date(2019, 1, 1)
+        )
         Movimiento.crear(
             concepto='00000',
             importe=100,
@@ -606,7 +612,7 @@ class TestSaldoOk(TestCase):
 class TestCorregirSaldo(TestCase):
 
     def test_corregir_saldo_corrige_saldo_a_partir_de_los_importes_de_movimientos(self):
-        cta1 = Cuenta.crear('Efectivo', 'E')
+        cta1 = Cuenta.crear('Efectivo', 'E', fecha_creacion=date(2019, 1, 1))
         Movimiento.crear(
             concepto='00000',
             importe=100,

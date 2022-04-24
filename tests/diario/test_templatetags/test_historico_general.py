@@ -11,7 +11,8 @@ from diario.templatetags.historico_general import historico_general
 class TestHistoricoGeneral(TestCase):
 
     def setUp(self):
-        self.cuenta = Cuenta.crear('cuenta', 'cta')
+        self.cuenta = Cuenta.crear(
+            'cuenta', 'cta', fecha_creacion=date(2010, 11, 11))
         self.mov = Movimiento.crear(
             'Ingreso', 100, self.cuenta,
             fecha=date(2010, 11, 11)

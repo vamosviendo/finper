@@ -327,7 +327,8 @@ class TestHomePageVerificarSaldo(TestCase):
 class TestCtaDetalle(TestCase):
 
     def setUp(self):
-        self.cta = Cuenta.crear('Efectivo', 'e')
+        self.cta = Cuenta.crear(
+            'Efectivo', 'e', fecha_creacion=date(2001, 1, 1))
         Movimiento.crear(
             concepto='a primer movimiento', importe=100, cta_entrada=self.cta)
         Movimiento.crear(

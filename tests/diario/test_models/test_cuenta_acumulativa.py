@@ -40,7 +40,10 @@ class TestSubcuentas(TestCase):
     """
 
     def setUp(self):
-        self.cta1 = Cuenta.crear('Efectivo', 'E')
+        self.cta1 = Cuenta.crear(
+            'Efectivo', 'E',
+            fecha_creacion=date(2019, 1, 1)
+        )
         Movimiento.crear(
             concepto='00000',
             importe=100,
@@ -377,7 +380,7 @@ class TestSaldoOk(TestCase):
         self.assertTrue(self.cta_acum.saldo_ok())
 
     def test_saldo_ok_devuelve_false_si_saldo_no_coincide_con_saldos_subcuentas(self):
-        cta1 = Cuenta.crear('Efectivo', 'E')
+        cta1 = Cuenta.crear('Efectivo', 'E', fecha_creacion=date(2019, 1, 1))
         Movimiento.crear(
             concepto='00000',
             importe=100,
@@ -397,7 +400,7 @@ class TestSaldoOk(TestCase):
 class TestCorregirSaldo(TestCase):
 
     def test_corregir_saldo_corrige_a_partir_de_saldos_de_subcuentas(self):
-        cta1 = Cuenta.crear('Efectivo', 'E')
+        cta1 = Cuenta.crear('Efectivo', 'E', fecha_creacion=date(2019, 1, 1))
         Movimiento.crear(
             concepto='00000',
             importe=100,
