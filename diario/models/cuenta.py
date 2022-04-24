@@ -333,7 +333,7 @@ class CuentaInteractiva(Cuenta):
         cta_madre = self._convertirse_en_acumulativa(fecha)
 
         cuentas_creadas = self._generar_subcuentas(
-            cuentas_limpias, movimientos_incompletos, cta_madre
+            cuentas_limpias, movimientos_incompletos, cta_madre, fecha
         )
         return cuentas_creadas
 
@@ -452,13 +452,17 @@ class CuentaInteractiva(Cuenta):
 
     @staticmethod
     def _generar_subcuentas(
-            cuentas_limpias, movimientos_incompletos, cta_madre):
+            cuentas_limpias, movimientos_incompletos, cta_madre, fecha):
 
         cuentas_creadas = list()
 
         for i, subcuenta in enumerate(cuentas_limpias):
             cuentas_creadas.append(
-                Cuenta.crear(**subcuenta, cta_madre=cta_madre)
+                Cuenta.crear(
+                    **subcuenta,
+                    cta_madre=cta_madre,
+                    fecha_creacion=fecha
+                )
             )
 
             if movimientos_incompletos[i] is not None:

@@ -118,7 +118,10 @@ class TestMetodoDividirEntre(TestCase):
     """
 
     def setUp(self):
-        self.cta1 = Cuenta.crear('Efectivo', 'E')
+        self.cta1 = Cuenta.crear(
+            'Efectivo', 'E',
+            fecha_creacion=date(2011, 1, 1)
+        )
         Movimiento.crear(
             concepto='00000',
             importe=100,
@@ -168,6 +171,14 @@ class TestMetodoDividirEntre(TestCase):
         self.assertEqual(cta3.cta_madre, self.cta1)
 
         self.assertEqual(list(self.cta1.subcuentas.all()), [cta2, cta3, ])
+
+    def test_cuentas_generadas_toman_fecha_de_creacion_de_argumento_fecha(self):
+        cta2, cta3 = self.cta1.dividir_entre(
+            *self.subcuentas,
+            fecha=date(2019, 1, 2)
+        )
+        self.assertEqual(cta2.fecha_creacion, date(2019, 1, 2))
+        self.assertEqual(cta3.fecha_creacion, date(2019, 1, 2))
 
     def test_titular_de_cuenta_madre_es_por_defecto_el_titular_de_cuentas_generadas(self):
         self.titular = Titular.crear(titname='tito', nombre='Tito Titi')
