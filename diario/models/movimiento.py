@@ -239,8 +239,6 @@ class Movimiento(MiModel):
             raise errors.ErrorCuentaEsAcumulativa(
                 errors.MOVIMIENTO_CON_CA_ELIMINADO)
 
-        super().delete(*args, **kwargs)
-
         if self.cta_entrada:
             self.cta_entrada.saldo -= self.importe
             self.cta_entrada.save()
@@ -249,45 +247,19 @@ class Movimiento(MiModel):
             # Si hay más movimientos de la cuenta en la fecha,
             #   retirar importe de saldo
             # Si no hay más movimientos de la cuenta en la fecha, eliminar saldo
-            if self.cta_entrada.movs_en_fecha(self.fecha).count() > 0:
-                Saldo.registrar(
-                    cuenta=self.cta_entrada,
-                    fecha=self.fecha,
-                    importe=-self.importe
-                )
-            else:
-                self.cta_entrada.saldo_set.get(fecha=self.fecha).eliminar()
-                for cta_madre in self.cta_entrada.ancestros():
-                    if cta_madre.movs_en_fecha(self.fecha).count() > 0:
-                        Saldo.registrar(
-                            cuenta=cta_madre,
-                            fecha=self.fecha,
-                            importe=-self.importe
-                        )
-                    else:
-                        cta_madre.saldo_set.get(fecha=self.fecha).eliminar()
+            self.cta_entrada.saldo_set.get(movimiento=self).eliminar()
+            # for cta_madre in self.cta_entrada.ancestros():
+            #     cta_madre.saldo_set.get(movimiento=self).eliminar()
 
         if self.cta_salida:
             self.cta_salida.saldo += self.importe
             self.cta_salida.save()
 
-            if self.cta_salida.movs_en_fecha(self.fecha).count() > 0:
-                Saldo.registrar(
-                    cuenta=self.cta_salida,
-                    fecha=self.fecha,
-                    importe=self.importe
-                )
-            else:
-                self.cta_salida.saldo_set.get(fecha=self.fecha).eliminar()
-                for cta_madre in self.cta_salida.ancestros():
-                    if cta_madre.movs_en_fecha(self.fecha).count() > 0:
-                        Saldo.registrar(
-                            cuenta=cta_madre,
-                            fecha=self.fecha,
-                            importe=self.importe
-                        )
-                    else:
-                        cta_madre.saldo_set.get(fecha=self.fecha).eliminar()
+            self.cta_salida.saldo_set.get(movimiento=self).eliminar(salida=True)
+            # for cta_madre in self.cta_salida.ancestros():
+            #     cta_madre.saldo_set.get(movimiento=self)
+
+        super().delete(*args, **kwargs)
 
         if self.id_contramov:
             self._eliminar_contramovimiento()
