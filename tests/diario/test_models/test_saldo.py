@@ -324,6 +324,12 @@ class TestSaldoMetodoEliminar(TestCase):
         mock_actualizar_posteriores.assert_called_once_with(
             self.saldo.cuenta, self.saldo.movimiento, -100)
 
+    @patch('diario.models.Saldo._actualizar_posteriores')
+    def test_pasa_importe_en_positivo_si_la_cuenta_es_de_salida_en_movimiento(self, mock_actualizar_posteriores):
+        self.saldo.eliminar(salida=True)
+        mock_actualizar_posteriores.assert_called_once_with(
+            self.saldo.cuenta, self.saldo.movimiento, 100)
+
 
 class TestSaldoMetodoActualizarPosteriores(TestCase):
 

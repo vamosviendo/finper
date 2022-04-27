@@ -130,10 +130,11 @@ class Saldo(MiModel):
 
         return saldo
 
-    def eliminar(self):
+    def eliminar(self, salida=False):
         self.delete()
+        importe = self.movimiento.importe if salida else -self.movimiento.importe
         Saldo._actualizar_posteriores(
-            self.cuenta, self.movimiento, -self.importe)
+            self.cuenta, self.movimiento, importe)
 
     @staticmethod
     def _actualizar_posteriores(cuenta, mov, importe):
