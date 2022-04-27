@@ -1,176 +1,287 @@
-from datetime import date
+from datetime import date, timedelta
 from unittest.mock import patch, call
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from diario.models import Cuenta, Movimiento, Saldo
-from utils import errors
 
 
 class TestSaldoBasic(TestCase):
 
     def setUp(self):
-        self.cuenta = Cuenta.crear('cuenta normal', 'cn')
+        self.cuenta = Cuenta.crear('cuenta normal', 'cn', fecha_creacion=date(2010, 11, 11))
 
-    def test_guarda_y_recupera_saldos(self):
-        saldo = Saldo()
-        saldo.cuenta = self.cuenta
-        saldo.fecha = date(2010, 11, 11)
-        saldo.importe = 100
-        saldo.save()
-
-        self.assertEqual(Saldo.cantidad(), 1)
-
-        saldo_recuperado = saldo.tomar(cuenta=self.cuenta, fecha=date(2010, 11, 11))
-
-        self.assertEqual(saldo_recuperado.importe, 100)
-
-    def test_no_admite_mas_de_un_saldo_por_cuenta_en_cada_fecha(self):
-        Saldo.crear(cuenta=self.cuenta, fecha=date(2010, 11, 11), importe=10)
+    def test_no_admite_mas_de_un_saldo_por_cuenta_en_cada_movimiento(self):
+        mov = Movimiento.crear('mov', 5, self.cuenta, fecha=date(2010, 11, 11))
+        # Saldo.crear(cuenta=self.cuenta, fecha=date(2010, 11, 11), importe=10)
 
         saldo = Saldo()
         saldo.cuenta = self.cuenta
-        saldo.fecha = date(2010, 11, 11)
+        saldo.movimiento = mov
         saldo.importe = 15
 
         with self.assertRaises(ValidationError):
             saldo.full_clean()
 
-    def test_saldos_se_ordenan_por_fecha(self):
-        saldo1 = Saldo.crear(
-            cuenta=self.cuenta, fecha=date(2010, 11, 10), importe=10)
-        saldo2 = Saldo.crear(
-            cuenta=self.cuenta, fecha=date(2010, 11, 2), importe=15)
-        saldo3 = Saldo.crear(
-            cuenta=self.cuenta, fecha=date(2010, 11, 5), importe=5)
-        self.assertEqual(
-            list(Saldo.todes()),
-            [saldo2, saldo3, saldo1]
-        )
+    def test_saldos_se_ordenan_por_movimiento(self):
+        mov1 = Movimiento.crear('mov 1', 10, self.cuenta, fecha=date(2010, 11, 20))
+        mov2 = Movimiento.crear('mov 2', 20, self.cuenta, fecha=date(2010, 11, 12))
+        mov3 = Movimiento.crear('mov 3', 30, self.cuenta, fecha=date(2010, 11, 12))
+        saldo1 = Saldo.objects.get(cuenta=self.cuenta, movimiento=mov1)
+        saldo2 = Saldo.objects.get(cuenta=self.cuenta, movimiento=mov2)
+        saldo3 = Saldo.objects.get(cuenta=self.cuenta, movimiento=mov3)
 
-    def test_dentro_de_fecha_saldos_se_ordenan_por_cuenta(self):
-        cuenta2 = Cuenta.crear('cuenta 2', 'c2')
-        cuenta3 = Cuenta.crear('cuenta 3', 'c3')
-        saldo1 = Saldo.crear(
-            cuenta=self.cuenta, fecha=date(2010, 11, 1), importe=10)
-        saldo2 = Saldo.crear(
-            cuenta=cuenta3, fecha=date(2010, 11, 1), importe=10)
-        saldo3 = Saldo.crear(
-            cuenta=cuenta2, fecha=date(2010, 11, 1), importe=10)
-        self.assertEqual(
-            list(Saldo.todes()),
-            [saldo3, saldo2, saldo1]
-        )
+        self.assertEqual(list(Saldo.todes()), [saldo2, saldo3, saldo1])
 
 
 class TestSaldoTomar(TestCase):
 
-    def test_si_no_encuentra_saldo_de_cuenta_en_fecha_busca_saldo_de_ultima_fecha_anterior(self):
-        cuenta1 = Cuenta.crear('cuenta 1', 'c1')
-        saldo2 = Saldo.crear(cuenta=cuenta1, fecha=date(2020, 1, 2), importe=150)
-        Saldo.crear(cuenta=cuenta1, fecha=date(2020, 1, 1), importe=100)
+    def setUp(self):
+        self.cuenta1 = Cuenta.crear(
+            'cuenta 1', 'c1', fecha_creacion=date(2020, 1, 1))
+        self.cuenta2 = Cuenta.crear(
+            'cuenta 2', 'c2', fecha_creacion=date(2020, 1, 1))
+
+    def test_si_no_encuentra_saldo_de_cuenta_en_movimiento_busca_ultimo_saldo_anterior(self):
+        mov1 = Movimiento.crear(
+            'mov1', 150, self.cuenta1, fecha=date(2020, 1, 2))
+        saldo = mov1.saldo_set.first()
+        mov2 = Movimiento.crear('mov2', 50, self.cuenta2, fecha=date(2020, 1, 5))
+
         self.assertEqual(
-            Saldo.tomar(cuenta=cuenta1, fecha=date(2020, 1, 10)),
-            saldo2
+            Saldo.tomar(cuenta=self.cuenta1, movimiento=mov2),
+            saldo
         )
 
-    def test_si_no_encuentra_saldo_de_cuenta_en_fecha_ni_en_fechas_anteriores_lanza_excepcion(self):
-        cuenta1 = Cuenta.crear('cuenta 1', 'c1')
+    def test_si_no_encuentra_saldo_de_cuenta_en_movimiento_ni_saldos_anteriores_lanza_excepcion(self):
+        mov = Movimiento.crear('mov', 50, self.cuenta2, fecha=date(2020, 1, 5))
         with self.assertRaises(Saldo.DoesNotExist):
-            Saldo.tomar(cuenta=cuenta1, fecha=date(2020, 1, 10))
+            Saldo.tomar(cuenta=self.cuenta1, movimiento=mov)
 
 
-class TestSaldoMetodoRegistrar(TestCase):
+class TestSaldoMetodoGenerar(TestCase):
 
     def setUp(self):
-        self.cuenta = Cuenta.crear('cuenta normal', 'cn')
+        self.fecha = date(2010, 11, 11)
+        self.cuenta1 = Cuenta.crear(
+            'cuenta 1', 'c1', fecha_creacion=self.fecha)
+        self.cuenta2 = Cuenta.crear(
+            'cuenta 2', 'c2', fecha_creacion=self.fecha)
+        self.mov = Movimiento.crear(
+            concepto='traspaso',
+            importe=100,
+            cta_entrada=self.cuenta1,
+            cta_salida=self.cuenta2,
+            fecha=self.fecha
+        )
+        Saldo.objects.get(movimiento=self.mov, cuenta=self.cuenta1).delete()
+        Saldo.objects.get(movimiento=self.mov, cuenta=self.cuenta2).delete()
 
     @patch('diario.models.Saldo.crear')
-    def test_primer_registro_en_fecha_genera_nuevo_saldo(self, mock_crear):
-        Saldo.registrar(self.cuenta, date(2010, 11, 11), 100)
+    def test_crea_saldos_para_cta_entrada_y_salida(self, mock_crear):
+        Saldo.generar(self.mov)
+
+        self.assertEqual(
+            mock_crear.call_args_list,
+            [
+                call(cuenta=self.mov.cta_entrada, importe=100, movimiento=self.mov),
+                call(cuenta=self.mov.cta_salida, importe=-100, movimiento=self.mov)
+            ]
+        )
+
+    @patch('diario.models.Saldo.crear')
+    @patch('django.db.models.QuerySet.last')
+    def test_saldo_creado_suma_importe_del_mov_recibido_a_ultimo_saldo_anterior_de_cta_entrada(self, mock_last, mock_crear):
+        mock_last.return_value = Movimiento(
+            concepto='mock mov',
+            importe=100,
+            fecha=self.fecha,
+            cta_entrada=self.cuenta1
+        )
+        self.mov.cta_salida = None
+        self.mov.fecha = self.fecha + timedelta(1)
+        self.mov.importe = 70
+        Saldo.generar(self.mov)
+
         mock_crear.assert_called_once_with(
-            cuenta=self.cuenta,
-            fecha=date(2010, 11, 11),
-            importe=100
+            cuenta=self.cuenta1,
+            importe=170,
+            movimiento=self.mov
         )
 
-    def test_saldo_creado_suma_importe_recibido_a_ultimo_saldo_anterior_de_cuenta(self):
-        Saldo.registrar(self.cuenta, date(2010, 11, 1), 100)
+    @patch('diario.models.Saldo.crear')
+    @patch('django.db.models.QuerySet.last')
+    def test_saldo_creado_resta_importe_del_mov_recibido_a_ultimo_saldo_anterior_de_cta_salida(self, mock_last, mock_crear):
+        mock_last.return_value = Movimiento(
+            concepto='mock mov',
+            importe=100,
+            fecha=self.fecha,
+            cta_entrada=self.cuenta2
+        )
+        self.mov.cta_entrada = None
+        self.mov.fecha = self.fecha + timedelta(1)
+        self.mov.importe = 70
+        Saldo.generar(self.mov)
 
-        with patch('diario.models.Saldo.crear') as mock_crear:
-            Saldo.registrar(self.cuenta, date(2010, 11, 11), 100)
-            mock_crear.assert_called_once_with(
-                cuenta=self.cuenta,
-                fecha=date(2010, 11, 11),
-                importe=200
-            )
-
-    def test_segundo_registro_de_cuenta_en_fecha_no_genera_nuevo_saldo(self):
-        Saldo.registrar(self.cuenta, date(2010, 11, 11), 100)
-        Saldo.registrar(self.cuenta, date(2010, 11, 11), 10)
-
-        self.assertEqual(Saldo.cantidad(), 1)
-
-    def test_segundo_registro_de_otra_cuenta_en_fecha_genera_nuevo_saldo(self):
-        cuenta2 = Cuenta.crear('cuenta2', 'c2')
-
-        Saldo.registrar(self.cuenta, date(2010, 11, 11), 10)
-        Saldo.registrar(cuenta2, date(2010, 11, 11), 10)
-
-        self.assertEqual(Saldo.cantidad(), 2)
-
-    def test_segundo_registro_en_fecha_suma_importe_a_saldo(self):
-        Saldo.registrar(self.cuenta, date(2010, 11, 11), 10)
-        Saldo.registrar(self.cuenta, date(2010, 11, 11), 5)
-
-        self.assertEqual(
-            Saldo.tomar(cuenta=self.cuenta, fecha=date(2010, 11, 11)).importe,
-            15
+        mock_crear.assert_called_once_with(
+            cuenta=self.cuenta2,
+            importe=30,
+            movimiento=self.mov
         )
 
-    def test_devuelve_saldo_creado(self):
-        saldo = Saldo.registrar(self.cuenta, date(2010, 11, 1), 100)
-        self.assertEqual(
-            saldo,
-            Saldo.tomar(cuenta=self.cuenta, fecha=date(2010, 11, 1))
+    @patch('diario.models.Saldo.crear')
+    def test_acepta_movimientos_sin_cta_salida(self, mock_crear):
+        self.mov.cta_salida = None
+        Saldo.generar(self.mov)
+        mock_crear.assert_called_once_with(
+            cuenta=self.mov.cta_entrada,
+            importe=100,
+            movimiento=self.mov
         )
 
-    def test_devuelve_saldo_actualizado(self):
-        Saldo.registrar(self.cuenta, date(2010, 11, 11), 10)
-        saldo = Saldo.registrar(self.cuenta, date(2010, 11, 11), 5)
-
-        self.assertEqual(
-            saldo,
-            Saldo.tomar(cuenta=self.cuenta, fecha=date(2010, 11, 11))
-        )
-
-    def test_saldo_registrado_en_fecha_antigua_modifica_saldos_de_fechas_posteriores(self):
-        Saldo.registrar(self.cuenta, date(2010, 11, 15), 20)
-        Saldo.registrar(self.cuenta, date(2010, 11, 11), 30)
-        self.assertEqual(
-            Saldo.tomar(cuenta=self.cuenta, fecha=date(2010, 11, 15)).importe,
-            50
-        )
-
-    def test_segundo_registro_en_fecha_antigua_modifica_saldos_de_fechas_posteriores(self):
-        Saldo.registrar(self.cuenta, date(2010, 11, 11), 30)
-        Saldo.registrar(self.cuenta, date(2010, 11, 15), 20)
-        Saldo.registrar(self.cuenta, date(2010, 11, 11), 40)
-        self.assertEqual(
-            Saldo.tomar(cuenta=self.cuenta, fecha=date(2010, 11, 11)).importe,
-            70
-        )
-        self.assertEqual(
-            Saldo.tomar(cuenta=self.cuenta, fecha=date(2010, 11, 15)).importe,
-            90
+    @patch('diario.models.Saldo.crear')
+    def test_acepta_movimientos_sin_cta_entrada(self, mock_crear):
+        # delattr(self.mov, 'cta_entrada')
+        self.mov.cta_entrada = None
+        Saldo.generar(self.mov)
+        mock_crear.assert_called_once_with(
+            cuenta=self.mov.cta_salida,
+            importe=-100,
+            movimiento=self.mov
         )
 
     @patch('diario.models.Saldo._actualizar_posteriores')
-    def test_llama_a_actualizar_posteriores(self, mock_actualizar_posteriores):
-        Saldo.registrar(self.cuenta, date(2010, 11, 11), 30)
+    def test_llama_a_actualizar_posteriores_con_cta_entrada(self, mock_actualizar_posteriores):
+        self.mov.cta_salida = None
+        Saldo.generar(self.mov)
         mock_actualizar_posteriores.assert_called_once_with(
-            self.cuenta, date(2010, 11, 11), 30)
+            self.cuenta1, self.mov, 100)
+
+    @patch('diario.models.Saldo._actualizar_posteriores')
+    def test_llama_a_actualizar_posteriores_con_cta_salida(self, mock_actualizar_posteriores):
+        self.mov.cta_entrada = None
+        Saldo.generar(self.mov)
+        mock_actualizar_posteriores.assert_called_once_with(
+            self.cuenta2, self.mov, -100)
+
+    def test_integrativo_actualiza_saldos_posteriores_de_cta_entrada(self):
+        self.mov.cta_salida = None
+        mov_post = Movimiento.crear(
+            'mov posterior', 70, self.cuenta1, fecha=self.fecha+timedelta(2))
+        self.assertEqual(
+            Saldo.tomar(cuenta=self.cuenta1, movimiento=mov_post).importe,
+            70
+        )
+
+        Saldo.generar(self.mov)
+
+        self.assertEqual(
+            Saldo.tomar(cuenta=self.cuenta1, movimiento=mov_post).importe,
+            70+100
+        )
+
+    def test_integrativo_actualiza_saldos_posteriores_de_cta_salida(self):
+        self.mov.cta_entrada = None
+        mov_post = Movimiento.crear(
+            'mov posterior', 70, self.cuenta2, fecha=self.fecha+timedelta(2))
+        self.assertEqual(
+            Saldo.tomar(cuenta=self.cuenta2, movimiento=mov_post).importe,
+            70
+        )
+
+        Saldo.generar(self.mov)
+
+        self.assertEqual(
+            Saldo.tomar(cuenta=self.cuenta2, movimiento=mov_post).importe,
+            70-100
+        )
+
+    def test_devuelve_tupla_con_saldos_generados_para_cta_entrada_y_cta_salida(self):
+        saldos = Saldo.generar(self.mov)
+        self.assertEqual(
+            saldos,
+            (
+                Saldo.objects.get(cuenta=self.cuenta1, movimiento=self.mov),
+                Saldo.objects.get(cuenta=self.cuenta2, movimiento=self.mov)
+            )
+        )
+
+    def test_devuelve_tupla_con_saldo_cta_entrada_y_none_si_no_hay_cta_salida(self):
+        self.mov.cta_salida = None
+        self.assertEqual(
+            Saldo.generar(self.mov),
+            (Saldo.objects.get(cuenta=self.cuenta1, movimiento=self.mov), None)
+        )
+
+    def test_devuelve_tupla_con_saldo_cta_salida_y_none_si_no_hay_cta_entrada(self):
+        self.mov.cta_entrada = None
+        self.assertEqual(
+            Saldo.generar(self.mov),
+            (None, Saldo.objects.get(cuenta=self.cuenta2, movimiento=self.mov))
+        )
+
+    def test_genera_saldo_de_cuenta_madre_de_cta_entrada(self):
+        cuenta3 = Cuenta.crear('cuenta3', 'c3', fecha_creacion=date(2010, 1, 1))
+        sc31, sc32 = cuenta3.dividir_entre(
+            ['subcuenta 3.1', 'sc31', 0],
+            ['subcuenta 3.2', 'sc32'],
+            fecha=date(2010, 1, 1)
+        )
+        mov = Movimiento.crear('mov', 100, sc31, fecha=date(2010, 1, 5))
+        self.assertEqual(
+            Saldo.tomar(cuenta=cuenta3, movimiento=mov).importe,
+            100
+        )
+
+    def test_genera_saldo_de_cuenta_madre_de_cta_salida(self):
+        cuenta3 = Cuenta.crear('cuenta3', 'c3', fecha_creacion=date(2010, 1, 1))
+        sc31, sc32 = cuenta3.dividir_entre(
+            ['subcuenta 3.1', 'sc31', 0],
+            ['subcuenta 3.2', 'sc32'],
+            fecha=date(2010, 1, 1)
+        )
+        mov = Movimiento.crear('mov', 100, None, sc31, fecha=date(2010, 1, 5))
+        self.assertEqual(
+            Saldo.tomar(cuenta=cuenta3, movimiento=mov).importe,
+            -100
+        )
+
+    def test_genera_saldo_de_cuenta_abuela_de_cta_entrada(self):
+        cuenta3 = Cuenta.crear('cuenta3', 'c3', fecha_creacion=date(2010, 1, 1))
+        sc31, sc32 = cuenta3.dividir_entre(
+            ['subcuenta 3.1', 'sc31', 0],
+            ['subcuenta 3.2', 'sc32'],
+            fecha=date(2010, 1, 1)
+        )
+        sc311, sc312 = sc31.dividir_entre(
+            ['subcuenta 3.1.1', 'sc311', 0],
+            ['subcuenta 3.1.2', 'sc312'],
+            fecha=date(2010, 1, 1)
+        )
+        mov = Movimiento.crear('mov', 100, sc311, fecha=date(2010, 1, 5))
+        self.assertEqual(
+            Saldo.tomar(cuenta=cuenta3, movimiento=mov).importe,
+            100
+        )
+
+    def test_genera_saldo_de_cuenta_abuela_de_cta_salida(self):
+        cuenta3 = Cuenta.crear('cuenta3', 'c3', fecha_creacion=date(2010, 1, 1))
+        sc31, sc32 = cuenta3.dividir_entre(
+            ['subcuenta 3.1', 'sc31', 0],
+            ['subcuenta 3.2', 'sc32'],
+            fecha=date(2010, 1, 1)
+        )
+        sc311, sc312 = sc31.dividir_entre(
+            ['subcuenta 3.1.1', 'sc311', 0],
+            ['subcuenta 3.1.2', 'sc312'],
+            fecha=date(2010, 1, 1)
+        )
+        mov = Movimiento.crear('mov', 100, None, sc311, fecha=date(2010, 1, 5))
+        self.assertEqual(
+            Saldo.tomar(cuenta=cuenta3, movimiento=mov).importe,
+            -100
+        )
 
     def test_lanza_excepcion_si_no_recibe_cuenta(self):
         with self.assertRaisesMessage(
@@ -179,138 +290,89 @@ class TestSaldoMetodoRegistrar(TestCase):
         ):
             Saldo.registrar(None, date(2010, 11, 11), 30)
 
-    @patch('diario.models.Saldo._actualizar_posteriores')
-    def test_si_cuenta_tiene_cuenta_madre_registra_saldo_en_fecha_en_cuenta_madre(self, mock_act_pos):
-        sc1, sc2 = self.cuenta.dividir_entre(
-            ['subcuenta 1', 'sc1', 0],
-            ['subcuenta 2', 'sc2']
-        )
-        cuenta = Cuenta.tomar(slug=self.cuenta.slug)
-
-        Saldo.registrar(sc1, date(2010, 11, 11), 30)
-
-        self.assertEqual(
-            mock_act_pos.call_args_list,
-            [
-                call(sc1, date(2010, 11, 11), 30),
-                call(cuenta, date(2010, 11, 11), 30)
-            ]
-        )
-
-    def test_integrativo_si_cuenta_tiene_cuenta_madre_registra_saldo_en_fecha_en_cuenta_madre(self):
-        sc1, sc2 = self.cuenta.dividir_entre(
-            ['subcuenta 1', 'sc1', 0],
-            ['subcuenta 2', 'sc2']
-        )
-        Saldo.registrar(sc1, date(2010, 11, 11), 30)
-        self.assertEqual(
-            Saldo.tomar(cuenta=self.cuenta, fecha=date(2010, 11, 11)).importe,
-            30
-        )
-
-    @patch('diario.models.Saldo._actualizar_posteriores')
-    def test_si_cuenta_tiene_cuenta_abuela_registra_saldo_en_fecha_en_cuenta_abuela(self, mock_act_pos):
-        sc1, sc2 = self.cuenta.dividir_entre(
-            ['subcuenta 1', 'sc1', 0],
-            ['subcuenta 2', 'sc2']
-        )
-        sc1_1, sc1_2 = sc1.dividir_entre(
-            ['subsubcuenta 1 1', 'sc11', 0],
-            ['subsubcuenta 1 2', 'sc12']
-        )
-        cuenta = Cuenta.tomar(slug=self.cuenta.slug)
-        sc1a = Cuenta.tomar(slug=sc1.slug)
-
-        Saldo.registrar(sc1_1, date(2010, 11, 11), 30)
-
-        self.assertEqual(
-            mock_act_pos.call_args_list,
-            [
-                call(sc1_1, date(2010, 11, 11), 30),
-                call(sc1a, date(2010, 11, 11), 30),
-                call(cuenta, date(2010, 11, 11), 30)
-            ]
-        )
-
 
 class TestSaldoMetodoEliminar(TestCase):
 
     def setUp(self):
-        self.cuenta = Cuenta.crear('cuenta normal', 'cn')
+        self.cuenta = Cuenta.crear(
+            'cuenta normal', 'cn', fecha_creacion=date(2010, 11, 11))
+        mov = Movimiento.crear('mov', 100, self.cuenta, fecha=date(2010, 11, 11))
+        self.saldo = mov.saldo_set.first()
 
     def test_elimina_saldo(self):
-        saldo = Saldo.registrar(self.cuenta, date(2010, 11, 11), 100)
-        saldo.eliminar()
-        self.assertEqual(saldo.cantidad(), 0)
+        self.saldo.eliminar()
+        self.assertEqual(self.saldo.cantidad(), 0)
         with self.assertRaises(Saldo.DoesNotExist):
-            Saldo.tomar(cuenta=saldo.cuenta, fecha=saldo.fecha)
+            Saldo.objects.get(
+                cuenta=self.saldo.cuenta,
+                movimiento=self.saldo.movimiento
+            )
 
     def test_modifica_saldos_posteriores(self):
-        saldo = Saldo.registrar(self.cuenta, date(2010, 11, 11), 100)
-        saldo_post = Saldo.registrar(self.cuenta, date(2010, 11, 15), 50)
-        saldo.eliminar()
+        mov2 = Movimiento.crear('mov2', 50, self.cuenta, fecha=date(2010, 11, 15))
+        saldo_post = mov2.saldo_set.first()
+        self.assertEqual(saldo_post.importe, 150)
+
+        self.saldo.eliminar()
         saldo_post.refresh_from_db()
+
         self.assertEqual(saldo_post.importe, 50)
 
     @patch('diario.models.Saldo._actualizar_posteriores')
     def test_llama_a_actualizar_posteriores_con_importe_en_negativo(self, mock_actualizar_posteriores):
-        saldo = Saldo.crear(
-            cuenta=self.cuenta, fecha=date(2010, 11, 11), importe=100)
-        saldo.eliminar()
+        self.saldo.eliminar()
         mock_actualizar_posteriores.assert_called_once_with(
-            self.cuenta, date(2010, 11, 11), -100)
-
-    @patch('diario.models.Saldo.delete', autospec=True)
-    @patch('django.db.models.QuerySet.count')
-    def test_si_cuenta_tiene_cuenta_madre_con_saldo_de_otra_subcuenta_en_fecha_no_elimina_saldo_de_cta_madre_en_fecha(self, mock_count, mock_delete):
-        sc1, sc2 = self.cuenta.dividir_entre(
-            ['subcuenta 1', 'sc1', 0],
-            ['subcuenta 2', 'sc2']
-        )
-        mock_count.return_value = 1
-
-        Saldo.registrar(sc1, date(2010, 11, 11), 30)
-        sc1.saldo_set.get(fecha=date(2010, 11, 11)).eliminar()
-
-        self.assertEqual(
-            len(mock_delete.call_args_list),
-            1
-        )
+            self.saldo.cuenta, self.saldo.movimiento, -100)
 
 
 class TestSaldoMetodoActualizarPosteriores(TestCase):
 
     def setUp(self):
-        self.cuenta = Cuenta.crear('cuenta normal', 'cn')
+        self.cuenta = Cuenta.crear(
+            'cuenta normal', 'cn', fecha_creacion=date(2010, 11, 10))
+        mov1 = Movimiento.crear(
+            'mov1', 150, self.cuenta, fecha=date(2011, 12, 15))
+        mov2 = Movimiento.crear(
+            'mov2', 50, self.cuenta, fecha=date(2012, 5, 6))
+        self.saldo1 = mov1.saldo_set.first()
+        self.saldo2 = mov2.saldo_set.first()
 
-    def test_suma_importe_a_saldos_de_cuenta_posteriores_a_fecha_del_saldo(self):
-        saldo2 = Saldo.crear(
-            cuenta=self.cuenta, fecha=date(2011, 12, 15), importe=150)
-        saldo3 = Saldo.crear(
-            cuenta=self.cuenta, fecha=date(2012, 5, 6), importe=200)
+    def test_suma_importe_a_saldos_de_cta_entrada_posteriores_a_fecha_del_saldo(self):
 
-        Saldo._actualizar_posteriores(self.cuenta, date(2010, 11, 11), 100)
-        saldo2.refresh_from_db(fields=['importe'])
-        saldo3.refresh_from_db(fields=['importe'])
+        Movimiento.crear('mov0', 100, self.cuenta, fecha=date(2011, 12, 14))
+        self.saldo1.refresh_from_db(fields=['importe'])
+        self.saldo2.refresh_from_db(fields=['importe'])
 
-        self.assertEqual(saldo2.importe, 250)
-        self.assertEqual(saldo3.importe, 300)
+        self.assertEqual(self.saldo1.importe, 250)
+        self.assertEqual(self.saldo2.importe, 300)
+
+    def test_resta_importe_a_saldos_de_cta_salida_posteriores_a_fecha_del_saldo(self):
+
+        Movimiento.crear(
+            'mov0', 100, None, self.cuenta, fecha=date(2011, 12, 14))
+        self.saldo1.refresh_from_db(fields=['importe'])
+        self.saldo2.refresh_from_db(fields=['importe'])
+
+        self.assertEqual(self.saldo1.importe, 50)
+        self.assertEqual(self.saldo2.importe, 100)
 
     def test_no_suma_importe_a_saldos_posteriores_de_otras_cuentas(self):
-        cuenta2 = Cuenta.crear('otra cuenta', 'oc')
-        saldo2 = Saldo.crear(
-            cuenta=cuenta2, fecha=date(2011, 12, 15), importe=200)
+        cuenta2 = Cuenta.crear(
+            'otra cuenta', 'oc', fecha_creacion=date(2011, 12, 14))
 
-        Saldo._actualizar_posteriores(self.cuenta, date(2010, 11, 11), 100)
-        saldo2.refresh_from_db(fields=['importe'])
+        Movimiento.crear(
+            'mov otra cuenta', 200, cuenta2, fecha=date(2011, 12, 14))
+        self.saldo1.refresh_from_db(fields=['importe'])
+        self.saldo2.refresh_from_db(fields=['importe'])
 
-        self.assertEqual(saldo2.importe, 200)
+        self.assertEqual(self.saldo1.importe, 150)
+        self.assertEqual(self.saldo2.importe, 200)
 
     def test_no_suma_importe_a_saldos_anteriores_de_la_cuenta(self):
-        saldo2 = Saldo.crear(
-            cuenta=self.cuenta, fecha=date(2010, 11, 10), importe=200)
+        Movimiento.crear(
+            'mov posterior', 200, self.cuenta, fecha=date(2012, 5, 7))
+        self.saldo1.refresh_from_db(fields=['importe'])
+        self.saldo2.refresh_from_db(fields=['importe'])
 
-        Saldo._actualizar_posteriores(self.cuenta, date(2010, 11, 11), 100)
-        saldo2.refresh_from_db(fields=['importe'])
-
-        self.assertEqual(saldo2.importe, 200)
+        self.assertEqual(self.saldo1.importe, 150)
+        self.assertEqual(self.saldo2.importe, 200)

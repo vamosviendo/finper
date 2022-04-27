@@ -268,6 +268,29 @@ class TestModelMovimientoCrear(TestModelMovimiento):
             importe=20
         )
 
+    @patch('diario.models.movimiento.Saldo.generar')
+    def test_llama_a_generar_saldo(self, mock_generar):
+        mov = Movimiento.crear(
+            'Nuevo mov', 20, self.cuenta1, fecha=date(2011, 11, 15))
+        mock_generar.assert_called_once_with(mov)
+
+    def test_integrativo_genera_saldo_para_cta_entrada(self):
+        mov = Movimiento.crear(
+            'Nuevo mov', 20, self.cuenta1, fecha=date(2011, 11, 15))
+
+        saldo = Saldo.objects.get(cuenta=self.cuenta1, movimiento=mov)
+        self.assertEqual(saldo.cuenta.pk, self.cuenta1.pk)
+        self.assertEqual(saldo.importe, 140+20)
+        self.assertEqual(saldo.movimiento, mov)
+
+    def test_integrativo_genera_saldo_para_cta_salida(self):
+        mov = Movimiento.crear(
+            'Nuevo mov', 20, None, self.cuenta1, fecha=date(2011, 11, 15))
+        saldo = Saldo.objects.get(cuenta=self.cuenta1, movimiento=mov)
+        self.assertEqual(saldo.cuenta.pk, self.cuenta1.pk)
+        self.assertEqual(saldo.importe, 140-20)
+        self.assertEqual(saldo.movimiento, mov)
+
     @patch('diario.models.movimiento.Saldo.registrar')
     def test_pasa_importe_en_negativo_a_registrar_saldo_si_cuenta_es_de_salida(self, mock_registrar):
         Movimiento.crear(

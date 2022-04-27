@@ -102,6 +102,7 @@ class Movimiento(MiModel):
         movimiento.esgratis = esgratis
         movimiento.full_clean()
         movimiento.save()
+        Saldo.generar(movimiento)
 
         return movimiento
 
@@ -497,26 +498,25 @@ class Movimiento(MiModel):
             Registrar negativo de importe en saldo de cuenta de salida de
             fecha de la instancia
         """
-
         if self.cta_entrada:
             self.cta_entrada.saldo += self.importe
             self.cta_entrada.save()
-
-            Saldo.registrar(
-                cuenta=self.cta_entrada,
-                fecha=self.fecha,
-                importe=self.importe
-            )
+            #
+            # Saldo.registrar(
+            #     cuenta=self.cta_entrada,
+            #     fecha=self.fecha,
+            #     importe=self.importe
+            # )
 
         if self.cta_salida:
             self.cta_salida.saldo -= self.importe
             self.cta_salida.save()
-
-            Saldo.registrar(
-                cuenta=self.cta_salida,
-                fecha=self.fecha,
-                importe=-self.importe
-            )
+            #
+            # Saldo.registrar(
+            #     cuenta=self.cta_salida,
+            #     fecha=self.fecha,
+            #     importe=-self.importe
+            # )
 
     def _mantiene_cuenta(self, campo, otro):
         return self.mantiene_foreignfield(campo, otro)

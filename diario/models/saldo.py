@@ -11,15 +11,17 @@ from vvmodel.models import MiModel
 class Saldo(MiModel):
 
     cuenta = models.ForeignKey('diario.Cuenta', on_delete=models.CASCADE)
-    fecha = models.DateField()
+    # fecha = models.DateField()
+    movimiento = models.ForeignKey(
+        'diario.Movimiento', on_delete=models.CASCADE)
     importe = models.FloatField()
 
     class Meta:
-        unique_together = ['cuenta', 'fecha']
-        ordering = ['fecha', 'cuenta']
+        unique_together = ['cuenta', 'movimiento']
+        ordering = ['movimiento']
 
     def __str__(self):
-        return f'{self.cuenta} al {self.fecha}: {self.importe}'
+        return f'{self.cuenta} al {self.movimiento.fecha} - {self.movimiento.orden_dia+1}: {self.importe}'
 
     @classmethod
     def tomar(cls, **kwargs):
@@ -28,13 +30,67 @@ class Saldo(MiModel):
         except cls.DoesNotExist:
             result = Saldo.filtro(
                 cuenta=kwargs['cuenta'],
-                fecha__lt=kwargs['fecha']
+                movimiento__lt=kwargs['movimiento']
             ).last()
 
             if result is None:
                 raise cls.DoesNotExist
 
             return result
+
+    @classmethod
+    def generar(cls, mov):
+        saldo_ce = saldo_cs = None
+
+        if mov.cta_entrada:
+            try:
+                importe_saldo_anterior = mov.cta_entrada.saldo_set\
+                    .filter(movimiento__lt=mov)\
+                    .last()\
+                    .importe
+            except AttributeError:
+                importe_saldo_anterior = 0
+            saldo_ce = cls.crear(
+                cuenta=mov.cta_entrada,
+                importe=importe_saldo_anterior + mov.importe,
+                movimiento=mov
+            )
+            Saldo._actualizar_posteriores(mov.cta_entrada, mov, mov.importe)
+
+            # TODO: Esto no es óptimo. Puede ser confuso. Lo ideal sería que
+            #   las cuentas acumulativas no tuvieran saldos como objeto sino que se manejaran
+            #   directamente con importes de saldo (aunque todavía no tengo muy
+            #   claro qué significaría o implicaría esto)
+            for cta_ancestro in mov.cta_entrada.ancestros():
+                cls.crear(
+                    cuenta=cta_ancestro,
+                    movimiento=mov,
+                    importe=saldo_ce.importe
+                )
+
+        if mov.cta_salida:
+            try:
+                importe_saldo_anterior = mov.cta_salida.saldo_set\
+                    .filter(movimiento__lt=mov)\
+                    .last()\
+                    .importe
+            except AttributeError:
+                importe_saldo_anterior = 0
+            saldo_cs = cls.crear(
+                cuenta=mov.cta_salida,
+                importe=importe_saldo_anterior-mov.importe,
+                movimiento=mov
+            )
+            Saldo._actualizar_posteriores(mov.cta_salida, mov, -mov.importe)
+
+            for cta_ancestro in mov.cta_salida.ancestros():
+                cls.crear(
+                    cuenta=cta_ancestro,
+                    movimiento=mov,
+                    importe=saldo_cs.importe
+                )
+
+        return saldo_ce, saldo_cs
 
     @classmethod
     def registrar(cls, cuenta, fecha, importe):
@@ -76,11 +132,17 @@ class Saldo(MiModel):
 
     def eliminar(self):
         self.delete()
-        Saldo._actualizar_posteriores(self.cuenta, self.fecha, -self.importe)
+        Saldo._actualizar_posteriores(
+            self.cuenta, self.movimiento, -self.importe)
 
     @staticmethod
-    def _actualizar_posteriores(cuenta, fecha, importe):
+    def _actualizar_posteriores(cuenta, mov, importe):
 
-        for saldo_post in Saldo.filtro(cuenta=cuenta, fecha__gt=fecha):
-            saldo_post.importe += importe
-            saldo_post.save()
+        # TODO: Refactor. Definir < y > para Movimiento.
+        for saldo_post in Saldo.filtro(cuenta=cuenta):
+            if saldo_post.movimiento.fecha > mov.fecha or (
+                    saldo_post.movimiento.fecha == mov.fecha and
+                    saldo_post.movimiento.orden_dia > mov.orden_dia
+            ):
+                saldo_post.importe += importe
+                saldo_post.save()
