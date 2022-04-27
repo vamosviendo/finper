@@ -79,15 +79,21 @@ class TestSaldoMetodoGenerar(TestCase):
         Saldo.objects.get(movimiento=self.mov, cuenta=self.cuenta2).delete()
 
     @patch('diario.models.Saldo.crear')
-    def test_crea_saldos_para_cta_entrada_y_salida(self, mock_crear):
-        Saldo.generar(self.mov)
+    def test_con_salida_False_crea_saldo_para_cta_entrada(self, mock_crear):
+        Saldo.generar(self.mov, salida=False)
+        mock_crear.assert_called_once_with(
+            cuenta=self.mov.cta_entrada,
+            importe=100,
+            movimiento=self.mov
+        )
 
-        self.assertEqual(
-            mock_crear.call_args_list,
-            [
-                call(cuenta=self.mov.cta_entrada, importe=100, movimiento=self.mov),
-                call(cuenta=self.mov.cta_salida, importe=-100, movimiento=self.mov)
-            ]
+    @patch('diario.models.Saldo.crear')
+    def test_con_salida_True_crea_saldo_para_cta_salida(self, mock_crear):
+        Saldo.generar(self.mov, salida=True)
+        mock_crear.assert_called_once_with(
+            cuenta=self.mov.cta_salida,
+            importe=-100,
+            movimiento=self.mov
         )
 
     @patch('diario.models.Saldo.crear')
@@ -99,10 +105,9 @@ class TestSaldoMetodoGenerar(TestCase):
             fecha=self.fecha,
             cta_entrada=self.cuenta1
         )
-        self.mov.cta_salida = None
         self.mov.fecha = self.fecha + timedelta(1)
         self.mov.importe = 70
-        Saldo.generar(self.mov)
+        Saldo.generar(self.mov, salida=False)
 
         mock_crear.assert_called_once_with(
             cuenta=self.cuenta1,
@@ -119,10 +124,9 @@ class TestSaldoMetodoGenerar(TestCase):
             fecha=self.fecha,
             cta_entrada=self.cuenta2
         )
-        self.mov.cta_entrada = None
         self.mov.fecha = self.fecha + timedelta(1)
         self.mov.importe = 70
-        Saldo.generar(self.mov)
+        Saldo.generar(self.mov, salida=True)
 
         mock_crear.assert_called_once_with(
             cuenta=self.cuenta2,
@@ -131,42 +135,30 @@ class TestSaldoMetodoGenerar(TestCase):
         )
 
     @patch('diario.models.Saldo.crear')
-    def test_acepta_movimientos_sin_cta_salida(self, mock_crear):
+    def test_con_salida_True_y_sin_cuenta_de_salida_no_crea_nada(self, mock_crear):
         self.mov.cta_salida = None
-        Saldo.generar(self.mov)
-        mock_crear.assert_called_once_with(
-            cuenta=self.mov.cta_entrada,
-            importe=100,
-            movimiento=self.mov
-        )
+        Saldo.generar(self.mov, salida=True)
+        mock_crear.assert_not_called()
 
     @patch('diario.models.Saldo.crear')
-    def test_acepta_movimientos_sin_cta_entrada(self, mock_crear):
-        # delattr(self.mov, 'cta_entrada')
+    def test_con_salida_False_y_sin_cuenta_de_entrada_no_crea_nada(self, mock_crear):
         self.mov.cta_entrada = None
-        Saldo.generar(self.mov)
-        mock_crear.assert_called_once_with(
-            cuenta=self.mov.cta_salida,
-            importe=-100,
-            movimiento=self.mov
-        )
+        Saldo.generar(self.mov, salida=False)
+        mock_crear.assert_not_called()
 
     @patch('diario.models.Saldo._actualizar_posteriores')
     def test_llama_a_actualizar_posteriores_con_cta_entrada(self, mock_actualizar_posteriores):
-        self.mov.cta_salida = None
-        Saldo.generar(self.mov)
+        Saldo.generar(self.mov, salida=False)
         mock_actualizar_posteriores.assert_called_once_with(
             self.cuenta1, self.mov, 100)
 
     @patch('diario.models.Saldo._actualizar_posteriores')
     def test_llama_a_actualizar_posteriores_con_cta_salida(self, mock_actualizar_posteriores):
-        self.mov.cta_entrada = None
-        Saldo.generar(self.mov)
+        Saldo.generar(self.mov, salida=True)
         mock_actualizar_posteriores.assert_called_once_with(
             self.cuenta2, self.mov, -100)
 
     def test_integrativo_actualiza_saldos_posteriores_de_cta_entrada(self):
-        self.mov.cta_salida = None
         mov_post = Movimiento.crear(
             'mov posterior', 70, self.cuenta1, fecha=self.fecha+timedelta(2))
         self.assertEqual(
@@ -174,7 +166,7 @@ class TestSaldoMetodoGenerar(TestCase):
             70
         )
 
-        Saldo.generar(self.mov)
+        Saldo.generar(self.mov, salida=False)
 
         self.assertEqual(
             Saldo.tomar(cuenta=self.cuenta1, movimiento=mov_post).importe,
@@ -182,7 +174,6 @@ class TestSaldoMetodoGenerar(TestCase):
         )
 
     def test_integrativo_actualiza_saldos_posteriores_de_cta_salida(self):
-        self.mov.cta_entrada = None
         mov_post = Movimiento.crear(
             'mov posterior', 70, self.cuenta2, fecha=self.fecha+timedelta(2))
         self.assertEqual(
@@ -190,36 +181,22 @@ class TestSaldoMetodoGenerar(TestCase):
             70
         )
 
-        Saldo.generar(self.mov)
+        Saldo.generar(self.mov, salida=True)
 
         self.assertEqual(
             Saldo.tomar(cuenta=self.cuenta2, movimiento=mov_post).importe,
             70-100
         )
 
-    def test_devuelve_tupla_con_saldos_generados_para_cta_entrada_y_cta_salida(self):
-        saldos = Saldo.generar(self.mov)
+    def test_devuelve_saldo_generado(self):
         self.assertEqual(
-            saldos,
-            (
-                Saldo.objects.get(cuenta=self.cuenta1, movimiento=self.mov),
-                Saldo.objects.get(cuenta=self.cuenta2, movimiento=self.mov)
-            )
+            Saldo.generar(self.mov, salida=False),
+            Saldo.objects.get(cuenta=self.cuenta1, movimiento=self.mov),
         )
 
-    def test_devuelve_tupla_con_saldo_cta_entrada_y_none_si_no_hay_cta_salida(self):
+    def test_devuelve_None_si_no_genera_saldo(self):
         self.mov.cta_salida = None
-        self.assertEqual(
-            Saldo.generar(self.mov),
-            (Saldo.objects.get(cuenta=self.cuenta1, movimiento=self.mov), None)
-        )
-
-    def test_devuelve_tupla_con_saldo_cta_salida_y_none_si_no_hay_cta_entrada(self):
-        self.mov.cta_entrada = None
-        self.assertEqual(
-            Saldo.generar(self.mov),
-            (None, Saldo.objects.get(cuenta=self.cuenta2, movimiento=self.mov))
-        )
+        self.assertIsNone(Saldo.generar(self.mov, salida=True))
 
     def test_genera_saldo_de_cuenta_madre_de_cta_entrada(self):
         cuenta3 = Cuenta.crear('cuenta3', 'c3', fecha_creacion=date(2010, 1, 1))
@@ -282,13 +259,6 @@ class TestSaldoMetodoGenerar(TestCase):
             Saldo.tomar(cuenta=cuenta3, movimiento=mov).importe,
             -100
         )
-
-    def test_lanza_excepcion_si_no_recibe_cuenta(self):
-        with self.assertRaisesMessage(
-            TypeError,
-            'Primer argumento debe ser una instancia de la clase Cuenta'
-        ):
-            Saldo.registrar(None, date(2010, 11, 11), 30)
 
 
 class TestSaldoMetodoEliminar(TestCase):

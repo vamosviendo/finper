@@ -39,58 +39,40 @@ class Saldo(MiModel):
             return result
 
     @classmethod
-    def generar(cls, mov):
-        saldo_ce = saldo_cs = None
+    def generar(cls, mov, salida):
 
-        if mov.cta_entrada:
+        cuenta = mov.cta_salida if salida else mov.cta_entrada
+        importe = mov.importe if not salida else -mov.importe
+
+        if cuenta:
             try:
-                importe_saldo_anterior = mov.cta_entrada.saldo_set\
+                importe_saldo_anterior = cuenta.saldo_set\
                     .filter(movimiento__lt=mov)\
                     .last()\
                     .importe
             except AttributeError:
                 importe_saldo_anterior = 0
-            saldo_ce = cls.crear(
-                cuenta=mov.cta_entrada,
-                importe=importe_saldo_anterior + mov.importe,
+            result = cls.crear(
+                cuenta=cuenta,
+                importe=importe_saldo_anterior + importe,
                 movimiento=mov
             )
-            Saldo._actualizar_posteriores(mov.cta_entrada, mov, mov.importe)
+            Saldo._actualizar_posteriores(cuenta, mov, importe)
 
             # TODO: Esto no es óptimo. Puede ser confuso. Lo ideal sería que
             #   las cuentas acumulativas no tuvieran saldos como objeto sino que se manejaran
             #   directamente con importes de saldo (aunque todavía no tengo muy
             #   claro qué significaría o implicaría esto)
-            for cta_ancestro in mov.cta_entrada.ancestros():
+            for cta_ancestro in cuenta.ancestros():
                 cls.crear(
                     cuenta=cta_ancestro,
                     movimiento=mov,
-                    importe=saldo_ce.importe
+                    importe=result.importe
                 )
 
-        if mov.cta_salida:
-            try:
-                importe_saldo_anterior = mov.cta_salida.saldo_set\
-                    .filter(movimiento__lt=mov)\
-                    .last()\
-                    .importe
-            except AttributeError:
-                importe_saldo_anterior = 0
-            saldo_cs = cls.crear(
-                cuenta=mov.cta_salida,
-                importe=importe_saldo_anterior-mov.importe,
-                movimiento=mov
-            )
-            Saldo._actualizar_posteriores(mov.cta_salida, mov, -mov.importe)
+            return result
 
-            for cta_ancestro in mov.cta_salida.ancestros():
-                cls.crear(
-                    cuenta=cta_ancestro,
-                    movimiento=mov,
-                    importe=saldo_cs.importe
-                )
-
-        return saldo_ce, saldo_cs
+        return None
 
     @classmethod
     def registrar(cls, cuenta, fecha, importe):
