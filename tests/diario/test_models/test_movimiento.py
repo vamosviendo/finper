@@ -261,10 +261,26 @@ class TestModelMovimientoCrear(TestModelMovimiento):
         self.assertEqual(self.cuenta1.saldo, 140-60)
 
     @patch('diario.models.movimiento.Saldo.generar')
-    def test_llama_a_generar_saldo(self, mock_generar):
+    def test_mov_entrada_llama_a_generar_saldo_con_salida_False(self, mock_generar):
         mov = Movimiento.crear(
             'Nuevo mov', 20, self.cuenta1, fecha=date(2011, 11, 15))
-        mock_generar.assert_called_once_with(mov)
+        mock_generar.assert_called_once_with(mov, salida=False)
+
+    @patch('diario.models.movimiento.Saldo.generar')
+    def test_mov_salida_llama_a_generar_saldo_con_salida_True(self, mock_generar):
+        mov = Movimiento.crear(
+            'Nuevo mov', 20, None, self.cuenta1, fecha=date(2011, 11, 15))
+        mock_generar.assert_called_once_with(mov, salida=True)
+
+    @patch('diario.models.movimiento.Saldo.generar')
+    def test_mov_traspaso_llama_a_generar_saldo_con_salida_false_para_cta_entrada_y_salida_True_(self, mock_generar):
+        mov = Movimiento.crear(
+            'Nuevo mov', 20, self.cuenta1, self.cuenta2, fecha=date(2011, 11, 15))
+
+        self.assertEqual(
+            mock_generar.call_args_list,
+            [call(mov, salida=False), call(mov, salida=True)]
+        )
 
     def test_integrativo_genera_saldo_para_cta_entrada(self):
         mov = Movimiento.crear(

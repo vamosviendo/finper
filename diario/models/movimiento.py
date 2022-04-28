@@ -102,7 +102,6 @@ class Movimiento(MiModel):
         movimiento.esgratis = esgratis
         movimiento.full_clean()
         movimiento.save()
-        Saldo.generar(movimiento)
 
         return movimiento
 
@@ -307,6 +306,12 @@ class Movimiento(MiModel):
             if self.es_prestamo_o_devolucion():
                 self._gestionar_transferencia()
 
+            super().save(*args, **kwargs)
+            if self.cta_entrada:
+                Saldo.generar(self, salida=False)
+            if self.cta_salida:
+                Saldo.generar(self, salida=True)
+
         else:                    # Movimiento existente
             mov_guardado = self.tomar_de_bd()
 
@@ -330,86 +335,130 @@ class Movimiento(MiModel):
                     # titulares y ahora ya no
                     self._eliminar_contramovimiento()
 
-            if self._cambia_campo(
-                    'importe', 'cta_entrada', 'cta_salida', 'fecha'):
+            super().save(*args, **kwargs)
 
-                if mov_guardado.cta_entrada:
-                    # Había una cuenta de entrada
-                    # Restar importe antiguo de cuenta de entrada antigua
-                    mov_guardado.cta_entrada.saldo -= mov_guardado.importe
-                    mov_guardado.cta_entrada.save()
+            generar_saldo_pospuesto = None
 
-                    if mov_guardado.es_unico_del_dia_de_cuenta(     # (1)
-                            mov_guardado.cta_entrada) \
-                            and mov_guardado.cta_entrada != self.cta_salida:
-                        mov_guardado.cta_entrada.saldo_set.get(
-                            fecha=mov_guardado.fecha
-                        ).eliminar()
-                    else:
-                        Saldo.registrar(
-                            cuenta=mov_guardado.cta_entrada,
-                            fecha=mov_guardado.fecha,
-                            importe=-mov_guardado.importe
-                        )
-
+            if not mov_guardado.cta_entrada:
                 if self.cta_entrada:
-                    self.cta_entrada.refresh_from_db()
-                    # Ahora hay una cuenta de entrada
-                    # Sumar importe nuevo a cuenta de entrada nueva
                     self.cta_entrada.saldo += self.importe
                     self.cta_entrada.save()
+                    generar_saldo_pospuesto = True
+            else:
+                if self.cta_entrada != mov_guardado.cta_entrada:
+                    mov_guardado.cta_entrada.saldo -= self.importe
+                    mov_guardado.cta_entrada.save()
+                    try:
+                        self.cta_entrada.saldo += self.importe
+                        self.cta_entrada.save()
+                    except AttributeError:
+                        pass
+                    mov_guardado.cta_entrada.saldo_set.get(movimiento=self).eliminar()
+                    generar_saldo_pospuesto = True
 
-                    Saldo.registrar(
-                        cuenta=self.cta_entrada,
-                        fecha=self.fecha,
-                        importe=self.importe
-                    )
-
-                self._actualizar_cuenta_salida_convertida_en_acumulativa()
-
-                if mov_guardado.cta_salida:
-                    # Había una cuenta de salida
-
-                    # Actualizar saldo de cta_salida antes de sumar importe
-                    # (Esto es necesario cuando la cuenta de salida pasa a
-                    # ser cuenta de entrada, porque el saldo de la cuenta
-                    # se modificó en el segmento anterior luego de que
-                    # se guardó el movimiento en mov_guardado. Probablemente
-                    # dejará de ser necesario cuando reemplacemos el campo
-                    # _saldo por el modelo relacionado Saldo)
-                    mov_guardado.cta_salida.refresh_from_db(fields=['_saldo'])
-
-                    # Sumar importe antiguo a cuenta de salida antigua
-                    mov_guardado.cta_salida.saldo += mov_guardado.importe
-                    mov_guardado.cta_salida.save()
-
-                    if mov_guardado.es_unico_del_dia_de_cuenta(     # (2)
-                            mov_guardado.cta_salida) \
-                            and mov_guardado.cta_salida != self.cta_entrada:
-                        mov_guardado.cta_salida.saldo_set.get(
-                            fecha=mov_guardado.fecha
-                        ).eliminar()
-                    else:
-                        Saldo.registrar(
-                            cuenta=mov_guardado.cta_salida,
-                            fecha=mov_guardado.fecha,
-                            importe=mov_guardado.importe
-                        )
-
+            if not mov_guardado.cta_salida:
                 if self.cta_salida:
-                    self.cta_salida.refresh_from_db()
-                    # Ahora hay una cuenta de salida
-                    # Restar importe nuevo a cuenta de salida nueva
+                    self.cta_salida.refresh_from_db(fields=['_saldo'])
                     self.cta_salida.saldo -= self.importe
                     self.cta_salida.save()
+                    Saldo.generar(self, salida=True)
+            else:
+                if self.cta_salida != mov_guardado.cta_salida:
+                    mov_guardado.cta_salida.refresh_from_db(fields=['_saldo'])
+                    mov_guardado.cta_salida.saldo += self.importe
+                    mov_guardado.cta_salida.save()
+                    try:
+                        self.cta_salida.refresh_from_db(fields=['_saldo'])
+                        self.cta_salida.saldo -= self.importe
+                        self.cta_salida.save()
+                    except AttributeError:
+                        pass
+                    mov_guardado.cta_salida.saldo_set.get(movimiento=self).eliminar()
+                    Saldo.generar(self, salida=True)
 
-                    Saldo.registrar(
-                        cuenta=self.cta_salida,
-                        fecha=self.fecha,
-                        importe=-self.importe
-                    )
+            if generar_saldo_pospuesto:
+                Saldo.generar(self, salida=False)
 
-        super().save(*args, **kwargs)
+        #     if self._cambia_campo(
+        #             'importe', 'cta_entrada', 'cta_salida', 'fecha'):
+        #
+        #         if mov_guardado.cta_entrada:
+        #             # Había una cuenta de entrada
+        #             # Restar importe antiguo de cuenta de entrada antigua
+        #             mov_guardado.cta_entrada.saldo -= mov_guardado.importe
+        #             mov_guardado.cta_entrada.save()
+        #
+        #             if mov_guardado.es_unico_del_dia_de_cuenta(     # (1)
+        #                     mov_guardado.cta_entrada) \
+        #                     and mov_guardado.cta_entrada != self.cta_salida:
+        #                 mov_guardado.cta_entrada.saldo_set.get(
+        #                     movimiento=mov_guardado
+        #                 ).eliminar()
+        #             else:
+        #                 Saldo.registrar(
+        #                     cuenta=mov_guardado.cta_entrada,
+        #                     fecha=mov_guardado.fecha,
+        #                     importe=-mov_guardado.importe
+        #                 )
+        #
+        #         if self.cta_entrada:
+        #             self.cta_entrada.refresh_from_db()
+        #             # Ahora hay una cuenta de entrada
+        #             # Sumar importe nuevo a cuenta de entrada nueva
+        #             self.cta_entrada.saldo += self.importe
+        #             self.cta_entrada.save()
+        #             #
+        #             # Saldo.registrar(
+        #             #     cuenta=self.cta_entrada,
+        #             #     fecha=self.fecha,
+        #             #     importe=self.importe
+        #             # )
+        #
+        #         self._actualizar_cuenta_salida_convertida_en_acumulativa()
+        #
+        #         if mov_guardado.cta_salida:
+        #             # Había una cuenta de salida
+        #
+        #             # Actualizar saldo de cta_salida antes de sumar importe
+        #             # (Esto es necesario cuando la cuenta de salida pasa a
+        #             # ser cuenta de entrada, porque el saldo de la cuenta
+        #             # se modificó en el segmento anterior luego de que
+        #             # se guardó el movimiento en mov_guardado. Probablemente
+        #             # dejará de ser necesario cuando reemplacemos el campo
+        #             # _saldo por el modelo relacionado Saldo)
+        #             mov_guardado.cta_salida.refresh_from_db(fields=['_saldo'])
+        #
+        #             # Sumar importe antiguo a cuenta de salida antigua
+        #             mov_guardado.cta_salida.saldo += mov_guardado.importe
+        #             mov_guardado.cta_salida.save()
+        #             #
+        #             # if mov_guardado.es_unico_del_dia_de_cuenta(     # (2)
+        #             #         mov_guardado.cta_salida) \
+        #             #         and mov_guardado.cta_salida != self.cta_entrada:
+        #             #     mov_guardado.cta_salida.saldo_set.get(
+        #             #         movimiento=mov_guardado
+        #             #     ).eliminar()
+        #             # else:
+        #             #     Saldo.registrar(
+        #             #         cuenta=mov_guardado.cta_salida,
+        #             #         fecha=mov_guardado.fecha,
+        #             #         importe=mov_guardado.importe
+        #             #     )
+        #
+        #         if self.cta_salida:
+        #             self.cta_salida.refresh_from_db()
+        #             # Ahora hay una cuenta de salida
+        #             # Restar importe nuevo a cuenta de salida nueva
+        #             self.cta_salida.saldo -= self.importe
+        #             self.cta_salida.save()
+        #             #
+        #             # Saldo.registrar(
+        #             #     cuenta=self.cta_salida,
+        #             #     fecha=self.fecha,
+        #             #     importe=-self.importe
+        #             # )
+        #
+        # # super().save(*args, **kwargs)
 
     def tiene_cuenta_acumulativa(self):
         if self.tiene_cta_entrada_acumulativa():
