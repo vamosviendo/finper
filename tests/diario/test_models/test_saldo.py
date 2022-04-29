@@ -289,16 +289,13 @@ class TestSaldoMetodoEliminar(TestCase):
         self.assertEqual(saldo_post.importe, 50)
 
     @patch('diario.models.Saldo._actualizar_posteriores')
-    def test_llama_a_actualizar_posteriores_con_importe_en_negativo(self, mock_actualizar_posteriores):
-        self.saldo.eliminar()
+    def test_llama_a_actualizar_posteriores_con_negativo_de_diferencia_entre_saldo_eliminado_y_ultimo_anterior(self, mock_actualizar_posteriores):
+        saldo2 = Movimiento.crear('mov2', 50, self.cuenta, fecha=date(2010, 11, 15)).saldo_set.first()
+        mock_actualizar_posteriores.reset_mock()
+        saldo2.eliminar()
         mock_actualizar_posteriores.assert_called_once_with(
-            self.saldo.cuenta, self.saldo.movimiento, -100)
-
-    @patch('diario.models.Saldo._actualizar_posteriores')
-    def test_pasa_importe_en_positivo_si_la_cuenta_es_de_salida_en_movimiento(self, mock_actualizar_posteriores):
-        self.saldo.eliminar(salida=True)
-        mock_actualizar_posteriores.assert_called_once_with(
-            self.saldo.cuenta, self.saldo.movimiento, 100)
+            saldo2.cuenta, saldo2.movimiento, -(saldo2.importe-self.saldo.importe)
+        )
 
 
 class TestSaldoMetodoActualizarPosteriores(TestCase):

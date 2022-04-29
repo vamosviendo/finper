@@ -114,14 +114,20 @@ class Saldo(MiModel):
 
     def eliminar(self, salida=False):
         self.delete()
-        importe = self.movimiento.importe if salida else -self.movimiento.importe
+        # TODO: Refactor - escribir método Saldo.anterior()
+        try:
+            importe_anterior = self.cuenta.saldo_set.filter(movimiento__lt=self.movimiento).last().importe
+        except AttributeError:
+            importe_anterior = 0
+        importe = self.importe - importe_anterior
         Saldo._actualizar_posteriores(
-            self.cuenta, self.movimiento, importe)
+            self.cuenta, self.movimiento, -importe)
 
     @staticmethod
     def _actualizar_posteriores(cuenta, mov, importe):
 
         # TODO: Refactor. Definir < y > para Movimiento.
+        #       (¿Por qué no funcionaría un filtro(cuenta=cuenta, movimiento__gt=mov))
         for saldo_post in Saldo.filtro(cuenta=cuenta):
             if saldo_post.movimiento.fecha > mov.fecha or (
                     saldo_post.movimiento.fecha == mov.fecha and
