@@ -1201,6 +1201,11 @@ class TestModelMovimientoMetodoCambiaCampo(TestModelMovimiento):
     def test_devuelve_false_si_no_hay_cambio_en_ninguno_de_los_campos_dados(self):
         self.assertFalse(self.mov1._cambia_campo('concepto', 'fecha'))
 
+    def test_acepta_un_movimiento_contra_el_cual_comparar(self):
+        mov2 = Movimiento(concepto='Movimento', importe=156, cta_entrada=self.cuenta1)
+        self.assertTrue(self.mov1._cambia_campo('concepto', contraparte=mov2))
+        self.assertFalse(self.mov1._cambia_campo('importe', contraparte=mov2))
+
 
 @patch('diario.models.Movimiento.mantiene_foreignfield', autospec=True)
 class TestModelMovimientoMetodoMantieneCuenta(TestModelMovimiento):

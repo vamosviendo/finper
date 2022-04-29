@@ -337,47 +337,62 @@ class Movimiento(MiModel):
 
             super().save(*args, **kwargs)
 
-            generar_saldo_pospuesto = None
+            if self._cambia_campo(
+                    'importe', 'cta_entrada', 'cta_salida',
+                    contraparte=mov_guardado
+            ):
+                if mov_guardado.cta_entrada:
+                    mov_guardado.cta_entrada.saldo_set.get(movimiento=mov_guardado)\
+                        .eliminar()
+                if mov_guardado.cta_salida:
+                    mov_guardado.cta_salida.saldo_set.get(movimiento=mov_guardado)\
+                        .eliminar()
+                Saldo.generar(self, salida=False)
+                Saldo.generar(self, salida=True)
 
-            if not mov_guardado.cta_entrada:
-                if self.cta_entrada:
-                    self.cta_entrada.saldo += self.importe
-                    self.cta_entrada.save()
-                    generar_saldo_pospuesto = True
-            else:
-                if self.cta_entrada != mov_guardado.cta_entrada:
-                    mov_guardado.cta_entrada.saldo -= self.importe
-                    mov_guardado.cta_entrada.save()
-                    try:
+                # Todo esto debería desaparecer una vez que desaparezca el
+                #   campo _saldo
+                if not mov_guardado.cta_entrada:
+                    if self.cta_entrada:
                         self.cta_entrada.saldo += self.importe
                         self.cta_entrada.save()
-                    except AttributeError:
-                        pass
-                    mov_guardado.cta_entrada.saldo_set.get(movimiento=self).eliminar()
-                    generar_saldo_pospuesto = True
+                else:
+                    if self.cta_entrada != mov_guardado.cta_entrada:
+                        mov_guardado.cta_entrada.saldo -= mov_guardado.importe
+                        mov_guardado.cta_entrada.save()
+                        try:
+                            self.cta_entrada.saldo += self.importe
+                            self.cta_entrada.save()
+                        except AttributeError:
+                            pass
+                    else:
+                        # Teniendo en cuenta que esto va a desaparecer, no me
+                        # voy a tomar el trabajo de refactorizar esto.
+                        # (idem para self.cta_salida)
+                        self.cta_entrada.saldo = self.cta_entrada.saldo - mov_guardado.importe + self.importe
+                        self.cta_entrada.save()
 
-            if not mov_guardado.cta_salida:
-                if self.cta_salida:
-                    self.cta_salida.refresh_from_db(fields=['_saldo'])
-                    self.cta_salida.saldo -= self.importe
-                    self.cta_salida.save()
-                    Saldo.generar(self, salida=True)
-            else:
-                if self.cta_salida != mov_guardado.cta_salida:
-                    mov_guardado.cta_salida.refresh_from_db(fields=['_saldo'])
-                    mov_guardado.cta_salida.saldo += self.importe
-                    mov_guardado.cta_salida.save()
-                    try:
+                if not mov_guardado.cta_salida:
+                    if self.cta_salida:
                         self.cta_salida.refresh_from_db(fields=['_saldo'])
                         self.cta_salida.saldo -= self.importe
                         self.cta_salida.save()
-                    except AttributeError:
-                        pass
-                    mov_guardado.cta_salida.saldo_set.get(movimiento=self).eliminar()
-                    Saldo.generar(self, salida=True)
-
-            if generar_saldo_pospuesto:
-                Saldo.generar(self, salida=False)
+                else:
+                    if self.cta_salida != mov_guardado.cta_salida:
+                        mov_guardado.cta_salida.refresh_from_db(
+                            fields=['_saldo']
+                        )
+                        mov_guardado.cta_salida.saldo += mov_guardado.importe
+                        mov_guardado.cta_salida.save()
+                        try:
+                            self.cta_salida.refresh_from_db(fields=['_saldo'])
+                            self.cta_salida.saldo -= self.importe
+                            self.cta_salida.save()
+                        except AttributeError:
+                            pass
+                    else:
+                        self.cta_salida.saldo = self.cta_salida.saldo + mov_guardado.importe - self.importe
+                        self.cta_salida.save()
 
         #     if self._cambia_campo(
         #             'importe', 'cta_entrada', 'cta_salida', 'fecha'):
@@ -561,8 +576,8 @@ class Movimiento(MiModel):
         self.cta_salida = self.cta_salida.tomar_de_bd() \
             if self.cta_salida else None
 
-    def _cambia_campo(self, *args):
-        mov_guardado = self.tomar_de_bd()
+    def _cambia_campo(self, *args, contraparte=None):
+        mov_guardado = contraparte or self.tomar_de_bd()
         for campo in args:
             if getattr(self, campo) != getattr(mov_guardado, campo):
                 return True
