@@ -1,5 +1,4 @@
 from datetime import date, timedelta
-from unittest import skip
 from unittest.mock import patch, call
 
 from django.core.exceptions import ValidationError
@@ -909,10 +908,10 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
         self.mov1.save()
 
         with self.assertRaises(Saldo.DoesNotExist):
-            Saldo.objects.get(cuenta=self.cuenta1, fecha=self.mov1.fecha)
+            Saldo.objects.get(cuenta=self.cuenta1, movimiento=self.mov1)
 
         self.assertEqual(
-            self.cuenta2.saldo_set.get(fecha=self.mov1.fecha).importe,
+            self.cuenta2.saldo_set.get(movimiento=self.mov1).importe,
             0 + 128
         )
 
@@ -935,10 +934,10 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
         self.mov2.save()
 
         with self.assertRaises(Saldo.DoesNotExist):
-            Saldo.objects.get(cuenta=self.cuenta1, fecha=self.mov2.fecha)
+            Saldo.objects.get(cuenta=self.cuenta1, movimiento=self.mov2)
 
         self.assertEqual(
-            self.cuenta2.saldo_set.get(fecha=self.mov2.fecha).importe,
+            self.cuenta2.saldo_set.get(movimiento=self.mov2).importe,
             0 - 63
         )
 
@@ -972,14 +971,14 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
         self.mov3.save()
 
         with self.assertRaises(Saldo.DoesNotExist):
-            Saldo.objects.get(cuenta=self.cuenta1, fecha=self.mov3.fecha)
+            Saldo.objects.get(cuenta=self.cuenta1, movimiento=self.mov3)
 
         self.assertEqual(
-            cuenta3.saldo_set.get(fecha=self.mov3.fecha).importe,
+            cuenta3.saldo_set.get(movimiento=self.mov3).importe,
             0 + 56
         )
         self.assertEqual(
-            self.cuenta2.saldo_set.get(fecha=self.mov3.fecha).importe,
+            self.cuenta2.saldo_set.get(movimiento=self.mov3).importe,
             -50 + 50 - 56
         )
 
@@ -1012,14 +1011,14 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
         self.mov3.save()
 
         with self.assertRaises(Saldo.DoesNotExist):
-            Saldo.objects.get(cuenta=self.cuenta2, fecha=self.mov3.fecha)
+            Saldo.objects.get(cuenta=self.cuenta2, movimiento=self.mov3)
 
         self.assertEqual(
-            cuenta3.saldo_set.get(fecha=self.mov3.fecha).importe,
+            cuenta3.saldo_set.get(movimiento=self.mov3).importe,
             0 - 56
         )
         self.assertEqual(
-            self.cuenta1.saldo_set.get(fecha=self.mov3.fecha).importe,
+            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
             140 - 50 + 56
         )
 
@@ -1056,17 +1055,17 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
         self.mov3.save()
 
         with self.assertRaises(Saldo.DoesNotExist):
-            Saldo.objects.get(cuenta=self.cuenta1, fecha=self.mov3.fecha)
+            Saldo.objects.get(cuenta=self.cuenta1, movimiento=self.mov3)
 
         with self.assertRaises(Saldo.DoesNotExist):
-            Saldo.objects.get(cuenta=self.cuenta2, fecha=self.mov3.fecha)
+            Saldo.objects.get(cuenta=self.cuenta2, movimiento=self.mov3)
 
         self.assertEqual(
-            cuenta3.saldo_set.get(fecha=self.mov3.fecha).importe,
+            cuenta3.saldo_set.get(movimiento=self.mov3).importe,
             0 + 56
         )
         self.assertEqual(
-            cuenta4.saldo_set.get(fecha=self.mov3.fecha).importe,
+            cuenta4.saldo_set.get(movimiento=self.mov3).importe,
             0 - 56
         )
 
@@ -1097,11 +1096,11 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
         self.mov3.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(fecha=self.mov3.fecha).importe,
+            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
             140 - 50 - 456
         )
         self.assertEqual(
-            self.cuenta2.saldo_set.get(fecha=self.mov3.fecha).importe,
+            self.cuenta2.saldo_set.get(movimiento=self.mov3).importe,
             -50 + 50 + 456
         )
 
@@ -1126,7 +1125,7 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
         self.mov1.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(fecha=self.mov1.fecha).importe,
+            self.cuenta1.saldo_set.get(movimiento=self.mov1).importe,
             125 - 125 - 128
         )
 
@@ -1151,7 +1150,7 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
         self.mov2.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(fecha=self.mov2.fecha).importe,
+            self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
             90 + 35 + 128
         )
 
@@ -1186,14 +1185,14 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
         self.mov3.save()
 
         with self.assertRaises(Saldo.DoesNotExist):
-            Saldo.objects.get(cuenta=self.cuenta1, fecha=self.mov3.fecha)
+            Saldo.objects.get(cuenta=self.cuenta1, movimiento=self.mov3)
 
         self.assertEqual(
-            self.cuenta2.saldo_set.get(fecha=self.mov3.fecha).importe,
+            self.cuenta2.saldo_set.get(movimiento=self.mov3).importe,
             -50 + 50 + 252
         )
         self.assertEqual(
-            cuenta3.saldo_set.get(fecha=self.mov3.fecha).importe,
+            cuenta3.saldo_set.get(movimiento=self.mov3).importe,
             0 - 252
         )
 
@@ -1227,14 +1226,14 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
         self.mov3.save()
 
         with self.assertRaises(Saldo.DoesNotExist):
-            Saldo.objects.get(cuenta=self.cuenta2, fecha=self.mov3.fecha)
+            Saldo.objects.get(cuenta=self.cuenta2, movimiento=self.mov3)
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(fecha=self.mov3.fecha).importe,
+            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
             140 - 50 - 165
         )
         self.assertEqual(
-            cuenta3.saldo_set.get(fecha=self.mov3.fecha).importe,
+            cuenta3.saldo_set.get(movimiento=self.mov3).importe,
             0 + 165
         )
 
@@ -1257,10 +1256,10 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
         self.mov3.save()
 
         with self.assertRaises(Saldo.DoesNotExist):
-            Saldo.objects.get(cuenta=self.cuenta2, fecha=self.mov3.fecha)
+            Saldo.objects.get(cuenta=self.cuenta2, movimiento=self.mov3)
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(fecha=self.mov3.fecha).importe,
+            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
             140 - 50 + 234
         )
 
@@ -1283,10 +1282,10 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
         self.mov3.save()
 
         with self.assertRaises(Saldo.DoesNotExist):
-            Saldo.objects.get(cuenta=self.cuenta1, fecha=self.mov3.fecha)
+            Saldo.objects.get(cuenta=self.cuenta1, movimiento=self.mov3)
 
         self.assertEqual(
-            self.cuenta2.saldo_set.get(fecha=self.mov3.fecha).importe,
+            self.cuenta2.saldo_set.get(movimiento=self.mov3).importe,
             -50 + 50 - 234
         )
 
@@ -1314,10 +1313,10 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
         self.mov3.save()
 
         with self.assertRaises(Saldo.DoesNotExist):
-            Saldo.objects.get(cuenta=self.cuenta2, fecha=self.mov3.fecha)
+            Saldo.objects.get(cuenta=self.cuenta2, movimiento=self.mov3)
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(fecha=self.mov3.fecha).importe,
+            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
             140 - 50 - 350
         )
 
@@ -1345,10 +1344,10 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
         self.mov3.save()
 
         with self.assertRaises(Saldo.DoesNotExist):
-            Saldo.objects.get(cuenta=self.cuenta1, fecha=self.mov3.fecha)
+            Saldo.objects.get(cuenta=self.cuenta1, movimiento=self.mov3)
 
         self.assertEqual(
-            self.cuenta2.saldo_set.get(fecha=self.mov3.fecha).importe,
+            self.cuenta2.saldo_set.get(movimiento=self.mov3).importe,
             -50 + 50 + 354
         )
 
@@ -1371,11 +1370,11 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
         self.mov1.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(fecha=self.mov1.fecha).importe,
+            self.cuenta1.saldo_set.get(movimiento=self.mov1).importe,
             125 - 125 + 255
         )
         self.assertEqual(
-            self.cuenta2.saldo_set.get(fecha=self.mov1.fecha).importe,
+            self.cuenta2.saldo_set.get(movimiento=self.mov1).importe,
             0 - 255
         )
 
@@ -1398,11 +1397,11 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
         self.mov2.save()
 
         self.assertEqual(
-            self.cuenta2.saldo_set.get(fecha=self.mov2.fecha).importe,
+            self.cuenta2.saldo_set.get(movimiento=self.mov2).importe,
             0 + 446
         )
         self.assertEqual(
-            self.cuenta1.saldo_set.get(fecha=self.mov2.fecha).importe,
+            self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
             90 + 35 - 446
         )
 
@@ -1430,11 +1429,11 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
         self.mov1.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(fecha=self.mov1.fecha).importe,
+            self.cuenta1.saldo_set.get(movimiento=self.mov1).importe,
             125 - 125 - 556
         )
         self.assertEqual(
-            self.cuenta2.saldo_set.get(fecha=self.mov1.fecha).importe,
+            self.cuenta2.saldo_set.get(movimiento=self.mov1).importe,
             0 + 556
         )
 
@@ -1462,11 +1461,11 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
         self.mov2.save()
 
         self.assertEqual(
-            self.cuenta2.saldo_set.get(fecha=self.mov2.fecha).importe,
+            self.cuenta2.saldo_set.get(movimiento=self.mov2).importe,
             0 - 445
         )
         self.assertEqual(
-            self.cuenta1.saldo_set.get(fecha=self.mov2.fecha).importe,
+            self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
             90 + 35 + 445
         )
 
@@ -1491,9 +1490,9 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
         self.mov1.save()
 
         with self.assertRaises(Saldo.DoesNotExist):
-            Saldo.objects.get(cuenta=self.cuenta1, fecha=self.mov1.fecha)
+            Saldo.objects.get(cuenta=self.cuenta1, movimiento=self.mov1)
         self.assertEqual(
-            self.cuenta2.saldo_set.get(fecha=self.mov1.fecha).importe,
+            self.cuenta2.saldo_set.get(movimiento=self.mov1).importe,
             0 - 565
         )
 
@@ -1519,10 +1518,10 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
         self.refresh_ctas()
 
         with self.assertRaises(Saldo.DoesNotExist):
-            Saldo.objects.get(cuenta=self.cuenta1, fecha=self.mov2.fecha)
+            Saldo.objects.get(cuenta=self.cuenta1, movimiento=self.mov2)
 
         self.assertEqual(
-            self.cuenta2.saldo_set.get(fecha=self.mov2.fecha).importe,
+            self.cuenta2.saldo_set.get(movimiento=self.mov2).importe,
             0 + 675
         )
 
@@ -1542,7 +1541,6 @@ class TestModelMovimientoSaveModificaEsGratis(TestModelMovimientoSave):
         self.assertEqual(Movimiento.filtro(id=id_contramov).count(), 0)
 
 
-@skip
 class TestModelMovimientoConCuentaAcumulativaModificar(TestModelMovimientoSave):
 
     def setUp(self):

@@ -58,17 +58,17 @@ class Saldo(MiModel):
                 movimiento=mov
             )
             Saldo._actualizar_posteriores(cuenta, mov, importe)
-
-            # TODO: Esto no es óptimo. Puede ser confuso. Lo ideal sería que
-            #   las cuentas acumulativas no tuvieran saldos como objeto sino que se manejaran
-            #   directamente con importes de saldo (aunque todavía no tengo muy
-            #   claro qué significaría o implicaría esto)
-            for cta_ancestro in cuenta.ancestros():
-                cls.crear(
-                    cuenta=cta_ancestro,
-                    movimiento=mov,
-                    importe=result.importe
-                )
+            #
+            # # TODO: Esto no es óptimo. Puede ser confuso. Lo ideal sería que
+            # #   las cuentas acumulativas no tuvieran saldos como objeto sino que se manejaran
+            # #   directamente con importes de saldo (aunque todavía no tengo muy
+            # #   claro qué significaría o implicaría esto)
+            # for cta_ancestro in cuenta.ancestros():
+            #     cls.crear(
+            #         cuenta=cta_ancestro,
+            #         movimiento=mov,
+            #         importe=result.importe
+            #     )
 
             return result
 

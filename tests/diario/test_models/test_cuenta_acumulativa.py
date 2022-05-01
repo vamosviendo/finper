@@ -365,60 +365,60 @@ class TestAgregarSubcuenta(TestCase):
         self.cta_acum.agregar_subcuenta('subc3', 'sc3', titular=titular2)
         subcuenta = Cuenta.tomar(slug='sc3')
         self.assertEqual(subcuenta.titular, titular2)
-
-
-class TestSaldoOk(TestCase):
-
-    def setUp(self):
-        self.cta_acum = Cuenta.crear('cta acum', 'ca')
-        Movimiento.crear('entrada', 200, cta_entrada=self.cta_acum)
-        Movimiento.crear('salida', 100, cta_salida=self.cta_acum)
-        self.cta_acum = dividir_en_dos_subcuentas(self.cta_acum, saldo=100)
-
-    def test_saldo_ok_devuelve_true_si_saldo_coincide_con_saldos_subcuentas(self):
-        self.assertEqual(self.cta_acum.saldo, self.cta_acum.total_subcuentas())
-        self.assertTrue(self.cta_acum.saldo_ok())
-
-    def test_saldo_ok_devuelve_false_si_saldo_no_coincide_con_saldos_subcuentas(self):
-        cta1 = Cuenta.crear('Efectivo', 'E', fecha_creacion=date(2019, 1, 1))
-        Movimiento.crear(
-            concepto='00000',
-            importe=100,
-            cta_entrada=cta1,
-            fecha=date(2019, 1, 1)
-        )
-        cta1 = cta1.dividir_y_actualizar(
-            {'nombre': 'Billetera', 'slug': 'eb', 'saldo': 15},
-            {'nombre': 'Cajón', 'slug': 'ec', }
-        )
-        cta1.saldo = 220
-        cta1.save()
-
-        self.assertFalse(cta1.saldo_ok())
-
-
-class TestCorregirSaldo(TestCase):
-
-    def test_corregir_saldo_corrige_a_partir_de_saldos_de_subcuentas(self):
-        cta1 = Cuenta.crear('Efectivo', 'E', fecha_creacion=date(2019, 1, 1))
-        Movimiento.crear(
-            concepto='00000',
-            importe=100,
-            cta_entrada=cta1,
-            fecha=date(2019, 1, 1)
-        )
-        cta1 = cta1.dividir_y_actualizar(
-            {'nombre': 'Billetera', 'slug': 'eb', 'saldo': 15},
-            {'nombre': 'Cajón', 'slug': 'ec', 'saldo': 65},
-            {'nombre': 'Cajita', 'slug': 'eca', }
-        )
-        cta2 = Cuenta.tomar(slug='eb')
-        Movimiento.crear('Movimiento', 5, cta_salida=cta2)
-        cta1.saldo = 550
-        cta1.save()
-        cta1.corregir_saldo()
-        cta1.refresh_from_db()
-        self.assertEqual(cta1.saldo, cta1.total_subcuentas())
+#
+#
+# class TestSaldoOk(TestCase):
+#
+#     def setUp(self):
+#         self.cta_acum = Cuenta.crear('cta acum', 'ca')
+#         Movimiento.crear('entrada', 200, cta_entrada=self.cta_acum)
+#         Movimiento.crear('salida', 100, cta_salida=self.cta_acum)
+#         self.cta_acum = dividir_en_dos_subcuentas(self.cta_acum, saldo=100)
+#
+#     def test_saldo_ok_devuelve_true_si_saldo_coincide_con_saldos_subcuentas(self):
+#         self.assertEqual(self.cta_acum.saldo, self.cta_acum.total_subcuentas())
+#         self.assertTrue(self.cta_acum.saldo_ok())
+#
+#     def test_saldo_ok_devuelve_false_si_saldo_no_coincide_con_saldos_subcuentas(self):
+#         cta1 = Cuenta.crear('Efectivo', 'E', fecha_creacion=date(2019, 1, 1))
+#         Movimiento.crear(
+#             concepto='00000',
+#             importe=100,
+#             cta_entrada=cta1,
+#             fecha=date(2019, 1, 1)
+#         )
+#         cta1 = cta1.dividir_y_actualizar(
+#             {'nombre': 'Billetera', 'slug': 'eb', 'saldo': 15},
+#             {'nombre': 'Cajón', 'slug': 'ec', }
+#         )
+#         cta1.saldo = 220
+#         cta1.save()
+#
+#         self.assertFalse(cta1.saldo_ok())
+#
+#
+# class TestCorregirSaldo(TestCase):
+#
+#     def test_corregir_saldo_corrige_a_partir_de_saldos_de_subcuentas(self):
+#         cta1 = Cuenta.crear('Efectivo', 'E', fecha_creacion=date(2019, 1, 1))
+#         Movimiento.crear(
+#             concepto='00000',
+#             importe=100,
+#             cta_entrada=cta1,
+#             fecha=date(2019, 1, 1)
+#         )
+#         cta1 = cta1.dividir_y_actualizar(
+#             {'nombre': 'Billetera', 'slug': 'eb', 'saldo': 15},
+#             {'nombre': 'Cajón', 'slug': 'ec', 'saldo': 65},
+#             {'nombre': 'Cajita', 'slug': 'eca', }
+#         )
+#         cta2 = Cuenta.tomar(slug='eb')
+#         Movimiento.crear('Movimiento', 5, cta_salida=cta2)
+#         cta1.saldo = 550
+#         cta1.save()
+#         cta1.corregir_saldo()
+#         cta1.refresh_from_db()
+#         self.assertEqual(cta1.saldo, cta1.total_subcuentas())
 
 
 class TestTieneSaldoSubcuentaEnFecha(TestCase):
@@ -443,4 +443,45 @@ class TestTieneSaldoSubcuentaEnFecha(TestCase):
     def test_devuelve_false_si_ninguna_de_sus_subcuentas_tiene_saldo_en_la_fecha_dada(self):
         self.assertFalse(
             self.cta_acum.tiene_saldo_subcuenta_en_fecha(date(2010, 1, 3))
+        )
+
+
+class TestSaldo(TestCase):
+
+    def setUp(self):
+        self.fecha = date(2010, 1, 2)
+        cta_acum = Cuenta.crear(
+            'cta acumulativa', 'ca', fecha_creacion=self.fecha)
+        self.sc1, self.sc2 = cta_acum.dividir_entre(
+            ['subcuenta 1', 'sc1', 0],
+            ['subcuenta 2', 'sc2'],
+            fecha=self.fecha
+        )
+        self.cta_acum = Cuenta.tomar(slug=cta_acum.slug)
+        Movimiento.crear('saldo sc1', 100, self.sc1, fecha=self.fecha)
+        Movimiento.crear('saldo sc2', 70, None, self.sc2, fecha=self.fecha)
+
+    def test_devuelve_suma_de_saldos_de_subcuentas_interactivas(self):
+        self.assertEqual(
+            self.cta_acum.saldo,
+            100-70
+        )
+
+    def test_devuelve_suma_de_saldos_incluyendo_subcuentas_acumulativas(self):
+        sc11, sc12 = self.sc1.dividir_entre(
+            ['subsubcuenta 1.1', 'sc11', 30],
+            ['subsubcuenta 1.2', 'sc12'],
+            fecha=self.fecha
+        )
+        Movimiento.crear('saldo sc11', 60, sc11, fecha=self.fecha)
+        self.sc1 = Cuenta.tomar(slug=self.sc1.slug)
+
+        self.assertEqual(
+            self.sc1.saldo,
+            90+70
+        )
+
+        self.assertEqual(
+            self.cta_acum.saldo,
+            160-70
         )

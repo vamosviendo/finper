@@ -335,6 +335,7 @@ class Movimiento(MiModel):
                     # titulares y ahora ya no
                     self._eliminar_contramovimiento()
 
+            self._actualizar_cuenta_salida_convertida_en_acumulativa()
             super().save(*args, **kwargs)
 
             if self._cambia_campo(
@@ -391,8 +392,9 @@ class Movimiento(MiModel):
                         except AttributeError:
                             pass
                     else:
-                        self.cta_salida.saldo = self.cta_salida.saldo + mov_guardado.importe - self.importe
-                        self.cta_salida.save()
+                        if self.cta_salida.es_interactiva:
+                            self.cta_salida.saldo = self.cta_salida.saldo + mov_guardado.importe - self.importe
+                            self.cta_salida.save()
 
         #     if self._cambia_campo(
         #             'importe', 'cta_entrada', 'cta_salida', 'fecha'):
