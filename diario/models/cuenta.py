@@ -77,17 +77,7 @@ class Cuenta(PolymorphModel):
 
     def saldo_historico(self, movimiento):
         try:
-            result = Saldo.tomar(cuenta=self, fecha=movimiento.fecha).importe
-            movs_posteriores_del_dia = Movimiento.filtro(
-                fecha=movimiento.fecha, orden_dia__gt=movimiento.orden_dia)
-
-            for mov in movs_posteriores_del_dia:
-                if mov.cta_entrada and mov.cta_entrada.pk == self.pk:
-                    result -= mov.importe
-                elif mov.cta_salida and mov.cta_salida.pk == self.pk:
-                    result += mov.importe
-
-            return result
+            return Saldo.tomar(cuenta=self, movimiento=movimiento).importe
 
         except Saldo.DoesNotExist:
             return 0
@@ -466,8 +456,12 @@ class CuentaInteractiva(Cuenta):
             )
 
             if movimientos_incompletos[i] is not None:
-                movimientos_incompletos[i].cta_entrada = cuentas_creadas[i]
+                if movimientos_incompletos[i].cta_salida is not None:
+                    movimientos_incompletos[i].cta_entrada = cuentas_creadas[i]
+                elif movimientos_incompletos[i].cta_entrada is not None:
+                    movimientos_incompletos[i].cta_salida = cuentas_creadas[i]
                 movimientos_incompletos[i].save()
+                cuentas_creadas[i].refresh_from_db(fields=['_saldo'])
 
         return cuentas_creadas
 

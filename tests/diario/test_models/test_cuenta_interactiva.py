@@ -239,6 +239,21 @@ class TestMetodoDividirEntre(TestCase):
         # self.assertEqual(movs[3].cta_entrada, subcuenta2)
         self.assertEqual(movs[3].cta_salida, self.cta1)
 
+    def test_genera_movimientos_de_entrada_en_cta_madre_con_saldo_negativo(self):
+        Movimiento.crear('salida', 310, None, self.cta1)
+        self.cta1.refresh_from_db()
+        self.subcuentas[0]['saldo'] = 0
+        self.subcuentas[1].pop('saldo')
+
+        sc1, sc2 = self.cta1.dividir_entre(*self.subcuentas)
+        movs = self.cta1.movs_directos()
+        self.assertEqual(len(movs), 4)
+
+        self.assertEqual(movs.last().concepto, 'Traspaso de saldo')
+        self.assertEqual(movs.last().importe, 60)
+        self.assertEqual(movs.last().cta_entrada, self.cta1)
+        self.assertEqual(movs.last().cta_salida.id, sc2.id)
+
     def test_agrega_subcuenta_como_cta_entrada_en_movimiento(self):
         self.cta1.dividir_entre(*self.subcuentas)
 

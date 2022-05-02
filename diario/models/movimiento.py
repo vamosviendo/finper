@@ -335,7 +335,7 @@ class Movimiento(MiModel):
                     # titulares y ahora ya no
                     self._eliminar_contramovimiento()
 
-            self._actualizar_cuenta_salida_convertida_en_acumulativa()
+            self._actualizar_cuenta_convertida_en_acumulativa()
             super().save(*args, **kwargs)
 
             if self._cambia_campo(
@@ -370,8 +370,9 @@ class Movimiento(MiModel):
                         # Teniendo en cuenta que esto va a desaparecer, no me
                         # voy a tomar el trabajo de refactorizar esto.
                         # (idem para self.cta_salida)
-                        self.cta_entrada.saldo = self.cta_entrada.saldo - mov_guardado.importe + self.importe
-                        self.cta_entrada.save()
+                        if self.cta_entrada.es_interactiva:
+                            self.cta_entrada.saldo = self.cta_entrada.saldo - mov_guardado.importe + self.importe
+                            self.cta_entrada.save()
 
                 if not mov_guardado.cta_salida:
                     if self.cta_salida:
@@ -559,24 +560,26 @@ class Movimiento(MiModel):
     def _mantiene_cuenta(self, campo, otro):
         return self.mantiene_foreignfield(campo, otro)
 
-    def _actualizar_cuenta_salida_convertida_en_acumulativa(self):
+    def _actualizar_cuenta_convertida_en_acumulativa(self):
         """ Este paso es necesario para el caso en el que se divide una cuenta
             en subcuentas convirtiéndola en acumulativa (ver
             diario.models.cuenta.CuentaInteractiva.dividir_entre().
             Para pasar el saldo de la cuenta madre a las subcuentas se crean
             movimientos, los cuales se generan en tres pasos:
             - por cada subcuenta se crea un movimiento con la cuenta madre
-              como cuenta de salida
+              como cuenta de salida o entrada, según el signo de su saldo
             - se crean las subcuentas y se convierte la cuenta madre en
               acumulativa
             - se modifican los movimientos recién creados agregándole la
-              subcuenta como cuenta de entrada.
+              subcuenta como cuenta de entrada o salida.
             En este último paso, es necesario "informarle" al movimiento que
-            su cuenta de salida se ha convertido en acumulativa, para que la
+            su cuenta de salida/entrada se ha convertido en acumulativa, para que la
             trate como tal.
         """
         self.cta_salida = self.cta_salida.tomar_de_bd() \
             if self.cta_salida else None
+        self.cta_entrada = self.cta_entrada.tomar_de_bd() \
+            if self.cta_entrada else None
 
     def _cambia_campo(self, *args, contraparte=None):
         mov_guardado = contraparte or self.tomar_de_bd()
