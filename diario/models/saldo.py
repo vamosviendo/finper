@@ -25,12 +25,24 @@ class Saldo(MiModel):
 
     @classmethod
     def tomar(cls, **kwargs):
+        cuenta = kwargs['cuenta']
+        movimiento = kwargs['movimiento']
+
+        if cuenta.es_acumulativa:
+            importe = 0
+            for c in cuenta.subcuentas.all():
+                try:
+                    importe += Saldo.tomar(cuenta=c, movimiento=movimiento).importe
+                except Saldo.DoesNotExist:
+                    pass
+            return Saldo(cuenta=cuenta, movimiento=movimiento, importe=importe)
+
         try:
             return super().tomar(**kwargs)
         except cls.DoesNotExist:
             result = Saldo.filtro(
-                cuenta=kwargs['cuenta'],
-                movimiento__lt=kwargs['movimiento']
+                cuenta=cuenta,
+                movimiento__lt=movimiento
             ).last()
 
             if result is None:

@@ -59,6 +59,20 @@ class TestSaldoTomar(TestCase):
         with self.assertRaises(Saldo.DoesNotExist):
             Saldo.tomar(cuenta=self.cuenta1, movimiento=mov)
 
+    def test_si_cuenta_es_acumulativa_devuelve_saldo_cuyo_importe_es_suma_de_importes_de_saldos_de_subcuentas_al_momento_del_movimiento(self):
+        sc11, sc12 = self.cuenta1.dividir_entre(
+            ['subcuenta 1.1', 'sc11', 0],
+            ['subcuenta 1.2', 'sc12'],
+            fecha=date(2020, 1, 5)
+        )
+        Movimiento.crear('mov', 50, sc11, fecha=date(2020, 1, 5))
+        mov = Movimiento.crear('mov2', 20, None, sc12, fecha=date(2020, 1, 5))
+        self.cuenta1 = self.cuenta1.tomar_de_bd()
+        self.assertEqual(
+            Saldo.tomar(cuenta=self.cuenta1, movimiento=mov).importe,
+            50-20
+        )
+
 
 class TestSaldoTomarDeFecha(TestCase):
 
@@ -239,6 +253,7 @@ class TestSaldoMetodoGenerar(TestCase):
             fecha=date(2010, 1, 1)
         )
         mov = Movimiento.crear('mov', 100, sc31, fecha=date(2010, 1, 5))
+        cuenta3 = cuenta3.tomar_de_bd()
         self.assertEqual(
             Saldo.tomar(cuenta=cuenta3, movimiento=mov).importe,
             100
@@ -252,6 +267,7 @@ class TestSaldoMetodoGenerar(TestCase):
             fecha=date(2010, 1, 1)
         )
         mov = Movimiento.crear('mov', 100, None, sc31, fecha=date(2010, 1, 5))
+        cuenta3 = cuenta3.tomar_de_bd()
         self.assertEqual(
             Saldo.tomar(cuenta=cuenta3, movimiento=mov).importe,
             -100
@@ -270,6 +286,7 @@ class TestSaldoMetodoGenerar(TestCase):
             fecha=date(2010, 1, 1)
         )
         mov = Movimiento.crear('mov', 100, sc311, fecha=date(2010, 1, 5))
+        cuenta3 = cuenta3.tomar_de_bd()
         self.assertEqual(
             Saldo.tomar(cuenta=cuenta3, movimiento=mov).importe,
             100
@@ -287,6 +304,7 @@ class TestSaldoMetodoGenerar(TestCase):
             ['subcuenta 3.1.2', 'sc312'],
             fecha=date(2010, 1, 1)
         )
+        cuenta3 = cuenta3.tomar_de_bd()
         mov = Movimiento.crear('mov', 100, None, sc311, fecha=date(2010, 1, 5))
         self.assertEqual(
             Saldo.tomar(cuenta=cuenta3, movimiento=mov).importe,
