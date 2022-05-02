@@ -1243,6 +1243,8 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
         self.mov3.cta_salida = None
         self.mov3.importe = 234
         self.mov3.save()
+
+        self.cuenta1.refresh_from_db()
         self.cuenta2.refresh_from_db()
 
         self.assertEqual(self.cuenta1.saldo, 140 - 50 + 234)

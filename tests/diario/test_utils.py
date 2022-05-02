@@ -53,22 +53,22 @@ class TestSaldoGeneralHistorico(TestCase):
     def test_devuelve_suma_de_saldos_historicos_de_cuentas_al_momento_del_movimiento(self):
         self.assertEqual(
             saldo_general_historico(self.mov1),
-            Saldo.tomar(cuenta=self.cuenta1, fecha=self.fecha1).importe
+            Saldo.tomar(cuenta=self.cuenta1, movimiento=self.mov1).importe
             # 10
         )
 
         self.assertEqual(
             saldo_general_historico(self.mov2),
-            Saldo.tomar(cuenta=self.cuenta1, fecha=self.fecha1).importe +
-                Saldo.tomar(cuenta=self.cuenta2, fecha=self.fecha1).importe
+            Saldo.tomar(cuenta=self.cuenta1, movimiento=self.mov2).importe +
+                Saldo.tomar(cuenta=self.cuenta2, movimiento=self.mov2).importe
             # 10+20
         )
 
         self.assertEqual(
             saldo_general_historico(self.mov3),
-            Saldo.tomar(cuenta=self.cuenta1, fecha=self.fecha1).importe +
-                Saldo.tomar(cuenta=self.cuenta2, fecha=self.fecha1).importe +
-                Saldo.tomar(cuenta=self.cuenta3, fecha=self.fecha1).importe
+            Saldo.tomar(cuenta=self.cuenta1, movimiento=self.mov3).importe +
+                Saldo.tomar(cuenta=self.cuenta2, movimiento=self.mov3).importe +
+                Saldo.tomar(cuenta=self.cuenta3, movimiento=self.mov3).importe
             # 10+20-15
         )
 
@@ -79,5 +79,5 @@ class TestSaldoGeneralHistorico(TestCase):
 
         self.assertEqual(
             saldo_general_historico(mov),
-        10+20-10
+            10+20-10
         )

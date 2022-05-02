@@ -340,13 +340,13 @@ class TestModelCuentaMetodosMovs(TestModelCuentaMetodos):
             self.assertIn(mov, self.cta1.movs())
 
     def test_incluye_movimientos_de_subcuentas(self):
-        subcuentas = self.cta1.dividir_entre(
+        sc11, sc12 = self.cta1.dividir_entre(
             {'nombre': 'Billetera', 'slug': 'eb', 'saldo': 30, },
             {'nombre': 'Cajoncito', 'slug': 'ec', }
         )
         self.cta1 = Cuenta.tomar(slug=self.cta1.slug)
         mov_subcuenta = Movimiento.crear(
-            concepto='movsubc', importe=10, cta_salida=subcuentas[0])
+            concepto='movsubc', importe=10, cta_salida=sc11)
 
         self.assertIn(mov_subcuenta, self.cta1.movs())
 
@@ -473,8 +473,6 @@ class TestModelCuentaMetodosAgregarMovCorrectivo(TestModelCuentaMetodos):
 
     def test_no_acepta_ctas_acumulativas(self):
         self.cta1 = dividir_en_dos_subcuentas(self.cta1)
-        self.cta1.saldo = 945
-        self.cta1.save()
         with self.assertRaises(AttributeError):
             self.cta1.agregar_mov_correctivo()
 
@@ -586,112 +584,9 @@ class TestModelCuentaMetodosSaldoHistorico(TestCase):
         self.mov1 = Movimiento.crear(
             'Movimiento cero', 100, self.cta1, fecha=date(2019, 1, 1))
 
-    def test_recupera_saldo_a_la_fecha_del_movimiento(self, mock_filtro, mock_tomar):
+    def test_recupera_saldo_al_momento_del_movimiento(self, mock_filtro, mock_tomar):
         self.cta1.saldo_historico(self.mov1)
-        mock_tomar.assert_called_once_with(cuenta=self.cta1, fecha=self.mov1.fecha)
-
-    def test_primer_mov_de_fecha_con_mov_unico_devuelve_saldo_a_la_fecha_del_movimiento(self, mock_filtro, mock_tomar):
-        mock_tomar.return_value = Saldo(
-            cuenta=self.cta1,
-            fecha=self.mov1.fecha,
-            importe=200
-        )
-        self.assertEqual(self.cta1.saldo_historico(self.mov1), 200)
-
-    def test_primer_mov_de_fecha_con_2_movs_devuelve_saldo_a_la_fecha_menos_importe_2do_mov_si_cta_es_cta_entrada_del_2do_mov(self, mock_filtro, mock_tomar):
-        mock_filtro.return_value = [
-            Movimiento(
-                concepto='otro mov del 1/1/2021',
-                importe=60,
-                cta_entrada=self.cta1,
-                fecha=self.mov1.fecha,
-            )
-        ]
-        mock_tomar.return_value = Saldo(
-            cuenta=self.cta1,
-            fecha=self.mov1.fecha,
-            importe=160
-        )
-        self.assertEqual(self.cta1.saldo_historico(self.mov1), 100)
-
-    def test_primer_mov_de_fecha_con_2_movs_devuelve_saldo_a_la_fecha_mas_importe_2do_mov_si_cta_es_cta_salida_del_2do_mov(self, mock_filtro, mock_tomar):
-        mock_filtro.return_value = [Movimiento(
-            concepto='otro mov del 1/1/2021',
-            importe=60,
-            cta_salida=self.cta1,
-            fecha=date(2019, 1, 1),
-        )]
-        mock_tomar.return_value = Saldo(
-            cuenta=self.cta1,
-            fecha=self.mov1.fecha,
-            importe=40
-        )
-        self.assertEqual(self.cta1.saldo_historico(self.mov1), 100)
-
-    def test_primer_mov_de_fecha_con_2_movs_devuelve_saldo_a_la_fecha_si_cta_no_interviene_en_el_2do_mov(self, mock_filtro, mock_tomar):
-        mock_filtro.return_value = [Movimiento(
-            concepto='otro mov del 1/1/2021',
-            importe=60,
-            cta_entrada=self.cta2,
-            fecha=date(2019, 1, 1),
-        )]
-        mock_tomar.return_value = Saldo(
-            cuenta=self.cta1,
-            fecha=self.mov1.fecha,
-            importe=100
-        )
-        self.assertEqual(self.cta1.saldo_historico(self.mov1), 100)
-
-    def test_saldo_historico_primer_mov_de_fecha_resta_importes_de_movs_en_los_que_la_cuenta_es_cta_entrada_y_suma_importes_de_movs_en_los_que_es_cta_salida(self, mock_filtro, mock_tomar):
-        mock_filtro.return_value = [
-            Movimiento(
-                concepto='otro mov del 1/1/2019',
-                importe=60,
-                cta_entrada=self.cta1,
-                fecha=date(2019, 1, 1),
-            ),
-            Movimiento(
-                concepto='tercer mov del 1/1/2019',
-                importe=80,
-                cta_entrada=self.cta2,
-                fecha=date(2019, 1, 1),
-            ),
-            Movimiento(
-                concepto='cuarto mov del 1/1/2019',
-                importe=40,
-                cta_entrada=self.cta1,
-                cta_salida=self.cta2,
-                fecha=date(2019, 1, 1)
-            ),
-            Movimiento(
-                concepto='quinto mov del 1/1/2019',
-                importe=30,
-                cta_entrada=self.cta2,
-                cta_salida=self.cta1,
-                fecha=date(2019, 1, 1)
-            )
-        ]
-        mock_tomar.return_value = Saldo(
-            cuenta=self.cta1,
-            fecha=self.mov1.fecha,
-            importe=170
-        )
-
-        self.assertEqual(self.cta1.saldo_historico(self.mov1), 100)
-
-    def test_saldo_historico_segundo_mov_de_fecha_solo_toma_en_cuenta_importes_de_movs_posteriores(self, mock_filtro, mock_tomar):
-        mock_tomar.return_value = Saldo(
-            cuenta=self.cta1,
-            fecha=self.mov1.fecha,
-            importe=170
-        )
-
-        self.cta1.saldo_historico(self.mov1)
-
-        mock_filtro.assert_called_once_with(
-            fecha=self.mov1.fecha,
-            orden_dia__gt=self.mov1.orden_dia
-        )
+        mock_tomar.assert_called_once_with(cuenta=self.cta1, movimiento=self.mov1)
 
     def test_si_no_encuentra_saldo_de_cuenta_en_fecha_de_mov_devuelve_0(self, mock_filtro, mock_tomar):
         mock_tomar.side_effect = Saldo.DoesNotExist
@@ -777,6 +672,17 @@ class TestMetodosSubcuentas(TestCase):
         )
         lista_subcuentas[0] = Cuenta.tomar(slug=lista_subcuentas[0].slug)
 
+        lista_subcuentas[1] = Cuenta.tomar(slug=lista_subcuentas[1].slug)
+        lista_subcuentas += lista_subcuentas[1].dividir_entre(
+            {
+                'nombre': 'Cajita verde',
+                'slug': 'eccv',
+                'saldo': 0,
+            },
+            {'nombre': 'Sobre', 'slug': 'ecs', },
+        )
+        lista_subcuentas[1] = Cuenta.tomar(slug=lista_subcuentas[1].slug)
+
         lista_subcuentas += lista_subcuentas[2].dividir_entre(
             {
                 'nombre': 'Billetera división delantera izquierda',
@@ -789,16 +695,6 @@ class TestMetodosSubcuentas(TestCase):
             },
         )
         lista_subcuentas[2] = Cuenta.tomar(slug=lista_subcuentas[2].slug)
-
-        lista_subcuentas += lista_subcuentas[1].dividir_entre(
-            {
-                'nombre': 'Cajita verde',
-                'slug': 'eccv',
-                'saldo': 0,
-            },
-            {'nombre': 'Sobre', 'slug': 'ecs', },
-        )
-        lista_subcuentas[1] = Cuenta.tomar(slug=lista_subcuentas[1].slug)
 
         self.assertEqual(
             self.cta1.arbol_de_subcuentas(), set(lista_subcuentas))
