@@ -60,6 +60,39 @@ class TestSaldoTomar(TestCase):
             Saldo.tomar(cuenta=self.cuenta1, movimiento=mov)
 
 
+class TestSaldoTomarDeFecha(TestCase):
+
+    def setUp(self):
+        self.cuenta1 = Cuenta.crear(
+            'cuenta 1', 'c1', fecha_creacion=date(2020, 1, 1))
+        self.cuenta2 = Cuenta.crear(
+            'cuenta 2', 'c2', fecha_creacion=date(2020, 1, 1))
+        Movimiento.crear('mov', 50, self.cuenta1, fecha=date(2020, 1, 2))
+        self.mov = Movimiento.crear(
+            'otro', 100, self.cuenta1, fecha=date(2020, 1, 2))
+
+    @patch('diario.models.saldo.MiModel.tomar')
+    def test_busca_saldo_del_ultimo_movimiento_de_la_cuenta_en_la_fecha(self, mock_tomar):
+        Saldo.tomar_de_fecha(cuenta=self.cuenta1, fecha=date(2020, 1, 2))
+        mock_tomar.assert_called_once_with(cuenta=self.cuenta1, movimiento=self.mov)
+
+    def test_si_no_hay_movimiento_de_la_cuenta_en_la_fecha_devuelve_ultimo_saldo_anterior(self):
+        mov = Movimiento.crear(
+            'de otra cuenta', 30, self.cuenta2, fecha=date(2020, 1, 3))
+        self.assertEqual(
+            Saldo.tomar_de_fecha(cuenta=self.cuenta1, fecha=date(2020, 1, 3)),
+            Saldo.tomar_de_fecha(cuenta=self.cuenta1, fecha=date(2020, 1, 2))
+        )
+
+    def test_si_no_hay_ningun_movimiento_en_la_fecha_devuelve_saldo_de_ultimo_movimiento_anterior_a_esa_fecha(self):
+        mov = Movimiento.crear(
+            'de otra cuenta', 30, self.cuenta2, fecha=date(2020, 1, 3))
+        self.assertEqual(
+            Saldo.tomar_de_fecha(cuenta=self.cuenta1, fecha=date(2020, 1, 4)),
+            Saldo.tomar_de_fecha(cuenta=self.cuenta1, fecha=date(2020, 1, 3))
+        )
+
+
 class TestSaldoMetodoGenerar(TestCase):
 
     def setUp(self):

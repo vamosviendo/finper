@@ -39,6 +39,13 @@ class Saldo(MiModel):
             return result
 
     @classmethod
+    def tomar_de_fecha(cls, cuenta, fecha):
+        ultimo_mov = Saldo.get_related_class('movimiento')\
+            .filtro(fecha__lte=fecha)\
+            .last()
+        return Saldo.tomar(cuenta=cuenta, movimiento=ultimo_mov)
+
+    @classmethod
     def generar(cls, mov, salida):
 
         cuenta = mov.cta_salida if salida else mov.cta_entrada
