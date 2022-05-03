@@ -161,7 +161,6 @@ class TestModelMovimientoCrear(TestModelMovimiento):
             cta_salida=self.cuenta2
         )
 
-    @skip
     def test_no_admite_cuenta_acumulativa(self):
         self.cuenta1 = self.cuenta1.dividir_y_actualizar(
             ['subcuenta 1', 'sc1', 0],
@@ -658,14 +657,6 @@ class TestModelMovimientoEliminar(TestModelMovimientoSave):
             140+35
         )
 
-    @skip
-    def test_eliminar_movimiento_resta_importe_de_saldo_de_cta_madre_de_cta_entrada_al_momento_del_movimiento(self):
-        self.fail('escribir cuando ataquemos cuentas acumulativas')
-
-    @skip
-    def test_eliminar_movimiento_suma_importe_a_saldo_de_cta_madre_de_cta_salida_al_momento_del_movimiento(self):
-        self.fail('escribir cuando ataquemos cuentas acumulativas')
-
 
 class TestModelMovimientoEliminarConContramovimiento(TestModelMovimientoSave):
 
@@ -706,7 +697,6 @@ class TestModelMovimientoEliminarConContramovimiento(TestModelMovimientoSave):
                 'No se eliminó contramovimiento a pesar de force=True')
 
 
-@skip
 class TestModelMovimientoDeSubcuentaEliminar(TestModelMovimientoSave):
 
     def setUp(self):
@@ -720,129 +710,30 @@ class TestModelMovimientoDeSubcuentaEliminar(TestModelMovimientoSave):
         self.subc12 = Cuenta.tomar(slug='sc2')
         self.fecha = date(2021, 1, 15)
 
-    def test_si_se_elimina_mov_con_subcuenta_como_cta_entrada_en_fecha_con_otro_movimiento_en_subcuenta_se_resta_importe_de_saldo_de_cta_madre_en_fecha(self):
+    def test_si_se_elimina_mov_con_subcuenta_como_cta_entrada_se_resta_importe_del_mov_de_saldo_de_cta_madre_en_fecha(self):
         mov = Movimiento.crear('mov subc', 45, self.subc11, fecha=self.fecha)
-        Movimiento.crear('otro mov', 40, self.subc11, fecha=self.fecha)
-        saldo = Saldo.tomar(cuenta=self.cuenta1, fecha=self.fecha).importe
-
+        saldo = Saldo.tomar(cuenta=self.cuenta1, movimiento=mov).importe
         mov.delete()
 
+        with self.assertRaises(Saldo.DoesNotExist):
+            self.subc11.saldo_set.get(movimiento=mov)
+
         self.assertEqual(
-            len(Saldo.filtro(cuenta=self.cuenta1, fecha=self.fecha)),
-            1
-        )
-        self.assertEqual(
-            self.cuenta1.saldo_set.get(fecha=self.fecha).importe,
+            Saldo.tomar_de_fecha(cuenta=self.cuenta1, fecha=self.fecha).importe,
             saldo-45
         )
 
-    def test_si_se_elimina_mov_con_subcuenta_como_cta_salida_en_fecha_con_otro_movimiento_en_subcuenta_se_suma_importe_al_saldo_de_cta_madre_en_fecha(self):
+    def test_si_se_elimina_mov_con_subcuenta_como_cta_salida_se_suma_importe_del_mov_a_saldo_de_cta_madre_en_fecha(self):
         mov = Movimiento.crear('mov subc', 45, None, self.subc11, fecha=self.fecha)
-        Movimiento.crear('otro mov', 40, None, self.subc11, fecha=self.fecha)
-        saldo = Saldo.tomar(cuenta=self.cuenta1, fecha=self.fecha).importe
-
+        saldo = Saldo.tomar(cuenta=self.cuenta1, movimiento=mov).importe
         mov.delete()
 
+        with self.assertRaises(Saldo.DoesNotExist):
+            self.subc11.saldo_set.get(movimiento=mov)
+
         self.assertEqual(
-            len(Saldo.filtro(cuenta=self.cuenta1, fecha=self.fecha)),
-            1
-        )
-        self.assertEqual(
-            self.cuenta1.saldo_set.get(fecha=self.fecha).importe,
+            Saldo.tomar_de_fecha(cuenta=self.cuenta1, fecha=self.fecha).importe,
             saldo+45
-        )
-
-    def test_si_se_elimina_unico_mov_con_subcuenta_como_cta_entrada_en_fecha_con_movimiento_de_otra_subcuenta_se_resta_importe_de_mov_de_saldo_de_cta_madre_en_fecha(self):
-        mov = Movimiento.crear('mov subc', 45, self.subc11, fecha=self.fecha)
-        Movimiento.crear('otro mov', 40, self.subc12, fecha=self.fecha)
-        saldo = Saldo.tomar(cuenta=self.cuenta1, fecha=self.fecha).importe
-
-        mov.delete()
-
-        self.assertEqual(
-            len(Saldo.filtro(cuenta=self.cuenta1, fecha=self.fecha)),
-            1
-        )
-        self.assertEqual(
-            self.cuenta1.saldo_set.get(fecha=self.fecha).importe,
-            saldo-45
-        )
-
-    def test_si_se_elimina_unico_mov_con_subcuenta_como_cta_salida_en_fecha_con_movimiento_de_otra_subcuenta_se_suma_importe_de_mov_de_saldo_de_cta_madre_en_fecha(self):
-        mov = Movimiento.crear('mov subc', 45, None, self.subc11, fecha=self.fecha)
-        Movimiento.crear('otro mov', 40, self.subc12, fecha=self.fecha)
-        saldo = Saldo.tomar(cuenta=self.cuenta1, fecha=self.fecha).importe
-
-        mov.delete()
-
-        self.assertEqual(
-            len(Saldo.filtro(cuenta=self.cuenta1, fecha=self.fecha)),
-            1
-        )
-        self.assertEqual(
-            self.cuenta1.saldo_set.get(fecha=self.fecha).importe,
-            saldo+45
-        )
-
-    def test_si_se_elimina_unico_mov_con_subcuenta_como_cta_entrada_en_fecha_sin_movimientos_de_otra_subcuenta_de_cta_madre_se_elimina_saldo_de_cta_madre_en_fecha(self):
-        mov = Movimiento.crear('mov subc', 45, self.subc11, fecha=self.fecha)
-        mov.delete()
-
-        with self.assertRaises(Saldo.DoesNotExist):
-            self.subc11.saldo_set.get(fecha=self.fecha)
-
-        with self.assertRaises(Saldo.DoesNotExist):
-            self.cuenta1.saldo_set.get(fecha=self.fecha)
-
-    def test_si_se_elimina_unico_mov_con_subcuenta_como_cta_salida_en_fecha_sin_movimientos_de_otra_subcuenta_de_cta_madre_se_elimina_saldo_de_cta_madre_en_fecha(self):
-        mov = Movimiento.crear('mov subc', 45, None, self.subc11, fecha=self.fecha)
-        mov.delete()
-
-        with self.assertRaises(Saldo.DoesNotExist):
-            self.subc11.saldo_set.get(fecha=self.fecha)
-
-        with self.assertRaises(Saldo.DoesNotExist):
-            self.cuenta1.saldo_set.get(fecha=self.fecha)
-
-    def test_si_se_elimina_mov_de_subcuenta_no_unico_en_fecha_con_movimientos_de_otra_subcuenta_de_cta_abuela_con_movimientos_en_fecha_se_resta_importe_de_saldo_de_cta_abuela(self):
-        subc111, subc112 = self.subc11.dividir_entre(
-            ['subcuenta 1.1.1', 'sc111', 0],
-            ['subcuenta 1.1.2', 'sc112'],
-            fecha=date(2021, 1, 12)
-        )
-        mov = Movimiento.crear('movsubsubc 1', 40, subc111, fecha=self.fecha)
-        Movimiento.crear('movsubsubc 2', 30, subc111, fecha=self.fecha)
-        Movimiento.crear('mov subc', 20, self.subc12, fecha=self.fecha)
-        saldo = Saldo.tomar(cuenta=self.cuenta1, fecha=self.fecha).importe
-
-        mov.delete()
-
-        self.assertEqual(
-            self.cuenta1.saldo_set.get(fecha=self.fecha).importe,
-            saldo-40
-        )
-
-    def test_si_se_elimina_unico_mov_de_subcuenta_en_fecha_con_movimientos_de_otra_subcuenta_de_cta_abuela_se_resta_importe_de_saldo_de_cta_abuela_en_fecha(self):
-        subc111, subc112 = self.subc11.dividir_entre(
-            ['subcuenta 1.1.1', 'sc111', 0],
-            ['subcuenta 1.1.2', 'sc112'],
-            fecha=date(2021, 1, 12)
-        )
-        mov = Movimiento.crear('mov subsubc', 40, subc111, fecha=self.fecha)
-        Movimiento.crear('mov subc', 30, self.subc12, fecha=self.fecha)
-        saldo = Saldo.tomar(cuenta=self.cuenta1, fecha=self.fecha).importe
-
-        mov.delete()
-
-        with self.assertRaises(Saldo.DoesNotExist):
-            subc111.saldo_set.get(fecha=self.fecha)
-
-        with self.assertRaises(Saldo.DoesNotExist):
-            self.subc11.saldo_set.get(fecha=self.fecha)
-
-        self.assertEqual(
-            self.cuenta1.saldo_set.get(fecha=self.fecha).importe,
-            saldo-40
         )
 
 
@@ -952,7 +843,6 @@ class TestModelMovimientoMetodoStr(TestModelMovimiento):
 
 class TestModelMovimientoMetodoTieneCuentaAcumulativa(TestModelMovimiento):
 
-    @skip
     def test_devuelve_true_si_mov_tiene_una_cuenta_acumulativa(self):
         cuenta2 = Cuenta.crear('cuenta2', 'c2')
         mov = Movimiento.crear(
