@@ -1,5 +1,5 @@
 from datetime import date
-from unittest.mock import patch
+from unittest.mock import patch, ANY
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -46,6 +46,17 @@ class TestModelCuentaInteractivaCrear(TestCase):
         self.assertEqual(Movimiento.cantidad(), 1)
         mov = Movimiento.primere()
         self.assertEqual(mov.concepto, f'Saldo inicial de {cuenta.nombre}')
+
+    @patch('diario.models.cuenta.Movimiento.crear')
+    def test_pasa_fecha_creacion_a_movimiento_inicial(self, mock_crear):
+        CuentaInteractiva.crear(
+            nombre='Efectivo', slug='e', saldo=155, fecha_creacion=date(2010, 1, 2))
+        mock_crear.assert_called_once_with(
+            concepto=ANY,
+            importe=ANY,
+            cta_entrada=ANY,
+            fecha=date(2010, 1, 2)
+        )
 
     def test_no_genera_movimiento_si_no_se_pasa_argumento_saldo(self):
         CuentaInteractiva.crear('Efectivo', 'e')

@@ -238,7 +238,8 @@ class CuentaInteractiva(Cuenta):
             Movimiento.crear(
                 concepto=f'Saldo inicial de {cuenta_nueva.nombre}',
                 importe=saldo,
-                cta_entrada=cuenta_nueva
+                cta_entrada=cuenta_nueva,
+                fecha=cuenta_nueva.fecha_creacion
             )
 
         return cuenta_nueva
