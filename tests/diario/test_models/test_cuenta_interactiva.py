@@ -224,7 +224,6 @@ class TestMetodoDividirEntre(TestCase):
 
         self.assertEqual(sub1.titular, self.cta1.titular)
 
-
     def test_devuelve_lista_con_subcuentas_creadas(self):
         self.assertEqual(
             self.cta1.dividir_entre(*self.subcuentas),
@@ -467,6 +466,98 @@ class TestMetodoDividirEntre(TestCase):
                 ('Cajón de arriba', 'ecaj'),
                 ('Cajón de abajo', 'ecab')
             )
+
+
+class DividirEntreCasosParticulares(TestCase):
+
+    def setUp(self):
+        self.fecha = date(2021, 2, 1)
+        self.cuenta1 = Cuenta.crear('cta 1', 'c1', fecha_creacion=self.fecha, saldo=-100)
+        self.cuenta2 = Cuenta.crear('cta 2', 'c2', fecha_creacion=self.fecha, saldo=100)
+
+    def test_cuenta_con_saldo_negativo_se_divide_en_subcuentas_con_saldo_negativo(self):
+        sc11, sc12 = self.cuenta1.dividir_entre(
+            ['subcuenta 1.1', 'sc11', -60],
+            ['subcuenta 1.2', 'sc12', -40],
+            fecha=self.fecha
+        )
+        self.cuenta1 = self.cuenta1.tomar_de_bd()
+        self.assertEqual(sc11.saldo, -60)
+        self.assertEqual(sc12.saldo, -40)
+        self.assertEqual(self.cuenta1._saldo, 0)
+        self.assertEqual(self.cuenta1.saldo, -60-40)
+
+    def test_cuenta_con_saldo_negativo_se_divide_en_subcuentas_con_saldo_0_y_total_respectivamente(self):
+        sc11, sc12 = self.cuenta1.dividir_entre(
+            ['subcuenta 1.1', 'sc11', 0],
+            ['subcuenta 1.2', 'sc12'],
+            fecha=self.fecha
+        )
+        self.cuenta1 = self.cuenta1.tomar_de_bd()
+        self.assertEqual(sc11.saldo, 0)
+        self.assertEqual(sc12.saldo, -100)
+        self.assertEqual(self.cuenta1._saldo, 0)
+        self.assertEqual(self.cuenta1.saldo, -100)
+
+    def test_cuenta_con_saldo_negativo_se_divide_en_subcuentas_con_saldo_total_y_0_respectivamente(self):
+        sc11, sc12 = self.cuenta1.dividir_entre(
+            ['subcuenta 1.1', 'sc11', -100],
+            ['subcuenta 1.2', 'sc12'],
+            fecha=self.fecha
+        )
+        self.cuenta1 = self.cuenta1.tomar_de_bd()
+        self.assertEqual(sc11.saldo, -100)
+        self.assertEqual(sc12.saldo, -0)
+        self.assertEqual(self.cuenta1._saldo, 0)
+        self.assertEqual(self.cuenta1.saldo, -100)
+
+    def test_cuenta_con_saldo_negativo_se_divide_en_subcuentas_con_saldo_positivo_y_negativo_respectivamente(self):
+        sc11, sc12 = self.cuenta1.dividir_entre(
+            ['subcuenta 1.1', 'sc11', 10],
+            ['subcuenta 1.2', 'sc12'],
+            fecha=self.fecha
+        )
+        self.cuenta1 = self.cuenta1.tomar_de_bd()
+        self.assertEqual(sc11.saldo, 10)
+        self.assertEqual(sc12.saldo, -110)
+        self.assertEqual(self.cuenta1._saldo, 0)
+        self.assertEqual(self.cuenta1.saldo, -100)
+
+    def test_cuenta_con_saldo_negativo_se_divide_en_subcuentas_con_saldo_negativo_y_positivo_respectivamente(self):
+        sc11, sc12 = self.cuenta1.dividir_entre(
+            ['subcuenta 1.1', 'sc11', -110],
+            ['subcuenta 1.2', 'sc12'],
+            fecha=self.fecha
+        )
+        self.cuenta1 = self.cuenta1.tomar_de_bd()
+        self.assertEqual(sc11.saldo, -110)
+        self.assertEqual(sc12.saldo, 10)
+        self.assertEqual(self.cuenta1._saldo, 0)
+        self.assertEqual(self.cuenta1.saldo, -100)
+
+    def test_cuenta_con_saldo_positivo_se_divide_en_subcuentas_con_saldo_negativo_y_positivo_respectivamente(self):
+        sc21, sc22 = self.cuenta2.dividir_entre(
+            ['subcuenta 2.1', 'sc21', -10],
+            ['subcuenta 2.2', 'sc22', 110],
+            fecha=self.fecha
+        )
+        self.cuenta2 = self.cuenta2.tomar_de_bd()
+        self.assertEqual(sc21.saldo, -10)
+        self.assertEqual(sc22.saldo, 110)
+        self.assertEqual(self.cuenta2._saldo, 0)
+        self.assertEqual(self.cuenta2.saldo, 100)
+
+    def test_cuenta_con_saldo_positivo_se_divide_en_subcuentas_con_saldo_positivo_y_negativo_respectivamente(self):
+        sc21, sc22 = self.cuenta2.dividir_entre(
+            ['subcuenta 2.1', 'sc21', 110],
+            ['subcuenta 2.2', 'sc22'],
+            fecha=self.fecha
+        )
+        self.cuenta2 = self.cuenta2.tomar_de_bd()
+        self.assertEqual(sc21.saldo, 110)
+        self.assertEqual(sc22.saldo, -10)
+        self.assertEqual(self.cuenta2._saldo, 0)
+        self.assertEqual(self.cuenta2.saldo, 100)
 
 
 class TestConvertirseEnAcumulativa(TestCase):
