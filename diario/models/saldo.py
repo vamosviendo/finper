@@ -77,59 +77,10 @@ class Saldo(MiModel):
                 movimiento=mov
             )
             Saldo._actualizar_posteriores(cuenta, mov, importe)
-            #
-            # # TODO: Esto no es óptimo. Puede ser confuso. Lo ideal sería que
-            # #   las cuentas acumulativas no tuvieran saldos como objeto sino que se manejaran
-            # #   directamente con importes de saldo (aunque todavía no tengo muy
-            # #   claro qué significaría o implicaría esto)
-            # for cta_ancestro in cuenta.ancestros():
-            #     cls.crear(
-            #         cuenta=cta_ancestro,
-            #         movimiento=mov,
-            #         importe=result.importe
-            #     )
 
             return result
 
         return None
-
-    @classmethod
-    def registrar(cls, cuenta, fecha, importe):
-        if cuenta is None:
-            raise TypeError(
-                'Primer argumento debe ser una instancia de la clase Cuenta'
-            )
-
-        try:
-            # Buscar saldo existente de cuenta en fecha
-            saldo = super().tomar(cuenta=cuenta, fecha=fecha)
-            saldo.importe += importe
-            saldo.save()
-        except cls.DoesNotExist:
-            # Si no existe, buscar el último saldo anterior
-            # para determinar el importe desde el cual partir
-            try:
-                importe_anterior = cls.tomar(cuenta=cuenta, fecha=fecha).importe
-            except cls.DoesNotExist:
-                # Si no existe saldo anterior, se parte de cero.
-                importe_anterior = 0
-
-            saldo = cls.crear(
-                cuenta=cuenta,
-                fecha=fecha,
-                importe=importe_anterior+importe
-            )
-
-        cls._actualizar_posteriores(cuenta, fecha, importe)
-
-        if cuenta.tiene_madre():
-            cls.registrar(
-                cuenta=cuenta.cta_madre,
-                fecha=fecha,
-                importe=importe,
-            )
-
-        return saldo
 
     def eliminar(self, salida=False):
         self.delete()

@@ -1,5 +1,5 @@
 from datetime import date, timedelta
-from unittest.mock import patch, call
+from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -14,7 +14,6 @@ class TestSaldoBasic(TestCase):
 
     def test_no_admite_mas_de_un_saldo_por_cuenta_en_cada_movimiento(self):
         mov = Movimiento.crear('mov', 5, self.cuenta, fecha=date(2010, 11, 11))
-        # Saldo.crear(cuenta=self.cuenta, fecha=date(2010, 11, 11), importe=10)
 
         saldo = Saldo()
         saldo.cuenta = self.cuenta
@@ -91,7 +90,7 @@ class TestSaldoTomarDeFecha(TestCase):
         mock_tomar.assert_called_once_with(cuenta=self.cuenta1, movimiento=self.mov)
 
     def test_si_no_hay_movimiento_de_la_cuenta_en_la_fecha_devuelve_ultimo_saldo_anterior(self):
-        mov = Movimiento.crear(
+        Movimiento.crear(
             'de otra cuenta', 30, self.cuenta2, fecha=date(2020, 1, 3))
         self.assertEqual(
             Saldo.tomar_de_fecha(cuenta=self.cuenta1, fecha=date(2020, 1, 3)),
@@ -99,7 +98,7 @@ class TestSaldoTomarDeFecha(TestCase):
         )
 
     def test_si_no_hay_ningun_movimiento_en_la_fecha_devuelve_saldo_de_ultimo_movimiento_anterior_a_esa_fecha(self):
-        mov = Movimiento.crear(
+        Movimiento.crear(
             'de otra cuenta', 30, self.cuenta2, fecha=date(2020, 1, 3))
         self.assertEqual(
             Saldo.tomar_de_fecha(cuenta=self.cuenta1, fecha=date(2020, 1, 4)),
