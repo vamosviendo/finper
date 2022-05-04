@@ -422,26 +422,6 @@ class TestModelCuentaMetodosFechaUltimoMovDirecto(TestModelCuentaMetodos):
 
 
 @tag('metodos')
-class TestModelCuentaMetodosTotalSubcuentas(TestModelCuentaMetodos):
-
-    def test_devuelve_suma_saldos_subcuentas(self):
-        self.cta1 = self.cta1.dividir_y_actualizar(
-            {'nombre': 'Billetera', 'slug': 'eb', 'saldo': 15},
-            {'nombre': 'Cajón', 'slug': 'ec', 'saldo': 65},
-            {'nombre': 'Cajita', 'slug': 'eca', }
-        )
-        cta2 = Cuenta.tomar(slug='eb')
-        Movimiento.crear('Movimiento', 5, cta_salida=cta2)
-        self.assertEqual(self.cta1.total_subcuentas(), 110-5)
-
-        Movimiento.crear('Movimiento con decimales', 4.45, cta_salida=cta2)
-        self.assertEqual(
-            self.cta1.total_subcuentas(), round(105-4.45, 2),
-            'No funciona correctamente con decimales'
-        )
-
-
-@tag('metodos')
 class TestModelCuentaMetodosCorregirSaldo(TestModelCuentaMetodos):
 
     def test_no_agrega_movimientos(self):

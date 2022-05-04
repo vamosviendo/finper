@@ -97,12 +97,6 @@ class Cuenta(PolymorphModel):
         self._impedir_cambio_de_titular()
         self._impedir_cambio_de_cta_madre()
         self._chequear_incongruencias_de_clase()
-    #
-    # def save(self, *args, **kwargs):
-    #     if self.tiene_madre():
-    #         self._actualizar_madre()
-    #
-    #     super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
         if self.saldo != 0:
@@ -490,17 +484,10 @@ class CuentaAcumulativa(Cuenta):
             if cuenta.es_acumulativa:
                 todas_las_subcuentas.update(cuenta.arbol_de_subcuentas())
         return todas_las_subcuentas
-    #
-    # def corregir_saldo(self):
-    #     self.saldo = self.total_subcuentas()
-    #     self.save()
 
     @property
     def saldo(self):
-        return self.total_subcuentas()
-    #
-    # def saldo_ok(self):
-    #     return self.saldo == self.total_subcuentas()
+        return sum([subc.saldo for subc in self.subcuentas.all()])
 
     def clean(self, *args, **kwargs):
         if self.cta_madre in self.arbol_de_subcuentas():
@@ -518,9 +505,6 @@ class CuentaAcumulativa(Cuenta):
         for sc in self.subcuentas.all():
             result = result | sc.movs(order_by=order_by)
         return result.order_by(order_by)
-
-    def total_subcuentas(self):
-        return sum([subc.saldo for subc in self.subcuentas.all()])
 
     def agregar_subcuenta(self, nombre, slug, titular=None):
         titular = titular or self.titular
