@@ -65,10 +65,14 @@ class Saldo(MiModel):
 
         if cuenta:
             try:
-                importe_saldo_anterior = cuenta.saldo_set\
-                    .filter(movimiento__lt=mov)\
-                    .last()\
-                    .importe
+                saldos_anteriores = \
+                    cuenta.saldo_set.filter(
+                        movimiento__fecha__lt=mov.fecha
+                    ) | cuenta.saldo_set.filter(
+                        movimiento__fecha=mov.fecha,
+                        movimiento__orden_dia__lt=mov.orden_dia
+                    )
+                importe_saldo_anterior = saldos_anteriores.last().importe
             except AttributeError:
                 importe_saldo_anterior = 0
             result = cls.crear(
