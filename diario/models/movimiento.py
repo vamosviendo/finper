@@ -242,21 +242,13 @@ class Movimiento(MiModel):
             self.cta_entrada.saldo -= self.importe
             self.cta_entrada.save()
 
-            # TODO: refactor (repetido para cta entrada y salida)
-            # Si hay más movimientos de la cuenta en la fecha,
-            #   retirar importe de saldo
-            # Si no hay más movimientos de la cuenta en la fecha, eliminar saldo
             self.cta_entrada.saldo_set.get(movimiento=self).eliminar()
-            # for cta_madre in self.cta_entrada.ancestros():
-            #     cta_madre.saldo_set.get(movimiento=self).eliminar()
 
         if self.cta_salida:
             self.cta_salida.saldo += self.importe
             self.cta_salida.save()
 
-            self.cta_salida.saldo_set.get(movimiento=self).eliminar(salida=True)
-            # for cta_madre in self.cta_salida.ancestros():
-            #     cta_madre.saldo_set.get(movimiento=self)
+            self.cta_salida.saldo_set.get(movimiento=self).eliminar()
 
         super().delete(*args, **kwargs)
 

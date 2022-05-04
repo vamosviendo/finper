@@ -631,7 +631,7 @@ class TestModelMovimientoEliminar(TestModelMovimientoSave):
     def test_eliminar_movimiento_elimina_saldo_cta_salida_al_momento_del_movimiento(self, mock_eliminar):
         saldo = Saldo.tomar(cuenta=self.cuenta1, movimiento=self.mov2)
         self.mov2.delete()
-        mock_eliminar.assert_called_once_with(saldo, salida=True)
+        mock_eliminar.assert_called_once_with(saldo)
 
     def test_integrativo_eliminar_movimiento_elimina_saldo_cta_salida_al_momento_del_movimiento(self):
         mov = self.mov1

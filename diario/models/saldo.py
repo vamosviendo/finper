@@ -82,7 +82,7 @@ class Saldo(MiModel):
 
         return None
 
-    def eliminar(self, salida=False):
+    def eliminar(self):
         self.delete()
         # TODO: Refactor - escribir método Saldo.anterior()
         try:
