@@ -272,7 +272,7 @@ class TestModelMovimientoCrear(TestModelMovimiento):
         mock_generar.assert_called_once_with(mov, salida=True)
 
     @patch('diario.models.movimiento.Saldo.generar')
-    def test_mov_traspaso_llama_a_generar_saldo_con_salida_false_para_cta_entrada_y_salida_True_(self, mock_generar):
+    def test_mov_traspaso_llama_a_generar_saldo_con_salida_false_para_cta_entrada_y_salida_True_para_cta_salida(self, mock_generar):
         mov = Movimiento.crear(
             'Nuevo mov', 20, self.cuenta1, self.cuenta2, fecha=date(2011, 11, 15))
 
