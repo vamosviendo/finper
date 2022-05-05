@@ -53,6 +53,22 @@ class TestSaldoTomar(TestCase):
             saldo
         )
 
+    def test_busca_saldo_anterior_por_fecha_y_orden_dia(self):
+        mov1 = Movimiento.crear(
+            'mov1', 150, self.cuenta1, fecha=date(2020, 1, 2))
+        mov2 = Movimiento.crear(
+            'mov2', 3, self.cuenta2, fecha=date(2020, 1, 1))
+        saldo = mov2.saldo_set.first()
+
+        self.assertEqual(
+            Saldo.tomar(cuenta=self.cuenta2, movimiento=mov1),
+            saldo
+        )
+
+        with self.assertRaises(Saldo.DoesNotExist):
+            Saldo.tomar(cuenta=self.cuenta1, movimiento=mov2)
+
+
     def test_si_no_encuentra_saldo_de_cuenta_en_movimiento_ni_saldos_anteriores_lanza_excepcion(self):
         mov = Movimiento.crear('mov', 50, self.cuenta2, fecha=date(2020, 1, 5))
         with self.assertRaises(Saldo.DoesNotExist):

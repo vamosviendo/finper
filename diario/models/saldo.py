@@ -40,10 +40,11 @@ class Saldo(MiModel):
         try:
             return super().tomar(**kwargs)
         except cls.DoesNotExist:
-            result = Saldo.filtro(
-                cuenta=cuenta,
-                movimiento__lt=movimiento
-            ).last()
+            result = Saldo._anterior_a(
+                fecha=movimiento.fecha,
+                orden_dia=movimiento.orden_dia,
+                cuenta=cuenta
+            )
 
             if result is None:
                 raise cls.DoesNotExist
