@@ -162,11 +162,11 @@ class TestSaldoMetodoGenerar(TestCase):
                 movimiento=mov
             )
 
-
     def test_importe_de_saldo_creado_para_cta_salida_es_igual_al_ultimo_saldo_anterior_de_la_cuenta_menos_el_importe_del_movimiento(self):
         Movimiento.crear('mov', 100, self.cuenta2, fecha=self.fecha)
         with patch('diario.models.Saldo.crear') as mock_crear:
-            mov = Movimiento.crear('mov', 70, None, self.cuenta2, fecha=self.fecha + timedelta(1))
+            mov = Movimiento.crear(
+                'mov', 70, None, self.cuenta2, fecha=self.fecha + timedelta(1))
 
             mock_crear.assert_called_once_with(
                 cuenta=self.cuenta2,
@@ -236,7 +236,7 @@ class TestSaldoMetodoEliminar(TestCase):
 
     def setUp(self):
         self.cuenta = Cuenta.crear(
-            'cuenta normal', 'cn', fecha_creacion=date(2010, 11, 11))
+            'cuenta normal', 'cn', fecha_creacion=date(2010, 11, 10))
         mov = Movimiento.crear('mov', 100, self.cuenta, fecha=date(2010, 11, 11))
         self.saldo = mov.saldo_set.first()
 

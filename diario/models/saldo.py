@@ -65,14 +65,9 @@ class Saldo(MiModel):
 
         if cuenta:
             try:
-                saldos_anteriores = \
-                    cuenta.saldo_set.filter(
-                        movimiento__fecha__lt=mov.fecha
-                    ) | cuenta.saldo_set.filter(
-                        movimiento__fecha=mov.fecha,
-                        movimiento__orden_dia__lt=mov.orden_dia
-                    )
-                importe_saldo_anterior = saldos_anteriores.last().importe
+                importe_saldo_anterior = Saldo._anterior_a(
+                    mov.fecha, mov.orden_dia, cuenta
+                ).importe
             except AttributeError:
                 importe_saldo_anterior = 0
             result = cls.crear(
@@ -88,9 +83,8 @@ class Saldo(MiModel):
 
     def eliminar(self):
         self.delete()
-        # TODO: Refactor - escribir método Saldo.anterior()
         try:
-            importe_anterior = self.cuenta.saldo_set.filter(movimiento__lt=self.movimiento).last().importe
+            importe_anterior = self.anterior().importe
         except AttributeError:
             importe_anterior = 0
         importe = self.importe - importe_anterior
@@ -98,11 +92,19 @@ class Saldo(MiModel):
             self.cuenta, self.movimiento, -importe)
 
     def anterior(self):
-        anteriores = self.cuenta.saldo_set.filter(
-            movimiento__fecha__lt=self.movimiento.fecha
-        ) | self.cuenta.saldo_set.filter(
-            movimiento__fecha=self.movimiento.fecha,
-            movimiento__orden_dia__lt=self.movimiento.orden_dia
+        return Saldo._anterior_a(
+            self.movimiento.fecha,
+            self.movimiento.orden_dia,
+            self.cuenta
+        )
+
+    @staticmethod
+    def _anterior_a(fecha, orden_dia, cuenta):
+        anteriores = cuenta.saldo_set.filter(
+            movimiento__fecha__lt=fecha
+        ) | cuenta.saldo_set.filter(
+            movimiento__fecha=fecha,
+            movimiento__orden_dia__lt=orden_dia
         )
         return anteriores.last()
 
