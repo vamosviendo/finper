@@ -113,11 +113,13 @@ class Saldo(MiModel):
     def _actualizar_posteriores(cuenta, mov, importe):
 
         # TODO: Refactor. Definir < y > para Movimiento.
-        #       (¿Por qué no funcionaría un filtro(cuenta=cuenta, movimiento__gt=mov))
-        for saldo_post in Saldo.filtro(cuenta=cuenta):
-            if saldo_post.movimiento.fecha > mov.fecha or (
-                    saldo_post.movimiento.fecha == mov.fecha and
-                    saldo_post.movimiento.orden_dia > mov.orden_dia
-            ):
+        for saldo_post in Saldo.filtro(
+                cuenta=cuenta,
+                movimiento__fecha__gt=mov.fecha
+        ) | Saldo.filtro(
+            cuenta=cuenta,
+            movimiento__fecha=mov.fecha,
+            movimiento__orden_dia__gt=mov.orden_dia
+        ):
                 saldo_post.importe += importe
                 saldo_post.save()
