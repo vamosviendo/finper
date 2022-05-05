@@ -328,3 +328,41 @@ class TestSaldoMetodoActualizarPosteriores(TestCase):
 
         self.assertEqual(self.saldo1.importe, 150)
         self.assertEqual(self.saldo2.importe, 200)
+
+
+class TestSaldoMetodoAnterior(TestCase):
+
+    def setUp(self):
+        self.cuenta = Cuenta.crear(
+            'cta', 'c', fecha_creacion=date(2010, 11, 11))
+
+    def test_devuelve_ultimo_saldo_anterior_de_la_cuenta_por_fecha(self):
+        mov1 = Movimiento.crear(
+            'mov1', 100, self.cuenta, fecha=date(2010, 11, 15))
+        mov2 = Movimiento.crear(
+            'mov2', 200, self.cuenta, fecha=date(2010, 11, 14))
+        saldo1 = Saldo.objects.get(cuenta=self.cuenta, movimiento=mov1)
+        saldo2 = Saldo.objects.get(cuenta=self.cuenta, movimiento=mov2)
+        self.assertEqual(saldo1.anterior(), saldo2)
+
+    def test_dentro_de_fecha_devuelve_ultimo_saldo_anterior_de_la_cuenta_por_orden_dia(self):
+        mov1 = Movimiento.crear(
+            'mov1', 100, self.cuenta, fecha=date(2010, 11, 15))
+        mov2 = Movimiento.crear(
+            'mov2', 200, self.cuenta, fecha=date(2010, 11, 15))
+        mov1.orden_dia = 1
+        mov2.orden_dia = 0
+        mov1.save()
+        mov2.save()
+
+        saldo1 = Saldo.objects.get(cuenta=self.cuenta, movimiento=mov1)
+        saldo2 = Saldo.objects.get(cuenta=self.cuenta, movimiento=mov2)
+
+        self.assertEqual(saldo1.anterior(), saldo2)
+
+    def test_si_no_hay_saldos_anteriores_por_fecha_u_orden_dia_devuelve_None(self):
+        mov1 = Movimiento.crear(
+            'mov1', 100, self.cuenta, fecha=date(2010, 11, 15))
+        saldo1 = Saldo.objects.get(cuenta=self.cuenta, movimiento=mov1)
+
+        self.assertIsNone(saldo1.anterior())

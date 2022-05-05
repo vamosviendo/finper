@@ -97,6 +97,15 @@ class Saldo(MiModel):
         Saldo._actualizar_posteriores(
             self.cuenta, self.movimiento, -importe)
 
+    def anterior(self):
+        anteriores = self.cuenta.saldo_set.filter(
+            movimiento__fecha__lt=self.movimiento.fecha
+        ) | self.cuenta.saldo_set.filter(
+            movimiento__fecha=self.movimiento.fecha,
+            movimiento__orden_dia__lt=self.movimiento.orden_dia
+        )
+        return anteriores.last()
+
     @staticmethod
     def _actualizar_posteriores(cuenta, mov, importe):
 
