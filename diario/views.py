@@ -50,6 +50,7 @@ class CtaDetalleView(DetailView):
         cuenta = self.object.como_subclase()
 
         context.update({
+            'cuenta': cuenta,
             'subcuentas': cuenta.subcuentas.order_by('slug')
                 if cuenta.es_acumulativa
                 else [],

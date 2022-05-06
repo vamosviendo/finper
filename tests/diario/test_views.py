@@ -344,7 +344,7 @@ class TestCtaDetalle(TestCase):
             reverse('cta_detalle', args=[self.cta.slug]))
         self.assertEqual(
             response.context['cuenta'],
-            Cuenta.tomar(polymorphic=False, slug=self.cta.slug)
+            Cuenta.tomar(slug=self.cta.slug)
         )
         self.assertContains(response, self.cta.nombre)
 
