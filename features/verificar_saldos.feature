@@ -45,27 +45,6 @@ Escenario: Verificar saldos de cuentas interactivas
     Entonces veo que el saldo de "Aefectivo" es 250 pesos
 
 
-Escenario: Verificar saldos de cuentas acumulativas
-    Dada una cuenta con los siguientes valores:
-        | nombre       | slug | saldo |
-        | Banco Nación | bn   | 500   |
-    Y la cuenta "Banco Nación" dividida en subcuentas:
-        | nombre                        | slug | saldo |
-        | Banco Nación Caja de ahorro   | bnca | 200   |
-        | Banco Nación Cuenta corriente | bncc | 300   |
-    Y un error de 100 pesos en el saldo de la cuenta "Banco Nación"
-
-    # Cuando voy a la página principal por primera vez en el día
-    Cuando voy a la página principal
-    Y cliqueo en el botón de id "id_btn_verificar_saldos"
-
-    Entonces soy dirigido a la página "corregir saldo"
-    Y veo un mensaje de saldo erróneo para la cuenta "Banco Nación"
-    Pero no veo un elemento de clase "class_btn_agregar"
-    Cuando cliqueo en el botón de clase "class_btn_corregir"
-    Entonces veo que el saldo de "Banco Nación" es 500 pesos
-
-
 Escenario: Verificar saldos diariamente
     Dadas 2 cuentas con los siguientes valores:
         | nombre         | slug |
