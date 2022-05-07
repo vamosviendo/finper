@@ -14,7 +14,7 @@ class Saldo(MiModel):
     # fecha = models.DateField()
     movimiento = models.ForeignKey(
         'diario.Movimiento', on_delete=models.CASCADE)
-    importe = models.FloatField()
+    _importe = models.FloatField()
 
     class Meta:
         unique_together = ['cuenta', 'movimiento']
@@ -22,6 +22,14 @@ class Saldo(MiModel):
 
     def __str__(self):
         return f'{self.cuenta} al {self.movimiento.fecha} - {self.movimiento.orden_dia+1}: {self.importe}'
+
+    @property
+    def importe(self):
+        return self._importe
+
+    @importe.setter
+    def importe(self, valor):
+        self._importe = round(valor, 2)
 
     @classmethod
     def tomar(cls, **kwargs):

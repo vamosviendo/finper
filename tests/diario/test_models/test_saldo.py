@@ -308,8 +308,8 @@ class TestSaldoMetodoActualizarPosteriores(TestCase):
             Saldo.objects.get(cuenta=self.cuenta, movimiento=self.mov2).importe,
             300
         )
-        self.saldo1.refresh_from_db(fields=['importe'])
-        self.saldo2.refresh_from_db(fields=['importe'])
+        self.saldo1.refresh_from_db(fields=['_importe'])
+        self.saldo2.refresh_from_db(fields=['_importe'])
 
         self.assertEqual(self.saldo1.importe, 250)
         self.assertEqual(self.saldo2.importe, 300)
@@ -318,8 +318,8 @@ class TestSaldoMetodoActualizarPosteriores(TestCase):
 
         Movimiento.crear(
             'mov0', 100, None, self.cuenta, fecha=date(2011, 12, 14))
-        self.saldo1.refresh_from_db(fields=['importe'])
-        self.saldo2.refresh_from_db(fields=['importe'])
+        self.saldo1.refresh_from_db(fields=['_importe'])
+        self.saldo2.refresh_from_db(fields=['_importe'])
 
         self.assertEqual(self.saldo1.importe, 50)
         self.assertEqual(self.saldo2.importe, 100)
@@ -330,8 +330,8 @@ class TestSaldoMetodoActualizarPosteriores(TestCase):
 
         Movimiento.crear(
             'mov otra cuenta', 200, cuenta2, fecha=date(2011, 12, 14))
-        self.saldo1.refresh_from_db(fields=['importe'])
-        self.saldo2.refresh_from_db(fields=['importe'])
+        self.saldo1.refresh_from_db(fields=['_importe'])
+        self.saldo2.refresh_from_db(fields=['_importe'])
 
         self.assertEqual(self.saldo1.importe, 150)
         self.assertEqual(self.saldo2.importe, 200)
@@ -339,8 +339,8 @@ class TestSaldoMetodoActualizarPosteriores(TestCase):
     def test_no_suma_importe_a_saldos_anteriores_de_la_cuenta(self):
         Movimiento.crear(
             'mov posterior', 200, self.cuenta, fecha=date(2012, 5, 7))
-        self.saldo1.refresh_from_db(fields=['importe'])
-        self.saldo2.refresh_from_db(fields=['importe'])
+        self.saldo1.refresh_from_db(fields=['_importe'])
+        self.saldo2.refresh_from_db(fields=['_importe'])
 
         self.assertEqual(self.saldo1.importe, 150)
         self.assertEqual(self.saldo2.importe, 200)
@@ -382,3 +382,23 @@ class TestSaldoMetodoAnterior(TestCase):
         saldo1 = Saldo.objects.get(cuenta=self.cuenta, movimiento=mov1)
 
         self.assertIsNone(saldo1.anterior())
+
+
+class TestSaldoPropertyImporte(TestCase):
+
+    def setUp(self):
+
+        self.cuenta = Cuenta.crear('cuenta', 'c')
+
+    def test_asigna_importe_a_campo__importe(self):
+        saldo = Saldo(cuenta=self.cuenta)
+        saldo.importe = 150
+        self.assertEqual(saldo._importe, 150)
+
+    def test_devuelve_importe_del_saldo(self):
+        saldo = Saldo(cuenta=self.cuenta, _importe=123)
+        self.assertEqual(saldo.importe, saldo._importe)
+
+    def test_redondea_valor_antes_de_asignarlo_a_campo__importe(self):
+        saldo = Saldo(cuenta=self.cuenta, importe=154.588)
+        self.assertEqual(saldo._importe, 154.59)
