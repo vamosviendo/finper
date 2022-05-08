@@ -14,7 +14,7 @@ class Titular(MiModel):
 
     @property
     def patrimonio(self):
-        return self.cuentas.all().aggregate(Sum('_saldo'))['_saldo__sum'] or 0
+        return sum([c.saldo for c in self.cuentas.all()])
 
     def movimientos(self):
         lista_movimientos = list()
