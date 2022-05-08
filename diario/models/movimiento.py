@@ -293,7 +293,7 @@ class Movimiento(MiModel):
         """
 
         if self._state.adding:   # Movimiento nuevo
-            self._actualizar_saldos_cuentas()
+            # self._actualizar_saldos_cuentas()
 
             if self.es_prestamo_o_devolucion():
                 self._gestionar_transferencia()
@@ -343,51 +343,51 @@ class Movimiento(MiModel):
                 Saldo.generar(self, salida=False)
                 Saldo.generar(self, salida=True)
 
-                # Todo esto debería desaparecer una vez que desaparezca el
-                #   campo _saldo
-                if not mov_guardado.cta_entrada:
-                    if self.cta_entrada:
-                        self.cta_entrada.saldo += self.importe
-                        self.cta_entrada.save()
-                else:
-                    if self.cta_entrada != mov_guardado.cta_entrada:
-                        mov_guardado.cta_entrada.saldo -= mov_guardado.importe
-                        mov_guardado.cta_entrada.save()
-                        try:
-                            self.cta_entrada.saldo += self.importe
-                            self.cta_entrada.save()
-                        except AttributeError:
-                            pass
-                    else:
-                        # Teniendo en cuenta que esto va a desaparecer, no me
-                        # voy a tomar el trabajo de refactorizar esto.
-                        # (idem para self.cta_salida)
-                        if self.cta_entrada.es_interactiva:
-                            self.cta_entrada.saldo = self.cta_entrada.saldo - mov_guardado.importe + self.importe
-                            self.cta_entrada.save()
-
-                if not mov_guardado.cta_salida:
-                    if self.cta_salida:
-                        self.cta_salida.refresh_from_db(fields=['_saldo'])
-                        self.cta_salida.saldo -= self.importe
-                        self.cta_salida.save()
-                else:
-                    if self.cta_salida != mov_guardado.cta_salida:
-                        mov_guardado.cta_salida.refresh_from_db(
-                            fields=['_saldo']
-                        )
-                        mov_guardado.cta_salida.saldo += mov_guardado.importe
-                        mov_guardado.cta_salida.save()
-                        try:
-                            self.cta_salida.refresh_from_db(fields=['_saldo'])
-                            self.cta_salida.saldo -= self.importe
-                            self.cta_salida.save()
-                        except AttributeError:
-                            pass
-                    else:
-                        if self.cta_salida.es_interactiva:
-                            self.cta_salida.saldo = self.cta_salida.saldo + mov_guardado.importe - self.importe
-                            self.cta_salida.save()
+                # # Todo esto debería desaparecer una vez que desaparezca el
+                # #   campo _saldo
+                # if not mov_guardado.cta_entrada:
+                #     if self.cta_entrada:
+                #         self.cta_entrada.saldo += self.importe
+                #         self.cta_entrada.save()
+                # else:
+                #     if self.cta_entrada != mov_guardado.cta_entrada:
+                #         mov_guardado.cta_entrada.saldo -= mov_guardado.importe
+                #         mov_guardado.cta_entrada.save()
+                #         try:
+                #             self.cta_entrada.saldo += self.importe
+                #             self.cta_entrada.save()
+                #         except AttributeError:
+                #             pass
+                #     else:
+                #         # Teniendo en cuenta que esto va a desaparecer, no me
+                #         # voy a tomar el trabajo de refactorizar esto.
+                #         # (idem para self.cta_salida)
+                #         if self.cta_entrada.es_interactiva:
+                #             self.cta_entrada.saldo = self.cta_entrada.saldo - mov_guardado.importe + self.importe
+                #             self.cta_entrada.save()
+                #
+                # if not mov_guardado.cta_salida:
+                #     if self.cta_salida:
+                #         self.cta_salida.refresh_from_db(fields=['_saldo'])
+                #         self.cta_salida.saldo -= self.importe
+                #         self.cta_salida.save()
+                # else:
+                #     if self.cta_salida != mov_guardado.cta_salida:
+                #         mov_guardado.cta_salida.refresh_from_db(
+                #             fields=['_saldo']
+                #         )
+                #         mov_guardado.cta_salida.saldo += mov_guardado.importe
+                #         mov_guardado.cta_salida.save()
+                #         try:
+                #             self.cta_salida.refresh_from_db(fields=['_saldo'])
+                #             self.cta_salida.saldo -= self.importe
+                #             self.cta_salida.save()
+                #         except AttributeError:
+                #             pass
+                #     else:
+                #         if self.cta_salida.es_interactiva:
+                #             self.cta_salida.saldo = self.cta_salida.saldo + mov_guardado.importe - self.importe
+                #             self.cta_salida.save()
 
         #     if self._cambia_campo(
         #             'importe', 'cta_entrada', 'cta_salida', 'fecha'):

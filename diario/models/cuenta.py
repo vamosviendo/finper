@@ -273,7 +273,8 @@ class CuentaInteractiva(Cuenta):
     def agregar_mov_correctivo(self):
         if self.saldo_ok():
             return None
-        saldo = self.saldo
+        saldo = self.saldo_set.last()
+        importe = saldo.importe
         mov = Movimiento(concepto='Movimiento correctivo')
         mov.importe = self.saldo - self.total_movs()
         if mov.importe < 0:
@@ -286,8 +287,9 @@ class CuentaInteractiva(Cuenta):
         except TypeError:
             raise TypeError(f'Error en mov {mov}')
         mov.save()
-        self.saldo = saldo
-        self.save()
+        saldo = self.saldo_set.last()
+        saldo.importe = importe
+        saldo.save()
         return mov
 
     def saldo_ok(self):
