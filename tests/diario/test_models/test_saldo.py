@@ -190,17 +190,17 @@ class TestSaldoMetodoGenerar(TestCase):
                 movimiento=mov
             )
 
-    @patch('diario.models.Saldo._actualizar_posteriores')
+    @patch('diario.models.Saldo._actualizar_posteriores', autospec=True)
     def test_llama_a_actualizar_posteriores_con_cta_entrada(self, mock_actualizar_posteriores):
         mov = Movimiento.crear('mov', 100, self.cuenta1, fecha=self.fecha)
-        mock_actualizar_posteriores.assert_called_once_with(
-            self.cuenta1, mov, 100)
+        saldo = mov.saldo_set.first()
+        mock_actualizar_posteriores.assert_called_once_with(saldo, 100)
 
-    @patch('diario.models.Saldo._actualizar_posteriores')
+    @patch('diario.models.Saldo._actualizar_posteriores', autospec=True)
     def test_llama_a_actualizar_posteriores_con_cta_salida(self, mock_actualizar_posteriores):
         mov = Movimiento.crear('mov', 100, None, self.cuenta2, fecha=self.fecha)
-        mock_actualizar_posteriores.assert_called_once_with(
-            self.cuenta2, mov, -100)
+        saldo = mov.saldo_set.first()
+        mock_actualizar_posteriores.assert_called_once_with(saldo, -100)
 
     def test_integrativo_actualiza_saldos_posteriores_de_cta_entrada(self):
         mov_post = Movimiento.crear(
@@ -275,13 +275,13 @@ class TestSaldoMetodoEliminar(TestCase):
 
         self.assertEqual(saldo_post.importe, 50)
 
-    @patch('diario.models.Saldo._actualizar_posteriores')
+    @patch('diario.models.Saldo._actualizar_posteriores', autospec=True)
     def test_llama_a_actualizar_posteriores_con_negativo_de_diferencia_entre_saldo_eliminado_y_ultimo_anterior(self, mock_actualizar_posteriores):
         saldo2 = Movimiento.crear('mov2', 50, self.cuenta, fecha=date(2010, 11, 15)).saldo_set.first()
         mock_actualizar_posteriores.reset_mock()
         saldo2.eliminar()
         mock_actualizar_posteriores.assert_called_once_with(
-            saldo2.cuenta, saldo2.movimiento, -(saldo2.importe-self.saldo.importe)
+            saldo2, -(saldo2.importe-self.saldo.importe)
         )
 
 

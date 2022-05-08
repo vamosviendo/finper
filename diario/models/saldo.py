@@ -85,14 +85,14 @@ class Saldo(MiModel):
                 ).importe
             except AttributeError:
                 importe_saldo_anterior = 0
-            result = cls.crear(
+            saldo = cls.crear(
                 cuenta=cuenta,
                 importe=importe_saldo_anterior + importe,
                 movimiento=mov
             )
-            Saldo._actualizar_posteriores(cuenta, mov, importe)
+            saldo._actualizar_posteriores(importe)
 
-            return result
+            return saldo
 
         return None
 
@@ -103,8 +103,7 @@ class Saldo(MiModel):
         except AttributeError:
             importe_anterior = 0
         importe = self.importe - importe_anterior
-        Saldo._actualizar_posteriores(
-            self.cuenta, self.movimiento, -importe)
+        self._actualizar_posteriores(-importe)
 
     def anterior(self):
         return Saldo._anterior_a(
@@ -123,17 +122,15 @@ class Saldo(MiModel):
         )
         return anteriores.last()
 
-    @staticmethod
-    def _actualizar_posteriores(cuenta, mov, importe):
+    def _actualizar_posteriores(self, importe):
 
-        # TODO: Refactor. Definir < y > para Movimiento.
         for saldo_post in Saldo.filtro(
-                cuenta=cuenta,
-                movimiento__fecha__gt=mov.fecha
+                cuenta=self.cuenta,
+                movimiento__fecha__gt=self.movimiento.fecha
         ) | Saldo.filtro(
-            cuenta=cuenta,
-            movimiento__fecha=mov.fecha,
-            movimiento__orden_dia__gt=mov.orden_dia
+            cuenta=self.cuenta,
+            movimiento__fecha=self.movimiento.fecha,
+            movimiento__orden_dia__gt=self.movimiento.orden_dia
         ):
                 saldo_post.importe += importe
                 saldo_post.save()
