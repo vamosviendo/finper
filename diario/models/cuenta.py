@@ -68,20 +68,16 @@ class Cuenta(PolymorphModel):
 
     @property
     def saldo(self):
-        return self.ultimo_historico
+        try:
+            return self.saldo_set.last().importe
+        except AttributeError:
+            return 0
 
     def saldo_historico(self, movimiento):
         try:
             return Saldo.tomar(cuenta=self, movimiento=movimiento).importe
 
         except Saldo.DoesNotExist:
-            return 0
-
-    @property
-    def ultimo_historico(self):
-        try:
-            return self.saldo_set.last().importe
-        except AttributeError:
             return 0
 
     def clean_fields(self, exclude=None):
