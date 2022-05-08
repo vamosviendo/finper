@@ -1,7 +1,13 @@
 """
-Hay un saldo por cuenta y por fecha.
-El saldo de la fecha de una cuenta se usa para calcular el saldo al momento
-de cada movimiento de la fecha.
+Hay un saldo por cuenta y por movimiento (hasta dos cuentas por movimiento).
+El campo _importe podría no existir, y surgir de sumar el saldo anterior y
+el importe del movimiento (o restarlo en caso de que la cuenta fuera de salida),
+pero si hiciéramos eso dejaría de tener sentido la existencia del modelo Saldo,
+ya que equivaldría a calcular todos los saldos históricos al momento de
+mostrarlos.
+(De todos modos no estaría mal hacer un branch basado en el cálculo y no en
+la consulta a base de datos y ver cuál es más rápido, en una de esas calcular
+es más rápido y hago desaparecer este modelo).
 """
 from django.db import models
 
