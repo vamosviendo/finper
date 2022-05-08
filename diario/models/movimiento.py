@@ -239,15 +239,9 @@ class Movimiento(MiModel):
                 errors.MOVIMIENTO_CON_CA_ELIMINADO)
 
         if self.cta_entrada:
-            self.cta_entrada.saldo -= self.importe
-            self.cta_entrada.save()
-
             self.cta_entrada.saldo_set.get(movimiento=self).eliminar()
 
         if self.cta_salida:
-            self.cta_salida.saldo += self.importe
-            self.cta_salida.save()
-
             self.cta_salida.saldo_set.get(movimiento=self).eliminar()
 
         super().delete(*args, **kwargs)
