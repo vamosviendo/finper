@@ -1,11 +1,10 @@
 from datetime import date, timedelta
-from unittest import skip
 from unittest.mock import patch, call
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
-from diario.models import Cuenta, CuentaInteractiva, Movimiento, Titular, Saldo
+from diario.models import Cuenta, Movimiento, Titular, Saldo
 from utils import errors
 from utils.helpers_tests import dividir_en_dos_subcuentas
 
@@ -1136,7 +1135,8 @@ class TestModelMovimientoMetodoCrearMovimientoCredito(
         )
 
     @patch('diario.models.Movimiento.recuperar_cuentas_credito', autospec=True)
-    def test_intent_recuperar_cuentas_credito(self, mock_recuperar_cuentas_credito):
+    @patch('diario.models.Movimiento.crear')
+    def test_intenta_recuperar_cuentas_credito(self, mock_crear, mock_recuperar_cuentas_credito):
         mock_recuperar_cuentas_credito.return_value = (
             Cuenta(nombre='mock1', slug='mock1'),
             Cuenta(nombre='mock2', slug='mock2')
@@ -1145,7 +1145,8 @@ class TestModelMovimientoMetodoCrearMovimientoCredito(
         mock_recuperar_cuentas_credito.assert_called_once_with(self.mov)
 
     @patch('diario.models.Movimiento._generar_cuentas_credito', autospec=True)
-    def test_genera_cuentas_credito_si_no_existen(self, mock_generar_cuentas_credito):
+    @patch('diario.models.Movimiento.crear')
+    def test_genera_cuentas_credito_si_no_existen(self, mock_crear, mock_generar_cuentas_credito):
         mock_generar_cuentas_credito.return_value = (
             Cuenta(nombre='mock1', slug='mock1'),
             Cuenta(nombre='mock2', slug='mock2')
@@ -1191,34 +1192,21 @@ class TestModelMovimientoMetodoCrearMovimientoCredito(
             *self.mov.recuperar_cuentas_credito()
         )
 
-    @patch('diario.models.Cuenta.crear')
-    def test_integrativo_genera_cuentas_credito_si_no_existen(self, mock_crear):
-        mock_crear.side_effect = [
-            CuentaInteractiva(nombre='mock0', slug='mock0'),
-            CuentaInteractiva(nombre='mock1', slug='mock1'),
-        ]
-
+    def test_integrativo_genera_cuentas_credito_si_no_existen(self):
         Movimiento.crear(
             'Prestamo', 10, cta_entrada=self.cuenta1, cta_salida=self.cuenta2)
 
-        self.assertEqual(
-            mock_crear.call_args_list[0],
-            call(
-                nombre='Préstamo entre tit2 y default',
-                slug='_tit2-default',
-                titular=self.titular2
-            )
-        )
-        args2 = mock_crear.call_args_list[1][1]
-        args2.pop('contracuenta')
-        self.assertEqual(
-            args2,
-            dict(
-                nombre='Préstamo entre default y tit2',
-                slug='_default-tit2',
-                titular=self.titular1,
-            )
-        )
+        self.assertEqual(Cuenta.cantidad(), 4)
+
+        cc1 = Cuenta.todes()[2]
+        cc2 = Cuenta.ultime()
+
+        self.assertEqual(cc2.nombre, 'préstamo entre tit2 y default')
+        self.assertEqual(cc2.slug, '_tit2-default')
+        self.assertEqual(cc2.titular, self.titular2)
+        self.assertEqual(cc1.nombre, 'préstamo entre default y tit2')
+        self.assertEqual(cc1.slug, '_default-tit2')
+        self.assertEqual(cc1.titular, self.titular1)
 
     @patch('diario.models.Movimiento.crear')
     @patch('diario.models.Movimiento._generar_cuentas_credito')
