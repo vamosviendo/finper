@@ -399,7 +399,7 @@ class TestModelCuentaMetodosFechaUltimoMovDirecto(TestModelCuentaMetodos):
 class TestModelCuentaMetodosCorregirSaldo(TestModelCuentaMetodos):
 
     def test_no_agrega_movimientos(self):
-        saldo = self.cta1.saldo_set.last()
+        saldo = self.cta1.ultimo_saldo
         saldo.importe = 345
         saldo.save()
         entradas = self.cta1.entradas.count()
@@ -415,7 +415,7 @@ class TestModelCuentaMetodosAgregarMovCorrectivo(TestModelCuentaMetodos):
 
     def setUp(self):
         super().setUp()
-        self.ultimo_saldo = self.cta1.saldo_set.last()
+        self.ultimo_saldo = self.cta1.ultimo_saldo
         self.ultimo_saldo.importe = 880
         self.ultimo_saldo.save()
 
@@ -440,7 +440,7 @@ class TestModelCuentaMetodosAgregarMovCorrectivo(TestModelCuentaMetodos):
         self.assertEqual(mov.importe, 770)
 
     def test_importe_es_siempre_positivo(self):
-        ultimo_saldo = self.cta2.saldo_set.last()
+        ultimo_saldo = self.cta2.ultimo_saldo
         ultimo_saldo.importe = 70
         ultimo_saldo.save()
         mov = self.cta2.agregar_mov_correctivo()
@@ -450,7 +450,7 @@ class TestModelCuentaMetodosAgregarMovCorrectivo(TestModelCuentaMetodos):
         mov1 = self.cta1.agregar_mov_correctivo()
         self.assertEqual(mov1.cta_entrada, self.cta1)
 
-        ultimo_saldo = self.cta2.saldo_set.last()
+        ultimo_saldo = self.cta2.ultimo_saldo
         ultimo_saldo.importe = 70
         ultimo_saldo.save()
         mov2 = self.cta2.agregar_mov_correctivo()

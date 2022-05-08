@@ -69,7 +69,7 @@ class Cuenta(PolymorphModel):
     @property
     def saldo(self):
         try:
-            return self.saldo_set.last().importe
+            return self.ultimo_saldo.importe
         except AttributeError:
             return 0
 
@@ -79,6 +79,10 @@ class Cuenta(PolymorphModel):
 
         except Saldo.DoesNotExist:
             return 0
+
+    @property
+    def ultimo_saldo(self):
+        return self.saldo_set.last()
 
     def clean_fields(self, exclude=None):
         self._pasar_nombre_y_slug_a_minuscula()
@@ -262,14 +266,14 @@ class CuentaInteractiva(Cuenta):
             )
 
     def corregir_saldo(self):
-        saldo = self.saldo_set.last()
+        saldo = self.ultimo_saldo
         saldo.importe = self.total_movs()
         saldo.save()
 
     def agregar_mov_correctivo(self):
         if self.saldo_ok():
             return None
-        saldo = self.saldo_set.last()
+        saldo = self.ultimo_saldo
         importe = saldo.importe
         mov = Movimiento(concepto='Movimiento correctivo')
         mov.importe = self.saldo - self.total_movs()
@@ -283,7 +287,7 @@ class CuentaInteractiva(Cuenta):
         except TypeError:
             raise TypeError(f'Error en mov {mov}')
         mov.save()
-        saldo = self.saldo_set.last()
+        saldo = self.ultimo_saldo
         saldo.importe = importe
         saldo.save()
         return mov

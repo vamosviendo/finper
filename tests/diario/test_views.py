@@ -1181,7 +1181,7 @@ class TestAgregarMovimiento(TestCase):
     def test_integrativo_agrega_movimiento_para_coincidir_con_saldo(self):
         Movimiento.crear(concepto='mov', importe=100, cta_entrada=self.cta2)
         cant_movs = self.cta2.cantidad_movs()
-        saldo = self.cta2.saldo_set.last()
+        saldo = self.cta2.ultimo_saldo
         saldo.importe = 135
         saldo.save()
 
