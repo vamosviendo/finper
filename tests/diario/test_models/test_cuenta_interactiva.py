@@ -484,7 +484,6 @@ class DividirEntreCasosParticulares(TestCase):
         self.cuenta1 = self.cuenta1.tomar_de_bd()
         self.assertEqual(sc11.saldo, -60)
         self.assertEqual(sc12.saldo, -40)
-        self.assertEqual(self.cuenta1._saldo, 0)
         self.assertEqual(self.cuenta1.saldo, -60-40)
 
     def test_cuenta_con_saldo_negativo_se_divide_en_subcuentas_con_saldo_0_y_total_respectivamente(self):
@@ -496,7 +495,6 @@ class DividirEntreCasosParticulares(TestCase):
         self.cuenta1 = self.cuenta1.tomar_de_bd()
         self.assertEqual(sc11.saldo, 0)
         self.assertEqual(sc12.saldo, -100)
-        self.assertEqual(self.cuenta1._saldo, 0)
         self.assertEqual(self.cuenta1.saldo, -100)
 
     def test_cuenta_con_saldo_negativo_se_divide_en_subcuentas_con_saldo_total_y_0_respectivamente(self):
@@ -508,7 +506,6 @@ class DividirEntreCasosParticulares(TestCase):
         self.cuenta1 = self.cuenta1.tomar_de_bd()
         self.assertEqual(sc11.saldo, -100)
         self.assertEqual(sc12.saldo, -0)
-        self.assertEqual(self.cuenta1._saldo, 0)
         self.assertEqual(self.cuenta1.saldo, -100)
 
     def test_cuenta_con_saldo_negativo_se_divide_en_subcuentas_con_saldo_positivo_y_negativo_respectivamente(self):
@@ -520,7 +517,6 @@ class DividirEntreCasosParticulares(TestCase):
         self.cuenta1 = self.cuenta1.tomar_de_bd()
         self.assertEqual(sc11.saldo, 10)
         self.assertEqual(sc12.saldo, -110)
-        self.assertEqual(self.cuenta1._saldo, 0)
         self.assertEqual(self.cuenta1.saldo, -100)
 
     def test_cuenta_con_saldo_negativo_se_divide_en_subcuentas_con_saldo_negativo_y_positivo_respectivamente(self):
@@ -532,7 +528,6 @@ class DividirEntreCasosParticulares(TestCase):
         self.cuenta1 = self.cuenta1.tomar_de_bd()
         self.assertEqual(sc11.saldo, -110)
         self.assertEqual(sc12.saldo, 10)
-        self.assertEqual(self.cuenta1._saldo, 0)
         self.assertEqual(self.cuenta1.saldo, -100)
 
     def test_cuenta_con_saldo_positivo_se_divide_en_subcuentas_con_saldo_negativo_y_positivo_respectivamente(self):
@@ -544,7 +539,6 @@ class DividirEntreCasosParticulares(TestCase):
         self.cuenta2 = self.cuenta2.tomar_de_bd()
         self.assertEqual(sc21.saldo, -10)
         self.assertEqual(sc22.saldo, 110)
-        self.assertEqual(self.cuenta2._saldo, 0)
         self.assertEqual(self.cuenta2.saldo, 100)
 
     def test_cuenta_con_saldo_positivo_se_divide_en_subcuentas_con_saldo_positivo_y_negativo_respectivamente(self):
@@ -556,7 +550,6 @@ class DividirEntreCasosParticulares(TestCase):
         self.cuenta2 = self.cuenta2.tomar_de_bd()
         self.assertEqual(sc21.saldo, 110)
         self.assertEqual(sc22.saldo, -10)
-        self.assertEqual(self.cuenta2._saldo, 0)
         self.assertEqual(self.cuenta2.saldo, 100)
 
 

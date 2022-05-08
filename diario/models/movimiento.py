@@ -632,7 +632,6 @@ class Movimiento(MiModel):
         tit1 = cta1.titular
         tit2 = contramov.cta_salida.titular
         contramov.delete(force=True)
-        cta1.refresh_from_db(fields=['_saldo'])
         self.id_contramov = None
         if cta1.saldo == 0:
             tit2.acreedores.remove(tit1)

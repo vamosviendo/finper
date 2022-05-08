@@ -603,13 +603,10 @@ class TestModelMovimientoEliminar(TestModelMovimientoSave):
     def test_eliminar_movimiento_resta_de_saldo_cta_entrada_y_suma_a_saldo_cta_salida(self):
 
         self.mov1.delete()
-        self.cuenta1.refresh_from_db(fields=['_saldo'])
 
         self.assertEqual(self.cuenta1.saldo, 140-125)
 
         self.mov3.delete()
-        self.cuenta1.refresh_from_db(fields=['_saldo'])
-        self.cuenta2.refresh_from_db(fields=['_saldo'])
 
         self.assertEqual(self.cuenta2.saldo, -50+50)
         self.assertEqual(self.cuenta1.saldo, 15-50)
@@ -677,8 +674,6 @@ class TestModelMovimientoEliminarConContramovimiento(TestModelMovimientoSave):
 
         self.movimiento.delete()
 
-        cta_deudora.refresh_from_db(fields=['_saldo'])
-        cta_acreedora.refresh_from_db(fields=['_saldo'])
         self.assertEqual(cta_deudora.saldo, 0)
         self.assertEqual(cta_acreedora.saldo, 0)
 

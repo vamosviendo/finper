@@ -29,7 +29,6 @@ class Cuenta(PolymorphModel):
         null=True, blank=True,
         on_delete=models.CASCADE,
     )
-    _saldo = models.FloatField(default=0)
     titular = models.ForeignKey('diario.Titular',
                                 related_name='cuentas',
                                 on_delete=models.CASCADE,
@@ -455,7 +454,6 @@ class CuentaInteractiva(Cuenta):
                 elif movimientos_incompletos[i].cta_entrada is not None:
                     movimientos_incompletos[i].cta_salida = cuentas_creadas[i]
                 movimientos_incompletos[i].save()
-                cuentas_creadas[i].refresh_from_db(fields=['_saldo'])
 
         return cuentas_creadas
 

@@ -227,8 +227,6 @@ class TestModelMovimientoSaveModificaImporte(TestModelMovimientoSave):
         movimiento.importe = 45
         movimiento.save()
 
-        cta_deudora.refresh_from_db(fields=['_saldo'])
-        cta_acreedora.refresh_from_db(fields=['_saldo'])
         self.assertEqual(cta_deudora.saldo, -45)
         self.assertEqual(cta_acreedora.saldo, 45)
 
