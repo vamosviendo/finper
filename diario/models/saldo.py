@@ -112,25 +112,43 @@ class Saldo(MiModel):
             self.cuenta
         )
 
+    def anteriores(self):
+        return Saldo._anteriores_a(
+            self.movimiento.fecha,
+            self.movimiento.orden_dia,
+            self.cuenta
+        )
+
+    def posteriores(self):
+        return Saldo._posteriores_a(
+            self.movimiento.fecha,
+            self.movimiento.orden_dia,
+            self.cuenta
+        )
+
     @staticmethod
     def _anterior_a(fecha, orden_dia, cuenta):
-        anteriores = cuenta.saldo_set.filter(
+        return Saldo._anteriores_a(fecha, orden_dia, cuenta).last()
+
+    @staticmethod
+    def _anteriores_a(fecha, orden_dia, cuenta):
+        return cuenta.saldo_set.filter(
             movimiento__fecha__lt=fecha
         ) | cuenta.saldo_set.filter(
             movimiento__fecha=fecha,
             movimiento__orden_dia__lt=orden_dia
         )
-        return anteriores.last()
+
+    @staticmethod
+    def _posteriores_a(fecha, orden_dia, cuenta):
+        return cuenta.saldo_set.filter(
+            movimiento__fecha__gt=fecha
+        ) | cuenta.saldo_set.filter(
+            movimiento__fecha=fecha,
+            movimiento__orden_dia__gt=orden_dia
+        )
 
     def _actualizar_posteriores(self, importe):
-
-        for saldo_post in Saldo.filtro(
-                cuenta=self.cuenta,
-                movimiento__fecha__gt=self.movimiento.fecha
-        ) | Saldo.filtro(
-            cuenta=self.cuenta,
-            movimiento__fecha=self.movimiento.fecha,
-            movimiento__orden_dia__gt=self.movimiento.orden_dia
-        ):
+        for saldo_post in self.posteriores():
                 saldo_post.importe += importe
                 saldo_post.save()
