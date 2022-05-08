@@ -267,8 +267,9 @@ class CuentaInteractiva(Cuenta):
             )
 
     def corregir_saldo(self):
-        self.saldo = self.total_movs()
-        self.save()
+        saldo = self.saldo_set.last()
+        saldo.importe = self.total_movs()
+        saldo.save()
 
     def agregar_mov_correctivo(self):
         if self.saldo_ok():
