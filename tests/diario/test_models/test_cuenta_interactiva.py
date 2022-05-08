@@ -721,8 +721,9 @@ class TestSaldoOk(TestCase):
             cta_entrada=cta1,
             fecha=date(2019, 1, 1)
         )
-        cta1.saldo = 220
-        cta1.save()
+        saldo = cta1.saldo_set.last()
+        saldo.importe = 220
+        saldo.save()
         self.assertFalse(cta1.saldo_ok())
 
 
@@ -736,8 +737,8 @@ class TestCorregirSaldo(TestCase):
             cta_entrada=cta1,
             fecha=date(2019, 1, 1)
         )
-        cta1.saldo = 345
-        cta1.save()
+        saldo = cta1.saldo_set.last()
+        saldo.importe = 345
+        saldo.save()
         cta1.corregir_saldo()
-        cta1.refresh_from_db()
         self.assertEqual(cta1.saldo, cta1.total_movs())
