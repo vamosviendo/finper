@@ -162,6 +162,25 @@ class TestModelCuentaPropiedadSaldo(TestCase):
             fecha=date(2019, 1, 1)
         )
 
+    def test_devuelve_el_ultimo_saldo_historico_de_la_cuenta(self):
+        mov = Movimiento.crear(
+            concepto='00001',
+            importe=40,
+            cta_salida=self.cta1,
+            fecha=(date(2019, 1, 2))
+        )
+        self.assertEqual(
+            self.cta1.saldo,
+            Saldo.objects.get(cuenta=self.cta1, movimiento=mov).importe
+        )
+
+    def test_si_no_encuentra_saldos_en_la_cuenta_devuelve_cero(self):
+        cta2 = Cuenta.crear('cta2', 'c2', fecha_creacion=(date(2019, 1, 1)))
+        self.assertEqual(
+            cta2.saldo,
+            0.0
+        )
+
     def test_devuelve_el_saldo_de_la_cuenta(self):
         self.assertEqual(self.cta1.saldo, self.cta1._saldo)
 

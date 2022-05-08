@@ -69,11 +69,7 @@ class Cuenta(PolymorphModel):
 
     @property
     def saldo(self):
-        return self._saldo
-
-    @saldo.setter
-    def saldo(self, valor):
-        self._saldo = round(valor, 2)
+        return self.ultimo_historico
 
     def saldo_historico(self, movimiento):
         try:
