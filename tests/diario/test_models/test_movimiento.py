@@ -887,85 +887,6 @@ class TestModelMovimientoMetodoEsPrestamo(TestModelMovimiento):
         self.assertFalse(mov.es_prestamo_o_devolucion())
 
 
-class TestModelMovimientoMetodoHermanosDeFecha(TestModelMovimiento):
-
-    def setUp(self):
-        super().setUp()
-        self.mov1 = Movimiento.crear(
-            'Movimiento 1', 100, self.cuenta1, fecha=date(2011, 11, 11))
-        self.mov2 = Movimiento.crear(
-            'Movimiento 2', 200, self.cuenta1, fecha=date(2011, 11, 11))
-        self.mov3 = Movimiento.crear(
-            'Movimiento 3', 300, self.cuenta1, fecha=date(2011, 11, 11))
-        self.result = self.mov1.hermanos_de_fecha()
-
-    def test_devuelve_movimientos_de_la_fecha(self):
-        self.assertIn(self.mov2, self.result)
-        self.assertIn(self.mov3, self.result)
-
-    def test_no_incluye_instancia(self):
-        self.assertNotIn(self.mov1, self.result)
-
-    def test_no_incluye_movimientos_de_otra_fecha(self):
-        mov4 = Movimiento.crear(
-            'Movimiento 4', 400, self.cuenta1, fecha=date(2011, 11, 12))
-        self.assertNotIn(mov4, self.result)
-
-
-class TestModelMovimientoMetodoEsUnicoDelDia(TestModelMovimiento):
-
-    def setUp(self):
-        super().setUp()
-        self.mov1 = Movimiento.crear(
-            'Movimiento 1', 100, self.cuenta1, fecha=date(2011, 11, 11))
-
-    @patch('diario.models.Movimiento.hermanos_de_fecha')
-    def test_devuelve_true_si_es_el_unico_movimiento_del_dia(self, mock_hermanos_de_fecha):
-        mock_hermanos_de_fecha.return_value = []
-        self.assertTrue(self.mov1.es_unico_del_dia())
-
-    @patch('diario.models.Movimiento.hermanos_de_fecha')
-    def test_devuelve_false_si_no_es_el_unico_movimiento_del_dia(self, mock_hermanos_de_fecha):
-        mock_hermanos_de_fecha.return_value = [Movimiento()]
-        self.assertFalse(self.mov1.es_unico_del_dia())
-
-
-class TestModelMovimientoMetodoEsUnicoDelDiaDeCuenta(TestModelMovimiento):
-
-    def setUp(self):
-        super().setUp()
-        self.cuenta2 = Cuenta.crear(
-            'cuenta 2', 'c2',
-            fecha_creacion=date(2011, 11, 11)
-        )
-        self.mov1 = Movimiento.crear(
-            'Movimiento 1', 100, self.cuenta1, fecha=date(2011, 11, 11))
-
-    def test_devuelve_true_si_es_el_unico_movimiento_del_dia(self):
-        self.assertTrue(self.mov1.es_unico_del_dia_de_cuenta(self.cuenta1))
-
-    def test_devuelve_true_si_es_el_unico_movimiento_del_dia_de_la_cuenta_dada_como_cuenta_de_entrada(self):
-        Movimiento.crear('Movimiento 2', 100, self.cuenta2, fecha=self.mov1.fecha)
-        self.assertTrue(self.mov1.es_unico_del_dia_de_cuenta(self.cuenta1))
-
-    def test_devuelve_false_si_hay_mas_movimientos_del_dia_de_la_cuenta_dada_como_cuenta_de_entrada(self):
-        Movimiento.crear('Movimiento 2', 100, self.cuenta1, fecha=self.mov1.fecha)
-        self.assertFalse(self.mov1.es_unico_del_dia_de_cuenta(self.cuenta1))
-
-    def test_devuelve_true_si_es_el_unico_movimiento_del_dia_de_la_cuenta_dada_como_cuenta_de_salida(self):
-        # En el estado actual, debería fallar. No falla.
-        Movimiento.crear('Movimiento 2', 100, None, self.cuenta2, fecha=self.mov1.fecha)
-        self.assertTrue(self.mov1.es_unico_del_dia_de_cuenta(self.cuenta1))
-
-    def test_devuelve_false_si_hay_mas_movimientos_del_dia_de_la_cuenta_dada_como_cuenta_de_salida(self):
-        Movimiento.crear('Movimiento 2', 100, None, self.cuenta1, fecha=self.mov1.fecha)
-        self.assertFalse(self.mov1.es_unico_del_dia_de_cuenta(self.cuenta1))
-
-    def test_lanza_excepcion_si_cuenta_no_figura_en_movimiento(self):
-        with self.assertRaises(errors.ErrorCuentaNoFiguraEnMovimiento):
-            self.mov1.es_unico_del_dia_de_cuenta(self.cuenta2)
-
-
 class TestModelMovimientoMetodoGenerarCuentasCredito(TestModelMovimientoCrearEntreTitulares):
 
     def test_crea_dos_cuentas_credito(self):
@@ -1089,32 +1010,6 @@ class TestModelMovimientoMetodoCambiaCampo(TestModelMovimiento):
         mov2 = Movimiento(concepto='Movimento', importe=156, cta_entrada=self.cuenta1)
         self.assertTrue(self.mov1._cambia_campo('concepto', contraparte=mov2))
         self.assertFalse(self.mov1._cambia_campo('importe', contraparte=mov2))
-
-
-@patch('diario.models.Movimiento.mantiene_foreignfield', autospec=True)
-class TestModelMovimientoMetodoMantieneCuenta(TestModelMovimiento):
-
-    def setUp(self):
-        super().setUp()
-        self.entrada = Movimiento.crear('entrada', 100, self.cuenta1)
-
-    def test_llama_a_mantiene_foreignkey_con_cuenta_y_movimiento(self, mock_mantiene_foreignfield):
-        mov_guardado = self.entrada
-        self.entrada._mantiene_cuenta('cta_entrada', mov_guardado)
-        mock_mantiene_foreignfield.assert_called_once_with(
-            self.entrada, 'cta_entrada', mov_guardado
-        )
-
-    def test_devuelve_resultado_de_mantiene_foreignkey(self, mock_mantiene_foreignkey):
-        mov_guardado = self.entrada
-        mock_mantiene_foreignkey.return_value = True
-        self.assertTrue(
-            self.entrada._mantiene_cuenta('cta_entrada', mov_guardado)
-        )
-        mock_mantiene_foreignkey.return_value = False
-        self.assertFalse(
-            self.entrada._mantiene_cuenta('cta_entrada', mov_guardado)
-        )
 
 
 class TestModelMovimientoMetodoCrearMovimientoCredito(

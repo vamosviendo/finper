@@ -109,9 +109,9 @@ class Movimiento(MiModel):
     def tomar(cls, **kwargs):
         mov = super().tomar(**kwargs)
         mov.cta_entrada = mov.cta_entrada.actualizar_subclase() \
-                if mov.cta_entrada else None
+            if mov.cta_entrada else None
         mov.cta_salida = mov.cta_salida.actualizar_subclase() \
-                if mov.cta_salida else None
+            if mov.cta_salida else None
         return mov
 
     def clean(self):
@@ -252,7 +252,8 @@ class Movimiento(MiModel):
     def save(self, *args, **kwargs):
         """
         Si el movimiento es nuevo (no existía antes, está siendo creado)
-        - sumar / restar importe del saldo la/s cuenta/s interviniente/s
+        - Generar saldo para cuentas de entrada y/o salida al momento del
+          movimiento.
         - Gestionar movimiento entre cuentas de distintos titulares (
           generar, ampliar o cancelar crédito)
 
@@ -260,20 +261,12 @@ class Movimiento(MiModel):
         - Chequear si cambió alguno de los "campos sensibles" (fecha, importe,
           cta_entrada, cta_salida).
         - Si cambió alguno de estos campos:
-          - Si antes había una cuenta de entrada, restar el importe del
-            movimiento anterior a la cuenta de entrada del movimiento anterior.
-            Si en la fecha guardada había otros movimientos de la cuentaademás
-            de este, registrar importe en negativo en la fecha. Si no, eliminar
-            saldo de la cuenta en la fecha
-
-          - Si ahora hay una cuenta de entrada, sumar el importe del movimiento
-            nuevo a la cuenta de entrada del movimiento nuevo.
-            Registrar importe en la nueva fecha (*).
-
-          - Repetir estos pasos para el caso de la cuenta de salida,
-            invirtiendo los signos (registrar importe en positivo en fecha
-            guardada y en negativo en fecha nueva
-
+          - Eliminar saldo de cuentas de entrada y/o salida del movimiento
+            guardado al momento de dicho movimiento, si existen.
+          - Generar saldo para cuentas de entrada y/o salida del movimiento
+            nuevo al momento del movimiento, si existen.
+          TODO: refactor para modificar campos en saldos en vez de
+                eliminar/generar
         - Antes de repetir el proceso con la cuenta de salida, actualizarla
           para el caso especial de la división de una cuenta en subcuentas.
           En este caso se crea un movimiento de salida en la cuenta madre
@@ -281,13 +274,9 @@ class Movimiento(MiModel):
           crear las subcuentas y luego se modifica el movimiento para agregar
           la subcuenta como cuenta de entrada. Es necesario actualizar la
           cuenta de salida para dar cuenta de su conversión en acumulativa.
-
-        (*) Tener en cuenta que la fecha guardada y la fecha nueva pueden ser
-            la misma.
         """
 
         if self._state.adding:   # Movimiento nuevo
-            # self._actualizar_saldos_cuentas()
 
             if self.es_prestamo_o_devolucion():
                 self._gestionar_transferencia()
@@ -329,10 +318,10 @@ class Movimiento(MiModel):
                     contraparte=mov_guardado
             ):
                 if mov_guardado.cta_entrada:
-                    mov_guardado.cta_entrada.saldo_set.get(movimiento=mov_guardado)\
+                    mov_guardado.cta_entrada.saldo_set.get(movimiento=mov_guardado) \
                         .eliminar()
                 if mov_guardado.cta_salida:
-                    mov_guardado.cta_salida.saldo_set.get(movimiento=mov_guardado)\
+                    mov_guardado.cta_salida.saldo_set.get(movimiento=mov_guardado) \
                         .eliminar()
                 if self.cta_entrada:
                     Saldo.generar(self, salida=False)
@@ -353,11 +342,11 @@ class Movimiento(MiModel):
         return self.cta_salida and self.cta_salida.es_acumulativa
 
     def es_prestamo_o_devolucion(self):
-        ''' Devuelve True si
+        """ Devuelve True si
             - hay cuenta de entrada y cuenta de salida
             - las cuentas de entrada y salida pertenecen a distinto titular
             - el movimiento no se creó como "gratis" (es decir, genera deuda)
-        '''
+        """
         return (self.cta_entrada and self.cta_salida and
                 self.receptor != self.emisor and
                 not self.esgratis)
@@ -374,52 +363,6 @@ class Movimiento(MiModel):
                          f'-{self.emisor.titname}'))
         except cls.DoesNotExist:
             return None, None
-
-    def hermanos_de_fecha(self):
-        return Movimiento.filtro(fecha=self.fecha).exclude(pk=self.pk)
-
-    def es_unico_del_dia(self):
-        return len(self.hermanos_de_fecha()) == 0
-
-    def es_unico_del_dia_de_cuenta(self, cuenta):
-        if cuenta not in (self.cta_entrada, self.cta_salida):
-            raise errors.ErrorCuentaNoFiguraEnMovimiento
-        hermanos = self.hermanos_de_fecha()
-        return len(
-            hermanos.filter(cta_entrada=cuenta) |
-            hermanos.filter(cta_salida=cuenta)
-        ) == 0
-
-    def _actualizar_saldos_cuentas(self):
-        """ Sumar importe a cuenta de entrada
-            Restar importe a cuenta de salida
-            Registrar importe en saldo de cuenta de entrada de fecha de la
-            instancia
-            Registrar negativo de importe en saldo de cuenta de salida de
-            fecha de la instancia
-        """
-        if self.cta_entrada:
-            self.cta_entrada.saldo += self.importe
-            self.cta_entrada.save()
-            #
-            # Saldo.registrar(
-            #     cuenta=self.cta_entrada,
-            #     fecha=self.fecha,
-            #     importe=self.importe
-            # )
-
-        if self.cta_salida:
-            self.cta_salida.saldo -= self.importe
-            self.cta_salida.save()
-            #
-            # Saldo.registrar(
-            #     cuenta=self.cta_salida,
-            #     fecha=self.fecha,
-            #     importe=-self.importe
-            # )
-
-    def _mantiene_cuenta(self, campo, otro):
-        return self.mantiene_foreignfield(campo, otro)
 
     def _actualizar_cuenta_convertida_en_acumulativa(self):
         """ Este paso es necesario para el caso en el que se divide una cuenta
@@ -527,6 +470,7 @@ class Movimiento(MiModel):
             concepto = 'Constitución de crédito'
 
         return concepto
+
 
 '''
 (1) cuenta_acreedora y cuenta_deudora lo son con respecto al movimiento, no en
