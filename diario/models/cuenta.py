@@ -80,6 +80,9 @@ class Cuenta(PolymorphModel):
         except Saldo.DoesNotExist:
             return 0
 
+    def saldo_en_mov(self, movimiento):
+        return self.saldo_set.get(movimiento=movimiento).importe
+
     @property
     def ultimo_saldo(self):
         return self.saldo_set.last()
