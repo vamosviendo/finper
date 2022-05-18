@@ -190,14 +190,15 @@ class TestModelMovimientoSaveModificaImporte(TestModelMovimientoSave):
 
 class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
 
-    @patch('diario.models.movimiento.Saldo.eliminar', autospec=True)
-    def test_cambiar_cta_entrada_elimina_saldo_de_cuenta_antigua_en_movimiento(self, mock_eliminar):
+    def test_cambiar_cta_entrada_elimina_saldo_de_cuenta_antigua_en_movimiento(self):
+        saldo_ce = self.mov1.saldo_ce()
         self.mov1.cta_entrada = self.cuenta2
-        self.mov1.save()
 
-        mock_eliminar.assert_called_once_with(
-            self.cuenta1.saldo_set.get(movimiento=self.mov1)
-        )
+        self.mov1.save()
+        saldo_ce.refresh_from_db(fields=['cuenta'])
+
+        self.assertEqual(saldo_ce.cuenta_id, self.cuenta2.id)
+
 
     @patch('diario.models.movimiento.Saldo.generar')
     def test_cambiar_cta_entrada_genera_saldo_de_cuenta_nueva_en_movimiento(self, mock_generar):
@@ -216,14 +217,15 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
         self.assertEqual(self.cuenta2.saldo_set.count(), cant_saldos+1)
         self.assertEqual(self.cuenta2.saldo_en_mov(self.mov1), 0+125)
 
-    @patch('diario.models.movimiento.Saldo.eliminar', autospec=True)
-    def test_cambiar_cta_salida_elimina_saldo_de_cuenta_antigua_en_movimiento(self, mock_eliminar):
+    def test_cambiar_cta_salida_elimina_saldo_de_cuenta_antigua_en_movimiento(self):
+        saldo_cs = self.mov2.saldo_cs()
         self.mov2.cta_salida = self.cuenta2
-        self.mov2.save()
 
-        mock_eliminar.assert_called_once_with(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2)
-        )
+        self.mov2.save()
+        saldo_cs.refresh_from_db(fields=['cuenta'])
+
+        self.assertEqual(saldo_cs.cuenta_id, self.cuenta2.id)
+
 
     @patch('diario.models.movimiento.Saldo.generar')
     def test_cambiar_cta_salida_genera_saldo_de_cuenta_nueva_en_movimiento(self, mock_generar):
@@ -433,18 +435,19 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
             Saldo.objects.get(cuenta=self.cuenta1, movimiento=self.mov3)
 
     def test_cuenta_de_salida_desaparece_y_cuenta_de_entrada_pasa_a_salida(self):
-        """ Suma importe a saldo de cta_salida retirada al momento del
-            movimiento
-            Desaparece saldo de vieja cta_entrada (ahora cta_salida) al momento
-            del movimiento."""
+        """ Desaparece saldo de cta_salida retirada al momento del movimiento.
+            Resta dos veces importe de saldo de vieja cta_entrada (ahora
+            cta_salida) al momento del movimiento."""
+        saldo = self.mov3.saldo_ce()
         self.mov3.cta_salida = self.mov3.cta_entrada
         self.mov3.cta_entrada = None
-        self.mov3.save()
 
-        self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
-            140 - 50 * 2
-        )
+        self.mov3.save()
+        saldo.refresh_from_db(fields=['cuenta', '_importe'])
+
+        self.assertEqual(saldo.cuenta_id, self.cuenta1.id)
+        self.assertEqual(saldo.importe, 140 - 50 * 2)
+
         with self.assertRaises(Saldo.DoesNotExist):
             Saldo.objects.get(cuenta=self.cuenta2, movimiento=self.mov3)
 
@@ -452,17 +455,18 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
         """ Desaparece saldo de cta_entrada retirada al momento del movimiento.
             Suma dos veces importe a saldo de vieja cta_salida (ahora
             cta_entrada) al momento del movimiento"""
-        self.mov3.cta_entrada = self.mov3.cta_salida
+        saldo = self.mov3.saldo_cs()
+        self.mov3.cta_entrada = self.mov3.cta_salida  # self.cuenta2
         self.mov3.cta_salida = None
+
         self.mov3.save()
+        saldo.refresh_from_db(fields=['cuenta', '_importe'])
 
         with self.assertRaises(Saldo.DoesNotExist):
             Saldo.objects.get(cuenta=self.cuenta1, movimiento=self.mov3)
 
-        self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=self.mov3).importe,
-            -50 + 50 * 2
-        )
+        self.assertEqual(saldo.cuenta_id, self.cuenta2.id)
+        self.assertEqual(saldo.importe, -50 + 50 * 2)
 
     def test_aparece_cuenta_de_salida(self):
         """ Aparece saldo de nueva cta_salida al momento del movimiento """
