@@ -345,7 +345,14 @@ class Movimiento(MiModel):
                                 else:
                                     saldo = mov_guardado.saldo_ce()
                                     saldo.cuenta = self.cta_entrada
-                                    saldo.importe = saldo.importe - mov_guardado.importe + self.importe
+                                    # TODO: refactorear (se repite en Saldo.generar)
+                                    try:
+                                        importe_saldo_anterior = Saldo._anterior_a(
+                                            self.fecha, self.orden_dia, saldo.cuenta
+                                        ).importe
+                                    except AttributeError:
+                                        importe_saldo_anterior = 0
+                                    saldo.importe = importe_saldo_anterior + self.importe
                                     saldo.save()
                         else:
                             # TODO: ¿Se usa esto todavía? Retirar y testear (el if, digo, no el resto)
@@ -382,7 +389,13 @@ class Movimiento(MiModel):
                                 else:
                                     saldo = mov_guardado.saldo_cs()
                                     saldo.cuenta = self.cta_salida
-                                    saldo.importe = saldo.importe + mov_guardado.importe - self.importe
+                                    try:
+                                        importe_saldo_anterior = Saldo._anterior_a(
+                                            self.fecha, self.orden_dia, saldo.cuenta
+                                        ).importe
+                                    except AttributeError:
+                                        importe_saldo_anterior = 0
+                                    saldo.importe = importe_saldo_anterior - self.importe
                                     saldo.save()
                         else:
                             if self.cta_salida.es_interactiva:
