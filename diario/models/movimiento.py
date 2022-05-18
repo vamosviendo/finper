@@ -360,6 +360,7 @@ class Movimiento(MiModel):
                                 saldo = mov_guardado.saldo_ce()
                                 saldo.importe = saldo.importe - mov_guardado.importe + self.importe
                                 saldo.save()
+                                saldo._actualizar_posteriores(self.importe-mov_guardado.importe)
                 else:
                     if mov_guardado.cta_entrada \
                             and self.cta_salida != mov_guardado.cta_entrada:
@@ -402,6 +403,7 @@ class Movimiento(MiModel):
                                 saldo = mov_guardado.saldo_cs()
                                 saldo.importe = saldo.importe + mov_guardado.importe - self.importe
                                 saldo.save()
+                                saldo._actualizar_posteriores(mov_guardado.importe-self.importe)
                 else:
                     if mov_guardado.cta_salida \
                             and self.cta_entrada != mov_guardado.cta_salida:
