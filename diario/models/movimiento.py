@@ -335,7 +335,8 @@ class Movimiento(MiModel):
                         if self.cta_entrada != mov_guardado.cta_entrada:
                             if self.cta_entrada == mov_guardado.cta_salida:
                                 saldo = mov_guardado.saldo_cs()
-                                mov_guardado.saldo_ce().eliminar()
+                                if self.cta_salida != mov_guardado.cta_entrada:
+                                    mov_guardado.saldo_ce().eliminar()
                                 saldo.importe = saldo.importe + mov_guardado.importe + self.importe
                                 saldo.save()
                             else:
@@ -371,7 +372,8 @@ class Movimiento(MiModel):
                         if self.cta_salida != mov_guardado.cta_salida:
                             if self.cta_salida == mov_guardado.cta_entrada:
                                 saldo = mov_guardado.saldo_ce()
-                                mov_guardado.saldo_cs().eliminar()
+                                if self.cta_entrada != mov_guardado.cta_salida:
+                                    mov_guardado.saldo_cs().eliminar()
                                 saldo.importe = saldo.importe - mov_guardado.importe - self.importe
                                 saldo.save()
                             else:
