@@ -323,14 +323,12 @@ class Movimiento(MiModel):
 
                 if self.cta_entrada:
                     if not mov_guardado.cta_entrada:
-                        # TODO redundante
-                        if self.cta_entrada:
-                            if self.cta_entrada == mov_guardado.cta_salida:
-                                saldo = mov_guardado.saldo_cs()
-                                saldo.importe = saldo.importe + mov_guardado.importe + self.importe
-                                saldo.save()
-                            else:
-                                Saldo.generar(self, salida=False)
+                        if self.cta_entrada == mov_guardado.cta_salida:
+                            saldo = mov_guardado.saldo_cs()
+                            saldo.importe = saldo.importe + mov_guardado.importe + self.importe
+                            saldo.save()
+                        else:
+                            Saldo.generar(self, salida=False)
                     else:
                         if self.cta_entrada != mov_guardado.cta_entrada:
                             if self.cta_entrada == mov_guardado.cta_salida:
@@ -368,14 +366,12 @@ class Movimiento(MiModel):
 
                 if self.cta_salida:
                     if not mov_guardado.cta_salida:
-                        # TODO redundante
-                        if self.cta_salida:
-                            if self.cta_salida == mov_guardado.cta_entrada:
-                                saldo = mov_guardado.saldo_ce()
-                                saldo.importe = saldo.importe - mov_guardado.importe - self.importe
-                                saldo.save()
-                            else:
-                                Saldo.generar(self, salida=True)
+                        if self.cta_salida == mov_guardado.cta_entrada:
+                            saldo = mov_guardado.saldo_ce()
+                            saldo.importe = saldo.importe - mov_guardado.importe - self.importe
+                            saldo.save()
+                        else:
+                            Saldo.generar(self, salida=True)
                     else:
                         if self.cta_salida != mov_guardado.cta_salida:
                             if self.cta_salida == mov_guardado.cta_entrada:
