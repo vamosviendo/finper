@@ -251,6 +251,7 @@ class Movimiento(MiModel):
 
     def save(self, *args, **kwargs):
         """
+        TODO: otra vez, reescribir una vez que terminemos con esto
         Si el movimiento es nuevo (no existía antes, está siendo creado)
         - Generar saldo para cuentas de entrada y/o salida al momento del
           movimiento.
@@ -317,16 +318,57 @@ class Movimiento(MiModel):
                     'importe', 'cta_entrada', 'cta_salida',
                     contraparte=mov_guardado
             ):
-                if mov_guardado.cta_entrada:
-                    mov_guardado.cta_entrada.saldo_set.get(movimiento=mov_guardado) \
-                        .eliminar()
-                if mov_guardado.cta_salida:
-                    mov_guardado.cta_salida.saldo_set.get(movimiento=mov_guardado) \
-                        .eliminar()
                 if self.cta_entrada:
-                    Saldo.generar(self, salida=False)
+                    if not mov_guardado.cta_entrada:
+                        if self.cta_entrada:
+                            Saldo.generar(self, salida=False)
+                    else:
+                        if self.cta_entrada != mov_guardado.cta_entrada:
+                            saldo = mov_guardado.saldo_ce()
+                            saldo.cuenta = self.cta_entrada
+                            saldo.importe = saldo.importe - mov_guardado.importe + self.importe
+                            saldo.save()
+                        else:
+                            if self.cta_entrada.es_interactiva:
+                                saldo = mov_guardado.saldo_ce()
+                                saldo.importe = saldo.importe - mov_guardado.importe + self.importe
+                                saldo.save()
+                else:
+                    if mov_guardado.cta_entrada:
+                        mov_guardado.saldo_ce().eliminar()
+
                 if self.cta_salida:
-                    Saldo.generar(self, salida=True)
+                    if not mov_guardado.cta_salida:
+                        if self.cta_salida:
+                            Saldo.generar(self, salida=True)
+                    else:
+                        if self.cta_salida != mov_guardado.cta_salida:
+                            saldo = mov_guardado.saldo_cs()
+                            saldo.cuenta = self.cta_salida
+                            saldo.importe = saldo.importe + mov_guardado.importe - self.importe
+                            saldo.save()
+                        else:
+                            if self.cta_salida.es_interactiva:
+                                saldo = mov_guardado.saldo_cs()
+                                saldo.importe = saldo.importe + mov_guardado.importe - self.importe
+                                saldo.save()
+                else:
+                    if mov_guardado.cta_salida:
+                        mov_guardado.saldo_cs().eliminar()
+
+    def saldo_ce(self):
+        try:
+            return self.cta_entrada.saldo_set.get(movimiento=self)
+        except AttributeError:
+            raise AttributeError(
+                f'Movimiento "{self.concepto}" no tiene cuenta de entrada')
+
+    def saldo_cs(self):
+        try:
+            return self.cta_salida.saldo_set.get(movimiento=self)
+        except AttributeError:
+            raise AttributeError(
+                f'Movimiento "{self.concepto}" no tiene cuenta de salida')
 
     def tiene_cuenta_acumulativa(self):
         if self.tiene_cta_entrada_acumulativa():

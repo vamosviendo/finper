@@ -835,6 +835,48 @@ class TestModelMovimientoMetodoStr(TestModelMovimiento):
         )
 
 
+class TestModelMovimientoMetodoSaldoCE(TestModelMovimiento):
+
+    def setUp(self):
+        super().setUp()
+        self.mov1 = Movimiento.crear('mov1', 100, self.cuenta1)
+        self.mov2 = Movimiento.crear('mov2', 200, None, self.cuenta1)
+
+    def test_devuelve_saldo_de_cta_entrada_al_momento_del_movimiento(self):
+        self.assertEqual(
+            self.mov1.saldo_ce(),
+            self.mov1.cta_entrada.saldo_set.get(movimiento=self.mov1)
+        )
+
+    def test_si_no_hay_cta_entrada_tira_error(self):
+        with self.assertRaisesMessage(
+            AttributeError,
+            'Movimiento "mov2" no tiene cuenta de entrada'
+        ):
+            self.mov2.saldo_ce()
+
+
+class TestModelMovimientoMetodoSaldoCS(TestModelMovimiento):
+
+    def setUp(self):
+        super().setUp()
+        self.mov1 = Movimiento.crear('mov1', 100, self.cuenta1)
+        self.mov2 = Movimiento.crear('mov2', 200, None, self.cuenta1)
+
+    def test_devuelve_saldo_de_cta_entrada_al_momento_del_movimiento(self):
+        self.assertEqual(
+            self.mov2.saldo_cs(),
+            self.mov2.cta_salida.saldo_set.get(movimiento=self.mov2)
+        )
+
+    def test_si_no_hay_cta_entrada_tira_error(self):
+        with self.assertRaisesMessage(
+            AttributeError,
+            'Movimiento "mov1" no tiene cuenta de salida'
+        ):
+            self.mov1.saldo_cs()
+
+
 class TestModelMovimientoMetodoTieneCuentaAcumulativa(TestModelMovimiento):
 
     def test_devuelve_true_si_mov_tiene_una_cuenta_acumulativa(self):
