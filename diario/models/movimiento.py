@@ -318,6 +318,9 @@ class Movimiento(MiModel):
                     'importe', 'cta_entrada', 'cta_salida',
                     contraparte=mov_guardado
             ):
+                # TODO: Probar a nvertir la lógica. Averiguar primero si
+                #  mov_guardado tiene ce / cs.
+
                 if self.cta_entrada:
                     if not mov_guardado.cta_entrada:
                         # TODO redundante
@@ -336,11 +339,15 @@ class Movimiento(MiModel):
                                 saldo.importe = saldo.importe + mov_guardado.importe + self.importe
                                 saldo.save()
                             else:
-                                saldo = mov_guardado.saldo_ce()
-                                saldo.cuenta = self.cta_entrada
-                                saldo.importe = saldo.importe - mov_guardado.importe + self.importe
-                                saldo.save()
+                                if self.cta_salida and self.cta_salida == mov_guardado.cta_entrada:
+                                    Saldo.generar(self, salida=False)
+                                else:
+                                    saldo = mov_guardado.saldo_ce()
+                                    saldo.cuenta = self.cta_entrada
+                                    saldo.importe = saldo.importe - mov_guardado.importe + self.importe
+                                    saldo.save()
                         else:
+                            # TODO: ¿Se usa esto todavía? Retirar y testear (el if, digo, no el resto)
                             if self.cta_entrada.es_interactiva:
                                 saldo = mov_guardado.saldo_ce()
                                 saldo.importe = saldo.importe - mov_guardado.importe + self.importe
@@ -368,10 +375,13 @@ class Movimiento(MiModel):
                                 saldo.importe = saldo.importe - mov_guardado.importe - self.importe
                                 saldo.save()
                             else:
-                                saldo = mov_guardado.saldo_cs()
-                                saldo.cuenta = self.cta_salida
-                                saldo.importe = saldo.importe + mov_guardado.importe - self.importe
-                                saldo.save()
+                                if self.cta_entrada and self.cta_entrada == mov_guardado.cta_salida:
+                                    Saldo.generar(self, salida=True)
+                                else:
+                                    saldo = mov_guardado.saldo_cs()
+                                    saldo.cuenta = self.cta_salida
+                                    saldo.importe = saldo.importe + mov_guardado.importe - self.importe
+                                    saldo.save()
                         else:
                             if self.cta_salida.es_interactiva:
                                 saldo = mov_guardado.saldo_cs()
