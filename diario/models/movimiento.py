@@ -325,6 +325,7 @@ class Movimiento(MiModel):
                     if not mov_guardado.cta_entrada:
                         if self.cta_entrada == mov_guardado.cta_salida:
                             saldo = mov_guardado.saldo_cs()
+                            saldo._actualizar_posteriores(mov_guardado.importe+self.importe)
                             saldo.importe = saldo.importe + mov_guardado.importe + self.importe
                             saldo.save()
                         else:
@@ -333,6 +334,7 @@ class Movimiento(MiModel):
                         if self.cta_entrada != mov_guardado.cta_entrada:
                             if self.cta_entrada == mov_guardado.cta_salida:
                                 saldo = mov_guardado.saldo_cs()
+                                saldo._actualizar_posteriores(mov_guardado.importe + self.importe)
                                 if self.cta_salida != mov_guardado.cta_entrada:
                                     mov_guardado.saldo_ce().eliminar()
                                 saldo.importe = saldo.importe + mov_guardado.importe + self.importe
@@ -341,8 +343,15 @@ class Movimiento(MiModel):
                                 if self.cta_salida and self.cta_salida == mov_guardado.cta_entrada:
                                     Saldo.generar(self, salida=False)
                                 else:
+                                    # TODO
+                                    # Esto es muy desprolijo. Tal vez haya que
+                                    # rescribir _actualizar_posteriores, o escribir
+                                    # un método actualizar_saldos_posteriores en
+                                    # Cuenta y usar ese en vez de este.
                                     saldo = mov_guardado.saldo_ce()
+                                    saldo._actualizar_posteriores(-self.importe)
                                     saldo.cuenta = self.cta_entrada
+                                    saldo._actualizar_posteriores(self.importe)
                                     # TODO: refactorear (se repite en Saldo.generar)
                                     try:
                                         importe_saldo_anterior = Saldo._anterior_a(
@@ -368,6 +377,7 @@ class Movimiento(MiModel):
                     if not mov_guardado.cta_salida:
                         if self.cta_salida == mov_guardado.cta_entrada:
                             saldo = mov_guardado.saldo_ce()
+                            saldo._actualizar_posteriores(-mov_guardado.importe-self.importe)
                             saldo.importe = saldo.importe - mov_guardado.importe - self.importe
                             saldo.save()
                         else:
@@ -376,6 +386,7 @@ class Movimiento(MiModel):
                         if self.cta_salida != mov_guardado.cta_salida:
                             if self.cta_salida == mov_guardado.cta_entrada:
                                 saldo = mov_guardado.saldo_ce()
+                                saldo._actualizar_posteriores(-mov_guardado.importe-self.importe)
                                 if self.cta_entrada != mov_guardado.cta_salida:
                                     mov_guardado.saldo_cs().eliminar()
                                 saldo.importe = saldo.importe - mov_guardado.importe - self.importe
@@ -385,7 +396,9 @@ class Movimiento(MiModel):
                                     Saldo.generar(self, salida=True)
                                 else:
                                     saldo = mov_guardado.saldo_cs()
+                                    saldo._actualizar_posteriores(self.importe)
                                     saldo.cuenta = self.cta_salida
+                                    saldo._actualizar_posteriores(-self.importe)
                                     try:
                                         importe_saldo_anterior = Saldo._anterior_a(
                                             self.fecha, self.orden_dia, saldo.cuenta

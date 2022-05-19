@@ -88,25 +88,11 @@ class TestModelMovimientoSaveModificaImporte(TestModelMovimientoSave):
         self.mov1.save()
         self.assertEqual(self.cuenta1.saldo_en_mov(self.mov1), 125-125+128)
 
-    def test_actualiza_saldo_de_cta_entrada_en_movimiento_y_posteriores(self):
-        self.mov1.importe = 110
-        self.mov1.save()
-
-        self.assertEqual(self.cuenta1.saldo_en_mov(self.mov1), 110)
-        self.assertEqual(self.cuenta1.saldo_en_mov(self.mov2), 75)
-
     def test_suma_importe_antiguo_y_resta_el_nuevo_de_cta_salida_en_movimiento(self):
         self.mov2.importe = 37
         self.mov2.save()
 
         self.assertEqual(self.cuenta1.saldo_en_mov(self.mov2), 90+35-37)
-
-    def test_actualiza_saldo_de_cta_salida_en_movimiento_y_posteriores(self):
-        self.mov2.importe = 37
-        self.mov2.save()
-
-        self.assertEqual(self.cuenta1.saldo_en_mov(self.mov2), 88)
-        self.assertEqual(self.cuenta1.saldo_en_mov(self.mov3), 138)
 
     def test_en_mov_de_traspaso_resta_importe_antiguo_y_suma_nuevo_en_saldo_cta_entrada_y_suma_importe_antiguo_y_resta_nuevo_en_saldo_cta_salida(self):
         saldo_ce = Saldo.tomar(cuenta=self.cuenta1, movimiento=self.mov3)
@@ -119,6 +105,18 @@ class TestModelMovimientoSaveModificaImporte(TestModelMovimientoSave):
 
         self.assertEqual(saldo_ce.importe, 140-50+60)
         self.assertEqual(saldo_cs.importe, -50+50-60)
+
+    def test_actualiza_saldos_posteriores_de_cta_entrada(self):
+        self.mov1.importe = 110
+        self.mov1.save()
+
+        self.assertEqual(self.cuenta1.saldo_en_mov(self.mov2), 75)
+
+    def test_actualiza_saldos_posteriores_de_cta_salida(self):
+        self.mov2.importe = 37
+        self.mov2.save()
+
+        self.assertEqual(self.cuenta1.saldo_en_mov(self.mov3), 138)
 
     @patch.object(Movimiento, '_regenerar_contramovimiento', autospec=True)
     def test_en_movimientos_con_contramovimiento_elimina_contramovimiento_para_volver_a_generarlo(
@@ -166,6 +164,19 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
 
         self.assertEqual(saldo_ce.cuenta_id, self.cuenta2.id)
 
+    def test_cambiar_cta_entrada_actualiza_importe_de_saldos_posteriores_de_cta_anterior_y_nueva(self):
+        self.mov1.cta_entrada = self.cuenta2
+        self.mov1.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
+            90-125
+        )
+        self.assertEqual(
+            self.cuenta2.saldo_set.get(movimiento=self.mov3).importe,
+            -50+125
+        )
+
     def test_cambiar_cta_salida_cambia_cuenta_en_saldo_cta_salida(self):
         saldo_cs = self.mov2.saldo_cs()
         self.mov2.cta_salida = self.cuenta2
@@ -174,6 +185,19 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
         saldo_cs.refresh_from_db(fields=['cuenta'])
 
         self.assertEqual(saldo_cs.cuenta_id, self.cuenta2.id)
+
+    def test_cambiar_cta_salida_actualiza_importe_de_saldos_posteriores_de_cta_anterior_y_nueva(self):
+        self.mov2.cta_salida = self.cuenta2
+        self.mov2.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
+            140+35
+        )
+        self.assertEqual(
+            self.cuenta2.saldo_set.get(movimiento=self.mov3).importe,
+            -50-35
+        )
 
     def test_modificar_cta_entrada_funciona_en_movimientos_de_traspaso(self):
         cuenta3 = Cuenta.crear('Cuenta 3', 'c3')
@@ -227,6 +251,36 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
             -50
         )
 
+    def test_modificar_ambas_cuentas_en_movimientos_de_traspaso_actualiza_importes_de_saldos_posteriores_de_las_cuatro_cuentas(self):
+        cuenta3 = Cuenta.crear('cuenta 3', 'c3', fecha_creacion=date(2021, 1, 1))
+        cuenta4 = Cuenta.crear('cuenta 4', 'c4', fecha_creacion=date(2021, 1, 1))
+
+        mov4 = Movimiento.crear(
+            'mov4', 1000, self.cuenta1, self.cuenta2, fecha=date(2021, 1, 12))
+        mov5 = Movimiento.crear(
+            'mov5', 100, cuenta3, cuenta4, fecha=date(2021, 1, 15))
+
+        self.mov3.cta_entrada = cuenta3
+        self.mov3.cta_salida = cuenta4
+        self.mov3.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=mov4).importe,
+            1140-50
+        )
+        self.assertEqual(
+            self.cuenta2.saldo_set.get(movimiento=mov4).importe,
+            -1050+50
+        )
+        self.assertEqual(
+            cuenta3.saldo_set.get(movimiento=mov5).importe,
+            100+50
+        )
+        self.assertEqual(
+            cuenta4.saldo_set.get(movimiento=mov5).importe,
+            -100-50
+        )
+
     def test_intercambiar_cuentas_resta_importe_x2_de_saldo_en_movimiento_de_cta_entrada_y_lo_suma_a_saldo_en_movimiento_de_cta_salida(
             self):
         self.mov3.cta_salida = self.cuenta1
@@ -242,6 +296,22 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
             -50 + 50 * 2
         )
 
+    def test_intercambiar_cuentas_actualiza_importes_de_saldos_posteriores_de_cuentas_intercambiadas(self):
+        mov4 = Movimiento.crear(
+            'mov4', 1000, self.cuenta1, self.cuenta2, fecha=date(2021, 1, 12))
+        self.mov3.cta_salida = self.cuenta1
+        self.mov3.cta_entrada = self.cuenta2
+        self.mov3.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=mov4).importe,
+            1140 - 50 * 2
+        )
+        self.assertEqual(
+            self.cuenta2.saldo_set.get(movimiento=mov4).importe,
+            -1050 + 50 * 2
+        )
+
     def test_cuenta_de_salida_pasa_a_ser_de_entrada(self):
         """ Suma dos veces importe a saldo de vieja cta_salida (ahora
             cta_entrada) al momento del movimiento"""
@@ -252,6 +322,16 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
         self.assertEqual(
             self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
             90 + 35 * 2
+        )
+
+    def test_cambiar_cta_de_salida_a_entrada_actualiza_importes_de_saldos_posteriores_de_cuenta(self):
+        self.mov2.cta_entrada = self.mov2.cta_salida
+        self.mov2.cta_salida = None
+        self.mov2.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
+            140 + 35 * 2
         )
 
     def test_cuenta_de_entrada_pasa_a_ser_de_salida(self):
@@ -266,7 +346,21 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
             125 - 125 * 2
         )
 
-    def test_cuenta_de_salida_pasa_a_ser_de_entrada_y_cuenta_nueva_de_salida(self):
+    def test_cambiar_cta_de_entrada_a_salida_actualiza_importes_de_saldos_posteriores_de_cuenta(self):
+        self.mov1.cta_salida = self.mov1.cta_entrada
+        self.mov1.cta_entrada = None
+        self.mov1.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
+            90 - 125 * 2
+        )
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
+            140 - 125 * 2
+        )
+
+    def test_cuenta_de_salida_pasa_a_ser_de_entrada_y_cuenta_nueva_de_salida_en_traspaso(self):
         """ Suma dos veces importe a saldo de vieja cta_salida (ahora
             cta_entrada) al momento del movimiento.
             Desaparece saldo de nueva cta_salida al momento del movimiento"""
@@ -289,7 +383,31 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
             -50
         )
 
-    def test_cuenta_de_entrada_pasa_a_ser_de_salida_y_cuenta_nueva_de_entrada(self):
+    def test_si_cta_salida_pasa_a_entrada_y_aparece_cta_salida_nueva_en_traspaso_se_actualiza_importe_de_saldos_posteriores_de_las_tres_cuentas(self):
+        cuenta3 = Cuenta.crear('cta3', 'c3', fecha_creacion=date(2021, 1, 1))
+        mov4 = Movimiento.crear(
+            'mov4', 1000, self.cuenta1, self.cuenta2, fecha=date(2021, 1, 12))
+        mov5 = Movimiento.crear(
+            'mov5', 100, cuenta3, fecha=date(2021, 1, 15))
+
+        self.mov3.cta_entrada = self.mov3.cta_salida
+        self.mov3.cta_salida = cuenta3
+        self.mov3.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=mov4).importe,
+            1140-50
+        )
+        self.assertEqual(
+            self.cuenta2.saldo_set.get(movimiento=mov4).importe,
+            -1050 + 50 * 2
+        )
+        self.assertEqual(
+            cuenta3.saldo_set.get(movimiento=mov5).importe,
+            100 - 50
+        )
+
+    def test_cuenta_de_entrada_pasa_a_ser_de_salida_y_cuenta_nueva_de_entrada_en_traspaso(self):
         """ Desaparece saldo de vieja cta_entrada (ahora cta_salida) al momento
             del movimiento.
             Suma importe a saldo de nueva cta_entrada al momento del
@@ -313,6 +431,30 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
             50
         )
 
+    def test_si_cta_entrada_pasa_a_salida_y_aparece_cta_entrada_nueva_en_traspaso_se_actualiza_importe_de_saldos_posteriores_de_las_tres_cuentas(self):
+        cuenta4 = Cuenta.crear('cta4', 'c4', fecha_creacion=date(2021, 1, 1))
+        mov4 = Movimiento.crear(
+            'mov4', 1000, self.cuenta1, self.cuenta2, fecha=date(2021, 1, 12))
+        mov5 = Movimiento.crear(
+            'mov5', 100, None, cuenta4, fecha=date(2021, 1, 15))
+
+        self.mov3.cta_salida = self.mov3.cta_entrada
+        self.mov3.cta_entrada = cuenta4
+        self.mov3.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=mov4).importe,
+            1140 - 50 * 2
+        )
+        self.assertEqual(
+            self.cuenta2.saldo_set.get(movimiento=mov4).importe,
+            -1050 + 50
+        )
+        self.assertEqual(
+            cuenta4.saldo_set.get(movimiento=mov5).importe,
+            -100 + 50
+        )
+
     def test_cuenta_de_salida_desaparece(self):
         """ Suma importe a saldo de cta_salida retirada al momento del
             movimiento"""
@@ -322,6 +464,17 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
         with self.assertRaises(Saldo.DoesNotExist):
             Saldo.objects.get(cuenta=self.cuenta2, movimiento=self.mov3)
 
+    def test_si_desaparece_cta_salida_en_traspaso_actualiza_importes_de_saldos_posteriores_de_cuenta(self):
+        mov4 = Movimiento.crear(
+            'mov4', 1000, self.cuenta1, self.cuenta2, fecha=date(2021, 1, 12))
+        self.mov3.cta_salida = None
+        self.mov3.save()
+
+        self.assertEqual(
+            self.cuenta2.saldo_set.get(movimiento=mov4).importe,
+            -1050 + 50
+        )
+
     def test_cuenta_de_entrada_desaparece(self):
         """ Desaparece saldo de cuenta de entrada en movimiento"""
         self.mov3.cta_entrada = None
@@ -329,6 +482,17 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
 
         with self.assertRaises(Saldo.DoesNotExist):
             Saldo.objects.get(cuenta=self.cuenta1, movimiento=self.mov3)
+
+    def test_si_desaparece_cta_entrada_en_traspaso_actualiza_importes_de_saldos_posteriores_de_cuenta(self):
+        mov4 = Movimiento.crear(
+            'mov4', 1000, self.cuenta1, self.cuenta2, fecha=date(2021, 1, 12))
+        self.mov3.cta_entrada = None
+        self.mov3.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=mov4).importe,
+            1140 - 50
+        )
 
     def test_cuenta_de_salida_desaparece_y_cuenta_de_entrada_pasa_a_salida(self):
         """ Desaparece saldo de cta_salida retirada al momento del movimiento.
@@ -347,6 +511,22 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
         with self.assertRaises(Saldo.DoesNotExist):
             Saldo.objects.get(cuenta=self.cuenta2, movimiento=self.mov3)
 
+    def test_si_desaparece_cta_salida_y_cta_entrada_pasa_a_salida_actaualiza_importes_de_saldos_posteriores_de_ambas_cuentas(self):
+        mov4 = Movimiento.crear(
+            'mov4', 1000, self.cuenta1, self.cuenta2, fecha=date(2021, 1, 12))
+        self.mov3.cta_salida = self.mov3.cta_entrada
+        self.mov3.cta_entrada = None
+        self.mov3.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=mov4).importe,
+            1140 - 50 * 2
+        )
+        self.assertEqual(
+            self.cuenta2.saldo_set.get(movimiento=mov4).importe,
+            -1050 + 50
+        )
+
     def test_cuenta_de_entrada_desaparece_y_cuenta_de_salida_pasa_a_entrada(self):
         """ Desaparece saldo de cta_entrada retirada al momento del movimiento.
             Suma dos veces importe a saldo de vieja cta_salida (ahora
@@ -364,6 +544,22 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
         self.assertEqual(saldo.cuenta_id, self.cuenta2.id)
         self.assertEqual(saldo.importe, -50 + 50 * 2)
 
+    def test_si_desaparece_cta_entrada_y_cta_salida_pasa_a_entrada_actaualiza_importes_de_saldos_posteriores_de_ambas_cuentas(self):
+        mov4 = Movimiento.crear(
+            'mov4', 1000, self.cuenta1, self.cuenta2, fecha=date(2021, 1, 12))
+        self.mov3.cta_entrada = self.mov3.cta_salida  # self.cuenta2
+        self.mov3.cta_salida = None
+        self.mov3.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=mov4).importe,
+            1140 - 50
+        )
+        self.assertEqual(
+            self.cuenta2.saldo_set.get(movimiento=mov4).importe,
+            -1050 + 50 * 2
+        )
+
     def test_aparece_cuenta_de_salida(self):
         """ Aparece saldo de nueva cta_salida al momento del movimiento """
         cant_saldos = self.cuenta2.saldo_set.count()
@@ -376,6 +572,15 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
             0 - 125
         )
 
+    def test_si_aparece_cta_salida_actualiza_importe_de_saldos_posteriores_de_cuenta(self):
+        self.mov1.cta_salida = self.cuenta2
+        self.mov1.save()
+
+        self.assertEqual(
+            self.cuenta2.saldo_set.get(movimiento=self.mov3).importe,
+            -50 - 125
+        )
+
     def test_aparece_cuenta_de_entrada(self):
         """ Aparece saldo de nueva cta_salida al momento del movimiento """
         cant_saldos = self.cuenta2.saldo_set.count()
@@ -386,6 +591,15 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
         self.assertEqual(
             self.cuenta2.saldo_set.get(movimiento=self.mov2).importe,
             0 + 35
+        )
+
+    def test_si_aparece_cta_entrada_actualiza_importe_de_saldos_posteriores_de_cuenta(self):
+        self.mov2.cta_entrada = self.cuenta2
+        self.mov2.save()
+
+        self.assertEqual(
+            self.cuenta2.saldo_set.get(movimiento=self.mov3).importe,
+            -50 + 35
         )
 
     def test_cuenta_de_entrada_pasa_a_salida_y_aparece_nueva_cuenta_de_entrada(self):
@@ -405,6 +619,20 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
         self.assertEqual(
             self.cuenta2.saldo_set.get(movimiento=self.mov1).importe,
             0 + 125
+        )
+
+    def test_si_cta_entrada_pasa_a_salida_y_aparece_nueva_cta_entrada_actualiza_importe_de_saldos_posteriores_de_ambas_cuentas(self):
+        self.mov1.cta_salida = self.mov1.cta_entrada
+        self.mov1.cta_entrada = self.cuenta2
+        self.mov1.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
+            140 - 125 * 2
+        )
+        self.assertEqual(
+            self.cuenta2.saldo_set.get(movimiento=self.mov3).importe,
+            -50 + 125
         )
 
     def test_cuenta_de_salida_pasa_a_entrada_y_aparece_nueva_cuenta_de_salida(self):
@@ -427,6 +655,20 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
             90 + 35 * 2
         )
 
+    def test_si_cta_salida_pasa_a_entrada_y_aparece_nueva_cta_salida_actualiza_importe_de_saldos_posteriores_de_ambas_cuentas(self):
+        self.mov2.cta_entrada = self.mov2.cta_salida
+        self.mov2.cta_salida = self.cuenta2
+        self.mov2.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
+            140 + 35 * 2
+        )
+        self.assertEqual(
+            self.cuenta2.saldo_set.get(movimiento=self.mov3).importe,
+            -50 - 35
+        )
+
     def test_desaparece_cta_entrada_y_aparece_cta_de_salida(self):
         """ Desaparece saldo de cta_entrada retirada al momento del movimiento.
             Aparece saldo de cta_salida agregada al momento del movimiento"""
@@ -444,6 +686,21 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
             0 - 125
         )
 
+    def test_si_desaparece_cta_entrada_y_aparece_cta_salida_actualiza_importes_de_saldos_posteriores_de_ambas_cuentas(self):
+        self.mov1.cta_entrada = None
+        self.mov1.cta_salida = self.cuenta2
+        self.mov1.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
+            140 - 125
+        )
+
+        self.assertEqual(
+            self.cuenta2.saldo_set.get(movimiento=self.mov3).importe,
+            -50 - 125
+        )
+
     def test_desaparece_cta_salida_y_aparece_cta_de_entrada(self):
         """ Desaparece saldo de cta_salida retirada al momento del movimiento.
             Aparece saldo de cta_entrada agregada al momento del movimiento"""
@@ -459,6 +716,21 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
         self.assertEqual(
             self.cuenta2.saldo_set.get(movimiento=self.mov2).importe,
             0 + 35
+        )
+
+    def test_si_desaparece_cta_salida_y_aparece_cta_entrada_actualiza_importes_de_saldos_posteriores_de_ambas_cuentas(self):
+        self.mov2.cta_entrada = self.cuenta2
+        self.mov2.cta_salida = None
+        self.mov2.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
+            140 + 35
+        )
+
+        self.assertEqual(
+            self.cuenta2.saldo_set.get(movimiento=self.mov3).importe,
+            -50 + 35
         )
 
     @patch.object(Movimiento, '_regenerar_contramovimiento', autospec=True)
