@@ -318,7 +318,7 @@ class Movimiento(MiModel):
                     'importe', 'cta_entrada', 'cta_salida',
                     contraparte=mov_guardado
             ):
-                # TODO: Probar a nvertir la lógica. Averiguar primero si
+                # TODO: Probar a invertir la lógica. Averiguar primero si
                 #  mov_guardado tiene ce / cs.
 
                 if self.cta_entrada:
@@ -362,12 +362,10 @@ class Movimiento(MiModel):
                                     saldo.importe = importe_saldo_anterior + self.importe
                                     saldo.save()
                         else:
-                            # TODO: ¿Se usa esto todavía? Retirar y testear (el if, digo, no el resto)
-                            if self.cta_entrada.es_interactiva:
-                                saldo = mov_guardado.saldo_ce()
-                                saldo.importe = saldo.importe - mov_guardado.importe + self.importe
-                                saldo.save()
-                                saldo._actualizar_posteriores(self.importe-mov_guardado.importe)
+                            saldo = mov_guardado.saldo_ce()
+                            saldo.importe = saldo.importe - mov_guardado.importe + self.importe
+                            saldo.save()
+                            saldo._actualizar_posteriores(self.importe-mov_guardado.importe)
                 else:
                     if mov_guardado.cta_entrada \
                             and self.cta_salida != mov_guardado.cta_entrada:
@@ -408,11 +406,10 @@ class Movimiento(MiModel):
                                     saldo.importe = importe_saldo_anterior - self.importe
                                     saldo.save()
                         else:
-                            if self.cta_salida.es_interactiva:
-                                saldo = mov_guardado.saldo_cs()
-                                saldo.importe = saldo.importe + mov_guardado.importe - self.importe
-                                saldo.save()
-                                saldo._actualizar_posteriores(mov_guardado.importe-self.importe)
+                            saldo = mov_guardado.saldo_cs()
+                            saldo.importe = saldo.importe + mov_guardado.importe - self.importe
+                            saldo.save()
+                            saldo._actualizar_posteriores(mov_guardado.importe-self.importe)
                 else:
                     if mov_guardado.cta_salida \
                             and self.cta_entrada != mov_guardado.cta_salida:
