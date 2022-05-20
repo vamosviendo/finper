@@ -346,6 +346,28 @@ class TestSaldoMetodoActualizarPosteriores(TestCase):
         self.assertEqual(self.saldo2.importe, 200)
 
 
+class TestSaldoMetodoActualizarImporteYAnteriores(TestCase):
+
+    def setUp(self):
+        self.cuenta = Cuenta.crear(
+            'cta', 'c', fecha_creacion=date(2010, 11, 11))
+        mov1 = Movimiento.crear(
+            'mov1', 100, self.cuenta, fecha=date(2010, 11, 13))
+        mov2 = Movimiento.crear(
+            'mov2', 200, self.cuenta, fecha=date(2010, 11, 14))
+        self.saldo1 = Saldo.objects.get(cuenta=self.cuenta, movimiento=mov1)
+        self.saldo2 = Saldo.objects.get(cuenta=self.cuenta, movimiento=mov2)
+        self.saldo1.sumar_a_este_y_posteriores(1000)
+
+    def test_suma_importe_a_importe_de_saldo(self):
+        self.saldo1.refresh_from_db()
+        self.assertEqual(self.saldo1.importe, 1100)
+
+    def test_suma_importe_a_importes_posteriores_a_saldo(self):
+        self.saldo2.refresh_from_db()
+        self.assertEqual(self.saldo2.importe, 1300)
+
+
 class TestSaldoMetodoAnterior(TestCase):
 
     def setUp(self):
