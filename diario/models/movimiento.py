@@ -318,102 +318,68 @@ class Movimiento(MiModel):
                     'importe', 'cta_entrada', 'cta_salida',
                     contraparte=mov_guardado
             ):
-                # TODO: Probar a invertir la lógica. Averiguar primero si
-                #  mov_guardado tiene ce / cs.
 
                 if self.cta_entrada:
-                    if not mov_guardado.cta_entrada:
-                        if self.cta_entrada == mov_guardado.cta_salida:
-                            saldo = mov_guardado.saldo_cs()
-                            saldo._actualizar_posteriores(mov_guardado.importe+self.importe)
-                            saldo.importe = saldo.importe + mov_guardado.importe + self.importe
-                            saldo.save()
-                        else:
+                    if self.cta_entrada == mov_guardado.cta_salida:     # ergo, != mov_guardado.cta_entrada
+                        saldo = mov_guardado.saldo_cs()
+                        saldo.sumar_a_este_y_posteriores(mov_guardado.importe + self.importe)
+                        if mov_guardado.cta_entrada and self.cta_salida != mov_guardado.cta_entrada:
+                            mov_guardado.saldo_ce().eliminar()
+                    elif mov_guardado.cta_entrada and self.cta_entrada != mov_guardado.cta_entrada:
+                        if self.cta_salida and self.cta_salida == mov_guardado.cta_entrada:
                             Saldo.generar(self, salida=False)
-                    else:
-                        if self.cta_entrada != mov_guardado.cta_entrada:
-                            if self.cta_entrada == mov_guardado.cta_salida:
-                                saldo = mov_guardado.saldo_cs()
-                                saldo._actualizar_posteriores(mov_guardado.importe + self.importe)
-                                if self.cta_salida != mov_guardado.cta_entrada:
-                                    mov_guardado.saldo_ce().eliminar()
-                                saldo.importe = saldo.importe + mov_guardado.importe + self.importe
-                                saldo.save()
-                            else:
-                                if self.cta_salida and self.cta_salida == mov_guardado.cta_entrada:
-                                    Saldo.generar(self, salida=False)
-                                else:
-                                    # TODO
-                                    # Esto es muy desprolijo. Tal vez haya que
-                                    # rescribir _actualizar_posteriores, o escribir
-                                    # un método actualizar_saldos_posteriores en
-                                    # Cuenta y usar ese en vez de este.
-                                    saldo = mov_guardado.saldo_ce()
-                                    saldo._actualizar_posteriores(-self.importe)
-                                    saldo.cuenta = self.cta_entrada
-                                    saldo._actualizar_posteriores(self.importe)
-                                    # TODO: refactorear (se repite en Saldo.generar)
-                                    try:
-                                        importe_saldo_anterior = Saldo._anterior_a(
-                                            self.fecha, self.orden_dia, saldo.cuenta
-                                        ).importe
-                                    except AttributeError:
-                                        importe_saldo_anterior = 0
-                                    saldo.importe = importe_saldo_anterior + self.importe
-                                    saldo.save()
                         else:
                             saldo = mov_guardado.saldo_ce()
-                            saldo.importe = saldo.importe - mov_guardado.importe + self.importe
+                            saldo._actualizar_posteriores(-self.importe)
+                            saldo.cuenta = self.cta_entrada
+                            saldo._actualizar_posteriores(self.importe)
+                            # TODO: refactorear (se repite en Saldo.generar)
+                            try:
+                                importe_saldo_anterior = Saldo._anterior_a(
+                                    self.fecha, self.orden_dia, saldo.cuenta
+                                ).importe
+                            except AttributeError:
+                                importe_saldo_anterior = 0
+                            saldo.importe = importe_saldo_anterior + self.importe
                             saldo.save()
-                            saldo._actualizar_posteriores(self.importe-mov_guardado.importe)
-                else:
-                    if mov_guardado.cta_entrada \
-                            and self.cta_salida != mov_guardado.cta_entrada:
-                        mov_guardado.saldo_ce().eliminar()
+                    elif mov_guardado.cta_entrada:
+                        saldo = mov_guardado.saldo_ce()
+                        saldo.sumar_a_este_y_posteriores(self.importe-mov_guardado.importe)
+                    else:   # not mov_guardado.cta_entrada
+                        Saldo.generar(self, salida=False)
+                elif mov_guardado.cta_entrada \
+                        and self.cta_salida != mov_guardado.cta_entrada:
+                    mov_guardado.saldo_ce().eliminar()
 
                 if self.cta_salida:
-                    if not mov_guardado.cta_salida:
-                        if self.cta_salida == mov_guardado.cta_entrada:
-                            saldo = mov_guardado.saldo_ce()
-                            saldo._actualizar_posteriores(-mov_guardado.importe-self.importe)
-                            saldo.importe = saldo.importe - mov_guardado.importe - self.importe
-                            saldo.save()
-                        else:
+                    if self.cta_salida == mov_guardado.cta_entrada:
+                        saldo = mov_guardado.saldo_ce()
+                        saldo.sumar_a_este_y_posteriores(-mov_guardado.importe - self.importe)
+                        if mov_guardado.cta_salida and self.cta_entrada != mov_guardado.cta_salida:
+                            mov_guardado.saldo_cs().eliminar()
+                    elif mov_guardado.cta_salida and self.cta_salida != mov_guardado.cta_salida:
+                        if self.cta_entrada and self.cta_entrada == mov_guardado.cta_salida:
                             Saldo.generar(self, salida=True)
-                    else:
-                        if self.cta_salida != mov_guardado.cta_salida:
-                            if self.cta_salida == mov_guardado.cta_entrada:
-                                saldo = mov_guardado.saldo_ce()
-                                saldo._actualizar_posteriores(-mov_guardado.importe-self.importe)
-                                if self.cta_entrada != mov_guardado.cta_salida:
-                                    mov_guardado.saldo_cs().eliminar()
-                                saldo.importe = saldo.importe - mov_guardado.importe - self.importe
-                                saldo.save()
-                            else:
-                                if self.cta_entrada and self.cta_entrada == mov_guardado.cta_salida:
-                                    Saldo.generar(self, salida=True)
-                                else:
-                                    saldo = mov_guardado.saldo_cs()
-                                    saldo._actualizar_posteriores(self.importe)
-                                    saldo.cuenta = self.cta_salida
-                                    saldo._actualizar_posteriores(-self.importe)
-                                    try:
-                                        importe_saldo_anterior = Saldo._anterior_a(
-                                            self.fecha, self.orden_dia, saldo.cuenta
-                                        ).importe
-                                    except AttributeError:
-                                        importe_saldo_anterior = 0
-                                    saldo.importe = importe_saldo_anterior - self.importe
-                                    saldo.save()
                         else:
                             saldo = mov_guardado.saldo_cs()
-                            saldo.importe = saldo.importe + mov_guardado.importe - self.importe
+                            saldo._actualizar_posteriores(self.importe)
+                            saldo.cuenta = self.cta_salida
+                            saldo._actualizar_posteriores(-self.importe)
+                            try:
+                                importe_saldo_anterior = Saldo._anterior_a(
+                                    self.fecha, self.orden_dia, saldo.cuenta
+                                ).importe
+                            except AttributeError:
+                                importe_saldo_anterior = 0
+                            saldo.importe = importe_saldo_anterior - self.importe
                             saldo.save()
-                            saldo._actualizar_posteriores(mov_guardado.importe-self.importe)
-                else:
-                    if mov_guardado.cta_salida \
-                            and self.cta_entrada != mov_guardado.cta_salida:
-                        mov_guardado.saldo_cs().eliminar()
+                    elif mov_guardado.cta_salida:
+                        saldo = mov_guardado.saldo_cs()
+                        saldo.sumar_a_este_y_posteriores(mov_guardado.importe-self.importe)
+                    else:
+                        Saldo.generar(self, salida=True)
+                elif mov_guardado.cta_salida and self.cta_entrada != mov_guardado.cta_salida:
+                    mov_guardado.saldo_cs().eliminar()
 
     def saldo_ce(self):
         try:
