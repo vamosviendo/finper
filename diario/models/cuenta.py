@@ -83,6 +83,28 @@ class Cuenta(PolymorphModel):
     def saldo_en_mov(self, movimiento):
         return self.saldo_set.get(movimiento=movimiento).importe
 
+    def saldos_posteriores_a(self, movimiento):
+        try:
+            saldo = Saldo.tomar(cuenta=self, movimiento=movimiento)
+            posteriores = saldo.posteriores()
+        except Saldo.DoesNotExist:
+            posteriores = self.saldo_set.all()
+        return posteriores
+
+    def sumar_a_saldos_posteriores(self, movimiento, importe):
+        posteriores = self.saldos_posteriores_a(movimiento)
+        for s in posteriores:
+            s.importe += importe
+            s.save()
+
+    def sumar_a_saldo_y_posteriores(self, movimiento, importe):
+        yposteriores = self.saldo_set.filter(
+            movimiento=movimiento
+        ) | self.saldos_posteriores_a(movimiento)
+        for s in yposteriores:
+            s.importe += importe
+            s.save()
+
     @property
     def ultimo_saldo(self):
         return self.saldo_set.last()

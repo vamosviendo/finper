@@ -549,6 +549,170 @@ class TestModelCuentaMetodosSaldoHistorico(TestCase):
         self.assertEqual(cuenta.saldo_historico(self.mov1), 0)
 
 
+class TestModelCuentaMetodosSaldosPosterioresA(TestCase):
+
+    def setUp(self):
+        self.cuenta = Cuenta.crear('cuenta', 'c', fecha_creacion=date(2020, 1, 1))
+        self.mov1 = Movimiento.crear('mov1', 10, self.cuenta, fecha=date(2020, 1, 15))
+        self.mov2 = Movimiento.crear('mov2', 100, self.cuenta, fecha=date(2020, 1, 11))
+        self.mov3 = Movimiento.crear('mov3', 1000, self.cuenta, fecha=date(2020, 1, 13))
+        self.saldo1 = self.cuenta.saldo_set.get(movimiento=self.mov1)
+        self.saldo2 = self.cuenta.saldo_set.get(movimiento=self.mov2)
+        self.saldo3 = self.cuenta.saldo_set.get(movimiento=self.mov3)
+
+    def test_incluye_saldos_posteriores_al_movimiento_recibido(self):
+        self.assertIn(
+            self.saldo1,
+            self.cuenta.saldos_posteriores_a(self.mov3)
+        )
+
+    def test_incluye_saldos_posteriores_de_la_misma_fecha(self):
+        mov4 = Movimiento.crear('mov4', 10000, self.cuenta, fecha=date(2020, 1, 13))
+        mov4.orden_dia = 0
+        mov4.save()
+
+        self.assertIn(
+            self.saldo3,
+            self.cuenta.saldos_posteriores_a(mov4)
+        )
+
+    def test_no_incluye_saldos_anteriores_al_movimiento_recibido(self):
+        self.assertNotIn(
+            self.saldo2,
+            self.cuenta.saldos_posteriores_a(self.mov3)
+        )
+
+    def test_no_incluye_saldo_al_momento_del_movimiento_recibido(self):
+        self.assertNotIn(
+            self.saldo3,
+            self.cuenta.saldos_posteriores_a(self.mov3)
+        )
+
+    def test_devuelve_todos_los_saldos_si_cuenta_aun_no_tiene_saldo_al_momento_del_movimiento(self):
+        cuenta2 = Cuenta.crear('cuenta2', 'c2', fecha_creacion=date(2020, 1, 1))
+        mov4 = Movimiento.crear('mov4', 10000, cuenta2, fecha=date(2020, 1, 9))
+
+        for saldo in (self.saldo1, self.saldo2, self.saldo3):
+            self.assertIn(saldo, self.cuenta.saldos_posteriores_a(mov4))
+
+
+class TestModelCuentaMetodosSumarASaldosPosteriores(TestCase):
+
+    def setUp(self):
+        self.cuenta = Cuenta.crear('cuenta', 'c', fecha_creacion=date(2020, 1, 1))
+        self.mov1 = Movimiento.crear('mov1', 10, self.cuenta, fecha=date(2020, 1, 15))
+        self.mov2 = Movimiento.crear('mov2', 100, self.cuenta, fecha=date(2020, 1, 11))
+        self.mov3 = Movimiento.crear('mov3', 1000, self.cuenta, fecha=date(2020, 1, 13))
+        self.saldo1 = self.cuenta.saldo_set.get(movimiento=self.mov1)
+        self.saldo2 = self.cuenta.saldo_set.get(movimiento=self.mov2)
+        self.saldo3 = self.cuenta.saldo_set.get(movimiento=self.mov3)
+
+    def test_suma_importe_a_saldos_posteriores_a_movimiento(self):
+        importe = self.saldo1.importe
+        self.cuenta.sumar_a_saldos_posteriores(self.mov3, 10000)
+        self.saldo1.refresh_from_db(fields=['_importe'])
+
+        self.assertEqual(self.saldo1.importe, importe+10000)
+
+    def test_no_suma_importe_a_saldos_anteriores_a_movimiento(self):
+        importe = self.saldo2.importe
+        self.cuenta.sumar_a_saldos_posteriores(self.mov3, 10000)
+        self.saldo2.refresh_from_db(fields=['_importe'])
+
+        self.assertEqual(self.saldo2.importe, importe)
+
+    def test_no_suma_importe_a_saldo_al_momento_del_movimiento(self):
+        importe = self.saldo3.importe
+        self.cuenta.sumar_a_saldos_posteriores(self.mov3, 10000)
+        self.saldo3.refresh_from_db(fields=['_importe'])
+
+        self.assertEqual(self.saldo3.importe, importe)
+
+    def test_suma_importe_a_todos_los_saldos_de_la_cuenta_si_esta_aun_no_tiene_saldo_al_momento_del_movimiento(self):
+        importes = []
+        saldos = Saldo.todes()
+        for s in saldos:
+            importes.append(s.importe)
+        cuenta2 = Cuenta.crear('cuenta2', 'c2', fecha_creacion=date(2020, 1, 1))
+        mov4 = Movimiento.crear('mov4', 10000, cuenta2, fecha=date(2020, 1, 9))
+
+        self.cuenta.sumar_a_saldos_posteriores(mov4, 100000)
+
+        for i, s in enumerate(saldos):
+            s.refresh_from_db(fields=['_importe'])
+            self.assertEqual(s.importe, importes[i]+100000)
+
+    def test_suma_importe_a_saldos_posteriores_al_movimiento_de_la_misma_fecha(self):
+        importe = self.saldo3.importe
+
+        mov4 = Movimiento.crear('mov4', 10000, self.cuenta, fecha=date(2020, 1, 13))
+        mov4.orden_dia = 0
+        mov4.save()
+
+        self.cuenta.sumar_a_saldos_posteriores(mov4, 100000)
+        self.saldo3.refresh_from_db(fields=['_importe'])
+
+        self.assertEqual(self.saldo3.importe, importe+100000)
+
+class TestModelCuentaMetodosSumarASaldoYPosteriores(TestCase):
+
+    def setUp(self):
+        self.cuenta = Cuenta.crear('cuenta', 'c', fecha_creacion=date(2020, 1, 1))
+        self.mov1 = Movimiento.crear('mov1', 10, self.cuenta, fecha=date(2020, 1, 15))
+        self.mov2 = Movimiento.crear('mov2', 100, self.cuenta, fecha=date(2020, 1, 11))
+        self.mov3 = Movimiento.crear('mov3', 1000, self.cuenta, fecha=date(2020, 1, 13))
+        self.saldo1 = self.cuenta.saldo_set.get(movimiento=self.mov1)
+        self.saldo2 = self.cuenta.saldo_set.get(movimiento=self.mov2)
+        self.saldo3 = self.cuenta.saldo_set.get(movimiento=self.mov3)
+
+    def test_suma_importe_a_saldos_posteriores_a_movimiento(self):
+        importe = self.saldo1.importe
+        self.cuenta.sumar_a_saldo_y_posteriores(self.mov3, 10000)
+        self.saldo1.refresh_from_db(fields=['_importe'])
+
+        self.assertEqual(self.saldo1.importe, importe+10000)
+
+    def test_no_suma_importe_a_saldos_anteriores_a_movimiento(self):
+        importe = self.saldo2.importe
+        self.cuenta.sumar_a_saldo_y_posteriores(self.mov3, 10000)
+        self.saldo2.refresh_from_db(fields=['_importe'])
+
+        self.assertEqual(self.saldo2.importe, importe)
+
+    def test_suma_importe_a_saldo_al_momento_del_movimiento(self):
+        importe = self.saldo3.importe
+        self.cuenta.sumar_a_saldo_y_posteriores(self.mov3, 10000)
+        self.saldo3.refresh_from_db(fields=['_importe'])
+
+        self.assertEqual(self.saldo3.importe, importe+10000)
+
+    def test_suma_importe_a_todos_los_saldos_de_la_cuenta_si_esta_aun_no_tiene_saldo_al_momento_del_movimiento(self):
+        importes = []
+        saldos = Saldo.todes()
+        for s in saldos:
+            importes.append(s.importe)
+        cuenta2 = Cuenta.crear('cuenta2', 'c2', fecha_creacion=date(2020, 1, 1))
+        mov4 = Movimiento.crear('mov4', 10000, cuenta2, fecha=date(2020, 1, 9))
+
+        self.cuenta.sumar_a_saldo_y_posteriores(mov4, 100000)
+
+        for i, s in enumerate(saldos):
+            s.refresh_from_db(fields=['_importe'])
+            self.assertEqual(s.importe, importes[i]+100000)
+
+    def test_suma_importe_a_saldos_posteriores_al_movimiento_de_la_misma_fecha(self):
+        importe = self.saldo3.importe
+
+        mov4 = Movimiento.crear('mov4', 10000, self.cuenta, fecha=date(2020, 1, 13))
+        mov4.orden_dia = 0
+        mov4.save()
+
+        self.cuenta.sumar_a_saldo_y_posteriores(mov4, 100000)
+        self.saldo3.refresh_from_db(fields=['_importe'])
+
+        self.assertEqual(self.saldo3.importe, importe+100000)
+
+
 class TestModelCuentaMetodosTomarDeBd(TestCase):
 
     def test_actualiza_cambios_en_cuentas_interactivas(self):
