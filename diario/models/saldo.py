@@ -85,7 +85,7 @@ class Saldo(MiModel):
                 ).importe
             except AttributeError:
                 importe_saldo_anterior = 0
-            saldo = cls.crear(
+            saldo: 'Saldo' = cls.crear(
                 cuenta=cuenta,
                 importe=importe_saldo_anterior + importe,
                 movimiento=mov
@@ -155,5 +155,5 @@ class Saldo(MiModel):
 
     def _actualizar_posteriores(self, importe):
         for saldo_post in self.posteriores():
-                saldo_post.importe += importe
-                saldo_post.save()
+            saldo_post.importe += importe
+            saldo_post.save()
