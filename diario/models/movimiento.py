@@ -41,6 +41,8 @@ class Movimiento(MiModel):
     id_contramov = models.IntegerField(null=True, blank=True)
     es_automatico = models.BooleanField(default=False)
 
+    viejo = None
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.esgratis = False
@@ -266,9 +268,7 @@ class Movimiento(MiModel):
             guardado al momento de dicho movimiento, si existen.
           - Generar saldo para cuentas de entrada y/o salida del movimiento
             nuevo al momento del movimiento, si existen.
-          TODO: refactor para modificar campos en saldos en vez de
-                eliminar/generar
-        - Antes de repetir el proceso con la cuenta de salida, actualizarla
+-++        - Antes de repetir el proceso con la cuenta de salida, actualizarla
           para el caso especial de la división de una cuenta en subcuentas.
           En este caso se crea un movimiento de salida en la cuenta madre
           (todavía interactiva), se convierte la cuenta en acumulativa al
@@ -289,7 +289,7 @@ class Movimiento(MiModel):
                 Saldo.generar(self, salida=True)
 
         else:                    # Movimiento existente
-            mov_viejo = self.tomar_de_bd()
+            self.viejo = self.tomar_de_bd()
 
             if self.es_prestamo_o_devolucion():
                 # El mov es una transacción no gratuita entre titulares
@@ -316,82 +316,9 @@ class Movimiento(MiModel):
 
             if self._cambia_campo(
                     'importe', 'cta_entrada', 'cta_salida',
-                    contraparte=mov_viejo
+                    contraparte=self.viejo
             ):
-
-                if self.cta_entrada:
-                    if self.cta_entrada == mov_viejo.cta_salida:
-                        # ergo, self.cta_entrada != mov_viejo.cta_entrada
-                        mov_viejo.cta_salida.sumar_a_saldo_y_posteriores(
-                            mov_viejo,
-                            mov_viejo.importe + self.importe
-                        )
-                        if mov_viejo.cta_entrada \
-                                and self.cta_salida != mov_viejo.cta_entrada:
-                            mov_viejo.saldo_ce().eliminar()
-                    elif mov_viejo.cta_entrada \
-                            and self.cta_entrada != mov_viejo.cta_entrada:
-                        if self.cta_salida \
-                                and self.cta_salida == mov_viejo.cta_entrada:
-                            Saldo.generar(self, salida=False)
-                        else:   # cta_entrada cambia por cta_nueva
-                            saldo = mov_viejo.saldo_ce()
-                            saldo.cuenta = self.cta_entrada
-                            saldo.importe = self.importe
-                            saldo.save()
-                            mov_viejo.cta_entrada.sumar_a_saldos_posteriores(
-                                self, -self.importe
-                            )
-                            self.cta_entrada.sumar_a_saldos_posteriores(
-                                self, self.importe
-                            )
-                    elif mov_viejo.cta_entrada:
-                        mov_viejo.cta_entrada.sumar_a_saldo_y_posteriores(
-                            mov_viejo,
-                            self.importe-mov_viejo.importe
-                        )
-                    else:   # not mov_viejo.cta_entrada
-                        Saldo.generar(self, salida=False)
-                elif mov_viejo.cta_entrada \
-                        and self.cta_salida != mov_viejo.cta_entrada:
-                    mov_viejo.saldo_ce().eliminar()
-
-                if self.cta_salida:
-                    if self.cta_salida == mov_viejo.cta_entrada:
-                        # ergo, self.cta_salida!= mov_viejo.cta_salida
-                        mov_viejo.cta_entrada.sumar_a_saldo_y_posteriores(
-                            mov_viejo,
-                            -mov_viejo.importe-self.importe
-                        )
-                        if mov_viejo.cta_salida \
-                                and self.cta_entrada != mov_viejo.cta_salida:
-                            mov_viejo.saldo_cs().eliminar()
-                    elif mov_viejo.cta_salida \
-                            and self.cta_salida != mov_viejo.cta_salida:
-                        if self.cta_entrada \
-                                and self.cta_entrada == mov_viejo.cta_salida:
-                            Saldo.generar(self, salida=True)
-                        else:   # cta_salida cambia por cuenta nueva
-                            saldo = mov_viejo.saldo_cs()
-                            saldo.cuenta = self.cta_salida
-                            saldo.importe = -self.importe
-                            saldo.save()
-                            mov_viejo.cta_salida.sumar_a_saldos_posteriores(
-                                self, self.importe
-                            )
-                            self.cta_salida.sumar_a_saldos_posteriores(
-                                self, -self.importe
-                            )
-                    elif mov_viejo.cta_salida:
-                        mov_viejo.cta_salida.sumar_a_saldo_y_posteriores(
-                            mov_viejo,
-                            mov_viejo.importe-self.importe
-                        )
-                    else:
-                        Saldo.generar(self, salida=True)
-                elif mov_viejo.cta_salida \
-                        and self.cta_entrada != mov_viejo.cta_salida:
-                    mov_viejo.saldo_cs().eliminar()
+                self._actualizar_saldos()
 
     def saldo_ce(self):
         try:
@@ -488,7 +415,94 @@ class Movimiento(MiModel):
             titular=self.receptor,
             contracuenta=cc1
         )
-        return (cc1, cc2)
+        return cc1, cc2
+
+    def _actualizar_saldos(self):
+        if self.cta_entrada:
+            if self._salida_pasa_a_entrada():
+                self.viejo.cta_salida.sumar_a_saldo_y_posteriores(
+                    self.viejo, self.viejo.importe + self.importe
+                )
+                if self.viejo.cta_entrada and not self._entrada_pasa_a_salida():
+                    self.viejo.saldo_ce().eliminar()
+            elif self._cambia_cta_entrada():
+                if self._entrada_pasa_a_salida():
+                    Saldo.generar(self, salida=False)
+                else:   # cta_entrada cambia por cta_nueva
+                    saldo = self.viejo.saldo_ce()
+                    saldo.cuenta = self.cta_entrada
+                    saldo.importe = self.importe
+                    saldo.save()
+                    self.viejo.cta_entrada.sumar_a_saldos_posteriores(
+                        self, -self.importe
+                    )
+                    self.cta_entrada.sumar_a_saldos_posteriores(
+                        self, self.importe
+                    )
+            elif self.viejo.cta_entrada:
+                self.viejo.cta_entrada.sumar_a_saldo_y_posteriores(
+                    self.viejo, self.importe-self.viejo.importe
+                )
+            else:   # not mov_viejo.cta_entrada
+                Saldo.generar(self, salida=False)
+        elif self.viejo.cta_entrada and not self._entrada_pasa_a_salida():
+            self.viejo.saldo_ce().eliminar()
+
+        if self.cta_salida:
+            if self._entrada_pasa_a_salida():
+                self.viejo.cta_entrada.sumar_a_saldo_y_posteriores(
+                    self.viejo, -self.viejo.importe - self.importe
+                )
+                if self.viejo.cta_salida \
+                        and not self._salida_pasa_a_entrada():
+                    self.viejo.saldo_cs().eliminar()
+            elif self._cambia_cta_salida():
+                if self._salida_pasa_a_entrada():
+                    Saldo.generar(self, salida=True)
+                else:   # cta_salida cambia por cuenta nueva
+                    saldo = self.viejo.saldo_cs()
+                    saldo.cuenta = self.cta_salida
+                    saldo.importe = -self.importe
+                    saldo.save()
+                    self.viejo.cta_salida.sumar_a_saldos_posteriores(
+                        self, self.importe
+                    )
+                    self.cta_salida.sumar_a_saldos_posteriores(
+                        self, -self.importe
+                    )
+            elif self.viejo.cta_salida:
+                self.viejo.cta_salida.sumar_a_saldo_y_posteriores(
+                    self.viejo, self.viejo.importe - self.importe
+                )
+            else:
+                Saldo.generar(self, salida=True)
+        elif self.viejo.cta_salida \
+                and not self._salida_pasa_a_entrada():
+            self.viejo.saldo_cs().eliminar()
+
+    def _cambia_cta_entrada(self):
+        return (
+            self.cta_entrada and self.viejo.cta_entrada
+            and self.cta_entrada != self.viejo.cta_entrada
+        )
+
+    def _cambia_cta_salida(self):
+        return (
+            self.cta_salida and self.viejo.cta_salida
+            and self.cta_salida != self.viejo.cta_salida
+        )
+
+    def _salida_pasa_a_entrada(self):
+        return (
+            self.cta_entrada and self.viejo.cta_salida
+            and self.cta_entrada == self.viejo.cta_salida
+        )
+
+    def _entrada_pasa_a_salida(self):
+        return (
+            self.cta_salida and self.viejo.cta_entrada
+            and self.cta_salida == self.viejo.cta_entrada
+        )
 
     def _crear_movimiento_credito(self):
         # TODO: ¿manejar con try/except?
