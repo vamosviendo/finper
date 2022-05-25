@@ -155,14 +155,18 @@ class TestModelMovimientoSaveModificaImporte(TestModelMovimientoSave):
 
 class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
 
-    def test_cambiar_cta_entrada_cambia_cuenta_en_saldo_cta_entrada(self):
+    @patch('diario.models.movimiento.Saldo.generar')
+    def test_cambiar_cta_entrada_genera_saldo_cta_entrada_nueva_en_movimiento(self, mock_generar):
+        self.mov1.cta_entrada = self.cuenta2
+        self.mov1.save()
+        mock_generar.assert_called_once_with(self.mov1, salida=False)
+
+    @patch('diario.models.movimiento.Saldo.eliminar', autospec=True)
+    def test_cambiar_cta_entrada_elimina_saldo_de_cta_entrada_vieja_en_movimiento(self, mock_eliminar):
         saldo_ce = self.mov1.saldo_ce()
         self.mov1.cta_entrada = self.cuenta2
-
         self.mov1.save()
-        saldo_ce.refresh_from_db(fields=['cuenta'])
-
-        self.assertEqual(saldo_ce.cuenta_id, self.cuenta2.id)
+        mock_eliminar.assert_called_once_with(saldo_ce)
 
     def test_cambiar_cta_entrada_actualiza_importe_de_saldos_posteriores_de_cta_anterior_y_nueva(self):
         self.mov1.cta_entrada = self.cuenta2
@@ -177,14 +181,18 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
             -50+125
         )
 
-    def test_cambiar_cta_salida_cambia_cuenta_en_saldo_cta_salida(self):
+    @patch('diario.models.movimiento.Saldo.generar')
+    def test_cambiar_cta_salida_genera_saldo_cta_salida_nueva_en_movimiento(self, mock_generar):
+        self.mov2.cta_salida = self.cuenta2
+        self.mov2.save()
+        mock_generar.assert_called_once_with(self.mov2, salida=True)
+
+    @patch('diario.models.movimiento.Saldo.eliminar', autospec=True)
+    def test_cambiar_cta_salida_elimina_saldo_de_cta_salida_vieja_en_movimiento(self, mock_eliminar):
         saldo_cs = self.mov2.saldo_cs()
         self.mov2.cta_salida = self.cuenta2
-
         self.mov2.save()
-        saldo_cs.refresh_from_db(fields=['cuenta'])
-
-        self.assertEqual(saldo_cs.cuenta_id, self.cuenta2.id)
+        mock_eliminar.assert_called_once_with(saldo_cs)
 
     def test_cambiar_cta_salida_actualiza_importe_de_saldos_posteriores_de_cta_anterior_y_nueva(self):
         self.mov2.cta_salida = self.cuenta2
