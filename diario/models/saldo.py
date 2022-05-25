@@ -11,6 +11,7 @@ es más rápido y hago desaparecer este modelo).
 """
 from django.db import models
 
+from utils import errors
 from vvmodel.models import MiModel
 
 
@@ -73,28 +74,30 @@ class Saldo(MiModel):
         return Saldo.tomar(cuenta=cuenta, movimiento=ultimo_mov)
 
     @classmethod
-    def generar(cls, mov, salida):
-
-        cuenta = mov.cta_salida if salida else mov.cta_entrada
+    def generar(cls, mov, cuenta=None, salida=False):
         importe = mov.importe if not salida else -mov.importe
-
-        if cuenta:
-            try:
-                importe_saldo_anterior = Saldo._anterior_a(
-                    mov.fecha, mov.orden_dia, cuenta
-                ).importe
-            except AttributeError:
-                importe_saldo_anterior = 0
-            saldo: 'Saldo' = cls.crear(
-                cuenta=cuenta,
-                importe=importe_saldo_anterior + importe,
-                movimiento=mov
+        cuenta = cuenta or (mov.cta_salida if salida else mov.cta_entrada)
+        if cuenta not in (mov.cta_entrada, mov.cta_salida):
+            raise errors.ErrorCuentaNoFiguraEnMovimiento(
+                f'La cuenta "{cuenta.nombre}" no pertenece al movimiento '
+                f'"{mov.concepto}"'
             )
-            saldo._actualizar_posteriores(importe)
 
-            return saldo
+        try:
+            importe_saldo_anterior = Saldo._anterior_a(
+                mov.fecha, mov.orden_dia, cuenta
+            ).importe
+        except AttributeError:
+            importe_saldo_anterior = 0
 
-        return None
+        saldo: 'Saldo' = cls.crear(
+            cuenta=cuenta,
+            importe=importe_saldo_anterior + importe,
+            movimiento=mov
+        )
+        saldo._actualizar_posteriores(importe)
+
+        return saldo
 
     def eliminar(self):
         self.delete()
