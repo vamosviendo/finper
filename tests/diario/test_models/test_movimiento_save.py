@@ -1273,6 +1273,28 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
         )
 
 
+class TestModelMovimientoSaveModificaFecha(TestModelMovimientoSave):
+
+    def test_si_cambia_fecha_a_fecha_posterior_toma_primer_orden_dia_de_nueva_fecha(self):
+        mov4 = Movimiento.crear('mov4', 100, self.cuenta1, fecha=self.mov1.fecha)
+        self.assertEqual(mov4.orden_dia, 1)
+
+        mov4.fecha = self.mov3.fecha
+        mov4.full_clean()
+        mov4.save()
+
+        self.assertEqual(mov4.orden_dia, 0)
+
+    def test_si_cambia_fecha_a_fecha_anterior_toma_ultimo_orden_dia_de_nueva_fecha(self):
+        Movimiento.crear('mov4', 100, self.cuenta1, fecha=self.mov1.fecha)
+
+        self.mov2.fecha = self.mov1.fecha
+        self.mov2.full_clean()
+        self.mov2.save()
+
+        self.assertEqual(self.mov2.orden_dia, 2)
+
+
 class TestModelMovimientoSaveModificaEsGratis(TestModelMovimientoSave):
 
     def setUp(self):

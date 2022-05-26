@@ -308,6 +308,22 @@ class Movimiento(MiModel):
             ):
                 self._actualizar_saldos()
 
+            if self._cambia_campo('fecha', contraparte=self.viejo):
+                if self.fecha > self.viejo.fecha:
+                    # si se cambia la fecha, va a pasar esto. Si se quiere
+                    # cambiar el orden_dia además de la fecha, hay que hacerlo
+                    # por separado (cambiar primero la fecha y después el
+                    # orden_dia)
+                    self.orden_dia = 0
+                    self.save()     # TODO ver si se puede retira
+
+                    if self.cta_entrada:
+                        movs_intermedios = Movimiento.filtro
+
+                elif self.fecha < self.viejo.fecha:
+                    self.orden_dia = Movimiento.filtro(fecha=self.fecha).count()
+                    self.save()
+
     def saldo_ce(self):
         try:
             return self.cta_entrada.saldo_set.get(movimiento=self)
