@@ -290,6 +290,59 @@ class TestSaldoMetodoEliminar(TestCase):
         )
 
 
+class TestSaldoMetodoIntermedios(TestCase):
+
+    def setUp(self):
+        self.cuenta = Cuenta.crear(
+            'cuenta normal', 'cn', fecha_creacion=date(2010, 11, 10))
+        mov2 = Movimiento.crear(
+            'mov2', 150, self.cuenta, fecha=date(2011, 12, 15))
+        mov3 = Movimiento.crear(
+            'mov3', 50, self.cuenta, fecha=date(2012, 5, 6))
+        mov1 = Movimiento.crear('mov1', 200, self.cuenta, fecha=date(2011, 1, 30))
+        mov4 = Movimiento.crear('mov4', 2900, self.cuenta, fecha=date(2012, 6, 15))
+        self.saldo2 = mov2.saldo_set.first()
+        self.saldo3 = mov3.saldo_set.first()
+        self.saldo1 = mov1.saldo_set.first()
+        self.saldo4 = mov4.saldo_set.first()
+
+    def test_si_saldo_es_anterior_a_otro_devuelve_saldos_posteriores_a_este_y_anteriores_a_otro(self):
+        intermedios = self.saldo1.intermedios(self.saldo4)
+        self.assertIn(self.saldo2, intermedios)
+        self.assertIn(self.saldo3, intermedios)
+
+    def test_si_saldo_es_anterior_a_otro_no_incluye_saldos_anteriores_a_este(self):
+        self.assertNotIn(self.saldo1, self.saldo2.intermedios(self.saldo4))
+
+    def test_si_saldo_es_anterior_a_otro_no_incluye_saldos_posteriores_a_este(self):
+        self.assertNotIn(self.saldo4, self.saldo1.intermedios(self.saldo3))
+
+    def test_no_incluye_este_saldo_ni_el_otro(self):
+        self.assertNotIn(self.saldo1, self.saldo1.intermedios(self.saldo3))
+        self.assertNotIn(self.saldo3, self.saldo1.intermedios(self.saldo3))
+
+    def test_no_incluye_saldos_de_otras_cuentas(self):
+        cuenta2 = Cuenta.crear('cuenta2', 'c2', fecha_creacion=date(2010, 11, 10))
+        mov5 = Movimiento.crear(
+            'mov2', 50, cuenta2, fecha=date(2012, 5, 6))
+        saldo5 = mov5.saldo_set.first()
+        self.assertNotIn(saldo5, self.saldo1.intermedios(self.saldo4))
+
+    def test_el_metodo_es_simetrico(self):
+        self.assertEqual(
+            list(self.saldo1.intermedios(self.saldo4)),
+            list(self.saldo4.intermedios(self.saldo1))
+        )
+        self.assertEqual(
+            list(self.saldo1.intermedios(self.saldo3)),
+            list(self.saldo3.intermedios(self.saldo1))
+        )
+        self.assertEqual(
+            list(self.saldo1.intermedios(self.saldo2)),
+            list(self.saldo2.intermedios(self.saldo1))
+        )
+
+
 class TestSaldoMetodoActualizarPosteriores(TestCase):
 
     def setUp(self):

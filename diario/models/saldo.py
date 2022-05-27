@@ -129,6 +129,28 @@ class Saldo(MiModel):
             self.cuenta
         )
 
+    def intermedios(self, otro):
+        return self.intermedios_con_fecha_y_orden(
+            otro.movimiento.fecha,
+            otro.movimiento.orden_dia
+        )
+
+    def intermedios_con_fecha_y_orden(self, fecha, orden_dia=0):
+        if self.movimiento.es_anterior_a_fecha_y_orden(fecha, orden_dia):
+            queryset = self._posteriores_a(
+                self.movimiento.fecha, self.movimiento.orden_dia, self.cuenta
+            ) & self._anteriores_a(
+                fecha, orden_dia, self.cuenta
+            )
+            return queryset
+        else:
+            queryset = self._posteriores_a(
+                fecha, orden_dia, self.cuenta
+            ) & self._anteriores_a(
+                self.movimiento.fecha, self.movimiento.orden_dia, self.cuenta
+            )
+            return queryset
+
     def sumar_a_este_y_posteriores(self, importe):
         self._actualizar_posteriores(importe)
         self.importe += importe
@@ -160,3 +182,4 @@ class Saldo(MiModel):
         for saldo_post in self.posteriores():
             saldo_post.importe += importe
             saldo_post.save()
+

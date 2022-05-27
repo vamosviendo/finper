@@ -361,6 +361,13 @@ class Movimiento(MiModel):
                 self.receptor != self.emisor and
                 not self.esgratis)
 
+    def es_anterior_a(self, otro):
+        return (
+            self.fecha < otro.fecha
+        ) or (
+            self.fecha == otro.fecha and self.orden_dia < otro.orden_dia
+        )
+
     def recuperar_cuentas_credito(self):
         cls = self.get_related_class('cta_entrada')
         try:
