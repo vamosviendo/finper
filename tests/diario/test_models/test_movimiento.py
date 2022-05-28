@@ -941,7 +941,7 @@ class TestModelMovimientoMetodoEsAnteriorA(TestModelMovimiento):
     def test_True_si_fecha_es_igual_y_orden_dia_es_menor_que_el_de_otro_False_si_es_mayor(self):
         m1 = Movimiento.crear('m1', 100, self.cuenta1, fecha=date(2012, 1, 5))
         m2 = Movimiento.crear('m2', 100, self.cuenta1, fecha=date(2012, 1, 5), orden_dia=0)
-        m1.refresh_from_db()
+        m1.refresh_from_db(fields=['orden_dia'])
 
         self.assertTrue(m2.es_anterior_a(m1))
         self.assertFalse(m1.es_anterior_a(m2))

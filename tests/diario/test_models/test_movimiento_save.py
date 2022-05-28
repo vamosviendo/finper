@@ -1294,6 +1294,29 @@ class TestModelMovimientoSaveModificaFecha(TestModelMovimientoSave):
 
         self.assertEqual(self.mov2.orden_dia, 2)
 
+    def test_si_cambia_fecha_a_fecha_posterior_resta_importe_a_saldos_intermedios_de_cta_entrada_entre_antigua_y_nueva_posicion_de_movimiento(self):
+        self.mov1.fecha = date(2021, 1, 12)
+        self.mov1.full_clean()
+        self.mov1.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
+            90-125
+        )
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
+            140-125
+        )
+
+    def test_si_cambia_fecha_a_fecha_posterior_suma_importe_a_saldos_intermedios_de_cta_salida_entre_antigua_y_nueva_posicion_de_movimiento(self):
+        self.mov2.fecha = date(2021, 1, 12)
+        self.mov2.full_clean()
+        self.mov2.save()
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
+            140+35
+        )
+
 
 class TestModelMovimientoSaveModificaEsGratis(TestModelMovimientoSave):
 

@@ -309,20 +309,7 @@ class Movimiento(MiModel):
                 self._actualizar_saldos()
 
             if self._cambia_campo('fecha', contraparte=self.viejo):
-                if self.fecha > self.viejo.fecha:
-                    # si se cambia la fecha, va a pasar esto. Si se quiere
-                    # cambiar el orden_dia además de la fecha, hay que hacerlo
-                    # por separado (cambiar primero la fecha y después el
-                    # orden_dia)
-                    self.orden_dia = 0
-                    self.save()     # TODO ver si se puede retira
-
-                    if self.cta_entrada:
-                        movs_intermedios = Movimiento.filtro
-
-                elif self.fecha < self.viejo.fecha:
-                    self.orden_dia = Movimiento.filtro(fecha=self.fecha).count()
-                    self.save()
+                self._actualizar_orden()
 
     def saldo_ce(self):
         try:
@@ -362,10 +349,13 @@ class Movimiento(MiModel):
                 not self.esgratis)
 
     def es_anterior_a(self, otro):
+        return self.es_anterior_a_fecha_y_orden(otro.fecha, otro.orden_dia)
+
+    def es_anterior_a_fecha_y_orden(self, fecha, orden_dia=0):
         return (
-            self.fecha < otro.fecha
+            self.fecha < fecha
         ) or (
-            self.fecha == otro.fecha and self.orden_dia < otro.orden_dia
+            self.fecha == fecha and self.orden_dia < orden_dia
         )
 
     def recuperar_cuentas_credito(self):
@@ -501,6 +491,40 @@ class Movimiento(MiModel):
 
         elif self.viejo.cta_salida and not self._salida_pasa_a_entrada():
             self.viejo.saldo_cs().eliminar()
+
+    def _actualizar_orden(self):
+        if self.fecha > self.viejo.fecha:
+            # si se cambia la fecha, va a pasar esto. Si se quiere
+            # cambiar el orden_dia además de la fecha, hay que hacerlo
+            # por separado (cambiar primero la fecha y después el
+            # orden_dia)
+            self.orden_dia = 0
+
+            if self.cta_entrada:
+                # TODO: self.actualizar_saldos_intermedios(entrada)
+                intermedios = self.saldo_ce().intermedios_con_fecha_y_orden(
+                    self.viejo.fecha,
+                    self.viejo.orden_dia
+                )
+                for saldo in intermedios:
+                    saldo.importe -= self.importe
+                    saldo.save()
+
+            if self.cta_salida:
+                # TODO: self.actualizar_saldos_intermedios(salida)
+                intermedios = self.saldo_cs().intermedios_con_fecha_y_orden(
+                    self.viejo.fecha,
+                    self.viejo.orden_dia
+                )
+                for saldo in intermedios:
+                    saldo.importe += self.importe
+                    saldo.save()
+
+            self.save()
+
+        elif self.fecha < self.viejo.fecha:
+            self.orden_dia = Movimiento.filtro(fecha=self.fecha).count()
+            self.save()
 
     def _cambia_cta_entrada(self):
         return (
