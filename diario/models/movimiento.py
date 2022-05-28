@@ -512,8 +512,10 @@ class Movimiento(MiModel):
                     saldo.importe -= self.importe
                     saldo.save()
 
-                saldo_ce.importe = intermedios.last().importe + self.importe
-                saldo_ce.save()
+                if intermedios.count() > 0:
+                    # TODO: self.calcular_nuevo_saldo_dada_ubicacion(entrada)
+                    saldo_ce.importe = intermedios.last().importe + self.importe
+                    saldo_ce.save()
 
             if self.cta_salida:
                 saldo_cs = self.saldo_cs()
@@ -527,8 +529,10 @@ class Movimiento(MiModel):
                     saldo.importe += self.importe
                     saldo.save()
 
-                saldo_cs.importe = intermedios.last().importe - self.importe
-                saldo_cs.save()
+                if intermedios.count() > 0:
+                    # TODO: self.calcular_nuevo_saldo_dada_ubicacion(salida)
+                    saldo_cs.importe = intermedios.last().importe - self.importe
+                    saldo_cs.save()
 
             self.save()
 
