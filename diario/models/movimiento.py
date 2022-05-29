@@ -493,6 +493,24 @@ class Movimiento(MiModel):
             self.viejo.saldo_cs().eliminar()
 
     def _actualizar_orden(self):
+        # TODO: saldos_intermedios_de_ctas(
+        #           self.viejo.fecha, self.viejo.orden_dia
+        #       ) -> intermedios_ce, intermedios_cs
+        try:
+            intermedios_ce = self.saldo_ce().intermedios_con_fecha_y_orden(
+                self.viejo.fecha,
+                self.viejo.orden_dia
+            )
+        except AttributeError:
+            intermedios_ce = None
+        try:
+            intermedios_cs = self.saldo_cs().intermedios_con_fecha_y_orden(
+                self.viejo.fecha,
+                self.viejo.orden_dia
+            )
+        except AttributeError:
+            intermedios_cs = None
+
         if self.fecha > self.viejo.fecha:
             # si se cambia la fecha, va a pasar esto. Si se quiere
             # cambiar el orden_dia además de la fecha, hay que hacerlo
@@ -503,35 +521,30 @@ class Movimiento(MiModel):
             if self.cta_entrada:
                 saldo_ce = self.saldo_ce()
 
-                # TODO: self.actualizar_saldos_intermedios(entrada)
-                intermedios = self.saldo_ce().intermedios_con_fecha_y_orden(
-                    self.viejo.fecha,
-                    self.viejo.orden_dia
-                )
-                for saldo in intermedios:
+                # TODO: Saldo.actualizar_saldos(saldos, importe)
+                #       (como Saldo.actualizar_posteriores pero actualiza
+                #       la lista de saldos que se le pasa y no los posteriores)
+                for saldo in intermedios_ce:
                     saldo.importe -= self.importe
                     saldo.save()
 
-                if intermedios.count() > 0:
+                if intermedios_ce.count() > 0:
                     # TODO: self.calcular_nuevo_saldo_dada_ubicacion(entrada)
-                    saldo_ce.importe = intermedios.last().importe + self.importe
+                    saldo_ce.importe = intermedios_ce.last().importe + self.importe
                     saldo_ce.save()
 
             if self.cta_salida:
                 saldo_cs = self.saldo_cs()
 
-                # TODO: self.actualizar_saldos_intermedios(salida)
-                intermedios = self.saldo_cs().intermedios_con_fecha_y_orden(
-                    self.viejo.fecha,
-                    self.viejo.orden_dia
-                )
-                for saldo in intermedios:
+                # TODO: Saldo.actualizar_saldos(saldos, importe)
+                for saldo in intermedios_cs:
                     saldo.importe += self.importe
                     saldo.save()
 
-                if intermedios.count() > 0:
-                    # TODO: self.calcular_nuevo_saldo_dada_ubicacion(salida)
-                    saldo_cs.importe = intermedios.last().importe - self.importe
+                # TODO: self.calcular_nuevo_saldo_dada_ubicacion(salida)
+                #       if intermedios.count() == 0: return
+                if intermedios_cs.count() > 0:
+                    saldo_cs.importe = intermedios_cs.last().importe - self.importe
                     saldo_cs.save()
 
         elif self.fecha < self.viejo.fecha:
@@ -540,26 +553,34 @@ class Movimiento(MiModel):
             if self.cta_entrada:
                 saldo_ce = self.saldo_ce()
 
-                # TODO: self.actualizar_saldos_intermedios(entrada)
-                intermedios = self.saldo_ce().intermedios_con_fecha_y_orden(
-                    self.viejo.fecha,
-                    self.viejo.orden_dia
-                )
-                for saldo in intermedios:
+                # TODO: Saldo.actualizar_saldos(saldos, importe)
+                for saldo in intermedios_ce:
                     saldo.importe += self.importe
                     saldo.save()
+
+                # TODO: self.calcular_nuevo_saldo_dada_ubicacion(salida)
+                #       if intermedios.count() == 0: return
+                saldo_ce_anterior = saldo_ce.anterior()
+                saldo_ce.importe = saldo_ce_anterior.importe + self.importe \
+                    if saldo_ce_anterior \
+                    else self.importe
+                saldo_ce.save()
 
             if self.cta_salida:
                 saldo_cs = self.saldo_cs()
 
-                # TODO: self.actualizar_saldos_intermedios(salida)
-                intermedios = self.saldo_cs().intermedios_con_fecha_y_orden(
-                    self.viejo.fecha,
-                    self.viejo.orden_dia
-                )
-                for saldo in intermedios:
+                # TODO: Saldo.actualizar_saldos(saldos, importe)
+                for saldo in intermedios_cs:
                     saldo.importe -= self.importe
                     saldo.save()
+
+                # TODO: self.calcular_nuevo_saldo_dada_ubicacion(salida)
+                #       if intermedios.count() == 0: return
+                saldo_cs_anterior = saldo_cs.anterior()
+                saldo_cs.importe = saldo_cs_anterior.importe - self.importe \
+                    if saldo_cs_anterior \
+                    else -self.importe
+                saldo_cs.save()
 
         self.save()
 
