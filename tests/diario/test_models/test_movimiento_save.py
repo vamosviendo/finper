@@ -1485,6 +1485,52 @@ class TestModelMovimientoSaveModificaFecha(TestModelMovimientoSave):
             -50
         )
 
+    def test_si_cambia_fecha_a_una_fecha_anterior_no_modifica_importes_de_saldos_de_cta_entrada_anteriores_a_nueva_ubicacion_de_movimiento(self):
+        self.mov3.fecha = date(2021, 1, 6)
+        self.mov3.full_clean()
+        self.mov3.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov1).importe,
+            125
+        )
+
+    def test_si_cambia_fecha_a_una_fecha_anterior_no_modifica_importes_de_saldos_de_cta_salida_anteriores_a_nueva_ubicacion(self):
+        mov4 = Movimiento.crear(
+            'mov posterior', 100, None, self.cuenta1, fecha=date(2021, 1, 31))
+        mov4.fecha = date(2021, 1, 6)
+        mov4.full_clean()
+        mov4.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov1).importe,
+            125
+        )
+
+    def test_si_cambia_fecha_a_una_fecha_anterior_no_modifica_importes_de_saldos_de_cta_entrada_posteriores_a_ubicacion_anterior_de_movimiento(self):
+        mov4 = Movimiento.crear(
+            'mov anterior', 100, self.cuenta1, fecha=date(2021, 1, 31))
+        self.mov3.fecha = date(2021, 1, 10)
+        self.mov3.full_clean()
+        self.mov3.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=mov4).importe,
+            240
+        )
+
+    def test_si_cambia_fecha_a_una_fecha_anterior_no_modifica_importes_de_saldos_de_cta_salida_posteriores_a_ubicacion_anterior_de_movimiento(self):
+        mov4 = Movimiento.crear(
+            'mov anterior', 100, self.cuenta1, fecha=date(2021, 1, 31))
+        self.mov2.fecha = date(2021, 1, 12)
+        self.mov2.full_clean()
+        self.mov2.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=mov4).importe,
+            240
+        )
+
 
 class TestModelMovimientoSaveModificaEsGratis(TestModelMovimientoSave):
 
