@@ -534,11 +534,34 @@ class Movimiento(MiModel):
                     saldo_cs.importe = intermedios.last().importe - self.importe
                     saldo_cs.save()
 
-            self.save()
-
         elif self.fecha < self.viejo.fecha:
             self.orden_dia = Movimiento.filtro(fecha=self.fecha).count()
-            self.save()
+
+            if self.cta_entrada:
+                saldo_ce = self.saldo_ce()
+
+                # TODO: self.actualizar_saldos_intermedios(entrada)
+                intermedios = self.saldo_ce().intermedios_con_fecha_y_orden(
+                    self.viejo.fecha,
+                    self.viejo.orden_dia
+                )
+                for saldo in intermedios:
+                    saldo.importe += self.importe
+                    saldo.save()
+
+            if self.cta_salida:
+                saldo_cs = self.saldo_cs()
+
+                # TODO: self.actualizar_saldos_intermedios(salida)
+                intermedios = self.saldo_cs().intermedios_con_fecha_y_orden(
+                    self.viejo.fecha,
+                    self.viejo.orden_dia
+                )
+                for saldo in intermedios:
+                    saldo.importe -= self.importe
+                    saldo.save()
+
+        self.save()
 
     def _cambia_cta_entrada(self):
         return (
