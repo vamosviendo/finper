@@ -1532,6 +1532,115 @@ class TestModelMovimientoSaveModificaFecha(TestModelMovimientoSave):
         )
 
 
+class TestModelMovimientoSaveModificaOrdenDia(TestModelMovimientoSave):
+
+    def setUp(self):
+        super().setUp()
+        self.mov2a = Movimiento.crear(
+            'mov2a', 100, self.cuenta1, fecha=self.mov2.fecha)
+        self.mov2b = Movimiento.crear(
+            'mov2b', 20, self.cuenta2, self.cuenta1, fecha=self.mov2.fecha)
+        self.mov2c = Movimiento.crear(
+            'mov2c', 30, self.cuenta1, self.cuenta2, fecha=self.mov2.fecha)
+
+    def test_si_cambia_orden_dia_a_un_orden_posterior_resta_importe_de_saldos_intermedios_de_cta_entrada(self):
+        self.mov2a.orden_dia = 3
+        self.mov2a.full_clean()
+        self.mov2a.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2b).importe,
+            170-100
+        )
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2c).importe,
+            200-100
+        )
+
+    def test_si_cambia_orden_dia_a_un_orden_posterior_suma_importe_a_saldos_intermedios_de_cta_salida(self):
+        self.mov2.orden_dia = 3
+        self.mov2.full_clean()
+        self.mov2.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2a).importe,
+            190+35
+        )
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2b).importe,
+            170+35
+        )
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2c).importe,
+            200+35
+        )
+
+    def test_si_cambia_orden_dia_a_un_orden_posterior_suma_importe_del_movimiento_a_importe_del_nuevo_ultimo_saldo_anterior_de_cta_entrada(self):
+        self.mov2a.orden_dia = 3
+        self.mov2a.full_clean()
+        self.mov2a.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2a).importe,
+            100+100
+        )
+
+    def test_si_cambia_orden_dia_a_un_orden_posterior_resta_importe_del_movimiento_a_importe_del_nuevo_ultimo_saldo_anterior_de_cta_salida(self):
+        self.mov2.orden_dia = 3
+        self.mov2.full_clean()
+        self.mov2.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
+            235-35
+        )
+
+    def test_si_cambia_orden_dia_a_un_orden_posterior_no_modifica_importe_de_saldos_de_cta_entrada_posteriores_a_nueva_ubicacion_de_movimiento(self):
+        self.mov2a.orden_dia = 2
+        self.mov2a.full_clean()
+        self.mov2a.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2c).importe,
+            200
+        )
+
+    def test_si_cambia_orden_dia_a_un_orden_posterior_no_modifica_importe_de_saldos_de_cta_salida_posteriores_a_nueva_ubicacion_de_movimiento(self):
+        self.mov2.orden_dia = 2
+        self.mov2.full_clean()
+        self.mov2.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2c).importe,
+            200
+        )
+
+    def test_si_cambia_orden_dia_a_un_orden_posterior_no_modifica_importes_de_saldos_de_cta_entrada_anteriores_a_ubicacion_anterior_de_movimiento(self):
+        self.mov2a.orden_dia = 2
+        self.mov2a.full_clean()
+        self.mov2a.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
+            90
+        )
+
+    def test_si_cambia_orden_dia_a_un_orden_posterior_no_modifica_importes_de_saldos_de_cta_salida_anteriores_a_ubicacion_anterior_de_movimiento(self):
+        self.mov2b.orden_dia = 3
+        self.mov2b.full_clean()
+        self.mov2b.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
+            90
+        )
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2a).importe,
+            190
+        )
+
+
 class TestModelMovimientoSaveModificaEsGratis(TestModelMovimientoSave):
 
     def setUp(self):

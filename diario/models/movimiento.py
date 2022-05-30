@@ -308,7 +308,7 @@ class Movimiento(MiModel):
             ):
                 self._actualizar_saldos()
 
-            if self._cambia_campo('fecha', contraparte=self.viejo):
+            if self._cambia_campo('fecha', 'orden_dia', contraparte=self.viejo):
                 self._actualizar_orden()
 
     def saldo_ce(self):
@@ -581,6 +581,36 @@ class Movimiento(MiModel):
                     if saldo_cs_anterior \
                     else -self.importe
                 saldo_cs.save()
+
+        elif self.orden_dia > self.viejo.orden_dia:
+            if self.cta_entrada:
+                saldo_ce = self.saldo_ce()
+                intermedios = self.cta_entrada.saldo_set.filter(
+                    movimiento__fecha=self.fecha,
+                    movimiento__orden_dia__gte=self.viejo.orden_dia,
+                    movimiento__orden_dia__lt=self.orden_dia
+                )
+                for saldo in intermedios:
+                    saldo.importe -= self.importe
+                    saldo.save()
+
+                saldo_ce.importe = saldo_ce.anterior().importe + self.importe
+                saldo_ce.save()
+
+            if self.cta_salida:
+                saldo_cs = self.saldo_cs()
+                intermedios = self.cta_salida.saldo_set.filter(
+                    movimiento__fecha=self.fecha,
+                    movimiento__orden_dia__gte=self.viejo.orden_dia,
+                    movimiento__orden_dia__lt=self.orden_dia
+                )
+                for saldo in intermedios:
+                    saldo.importe += self.importe
+                    saldo.save()
+
+                saldo_cs.importe = saldo_cs.anterior().importe - self.importe
+                saldo_cs.save()
+
 
         self.save()
 
