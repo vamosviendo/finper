@@ -165,27 +165,27 @@ class Saldo(MiModel):
 
     @staticmethod
     def _anteriores_a(fecha, cuenta, orden_dia=0, inclusive_od=False):
+        kw_orden_dia = 'movimiento__orden_dia__lte' if inclusive_od \
+            else 'movimiento__orden_dia__lt'
+        kwarg_orden_dia = {kw_orden_dia: orden_dia}
         return cuenta.saldo_set.filter(
             movimiento__fecha__lt=fecha
-        ) | (cuenta.saldo_set.filter(
+        ) | cuenta.saldo_set.filter(
             movimiento__fecha=fecha,
-            movimiento__orden_dia__lte=orden_dia
-        ) if inclusive_od else cuenta.saldo_set.filter(
-            movimiento__fecha=fecha,
-            movimiento__orden_dia__lt=orden_dia
-        ))
+            **kwarg_orden_dia
+        )
 
     @staticmethod
     def _posteriores_a(fecha, cuenta, orden_dia=0, inclusive_od=False):
+        kw_orden_dia = 'movimiento__orden_dia__gte' if inclusive_od \
+            else 'movimiento__orden_dia__gt'
+        kwarg_orden_dia = {kw_orden_dia: orden_dia}
         return cuenta.saldo_set.filter(
             movimiento__fecha__gt=fecha
-        ) | (cuenta.saldo_set.filter(
+        ) | cuenta.saldo_set.filter(
             movimiento__fecha=fecha,
-            movimiento__orden_dia__gte=orden_dia
-        ) if inclusive_od else cuenta.saldo_set.filter(
-            movimiento__fecha=fecha,
-            movimiento__orden_dia__gt=orden_dia
-        ))
+            **kwarg_orden_dia
+        )
 
     def _actualizar_posteriores(self, importe):
         for saldo_post in self.posteriores():
