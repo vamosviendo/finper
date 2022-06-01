@@ -1640,6 +1640,22 @@ class TestModelMovimientoSaveModificaOrdenDia(TestModelMovimientoSave):
             190
         )
 
+    def test_si_cambia_orden_dia_a_un_orden_anterior_suma_importe_a_saldos_intermedios_de_cta_entrada(self):
+        self.mov2c.orden_dia = 1
+        self.mov2c.full_clean()
+        self.mov2c.save()
+        self.mov2a.refresh_from_db()
+        self.mov2b.refresh_from_db()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2a).importe,
+            190+30
+        )
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2b).importe,
+            170+30
+        )
+
 
 class TestModelMovimientoSaveModificaEsGratis(TestModelMovimientoSave):
 

@@ -125,8 +125,8 @@ class Saldo(MiModel):
     def posteriores(self):
         return Saldo._posteriores_a(
             self.movimiento.fecha,
+            self.cuenta,
             self.movimiento.orden_dia,
-            self.cuenta
         )
 
     def intermedios(self, otro):
@@ -135,19 +135,22 @@ class Saldo(MiModel):
             otro.movimiento.orden_dia
         )
 
-    def intermedios_con_fecha_y_orden(self, fecha, orden_dia=0):
+    def intermedios_con_fecha_y_orden(self, fecha, orden_dia=0,
+                                      inclusive_od=False):
         if self.movimiento.es_anterior_a_fecha_y_orden(fecha, orden_dia):
             queryset = self._posteriores_a(
-                self.movimiento.fecha, self.movimiento.orden_dia, self.cuenta
+                self.movimiento.fecha, self.cuenta, self.movimiento.orden_dia,
+                inclusive_od
             ) & self._anteriores_a(
-                fecha, orden_dia, self.cuenta
+                fecha, self.cuenta, orden_dia, inclusive_od
             )
             return queryset
         else:
             queryset = self._posteriores_a(
-                fecha, orden_dia, self.cuenta
+                fecha, self.cuenta, orden_dia, inclusive_od
             ) & self._anteriores_a(
-                self.movimiento.fecha, self.movimiento.orden_dia, self.cuenta
+                self.movimiento.fecha, self.cuenta, self.movimiento.orden_dia,
+                inclusive_od
             )
             return queryset
 
@@ -158,25 +161,31 @@ class Saldo(MiModel):
 
     @staticmethod
     def _anterior_a(fecha, orden_dia, cuenta):
-        return Saldo._anteriores_a(fecha, orden_dia, cuenta).last()
+        return Saldo._anteriores_a(fecha, cuenta, orden_dia).last()
 
     @staticmethod
-    def _anteriores_a(fecha, orden_dia, cuenta):
+    def _anteriores_a(fecha, cuenta, orden_dia=0, inclusive_od=False):
         return cuenta.saldo_set.filter(
             movimiento__fecha__lt=fecha
-        ) | cuenta.saldo_set.filter(
+        ) | (cuenta.saldo_set.filter(
+            movimiento__fecha=fecha,
+            movimiento__orden_dia__lte=orden_dia
+        ) if inclusive_od else cuenta.saldo_set.filter(
             movimiento__fecha=fecha,
             movimiento__orden_dia__lt=orden_dia
-        )
+        ))
 
     @staticmethod
-    def _posteriores_a(fecha, orden_dia, cuenta):
+    def _posteriores_a(fecha, cuenta, orden_dia=0, inclusive_od=False):
         return cuenta.saldo_set.filter(
             movimiento__fecha__gt=fecha
-        ) | cuenta.saldo_set.filter(
+        ) | (cuenta.saldo_set.filter(
+            movimiento__fecha=fecha,
+            movimiento__orden_dia__gte=orden_dia
+        ) if inclusive_od else cuenta.saldo_set.filter(
             movimiento__fecha=fecha,
             movimiento__orden_dia__gt=orden_dia
-        )
+        ))
 
     def _actualizar_posteriores(self, importe):
         for saldo_post in self.posteriores():

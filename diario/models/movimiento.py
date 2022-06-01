@@ -585,32 +585,37 @@ class Movimiento(MiModel):
         elif self.orden_dia > self.viejo.orden_dia:
             if self.cta_entrada:
                 saldo_ce = self.saldo_ce()
-                intermedios = self.cta_entrada.saldo_set.filter(
-                    movimiento__fecha=self.fecha,
-                    movimiento__orden_dia__gte=self.viejo.orden_dia,
-                    movimiento__orden_dia__lt=self.orden_dia
+                intermedios = saldo_ce.intermedios_con_fecha_y_orden(
+                    self.viejo.fecha,
+                    self.viejo.orden_dia,
+                    inclusive_od=True
                 )
                 for saldo in intermedios:
                     saldo.importe -= self.importe
                     saldo.save()
 
-                saldo_ce.importe = saldo_ce.anterior().importe + self.importe
+                saldo_ce_anterior = saldo_ce.anterior()
+                saldo_ce.importe = saldo_ce_anterior.importe + self.importe \
+                    if saldo_ce_anterior \
+                    else self.importe
                 saldo_ce.save()
 
             if self.cta_salida:
                 saldo_cs = self.saldo_cs()
-                intermedios = self.cta_salida.saldo_set.filter(
-                    movimiento__fecha=self.fecha,
-                    movimiento__orden_dia__gte=self.viejo.orden_dia,
-                    movimiento__orden_dia__lt=self.orden_dia
+                intermedios = saldo_cs.intermedios_con_fecha_y_orden(
+                    self.viejo.fecha,
+                    self.viejo.orden_dia,
+                    inclusive_od=True
                 )
                 for saldo in intermedios:
                     saldo.importe += self.importe
                     saldo.save()
 
-                saldo_cs.importe = saldo_cs.anterior().importe - self.importe
+                saldo_cs_anterior = saldo_cs.anterior()
+                saldo_cs.importe = saldo_cs_anterior.importe - self.importe \
+                    if saldo_cs_anterior \
+                    else -self.importe
                 saldo_cs.save()
-
 
         self.save()
 
