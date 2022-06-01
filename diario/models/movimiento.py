@@ -617,6 +617,42 @@ class Movimiento(MiModel):
                     else -self.importe
                 saldo_cs.save()
 
+        else:
+
+            if self.cta_entrada:
+                saldo_ce = self.saldo_ce()
+                intermedios = saldo_ce.intermedios_con_fecha_y_orden(
+                    self.viejo.fecha,
+                    self.viejo.orden_dia,
+                    inclusive_od=True
+                )
+                for saldo in intermedios:
+                    saldo.importe += self.importe
+                    saldo.save()
+
+                saldo_ce_anterior = saldo_ce.anterior()
+                saldo_ce.importe = saldo_ce_anterior.importe + self.importe \
+                    if saldo_ce_anterior \
+                    else self.importe
+                saldo_ce.save()
+
+            if self.cta_salida:
+                saldo_cs = self.saldo_cs()
+                intermedios = saldo_cs.intermedios_con_fecha_y_orden(
+                    self.viejo.fecha,
+                    self.viejo.orden_dia,
+                    inclusive_od=True
+                )
+                for saldo in intermedios:
+                    saldo.importe -= self.importe
+                    saldo.save()
+
+                saldo_cs_anterior = saldo_cs.anterior()
+                saldo_cs.importe = saldo_cs_anterior.importe - self.importe \
+                    if saldo_cs_anterior \
+                    else -self.importe
+                saldo_cs.save()
+
         self.save()
 
     def _cambia_cta_entrada(self):

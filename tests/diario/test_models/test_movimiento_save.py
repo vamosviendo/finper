@@ -1656,6 +1656,107 @@ class TestModelMovimientoSaveModificaOrdenDia(TestModelMovimientoSave):
             170+30
         )
 
+    def test_si_cambia_orden_dia_a_un_orden_anterior_resta_importe_a_saldos_intermedios_de_cta_salida(self):
+        self.mov2b.orden_dia = 0
+        self.mov2b.full_clean()
+        self.mov2b.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
+            90-20
+        )
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2a).importe,
+            190-20
+        )
+
+    def test_si_cambia_orden_dia_a_un_orden_anterior_suma_importe_del_movimiento_a_importe_del_nuevo_ultimo_saldo_anterior_de_cta_entrada(self):
+        self.mov2c.orden_dia = 1
+        self.mov2c.full_clean()
+        self.mov2c.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2c).importe,
+            90+30
+        )
+
+    def test_si_cambia_orden_dia_a_un_orden_anterior_resta_importe_del_movimiento_a_importe_del_nuevo_ultimo_saldo_anterior_de_cta_salida(self):
+        self.mov2b.orden_dia = 0
+        self.mov2b.full_clean()
+        self.mov2b.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2b).importe,
+            125-20
+        )
+
+    def test_si_cambia_orden_dia_a_un_orden_anterior_y_no_hay_saldo_anterior_de_cta_entrada_asigna_importe_del_movimiento_a_saldo_cta_entrada_en_nueva_ubicacion_del_movimiento(self):
+        # se evalúa cuenta2
+        self.mov2b.orden_dia = 0
+        self.mov2b.full_clean()
+        self.mov2b.save()
+
+        self.assertEqual(
+            self.cuenta2.saldo_set.get(movimiento=self.mov2b).importe,
+            self.mov2b.importe  # 20
+        )
+
+    def test_si_cambia_orden_dia_a_un_orden_anterior_y_no_hay_saldo_anterior_de_cta_salida_asigna_importe_del_movimiento_a_en_negativo_de_saldo_cta_salida_en_nueva_ubicacion_del_movimiento(self):
+        # se evalúa cuenta2
+        self.mov2c.orden_dia = 0
+        self.mov2c.full_clean()
+        self.mov2c.save()
+
+        self.assertEqual(
+            self.cuenta2.saldo_set.get(movimiento=self.mov2c).importe,
+            -self.mov2c.importe  # -20
+        )
+
+    def test_si_cambia_orden_dia_a_un_orden_anterior_no_modifica_importes_de_saldos_de_cta_entrada_anteriores_a_nueva_ubicacion_de_movimiento(self):
+        self.mov2c.orden_dia = 1
+        self.mov2c.full_clean()
+        self.mov2c.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
+            90
+        )
+
+    def test_si_cambia_orden_dia_a_un_orden_anterior_no_modifica_importes_de_saldos_de_cta_entrada_posteriores_a_ubicacion_anterior_de_movimiento(self):
+        self.mov2a.orden_dia = 0
+        self.mov2a.full_clean()
+        self.mov2a.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2b).importe,
+            170
+        )
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2c).importe,
+            200
+        )
+
+    def test_si_cambia_orden_dia_a_un_orden_anterior_no_modifica_importes_de_saldos_de_cta_salida_anteriores_a_nueva_ubicacion_de_movimiento(self):
+        self.mov2b.orden_dia = 1
+        self.mov2b.full_clean()
+        self.mov2b.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
+            90
+        )
+
+    def test_si_cambia_orden_dia_a_un_orden_anterior_no_modifica_importes_de_saldos_de_cta_salida_posteriores_a_ubicacion_anterior_de_movimiento(self):
+        self.mov2b.orden_dia = 1
+        self.mov2b.full_clean()
+        self.mov2b.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2c).importe,
+            200
+        )
+
 
 class TestModelMovimientoSaveModificaEsGratis(TestModelMovimientoSave):
 
