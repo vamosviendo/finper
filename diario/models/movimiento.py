@@ -251,7 +251,7 @@ class Movimiento(MiModel):
         if self.id_contramov:
             self._eliminar_contramovimiento()
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, mantiene_orden_dia=False, **kwargs):
         """
         Si el movimiento es nuevo (no existía antes, está siendo creado)
         - Generar saldo para cuentas de entrada y/o salida al momento del
@@ -309,7 +309,7 @@ class Movimiento(MiModel):
                 self._actualizar_saldos()
 
             if self._cambia_campo('fecha', 'orden_dia', contraparte=self.viejo):
-                self._actualizar_orden()
+                self._actualizar_orden(mantiene_orden_dia)
 
     def saldo_ce(self):
         try:
@@ -492,7 +492,7 @@ class Movimiento(MiModel):
         elif self.viejo.cta_salida and not self._salida_pasa_a_entrada():
             self.viejo.saldo_cs().eliminar()
 
-    def _actualizar_orden(self):
+    def _actualizar_orden(self, mantiene_orden_dia):
         # TODO: saldos_intermedios_de_ctas(
         #           self.viejo.fecha, self.viejo.orden_dia
         #       ) -> intermedios_ce, intermedios_cs
@@ -512,11 +512,8 @@ class Movimiento(MiModel):
             intermedios_cs = None
 
         if self.fecha > self.viejo.fecha:
-            # si se cambia la fecha, va a pasar esto. Si se quiere
-            # cambiar el orden_dia además de la fecha, hay que hacerlo
-            # por separado (cambiar primero la fecha y después el
-            # orden_dia)
-            self.orden_dia = 0
+            if not mantiene_orden_dia:
+                self.orden_dia = 0
 
             if self.cta_entrada:
                 saldo_ce = self.saldo_ce()
@@ -548,7 +545,8 @@ class Movimiento(MiModel):
                     saldo_cs.save()
 
         elif self.fecha < self.viejo.fecha:
-            self.orden_dia = Movimiento.filtro(fecha=self.fecha).count()
+            if not mantiene_orden_dia:
+                self.orden_dia = Movimiento.filtro(fecha=self.fecha).count()
 
             if self.cta_entrada:
                 saldo_ce = self.saldo_ce()
@@ -585,12 +583,12 @@ class Movimiento(MiModel):
         elif self.orden_dia > self.viejo.orden_dia:
             if self.cta_entrada:
                 saldo_ce = self.saldo_ce()
-                intermedios = saldo_ce.intermedios_con_fecha_y_orden(
+                intermedios_ce = saldo_ce.intermedios_con_fecha_y_orden(
                     self.viejo.fecha,
                     self.viejo.orden_dia,
                     inclusive_od=True
                 )
-                for saldo in intermedios:
+                for saldo in intermedios_ce:
                     saldo.importe -= self.importe
                     saldo.save()
 
@@ -602,12 +600,12 @@ class Movimiento(MiModel):
 
             if self.cta_salida:
                 saldo_cs = self.saldo_cs()
-                intermedios = saldo_cs.intermedios_con_fecha_y_orden(
+                intermedios_cs = saldo_cs.intermedios_con_fecha_y_orden(
                     self.viejo.fecha,
                     self.viejo.orden_dia,
                     inclusive_od=True
                 )
-                for saldo in intermedios:
+                for saldo in intermedios_cs:
                     saldo.importe += self.importe
                     saldo.save()
 
@@ -621,12 +619,12 @@ class Movimiento(MiModel):
 
             if self.cta_entrada:
                 saldo_ce = self.saldo_ce()
-                intermedios = saldo_ce.intermedios_con_fecha_y_orden(
+                intermedios_ce = saldo_ce.intermedios_con_fecha_y_orden(
                     self.viejo.fecha,
                     self.viejo.orden_dia,
                     inclusive_od=True
                 )
-                for saldo in intermedios:
+                for saldo in intermedios_ce:
                     saldo.importe += self.importe
                     saldo.save()
 
@@ -638,12 +636,12 @@ class Movimiento(MiModel):
 
             if self.cta_salida:
                 saldo_cs = self.saldo_cs()
-                intermedios = saldo_cs.intermedios_con_fecha_y_orden(
+                intermedios_cs = saldo_cs.intermedios_con_fecha_y_orden(
                     self.viejo.fecha,
                     self.viejo.orden_dia,
                     inclusive_od=True
                 )
-                for saldo in intermedios:
+                for saldo in intermedios_cs:
                     saldo.importe -= self.importe
                     saldo.save()
 

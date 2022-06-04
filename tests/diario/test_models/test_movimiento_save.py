@@ -1758,6 +1758,34 @@ class TestModelMovimientoSaveModificaOrdenDia(TestModelMovimientoSave):
         )
 
 
+class TestModelMovimientoSaveModificaFechaYOrdenDia(TestModelMovimientoSave):
+
+    def test_cambia_fecha_a_una_fecha_posterior_y_orden_dia_a_uno_posterior_a_orden_existente_en_nueva_fecha(self):
+        self.mov1.fecha = self.mov3.fecha
+        self.mov1.orden_dia = 1
+        self.mov1.save(mantiene_orden_dia=True)
+        self.mov3.refresh_from_db()
+
+        self.assertEqual(self.mov3.orden_dia, 0)
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
+            140-125
+        )
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov1).importe,
+            140-125+125
+        )
+
+    def test_cambia_fecha_a_una_fecha_anterior_y_orden_dia_a_uno_anterior_a_orden_existente_en_nueva_fecha(self):
+        self.mov3.fecha = self.mov1.fecha
+        self.mov3.orden_dia = 0
+        self.mov3.save(mantiene_orden_dia=True)
+        self.mov1.refresh_from_db()
+
+        self.assertEqual(self.mov1.orden_dia, 1)
+
+
 class TestModelMovimientoSaveModificaEsGratis(TestModelMovimientoSave):
 
     def setUp(self):
