@@ -522,7 +522,7 @@ class Movimiento(MiModel):
                 #       (como Saldo.actualizar_posteriores pero actualiza
                 #       la lista de saldos que se le pasa y no los posteriores)
                 for saldo in intermedios_ce:
-                    saldo.importe -= self.importe
+                    saldo.importe -= self.viejo.importe
                     saldo.save()
 
                 if intermedios_ce.count() > 0:
@@ -535,7 +535,7 @@ class Movimiento(MiModel):
 
                 # TODO: Saldo.actualizar_saldos(saldos, importe)
                 for saldo in intermedios_cs:
-                    saldo.importe += self.importe
+                    saldo.importe += self.viejo.importe
                     saldo.save()
 
                 # TODO: self.calcular_nuevo_saldo_dada_ubicacion(salida)
@@ -553,7 +553,13 @@ class Movimiento(MiModel):
 
                 # TODO: Saldo.actualizar_saldos(saldos, importe)
                 for saldo in intermedios_ce:
-                    saldo.importe += self.importe
+                    # si se modificó el importe, ya se sumó a los saldos
+                    # posteriores la diferencia entre el saldo nuevo y
+                    # el viejo. Queda sumar el saldo viejo. De lo contrario,
+                    # estaríamos sumando la diferencia dos veces
+                    # TODO: Tiene que haber una forma mejor de resolver
+                    #   esto.
+                    saldo.importe += self.viejo.importe
                     saldo.save()
 
                 # TODO: self.calcular_nuevo_saldo_dada_ubicacion(salida)
@@ -569,7 +575,7 @@ class Movimiento(MiModel):
 
                 # TODO: Saldo.actualizar_saldos(saldos, importe)
                 for saldo in intermedios_cs:
-                    saldo.importe -= self.importe
+                    saldo.importe -= self.viejo.importe
                     saldo.save()
 
                 # TODO: self.calcular_nuevo_saldo_dada_ubicacion(salida)
