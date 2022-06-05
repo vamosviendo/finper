@@ -595,7 +595,7 @@ class Movimiento(MiModel):
                     inclusive_od=True
                 )
                 for saldo in intermedios_ce:
-                    saldo.importe -= self.importe
+                    saldo.importe -= self.viejo.importe
                     saldo.save()
 
                 saldo_ce_anterior = saldo_ce.anterior()
@@ -612,7 +612,7 @@ class Movimiento(MiModel):
                     inclusive_od=True
                 )
                 for saldo in intermedios_cs:
-                    saldo.importe += self.importe
+                    saldo.importe += self.viejo.importe
                     saldo.save()
 
                 saldo_cs_anterior = saldo_cs.anterior()
@@ -621,7 +621,7 @@ class Movimiento(MiModel):
                     else -self.importe
                 saldo_cs.save()
 
-        else:
+        else:   # self.orden_dia < self.viejo.orden_dia
 
             if self.cta_entrada:
                 saldo_ce = self.saldo_ce()
@@ -631,7 +631,7 @@ class Movimiento(MiModel):
                     inclusive_od=True
                 )
                 for saldo in intermedios_ce:
-                    saldo.importe += self.importe
+                    saldo.importe += self.viejo.importe
                     saldo.save()
 
                 saldo_ce_anterior = saldo_ce.anterior()
@@ -648,7 +648,7 @@ class Movimiento(MiModel):
                     inclusive_od=True
                 )
                 for saldo in intermedios_cs:
-                    saldo.importe -= self.importe
+                    saldo.importe -= self.viejo.importe
                     saldo.save()
 
                 saldo_cs_anterior = saldo_cs.anterior()

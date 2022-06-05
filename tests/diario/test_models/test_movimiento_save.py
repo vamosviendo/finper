@@ -1907,6 +1907,129 @@ class TestModelMovimientoSaveModificaImporteYFecha(TestModelMovimientoSave):
         )
 
 
+class TestModelMovimientoSaveModificaImporteYOrdenDia(TestModelMovimientoSave):
+
+    def setUp(self):
+        super().setUp()
+        self.mov2a = Movimiento.crear(
+            'mov2a', 100, self.cuenta1, fecha=self.mov2.fecha)
+        self.mov2b = Movimiento.crear(
+            'mov2b', 20, self.cuenta2, self.cuenta1, fecha=self.mov2.fecha)
+        self.mov2c = Movimiento.crear(
+            'mov2c', 30, self.cuenta1, self.cuenta2, fecha=self.mov2.fecha)
+
+    def test_si_cambia_importe_y_orden_dia_a_un_orden_posterior_resta_importe_viejo_de_saldos_intermedios_de_cta_entrada(self):
+        self.mov2a.orden_dia = 3
+        self.mov2a.importe = 1000
+        self.mov2a.full_clean()
+        self.mov2a.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2b).importe,
+            170-100
+        )
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2c).importe,
+            200-100
+        )
+
+    def test_si_cambia_importe_y_orden_dia_a_un_orden_posterior_suma_importe_viejo_a_saldos_intermedios_de_cta_salida(self):
+        self.mov2.orden_dia = 3
+        self.mov2.importe = 1000
+        self.mov2.full_clean()
+        self.mov2.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2a).importe,
+            190+35
+        )
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2b).importe,
+            170+35
+        )
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2c).importe,
+            200+35
+        )
+
+    def test_si_cambia_importe_y_orden_dia_a_un_orden_posterior_suma_importe_nuevo_del_movimiento_a_importe_del_nuevo_ultimo_saldo_anterior_de_cta_entrada(self):
+        self.mov2a.orden_dia = 3
+        self.mov2a.importe = 1000
+        self.mov2a.full_clean()
+        self.mov2a.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2a).importe,
+            100+1000
+        )
+
+    def test_si_cambia_importe_y_orden_dia_a_un_orden_posterior_resta_importe_nuevo_del_movimiento_a_importe_del_nuevo_ultimo_saldo_anterior_de_cta_salida(self):
+        self.mov2.orden_dia = 3
+        self.mov2.importe = 1000
+        self.mov2.full_clean()
+        self.mov2.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
+            235-1000
+        )
+
+    def test_si_cambia_orden_dia_a_un_orden_anterior_suma_importe_nuevo_a_saldos_intermedios_de_cta_entrada(self):
+        self.mov2c.orden_dia = 1
+        self.mov2c.importe = 1000
+        self.mov2c.full_clean()
+        self.mov2c.save()
+        self.mov2a.refresh_from_db()
+        self.mov2b.refresh_from_db()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2a).importe,
+            190+1000
+        )
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2b).importe,
+            170+1000
+        )
+
+    def test_si_cambia_importe_y_orden_dia_a_un_orden_anterior_resta_importe_nuevo_a_saldos_intermedios_de_cta_salida(self):
+        self.mov2b.orden_dia = 0
+        self.mov2b.importe = 1000
+        self.mov2b.full_clean()
+        self.mov2b.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
+            90-1000
+        )
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2a).importe,
+            190-1000
+        )
+
+    def test_si_cambia_importe_y_orden_dia_a_un_orden_anterior_suma_importe_nuevo_del_movimiento_a_importe_del_nuevo_ultimo_saldo_anterior_de_cta_entrada(self):
+        self.mov2c.orden_dia = 1
+        self.mov2c.importe = 1000
+        self.mov2c.full_clean()
+        self.mov2c.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2c).importe,
+            90+1000
+        )
+
+    def test_si_cambia_importe_y_orden_dia_a_un_orden_anterior_resta_importe_nuevo_del_movimiento_a_importe_del_nuevo_ultimo_saldo_anterior_de_cta_salida(self):
+        self.mov2b.orden_dia = 0
+        self.mov2b.importe = 1000
+        self.mov2b.full_clean()
+        self.mov2b.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov2b).importe,
+            125-1000
+        )
+
+
 class TestModelMovimientoSaveModificaEsGratis(TestModelMovimientoSave):
 
     def setUp(self):
