@@ -28,7 +28,7 @@ class Saldo(MiModel):
         ordering = ['movimiento']
 
     def __str__(self):
-        return f'{self.cuenta} al {self.movimiento.fecha} - {self.movimiento.orden_dia+1}: {self.importe}'
+        return f'{self.cuenta} al {self.movimiento.fecha} - {self.movimiento.orden_dia}: {self.importe}'
 
     @property
     def importe(self):
@@ -137,22 +137,35 @@ class Saldo(MiModel):
 
     def intermedios_con_fecha_y_orden(self, fecha, orden_dia=0,
                                       inclusive_od=False):
-        if self.movimiento.es_anterior_a_fecha_y_orden(fecha, orden_dia):
-            queryset = self._posteriores_a(
-                self.movimiento.fecha, self.cuenta, self.movimiento.orden_dia,
-                inclusive_od
-            ) & self._anteriores_a(
-                fecha, self.cuenta, orden_dia, inclusive_od
-            )
-            return queryset
-        else:
-            queryset = self._posteriores_a(
-                fecha, self.cuenta, orden_dia, inclusive_od
-            ) & self._anteriores_a(
-                self.movimiento.fecha, self.cuenta, self.movimiento.orden_dia,
-                inclusive_od
-            )
-            return queryset
+        return Saldo.intermedios_entre_fechas_y_ordenes_de_cuenta(
+            cuenta=self.cuenta,
+            fecha1=self.movimiento.fecha,
+            fecha2=fecha,
+            orden_dia1=self.movimiento.orden_dia,
+            orden_dia2=orden_dia,
+            inclusive_od=inclusive_od
+        )
+
+    @staticmethod
+    def intermedios_entre_fechas_y_ordenes_de_cuenta(
+            cuenta,
+            fecha1,
+            fecha2,
+            orden_dia1=0,
+            orden_dia2=0,
+            inclusive_od=False
+    ):
+        (fecha_ant, orden_dia_ant), (fecha_pos, orden_dia_pos) = sorted([
+            [fecha1, orden_dia1],
+            [fecha2, orden_dia2]
+        ])
+
+        return Saldo._posteriores_a(
+            fecha_ant, cuenta, orden_dia_ant, inclusive_od
+        ) & Saldo._anteriores_a(
+            fecha_pos, cuenta, orden_dia_pos, inclusive_od
+        )
+
 
     def sumar_a_este_y_posteriores(self, importe):
         self._actualizar_posteriores(importe)

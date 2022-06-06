@@ -1,6 +1,5 @@
 from datetime import date, timedelta
-from unittest import skip
-from unittest.mock import patch, ANY
+from unittest.mock import patch, ANY, MagicMock
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -455,6 +454,217 @@ class TestSaldoMetodoIntermedios(TestCase):
         )
 
 
+class TestSaldoMetodoIntermediosEntreFechasYOrdenesDeCuenta(TestCase):
+
+    def setUp(self):
+        self.cuenta = Cuenta.crear(
+            'cuenta normal', 'cn', fecha_creacion=date(2010, 11, 10))
+        self.saldo1 = Movimiento.crear(
+            'mov1', 200, self.cuenta, fecha=date(2011, 1, 30)
+        ).saldo_set.first()
+        self.saldo2 = Movimiento.crear(
+            'mov2', 150, self.cuenta, fecha=date(2011, 12, 15)
+        ).saldo_set.first()
+        self.saldo3 = Movimiento.crear(
+            'mov3', 50, self.cuenta, fecha=date(2012, 5, 6)
+        ).saldo_set.first()
+        self.saldo4 = Movimiento.crear(
+            'mov4', 2900, self.cuenta, fecha=date(2012, 6, 15)
+        ).saldo_set.first()
+        self.saldo5 = Movimiento.crear(
+            'mov5', 10000, self.cuenta, fecha=date(2012, 6, 15)
+        ).saldo_set.first()
+        self.saldo6 = Movimiento.crear(
+            'mov6', 100000, self.cuenta, fecha=date(2012, 6, 15)
+        ).saldo_set.first()
+
+    def test_incluye_saldos_posteriores_a_fecha_anterior_y_anteriores_a_fecha_posterior_entre_fecha1_y_fecha2(self):
+        self.assertIn(
+            self.saldo2,
+            Saldo.intermedios_entre_fechas_y_ordenes_de_cuenta(
+                self.cuenta,
+                date(2011, 12, 1),
+                date(2012, 7, 15)
+            )
+        )
+
+    def test_acepta_fechas_invertidas(self):
+        self.assertEqual(
+            list(Saldo.intermedios_entre_fechas_y_ordenes_de_cuenta(
+                self.cuenta,
+                date(2011, 12, 1),
+                date(2012, 7, 15),
+            )),
+            list(Saldo.intermedios_entre_fechas_y_ordenes_de_cuenta(
+                self.cuenta,
+                date(2012, 7, 15),
+                date(2011, 12, 1),
+            ))
+        )
+
+    def test_no_incluye_saldos_anteriores_a_fecha_anterior_entre_fecha1_y_fecha2(self):
+        self.assertNotIn(
+            self.saldo1,
+            Saldo.intermedios_entre_fechas_y_ordenes_de_cuenta(
+                self.cuenta,
+                date(2011, 12, 1),
+                date(2012, 7, 15)
+            )
+        )
+
+    def test_no_incluye_saldos_posteriores_a_fecha_posterior_entre_fecha1_y_fecha2(self):
+        self.assertNotIn(
+            self.saldo4,
+            Saldo.intermedios_entre_fechas_y_ordenes_de_cuenta(
+                self.cuenta,
+                date(2012, 5, 10),
+                date(2011, 12, 1)
+            )
+        )
+
+    def test_incluye_saldos_posteriores_a_orden_dia_anterior_y_anteriores_a_orden_dia_posterior_entre_orden_dia1_y_orden_dia2_si_fecha1_y_fecha2_son_iguales(self):
+        self.assertIn(
+            self.saldo5,
+            Saldo.intermedios_entre_fechas_y_ordenes_de_cuenta(
+                self.cuenta,
+                date(2012, 6, 15),
+                date(2012, 6, 15),
+                orden_dia1=0,
+                orden_dia2=2
+            )
+        )
+
+    def test_acepta_ordenes_dia_invertidos(self):
+        self.assertEqual(
+            list(Saldo.intermedios_entre_fechas_y_ordenes_de_cuenta(
+                self.cuenta,
+                date(2012, 6, 15),
+                date(2012, 6, 15),
+                orden_dia1=0,
+                orden_dia2=2,
+            )),
+            list(Saldo.intermedios_entre_fechas_y_ordenes_de_cuenta(
+                self.cuenta,
+                date(2012, 6, 15),
+                date(2012, 6, 15),
+                orden_dia2=2,
+                orden_dia1=0,
+            ))
+        )
+
+    def test_no_incluye_saldos_anteriores_a_orden_dia_anterior_entre_orden_dia1_y_orden_dia2_si_fecha1_y_fecha2_son_iguales(
+            self):
+        self.assertNotIn(
+            self.saldo4,
+            Saldo.intermedios_entre_fechas_y_ordenes_de_cuenta(
+                self.cuenta,
+                date(2012, 6, 15),
+                date(2012, 6, 15),
+                orden_dia1=1,
+                orden_dia2=2,
+            )
+        )
+
+    def test_no_incluye_saldos_posteriores_a_orden_dia_posterior_entre_orden_dia1_y_orden_dia2_si_fecha1_y_fecha2_son_iguales(
+            self):
+        self.assertNotIn(
+            self.saldo6,
+            Saldo.intermedios_entre_fechas_y_ordenes_de_cuenta(
+                self.cuenta,
+                date(2012, 6, 15),
+                date(2012, 6, 15),
+                orden_dia1=0,
+                orden_dia2=1,
+            )
+        )
+
+    def test_no_incluye_saldo_posterior_entre_orden_dia1_y_orden_dia2_si_inclusive_od_false(self):
+        self.assertNotIn(
+            self.saldo6,
+            Saldo.intermedios_entre_fechas_y_ordenes_de_cuenta(
+                self.cuenta,
+                date(2012, 6, 15),
+                date(2012, 6, 15),
+                orden_dia1=0,
+                orden_dia2=2,
+                inclusive_od=False
+            )
+        )
+
+    def test_no_incluye_saldo_anterior_entre_orden_dia1_y_orden_dia2_si_inclusive_od_false(self):
+        self.assertNotIn(
+            self.saldo4,
+            Saldo.intermedios_entre_fechas_y_ordenes_de_cuenta(
+                self.cuenta,
+                date(2012, 6, 15),
+                date(2012, 6, 15),
+                orden_dia1=0,
+                orden_dia2=2,
+                inclusive_od=False
+            )
+        )
+
+    def test_incluye_saldo_posterior_entre_orden_dia1_y_orden_dia1_si_inclusive_od_true(self):
+        self.assertIn(
+            self.saldo6,
+            Saldo.intermedios_entre_fechas_y_ordenes_de_cuenta(
+                self.cuenta,
+                date(2012, 6, 15),
+                date(2012, 6, 15),
+                orden_dia1=0,
+                orden_dia2=2,
+                inclusive_od=True
+            )
+        )
+
+    def test_incluye_saldo_anterior_entre_orden_dia1_y_orden_dia1_si_inclusive_od_true(self):
+        self.assertIn(
+            self.saldo4,
+            Saldo.intermedios_entre_fechas_y_ordenes_de_cuenta(
+                self.cuenta,
+                date(2012, 6, 15),
+                date(2012, 6, 15),
+                orden_dia1=0,
+                orden_dia2=2,
+                inclusive_od=True
+            )
+        )
+
+
+@patch('diario.models.saldo.Saldo.intermedios_entre_fechas_y_ordenes_de_cuenta')
+class TestSaldoMetodoIntermediosConFechaYOrden(TestCase):
+
+    def setUp(self):
+        cuenta = Cuenta.crear('cuenta', 'c', fecha_creacion=date(2011, 1, 1))
+        self.saldo = Movimiento.crear(
+            'mov', 100, cuenta, fecha=date(2011, 1, 2)
+        ).saldo_set.first()
+
+
+    def test_llama_a_metodo_intermedios_entre_fechas_y_ordenes_de_cuenta(self, mock_intermedios):
+        self.saldo.intermedios_con_fecha_y_orden(
+            date(2012, 5, 5), orden_dia=1, inclusive_od=True
+        )
+        mock_intermedios.assert_called_once_with(
+            cuenta=self.saldo.cuenta,
+            fecha1=self.saldo.movimiento.fecha,
+            fecha2=date(2012, 5, 5),
+            orden_dia1=self.saldo.movimiento.orden_dia,
+            orden_dia2=1,
+            inclusive_od=True
+        )
+
+    def test_devuelve_resultado_de_metodo_intermedios_entre_fechas_y_ordenes_de_cuenta(self, mock_intermedios):
+        mock_queryset = MagicMock()
+        mock_intermedios.return_value = mock_queryset
+        self.assertEqual(
+            self.saldo.intermedios_con_fecha_y_orden(
+                date(2012, 5, 5), orden_dia=1, inclusive_od=True
+            ),
+            mock_queryset
+        )
+
+
 class TestSaldoMetodoActualizarPosteriores(TestCase):
 
     def setUp(self):
@@ -574,6 +784,32 @@ class TestSaldoMetodoAnterior(TestCase):
         saldo1 = Saldo.objects.get(cuenta=self.cuenta, movimiento=mov1)
 
         self.assertIsNone(saldo1.anterior())
+
+
+class TestSaldoMetodoAnterioresA(TestCase):
+
+    def setUp(self):
+        self.cuenta = Cuenta.crear(
+            'cuenta', 'c', fecha_creacion=date(2012, 1, 1))
+        self.saldo1 = Movimiento.crear(
+            'mov1', 2900, self.cuenta, fecha=date(2012, 6, 15)
+        ).saldo_set.first()
+        self.saldo2 = Movimiento.crear(
+            'mov2', 10000, self.cuenta, fecha=date(2012, 6, 15)
+        ).saldo_set.first()
+        self.saldo3 = Movimiento.crear(
+            'mov3', 100000, self.cuenta, fecha=date(2012, 6, 15)
+        ).saldo_set.first()
+
+    def test_con_inclusive_od_false_no_incluye_saldo_con_fecha_y_od_iguales_al_dado(self):
+        self.assertNotIn(
+            self.saldo3,
+            Saldo._anteriores_a(date(2012, 6, 15), self.cuenta, orden_dia=2, inclusive_od=False)
+        )
+        self.assertIn(
+            self.saldo1,
+            Saldo._anteriores_a(date(2012, 6, 15), self.cuenta, orden_dia=2, inclusive_od=False)
+        )
 
 
 class TestSaldoPropertyImporte(TestCase):
