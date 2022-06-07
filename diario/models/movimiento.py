@@ -42,6 +42,7 @@ class Movimiento(MiModel):
     es_automatico = models.BooleanField(default=False)
 
     viejo = None
+    viejo_dict = None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -279,6 +280,22 @@ class Movimiento(MiModel):
         else:                    # Movimiento existente
             self.viejo = self.tomar_de_bd()
 
+            # Esto tiene que ser provisorio
+            # Todo esto es porque en _actualizar_saldos(), si se cambia la
+            # cuenta por una nueva, se elimina el saldo de la vieja. Entonces,
+            # para cuando llegamos a _actualizar_orden, no tenemos un
+            # movimiento viejo del cual extraer los datos necesarios.
+            # Así que por ahora, hasta que busquemos y tal vez encontremos una
+            # solución mejor, hacemos una copia de self.viejo en un dict para
+            # preservar sus datos más allá de su desaparición.
+            self.viejo_dict = {
+                'fecha': self.viejo.fecha,
+                'orden_dia': self.viejo.orden_dia,
+                'importe': self.viejo.importe,
+                'ce': self.viejo.cta_entrada,
+                'cs': self.viejo.cta_salida,
+            }
+
             if self.es_prestamo_o_devolucion():
                 # El mov es una transacción no gratuita entre titulares
                 if self.id_contramov:
@@ -497,16 +514,22 @@ class Movimiento(MiModel):
         #           self.viejo.fecha, self.viejo.orden_dia
         #       ) -> intermedios_ce, intermedios_cs
         try:
-            intermedios_ce = self.saldo_ce().intermedios_con_fecha_y_orden(
-                self.viejo.fecha,
-                self.viejo.orden_dia
+            intermedios_ce = Saldo.intermedios_entre_fechas_y_ordenes_de_cuenta(
+                self.viejo_dict['ce'],
+                self.viejo_dict['fecha'],
+                self.fecha,
+                self.viejo_dict['orden_dia'],
+                self.orden_dia
             )
         except AttributeError:
             intermedios_ce = None
         try:
-            intermedios_cs = self.saldo_cs().intermedios_con_fecha_y_orden(
-                self.viejo.fecha,
-                self.viejo.orden_dia
+            intermedios_cs = Saldo.intermedios_entre_fechas_y_ordenes_de_cuenta(
+                self.viejo_dict['cs'],
+                self.viejo_dict['fecha'],
+                self.fecha,
+                self.viejo_dict['orden_dia'],
+                self.orden_dia
             )
         except AttributeError:
             intermedios_cs = None

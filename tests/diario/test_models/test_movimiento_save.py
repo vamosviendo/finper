@@ -1312,6 +1312,7 @@ class TestModelMovimientoSaveModificaFecha(TestModelMovimientoSave):
         self.mov2.fecha = date(2021, 1, 12)
         self.mov2.full_clean()
         self.mov2.save()
+
         self.assertEqual(
             self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
             140+35
@@ -2027,6 +2028,44 @@ class TestModelMovimientoSaveModificaImporteYOrdenDia(TestModelMovimientoSave):
         self.assertEqual(
             self.cuenta1.saldo_set.get(movimiento=self.mov2b).importe,
             125-1000
+        )
+
+
+class TestModelMovimientoSaveModificaCuentasYFecha(TestModelMovimientoSave):
+
+    def setUp(self):
+        super().setUp()
+        self.cuenta4 = Cuenta.crear(
+            'cuenta extra', 'ce',
+            fecha_creacion=date(2021, 1, 4)
+        )
+        self.mov0 = Movimiento.crear('mov0', 10, self.cuenta4, fecha=date(2021, 1, 4))
+
+    def test_si_cambia_cta_entrada_y_fecha_a_fecha_posterior_resta_importe_a_saldos_intermedios_de_vieja_cta_entrada_entre_antigua_y_nueva_posicion_de_movimiento(self):
+        self.mov1.fecha = date(2021, 1, 12)
+        self.mov1.cta_entrada = self.cuenta4
+        self.mov1.full_clean()
+        self.mov1.save()
+
+        self.assertEqual(
+            # Saldo.tomar(cuenta=self.cuenta1, movimiento=self.mov2).importe,
+            self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
+            90-125
+        )
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
+            140-125
+        )
+
+    def test_si_cambia_cta_salida_y_fecha_a_fecha_posterior_suma_importe_a_saldos_intermedios_de_vieja_cta_salida_entre_antigua_y_nueva_posicion_de_movimiento(self):
+        self.mov2.fecha = date(2021, 1, 12)
+        self.mov2.cta_salida = self.cuenta4
+        self.mov2.full_clean()
+        self.mov2.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
+            140+35
         )
 
 
