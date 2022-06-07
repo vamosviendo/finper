@@ -548,10 +548,13 @@ class Movimiento(MiModel):
                     saldo.importe -= self.viejo.importe
                     saldo.save()
 
-                if intermedios_ce.count() > 0:
-                    # TODO: self.calcular_nuevo_saldo_dada_ubicacion(entrada)
-                    saldo_ce.importe = intermedios_ce.last().importe + self.importe
+                # TODO: self.calcular_nuevo_saldo_dada_ubicacion(entrada)
+                try:
+                    saldo_ce.importe = saldo_ce.anterior().importe + \
+                                       self.importe
                     saldo_ce.save()
+                except AttributeError:
+                    pass
 
             if self.cta_salida:
                 saldo_cs = self.saldo_cs()
@@ -563,9 +566,12 @@ class Movimiento(MiModel):
 
                 # TODO: self.calcular_nuevo_saldo_dada_ubicacion(salida)
                 #       if intermedios.count() == 0: return
-                if intermedios_cs.count() > 0:
-                    saldo_cs.importe = intermedios_cs.last().importe - self.importe
+                try:
+                    saldo_cs.importe = saldo_cs.anterior().importe - \
+                                       self.importe
                     saldo_cs.save()
+                except AttributeError:
+                    pass
 
         elif self.fecha < self.viejo.fecha:
             if not mantiene_orden_dia:
