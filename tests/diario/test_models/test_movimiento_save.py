@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from unittest import skip
 from unittest.mock import patch, call
 
 from django.core.exceptions import ValidationError
@@ -2088,6 +2089,44 @@ class TestModelMovimientoSaveModificaCuentasYFecha(TestModelMovimientoSave):
         self.assertEqual(
             self.cuenta4.saldo_set.get(movimiento=self.mov2).importe,
             10-35
+        )
+
+    def test_si_cambia_cta_entrada_y_fecha_a_una_fecha_posterior_resta_importe_de_saldos_de_cta_entrada_vieja_posteriores_a_nueva_ubicacion_de_movimiento(self):
+        mov4 = Movimiento.crear(
+            'mov posterior', 100, self.cuenta1, fecha=date(2021, 1, 31))
+        mov5 = Movimiento.crear(
+            'salida posterior', 10, None, self.cuenta1, fecha=date(2021, 2, 1))
+        self.mov1.fecha = date(2021, 1, 10)
+        self.mov1.cta_entrada = self.cuenta4
+        self.mov1.full_clean()
+        self.mov1.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=mov4).importe,
+            240-125
+        )
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=mov5).importe,
+            230-125
+        )
+
+    def test_si_cambia_cta_salida_y_fecha_a_una_fecha_posterior_suma_importe_a_saldos_de_cta_salida_vieja_posteriores_a_nueva_ubicacion(self):
+        mov4 = Movimiento.crear(
+            'mov posterior', 100, self.cuenta1, fecha=date(2021, 1, 31))
+        mov5 = Movimiento.crear(
+            'salida posterior', 10, None, self.cuenta1, fecha=date(2021, 2, 1))
+        self.mov2.fecha = date(2021, 1, 12)
+        self.mov2.cta_salida = self.cuenta4
+        self.mov2.full_clean()
+        self.mov2.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=mov4).importe,
+            240 + 35
+        )
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=mov5).importe,
+            230 + 35
         )
 
 

@@ -471,7 +471,9 @@ class Movimiento(MiModel):
             elif self._cambia_cta_entrada():
                 Saldo.generar(self, salida=False)
                 if self.viejo.cta_entrada and not self._entrada_pasa_a_salida():
-                    self.viejo.saldo_ce().eliminar()
+                    self.viejo.saldo_set.get(
+                        cuenta=self.viejo.cta_entrada
+                    ).eliminar()
 
             elif self.viejo.cta_entrada:
                 self.viejo.cta_entrada.sumar_a_saldo_y_posteriores(
@@ -496,7 +498,9 @@ class Movimiento(MiModel):
             elif self._cambia_cta_salida():
                 Saldo.generar(self, salida=True)
                 if self.viejo.cta_salida and not self._salida_pasa_a_entrada():
-                    self.viejo.saldo_cs().eliminar()
+                    self.viejo.saldo_set.get(
+                        cuenta=self.viejo.cta_salida
+                    ).eliminar()
 
             elif self.viejo.cta_salida:
                 self.viejo.cta_salida.sumar_a_saldo_y_posteriores(
@@ -537,6 +541,7 @@ class Movimiento(MiModel):
         if self.fecha > self.viejo.fecha:
             if not mantiene_orden_dia:
                 self.orden_dia = 0
+                super().save()
 
             if self.cta_entrada:
                 saldo_ce = self.saldo_ce()
@@ -545,8 +550,9 @@ class Movimiento(MiModel):
                 #       (como Saldo.actualizar_posteriores pero actualiza
                 #       la lista de saldos que se le pasa y no los posteriores)
                 for saldo in intermedios_ce:
-                    saldo.importe -= self.viejo.importe
-                    saldo.save()
+                    if not self._cambia_cta_entrada():
+                        saldo.importe -= self.viejo.importe
+                        saldo.save()
 
                 # TODO: self.calcular_nuevo_saldo_dada_ubicacion(entrada)
                 try:
@@ -561,8 +567,9 @@ class Movimiento(MiModel):
 
                 # TODO: Saldo.actualizar_saldos(saldos, importe)
                 for saldo in intermedios_cs:
-                    saldo.importe += self.viejo.importe
-                    saldo.save()
+                    if not self._cambia_cta_salida():
+                        saldo.importe += self.viejo.importe
+                        saldo.save()
 
                 # TODO: self.calcular_nuevo_saldo_dada_ubicacion(salida)
                 #       if intermedios.count() == 0: return
@@ -576,6 +583,7 @@ class Movimiento(MiModel):
         elif self.fecha < self.viejo.fecha:
             if not mantiene_orden_dia:
                 self.orden_dia = Movimiento.filtro(fecha=self.fecha).count()
+                super().save()
 
             if self.cta_entrada:
                 saldo_ce = self.saldo_ce()
@@ -685,8 +693,6 @@ class Movimiento(MiModel):
                     if saldo_cs_anterior \
                     else -self.importe
                 saldo_cs.save()
-
-        self.save()
 
     def _cambia_cta_entrada(self):
         return (
