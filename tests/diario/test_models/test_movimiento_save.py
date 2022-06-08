@@ -2038,7 +2038,7 @@ class TestModelMovimientoSaveModificaCuentasYFecha(TestModelMovimientoSave):
         super().setUp()
         self.cuenta4 = Cuenta.crear(
             'cuenta extra', 'ce',
-            fecha_creacion=date(2021, 1, 4)
+            fecha_creacion=date(2021, 1, 1)
         )
         self.mov0 = Movimiento.crear('mov0', 10, self.cuenta4, fecha=date(2021, 1, 4))
 
@@ -2091,7 +2091,7 @@ class TestModelMovimientoSaveModificaCuentasYFecha(TestModelMovimientoSave):
             10-35
         )
 
-    def test_si_cambia_cta_entrada_y_fecha_a_una_fecha_posterior_resta_importe_de_saldos_de_cta_entrada_vieja_posteriores_a_nueva_ubicacion_de_movimiento(self):
+    def test_si_cambia_cta_entrada_y_fecha_a_una_fecha_posterior_resta_importe_de_saldos_de_cta_entrada_vieja_posteriores_a_nueva_ubicacion_del_movimiento(self):
         mov4 = Movimiento.crear(
             'mov posterior', 100, self.cuenta1, fecha=date(2021, 1, 31))
         mov5 = Movimiento.crear(
@@ -2108,6 +2108,44 @@ class TestModelMovimientoSaveModificaCuentasYFecha(TestModelMovimientoSave):
         self.assertEqual(
             self.cuenta1.saldo_set.get(movimiento=mov5).importe,
             230-125
+        )
+
+    def test_si_cambia_cta_entrada_y_fecha_a_una_fecha_posterior_suma_importe_a_saldos_de_cta_entrada_nueva_posteriores_a_nueva_ubicacion_del_movimiento(self):
+        mov4 = Movimiento.crear(
+            'mov posterior', 1000, self.cuenta4, fecha=date(2021, 2, 1))
+        mov5 = Movimiento.crear(
+            'salida posterior', 100, None, self.cuenta4, fecha=date(2021, 2, 5))
+        self.mov1.fecha = date(2021, 1, 31)
+        self.mov1.cta_entrada = self.cuenta4
+        self.mov1.full_clean()
+        self.mov1.save()
+
+        self.assertEqual(
+            self.cuenta4.saldo_set.get(movimiento=mov4).importe,
+            1010+125
+        )
+        self.assertEqual(
+            self.cuenta4.saldo_set.get(movimiento=mov5).importe,
+            910+125
+        )
+
+    def test_si_cambia_cta_salida_y_fecha_a_una_fecha_posterior_resta_importe_a_saldos_de_cta_salida_nueva_posteriores_a_nueva_ubicacion_del_movimiento(self):
+        mov4 = Movimiento.crear(
+            'mov posterior', 1000, self.cuenta4, fecha=date(2021, 2, 1))
+        mov5 = Movimiento.crear(
+            'salida posterior', 100, None, self.cuenta4, fecha=date(2021, 2, 5))
+        self.mov2.fecha = date(2021, 1, 31)
+        self.mov2.cta_salida = self.cuenta4
+        self.mov2.full_clean()
+        self.mov2.save()
+
+        self.assertEqual(
+            self.cuenta4.saldo_set.get(movimiento=mov4).importe,
+            1010-35
+        )
+        self.assertEqual(
+            self.cuenta4.saldo_set.get(movimiento=mov5).importe,
+            910-35
         )
 
     def test_si_cambia_cta_salida_y_fecha_a_una_fecha_posterior_suma_importe_a_saldos_de_cta_salida_vieja_posteriores_a_nueva_ubicacion(self):
@@ -2127,6 +2165,63 @@ class TestModelMovimientoSaveModificaCuentasYFecha(TestModelMovimientoSave):
         self.assertEqual(
             self.cuenta1.saldo_set.get(movimiento=mov5).importe,
             230 + 35
+        )
+
+    def test_si_cambia_cta_entrada_y_fecha_a_una_fecha_posterior_no_modifica_importes_de_saldos_de_vieja_cta_entrada_anteriores_a_ubicacion_anterior_del_movimiento(self):
+        mov4 = Movimiento.crear(
+            'mov anterior', 100, self.cuenta1, fecha=date(2021, 1, 1))
+        mov5 = Movimiento.crear(
+            'salida anterior', 10, None, self.cuenta1, fecha=date(2021, 1, 2)
+        )
+        self.mov1.fecha = date(2021, 1, 10)
+        self.mov1.cta_entrada = self.cuenta4
+        self.mov1.full_clean()
+        self.mov1.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=mov4).importe,
+            100
+        )
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=mov5).importe,
+            90
+        )
+
+    def test_si_cambia_cta_salida_y_fecha_a_una_fecha_posterior_no_modifica_importes_de_saldos_de_vieja_cta_salida_anteriores_a_ubicacion_anterior_de_movimiento(self):
+        self.mov2.fecha = date(2021, 1, 12)
+        self.mov2.cta_salida = self.cuenta4
+        self.mov2.full_clean()
+        self.mov2.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov1).importe,
+            125
+        )
+
+    def test_si_cambia_cta_entrada_y_fecha_a_una_fecha_posterior_no_modifica_importes_de_saldos_de_nueva_cta_entrada_anteriores_a_ubicacion_nueva_del_movimiento(self):
+        mov5 = Movimiento.crear(
+            'mov posterior', 1000, self.cuenta4, fecha=date(2021, 1, 31))
+        self.mov1.fecha = date(2021, 2, 2)
+        self.mov1.cta_entrada = self.cuenta4
+        self.mov1.full_clean()
+        self.mov1.save()
+
+        self.assertEqual(
+            self.cuenta4.saldo_set.get(movimiento=mov5).importe,
+            1010
+        )
+
+    def test_si_cambia_cta_salida_y_fecha_a_una_fecha_posterior_no_modifica_importes_de_saldos_de_nueva_cta_salida_anteriores_a_ubicacion_nueva_del_movimiento(self):
+        mov5 = Movimiento.crear(
+            'mov posterior', 1000, self.cuenta4, fecha=date(2021, 1, 31))
+        self.mov2.fecha = date(2021, 2, 2)
+        self.mov2.cta_salida = self.cuenta4
+        self.mov2.full_clean()
+        self.mov2.save()
+
+        self.assertEqual(
+            self.cuenta4.saldo_set.get(movimiento=mov5).importe,
+            1010
         )
 
 
