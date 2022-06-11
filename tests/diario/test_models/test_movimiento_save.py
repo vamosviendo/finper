@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 from unittest import skip
-from unittest.mock import patch, call
+from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
 
@@ -2223,6 +2223,51 @@ class TestModelMovimientoSaveModificaCuentasYFecha(TestModelMovimientoSave):
             self.cuenta4.saldo_set.get(movimiento=mov5).importe,
             1010
         )
+
+    def test_si_se_intercambian_cuentas_y_cambia_fecha_a_fecha_posterior_en_un_movimiento_de_traspaso_se_actualizan_correctamente_importes_de_saldo_modificado_e_intermedios(self):
+        mov4 = Movimiento.crear(
+            'mov posterior c1', 10000, self.cuenta1, fecha=date(2021, 1, 31))
+        mov5 = Movimiento.crear(
+            'sal posterior c1', 1000, None, self.cuenta1, fecha=date(2021, 2, 3))
+        mov6 = Movimiento.crear(
+            'mov posterior c2', 100000, self.cuenta2, fecha=date(2021, 2, 6))
+        mov7 = Movimiento.crear(
+            'sal posterior c2', 1, None, self.cuenta2, fecha=date(2021, 2, 9))
+
+        self.mov3.fecha = date(2021, 2, 11)
+        self.mov3.cta_entrada = self.cuenta2
+        self.mov3.cta_salida = self.cuenta1
+        self.mov3.full_clean()
+        self.mov3.save()
+
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=mov4).importe,
+            10140-50
+        )
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=mov5).importe,
+            9140-50
+        )
+        self.assertEqual(
+            self.cuenta2.saldo_set.get(movimiento=mov6).importe,
+            99950+50
+        )
+        self.assertEqual(
+            self.cuenta2.saldo_set.get(movimiento=mov7).importe,
+            99949+50
+        )
+        self.assertEqual(
+            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
+            9090-50
+        )
+        self.assertEqual(
+            self.cuenta2.saldo_set.get(movimiento=self.mov3).importe,
+            99999+50
+        )
+
+    @skip
+    def test_si_cambia_cta_entrada_o_salida_y_fecha_a_una_fecha_anterior(self):
+        self.fail('escribir')
 
 
 class TestModelMovimientoSaveModificaEsGratis(TestModelMovimientoSave):

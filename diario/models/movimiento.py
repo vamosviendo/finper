@@ -550,7 +550,7 @@ class Movimiento(MiModel):
                 #       (como Saldo.actualizar_posteriores pero actualiza
                 #       la lista de saldos que se le pasa y no los posteriores)
                 for saldo in intermedios_ce:
-                    if not self._cambia_cta_entrada():
+                    if not self._cambia_cta_entrada() or self._salida_pasa_a_entrada():
                         saldo.importe -= self.viejo.importe
                         saldo.save()
 
@@ -567,7 +567,7 @@ class Movimiento(MiModel):
 
                 # TODO: Saldo.actualizar_saldos(saldos, importe)
                 for saldo in intermedios_cs:
-                    if not self._cambia_cta_salida():
+                    if not self._cambia_cta_salida() or self._entrada_pasa_a_salida():
                         saldo.importe += self.viejo.importe
                         saldo.save()
 
