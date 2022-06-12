@@ -38,6 +38,17 @@ class Saldo(MiModel):
     def importe(self, valor):
         self._importe = round(valor, 2)
 
+    @property
+    def viene_de_entrada(self):
+        try:
+            return self == self.movimiento.saldo_ce()
+        except AttributeError:
+            return False
+
+    @property
+    def viene_de_salida(self):
+        return not self.viene_de_entrada
+
     @classmethod
     def tomar(cls, **kwargs):
         cuenta = kwargs['cuenta']
@@ -165,7 +176,6 @@ class Saldo(MiModel):
         ) & Saldo._anteriores_a(
             fecha_pos, cuenta, orden_dia_pos, inclusive_od
         )
-
 
     def sumar_a_este_y_posteriores(self, importe):
         self._actualizar_posteriores(importe)

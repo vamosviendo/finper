@@ -830,3 +830,19 @@ class TestSaldoPropertyImporte(TestCase):
     def test_redondea_valor_antes_de_asignarlo_a_campo__importe(self):
         saldo = Saldo(cuenta=self.cuenta, importe=154.588)
         self.assertEqual(saldo._importe, 154.59)
+
+
+class TestSaldoPropertesVieneDeEntradaVieneDeSalida(TestCase):
+
+    def setUp(self):
+        self.cuenta = Cuenta.crear('cuenta', 'c')
+        self.saldo1 = Movimiento.crear('mov1', 5, self.cuenta).saldo_ce()
+        self.saldo2 = Movimiento.crear('mov2', 6, None, self.cuenta).saldo_cs()
+
+    def test_vde_devuelve_true_y_vds_false_si_la_cuenta_es_cta_entrada_de_su_movimiento(self):
+        self.assertTrue(self.saldo1.viene_de_entrada)
+        self.assertFalse(self.saldo1.viene_de_salida)
+
+    def test_vde_devuelve_false_y_vds_true_si_la_cuenta_es_cta_salida_de_su_movimiento(self):
+        self.assertTrue(self.saldo2.viene_de_salida)
+        self.assertFalse(self.saldo2.viene_de_entrada)
