@@ -739,6 +739,137 @@ class TestModelCuentaMetodosTomarDeBd(TestCase):
         self.assertEqual(variable.nombre, 'kuenta')
 
 
+class TestSaldoMetodoRecalcularSaldosEntre(TestCase):
+
+    def setUp(self):
+        self.cuentaA = Cuenta.crear('cuenta a', 'ca', fecha_creacion=date(2001, 1, 1))
+        self.cuentaB = Cuenta.crear('cuenta b', 'cb', fecha_creacion=date(2001, 1, 1))
+        mov1 = Movimiento.crear('mov1', 2, self.cuentaA, self.cuentaB, fecha=date(2011, 1, 10))
+        mov2 = Movimiento.crear('mov2', 3, self.cuentaB, fecha=date(2011, 1, 15))
+        mov3 = Movimiento.crear('mov3', 6, None, self.cuentaA, fecha=date(2011, 1, 16))
+        mov4 = Movimiento.crear('mov4', 5, self.cuentaB, self.cuentaA, fecha=date(2011, 1, 18))
+        mov5 = Movimiento.crear('mov5', 11, self.cuentaA, self.cuentaB, fecha=date(2011, 1, 25))
+        self.saldo1a = mov1.saldo_ce()  # 2
+        self.saldo2a = mov3.saldo_cs()  # -4
+        self.saldo3a = mov4.saldo_cs()  # -9
+        self.saldo4a = mov5.saldo_ce()  # 2
+        self.saldo1b = mov1.saldo_cs()  # -2
+        self.saldo2b = mov2.saldo_ce()  # 1
+        self.saldo3b = mov4.saldo_ce()  # 6
+        self.saldo4b = mov5.saldo_cs()  # -5
+
+    def test_recalcula_saldos_de_cuenta_a_partir_de_fecha(self):
+        self.saldo3a.importe = 100
+        self.saldo3a.save()
+        self.saldo4a.importe = 1000
+        self.saldo4a.save()
+
+        self.cuentaA.recalcular_saldos_entre(date(2011, 1, 17))
+        self.saldo3a.refresh_from_db(fields=['_importe'])
+        self.saldo4a.refresh_from_db(fields=['_importe'])
+
+        self.assertEqual(self.saldo3a.importe, -9)
+        self.assertEqual(self.saldo4a.importe, 2)
+
+    def test_no_recalcula_saldos_anteriores_a_fecha(self):
+        self.saldo1a.importe = 100
+        self.saldo1a.save()
+        self.cuentaA.recalcular_saldos_entre(date(2011, 1, 17))
+        self.saldo1a.refresh_from_db(fields=['_importe'])
+
+        self.assertEqual(self.saldo1a.importe, 100)
+
+    def test_recalcula_saldos_de_cuenta_a_partir_de_orden_dia_inclusive(self):
+        saldo5a = Movimiento.crear(
+            'mov6', 12, self.cuentaA, fecha=date(2011, 1, 25)
+        ).saldo_ce()    # 14
+        saldo6a = Movimiento.crear(
+            'mov7', 15, None, self.cuentaA, fecha=date(2011, 1, 25)
+        ).saldo_cs()    # -1
+
+        saldo5a.importe = 100
+        saldo5a.save()
+        saldo6a.importe = 200
+        saldo6a.save()
+
+        self.cuentaA.recalcular_saldos_entre(date(2011, 1, 25), od_desde=1)
+        saldo5a.refresh_from_db(fields=['_importe'])
+        saldo6a.refresh_from_db(fields=['_importe'])
+
+        self.assertEqual(saldo5a.importe, 14)
+        self.assertEqual(saldo6a.importe, -1)
+
+    def test_no_recalcula_saldos_de_cuenta_en_la_misma_fecha_anteriores_a_orden_dia(self):
+        self.saldo4a.importe = 200
+        self.saldo4a.save()
+
+        self.cuentaA.recalcular_saldos_entre(date(2011, 1, 25), od_desde=1)
+        self.saldo4a.refresh_from_db(fields=['_importe'])
+
+        self.assertEqual(self.saldo4a.importe, 200)
+
+    def test_no_recalcula_saldos_posteriores_a_fecha_hasta(self):
+        self.saldo4a.importe = 200
+        self.saldo4a.save()
+
+        self.cuentaA.recalcular_saldos_entre(
+            fecha_desde=date(2011, 1, 11),
+            fecha_hasta=date(2011, 1, 20)
+        )
+        self.saldo4a.refresh_from_db(fields=['_importe'])
+
+        self.assertEqual(self.saldo4a.importe, 200)
+
+    def test_recalcula_saldos_de_fecha_hasta(self):
+        self.saldo4a.importe = 200
+        self.saldo4a.save()
+
+        self.cuentaA.recalcular_saldos_entre(
+            fecha_desde=date(2011, 1, 11),
+            fecha_hasta=date(2011, 1, 25)
+        )
+        self.saldo4a.refresh_from_db(fields=['_importe'])
+
+        self.assertEqual(self.saldo4a.importe, 2)
+
+    def test_no_recalcula_saldos_de_fecha_hasta_posteriores_a_od_hasta(self):
+        Movimiento.crear(
+            'mov6', 12, self.cuentaA, fecha=date(2011, 1, 25)
+        ).saldo_ce()    # 14
+        saldo6a = Movimiento.crear(
+            'mov7', 15, None, self.cuentaA, fecha=date(2011, 1, 25)
+        ).saldo_cs()    # -1
+
+        saldo6a.importe = 200
+        saldo6a.save()
+
+        self.cuentaA.recalcular_saldos_entre(
+            fecha_desde=date(2011, 1, 11),
+            fecha_hasta=date(2011, 1, 25),
+            od_hasta=1
+        )
+        saldo6a.refresh_from_db(fields=['_importe'])
+
+        self.assertEqual(saldo6a.importe, 200)
+
+    def test_recalcula_saldos_de_fecha_hasta_con_orden_dia_igual_a_od_hasta(self):
+        saldo5a = Movimiento.crear(
+            'mov6', 12, self.cuentaA, fecha=date(2011, 1, 25)
+        ).saldo_ce()    # 14
+
+        saldo5a.importe = 200
+        saldo5a.save()
+
+        self.cuentaA.recalcular_saldos_entre(
+            fecha_desde=date(2011, 1, 11),
+            fecha_hasta=date(2011, 1, 25),
+            od_hasta=1
+        )
+        saldo5a.refresh_from_db(fields=['_importe'])
+
+        self.assertEqual(saldo5a.importe, 14)
+
+
 class TestCuentaPolymorphic(TestCase):
 
     def test_tomar_devuelve_cuenta_de_la_clase_correcta(self):

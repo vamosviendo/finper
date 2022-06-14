@@ -308,38 +308,38 @@ class TestSaldoMetodoPosterioresA(TestCase):
         self.saldo4 = mov4.saldo_set.first()
 
     def test_incluye_saldos_de_cuenta_posteriores_a_fecha_dada(self):
-        posteriores = Saldo._posteriores_a(date(2011, 12, 16), self.cuenta)
+        posteriores = Saldo.posteriores_a(date(2011, 12, 16), self.cuenta)
         self.assertIn(self.saldo3, posteriores)
         self.assertIn(self.saldo4, posteriores)
 
     def test_incluye_saldos_de_cuenta_de_la_misma_fecha_y_orden_dia_posterior(self):
         self.assertIn(
             self.saldo4,
-            Saldo._posteriores_a(date(2012, 5, 6), self.cuenta, orden_dia=0)
+            Saldo.posteriores_a(date(2012, 5, 6), self.cuenta, orden_dia=0)
         )
 
     def test_no_incluye_saldos_de_cuenta_de_fecha_anterior_a_la_dada(self):
         self.assertNotIn(
             self.saldo1,
-            Saldo._posteriores_a(date(2011, 12, 9), self.cuenta)
+            Saldo.posteriores_a(date(2011, 12, 9), self.cuenta)
         )
 
     def test_no_incluye_saldos_de_cuenta_de_la_misma_fecha_y_orden_dia_anterior(self):
         self.assertNotIn(
             self.saldo3,
-            Saldo._posteriores_a(date(2012, 5, 6), self.cuenta, orden_dia=1)
+            Saldo.posteriores_a(date(2012, 5, 6), self.cuenta, orden_dia=1)
         )
 
     def test_con_inclusive_od_false_no_incluye_saldo_con_la_fecha_y_orden_dia_dados(self):
         self.assertNotIn(
             self.saldo4,
-            Saldo._posteriores_a(date(2012, 5, 6), self.cuenta, orden_dia=1, inclusive_od=False)
+            Saldo.posteriores_a(date(2012, 5, 6), self.cuenta, orden_dia=1, inclusive_od=False)
         )
 
     def test_con_inclusive_od_true_incluye_saldo_con_la_fecha_y_orden_dia_dados_si_existe(self):
         self.assertIn(
             self.saldo4,
-            Saldo._posteriores_a(date(2012, 5, 6), self.cuenta, orden_dia=1, inclusive_od=True)
+            Saldo.posteriores_a(date(2012, 5, 6), self.cuenta, orden_dia=1, inclusive_od=True)
         )
 
 
@@ -362,20 +362,20 @@ class TestSaldoMetodoAnterioresA(TestCase):
         self.saldo4 = mov4.saldo_set.first()
 
     def test_incluye_saldos_de_cuenta_anteriores_a_fecha_dada(self):
-        anteriores = Saldo._anteriores_a(date(2011, 12, 16), self.cuenta)
+        anteriores = Saldo.anteriores_a(date(2011, 12, 16), self.cuenta)
         self.assertIn(self.saldo1, anteriores)
         self.assertIn(self.saldo2, anteriores)
 
     def test_incluye_saldos_de_cuenta_de_la_misma_fecha_y_orden_dia_anterior(self):
         self.assertIn(
             self.saldo3,
-            Saldo._anteriores_a(date(2012, 5, 6), self.cuenta, orden_dia=1)
+            Saldo.anteriores_a(date(2012, 5, 6), self.cuenta, orden_dia=1)
         )
 
     def test_no_incluye_saldos_de_cuenta_de_fecha_posterior_a_la_dada(self):
         self.assertNotIn(
             self.saldo3,
-            Saldo._anteriores_a(date(2011, 12, 16), self.cuenta)
+            Saldo.anteriores_a(date(2011, 12, 16), self.cuenta)
         )
 
     def test_no_incluye_saldos_de_cuenta_de_la_misma_fecha_y_orden_dia_posterior(self):
@@ -385,19 +385,19 @@ class TestSaldoMetodoAnterioresA(TestCase):
 
         self.assertNotIn(
             saldo5,
-            Saldo._anteriores_a(date(2012, 5, 6), self.cuenta, orden_dia=1)
+            Saldo.anteriores_a(date(2012, 5, 6), self.cuenta, orden_dia=1)
         )
 
     def test_con_inclusive_od_false_no_incluye_saldo_con_la_fecha_y_orden_dia_dados(self):
         self.assertNotIn(
             self.saldo4,
-            Saldo._anteriores_a(date(2012, 5, 6), self.cuenta, orden_dia=1, inclusive_od=False)
+            Saldo.anteriores_a(date(2012, 5, 6), self.cuenta, orden_dia=1, inclusive_od=False)
         )
 
     def test_con_inclusive_od_true_incluye_saldo_con_la_fecha_y_orden_dia_dados_si_existe(self):
         self.assertIn(
             self.saldo4,
-            Saldo._anteriores_a(date(2012, 5, 6), self.cuenta, orden_dia=1, inclusive_od=True)
+            Saldo.anteriores_a(date(2012, 5, 6), self.cuenta, orden_dia=1, inclusive_od=True)
         )
 
 
@@ -804,11 +804,11 @@ class TestSaldoMetodoAnterioresA(TestCase):
     def test_con_inclusive_od_false_no_incluye_saldo_con_fecha_y_od_iguales_al_dado(self):
         self.assertNotIn(
             self.saldo3,
-            Saldo._anteriores_a(date(2012, 6, 15), self.cuenta, orden_dia=2, inclusive_od=False)
+            Saldo.anteriores_a(date(2012, 6, 15), self.cuenta, orden_dia=2, inclusive_od=False)
         )
         self.assertIn(
             self.saldo1,
-            Saldo._anteriores_a(date(2012, 6, 15), self.cuenta, orden_dia=2, inclusive_od=False)
+            Saldo.anteriores_a(date(2012, 6, 15), self.cuenta, orden_dia=2, inclusive_od=False)
         )
 
 
@@ -832,7 +832,7 @@ class TestSaldoPropertyImporte(TestCase):
         self.assertEqual(saldo._importe, 154.59)
 
 
-class TestSaldoPropertesVieneDeEntradaVieneDeSalida(TestCase):
+class TestSaldoPropertiesVieneDeEntradaVieneDeSalida(TestCase):
 
     def setUp(self):
         self.cuenta = Cuenta.crear('cuenta', 'c')

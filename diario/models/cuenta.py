@@ -19,6 +19,10 @@ alfaminusculas = RegexValidator(
     r'^[0-9a-z_\-]*$', 'Solamente caracteres alfanuméricos y guiones')
 
 
+def signo(condicion):
+    return 1 if condicion else -1
+
+
 class Cuenta(PolymorphModel):
     nombre = models.CharField(max_length=100, unique=True)
     slug = models.CharField(
@@ -104,6 +108,19 @@ class Cuenta(PolymorphModel):
         for s in yposteriores:
             s.importe += importe
             s.save()
+
+    def recalcular_saldos_entre(self, fecha_desde, od_desde=0, fecha_hasta=None, od_hasta=10000000):
+        fecha_hasta = fecha_hasta or date.today()
+
+        saldos = Saldo.posteriores_a(
+                     fecha_desde, self, od_desde, inclusive_od=True) & \
+                 Saldo.anteriores_a(
+                     fecha_hasta, self, orden_dia=od_hasta, inclusive_od=True)
+        for saldo in saldos:
+            saldo.importe = saldo.anterior().importe + (
+                signo(saldo.viene_de_entrada)*saldo.movimiento.importe
+            )
+            saldo.save()
 
     @property
     def ultimo_saldo(self):

@@ -127,14 +127,14 @@ class Saldo(MiModel):
         )
 
     def anteriores(self):
-        return Saldo._anteriores_a(
+        return Saldo.anteriores_a(
             self.movimiento.fecha,
             self.movimiento.orden_dia,
             self.cuenta
         )
 
     def posteriores(self):
-        return Saldo._posteriores_a(
+        return Saldo.posteriores_a(
             self.movimiento.fecha,
             self.cuenta,
             self.movimiento.orden_dia,
@@ -171,9 +171,9 @@ class Saldo(MiModel):
             [fecha2, orden_dia2]
         ])
 
-        return Saldo._posteriores_a(
+        return Saldo.posteriores_a(
             fecha_ant, cuenta, orden_dia_ant, inclusive_od
-        ) & Saldo._anteriores_a(
+        ) & Saldo.anteriores_a(
             fecha_pos, cuenta, orden_dia_pos, inclusive_od
         )
 
@@ -184,10 +184,10 @@ class Saldo(MiModel):
 
     @staticmethod
     def _anterior_a(fecha, orden_dia, cuenta):
-        return Saldo._anteriores_a(fecha, cuenta, orden_dia).last()
+        return Saldo.anteriores_a(fecha, cuenta, orden_dia).last()
 
     @staticmethod
-    def _anteriores_a(fecha, cuenta, orden_dia=0, inclusive_od=False):
+    def anteriores_a(fecha, cuenta, orden_dia=0, inclusive_od=False):
         kw_orden_dia = 'movimiento__orden_dia__lte' if inclusive_od \
             else 'movimiento__orden_dia__lt'
         kwarg_orden_dia = {kw_orden_dia: orden_dia}
@@ -199,7 +199,7 @@ class Saldo(MiModel):
         )
 
     @staticmethod
-    def _posteriores_a(fecha, cuenta, orden_dia=0, inclusive_od=False):
+    def posteriores_a(fecha, cuenta, orden_dia=0, inclusive_od=False):
         kw_orden_dia = 'movimiento__orden_dia__gte' if inclusive_od \
             else 'movimiento__orden_dia__gt'
         kwarg_orden_dia = {kw_orden_dia: orden_dia}
