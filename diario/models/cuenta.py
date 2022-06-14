@@ -117,9 +117,13 @@ class Cuenta(PolymorphModel):
                  Saldo.anteriores_a(
                      fecha_hasta, self, orden_dia=od_hasta, inclusive_od=True)
         for saldo in saldos:
-            saldo.importe = saldo.anterior().importe + (
-                signo(saldo.viene_de_entrada)*saldo.movimiento.importe
-            )
+            try:
+                saldo.importe = saldo.anterior().importe + (
+                    signo(saldo.viene_de_entrada)*saldo.movimiento.importe
+                )
+            except AttributeError:
+                saldo.importe = \
+                    signo(saldo.viene_de_entrada)*saldo.movimiento.importe
             saldo.save()
 
     @property

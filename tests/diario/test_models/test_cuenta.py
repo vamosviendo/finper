@@ -869,6 +869,15 @@ class TestSaldoMetodoRecalcularSaldosEntre(TestCase):
 
         self.assertEqual(saldo5a.importe, 14)
 
+    def test_si_no_hay_saldos_anteriores_actualiza_del_primer_saldo_en_adelante(self):
+        self.saldo1a.importe = 200
+        self.saldo1a.save()
+
+        self.cuentaA.recalcular_saldos_entre(fecha_desde=date(2011, 1, 4))
+        self.saldo1a.refresh_from_db(fields=['_importe'])
+
+        self.assertEqual(self.saldo1a.importe, 2)
+
 
 class TestCuentaPolymorphic(TestCase):
 
