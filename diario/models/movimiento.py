@@ -323,10 +323,66 @@ class Movimiento(MiModel):
                     'importe', 'cta_entrada', 'cta_salida',
                     contraparte=self.viejo
             ):
-                self._actualizar_saldos()
+                """
+                Nota para el commit: (TODO: eliminar)
+                Lo que estamos intentando hacer es cambiar el sistema de 
+                recálculo de los saldos a partir de la modificación de
+                movimientos. El sistema anterior se basaba en restar el saldo
+                viejo y sumar el nuevo al saldo (o viceversa), lo cual era 
+                apropiado para el caso de un saldo único. El nuevo sistema se
+                basa en sumar (o restar) el nuevo importe al saldo anterior del
+                movimiento. Lo cual es más apropiado para el caso de saldos 
+                históricos.
+                Esta nota será retirada una vez que terminemos con la 
+                implementación 
+                """
+                if self.cta_entrada:
+                    if self._salida_pasa_a_entrada():
+                        self.cta_entrada.recalcular_saldos_entre(
+                            self.fecha, self.orden_dia)
+                        self._eliminar_saldo_viejo_si_existe('cta_entrada')
 
-            if self._cambia_campo('fecha', 'orden_dia', contraparte=self.viejo):
-                self._actualizar_orden(mantiene_orden_dia)
+                    elif self._cambia_cta_entrada():
+                        Saldo.generar(self, salida=False)
+                        self._eliminar_saldo_viejo_si_existe('cta_entrada')
+
+                    elif self.viejo.cta_entrada:
+                        self._recalcular_si_cambia_importe('cta_entrada')
+
+                    else:   # única opción restante: not mov.viejo.cta_entrada and self.cta_entrada
+                        Saldo.generar(self, salida=False)
+
+                else:
+                    self._eliminar_saldo_viejo_si_existe('cta_entrada')
+
+                if self.cta_salida:
+                    if self._entrada_pasa_a_salida():
+                        self.cta_salida.recalcular_saldos_entre(
+                            self.fecha, self.orden_dia)
+                        self._eliminar_saldo_viejo_si_existe('cta_salida')
+
+                    elif self._cambia_cta_salida():
+                        Saldo.generar(self, salida=True)
+                        self._eliminar_saldo_viejo_si_existe('cta_salida')
+
+                    elif self.viejo.cta_salida:
+                        self._recalcular_si_cambia_importe('cta_salida')
+
+                    else:  # única opción restante: not mov.viejo.cta_salida and self.cta_salida
+                        Saldo.generar(self, salida=True)
+
+                else:
+                    self._eliminar_saldo_viejo_si_existe('cta_salida')
+
+            #
+            # if self._cambia_campo(
+            #         'importe', 'cta_entrada', 'cta_salida',
+            #         contraparte=self.viejo
+            # ):
+            #     self._actualizar_saldos()
+            #
+            # if self._cambia_campo('fecha', 'orden_dia', contraparte=self.viejo):
+            #     self._actualizar_orden(mantiene_orden_dia)
 
     def saldo_ce(self):
         try:
@@ -512,6 +568,30 @@ class Movimiento(MiModel):
 
         elif self.viejo.cta_salida and not self._salida_pasa_a_entrada():
             self.viejo.saldo_cs().eliminar()
+
+    def _recalcular_si_cambia_importe(self, sentido):
+        cuenta = getattr(self.viejo, sentido)
+        if self._cambia_campo('importe', contraparte=self.viejo):
+            cuenta.recalcular_saldos_entre(
+                self.fecha, self.orden_dia
+            )
+
+    def _eliminar_saldo_viejo_si_existe(self, sentido):
+        cuenta = getattr(self.viejo, sentido)
+        if sentido == 'cta_entrada':
+            intercambio = self._entrada_pasa_a_salida
+            saldo = self.viejo.saldo_ce
+        elif sentido == 'cta_salida':
+            intercambio = self._salida_pasa_a_entrada
+            saldo = self.viejo.saldo_cs
+        else:
+            raise ValueError(
+                'Argumento incorrecto. Debe ser "cta_entrada"'
+                ' o "cta_salida"'
+            )
+
+        if cuenta and not intercambio():
+            saldo().eliminar()
 
     def _actualizar_orden(self, mantiene_orden_dia):
         # TODO: saldos_intermedios_de_ctas(
