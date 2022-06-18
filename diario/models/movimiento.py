@@ -320,7 +320,7 @@ class Movimiento(MiModel):
             super().save(*args, **kwargs)
 
             if self._cambia_campo(
-                    'importe', 'cta_entrada', 'cta_salida',
+                    'importe', 'cta_entrada', 'cta_salida', 'fecha',
                     contraparte=self.viejo
             ):
                 """
@@ -349,8 +349,19 @@ class Movimiento(MiModel):
                     elif self.viejo.cta_entrada:
                         self._recalcular_si_cambia_importe('cta_entrada')
 
-                    else:   # única opción restante: not mov.viejo.cta_entrada and self.cta_entrada
+                    else:   # única opción restante: not self.viejo.cta_entrada and self.cta_entrada
                         Saldo.generar(self, salida=False)
+
+                    if self._cambia_campo('fecha', contraparte=self.viejo):
+                        # TODO extraer
+                        fecha_min, fecha_max = sorted([self.fecha, self.viejo.fecha])
+                        self.orden_dia = 0 if fecha_min == self.viejo.fecha else \
+                            Movimiento.filtro(fecha=fecha_min).count()
+                        super().save()
+
+                        self.cta_entrada.recalcular_saldos_entre(
+                            fecha_min, fecha_hasta=fecha_max
+                        )
 
                 else:
                     self._eliminar_saldo_viejo_si_existe('cta_entrada')
@@ -368,8 +379,17 @@ class Movimiento(MiModel):
                     elif self.viejo.cta_salida:
                         self._recalcular_si_cambia_importe('cta_salida')
 
-                    else:  # única opción restante: not mov.viejo.cta_salida and self.cta_salida
+                    else:  # única opción restante: not self.viejo.cta_salida and self.cta_salida
                         Saldo.generar(self, salida=True)
+
+                    if self._cambia_campo('fecha', contraparte=self.viejo):
+                        # TODO extraer
+                        fecha = min(self.fecha, self.viejo.fecha)
+                        self.orden_dia = 0 if self.fecha > self.viejo.fecha else \
+                            Movimiento.filtro(fecha=fecha).count()
+                        super().save()
+
+                        self.cta_salida.recalcular_saldos_entre(fecha)
 
                 else:
                     self._eliminar_saldo_viejo_si_existe('cta_salida')
