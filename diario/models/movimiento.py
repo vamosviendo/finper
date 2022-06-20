@@ -24,6 +24,29 @@ class MiDateField(models.DateField):
             return value
 
 
+class Posicion:
+
+    def __init__(self, fecha: date, orden_dia: int):
+        self.fecha = fecha
+        self.orden_dia = orden_dia
+
+    def __lt__(self, other) -> bool:
+        if self.fecha < other.fecha:
+            return True
+        if self.fecha == other.fecha and self.orden_dia < other.orden_dia:
+            return True
+        return False
+
+    def __eq__(self, other) -> bool:
+        return self.fecha == other.fecha and self.orden_dia == other.orden_dia
+
+    def __lte__(self, other) -> bool:
+        return self.__lt__(other) or self.__eq__(other)
+
+    def __str__(self) -> str:
+        return f'{self.fecha}, {self.orden_dia}'
+
+
 class Movimiento(MiModel):
     fecha = MiDateField(default=date.today)
     orden_dia = OrderedCollectionField(collection='fecha')
@@ -68,6 +91,10 @@ class Movimiento(MiModel):
     def receptor(self):
         if self.cta_entrada:
             return self.cta_entrada.titular
+
+    @property
+    def posicion(self):
+        return Posicion(fecha=self.fecha, orden_dia=self.orden_dia)
 
     def __str__(self):
         importe = self.importe \
@@ -320,7 +347,7 @@ class Movimiento(MiModel):
             super().save(*args, **kwargs)
 
             if self._cambia_campo(
-                    'importe', 'cta_entrada', 'cta_salida', 'fecha',
+                    'importe', 'cta_entrada', 'cta_salida', 'fecha', 'orden_dia',
                     contraparte=self.viejo
             ):
                 """
@@ -337,7 +364,7 @@ class Movimiento(MiModel):
                 implementación 
                 """
                 for sentido in ('cta_entrada', 'cta_salida'):
-                    self._actualizar_saldos_cuenta(sentido)
+                    self._actualizar_saldos_cuenta(sentido, mantiene_orden_dia)
 
             #
             # if self._cambia_campo(
@@ -534,7 +561,7 @@ class Movimiento(MiModel):
     #     elif self.viejo.cta_salida and not self._salida_pasa_a_entrada():
     #         self.viejo.saldo_cs().eliminar()
 
-    def _actualizar_saldos_cuenta(self, sentido):
+    def _actualizar_saldos_cuenta(self, sentido, mantiene_orden_dia):
         if sentido not in ('cta_entrada', 'cta_salida'):
             raise ValueError(
                 'Argumento incorrecto. Debe ser "cta_entrada"'
@@ -570,14 +597,18 @@ class Movimiento(MiModel):
             else:
                 Saldo.generar(self, salida=(sentido == 'cta_salida'))
 
-            if self._cambia_campo('fecha', contraparte=self.viejo):
-                # TODO extraer
-                fecha_min, fecha_max = sorted([self.fecha, self.viejo.fecha])
-                self.orden_dia = 0 if fecha_min == self.viejo.fecha else \
-                    Movimiento.filtro(fecha=fecha_min).count()
-                super().save()
+            if self._cambia_campo('fecha', 'orden_dia', contraparte=self.viejo):
+                pos_min, pos_max = sorted([self.posicion, self.viejo.posicion])
+                # TODO extraer Movimiento.asignar_orden()
+                if pos_min.fecha != pos_max.fecha and not mantiene_orden_dia:
+                    self.orden_dia = 0 \
+                        if pos_min.fecha == self.viejo.fecha \
+                        else Movimiento.filtro(fecha=pos_min.fecha).count()
+                    super().save()
 
-                cuenta.recalcular_saldos_entre(fecha_min, fecha_hasta=fecha_max)
+                cuenta.recalcular_saldos_entre(
+                    pos_min.fecha, pos_min.orden_dia,
+                    pos_max.fecha, pos_max.orden_dia)
 
         else:
             self._eliminar_saldo_viejo_si_existe(
