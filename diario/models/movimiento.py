@@ -8,6 +8,7 @@ from utils import errors
 from vvmodel.models import MiModel
 
 from diario.models.saldo import Saldo
+from utils.tiempo import Posicion
 
 
 class MiDateField(models.DateField):
@@ -22,29 +23,6 @@ class MiDateField(models.DateField):
             return super().to_python(value)
         except TypeError:
             return value
-
-
-class Posicion:
-
-    def __init__(self, fecha: date, orden_dia: int):
-        self.fecha = fecha
-        self.orden_dia = orden_dia
-
-    def __lt__(self, other) -> bool:
-        if self.fecha < other.fecha:
-            return True
-        if self.fecha == other.fecha and self.orden_dia < other.orden_dia:
-            return True
-        return False
-
-    def __eq__(self, other) -> bool:
-        return self.fecha == other.fecha and self.orden_dia == other.orden_dia
-
-    def __lte__(self, other) -> bool:
-        return self.__lt__(other) or self.__eq__(other)
-
-    def __str__(self) -> str:
-        return f'{self.fecha}, {self.orden_dia}'
 
 
 class Movimiento(MiModel):
@@ -582,7 +560,7 @@ class Movimiento(MiModel):
         if cuenta is not None:
 
             if viene_de_opuesto():
-                cuenta.recalcular_saldos_entre(self.fecha, self.orden_dia)
+                cuenta.recalcular_saldos_entre(self.posicion)
                 self._eliminar_saldo_viejo_si_existe(
                     cuenta_vieja, pasa_a_opuesto, saldo)
 
@@ -606,9 +584,7 @@ class Movimiento(MiModel):
                         else Movimiento.filtro(fecha=pos_min.fecha).count()
                     super().save()
 
-                cuenta.recalcular_saldos_entre(
-                    pos_min.fecha, pos_min.orden_dia,
-                    pos_max.fecha, pos_max.orden_dia)
+                cuenta.recalcular_saldos_entre(pos_min, pos_max)
 
         else:
             self._eliminar_saldo_viejo_si_existe(
@@ -616,9 +592,7 @@ class Movimiento(MiModel):
 
     def _recalcular_si_cambia_importe(self, cuenta):
         if self._cambia_campo('importe', contraparte=self.viejo):
-            cuenta.recalcular_saldos_entre(
-                self.fecha, self.orden_dia
-            )
+            cuenta.recalcular_saldos_entre(self.posicion)
 
     def _eliminar_saldo_viejo_si_existe(self, cuenta_vieja, pasa_a_opuesto, saldo):
         if cuenta_vieja is not None and not pasa_a_opuesto():

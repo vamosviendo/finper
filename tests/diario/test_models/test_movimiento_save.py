@@ -2048,7 +2048,6 @@ class TestModelMovimientoSaveModificaCuentasYFecha(TestModelMovimientoSave):
         self.mov1.save()
 
         self.assertEqual(
-            # Saldo.tomar(cuenta=self.cuenta1, movimiento=self.mov2).importe,
             self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
             90-125
         )

@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase, tag
 
 from diario.models import Cuenta, CuentaInteractiva, Movimiento, Saldo, Titular
+from utils.tiempo import Posicion
 
 from utils.errors import SaldoNoCeroException, CambioDeTitularException
 from utils.helpers_tests import dividir_en_dos_subcuentas
@@ -764,7 +765,7 @@ class TestSaldoMetodoRecalcularSaldosEntre(TestCase):
         self.saldo4a.importe = 1000
         self.saldo4a.save()
 
-        self.cuentaA.recalcular_saldos_entre(date(2011, 1, 17))
+        self.cuentaA.recalcular_saldos_entre(Posicion(date(2011, 1, 17)))
         self.saldo3a.refresh_from_db(fields=['_importe'])
         self.saldo4a.refresh_from_db(fields=['_importe'])
 
@@ -774,7 +775,7 @@ class TestSaldoMetodoRecalcularSaldosEntre(TestCase):
     def test_no_recalcula_saldos_anteriores_a_fecha(self):
         self.saldo1a.importe = 100
         self.saldo1a.save()
-        self.cuentaA.recalcular_saldos_entre(date(2011, 1, 17))
+        self.cuentaA.recalcular_saldos_entre(Posicion(date(2011, 1, 17)))
         self.saldo1a.refresh_from_db(fields=['_importe'])
 
         self.assertEqual(self.saldo1a.importe, 100)
@@ -792,7 +793,9 @@ class TestSaldoMetodoRecalcularSaldosEntre(TestCase):
         saldo6a.importe = 200
         saldo6a.save()
 
-        self.cuentaA.recalcular_saldos_entre(date(2011, 1, 25), od_desde=1)
+        self.cuentaA.recalcular_saldos_entre(
+            Posicion(date(2011, 1, 25), orden_dia=1)
+        )
         saldo5a.refresh_from_db(fields=['_importe'])
         saldo6a.refresh_from_db(fields=['_importe'])
 
@@ -803,36 +806,38 @@ class TestSaldoMetodoRecalcularSaldosEntre(TestCase):
         self.saldo4a.importe = 200
         self.saldo4a.save()
 
-        self.cuentaA.recalcular_saldos_entre(date(2011, 1, 25), od_desde=1)
-        self.saldo4a.refresh_from_db(fields=['_importe'])
-
-        self.assertEqual(self.saldo4a.importe, 200)
-
-    def test_no_recalcula_saldos_posteriores_a_fecha_hasta(self):
-        self.saldo4a.importe = 200
-        self.saldo4a.save()
-
         self.cuentaA.recalcular_saldos_entre(
-            fecha_desde=date(2011, 1, 11),
-            fecha_hasta=date(2011, 1, 20)
+            Posicion(date(2011, 1, 25), orden_dia=1)
         )
         self.saldo4a.refresh_from_db(fields=['_importe'])
 
         self.assertEqual(self.saldo4a.importe, 200)
 
-    def test_recalcula_saldos_de_fecha_hasta(self):
+    def test_no_recalcula_saldos_posteriores_a_fecha_de_pos_hasta(self):
         self.saldo4a.importe = 200
         self.saldo4a.save()
 
         self.cuentaA.recalcular_saldos_entre(
-            fecha_desde=date(2011, 1, 11),
-            fecha_hasta=date(2011, 1, 25)
+            Posicion(date(2011, 1, 11)),
+            Posicion(date(2011, 1, 20))
+        )
+        self.saldo4a.refresh_from_db(fields=['_importe'])
+
+        self.assertEqual(self.saldo4a.importe, 200)
+
+    def test_recalcula_saldos_de_fecha_de_pos_hasta(self):
+        self.saldo4a.importe = 200
+        self.saldo4a.save()
+
+        self.cuentaA.recalcular_saldos_entre(
+            Posicion(date(2011, 1, 11)),
+            Posicion(date(2011, 1, 25))
         )
         self.saldo4a.refresh_from_db(fields=['_importe'])
 
         self.assertEqual(self.saldo4a.importe, 2)
 
-    def test_no_recalcula_saldos_de_fecha_hasta_posteriores_a_od_hasta(self):
+    def test_no_recalcula_saldos_de_fecha_hasta_posteriores_a_orden_dia_de_pos_hasta(self):
         Movimiento.crear(
             'mov6', 12, self.cuentaA, fecha=date(2011, 1, 25)
         ).saldo_ce()    # 14
@@ -844,15 +849,14 @@ class TestSaldoMetodoRecalcularSaldosEntre(TestCase):
         saldo6a.save()
 
         self.cuentaA.recalcular_saldos_entre(
-            fecha_desde=date(2011, 1, 11),
-            fecha_hasta=date(2011, 1, 25),
-            od_hasta=1
+            Posicion(date(2011, 1, 11)),
+            Posicion(date(2011, 1, 25), orden_dia=1)
         )
         saldo6a.refresh_from_db(fields=['_importe'])
 
         self.assertEqual(saldo6a.importe, 200)
 
-    def test_recalcula_saldos_de_fecha_hasta_con_orden_dia_igual_a_od_hasta(self):
+    def test_recalcula_saldos_de_fecha_hasta_con_orden_dia_igual_a_orden_dia_de_pos_hasta(self):
         saldo5a = Movimiento.crear(
             'mov6', 12, self.cuentaA, fecha=date(2011, 1, 25)
         ).saldo_ce()    # 14
@@ -861,9 +865,8 @@ class TestSaldoMetodoRecalcularSaldosEntre(TestCase):
         saldo5a.save()
 
         self.cuentaA.recalcular_saldos_entre(
-            fecha_desde=date(2011, 1, 11),
-            fecha_hasta=date(2011, 1, 25),
-            od_hasta=1
+            Posicion(date(2011, 1, 11)),
+            Posicion(date(2011, 1, 25), orden_dia=1)
         )
         saldo5a.refresh_from_db(fields=['_importe'])
 
@@ -873,7 +876,7 @@ class TestSaldoMetodoRecalcularSaldosEntre(TestCase):
         self.saldo1a.importe = 200
         self.saldo1a.save()
 
-        self.cuentaA.recalcular_saldos_entre(fecha_desde=date(2011, 1, 4))
+        self.cuentaA.recalcular_saldos_entre(Posicion(date(2011, 1, 4)))
         self.saldo1a.refresh_from_db(fields=['_importe'])
 
         self.assertEqual(self.saldo1a.importe, 2)

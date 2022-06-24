@@ -7,6 +7,7 @@ from django.db import models
 from django.db.models import Sum
 from django.urls import reverse
 
+from utils.tiempo import Posicion
 from diario.models.titular import Titular
 from diario.models.movimiento import Movimiento
 from diario.models.saldo import Saldo
@@ -109,13 +110,13 @@ class Cuenta(PolymorphModel):
             s.importe += importe
             s.save()
 
-    def recalcular_saldos_entre(self, fecha_desde, od_desde=0, fecha_hasta=None, od_hasta=10000000):
-        fecha_hasta = fecha_hasta or date.today()
+    def recalcular_saldos_entre(self,
+                                pos_desde=Posicion(orden_dia=0),
+                                pos_hasta=Posicion(orden_dia=100000000)):
+        pos_hasta.fecha = pos_hasta.fecha or date.today()
 
-        saldos = Saldo.posteriores_a(
-                     fecha_desde, self, od_desde, inclusive_od=True) & \
-                 Saldo.anteriores_a(
-                     fecha_hasta, self, orden_dia=od_hasta, inclusive_od=True)
+        saldos = Saldo.posteriores_a(self, pos_desde, inclusive_od=True) & \
+                 Saldo.anteriores_a(self, pos_hasta, inclusive_od=True)
         for saldo in saldos:
             try:
                 saldo.importe = saldo.anterior().importe + (

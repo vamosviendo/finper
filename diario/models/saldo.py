@@ -9,10 +9,14 @@ mostrarlos.
 la consulta a base de datos y ver cuál es más rápido, en una de esas calcular
 es más rápido y hago desaparecer este modelo).
 """
+import operator
+
 from django.db import models
 
 from utils import errors
 from vvmodel.models import MiModel
+
+from utils.tiempo import Posicion
 
 
 class Saldo(MiModel):
@@ -67,8 +71,7 @@ class Saldo(MiModel):
             return super().tomar(**kwargs)
         except cls.DoesNotExist:
             result = Saldo._anterior_a(
-                fecha=movimiento.fecha,
-                orden_dia=movimiento.orden_dia,
+                posicion=movimiento.posicion,
                 cuenta=cuenta
             )
 
@@ -96,7 +99,7 @@ class Saldo(MiModel):
 
         try:
             importe_saldo_anterior = Saldo._anterior_a(
-                mov.fecha, mov.orden_dia, cuenta
+                mov.posicion, cuenta
             ).importe
         except AttributeError:
             importe_saldo_anterior = 0
@@ -121,29 +124,31 @@ class Saldo(MiModel):
 
     def anterior(self):
         return Saldo._anterior_a(
-            self.movimiento.fecha,
-            self.movimiento.orden_dia,
+            self.movimiento.posicion,
             self.cuenta
         )
 
     def anteriores(self):
         return Saldo.anteriores_a(
-            self.movimiento.fecha,
-            self.movimiento.orden_dia,
-            self.cuenta
+            self.cuenta,
+            self.movimiento.posicion,
         )
 
     def posteriores(self):
         return Saldo.posteriores_a(
-            self.movimiento.fecha,
             self.cuenta,
-            self.movimiento.orden_dia,
+            self.movimiento.posicion,
         )
 
     def intermedios(self, otro):
-        return self.intermedios_con_fecha_y_orden(
-            otro.movimiento.fecha,
-            otro.movimiento.orden_dia
+        return self.intermedios_con_posicion(otro.movimiento.posicion)
+
+    def intermedios_con_posicion(self, posicion=Posicion(orden_dia=0), inclusive_od=False):
+        return Saldo.intermedios_entre_posiciones_de_cuenta(
+            cuenta=self.cuenta,
+            pos1=self.movimiento.posicion,
+            pos2=posicion,
+            inclusive_od=inclusive_od
         )
 
     def intermedios_con_fecha_y_orden(self, fecha, orden_dia=0,
@@ -155,6 +160,15 @@ class Saldo(MiModel):
             orden_dia1=self.movimiento.orden_dia,
             orden_dia2=orden_dia,
             inclusive_od=inclusive_od
+        )
+
+    @staticmethod
+    def intermedios_entre_posiciones_de_cuenta(cuenta, pos1, pos2, inclusive_od=False):
+        pos_ant, pos_post = sorted([pos1, pos2])
+        return Saldo.posteriores_a(
+            cuenta, pos_ant, inclusive_od
+        ) & Saldo.anteriores_a(
+            cuenta, pos_post, inclusive_od
         )
 
     @staticmethod
@@ -172,9 +186,9 @@ class Saldo(MiModel):
         ])
 
         return Saldo.posteriores_a(
-            fecha_ant, cuenta, orden_dia_ant, inclusive_od
+            cuenta, Posicion(fecha_ant, orden_dia_ant), inclusive_od
         ) & Saldo.anteriores_a(
-            fecha_pos, cuenta, orden_dia_pos, inclusive_od
+            cuenta, Posicion(fecha_pos, orden_dia_pos), inclusive_od
         )
 
     def sumar_a_este_y_posteriores(self, importe):
@@ -183,32 +197,28 @@ class Saldo(MiModel):
         self.save()
 
     @staticmethod
-    def _anterior_a(fecha, orden_dia, cuenta):
-        return Saldo.anteriores_a(fecha, cuenta, orden_dia).last()
+    def _anterior_a(posicion, cuenta):
+        return Saldo.anteriores_a(cuenta, posicion).last()
 
     @staticmethod
-    def anteriores_a(fecha, cuenta, orden_dia=0, inclusive_od=False):
-        kw_orden_dia = 'movimiento__orden_dia__lte' if inclusive_od \
-            else 'movimiento__orden_dia__lt'
-        kwarg_orden_dia = {kw_orden_dia: orden_dia}
-        return cuenta.saldo_set.filter(
-            movimiento__fecha__lt=fecha
-        ) | cuenta.saldo_set.filter(
-            movimiento__fecha=fecha,
-            **kwarg_orden_dia
-        )
+    def anteriores_a(cuenta, posicion=Posicion(), inclusive_od=False):
+        es_anterior = operator.le if inclusive_od else operator.lt
+        ids = [
+            saldo.id for saldo in cuenta.saldo_set.all()
+            if es_anterior(saldo.movimiento.posicion, posicion)
+        ]
+
+        return cuenta.saldo_set.filter(id__in=ids)
 
     @staticmethod
-    def posteriores_a(fecha, cuenta, orden_dia=0, inclusive_od=False):
-        kw_orden_dia = 'movimiento__orden_dia__gte' if inclusive_od \
-            else 'movimiento__orden_dia__gt'
-        kwarg_orden_dia = {kw_orden_dia: orden_dia}
-        return cuenta.saldo_set.filter(
-            movimiento__fecha__gt=fecha
-        ) | cuenta.saldo_set.filter(
-            movimiento__fecha=fecha,
-            **kwarg_orden_dia
-        )
+    def posteriores_a(cuenta, posicion=Posicion(), inclusive_od=False):
+        es_posterior = operator.ge if inclusive_od else operator.gt
+        ids = [
+            saldo.id for saldo in cuenta.saldo_set.all()
+            if es_posterior(saldo.movimiento.posicion, posicion)
+        ]
+
+        return cuenta.saldo_set.filter(id__in=ids)
 
     def _actualizar_posteriores(self, importe):
         for saldo_post in self.posteriores():
