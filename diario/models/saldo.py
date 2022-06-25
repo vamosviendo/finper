@@ -81,13 +81,6 @@ class Saldo(MiModel):
             return result
 
     @classmethod
-    def tomar_de_fecha(cls, cuenta, fecha):
-        ultimo_mov = Saldo.get_related_class('movimiento')\
-            .filtro(fecha__lte=fecha)\
-            .last()
-        return Saldo.tomar(cuenta=cuenta, movimiento=ultimo_mov)
-
-    @classmethod
     def generar(cls, mov, cuenta=None, salida=False):
         importe = mov.importe if not salida else -mov.importe
         cuenta = cuenta or (mov.cta_salida if salida else mov.cta_entrada)
@@ -150,17 +143,18 @@ class Saldo(MiModel):
             pos2=posicion,
             inclusive_od=inclusive_od
         )
-
-    def intermedios_con_fecha_y_orden(self, fecha, orden_dia=0,
-                                      inclusive_od=False):
-        return Saldo.intermedios_entre_fechas_y_ordenes_de_cuenta(
-            cuenta=self.cuenta,
-            fecha1=self.movimiento.fecha,
-            fecha2=fecha,
-            orden_dia1=self.movimiento.orden_dia,
-            orden_dia2=orden_dia,
-            inclusive_od=inclusive_od
-        )
+    #
+    # def intermedios_con_fecha_y_orden(self, fecha, orden_dia=0,
+    #                                   inclusive_od=False):
+    #     # TODO: deprecated
+    #     return Saldo.intermedios_entre_fechas_y_ordenes_de_cuenta(
+    #         cuenta=self.cuenta,
+    #         fecha1=self.movimiento.fecha,
+    #         fecha2=fecha,
+    #         orden_dia1=self.movimiento.orden_dia,
+    #         orden_dia2=orden_dia,
+    #         inclusive_od=inclusive_od
+    #     )
 
     @staticmethod
     def intermedios_entre_posiciones_de_cuenta(cuenta, pos1, pos2, inclusive_od=False):
@@ -170,26 +164,27 @@ class Saldo(MiModel):
         ) & Saldo.anteriores_a(
             cuenta, pos_post, inclusive_od
         )
-
-    @staticmethod
-    def intermedios_entre_fechas_y_ordenes_de_cuenta(
-            cuenta,
-            fecha1,
-            fecha2,
-            orden_dia1=0,
-            orden_dia2=0,
-            inclusive_od=False
-    ):
-        (fecha_ant, orden_dia_ant), (fecha_pos, orden_dia_pos) = sorted([
-            [fecha1, orden_dia1],
-            [fecha2, orden_dia2]
-        ])
-
-        return Saldo.posteriores_a(
-            cuenta, Posicion(fecha_ant, orden_dia_ant), inclusive_od
-        ) & Saldo.anteriores_a(
-            cuenta, Posicion(fecha_pos, orden_dia_pos), inclusive_od
-        )
+    #
+    # @staticmethod
+    # def intermedios_entre_fechas_y_ordenes_de_cuenta(
+    #         cuenta,
+    #         fecha1,
+    #         fecha2,
+    #         orden_dia1=0,
+    #         orden_dia2=0,
+    #         inclusive_od=False
+    # ):
+    #     # TODO: deprecated
+    #     (fecha_ant, orden_dia_ant), (fecha_pos, orden_dia_pos) = sorted([
+    #         [fecha1, orden_dia1],
+    #         [fecha2, orden_dia2]
+    #     ])
+    #
+    #     return Saldo.posteriores_a(
+    #         cuenta, Posicion(fecha_ant, orden_dia_ant), inclusive_od
+    #     ) & Saldo.anteriores_a(
+    #         cuenta, Posicion(fecha_pos, orden_dia_pos), inclusive_od
+    #     )
 
     def sumar_a_este_y_posteriores(self, importe):
         self._actualizar_posteriores(importe)
@@ -224,4 +219,3 @@ class Saldo(MiModel):
         for saldo_post in self.posteriores():
             saldo_post.importe += importe
             saldo_post.save()
-

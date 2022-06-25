@@ -88,32 +88,11 @@ class Cuenta(PolymorphModel):
     def saldo_en_mov(self, movimiento):
         return self.saldo_set.get(movimiento=movimiento).importe
 
-    def saldos_posteriores_a(self, movimiento):
-        try:
-            saldo = Saldo.tomar(cuenta=self, movimiento=movimiento)
-            posteriores = saldo.posteriores()
-        except Saldo.DoesNotExist:
-            posteriores = self.saldo_set.all()
-        return posteriores
-
-    def sumar_a_saldos_posteriores(self, movimiento, importe):
-        posteriores = self.saldos_posteriores_a(movimiento)
-        for s in posteriores:
-            s.importe += importe
-            s.save()
-
-    def sumar_a_saldo_y_posteriores(self, movimiento, importe):
-        yposteriores = self.saldo_set.filter(
-            movimiento=movimiento
-        ) | self.saldos_posteriores_a(movimiento)
-        for s in yposteriores:
-            s.importe += importe
-            s.save()
-
     def recalcular_saldos_entre(self,
                                 pos_desde=Posicion(orden_dia=0),
                                 pos_hasta=Posicion(orden_dia=100000000)):
         pos_hasta.fecha = pos_hasta.fecha or date.today()
+        pos_hasta.orden_dia = pos_hasta.orden_dia or 100000000
 
         saldos = Saldo.posteriores_a(self, pos_desde, inclusive_od=True) & \
                  Saldo.anteriores_a(self, pos_hasta, inclusive_od=True)
@@ -168,7 +147,6 @@ class Cuenta(PolymorphModel):
     def movs_en_fecha(self, fecha):
         """ Devuelve movimientos propios y de sus subcuentas en una fecha dada.
         Ver comentario anterior."""
-        pass
         return self.movs().filter(fecha=fecha)
 
     def cantidad_movs(self):

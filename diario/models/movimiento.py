@@ -392,14 +392,7 @@ class Movimiento(MiModel):
                 not self.esgratis)
 
     def es_anterior_a(self, otro):
-        return self.es_anterior_a_fecha_y_orden(otro.fecha, otro.orden_dia)
-
-    def es_anterior_a_fecha_y_orden(self, fecha, orden_dia=0):
-        return (
-            self.fecha < fecha
-        ) or (
-            self.fecha == fecha and self.orden_dia < orden_dia
-        )
+        return self.posicion < otro.posicion
 
     def recuperar_cuentas_credito(self):
         cls = self.get_related_class('cta_entrada')
@@ -597,187 +590,191 @@ class Movimiento(MiModel):
     def _eliminar_saldo_viejo_si_existe(self, cuenta_vieja, pasa_a_opuesto, saldo):
         if cuenta_vieja is not None and not pasa_a_opuesto():
             saldo().eliminar()
-
-    def _actualizar_orden(self, mantiene_orden_dia):
-        # TODO: saldos_intermedios_de_ctas(
-        #           self.viejo.fecha, self.viejo.orden_dia
-        #       ) -> intermedios_ce, intermedios_cs
-        try:
-            intermedios_ce = Saldo.intermedios_entre_fechas_y_ordenes_de_cuenta(
-                self.viejo_dict['ce'],
-                self.viejo_dict['fecha'],
-                self.fecha,
-                self.viejo_dict['orden_dia'],
-                self.orden_dia
-            )
-        except AttributeError:
-            intermedios_ce = None
-        try:
-            intermedios_cs = Saldo.intermedios_entre_fechas_y_ordenes_de_cuenta(
-                self.viejo_dict['cs'],
-                self.viejo_dict['fecha'],
-                self.fecha,
-                self.viejo_dict['orden_dia'],
-                self.orden_dia
-            )
-        except AttributeError:
-            intermedios_cs = None
-
-        if self.fecha > self.viejo.fecha:
-            if not mantiene_orden_dia:
-                self.orden_dia = 0
-                super().save()
-
-            if self.cta_entrada:
-                saldo_ce = self.saldo_ce()
-
-                # TODO: Saldo.actualizar_saldos(saldos, importe)
-                #       (como Saldo.actualizar_posteriores pero actualiza
-                #       la lista de saldos que se le pasa y no los posteriores)
-                for saldo in intermedios_ce:
-                    if not self._cambia_cta_entrada():
-                        saldo.importe -= self.viejo.importe
-                        saldo.save()
-
-                # TODO: self.calcular_nuevo_saldo_dada_ubicacion(entrada)
-                try:
-                    saldo_ce.importe = saldo_ce.anterior().importe + \
-                                       self.importe
-                    saldo_ce.save()
-                except AttributeError:
-                    pass
-
-            if self.cta_salida:
-                saldo_cs = self.saldo_cs()
-
-                # TODO: Saldo.actualizar_saldos(saldos, importe)
-                for saldo in intermedios_cs:
-                    if not self._cambia_cta_salida():
-                        saldo.importe += self.viejo.importe
-                        saldo.save()
-
-                # TODO: self.calcular_nuevo_saldo_dada_ubicacion(salida)
-                #       if intermedios.count() == 0: return
-                try:
-                    saldo_cs.importe = saldo_cs.anterior().importe - \
-                                       self.importe
-                    saldo_cs.save()
-                except AttributeError:
-                    pass
-
-        elif self.fecha < self.viejo.fecha:
-            if not mantiene_orden_dia:
-                self.orden_dia = Movimiento.filtro(fecha=self.fecha).count()
-                super().save()
-
-            if self.cta_entrada:
-                saldo_ce = self.saldo_ce()
-
-                # TODO: Saldo.actualizar_saldos(saldos, importe)
-                for saldo in intermedios_ce:
-                    # si se modificó el importe, ya se sumó a los saldos
-                    # posteriores la diferencia entre el saldo nuevo y
-                    # el viejo. Queda sumar el saldo viejo. De lo contrario,
-                    # estaríamos sumando la diferencia dos veces
-                    # TODO: Tiene que haber una forma mejor de resolver
-                    #   esto.
-                    saldo.importe += self.viejo.importe
-                    saldo.save()
-
-                # TODO: self.calcular_nuevo_saldo_dada_ubicacion(salida)
-                #       if intermedios.count() == 0: return
-                saldo_ce_anterior = saldo_ce.anterior()
-                saldo_ce.importe = saldo_ce_anterior.importe + self.importe \
-                    if saldo_ce_anterior \
-                    else self.importe
-                saldo_ce.save()
-
-            if self.cta_salida:
-                saldo_cs = self.saldo_cs()
-
-                # TODO: Saldo.actualizar_saldos(saldos, importe)
-                for saldo in intermedios_cs:
-                    saldo.importe -= self.viejo.importe
-                    saldo.save()
-
-                # TODO: self.calcular_nuevo_saldo_dada_ubicacion(salida)
-                #       if intermedios.count() == 0: return
-                saldo_cs_anterior = saldo_cs.anterior()
-                saldo_cs.importe = saldo_cs_anterior.importe - self.importe \
-                    if saldo_cs_anterior \
-                    else -self.importe
-                saldo_cs.save()
-
-        elif self.orden_dia > self.viejo.orden_dia:
-            if self.cta_entrada:
-                saldo_ce = self.saldo_ce()
-                intermedios_ce = saldo_ce.intermedios_con_fecha_y_orden(
-                    self.viejo.fecha,
-                    self.viejo.orden_dia,
-                    inclusive_od=True
-                )
-                for saldo in intermedios_ce:
-                    saldo.importe -= self.viejo.importe
-                    saldo.save()
-
-                saldo_ce_anterior = saldo_ce.anterior()
-                saldo_ce.importe = saldo_ce_anterior.importe + self.importe \
-                    if saldo_ce_anterior \
-                    else self.importe
-                saldo_ce.save()
-
-            if self.cta_salida:
-                saldo_cs = self.saldo_cs()
-                intermedios_cs = saldo_cs.intermedios_con_fecha_y_orden(
-                    self.viejo.fecha,
-                    self.viejo.orden_dia,
-                    inclusive_od=True
-                )
-                for saldo in intermedios_cs:
-                    saldo.importe += self.viejo.importe
-                    saldo.save()
-
-                saldo_cs_anterior = saldo_cs.anterior()
-                saldo_cs.importe = saldo_cs_anterior.importe - self.importe \
-                    if saldo_cs_anterior \
-                    else -self.importe
-                saldo_cs.save()
-
-        else:   # self.orden_dia < self.viejo.orden_dia
-
-            if self.cta_entrada:
-                saldo_ce = self.saldo_ce()
-                intermedios_ce = saldo_ce.intermedios_con_fecha_y_orden(
-                    self.viejo.fecha,
-                    self.viejo.orden_dia,
-                    inclusive_od=True
-                )
-                for saldo in intermedios_ce:
-                    saldo.importe += self.viejo.importe
-                    saldo.save()
-
-                saldo_ce_anterior = saldo_ce.anterior()
-                saldo_ce.importe = saldo_ce_anterior.importe + self.importe \
-                    if saldo_ce_anterior \
-                    else self.importe
-                saldo_ce.save()
-
-            if self.cta_salida:
-                saldo_cs = self.saldo_cs()
-                intermedios_cs = saldo_cs.intermedios_con_fecha_y_orden(
-                    self.viejo.fecha,
-                    self.viejo.orden_dia,
-                    inclusive_od=True
-                )
-                for saldo in intermedios_cs:
-                    saldo.importe -= self.viejo.importe
-                    saldo.save()
-
-                saldo_cs_anterior = saldo_cs.anterior()
-                saldo_cs.importe = saldo_cs_anterior.importe - self.importe \
-                    if saldo_cs_anterior \
-                    else -self.importe
-                saldo_cs.save()
+    #
+    # def _actualizar_orden(self, mantiene_orden_dia):
+    #     # TODO: deprecated
+    #     # --- AL DESAPARECER, HARÁ INNECESARIOS LOS SIGUIENTES ELEMENTOS:
+    #     #   diario.models.Saldo.intermedios_con_fecha_y_orden
+    #     #   diario.models.Saldo.intermedios_entre_fechas_y_ordenes_de_cuenta
+    #     #   tests.diario.test_models.test_saldo.TestSaldoMetodoIntermediosConFechaYOrden
+    #     #   tests.diario.test_models.test_saldo.TestSaldoMetodoIntermediosEntreFechasYOrdenesDeCuenta
+    #     #
+    #     try:
+    #         intermedios_ce = Saldo.intermedios_entre_fechas_y_ordenes_de_cuenta(
+    #             self.viejo_dict['ce'],
+    #             self.viejo_dict['fecha'],
+    #             self.fecha,
+    #             self.viejo_dict['orden_dia'],
+    #             self.orden_dia
+    #         )
+    #     except AttributeError:
+    #         intermedios_ce = None
+    #     try:
+    #         intermedios_cs = Saldo.intermedios_entre_fechas_y_ordenes_de_cuenta(
+    #             self.viejo_dict['cs'],
+    #             self.viejo_dict['fecha'],
+    #             self.fecha,
+    #             self.viejo_dict['orden_dia'],
+    #             self.orden_dia
+    #         )
+    #     except AttributeError:
+    #         intermedios_cs = None
+    #
+    #     if self.fecha > self.viejo.fecha:
+    #         if not mantiene_orden_dia:
+    #             self.orden_dia = 0
+    #             super().save()
+    #
+    #         if self.cta_entrada:
+    #             saldo_ce = self.saldo_ce()
+    #
+    #             # TODO: Saldo.actualizar_saldos(saldos, importe)
+    #             #       (como Saldo.actualizar_posteriores pero actualiza
+    #             #       la lista de saldos que se le pasa y no los posteriores)
+    #             for saldo in intermedios_ce:
+    #                 if not self._cambia_cta_entrada():
+    #                     saldo.importe -= self.viejo.importe
+    #                     saldo.save()
+    #
+    #             # TODO: self.calcular_nuevo_saldo_dada_ubicacion(entrada)
+    #             try:
+    #                 saldo_ce.importe = saldo_ce.anterior().importe + \
+    #                                    self.importe
+    #                 saldo_ce.save()
+    #             except AttributeError:
+    #                 pass
+    #
+    #         if self.cta_salida:
+    #             saldo_cs = self.saldo_cs()
+    #
+    #             # TODO: Saldo.actualizar_saldos(saldos, importe)
+    #             for saldo in intermedios_cs:
+    #                 if not self._cambia_cta_salida():
+    #                     saldo.importe += self.viejo.importe
+    #                     saldo.save()
+    #
+    #             # TODO: self.calcular_nuevo_saldo_dada_ubicacion(salida)
+    #             #       if intermedios.count() == 0: return
+    #             try:
+    #                 saldo_cs.importe = saldo_cs.anterior().importe - \
+    #                                    self.importe
+    #                 saldo_cs.save()
+    #             except AttributeError:
+    #                 pass
+    #
+    #     elif self.fecha < self.viejo.fecha:
+    #         if not mantiene_orden_dia:
+    #             self.orden_dia = Movimiento.filtro(fecha=self.fecha).count()
+    #             super().save()
+    #
+    #         if self.cta_entrada:
+    #             saldo_ce = self.saldo_ce()
+    #
+    #             # TODO: Saldo.actualizar_saldos(saldos, importe)
+    #             for saldo in intermedios_ce:
+    #                 # si se modificó el importe, ya se sumó a los saldos
+    #                 # posteriores la diferencia entre el saldo nuevo y
+    #                 # el viejo. Queda sumar el saldo viejo. De lo contrario,
+    #                 # estaríamos sumando la diferencia dos veces
+    #                 # TODO: Tiene que haber una forma mejor de resolver
+    #                 #   esto.
+    #                 saldo.importe += self.viejo.importe
+    #                 saldo.save()
+    #
+    #             # TODO: self.calcular_nuevo_saldo_dada_ubicacion(salida)
+    #             #       if intermedios.count() == 0: return
+    #             saldo_ce_anterior = saldo_ce.anterior()
+    #             saldo_ce.importe = saldo_ce_anterior.importe + self.importe \
+    #                 if saldo_ce_anterior \
+    #                 else self.importe
+    #             saldo_ce.save()
+    #
+    #         if self.cta_salida:
+    #             saldo_cs = self.saldo_cs()
+    #
+    #             # TODO: Saldo.actualizar_saldos(saldos, importe)
+    #             for saldo in intermedios_cs:
+    #                 saldo.importe -= self.viejo.importe
+    #                 saldo.save()
+    #
+    #             # TODO: self.calcular_nuevo_saldo_dada_ubicacion(salida)
+    #             #       if intermedios.count() == 0: return
+    #             saldo_cs_anterior = saldo_cs.anterior()
+    #             saldo_cs.importe = saldo_cs_anterior.importe - self.importe \
+    #                 if saldo_cs_anterior \
+    #                 else -self.importe
+    #             saldo_cs.save()
+    #
+    #     elif self.orden_dia > self.viejo.orden_dia:
+    #         if self.cta_entrada:
+    #             saldo_ce = self.saldo_ce()
+    #             intermedios_ce = saldo_ce.intermedios_con_fecha_y_orden(
+    #                 self.viejo.fecha,
+    #                 self.viejo.orden_dia,
+    #                 inclusive_od=True
+    #             )
+    #             for saldo in intermedios_ce:
+    #                 saldo.importe -= self.viejo.importe
+    #                 saldo.save()
+    #
+    #             saldo_ce_anterior = saldo_ce.anterior()
+    #             saldo_ce.importe = saldo_ce_anterior.importe + self.importe \
+    #                 if saldo_ce_anterior \
+    #                 else self.importe
+    #             saldo_ce.save()
+    #
+    #         if self.cta_salida:
+    #             saldo_cs = self.saldo_cs()
+    #             intermedios_cs = saldo_cs.intermedios_con_fecha_y_orden(
+    #                 self.viejo.fecha,
+    #                 self.viejo.orden_dia,
+    #                 inclusive_od=True
+    #             )
+    #             for saldo in intermedios_cs:
+    #                 saldo.importe += self.viejo.importe
+    #                 saldo.save()
+    #
+    #             saldo_cs_anterior = saldo_cs.anterior()
+    #             saldo_cs.importe = saldo_cs_anterior.importe - self.importe \
+    #                 if saldo_cs_anterior \
+    #                 else -self.importe
+    #             saldo_cs.save()
+    #
+    #     else:   # self.orden_dia < self.viejo.orden_dia
+    #
+    #         if self.cta_entrada:
+    #             saldo_ce = self.saldo_ce()
+    #             intermedios_ce = saldo_ce.intermedios_con_fecha_y_orden(
+    #                 self.viejo.fecha,
+    #                 self.viejo.orden_dia,
+    #                 inclusive_od=True
+    #             )
+    #             for saldo in intermedios_ce:
+    #                 saldo.importe += self.viejo.importe
+    #                 saldo.save()
+    #
+    #             saldo_ce_anterior = saldo_ce.anterior()
+    #             saldo_ce.importe = saldo_ce_anterior.importe + self.importe \
+    #                 if saldo_ce_anterior \
+    #                 else self.importe
+    #             saldo_ce.save()
+    #
+    #         if self.cta_salida:
+    #             saldo_cs = self.saldo_cs()
+    #             intermedios_cs = saldo_cs.intermedios_con_fecha_y_orden(
+    #                 self.viejo.fecha,
+    #                 self.viejo.orden_dia,
+    #                 inclusive_od=True
+    #             )
+    #             for saldo in intermedios_cs:
+    #                 saldo.importe -= self.viejo.importe
+    #                 saldo.save()
+    #
+    #             saldo_cs_anterior = saldo_cs.anterior()
+    #             saldo_cs.importe = saldo_cs_anterior.importe - self.importe \
+    #                 if saldo_cs_anterior \
+    #                 else -self.importe
+    #             saldo_cs.save()
 
     def _cambia_cta_entrada(self):
         return (
