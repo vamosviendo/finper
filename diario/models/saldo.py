@@ -112,12 +112,7 @@ class Saldo(MiModel):
 
     def eliminar(self):
         self.delete()
-        try:
-            importe_anterior = self.anterior().importe
-        except AttributeError:
-            importe_anterior = 0
-        importe = self.importe - importe_anterior
-        self._actualizar_posteriores(-importe)
+        self.cuenta.recalcular_saldos_entre(self.posicion)
 
     def anterior(self):
         return Saldo._anterior_a(

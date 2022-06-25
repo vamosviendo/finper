@@ -578,6 +578,8 @@ class Movimiento(MiModel):
                     super().save()
 
                 cuenta.recalcular_saldos_entre(pos_min, pos_max)
+                if self._cambia_campo(sentido, contraparte=self.viejo):
+                    cuenta_vieja.recalcular_saldos_entre(pos_min)
 
         else:
             self._eliminar_saldo_viejo_si_existe(

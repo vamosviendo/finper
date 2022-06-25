@@ -1,5 +1,4 @@
 from datetime import date, timedelta
-from unittest import skip
 from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
@@ -2032,7 +2031,6 @@ class TestModelMovimientoSaveModificaImporteYOrdenDia(TestModelMovimientoSave):
         )
 
 
-@skip
 class TestModelMovimientoSaveModificaCuentasYFecha(TestModelMovimientoSave):
 
     def setUp(self):
