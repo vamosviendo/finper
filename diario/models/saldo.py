@@ -43,6 +43,10 @@ class Saldo(MiModel):
         self._importe = round(valor, 2)
 
     @property
+    def posicion(self):
+        return self.movimiento.posicion
+
+    @property
     def viene_de_entrada(self):
         try:
             return self == self.movimiento.saldo_ce()
@@ -117,29 +121,29 @@ class Saldo(MiModel):
 
     def anterior(self):
         return Saldo._anterior_a(
-            self.movimiento.posicion,
+            self.posicion,
             self.cuenta
         )
 
     def anteriores(self):
         return Saldo.anteriores_a(
             self.cuenta,
-            self.movimiento.posicion,
+            self.posicion,
         )
 
     def posteriores(self):
         return Saldo.posteriores_a(
             self.cuenta,
-            self.movimiento.posicion,
+            self.posicion,
         )
 
     def intermedios(self, otro):
-        return self.intermedios_con_posicion(otro.movimiento.posicion)
+        return self.intermedios_con_posicion(otro.posicion)
 
     def intermedios_con_posicion(self, posicion=Posicion(orden_dia=0), inclusive_od=False):
         return Saldo.intermedios_entre_posiciones_de_cuenta(
             cuenta=self.cuenta,
-            pos1=self.movimiento.posicion,
+            pos1=self.posicion,
             pos2=posicion,
             inclusive_od=inclusive_od
         )
@@ -200,7 +204,7 @@ class Saldo(MiModel):
         es_anterior = operator.le if inclusive_od else operator.lt
         ids = [
             saldo.id for saldo in cuenta.saldo_set.all()
-            if es_anterior(saldo.movimiento.posicion, posicion)
+            if es_anterior(saldo.posicion, posicion)
         ]
 
         return cuenta.saldo_set.filter(id__in=ids)
@@ -210,7 +214,7 @@ class Saldo(MiModel):
         es_posterior = operator.ge if inclusive_od else operator.gt
         ids = [
             saldo.id for saldo in cuenta.saldo_set.all()
-            if es_posterior(saldo.movimiento.posicion, posicion)
+            if es_posterior(saldo.posicion, posicion)
         ]
 
         return cuenta.saldo_set.filter(id__in=ids)

@@ -629,7 +629,7 @@ class TestSaldoMetodoIntermediosConPosicion(TestCase):
         )
         mock_intermedios.assert_called_once_with(
             cuenta=self.saldo.cuenta,
-            pos1=self.saldo.movimiento.posicion,
+            pos1=self.saldo.posicion,
             pos2=Posicion(date(2012, 5, 5), orden_dia=1),
             inclusive_od=True
         )
