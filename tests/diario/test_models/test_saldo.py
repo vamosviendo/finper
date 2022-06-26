@@ -247,14 +247,11 @@ class TestSaldoMetodoEliminar(TestCase):
 
         self.assertEqual(saldo_post.importe, 50)
 
-    @patch('diario.models.Saldo._actualizar_posteriores', autospec=True)
-    def test_llama_a_actualizar_posteriores_con_negativo_de_diferencia_entre_saldo_eliminado_y_ultimo_anterior(self, mock_actualizar_posteriores):
+    @patch('diario.models.Cuenta.recalcular_saldos_entre', autospec=True)
+    def test_llama_a_recalcular_saldos_de_cuenta_de_saldo_eliminado_desde_fecha_de_saldo_en_adelante(self, mock_recalcular):
         saldo2 = Movimiento.crear('mov2', 50, self.cuenta, fecha=date(2010, 11, 15)).saldo_set.first()
-        mock_actualizar_posteriores.reset_mock()
         saldo2.eliminar()
-        mock_actualizar_posteriores.assert_called_once_with(
-            saldo2, -(saldo2.importe-self.saldo.importe)
-        )
+        mock_recalcular.assert_called_once_with(saldo2.cuenta, saldo2.posicion)
 
 
 class TestSaldoMetodoPosterioresA(TestCase):
