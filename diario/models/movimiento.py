@@ -325,8 +325,8 @@ class Movimiento(MiModel):
                 Esta nota será retirada una vez que terminemos con la 
                 implementación 
                 """
-                for sentido in ('cta_entrada', 'cta_salida'):
-                    self._actualizar_saldos_cuenta(sentido, mantiene_orden_dia)
+                for campo_cuenta in ('cta_entrada', 'cta_salida'):
+                    self._actualizar_saldos_cuenta(campo_cuenta, mantiene_orden_dia)
 
     def saldo_ce(self):
         try:
@@ -428,19 +428,19 @@ class Movimiento(MiModel):
         )
         return cc1, cc2
 
-    def _actualizar_saldos_cuenta(self, sentido, mantiene_orden_dia):
-        if sentido not in ('cta_entrada', 'cta_salida'):
+    def _actualizar_saldos_cuenta(self, campo_cuenta, mantiene_orden_dia):
+        if campo_cuenta not in ('cta_entrada', 'cta_salida'):
             raise ValueError(
                 'Argumento incorrecto. Debe ser "cta_entrada"'
                 ' o "cta_salida"'
             )
-        cuenta = getattr(self, sentido)
-        cuenta_vieja = getattr(self.viejo, sentido)
+        cuenta = getattr(self, campo_cuenta)
+        cuenta_vieja = getattr(self.viejo, campo_cuenta)
         pasa_a_opuesto, viene_de_opuesto, saldo = (
             self._entrada_pasa_a_salida,
             self._salida_pasa_a_entrada,
             self.viejo.saldo_ce,
-        ) if sentido == 'cta_entrada' else (
+        ) if campo_cuenta == 'cta_entrada' else (
             self._salida_pasa_a_entrada,
             self._entrada_pasa_a_salida,
             self.viejo.saldo_cs,
@@ -450,16 +450,16 @@ class Movimiento(MiModel):
             return self._cambia_campo(*args, contraparte=self.viejo)
 
         if cuenta is not None:
-            if cambia_campo(sentido):
+            if cambia_campo(campo_cuenta):
                 if viene_de_opuesto():
                     cuenta.recalcular_saldos_entre(self.posicion)
                 else:
-                    Saldo.generar(self, salida=(sentido == 'cta_salida'))
+                    Saldo.generar(self, salida=(campo_cuenta == 'cta_salida'))
                 self._eliminar_saldo_viejo_si_existe(cuenta_vieja, pasa_a_opuesto, saldo)
             elif cambia_campo('importe'):
                 cuenta.recalcular_saldos_entre(self.posicion)
-            elif getattr(self.viejo, sentido) is None:
-                Saldo.generar(self, salida=(sentido == 'cta_salida'))
+            elif getattr(self.viejo, campo_cuenta) is None:
+                Saldo.generar(self, salida=(campo_cuenta == 'cta_salida'))
 
             if cambia_campo('fecha', 'orden_dia'):
                 pos_min, pos_max = sorted([self.posicion, self.viejo.posicion])
@@ -471,7 +471,7 @@ class Movimiento(MiModel):
                     super().save()
 
                 cuenta.recalcular_saldos_entre(pos_min, pos_max)
-                if cambia_campo(sentido):
+                if cambia_campo(campo_cuenta):
                     cuenta_vieja.recalcular_saldos_entre(pos_min)
 
         else:
