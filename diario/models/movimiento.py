@@ -446,25 +446,22 @@ class Movimiento(MiModel):
             self.viejo.saldo_cs,
         )
 
+        def cambia_campo(*args):
+            return self._cambia_campo(*args, contraparte=self.viejo)
+
         if cuenta is not None:
-
-            if viene_de_opuesto():
+            if cambia_campo(sentido):
+                if viene_de_opuesto():
+                    cuenta.recalcular_saldos_entre(self.posicion)
+                else:
+                    Saldo.generar(self, salida=(sentido == 'cta_salida'))
+                self._eliminar_saldo_viejo_si_existe(cuenta_vieja, pasa_a_opuesto, saldo)
+            elif cambia_campo('importe'):
                 cuenta.recalcular_saldos_entre(self.posicion)
-                self._eliminar_saldo_viejo_si_existe(
-                    cuenta_vieja, pasa_a_opuesto, saldo)
-
-            elif self._cambia_campo(sentido, contraparte=self.viejo):
-                Saldo.generar(self, salida=(sentido == 'cta_salida'))
-                self._eliminar_saldo_viejo_si_existe(
-                    cuenta_vieja, pasa_a_opuesto, saldo)
-
-            elif getattr(self.viejo, sentido) is not None:
-                self._recalcular_si_cambia_importe(cuenta)
-
-            else:
+            elif getattr(self.viejo, sentido) is None:
                 Saldo.generar(self, salida=(sentido == 'cta_salida'))
 
-            if self._cambia_campo('fecha', 'orden_dia', contraparte=self.viejo):
+            if cambia_campo('fecha', 'orden_dia'):
                 pos_min, pos_max = sorted([self.posicion, self.viejo.posicion])
                 # TODO extraer Movimiento.asignar_orden()
                 if pos_min.fecha != pos_max.fecha and not mantiene_orden_dia:
@@ -474,7 +471,7 @@ class Movimiento(MiModel):
                     super().save()
 
                 cuenta.recalcular_saldos_entre(pos_min, pos_max)
-                if self._cambia_campo(sentido, contraparte=self.viejo):
+                if cambia_campo(sentido):
                     cuenta_vieja.recalcular_saldos_entre(pos_min)
 
         else:
