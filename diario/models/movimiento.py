@@ -455,34 +455,36 @@ class Movimiento(MiModel):
                     cuenta.recalcular_saldos_entre(self.posicion)
                 else:
                     Saldo.generar(self, salida=(campo_cuenta == 'cta_salida'))
-                self._eliminar_saldo_viejo_si_existe(cuenta_vieja, pasa_a_opuesto, saldo)
+                self._eliminar_saldo_de_cuenta_vieja_si_existe(cuenta_vieja, pasa_a_opuesto, saldo)
+
             elif cambia_campo('importe'):
                 cuenta.recalcular_saldos_entre(self.posicion)
+
             elif getattr(self.viejo, campo_cuenta) is None:
                 Saldo.generar(self, salida=(campo_cuenta == 'cta_salida'))
 
             if cambia_campo('fecha', 'orden_dia'):
-                pos_min, pos_max = sorted([self.posicion, self.viejo.posicion])
-                # TODO extraer Movimiento.asignar_orden()
-                if pos_min.fecha != pos_max.fecha and not mantiene_orden_dia:
-                    self.orden_dia = 0 \
-                        if pos_min.fecha == self.viejo.fecha \
-                        else Movimiento.filtro(fecha=pos_min.fecha).count()
-                    super().save()
+                if not mantiene_orden_dia:
+                    self._asignar_orden_dia()
 
+                pos_min, pos_max = sorted([self.posicion, self.viejo.posicion])
                 cuenta.recalcular_saldos_entre(pos_min, pos_max)
                 if cambia_campo(campo_cuenta):
                     cuenta_vieja.recalcular_saldos_entre(pos_min)
 
         else:
-            self._eliminar_saldo_viejo_si_existe(
+            self._eliminar_saldo_de_cuenta_vieja_si_existe(
                 cuenta_vieja, pasa_a_opuesto, saldo)
 
-    def _recalcular_si_cambia_importe(self, cuenta):
-        if self._cambia_campo('importe', contraparte=self.viejo):
-            cuenta.recalcular_saldos_entre(self.posicion)
+    def _asignar_orden_dia(self):
+        pos_min, pos_max = sorted([self.posicion, self.viejo.posicion])
+        if pos_min.fecha != pos_max.fecha:
+            self.orden_dia = 0 \
+                if pos_min.fecha == self.viejo.fecha \
+                else Movimiento.filtro(fecha=pos_min.fecha).count()
+            super().save()
 
-    def _eliminar_saldo_viejo_si_existe(self, cuenta_vieja, pasa_a_opuesto, saldo):
+    def _eliminar_saldo_de_cuenta_vieja_si_existe(self, cuenta_vieja, pasa_a_opuesto, saldo):
         if cuenta_vieja is not None and not pasa_a_opuesto():
             saldo().eliminar()
 
