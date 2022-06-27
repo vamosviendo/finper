@@ -174,11 +174,11 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
         self.mov1.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
+            self.cuenta1.saldo_en_mov(self.mov2),
             90-125
         )
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta2.saldo_en_mov(self.mov3),
             -50+125
         )
 
@@ -200,11 +200,11 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
         self.mov2.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta1.saldo_en_mov(self.mov3),
             140+35
         )
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta2.saldo_en_mov(self.mov3),
             -50-35
         )
 
@@ -218,7 +218,7 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
 
         self.assertEqual(cuenta3.saldo_set.count(), 1)
         self.assertEqual(
-            cuenta3.saldo_set.get(movimiento=self.mov3).importe,
+            cuenta3.saldo_en_mov(self.mov3),
             50
         )
 
@@ -232,7 +232,7 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
 
         self.assertEqual(cuenta3.saldo_set.count(), 1)
         self.assertEqual(
-            cuenta3.saldo_set.get(movimiento=self.mov3).importe,
+            cuenta3.saldo_en_mov(self.mov3),
             -50
         )
 
@@ -251,12 +251,12 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
 
         self.assertEqual(cuenta3.saldo_set.count(), 1)
         self.assertEqual(
-            cuenta3.saldo_set.get(movimiento=self.mov3).importe,
+            cuenta3.saldo_en_mov(self.mov3),
             50
         )
         self.assertEqual(cuenta4.saldo_set.count(), 1)
         self.assertEqual(
-            cuenta4.saldo_set.get(movimiento=self.mov3).importe,
+            cuenta4.saldo_en_mov(self.mov3),
             -50
         )
 
@@ -274,19 +274,19 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
         self.mov3.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=mov4).importe,
+            self.cuenta1.saldo_en_mov(mov4),
             1140-50
         )
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=mov4).importe,
+            self.cuenta2.saldo_en_mov(mov4),
             -1050+50
         )
         self.assertEqual(
-            cuenta3.saldo_set.get(movimiento=mov5).importe,
+            cuenta3.saldo_en_mov(mov5),
             100+50
         )
         self.assertEqual(
-            cuenta4.saldo_set.get(movimiento=mov5).importe,
+            cuenta4.saldo_en_mov(mov5),
             -100-50
         )
 
@@ -297,11 +297,11 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
         self.mov3.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta1.saldo_en_mov(self.mov3),
             140 - 50 * 2
         )
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta2.saldo_en_mov(self.mov3),
             -50 + 50 * 2
         )
 
@@ -313,11 +313,11 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
         self.mov3.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=mov4).importe,
+            self.cuenta1.saldo_en_mov(mov4),
             1140 - 50 * 2
         )
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=mov4).importe,
+            self.cuenta2.saldo_en_mov(mov4),
             -1050 + 50 * 2
         )
 
@@ -329,7 +329,7 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
         self.mov2.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
+            self.cuenta1.saldo_en_mov(self.mov2),
             90 + 35 * 2
         )
 
@@ -339,7 +339,7 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
         self.mov2.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta1.saldo_en_mov(self.mov3),
             140 + 35 * 2
         )
 
@@ -351,7 +351,7 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
         self.mov1.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov1).importe,
+            self.cuenta1.saldo_en_mov(self.mov1),
             125 - 125 * 2
         )
 
@@ -361,11 +361,11 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
         self.mov1.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
+            self.cuenta1.saldo_en_mov(self.mov2),
             90 - 125 * 2
         )
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta1.saldo_en_mov(self.mov3),
             140 - 125 * 2
         )
 
@@ -383,12 +383,12 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
             Saldo.objects.get(cuenta=self.cuenta1, movimiento=self.mov3)
 
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta2.saldo_en_mov(self.mov3),
             -50 + 50 * 2
         )
         self.assertEqual(cuenta3.saldo_set.count(), 1)
         self.assertEqual(
-            cuenta3.saldo_set.get(movimiento=self.mov3).importe,
+            cuenta3.saldo_en_mov(self.mov3),
             -50
         )
 
@@ -404,15 +404,15 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
         self.mov3.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=mov4).importe,
+            self.cuenta1.saldo_en_mov(mov4),
             1140-50
         )
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=mov4).importe,
+            self.cuenta2.saldo_en_mov(mov4),
             -1050 + 50 * 2
         )
         self.assertEqual(
-            cuenta3.saldo_set.get(movimiento=mov5).importe,
+            cuenta3.saldo_en_mov(mov5),
             100 - 50
         )
 
@@ -428,7 +428,7 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
         self.mov3.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta1.saldo_en_mov(self.mov3),
             140 - 50 * 2
         )
         with self.assertRaises(Saldo.DoesNotExist):
@@ -436,7 +436,7 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
 
         self.assertEqual(cuenta3.saldo_set.count(), 1)
         self.assertEqual(
-            cuenta3.saldo_set.get(movimiento=self.mov3).importe,
+            cuenta3.saldo_en_mov(self.mov3),
             50
         )
 
@@ -452,15 +452,15 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
         self.mov3.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=mov4).importe,
+            self.cuenta1.saldo_en_mov(mov4),
             1140 - 50 * 2
         )
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=mov4).importe,
+            self.cuenta2.saldo_en_mov(mov4),
             -1050 + 50
         )
         self.assertEqual(
-            cuenta4.saldo_set.get(movimiento=mov5).importe,
+            cuenta4.saldo_en_mov(mov5),
             -100 + 50
         )
 
@@ -480,7 +480,7 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
         self.mov3.save()
 
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=mov4).importe,
+            self.cuenta2.saldo_en_mov(mov4),
             -1050 + 50
         )
 
@@ -499,7 +499,7 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
         self.mov3.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=mov4).importe,
+            self.cuenta1.saldo_en_mov(mov4),
             1140 - 50
         )
 
@@ -528,11 +528,11 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
         self.mov3.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=mov4).importe,
+            self.cuenta1.saldo_en_mov(mov4),
             1140 - 50 * 2
         )
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=mov4).importe,
+            self.cuenta2.saldo_en_mov(mov4),
             -1050 + 50
         )
 
@@ -561,11 +561,11 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
         self.mov3.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=mov4).importe,
+            self.cuenta1.saldo_en_mov(mov4),
             1140 - 50
         )
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=mov4).importe,
+            self.cuenta2.saldo_en_mov(mov4),
             -1050 + 50 * 2
         )
 
@@ -577,7 +577,7 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
 
         self.assertEqual(self.cuenta2.saldo_set.count(), cant_saldos+1)
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=self.mov1).importe,
+            self.cuenta2.saldo_en_mov(self.mov1),
             0 - 125
         )
 
@@ -586,7 +586,7 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
         self.mov1.save()
 
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta2.saldo_en_mov(self.mov3),
             -50 - 125
         )
 
@@ -598,7 +598,7 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
 
         self.assertEqual(self.cuenta2.saldo_set.count(), cant_saldos+1)
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=self.mov2).importe,
+            self.cuenta2.saldo_en_mov(self.mov2),
             0 + 35
         )
 
@@ -607,7 +607,7 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
         self.mov2.save()
 
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta2.saldo_en_mov(self.mov3),
             -50 + 35
         )
 
@@ -621,12 +621,12 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
         self.mov1.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov1).importe,
+            self.cuenta1.saldo_en_mov(self.mov1),
             125 - 125 * 2
         )
         self.assertEqual(self.cuenta2.saldo_set.count(), cant_saldos+1)
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=self.mov1).importe,
+            self.cuenta2.saldo_en_mov(self.mov1),
             0 + 125
         )
 
@@ -636,11 +636,11 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
         self.mov1.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta1.saldo_en_mov(self.mov3),
             140 - 125 * 2
         )
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta2.saldo_en_mov(self.mov3),
             -50 + 125
         )
 
@@ -654,13 +654,13 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
         self.mov2.save()
 
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=self.mov2).importe,
+            self.cuenta2.saldo_en_mov(self.mov2),
             0 - 35
         )
 
         self.assertEqual(self.cuenta2.saldo_set.count(), cant_saldos+1)
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
+            self.cuenta1.saldo_en_mov(self.mov2),
             90 + 35 * 2
         )
 
@@ -670,11 +670,11 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
         self.mov2.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta1.saldo_en_mov(self.mov3),
             140 + 35 * 2
         )
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta2.saldo_en_mov(self.mov3),
             -50 - 35
         )
 
@@ -691,7 +691,7 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
 
         self.assertEqual(self.cuenta2.saldo_set.count(), cant_saldos+1)
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=self.mov1).importe,
+            self.cuenta2.saldo_en_mov(self.mov1),
             0 - 125
         )
 
@@ -701,12 +701,12 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
         self.mov1.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta1.saldo_en_mov(self.mov3),
             140 - 125
         )
 
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta2.saldo_en_mov(self.mov3),
             -50 - 125
         )
 
@@ -723,7 +723,7 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
 
         self.assertEqual(self.cuenta2.saldo_set.count(), cant_saldos+1)
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=self.mov2).importe,
+            self.cuenta2.saldo_en_mov(self.mov2),
             0 + 35
         )
 
@@ -733,12 +733,12 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
         self.mov2.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta1.saldo_en_mov(self.mov3),
             140 + 35
         )
 
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta2.saldo_en_mov(self.mov3),
             -50 + 35
         )
 
@@ -886,7 +886,7 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
 
         self.assertEqual(self.cuenta2.saldo_set.count(), cant_saldos+1)
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=self.mov1).importe,
+            self.cuenta2.saldo_en_mov(self.mov1),
             0 + 128
         )
 
@@ -904,7 +904,7 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
 
         self.assertEqual(self.cuenta2.saldo_set.count(), cant_saldos+1)
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=self.mov2).importe,
+            self.cuenta2.saldo_en_mov(self.mov2),
             0 - 63
         )
 
@@ -924,11 +924,11 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
 
         self.assertEqual(cuenta3.saldo_set.count(), 1)
         self.assertEqual(
-            cuenta3.saldo_set.get(movimiento=self.mov3).importe,
+            cuenta3.saldo_en_mov(self.mov3),
             0 + 56
         )
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta2.saldo_en_mov(self.mov3),
             -50 + 50 - 56
         )
 
@@ -948,11 +948,11 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
 
         self.assertEqual(cuenta3.saldo_set.count(), 1)
         self.assertEqual(
-            cuenta3.saldo_set.get(movimiento=self.mov3).importe,
+            cuenta3.saldo_en_mov(self.mov3),
             0 - 56
         )
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta1.saldo_en_mov(self.mov3),
             140 - 50 + 56
         )
 
@@ -979,12 +979,12 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
 
         self.assertEqual(cuenta3.saldo_set.count(), 1)
         self.assertEqual(
-            cuenta3.saldo_set.get(movimiento=self.mov3).importe,
+            cuenta3.saldo_en_mov(self.mov3),
             0 + 56
         )
         self.assertEqual(cuenta4.saldo_set.count(), 1)
         self.assertEqual(
-            cuenta4.saldo_set.get(movimiento=self.mov3).importe,
+            cuenta4.saldo_en_mov(self.mov3),
             0 - 56
         )
 
@@ -999,11 +999,11 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
         self.mov3.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta1.saldo_en_mov(self.mov3),
             140 - 50 - 456
         )
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta2.saldo_en_mov(self.mov3),
             -50 + 50 + 456
         )
 
@@ -1016,7 +1016,7 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
         self.mov1.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov1).importe,
+            self.cuenta1.saldo_en_mov(self.mov1),
             125 - 125 - 128
         )
 
@@ -1029,7 +1029,7 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
         self.mov2.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
+            self.cuenta1.saldo_en_mov(self.mov2),
             90 + 35 + 128
         )
 
@@ -1050,12 +1050,12 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
             Saldo.objects.get(cuenta=self.cuenta1, movimiento=self.mov3)
 
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta2.saldo_en_mov(self.mov3),
             -50 + 50 + 252
         )
         self.assertEqual(cuenta3.saldo_set.count(), 1)
         self.assertEqual(
-            cuenta3.saldo_set.get(movimiento=self.mov3).importe,
+            cuenta3.saldo_en_mov(self.mov3),
             0 - 252
         )
 
@@ -1076,12 +1076,12 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
             Saldo.objects.get(cuenta=self.cuenta2, movimiento=self.mov3)
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta1.saldo_en_mov(self.mov3),
             140 - 50 - 165
         )
         self.assertEqual(cuenta3.saldo_set.count(), 1)
         self.assertEqual(
-            cuenta3.saldo_set.get(movimiento=self.mov3).importe,
+            cuenta3.saldo_en_mov(self.mov3),
             0 + 165
         )
 
@@ -1097,7 +1097,7 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
             Saldo.objects.get(cuenta=self.cuenta2, movimiento=self.mov3)
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta1.saldo_en_mov(self.mov3),
             140 - 50 + 234
         )
 
@@ -1113,7 +1113,7 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
             Saldo.objects.get(cuenta=self.cuenta1, movimiento=self.mov3)
 
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta2.saldo_en_mov(self.mov3),
             -50 + 50 - 234
         )
 
@@ -1131,7 +1131,7 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
             Saldo.objects.get(cuenta=self.cuenta2, movimiento=self.mov3)
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta1.saldo_en_mov(self.mov3),
             140 - 50 - 350
         )
 
@@ -1149,7 +1149,7 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
             Saldo.objects.get(cuenta=self.cuenta1, movimiento=self.mov3)
 
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta2.saldo_en_mov(self.mov3),
             -50 + 50 + 354
         )
 
@@ -1164,12 +1164,12 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
         self.mov1.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov1).importe,
+            self.cuenta1.saldo_en_mov(self.mov1),
             125 - 125 + 255
         )
         self.assertEqual(self.cuenta2.saldo_set.count(), cant_saldos+1)
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=self.mov1).importe,
+            self.cuenta2.saldo_en_mov(self.mov1),
             0 - 255
         )
 
@@ -1185,11 +1185,11 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
 
         self.assertEqual(self.cuenta2.saldo_set.count(), cant_saldos+1)
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=self.mov2).importe,
+            self.cuenta2.saldo_en_mov(self.mov2),
             0 + 446
         )
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
+            self.cuenta1.saldo_en_mov(self.mov2),
             90 + 35 - 446
         )
 
@@ -1206,12 +1206,12 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
         self.mov1.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov1).importe,
+            self.cuenta1.saldo_en_mov(self.mov1),
             125 - 125 - 556
         )
         self.assertEqual(self.cuenta2.saldo_set.count(), cant_saldos+1)
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=self.mov1).importe,
+            self.cuenta2.saldo_en_mov(self.mov1),
             0 + 556
         )
 
@@ -1229,11 +1229,11 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
 
         self.assertEqual(self.cuenta2.saldo_set.count(), cant_saldos+1)
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=self.mov2).importe,
+            self.cuenta2.saldo_en_mov(self.mov2),
             0 - 445
         )
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
+            self.cuenta1.saldo_en_mov(self.mov2),
             90 + 35 + 445
         )
 
@@ -1251,7 +1251,7 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
             Saldo.objects.get(cuenta=self.cuenta1, movimiento=self.mov1)
         self.assertEqual(self.cuenta2.saldo_set.count(), cant_saldos+1)
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=self.mov1).importe,
+            self.cuenta2.saldo_en_mov(self.mov1),
             0 - 565
         )
 
@@ -1269,7 +1269,7 @@ class TestModelMovimientoSaveModificaImporteYCuentas(TestModelMovimientoSave):
 
         self.assertEqual(self.cuenta2.saldo_set.count(), cant_movs+1)
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=self.mov2).importe,
+            self.cuenta2.saldo_en_mov(self.mov2),
             0 + 675
         )
 
@@ -1301,11 +1301,11 @@ class TestModelMovimientoSaveModificaFecha(TestModelMovimientoSave):
         self.mov1.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
+            self.cuenta1.saldo_en_mov(self.mov2),
             90-125
         )
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta1.saldo_en_mov(self.mov3),
             140-125
         )
 
@@ -1315,7 +1315,7 @@ class TestModelMovimientoSaveModificaFecha(TestModelMovimientoSave):
         self.mov2.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta1.saldo_en_mov(self.mov3),
             140+35
         )
 
@@ -1325,7 +1325,7 @@ class TestModelMovimientoSaveModificaFecha(TestModelMovimientoSave):
         self.mov1.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov1).importe,
+            self.cuenta1.saldo_en_mov(self.mov1),
             140-125+125
         )
 
@@ -1335,7 +1335,7 @@ class TestModelMovimientoSaveModificaFecha(TestModelMovimientoSave):
         self.mov2.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
+            self.cuenta1.saldo_en_mov(self.mov2),
             125+50-35
         )
 
@@ -1346,15 +1346,15 @@ class TestModelMovimientoSaveModificaFecha(TestModelMovimientoSave):
         self.mov1.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov1).importe,
+            self.cuenta1.saldo_en_mov(self.mov1),
             125
         )
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
+            self.cuenta1.saldo_en_mov(self.mov2),
             90
         )
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta1.saldo_en_mov(self.mov3),
             140
         )
 
@@ -1366,11 +1366,11 @@ class TestModelMovimientoSaveModificaFecha(TestModelMovimientoSave):
         self.mov3.save()
 
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta2.saldo_en_mov(self.mov3),
             -50
         )
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=mov4).importe,
+            self.cuenta2.saldo_en_mov(mov4),
             40
         )
 
@@ -1382,7 +1382,7 @@ class TestModelMovimientoSaveModificaFecha(TestModelMovimientoSave):
         self.mov1.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=mov4).importe,
+            self.cuenta1.saldo_en_mov(mov4),
             240
         )
 
@@ -1394,7 +1394,7 @@ class TestModelMovimientoSaveModificaFecha(TestModelMovimientoSave):
         self.mov2.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=mov4).importe,
+            self.cuenta1.saldo_en_mov(mov4),
             240
         )
 
@@ -1406,7 +1406,7 @@ class TestModelMovimientoSaveModificaFecha(TestModelMovimientoSave):
         self.mov1.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=mov4).importe,
+            self.cuenta1.saldo_en_mov(mov4),
             100
         )
 
@@ -1416,7 +1416,7 @@ class TestModelMovimientoSaveModificaFecha(TestModelMovimientoSave):
         self.mov2.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov1).importe,
+            self.cuenta1.saldo_en_mov(self.mov1),
             125
         )
 
@@ -1426,11 +1426,11 @@ class TestModelMovimientoSaveModificaFecha(TestModelMovimientoSave):
         self.mov3.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov1).importe,
+            self.cuenta1.saldo_en_mov(self.mov1),
             125+50
         )
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
+            self.cuenta1.saldo_en_mov(self.mov2),
             90+50
         )
 
@@ -1441,7 +1441,7 @@ class TestModelMovimientoSaveModificaFecha(TestModelMovimientoSave):
 
         self.assertEqual(
             # Saldo.tomar(cuenta=self.cuenta2, movimiento=self.mov1).importe,
-            self.cuenta1.saldo_set.get(movimiento=self.mov1).importe,
+            self.cuenta1.saldo_en_mov(self.mov1),
             125-35
         )
 
@@ -1451,7 +1451,7 @@ class TestModelMovimientoSaveModificaFecha(TestModelMovimientoSave):
         self.mov3.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta1.saldo_en_mov(self.mov3),
             125+50
         )
 
@@ -1463,7 +1463,7 @@ class TestModelMovimientoSaveModificaFecha(TestModelMovimientoSave):
         mov4.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=mov4).importe,
+            self.cuenta1.saldo_en_mov(mov4),
             125-100
         )
 
@@ -1473,7 +1473,7 @@ class TestModelMovimientoSaveModificaFecha(TestModelMovimientoSave):
         self.mov3.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta1.saldo_en_mov(self.mov3),
             50
         )
 
@@ -1483,7 +1483,7 @@ class TestModelMovimientoSaveModificaFecha(TestModelMovimientoSave):
         self.mov3.save()
 
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta2.saldo_en_mov(self.mov3),
             -50
         )
 
@@ -1493,7 +1493,7 @@ class TestModelMovimientoSaveModificaFecha(TestModelMovimientoSave):
         self.mov3.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov1).importe,
+            self.cuenta1.saldo_en_mov(self.mov1),
             125
         )
 
@@ -1505,7 +1505,7 @@ class TestModelMovimientoSaveModificaFecha(TestModelMovimientoSave):
         mov4.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov1).importe,
+            self.cuenta1.saldo_en_mov(self.mov1),
             125
         )
 
@@ -1517,7 +1517,7 @@ class TestModelMovimientoSaveModificaFecha(TestModelMovimientoSave):
         self.mov3.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=mov4).importe,
+            self.cuenta1.saldo_en_mov(mov4),
             240
         )
 
@@ -1529,7 +1529,7 @@ class TestModelMovimientoSaveModificaFecha(TestModelMovimientoSave):
         self.mov2.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=mov4).importe,
+            self.cuenta1.saldo_en_mov(mov4),
             240
         )
 
@@ -1551,11 +1551,11 @@ class TestModelMovimientoSaveModificaOrdenDia(TestModelMovimientoSave):
         self.mov2a.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2b).importe,
+            self.cuenta1.saldo_en_mov(self.mov2b),
             170-100
         )
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2c).importe,
+            self.cuenta1.saldo_en_mov(self.mov2c),
             200-100
         )
 
@@ -1565,16 +1565,16 @@ class TestModelMovimientoSaveModificaOrdenDia(TestModelMovimientoSave):
         self.mov2.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2a).importe,
+            self.cuenta1.saldo_en_mov(self.mov2a),
             190+35
         )
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2b).importe,
+            self.cuenta1.saldo_en_mov(self.mov2b),
             170+35
         )
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2c).importe,
+            self.cuenta1.saldo_en_mov(self.mov2c),
             200+35
         )
 
@@ -1584,7 +1584,7 @@ class TestModelMovimientoSaveModificaOrdenDia(TestModelMovimientoSave):
         self.mov2a.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2a).importe,
+            self.cuenta1.saldo_en_mov(self.mov2a),
             100+100
         )
 
@@ -1594,7 +1594,7 @@ class TestModelMovimientoSaveModificaOrdenDia(TestModelMovimientoSave):
         self.mov2.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
+            self.cuenta1.saldo_en_mov(self.mov2),
             235-35
         )
 
@@ -1604,7 +1604,7 @@ class TestModelMovimientoSaveModificaOrdenDia(TestModelMovimientoSave):
         self.mov2a.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2c).importe,
+            self.cuenta1.saldo_en_mov(self.mov2c),
             200
         )
 
@@ -1614,7 +1614,7 @@ class TestModelMovimientoSaveModificaOrdenDia(TestModelMovimientoSave):
         self.mov2.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2c).importe,
+            self.cuenta1.saldo_en_mov(self.mov2c),
             200
         )
 
@@ -1624,7 +1624,7 @@ class TestModelMovimientoSaveModificaOrdenDia(TestModelMovimientoSave):
         self.mov2a.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
+            self.cuenta1.saldo_en_mov(self.mov2),
             90
         )
 
@@ -1634,11 +1634,11 @@ class TestModelMovimientoSaveModificaOrdenDia(TestModelMovimientoSave):
         self.mov2b.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
+            self.cuenta1.saldo_en_mov(self.mov2),
             90
         )
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2a).importe,
+            self.cuenta1.saldo_en_mov(self.mov2a),
             190
         )
 
@@ -1650,11 +1650,11 @@ class TestModelMovimientoSaveModificaOrdenDia(TestModelMovimientoSave):
         self.mov2b.refresh_from_db()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2a).importe,
+            self.cuenta1.saldo_en_mov(self.mov2a),
             190+30
         )
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2b).importe,
+            self.cuenta1.saldo_en_mov(self.mov2b),
             170+30
         )
 
@@ -1664,11 +1664,11 @@ class TestModelMovimientoSaveModificaOrdenDia(TestModelMovimientoSave):
         self.mov2b.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
+            self.cuenta1.saldo_en_mov(self.mov2),
             90-20
         )
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2a).importe,
+            self.cuenta1.saldo_en_mov(self.mov2a),
             190-20
         )
 
@@ -1678,7 +1678,7 @@ class TestModelMovimientoSaveModificaOrdenDia(TestModelMovimientoSave):
         self.mov2c.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2c).importe,
+            self.cuenta1.saldo_en_mov(self.mov2c),
             90+30
         )
 
@@ -1688,7 +1688,7 @@ class TestModelMovimientoSaveModificaOrdenDia(TestModelMovimientoSave):
         self.mov2b.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2b).importe,
+            self.cuenta1.saldo_en_mov(self.mov2b),
             125-20
         )
 
@@ -1699,7 +1699,7 @@ class TestModelMovimientoSaveModificaOrdenDia(TestModelMovimientoSave):
         self.mov2b.save()
 
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=self.mov2b).importe,
+            self.cuenta2.saldo_en_mov(self.mov2b),
             self.mov2b.importe  # 20
         )
 
@@ -1710,7 +1710,7 @@ class TestModelMovimientoSaveModificaOrdenDia(TestModelMovimientoSave):
         self.mov2c.save()
 
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=self.mov2c).importe,
+            self.cuenta2.saldo_en_mov(self.mov2c),
             -self.mov2c.importe  # -20
         )
 
@@ -1720,7 +1720,7 @@ class TestModelMovimientoSaveModificaOrdenDia(TestModelMovimientoSave):
         self.mov2c.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
+            self.cuenta1.saldo_en_mov(self.mov2),
             90
         )
 
@@ -1730,12 +1730,12 @@ class TestModelMovimientoSaveModificaOrdenDia(TestModelMovimientoSave):
         self.mov2a.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2b).importe,
+            self.cuenta1.saldo_en_mov(self.mov2b),
             170
         )
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2c).importe,
+            self.cuenta1.saldo_en_mov(self.mov2c),
             200
         )
 
@@ -1745,7 +1745,7 @@ class TestModelMovimientoSaveModificaOrdenDia(TestModelMovimientoSave):
         self.mov2b.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
+            self.cuenta1.saldo_en_mov(self.mov2),
             90
         )
 
@@ -1755,7 +1755,7 @@ class TestModelMovimientoSaveModificaOrdenDia(TestModelMovimientoSave):
         self.mov2b.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2c).importe,
+            self.cuenta1.saldo_en_mov(self.mov2c),
             200
         )
 
@@ -1771,11 +1771,11 @@ class TestModelMovimientoSaveModificaFechaYOrdenDia(TestModelMovimientoSave):
         self.assertEqual(self.mov3.orden_dia, 0)
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta1.saldo_en_mov(self.mov3),
             140-125
         )
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov1).importe,
+            self.cuenta1.saldo_en_mov(self.mov1),
             140-125+125
         )
 
@@ -1799,11 +1799,11 @@ class TestModelMovimientoSaveModificaImporteYFecha(TestModelMovimientoSave):
         self.mov1.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
+            self.cuenta1.saldo_en_mov(self.mov2),
             90-125
         )
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta1.saldo_en_mov(self.mov3),
             140-125
         )
 
@@ -1813,7 +1813,7 @@ class TestModelMovimientoSaveModificaImporteYFecha(TestModelMovimientoSave):
         self.mov2.full_clean()
         self.mov2.save()
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta1.saldo_en_mov(self.mov3),
             140+35
         )
 
@@ -1824,7 +1824,7 @@ class TestModelMovimientoSaveModificaImporteYFecha(TestModelMovimientoSave):
         self.mov1.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov1).importe,
+            self.cuenta1.saldo_en_mov(self.mov1),
             140-125+128
         )
 
@@ -1835,7 +1835,7 @@ class TestModelMovimientoSaveModificaImporteYFecha(TestModelMovimientoSave):
         self.mov2.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
+            self.cuenta1.saldo_en_mov(self.mov2),
             140+35-38
         )
 
@@ -1848,7 +1848,7 @@ class TestModelMovimientoSaveModificaImporteYFecha(TestModelMovimientoSave):
         self.mov3.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
+            self.cuenta1.saldo_en_mov(self.mov2),
             90+53
         )
 
@@ -1864,7 +1864,7 @@ class TestModelMovimientoSaveModificaImporteYFecha(TestModelMovimientoSave):
         mov5.save()
 
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=mov4).importe,
+            self.cuenta2.saldo_en_mov(mov4),
             -150-10000
         )
 
@@ -1876,7 +1876,7 @@ class TestModelMovimientoSaveModificaImporteYFecha(TestModelMovimientoSave):
         self.mov3.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta1.saldo_en_mov(self.mov3),
             125 + 53
         )
 
@@ -1892,7 +1892,7 @@ class TestModelMovimientoSaveModificaImporteYFecha(TestModelMovimientoSave):
         mov5.save()
 
         self.assertEqual(
-            self.cuenta2.saldo_set.get(movimiento=mov5).importe,
+            self.cuenta2.saldo_en_mov(mov5),
             -50-10000
         )
 
@@ -1927,11 +1927,11 @@ class TestModelMovimientoSaveModificaImporteYOrdenDia(TestModelMovimientoSave):
         self.mov2a.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2b).importe,
+            self.cuenta1.saldo_en_mov(self.mov2b),
             170-100
         )
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2c).importe,
+            self.cuenta1.saldo_en_mov(self.mov2c),
             200-100
         )
 
@@ -1942,16 +1942,16 @@ class TestModelMovimientoSaveModificaImporteYOrdenDia(TestModelMovimientoSave):
         self.mov2.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2a).importe,
+            self.cuenta1.saldo_en_mov(self.mov2a),
             190+35
         )
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2b).importe,
+            self.cuenta1.saldo_en_mov(self.mov2b),
             170+35
         )
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2c).importe,
+            self.cuenta1.saldo_en_mov(self.mov2c),
             200+35
         )
 
@@ -1962,7 +1962,7 @@ class TestModelMovimientoSaveModificaImporteYOrdenDia(TestModelMovimientoSave):
         self.mov2a.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2a).importe,
+            self.cuenta1.saldo_en_mov(self.mov2a),
             100+1000
         )
 
@@ -1973,7 +1973,7 @@ class TestModelMovimientoSaveModificaImporteYOrdenDia(TestModelMovimientoSave):
         self.mov2.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
+            self.cuenta1.saldo_en_mov(self.mov2),
             235-1000
         )
 
@@ -1986,11 +1986,11 @@ class TestModelMovimientoSaveModificaImporteYOrdenDia(TestModelMovimientoSave):
         self.mov2b.refresh_from_db()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2a).importe,
+            self.cuenta1.saldo_en_mov(self.mov2a),
             190+1000
         )
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2b).importe,
+            self.cuenta1.saldo_en_mov(self.mov2b),
             170+1000
         )
 
@@ -2001,11 +2001,11 @@ class TestModelMovimientoSaveModificaImporteYOrdenDia(TestModelMovimientoSave):
         self.mov2b.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
+            self.cuenta1.saldo_en_mov(self.mov2),
             90-1000
         )
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2a).importe,
+            self.cuenta1.saldo_en_mov(self.mov2a),
             190-1000
         )
 
@@ -2016,7 +2016,7 @@ class TestModelMovimientoSaveModificaImporteYOrdenDia(TestModelMovimientoSave):
         self.mov2c.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2c).importe,
+            self.cuenta1.saldo_en_mov(self.mov2c),
             90+1000
         )
 
@@ -2027,7 +2027,7 @@ class TestModelMovimientoSaveModificaImporteYOrdenDia(TestModelMovimientoSave):
         self.mov2b.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov2b).importe,
+            self.cuenta1.saldo_en_mov(self.mov2b),
             125-1000
         )
 
@@ -2049,12 +2049,11 @@ class TestModelMovimientoSaveModificaCuentasYFecha(TestModelMovimientoSave):
         self.mov1.save()
 
         self.assertEqual(
-            # Saldo.tomar(cuenta=self.cuenta1, movimiento=self.mov2).importe,
-            self.cuenta1.saldo_set.get(movimiento=self.mov2).importe,
+            self.cuenta1.saldo_en_mov(self.mov2),
             90-125
         )
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta1.saldo_en_mov(self.mov3),
             140-125
         )
 
@@ -2065,7 +2064,7 @@ class TestModelMovimientoSaveModificaCuentasYFecha(TestModelMovimientoSave):
         self.mov2.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov3).importe,
+            self.cuenta1.saldo_en_mov(self.mov3),
             140+35
         )
 
@@ -2076,7 +2075,7 @@ class TestModelMovimientoSaveModificaCuentasYFecha(TestModelMovimientoSave):
         self.mov1.save()
 
         self.assertEqual(
-            self.cuenta4.saldo_set.get(movimiento=self.mov1).importe,
+            self.cuenta4.saldo_en_mov(self.mov1),
             10+125
         )
 
@@ -2087,7 +2086,7 @@ class TestModelMovimientoSaveModificaCuentasYFecha(TestModelMovimientoSave):
         self.mov2.save()
 
         self.assertEqual(
-            self.cuenta4.saldo_set.get(movimiento=self.mov2).importe,
+            self.cuenta4.saldo_en_mov(self.mov2),
             10-35
         )
 
@@ -2102,11 +2101,11 @@ class TestModelMovimientoSaveModificaCuentasYFecha(TestModelMovimientoSave):
         self.mov1.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=mov4).importe,
+            self.cuenta1.saldo_en_mov(mov4),
             240-125
         )
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=mov5).importe,
+            self.cuenta1.saldo_en_mov(mov5),
             230-125
         )
 
@@ -2121,11 +2120,11 @@ class TestModelMovimientoSaveModificaCuentasYFecha(TestModelMovimientoSave):
         self.mov1.save()
 
         self.assertEqual(
-            self.cuenta4.saldo_set.get(movimiento=mov4).importe,
+            self.cuenta4.saldo_en_mov(mov4),
             1010+125
         )
         self.assertEqual(
-            self.cuenta4.saldo_set.get(movimiento=mov5).importe,
+            self.cuenta4.saldo_en_mov(mov5),
             910+125
         )
 
@@ -2140,11 +2139,11 @@ class TestModelMovimientoSaveModificaCuentasYFecha(TestModelMovimientoSave):
         self.mov2.save()
 
         self.assertEqual(
-            self.cuenta4.saldo_set.get(movimiento=mov4).importe,
+            self.cuenta4.saldo_en_mov(mov4),
             1010-35
         )
         self.assertEqual(
-            self.cuenta4.saldo_set.get(movimiento=mov5).importe,
+            self.cuenta4.saldo_en_mov(mov5),
             910-35
         )
 
@@ -2159,11 +2158,11 @@ class TestModelMovimientoSaveModificaCuentasYFecha(TestModelMovimientoSave):
         self.mov2.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=mov4).importe,
+            self.cuenta1.saldo_en_mov(mov4),
             240 + 35
         )
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=mov5).importe,
+            self.cuenta1.saldo_en_mov(mov5),
             230 + 35
         )
 
@@ -2179,11 +2178,11 @@ class TestModelMovimientoSaveModificaCuentasYFecha(TestModelMovimientoSave):
         self.mov1.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=mov4).importe,
+            self.cuenta1.saldo_en_mov(mov4),
             100
         )
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=mov5).importe,
+            self.cuenta1.saldo_en_mov(mov5),
             90
         )
 
@@ -2194,7 +2193,7 @@ class TestModelMovimientoSaveModificaCuentasYFecha(TestModelMovimientoSave):
         self.mov2.save()
 
         self.assertEqual(
-            self.cuenta1.saldo_set.get(movimiento=self.mov1).importe,
+            self.cuenta1.saldo_en_mov(self.mov1),
             125
         )
 
@@ -2207,7 +2206,7 @@ class TestModelMovimientoSaveModificaCuentasYFecha(TestModelMovimientoSave):
         self.mov1.save()
 
         self.assertEqual(
-            self.cuenta4.saldo_set.get(movimiento=mov5).importe,
+            self.cuenta4.saldo_en_mov(mov5),
             1010
         )
 
@@ -2220,7 +2219,7 @@ class TestModelMovimientoSaveModificaCuentasYFecha(TestModelMovimientoSave):
         self.mov2.save()
 
         self.assertEqual(
-            self.cuenta4.saldo_set.get(movimiento=mov5).importe,
+            self.cuenta4.saldo_en_mov(mov5),
             1010
         )
 

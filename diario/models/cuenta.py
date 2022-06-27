@@ -7,6 +7,7 @@ from django.db import models
 from django.db.models import Sum
 from django.urls import reverse
 
+from utils.tiempo import Posicion
 from diario.models.titular import Titular
 from diario.models.movimiento import Movimiento
 from diario.models.saldo import Saldo
@@ -17,6 +18,10 @@ from vvmodel.models import PolymorphModel
 
 alfaminusculas = RegexValidator(
     r'^[0-9a-z_\-]*$', 'Solamente caracteres alfanuméricos y guiones')
+
+
+def signo(condicion):
+    return 1 if condicion else -1
 
 
 class Cuenta(PolymorphModel):
@@ -83,27 +88,23 @@ class Cuenta(PolymorphModel):
     def saldo_en_mov(self, movimiento):
         return self.saldo_set.get(movimiento=movimiento).importe
 
-    def saldos_posteriores_a(self, movimiento):
-        try:
-            saldo = Saldo.tomar(cuenta=self, movimiento=movimiento)
-            posteriores = saldo.posteriores()
-        except Saldo.DoesNotExist:
-            posteriores = self.saldo_set.all()
-        return posteriores
+    def recalcular_saldos_entre(self,
+                                pos_desde=Posicion(orden_dia=0),
+                                pos_hasta=Posicion(orden_dia=100000000)):
+        pos_hasta.fecha = pos_hasta.fecha or date.today()
+        pos_hasta.orden_dia = pos_hasta.orden_dia or 100000000
 
-    def sumar_a_saldos_posteriores(self, movimiento, importe):
-        posteriores = self.saldos_posteriores_a(movimiento)
-        for s in posteriores:
-            s.importe += importe
-            s.save()
-
-    def sumar_a_saldo_y_posteriores(self, movimiento, importe):
-        yposteriores = self.saldo_set.filter(
-            movimiento=movimiento
-        ) | self.saldos_posteriores_a(movimiento)
-        for s in yposteriores:
-            s.importe += importe
-            s.save()
+        saldos = Saldo.posteriores_a(self, pos_desde, inclusive_od=True) & \
+                 Saldo.anteriores_a(self, pos_hasta, inclusive_od=True)
+        for saldo in saldos:
+            try:
+                saldo.importe = saldo.anterior().importe + (
+                    signo(saldo.viene_de_entrada)*saldo.movimiento.importe
+                )
+            except AttributeError:
+                saldo.importe = \
+                    signo(saldo.viene_de_entrada)*saldo.movimiento.importe
+            saldo.save()
 
     @property
     def ultimo_saldo(self):
@@ -146,7 +147,6 @@ class Cuenta(PolymorphModel):
     def movs_en_fecha(self, fecha):
         """ Devuelve movimientos propios y de sus subcuentas en una fecha dada.
         Ver comentario anterior."""
-        pass
         return self.movs().filter(fecha=fecha)
 
     def cantidad_movs(self):

@@ -3,7 +3,7 @@ from datetime import date
 from selenium.webdriver.common.by import By
 
 from .base import FunctionalTest
-from utils.fechas import hoy
+from utils.tiempo import hoy
 
 
 class TestRecorrido(FunctionalTest):

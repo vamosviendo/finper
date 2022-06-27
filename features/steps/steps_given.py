@@ -4,6 +4,8 @@
         @when('agrego una cuenta con nombre "{nombre}"')
         @when('agrego una cuenta')
 """
+from datetime import datetime
+
 from behave import given
 
 from diario.models import Cuenta, Movimiento, Titular
@@ -52,7 +54,7 @@ def hay_movimientos(context):
         fecha = fila.get('fecha')
 
         if fecha:
-            mov.fecha = fecha
+            mov.fecha = datetime.strptime(fecha, "%Y-%m-%d").date()
 
         mov.save()
 

@@ -8,6 +8,7 @@ from utils import errors
 from vvmodel.models import MiModel
 
 from diario.models.saldo import Saldo
+from utils.tiempo import Posicion
 
 
 class MiDateField(models.DateField):
@@ -68,6 +69,10 @@ class Movimiento(MiModel):
     def receptor(self):
         if self.cta_entrada:
             return self.cta_entrada.titular
+
+    @property
+    def posicion(self):
+        return Posicion(fecha=self.fecha, orden_dia=self.orden_dia)
 
     def __str__(self):
         importe = self.importe \
@@ -280,22 +285,6 @@ class Movimiento(MiModel):
         else:                    # Movimiento existente
             self.viejo = self.tomar_de_bd()
 
-            # Esto tiene que ser provisorio
-            # Todo esto es porque en _actualizar_saldos(), si se cambia la
-            # cuenta por una nueva, se elimina el saldo de la vieja. Entonces,
-            # para cuando llegamos a _actualizar_orden, no tenemos un
-            # movimiento viejo del cual extraer los datos necesarios.
-            # Así que por ahora, hasta que busquemos y tal vez encontremos una
-            # solución mejor, hacemos una copia de self.viejo en un dict para
-            # preservar sus datos más allá de su desaparición.
-            self.viejo_dict = {
-                'fecha': self.viejo.fecha,
-                'orden_dia': self.viejo.orden_dia,
-                'importe': self.viejo.importe,
-                'ce': self.viejo.cta_entrada,
-                'cs': self.viejo.cta_salida,
-            }
-
             if self.es_prestamo_o_devolucion():
                 # El mov es una transacción no gratuita entre titulares
                 if self.id_contramov:
@@ -320,13 +309,24 @@ class Movimiento(MiModel):
             super().save(*args, **kwargs)
 
             if self._cambia_campo(
-                    'importe', 'cta_entrada', 'cta_salida',
+                    'importe', 'cta_entrada', 'cta_salida', 'fecha', 'orden_dia',
                     contraparte=self.viejo
             ):
-                self._actualizar_saldos()
-
-            if self._cambia_campo('fecha', 'orden_dia', contraparte=self.viejo):
-                self._actualizar_orden(mantiene_orden_dia)
+                """
+                Nota para el commit: (TODO: eliminar)
+                Lo que estamos intentando hacer es cambiar el sistema de 
+                recálculo de los saldos a partir de la modificación de
+                movimientos. El sistema anterior se basaba en restar el saldo
+                viejo y sumar el nuevo al saldo (o viceversa), lo cual era 
+                apropiado para el caso de un saldo único. El nuevo sistema se
+                basa en sumar (o restar) el nuevo importe al saldo anterior del
+                movimiento. Lo cual es más apropiado para el caso de saldos 
+                históricos.
+                Esta nota será retirada una vez que terminemos con la 
+                implementación 
+                """
+                for campo_cuenta in ('cta_entrada', 'cta_salida'):
+                    self._actualizar_saldos_cuenta(campo_cuenta, mantiene_orden_dia)
 
     def saldo_ce(self):
         try:
@@ -366,14 +366,7 @@ class Movimiento(MiModel):
                 not self.esgratis)
 
     def es_anterior_a(self, otro):
-        return self.es_anterior_a_fecha_y_orden(otro.fecha, otro.orden_dia)
-
-    def es_anterior_a_fecha_y_orden(self, fecha, orden_dia=0):
-        return (
-            self.fecha < fecha
-        ) or (
-            self.fecha == fecha and self.orden_dia < orden_dia
-        )
+        return self.posicion < otro.posicion
 
     def recuperar_cuentas_credito(self):
         cls = self.get_related_class('cta_entrada')
@@ -435,264 +428,65 @@ class Movimiento(MiModel):
         )
         return cc1, cc2
 
-    def _actualizar_saldos(self):
-        """
-        - Si la cuenta de entrada es la vieja cuenta de salida, sumar el
-          importe del movimiento por dos a la nueva cuenta de entrada.
-          - Si ya había una cuenta de entrada y esta no pasó a ser de salida
-            (es decir, ya no forma parte del movimiento), eliminar el saldo
-            correspondiente.
-        - Si la cuenta de entrada es una cuenta que no formaba parte del
-          movimiento
-          - Generar saldo para la nueva cta_entrada
-          - Si había una cta_entrada, eliminar el saldo correspondiente
-          - Eliminar saldo de cuentas de entrada y/o salida del movimiento
-            guardado al momento de dicho movimiento, si existen.
-          - Generar saldo para cuentas de entrada y/o salida del movimiento
-            nuevo al momento del movimiento, si existen.
-        - Si la cuenta de entrada no cambió, restar importe anterior y sumar
-          el nuevo al saldo de la cta_entrada en el movimiento y posteriores.
-        - Antes de repetir el proceso con la cuenta de salida, actualizarla
-          para el caso especial de la división de una cuenta en subcuentas.
-          En este caso se crea un movimiento de salida en la cuenta madre
-          (todavía interactiva), se convierte la cuenta en acumulativa al
-          crear las subcuentas y luego se modifica el movimiento para agregar
-          la subcuenta como cuenta de entrada. Es necesario actualizar la
-          cuenta de salida para dar cuenta de su conversión en acumulativa.
-        """
-        if self.cta_entrada:
-            if self._salida_pasa_a_entrada():
-                self.viejo.cta_salida.sumar_a_saldo_y_posteriores(
-                    self.viejo, self.viejo.importe + self.importe
-                )
-                if self.viejo.cta_entrada and not self._entrada_pasa_a_salida():
-                    self.viejo.saldo_ce().eliminar()
-
-            elif self._cambia_cta_entrada():
-                Saldo.generar(self, salida=False)
-                if self.viejo.cta_entrada and not self._entrada_pasa_a_salida():
-                    self.viejo.saldo_set.get(
-                        cuenta=self.viejo.cta_entrada
-                    ).eliminar()
-
-            elif self.viejo.cta_entrada:
-                self.viejo.cta_entrada.sumar_a_saldo_y_posteriores(
-                    self.viejo, self.importe-self.viejo.importe
-                )
-
-            else:   # not mov_viejo.cta_entrada
-                Saldo.generar(self, salida=False)
-
-        elif self.viejo.cta_entrada and not self._entrada_pasa_a_salida():
-            self.viejo.saldo_ce().eliminar()
-
-        if self.cta_salida:
-            if self._entrada_pasa_a_salida():
-                self.viejo.cta_entrada.sumar_a_saldo_y_posteriores(
-                    self.viejo, -self.viejo.importe - self.importe
-                )
-                if self.viejo.cta_salida \
-                        and not self._salida_pasa_a_entrada():
-                    self.viejo.saldo_cs().eliminar()
-
-            elif self._cambia_cta_salida():
-                Saldo.generar(self, salida=True)
-                if self.viejo.cta_salida and not self._salida_pasa_a_entrada():
-                    self.viejo.saldo_set.get(
-                        cuenta=self.viejo.cta_salida
-                    ).eliminar()
-
-            elif self.viejo.cta_salida:
-                self.viejo.cta_salida.sumar_a_saldo_y_posteriores(
-                    self.viejo, self.viejo.importe - self.importe
-                )
-
-            else:
-                Saldo.generar(self, salida=True)
-
-        elif self.viejo.cta_salida and not self._salida_pasa_a_entrada():
-            self.viejo.saldo_cs().eliminar()
-
-    def _actualizar_orden(self, mantiene_orden_dia):
-        # TODO: saldos_intermedios_de_ctas(
-        #           self.viejo.fecha, self.viejo.orden_dia
-        #       ) -> intermedios_ce, intermedios_cs
-        try:
-            intermedios_ce = Saldo.intermedios_entre_fechas_y_ordenes_de_cuenta(
-                self.viejo_dict['ce'],
-                self.viejo_dict['fecha'],
-                self.fecha,
-                self.viejo_dict['orden_dia'],
-                self.orden_dia
+    def _actualizar_saldos_cuenta(self, campo_cuenta, mantiene_orden_dia):
+        if campo_cuenta not in ('cta_entrada', 'cta_salida'):
+            raise ValueError(
+                'Argumento incorrecto. Debe ser "cta_entrada"'
+                ' o "cta_salida"'
             )
-        except AttributeError:
-            intermedios_ce = None
-        try:
-            intermedios_cs = Saldo.intermedios_entre_fechas_y_ordenes_de_cuenta(
-                self.viejo_dict['cs'],
-                self.viejo_dict['fecha'],
-                self.fecha,
-                self.viejo_dict['orden_dia'],
-                self.orden_dia
-            )
-        except AttributeError:
-            intermedios_cs = None
+        cuenta = getattr(self, campo_cuenta)
+        cuenta_vieja = getattr(self.viejo, campo_cuenta)
+        pasa_a_opuesto, viene_de_opuesto, saldo = (
+            self._entrada_pasa_a_salida,
+            self._salida_pasa_a_entrada,
+            self.viejo.saldo_ce,
+        ) if campo_cuenta == 'cta_entrada' else (
+            self._salida_pasa_a_entrada,
+            self._entrada_pasa_a_salida,
+            self.viejo.saldo_cs,
+        )
 
-        if self.fecha > self.viejo.fecha:
-            if not mantiene_orden_dia:
-                self.orden_dia = 0
-                super().save()
+        def cambia_campo(*args):
+            return self._cambia_campo(*args, contraparte=self.viejo)
 
-            if self.cta_entrada:
-                saldo_ce = self.saldo_ce()
+        if cuenta is not None:
+            if cambia_campo(campo_cuenta):
+                if viene_de_opuesto():
+                    cuenta.recalcular_saldos_entre(self.posicion)
+                else:
+                    Saldo.generar(self, salida=(campo_cuenta == 'cta_salida'))
+                self._eliminar_saldo_de_cuenta_vieja_si_existe(cuenta_vieja, pasa_a_opuesto, saldo)
 
-                # TODO: Saldo.actualizar_saldos(saldos, importe)
-                #       (como Saldo.actualizar_posteriores pero actualiza
-                #       la lista de saldos que se le pasa y no los posteriores)
-                for saldo in intermedios_ce:
-                    if not self._cambia_cta_entrada() or self._salida_pasa_a_entrada():
-                        saldo.importe -= self.viejo.importe
-                        saldo.save()
+            elif cambia_campo('importe'):
+                cuenta.recalcular_saldos_entre(self.posicion)
 
-                # TODO: self.calcular_nuevo_saldo_dada_ubicacion(entrada)
-                try:
-                    saldo_ce.importe = saldo_ce.anterior().importe + \
-                                       self.importe
-                    saldo_ce.save()
-                except AttributeError:
-                    pass
+            elif getattr(self.viejo, campo_cuenta) is None:
+                Saldo.generar(self, salida=(campo_cuenta == 'cta_salida'))
 
-            if self.cta_salida:
-                saldo_cs = self.saldo_cs()
+            if cambia_campo('fecha', 'orden_dia'):
+                if not mantiene_orden_dia:
+                    self._asignar_orden_dia()
 
-                # TODO: Saldo.actualizar_saldos(saldos, importe)
-                for saldo in intermedios_cs:
-                    if not self._cambia_cta_salida() or self._entrada_pasa_a_salida():
-                        saldo.importe += self.viejo.importe
-                        saldo.save()
+                pos_min, pos_max = sorted([self.posicion, self.viejo.posicion])
+                cuenta.recalcular_saldos_entre(pos_min, pos_max)
+                if cambia_campo(campo_cuenta):
+                    cuenta_vieja.recalcular_saldos_entre(pos_min)
 
-                # TODO: self.calcular_nuevo_saldo_dada_ubicacion(salida)
-                #       if intermedios.count() == 0: return
-                try:
-                    saldo_cs.importe = saldo_cs.anterior().importe - \
-                                       self.importe
-                    saldo_cs.save()
-                except AttributeError:
-                    pass
+        else:
+            self._eliminar_saldo_de_cuenta_vieja_si_existe(
+                cuenta_vieja, pasa_a_opuesto, saldo)
 
-        elif self.fecha < self.viejo.fecha:
-            if not mantiene_orden_dia:
-                self.orden_dia = Movimiento.filtro(fecha=self.fecha).count()
-                super().save()
+    def _asignar_orden_dia(self):
+        pos_min, pos_max = sorted([self.posicion, self.viejo.posicion])
+        if pos_min.fecha != pos_max.fecha:
+            self.orden_dia = 0 \
+                if pos_min.fecha == self.viejo.fecha \
+                else Movimiento.filtro(fecha=pos_min.fecha).count()
+            super().save()
 
-            if self.cta_entrada:
-                saldo_ce = self.saldo_ce()
-
-                # TODO: Saldo.actualizar_saldos(saldos, importe)
-                for saldo in intermedios_ce:
-                    # si se modificó el importe, ya se sumó a los saldos
-                    # posteriores la diferencia entre el saldo nuevo y
-                    # el viejo. Queda sumar el saldo viejo. De lo contrario,
-                    # estaríamos sumando la diferencia dos veces
-                    # TODO: Tiene que haber una forma mejor de resolver
-                    #   esto.
-                    saldo.importe += self.viejo.importe
-                    saldo.save()
-
-                # TODO: self.calcular_nuevo_saldo_dada_ubicacion(salida)
-                #       if intermedios.count() == 0: return
-                saldo_ce_anterior = saldo_ce.anterior()
-                saldo_ce.importe = saldo_ce_anterior.importe + self.importe \
-                    if saldo_ce_anterior \
-                    else self.importe
-                saldo_ce.save()
-
-            if self.cta_salida:
-                saldo_cs = self.saldo_cs()
-
-                # TODO: Saldo.actualizar_saldos(saldos, importe)
-                for saldo in intermedios_cs:
-                    saldo.importe -= self.viejo.importe
-                    saldo.save()
-
-                # TODO: self.calcular_nuevo_saldo_dada_ubicacion(salida)
-                #       if intermedios.count() == 0: return
-                saldo_cs_anterior = saldo_cs.anterior()
-                saldo_cs.importe = saldo_cs_anterior.importe - self.importe \
-                    if saldo_cs_anterior \
-                    else -self.importe
-                saldo_cs.save()
-
-        elif self.orden_dia > self.viejo.orden_dia:
-            if self.cta_entrada:
-                saldo_ce = self.saldo_ce()
-                intermedios_ce = saldo_ce.intermedios_con_fecha_y_orden(
-                    self.viejo.fecha,
-                    self.viejo.orden_dia,
-                    inclusive_od=True
-                )
-                for saldo in intermedios_ce:
-                    saldo.importe -= self.viejo.importe
-                    saldo.save()
-
-                saldo_ce_anterior = saldo_ce.anterior()
-                saldo_ce.importe = saldo_ce_anterior.importe + self.importe \
-                    if saldo_ce_anterior \
-                    else self.importe
-                saldo_ce.save()
-
-            if self.cta_salida:
-                saldo_cs = self.saldo_cs()
-                intermedios_cs = saldo_cs.intermedios_con_fecha_y_orden(
-                    self.viejo.fecha,
-                    self.viejo.orden_dia,
-                    inclusive_od=True
-                )
-                for saldo in intermedios_cs:
-                    saldo.importe += self.viejo.importe
-                    saldo.save()
-
-                saldo_cs_anterior = saldo_cs.anterior()
-                saldo_cs.importe = saldo_cs_anterior.importe - self.importe \
-                    if saldo_cs_anterior \
-                    else -self.importe
-                saldo_cs.save()
-
-        else:   # self.orden_dia < self.viejo.orden_dia
-
-            if self.cta_entrada:
-                saldo_ce = self.saldo_ce()
-                intermedios_ce = saldo_ce.intermedios_con_fecha_y_orden(
-                    self.viejo.fecha,
-                    self.viejo.orden_dia,
-                    inclusive_od=True
-                )
-                for saldo in intermedios_ce:
-                    saldo.importe += self.viejo.importe
-                    saldo.save()
-
-                saldo_ce_anterior = saldo_ce.anterior()
-                saldo_ce.importe = saldo_ce_anterior.importe + self.importe \
-                    if saldo_ce_anterior \
-                    else self.importe
-                saldo_ce.save()
-
-            if self.cta_salida:
-                saldo_cs = self.saldo_cs()
-                intermedios_cs = saldo_cs.intermedios_con_fecha_y_orden(
-                    self.viejo.fecha,
-                    self.viejo.orden_dia,
-                    inclusive_od=True
-                )
-                for saldo in intermedios_cs:
-                    saldo.importe -= self.viejo.importe
-                    saldo.save()
-
-                saldo_cs_anterior = saldo_cs.anterior()
-                saldo_cs.importe = saldo_cs_anterior.importe - self.importe \
-                    if saldo_cs_anterior \
-                    else -self.importe
-                saldo_cs.save()
+    def _eliminar_saldo_de_cuenta_vieja_si_existe(self, cuenta_vieja, pasa_a_opuesto, saldo):
+        if cuenta_vieja is not None and not pasa_a_opuesto():
+            saldo().eliminar()
 
     def _cambia_cta_entrada(self):
         return (

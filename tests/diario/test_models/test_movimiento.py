@@ -713,7 +713,7 @@ class TestModelMovimientoDeSubcuentaEliminar(TestModelMovimientoSave):
             self.subc11.saldo_set.get(movimiento=mov)
 
         self.assertEqual(
-            Saldo.tomar_de_fecha(cuenta=self.cuenta1, fecha=self.fecha).importe,
+            Saldo.tomar(cuenta=self.cuenta1, movimiento=mov).importe,
             saldo-45
         )
 
@@ -726,7 +726,7 @@ class TestModelMovimientoDeSubcuentaEliminar(TestModelMovimientoSave):
             self.subc11.saldo_set.get(movimiento=mov)
 
         self.assertEqual(
-            Saldo.tomar_de_fecha(cuenta=self.cuenta1, fecha=self.fecha).importe,
+            Saldo.tomar(cuenta=self.cuenta1, movimiento=mov).importe,
             saldo+45
         )
 
