@@ -454,36 +454,6 @@ class TestModelMovimientoClean(TestModelMovimiento):
         )
         mov.full_clean()    # No debe dar error
 
-    def test_no_permite_movimiento_anterior_a_creacion_cta_entrada(self):
-        fecha_mov = self.cuenta1.fecha_creacion-timedelta(1)
-        mov = Movimiento(
-            fecha=fecha_mov,
-            concepto = 'Movimiento anterior a creación de cuenta',
-            importe=100,
-            cta_entrada=self.cuenta1
-        )
-        with self.assertRaisesMessage(
-            ValidationError,
-            f'Fecha del movimiento ({fecha_mov}) es anterior a creación '
-            f'de la cuenta "cuenta titular 1" ({self.cuenta1.fecha_creacion})'
-        ):
-            mov.full_clean()
-
-    def test_no_permite_movimiento_anterior_a_creacion_cta_salida(self):
-        fecha_mov = self.cuenta1.fecha_creacion-timedelta(1)
-        mov = Movimiento(
-            fecha=fecha_mov,
-            concepto = 'Movimiento anterior a creación de cuenta',
-            importe=100,
-            cta_salida=self.cuenta1
-        )
-        with self.assertRaisesMessage(
-            ValidationError,
-            f'Fecha del movimiento ({fecha_mov}) es anterior a creación '
-            f'de la cuenta "cuenta titular 1" ({self.cuenta1.fecha_creacion})'
-        ):
-            mov.full_clean()
-
     def test_movimiento_de_entrada_no_admite_cuenta_credito(self):
         cc12, cc21 = self.generar_cuentas_credito()
         mov_no_e = Movimiento(
