@@ -4,7 +4,8 @@ from unittest.mock import patch, call
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
-from diario.models import Cuenta, Movimiento, Titular, Saldo
+from diario.models import Cuenta, CuentaInteractiva, CuentaAcumulativa, \
+    Movimiento, Titular, Saldo
 from utils import errors
 from utils.helpers_tests import dividir_en_dos_subcuentas
 
@@ -566,6 +567,15 @@ class TestModelMovimientoSave(TestModelMovimiento):
         self.cuenta3.refresh_from_db()
         for arg in args:
             arg.refresh_from_db()
+
+
+class TestModelMovimientoRefreshFromDb(TestModelMovimientoSave):
+
+    def test_mantiene_tipos_especificos_de_cuentas_de_entrada_y_salida(self):
+        dividir_en_dos_subcuentas(self.cuenta1)
+        self.mov3.refresh_from_db()
+        self.assertEqual(type(self.mov3.cta_salida), CuentaInteractiva)
+        self.assertEqual(type(self.mov3.cta_entrada), CuentaAcumulativa)
 
 
 class TestModelMovimientoEliminar(TestModelMovimientoSave):

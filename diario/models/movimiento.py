@@ -84,7 +84,7 @@ class MovimientoCleaner:
                     raise errors.ErrorCuentaEsAcumulativa(
                         errors.CUENTA_ACUMULATIVA_AGREGADA
                     )
-                if self.mov.fecha > cuenta.como_subclase().fecha_conversion:
+                if self.mov.fecha > cuenta.fecha_conversion:
                     raise ValidationError(
                         message=errors.CUENTA_ACUMULATIVA_EN_MOVIMIENTO
                     )
@@ -314,6 +314,13 @@ class Movimiento(MiModel):
                 """
                 for campo_cuenta in ('cta_entrada', 'cta_salida'):
                     self._actualizar_saldos_cuenta(campo_cuenta, mantiene_orden_dia)
+
+    def refresh_from_db(self, using=None, fields=None):
+        super().refresh_from_db()
+        for campo_cuenta in 'cta_entrada', 'cta_salida':
+            cuenta = getattr(self, campo_cuenta)
+            if cuenta:
+                setattr(self, campo_cuenta, cuenta.como_subclase())
 
     def saldo_ce(self):
         try:
