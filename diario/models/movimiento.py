@@ -42,12 +42,7 @@ class Movimiento(MiModel):
     id_contramov = models.IntegerField(null=True, blank=True)
     es_automatico = models.BooleanField(default=False)
 
-    viejo = None
-    viejo_dict = None
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.esgratis = False
+    viejo: 'Movimiento' = None
 
     class Meta:
         ordering = ('fecha', 'orden_dia')
@@ -107,9 +102,8 @@ class Movimiento(MiModel):
             cta_salida=cta_salida,
             **kwargs
         )
-        movimiento.esgratis = esgratis
         movimiento.full_clean()
-        movimiento.save()
+        movimiento.save(esgratis=esgratis)
 
         return movimiento
 
@@ -250,7 +244,7 @@ class Movimiento(MiModel):
         if self.id_contramov:
             self._eliminar_contramovimiento()
 
-    def save(self, *args, mantiene_orden_dia=False, **kwargs):
+    def save(self, *args, mantiene_orden_dia=False, esgratis=False, **kwargs):
         """
         Si el movimiento es nuevo (no existía antes, está siendo creado)
         - Generar saldo para cuentas de entrada y/o salida al momento del
@@ -265,6 +259,9 @@ class Movimiento(MiModel):
         """
 
         if self._state.adding:   # Movimiento nuevo
+            # TODO extract Movimiento.__setup__()
+            if not hasattr(self, 'esgratis'):
+                self.esgratis = esgratis
 
             if self.es_prestamo_o_devolucion():
                 self._gestionar_transferencia()
@@ -564,7 +561,6 @@ class Movimiento(MiModel):
             concepto = 'Constitución de crédito'
 
         return concepto
-
 
 '''
 (1) cuenta_acreedora y cuenta_deudora lo son con respecto al movimiento, no en
