@@ -56,7 +56,7 @@ from vvselenium.helpers import table_to_str, fijar_atributo
 @then('veo un titular en la grilla con nombre "{nombre}"')
 @then('veo un titular en la grilla')
 @then('no veo un titular con nombre "{nombre}" en la grilla')
-@then('veo que el patrimonio de "{titular}" es {tantos} pesos')
+@then('veo que el capital de "{titular}" es {tantos} pesos')
 
 @then('veo un mensaje de saldos erróneos que incluye las cuentas')
 @then('veo un mensaje de saldo erróneo para la cuenta "{nombre}"')
@@ -498,13 +498,13 @@ def titular_no_esta_en_grilla(context, nombre):
     )
 
 
-@then('veo que el patrimonio de "{titular}" es {tantos} pesos')
-def el_patrimonio_es_tanto(context, titular, tantos):
+@then('veo que el capital de "{titular}" es {tantos} pesos')
+def el_capital_es_tanto(context, titular, tantos):
     titname = Titular.tomar(nombre=titular).titname
 
     tantos = formatear_importe(tantos)
 
-    patri = context.browser.esperar_elemento(f'id_patrimonio_{titname}')
+    patri = context.browser.esperar_elemento(f'id_capital_{titname}')
     context.test.assertEqual(patri.text, tantos)
 
 

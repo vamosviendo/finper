@@ -11,8 +11,8 @@
       {{ titular.nombre }}
     </a>
   </div>
-  <div id="id_patrimonio_{{ titular.titname }}" class="card-body text-success numero class_patrimonio_titular">
-    {{ titular.patrimonio|floatformat:2 }}
+  <div id="id_capital_{{ titular.titname }}" class="card-body text-success numero class_capital_titular">
+    {{ titular.capital|floatformat:2 }}
   </div>
 </div>
 {% endblock grid_titulares %}
@@ -25,5 +25,5 @@
 {% endblock verificar_saldos %}
 
 {% block general %}
-  {{ titular.patrimonio|floatformat:2 }}
+  {{ titular.capital|floatformat:2 }}
 {% endblock general %}

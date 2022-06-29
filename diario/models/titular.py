@@ -13,7 +13,7 @@ class Titular(MiModel):
     deudores = models.ManyToManyField('Titular', related_name='acreedores')
 
     @property
-    def patrimonio(self):
+    def capital(self):
         return sum([c.saldo for c in self.cuentas.all()])
 
     def movimientos(self):

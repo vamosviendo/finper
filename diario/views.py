@@ -208,7 +208,7 @@ class TitDetalleView(DetailView):
         context = super().get_context_data(**kwargs)
         context.update({
             'subcuentas': self.object.cuentas.order_by('slug'),
-            'saldo_pag': self.object.patrimonio,
+            'saldo_pag': self.object.capital,
             'movimientos': self.object.movimientos(),
         })
         return context

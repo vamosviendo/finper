@@ -87,8 +87,8 @@ Escenario: Se modifica gratuidad de movimiento entre cuentas de distinto titular
     Y cliqueo en el botón
 
     Entonces no veo movimientos con concepto "Constitución de crédito"
-    Y veo que el patrimonio de "Tito Gómez" es 100 pesos
-    Y veo que el patrimonio de "Juan Juánez" es -100 pesos
+    Y veo que el capital de "Tito Gómez" es 100 pesos
+    Y veo que el capital de "Juan Juánez" es -100 pesos
 
     Cuando voy a la página "modificar movimiento" del movimiento de concepto "préstamo de juan a tito"
     Entonces veo que el checkbox "esgratis" está seleccionado
@@ -97,8 +97,8 @@ Escenario: Se modifica gratuidad de movimiento entre cuentas de distinto titular
     Y cliqueo en el botón
 
     Entonces veo un movimiento con concepto "Constitución de crédito"
-    Y veo que el patrimonio de "Tito Gómez" es 0 pesos
-    Y veo que el patrimonio de "Juan Juánez" es 0 pesos
+    Y veo que el capital de "Tito Gómez" es 0 pesos
+    Y veo que el capital de "Juan Juánez" es 0 pesos
 
     Cuando voy a la página "modificar movimiento" del movimiento de concepto "préstamo de juan a tito"
     Entonces veo que el checkbox "esgratis" está deseleccionado

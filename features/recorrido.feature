@@ -21,7 +21,7 @@ Escenario: Crear una cuenta y verla en la homepage
     Cuando agrego una cuenta con nombre "Banco"
     Entonces veo una cuenta en la grilla con nombre "banco"
     Y veo que el saldo de "Efectivo" es cero pesos
-    Y veo que el patrimonio de "Titular por defecto" es cero pesos
+    Y veo que el capital de "Titular por defecto" es cero pesos
     Y veo un botón de Movimiento nuevo
 
     Cuando cliqueo en el botón "Movimiento nuevo"
@@ -35,4 +35,4 @@ Escenario: Crear una cuenta y verla en la homepage
         | importe     | 50.00                  |
     Entonces veo un movimiento en la página
     Y veo que el saldo de Banco es 50 pesos
-    Y veo que el patrimonio de "Titular por defecto" es 50 pesos
+    Y veo que el capital de "Titular por defecto" es 50 pesos

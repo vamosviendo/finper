@@ -163,9 +163,9 @@ Escenario: Crear traspaso entre cuentas de distintos titulares sin generar deuda
     Cuando voy a la página "tit_detalle" del titular "Tito Gómez"
 
     Entonces no veo una cuenta con slug "_tito-juan" en la grilla
-    Y veo que el patrimonio de "Tito Gómez" es 70 pesos
+    Y veo que el capital de "Tito Gómez" es 70 pesos
 
     Cuando voy a la página "tit_detalle" del titular "Juan Juánez"
 
     Entonces no veo una cuenta con slug "_juan-tito" en la grilla
-    Y veo que el patrimonio de "Juan Juánez" es 30 pesos
+    Y veo que el capital de "Juan Juánez" es 30 pesos

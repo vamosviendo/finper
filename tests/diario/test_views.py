@@ -66,9 +66,9 @@ class TestTitularDetalle(TestCase):
             [cuenta2, cuenta1]
         )
 
-    @patch('diario.views.Titular.patrimonio', new_callable=PropertyMock)
-    def test_pasa_patrimonio_del_titular_al_template(self, mock_patrimonio):
-        mock_patrimonio.return_value = 250
+    @patch('diario.views.Titular.capital', new_callable=PropertyMock)
+    def test_pasa_capital_del_titular_al_template(self, mock_capital):
+        mock_capital.return_value = 250
 
         response = self.client.get(reverse('tit_detalle', args=[self.tit.titname]))
 

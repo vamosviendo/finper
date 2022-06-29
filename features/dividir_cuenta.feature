@@ -54,7 +54,7 @@ Escenario: Asignar subcuenta a un titular distinto al dividir cuenta
     Entonces veo una cuenta en la grilla con nombre "Cajón de arriba"
     Y veo una cuenta en la grilla con nombre "Préstamo entre tit2 y default"
     Y no veo una cuenta con nombre "Billetera" en la grilla
-    Y veo que el patrimonio de "Otro Titular" es cero pesos
+    Y veo que el capital de "Otro Titular" es cero pesos
 
 
 Escenario: Asignar subcuenta a un titular distinto al dividir cuenta sin generar deuda
@@ -77,4 +77,4 @@ Escenario: Asignar subcuenta a un titular distinto al dividir cuenta sin generar
 
     Entonces veo una cuenta en la grilla con nombre "Cajón de arriba"
     Y no veo una cuenta con nombre "Billetera" en la grilla
-    Y veo que el patrimonio de "Otro Titular" es 150 pesos
+    Y veo que el capital de "Otro Titular" es 150 pesos

@@ -68,18 +68,18 @@ class TestTitularPatrimonio(TestCase):
         CuentaInteractiva.crear('cuenta2', 'cta2', saldo=-120, titular=tit)
         CuentaInteractiva.crear('cuenta_ajena', 'ctaj', saldo=300)
 
-        self.assertEqual(tit.patrimonio, 380)
+        self.assertEqual(tit.capital, 380)
 
     def test_funciona_correctamente_con_valores_con_decimales(self):
         tit = Titular.crear(titname='Titu')
         CuentaInteractiva.crear('cuenta1', 'cta1', saldo=500.22, titular=tit)
         CuentaInteractiva.crear('cuenta2', 'cta2', saldo=-120.35, titular=tit)
 
-        self.assertEqual(tit.patrimonio, round(500.22-120.35, 2))
+        self.assertEqual(tit.capital, round(500.22 - 120.35, 2))
 
     def test_devuelve_cero_si_titular_no_tiene_cuentas(self):
         tit = Titular.crear(titname='Toti')
-        self.assertEqual(tit.patrimonio, 0)
+        self.assertEqual(tit.capital, 0)
 
 
 class TestTitularMovimientos(TestCase):

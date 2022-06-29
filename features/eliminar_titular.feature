@@ -1,8 +1,8 @@
 #language: es
 Característica: Eliminar titular
     Quiero poder eliminar titulares
-    Quiero que si esos titulares tienen patrimonio, al eliminarlo se elimine
-    el patrimonio, el saldo de todas sus cuentas sea llevado a cero y las
+    Quiero que si esos titulares tienen capital, al eliminarlo se elimine
+    el capital, el saldo de todas sus cuentas sea llevado a cero y las
     cuentas sean eliminadas, sean independientes o subcuentas de otra cuenta,
     interactivas o acumulativas.
 
@@ -54,7 +54,7 @@ Escenario: Eliminar titular con cuentas con saldo
     Y el saldo general es 66,00 pesos
     Y veo un movimiento con los siguientes valores:
         | concepto                           | importe | cta_entrada | cta_salida |
-        | Retiro de patrimonio de Tito Gómez | 50      | cta1        |            |
+        | Retiro de capital de Tito Gómez | 50      | cta1        |            |
     Y veo un movimiento con los siguientes valores:
         | concepto                           | importe | cta_entrada | cta_salida |
-        | Retiro de patrimonio de Tito Gómez | 100     |             | cta2       |
+        | Retiro de capital de Tito Gómez | 100     |             | cta2       |

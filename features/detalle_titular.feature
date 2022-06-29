@@ -9,7 +9,7 @@ Característica: Detalles titular
     movimientos que involucren a las cuentas de ese titular.
     Quiero que entre los movimientos que se muestran estén también los que
     involucren a las cuentas acumulativas cuando éstas formaban parte del
-    patrimonio del titular.
+    capital del titular.
 
 
 Escenario: Ver detalles de un titular
@@ -29,7 +29,7 @@ Escenario: Ver detalles de un titular
     Y cliqueo en el titular "Tito Gómez"
     Entonces soy dirigido a la página "tit_detalle" del titular "Tito Gómez"
     Y veo un "div" de clase "nombre_titular" con texto "Tito Gómez"
-    Y veo que el patrimonio de "Tito Gómez" es 700 pesos
+    Y veo que el capital de "Tito Gómez" es 700 pesos
     Y veo una cuenta en la grilla con nombre "cta1efectivo"
     Y veo una cuenta en la grilla con nombre "cta3credito"
     Y no veo una cuenta con nombre "cta2banco" en la grilla
