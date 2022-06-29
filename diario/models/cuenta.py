@@ -86,7 +86,7 @@ class Cuenta(PolymorphModel):
             return 0
 
     def saldo_en_mov(self, movimiento):
-        return self.saldo_set.get(movimiento=movimiento).importe
+        return Saldo.tomar(cuenta=self, movimiento=movimiento).importe
 
     def recalcular_saldos_entre(self,
                                 pos_desde=Posicion(orden_dia=0),
