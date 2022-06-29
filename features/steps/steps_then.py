@@ -436,7 +436,7 @@ def veo_una_cuenta(context, nombre):
     )
 
 
-@then('no veo una cuenta con nombre {nombre} en la grilla')
+@then('no veo una cuenta con nombre "{nombre}" en la grilla')
 def cuenta_no_esta_en_grilla(context, nombre):
     cuentas = context.browser.esperar_elementos('class_div_cuenta')
     context.test.assertNotIn(
