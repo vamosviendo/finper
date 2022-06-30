@@ -2,6 +2,7 @@ db.sqlite*
 pruebadb.sqlite3
 geckodriver.log
 vfinper
+vfinperprod
 __pycache__
 *.pyc
 .idea
