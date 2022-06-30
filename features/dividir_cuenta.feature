@@ -78,3 +78,10 @@ Escenario: Asignar subcuenta a un titular distinto al dividir cuenta sin generar
     Entonces veo una cuenta en la grilla con nombre "Cajón de arriba"
     Y no veo una cuenta con nombre "Billetera" en la grilla
     Y veo que el capital de "Otro Titular" es 150 pesos
+
+    Cuando voy a la página "tit_detalle" del titular "Titular por defecto"
+
+    Entonces veo una cuenta en la grilla con nombre "Billetera"
+    Y no veo una cuenta con nombre "Cajón de arriba" en la grilla
+    Y no veo una cuenta con nombre "Efectivo" en la grilla
+    Y veo que el capital de "Titular por defecto" es 50 pesos

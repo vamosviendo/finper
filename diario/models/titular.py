@@ -1,6 +1,5 @@
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Sum
 
 from diario.settings_app import TITULAR_PRINCIPAL
 from vvmodel.models import MiModel
@@ -14,7 +13,11 @@ class Titular(MiModel):
 
     @property
     def capital(self):
-        return sum([c.saldo for c in self.cuentas.all()])
+        return sum([c.saldo for c in self.cuentas_interactivas()])
+
+    def cuentas_interactivas(self):
+        ids = [c.id for c in self.cuentas.all() if c.es_interactiva]
+        return self.cuentas.filter(id__in=ids)
 
     def movimientos(self):
         lista_movimientos = list()
