@@ -13,15 +13,18 @@ User = get_user_model()
 
 class FinperFirefox(MiFirefox):
 
-    def esperar_movimiento(self, concepto):
+    def esperar_movimiento(self, columna, contenido):
         movimientos = self.esperar_elementos('class_row_mov', By.CLASS_NAME)
         try:
             return next(
                 x for x in movimientos
-                if x.find_element_by_class_name('class_td_concepto').text == concepto
+                if x.find_element_by_class_name(f'class_td_{columna}').text
+                    == contenido
             )
         except StopIteration:
-            raise ValueError(f'Concepto {concepto} no encontrado')
+            raise ValueError(
+                f'Contenido {contenido} no encontrado en columna {columna}'
+            )
 
 
 class FunctionalTest(StaticLiveServerTestCase):

@@ -42,6 +42,7 @@ from vvselenium.helpers import table_to_str, fijar_atributo
 @then('veo que el concepto del movimiento es "{concepto}"')
 @then('veo que el importe del movimiento "{concepto}" es {tantos} pesos')
 @then('veo que la cuenta de {sentido} del movimiento "{concepto}" es "{esta}"')
+@then('veo que la fecha del movimiento de detalle "{detalle}" es "{esta}"')
 @then('veo que el movimiento "{concepto}" no tiene cuenta de {sentido}')
 @then('veo que "{nombre}" no está entre las cuentas del movimiento "{concepto}"')
 
@@ -359,7 +360,7 @@ def el_importe_es_tanto(context, concepto, tantos):
     if tantos.find('.') == -1:
         tantos += ',00'
 
-    movimiento = context.browser.esperar_movimiento(concepto)
+    movimiento = context.browser.esperar_movimiento("concepto", concepto)
     importe = movimiento.find_element_by_class_name('class_td_importe').text
 
     context.test.assertEqual(importe, tantos)
@@ -367,7 +368,7 @@ def el_importe_es_tanto(context, concepto, tantos):
 
 @then('veo que la cuenta de {sentido} del movimiento "{concepto}" es "{esta}"')
 def cuenta_mov_es(context, sentido, concepto, esta):
-    movimiento = context.browser.esperar_movimiento(concepto)
+    movimiento = context.browser.esperar_movimiento("concepto", concepto)
     cuentas = movimiento.find_element_by_class_name('class_td_cuentas').text
 
     if sentido == "entrada":
@@ -382,9 +383,17 @@ def cuenta_mov_es(context, sentido, concepto, esta):
     context.test.assertIn(signo+slug, cuentas)
 
 
+@then('veo que la fecha del movimiento de detalle "{detalle}" es "{esta}"')
+def fecha_mov_es(context, detalle, esta):
+    movimiento = context.browser.esperar_movimiento('detalle', detalle)
+    fecha = movimiento.find_element_by_class_name('class_td_fecha').text
+
+    context.test.assertEqual(fecha, esta)
+
+
 @then('veo que el movimiento "{concepto}" no tiene cuenta de {sentido}')
 def mov_no_tiene_cuenta(context, concepto, sentido):
-    movimiento = context.browser.esperar_movimiento(concepto)
+    movimiento = context.browser.esperar_movimiento("concepto", concepto)
     cuentas = movimiento.find_element_by_class_name('class_td_cuentas').text
 
     if sentido == "entrada":
@@ -400,7 +409,7 @@ def mov_no_tiene_cuenta(context, concepto, sentido):
 
 @then('veo que "{nombre}" no está entre las cuentas del movimiento "{concepto}"')
 def cuenta_no_esta_en_mov(context, nombre, concepto):
-    movimiento = context.browser.esperar_movimiento(concepto)
+    movimiento = context.browser.esperar_movimiento("concepto", concepto)
     cuentas = movimiento.find_element_by_class_name('class_td_cuentas').text
 
     context.test.assertNotIn(nombre, cuentas)

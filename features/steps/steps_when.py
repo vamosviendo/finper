@@ -37,6 +37,7 @@ from vvselenium.helpers import table_to_str
 
 @when('voy a la página "{pag}" del {orden} movimiento')
 @when('voy a la página "{pag}" del movimiento de concepto "{concepto}"')
+@when('voy a la página "{pag}" del movimiento de detalle "{detalle}")
 @when('voy a la página principal por primera vez en el día')
 @when('voy a la página principal sin que haya cambiado el día')
 @when('voy a la página "{pag}" de la cuenta "{coso}"')
@@ -202,6 +203,14 @@ def ir_a_pag_mov(context, pag, concepto):
         f'con el argumento "{mov_pk}"'
     )
 
+
+@when('voy a la página "{pag}" del movimiento de detalle "{detalle}"')
+def ir_a_pag_mov(context, pag, detalle):
+    mov_pk = Movimiento.tomar(detalle=detalle).pk
+    nombre = NOMBRES_URL.get(pag, pag)
+    context.execute_steps(
+        f'Cuando voy a la página "{nombre}" con el argumento "{mov_pk}"'
+    )
 
 # NAVEGACIÓN
 
