@@ -904,7 +904,9 @@ class TestMovMod(TestCase):
         super().setUp()
         self.cuenta = Cuenta.crear(nombre='Efectivo', slug='E')
         self.mov = Movimiento.crear(
-            concepto='saldo', importe=166, cta_entrada=self.cuenta)
+            concepto='saldo', importe=166, cta_entrada=self.cuenta,
+            fecha=date(2021, 1, 15)
+        )
 
     def test_usa_template_mov_form(self):
         response = self.client.get(reverse('mov_mod', args=[self.mov.pk]))
@@ -1028,6 +1030,20 @@ class TestMovMod(TestCase):
         self.cuenta.refresh_from_db()
 
         self.assertEqual(self.cuenta.saldo, saldo)
+
+    def test_permite_modificar_fecha_de_movimiento_con_cuenta_acumulativa(self):
+        dividir_en_dos_subcuentas(self.cuenta, fecha=date(2021, 1, 20))
+
+        self.client.post(
+            reverse('mov_mod', args=[self.mov.pk]),
+            {
+                'fecha': date(2021, 1, 18),
+                'concepto': self.mov.concepto,
+                'importe': self.mov.importe,
+            }
+        )
+        self.mov.refresh_from_db()
+        self.assertEqual(self.mov.fecha, date(2021, 1, 18))
 
     def test_si_se_selecciona_esgratis_en_movimiento_entre_titulares_desaparece_contramovimiento(self):
         titular2 = Titular.crear(nombre="Titular 2", titname="tit2")
