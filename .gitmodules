@@ -1,3 +1,6 @@
 [submodule "vvmodel"]
 	path = vvmodel
 	url = /home/nando/prog/proyecto/vvmodel
+[submodule "vvsteps"]
+	path = vvsteps
+	url = /home/nando/prog/proyecto/vvsteps
