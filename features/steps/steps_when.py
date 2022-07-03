@@ -14,7 +14,7 @@ from selenium.webdriver.common.by import By
 from consts import NOMBRES_URL
 from diario.models import Cuenta, Movimiento, Titular
 from utils.archivos import fijar_mtime
-from vvselenium.helpers import table_to_str
+from vvsteps.helpers import table_to_str
 
 """Steps en el archivo:
 @when('cliqueo en el titular "{nombre}"')

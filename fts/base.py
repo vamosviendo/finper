@@ -6,7 +6,7 @@ from selenium.webdriver.common.by import By
 from django.contrib.auth import get_user_model
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 
-from vvselenium.driver import esperar, MiFirefox
+from vvsteps.driver import esperar, MiFirefox
 
 User = get_user_model()
 

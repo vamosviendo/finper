@@ -1,4 +1,4 @@
-from vvselenium.helpers import overrides
+from vvsteps.helpers import overrides
 
 
 @overrides('cliqueo en el botón "{texto}"', 'when')

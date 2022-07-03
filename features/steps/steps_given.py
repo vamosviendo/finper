@@ -9,7 +9,7 @@ from datetime import datetime
 from behave import given
 
 from diario.models import Cuenta, Movimiento, Titular
-from vvselenium.helpers import table_to_str, fijar_atributo
+from vvsteps.helpers import table_to_str, fijar_atributo
 """ Steps en el archivo:
 @given('movimientos con los siguientes valores')
 @given('{n} movimientos con los siguientes valores')

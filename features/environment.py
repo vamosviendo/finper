@@ -1,3 +1,4 @@
+import vvsteps.environment_base as ev
 from diario.models import Titular
 from fts.base import FinperFirefox
 
@@ -17,7 +18,7 @@ def before_all(context):
 
 
 def after_all(context):
-    context.browser.quit()
+    ev.after_all(context)
 
 
 def before_feature(context, feature):
