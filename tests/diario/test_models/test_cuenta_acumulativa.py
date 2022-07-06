@@ -1,14 +1,23 @@
 from datetime import date
-from unittest import skip
 from unittest.mock import patch, MagicMock
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from diario.models import Cuenta, Movimiento, Titular, Saldo, CuentaAcumulativa
+from utils import errors
 from utils.errors import ErrorCuentaEsAcumulativa, \
     CUENTA_ACUMULATIVA_EN_MOVIMIENTO
 from utils.helpers_tests import dividir_en_dos_subcuentas
+
+
+class TestTirar(TestCase):
+
+    def test_tirar(self):
+        cuenta = Cuenta.crear('cuenta', 'c')
+        cuenta = cuenta.dividir_y_actualizar(['subc1', 'sc1', 0], ['subc2', 'subc2'])
+        with self.assertRaises(errors.ErrorMovimientoPosteriorAConversion):
+            cuenta.tirar()
 
 
 class TestCuentaAcumulativa(TestCase):
@@ -392,24 +401,26 @@ class TestSave(TestCase):
             'Efectivo', 'E',
             fecha_creacion=date(2011, 1, 1)
         )
-        Movimiento.crear(
+        self.mov1 = Movimiento.crear(
             concepto='00000',
             importe=100,
             cta_entrada=self.cta1,
-            fecha=date(2019, 1, 1)
+            fecha=date(2019, 1, 2)
         )
-        Movimiento.crear(
+        self.mov2 = Movimiento.crear(
             concepto='00000', importe=150, cta_entrada=self.cta1,
-            fecha=date(2019, 1, 1)
+            fecha=date(2019, 1, 4)
         )
         self.subcuentas = [
             {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 50},
             {'nombre': 'Cajón de arriba', 'slug': 'ecaj', 'saldo': 200},
         ]
 
-
     @patch('diario.models.cuenta.CuentaAcumulativa.movs_conversion')
-    def test_permite_modificar_fecha_de_conversion_de_cuenta(self, mock_movs):
+    def test_permite_modificar_fecha_de_conversion_de_cuenta(
+            self,
+            mock_movs,
+    ):
         mock_movs.return_value = [MagicMock(), MagicMock()]
         self.cta1 = self.cta1.dividir_y_actualizar(*self.subcuentas, fecha=date(2020, 10, 5))
         self.cta1.fecha_conversion = date(2021, 1, 6)
@@ -419,7 +430,10 @@ class TestSave(TestCase):
         self.assertEqual(self.cta1.fecha_conversion, date(2021, 1, 6))
 
     @patch('diario.models.cuenta.CuentaAcumulativa.movs_conversion')
-    def test_si_se_modifica_fecha_de_conversion_de_cuenta_se_modifica_fecha_de_movimientos_de_traspaso_de_saldo(self, mock_movs):
+    def test_si_se_modifica_fecha_de_conversion_de_cuenta_se_modifica_fecha_de_movimientos_de_traspaso_de_saldo(
+            self,
+            mock_movs,
+    ):
         sc1, sc2 = self.cta1.dividir_entre(*self.subcuentas, fecha=date(2020, 10, 5))
         mov1 = Movimiento.tomar(cta_entrada=sc1)
         mov2 = Movimiento.tomar(cta_entrada=sc2)
@@ -433,7 +447,8 @@ class TestSave(TestCase):
         self.assertEqual(mov1.fecha, date(2021, 1, 6))
         self.assertEqual(mov2.fecha, date(2021, 1, 6))
 
-    def test_integrativo_si_se_modifica_fecha_de_conversion_de_cuenta_se_modifica_fecha_de_movimientos_de_traspaso_de_saldo(self):
+    def test_integrativo_si_se_modifica_fecha_de_conversion_de_cuenta_se_modifica_fecha_de_movimientos_de_traspaso_de_saldo(
+            self):
         sc1, sc2 = self.cta1.dividir_entre(*self.subcuentas, fecha=date(2020, 10, 5))
         mov1 = Movimiento.tomar(cta_entrada=sc1)
         mov2 = Movimiento.tomar(cta_entrada=sc2)
@@ -448,10 +463,16 @@ class TestSave(TestCase):
         self.assertEqual(mov1.fecha, date(2021, 1, 6))
         self.assertEqual(mov2.fecha, date(2021, 1, 6))
 
-
-    @skip
     def test_no_permite_cambiar_fecha_de_conversion_por_una_anterior_a_la_de_cualquier_movimiento_de_la_cuenta(self):
-        self.fail()
+        self.cta1 = self.cta1.dividir_y_actualizar(*self.subcuentas, fecha=date(2020, 10, 5))
+        self.cta1.fecha_conversion = date(2019, 1, 3)
+
+        with self.assertRaisesMessage(
+            ValidationError,
+            'La fecha de conversión no puede ser anterior a la del último '
+            'movimiento de la cuenta (2019-01-04)'
+        ):
+            self.cta1.full_clean()
 
 
 class TestMovsConversion(TestCase):
@@ -486,3 +507,31 @@ class TestMovsConversion(TestCase):
         self.cta1 = self.cta1.dividir_y_actualizar(*self.subcuentas, fecha=date(2020, 10, 5))
 
         self.assertQuerysetEqual(self.cta1.movs_conversion(), [])
+
+
+class TestMovsNoConversion(TestCase):
+
+    def setUp(self):
+        self.cta1 = Cuenta.crear(
+            'Efectivo', 'E',
+            fecha_creacion=date(2011, 1, 1)
+        )
+        self.mov1 = Movimiento.crear(
+            concepto='00000',
+            importe=100,
+            cta_entrada=self.cta1,
+            fecha=date(2019, 1, 2)
+        )
+        self.mov2 = Movimiento.crear(
+            concepto='00000', importe=150, cta_entrada=self.cta1,
+            fecha=date(2019, 1, 4)
+        )
+        self.subcuentas = [
+            {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 50},
+            {'nombre': 'Cajón de arriba', 'slug': 'ecaj', 'saldo': 200},
+        ]
+
+    def test_devuelve_todos_los_movimientos_de_la_cuenta_excepto_los_de_conversion(self):
+        self.cta1 = self.cta1.dividir_y_actualizar(*self.subcuentas, fecha=date(2020, 10, 5))
+
+        self.assertQuerysetEqual(self.cta1.movs_no_conversion(), [self.mov1, self.mov2])

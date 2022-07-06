@@ -476,6 +476,7 @@ class Movimiento(MiModel):
     def _actualizar_fechas_conversion(self):
         if self._cambia_campo('fecha', contraparte=self.viejo) and self.convierte_cuenta:
             self.cta_salida.fecha_conversion = self.fecha
+            self.cta_salida.full_clean()
             self.cta_salida.save()
 
     def _asignar_orden_dia(self):

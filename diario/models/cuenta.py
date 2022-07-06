@@ -1,5 +1,4 @@
 from datetime import date
-from typing import List
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
@@ -521,7 +520,20 @@ class CuentaAcumulativa(Cuenta):
                 f'entre las subcuentas de {self.nombre.capitalize()} o entre '
                 f'las de una de sus subcuentas'
             )
+        movs_normales = self.movs_no_conversion()
+        fecha_ultimo_mov_normal = max([m.fecha for m in movs_normales]) \
+            if movs_normales.count() > 0 else date(1, 1, 1)
+
+        if self.fecha_conversion < fecha_ultimo_mov_normal:
+            raise errors.ErrorMovimientoPosteriorAConversion(
+                f'La fecha de conversión no puede ser anterior a la del '
+                f'último movimiento de la cuenta ({fecha_ultimo_mov_normal})'
+            )
+
         super().clean(*args, **kwargs)
+
+    def tirar(self):
+        raise errors.ErrorMovimientoPosteriorAConversion
 
     def manejar_cambios(self):
         if self._state.adding:
@@ -547,6 +559,9 @@ class CuentaAcumulativa(Cuenta):
 
     def movs_conversion(self) -> models.QuerySet[Movimiento]:
         return self.movs().filter(convierte_cuenta=True)
+
+    def movs_no_conversion(self):
+        return self.movs().filter(convierte_cuenta=False)
 
     def agregar_subcuenta(self, nombre, slug, titular=None):
         titular = titular or self.titular
