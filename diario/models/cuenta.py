@@ -529,8 +529,9 @@ class CuentaAcumulativa(Cuenta):
         vieja = CuentaAcumulativa.tomar(pk=self.pk)
         if self.fecha_conversion != vieja.fecha_conversion:
             for mov in self.movs_conversion():
-                mov.fecha = self.fecha_conversion
-                mov.save()
+                if mov.fecha != self.fecha_conversion:
+                    mov.fecha = self.fecha_conversion
+                    mov.save()
 
     def save(self, *args, **kwargs):
         self.manejar_cambios()

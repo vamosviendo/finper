@@ -1533,6 +1533,53 @@ class TestModelMovimientoSaveModificaFecha(TestModelMovimientoSave):
             240
         )
 
+    def test_modifica_fecha_en_movimiento_con_cuenta_acumulativa(self):
+        dividir_en_dos_subcuentas(self.cuenta1)
+        self.mov3.refresh_from_db()
+        self.mov3.fecha = date(2022, 1, 15)
+        self.mov3.full_clean()
+        self.mov3.save()
+
+        self.assertTrue(self.mov3.cta_entrada.es_acumulativa)
+        self.assertFalse(self.mov3.cta_salida.es_acumulativa)
+        self.assertEqual(
+            self.mov3.fecha,
+            date(2022, 1, 15)
+        )
+
+    def test_permite_modificar_fecha_de_movimiento_de_traspaso_de_saldo(self):
+        subc1, subc2 = self.cuenta1.dividir_entre(
+            ['subc1', 'sc1', 10],
+            ['subc2', 'sc2'],
+        )
+        mov1 = Movimiento.tomar(cta_entrada=subc1)
+        mov1.fecha = date(2021, 1, 5)
+        mov1.full_clean()
+        mov1.save()
+        self.assertEqual(mov1.fecha, date(2021, 1, 5))
+
+    def test_si_se_modifica_fecha_de_un_movimiento_de_traspaso_de_saldo_se_modifica_fecha_de_conversion_de_cuenta_y_de_los_movimientos_restantes_de_traspaso_de_saldo(self):
+        subc1, subc2, subc3 = self.cuenta1.dividir_entre(
+            ['subc1', 'sc1', 10],
+            ['subc2', 'sc2', 5],
+            ['subc3', 'sc3'],
+        )
+        mov1 = Movimiento.tomar(cta_entrada=subc1)
+        mov1.fecha = date(2021, 1, 5)
+        mov1.full_clean()
+        mov1.save()
+        self.cuenta1 = self.cuenta1.refresh_from_db()
+        mov2 = Movimiento.tomar(cta_entrada=subc2)
+        mov3 = Movimiento.tomar(cta_entrada=subc3)
+
+        self.assertEqual(self.cuenta1.fecha_conversion, date(2021, 1, 5))
+        self.assertEqual(mov2.fecha, date(2021, 1, 5))
+        self.assertEqual(mov3.fecha, date(2021, 1, 5))
+
+    @skip
+    def test_no_permite_modificar_fecha_de_movimiento_de_traspaso_de_saldo_por_fecha_anterior_a_la_de_cualquier_otro_movimiento_de_la_cuenta(self):
+        self.fail()
+
 
 class TestModelMovimientoSaveModificaOrdenDia(TestModelMovimientoSave):
 

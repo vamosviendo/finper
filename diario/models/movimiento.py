@@ -256,7 +256,6 @@ class Movimiento(MiModel):
           cta_entrada, cta_salida).
         - Si cambió alguno de estos campos, actualizar saldos:
         """
-
         if self._state.adding:   # Movimiento nuevo
             # TODO extract Movimiento.__setup__()
             if not hasattr(self, 'esgratis'):
@@ -316,6 +315,8 @@ class Movimiento(MiModel):
                 """
                 for campo_cuenta in ('cta_entrada', 'cta_salida'):
                     self._actualizar_saldos_cuenta(campo_cuenta, mantiene_orden_dia)
+
+                self._actualizar_fechas_conversion()
 
     def refresh_from_db(self, using=None, fields=None):
         super().refresh_from_db()
@@ -471,6 +472,11 @@ class Movimiento(MiModel):
         else:
             self._eliminar_saldo_de_cuenta_vieja_si_existe(
                 cuenta_vieja, pasa_a_opuesto, saldo)
+
+    def _actualizar_fechas_conversion(self):
+        if self._cambia_campo('fecha', contraparte=self.viejo) and self.convierte_cuenta:
+            self.cta_salida.fecha_conversion = self.fecha
+            self.cta_salida.save()
 
     def _asignar_orden_dia(self):
         pos_min, pos_max = sorted([self.posicion, self.viejo.posicion])
