@@ -1,4 +1,5 @@
 from datetime import date
+from typing import List
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
@@ -452,6 +453,7 @@ class CuentaInteractiva(Cuenta):
                     importe=subcuenta.pop('saldo'),
                     cta_salida=self,
                     esgratis=subcuenta.pop('esgratis', False),
+                    convierte_cuenta=True,
                 ))
             except errors.ErrorImporteCero:
                 # Si el saldo de la subcuenta es 0, no generar movimiento
@@ -542,8 +544,8 @@ class CuentaAcumulativa(Cuenta):
             result = result | sc.movs(order_by=order_by)
         return result.order_by(order_by)
 
-    def movs_conversion(self) -> models.QuerySet:
-        return models.QuerySet()
+    def movs_conversion(self) -> models.QuerySet[Movimiento]:
+        return self.movs().filter(convierte_cuenta=True)
 
     def agregar_subcuenta(self, nombre, slug, titular=None):
         titular = titular or self.titular

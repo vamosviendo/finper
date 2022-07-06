@@ -650,6 +650,15 @@ class TestVaciarSaldo(TestCase):
             "Saldo pasado por Efectivo a nueva subcuenta Subc2"
         )
 
+    def test_marca_movimientos_de_traspaso_de_saldos_como_convierte_cuenta(self):
+        cta_madre = CuentaInteractiva.crear('Efectivo', 'efec')
+        ctas_limpias = cta_madre._ajustar_subcuentas(
+            [['subc1', 'sc1', 10], ['subc2', 'sc2']])
+
+        movimientos = cta_madre._vaciar_saldo(ctas_limpias)
+
+        for movimiento in movimientos:
+            self.assertTrue(movimiento.convierte_cuenta)
 
 @patch('diario.models.cuenta.Movimiento.crear')
 class TestCargarSaldo(TestCase):

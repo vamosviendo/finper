@@ -129,6 +129,7 @@ class Movimiento(MiModel):
         on_delete=models.CASCADE
     )
     id_contramov = models.IntegerField(null=True, blank=True)
+    convierte_cuenta = models.BooleanField(default=False)
     es_automatico = models.BooleanField(default=False)
 
     cleaner: MovimientoCleaner = None
