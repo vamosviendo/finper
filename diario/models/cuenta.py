@@ -432,6 +432,7 @@ class CuentaInteractiva(Cuenta):
             app_label='diario', model='cuentaacumulativa'
         )
         cuenta_acumulativa.fecha_conversion = fecha
+        cuenta_acumulativa._state.adding = True
         cuenta_acumulativa.save()
         return cuenta_acumulativa
 
@@ -520,6 +521,19 @@ class CuentaAcumulativa(Cuenta):
             )
         super().clean(*args, **kwargs)
 
+    def manejar_cambios(self):
+        if self._state.adding:
+            return
+        vieja = CuentaAcumulativa.tomar(pk=self.pk)
+        if self.fecha_conversion != vieja.fecha_conversion:
+            for mov in self.movs_conversion():
+                mov.fecha = self.fecha_conversion
+                mov.save()
+
+    def save(self, *args, **kwargs):
+        self.manejar_cambios()
+        super().save(*args, **kwargs)
+
     def movs(self, order_by='fecha'):
         """ Devuelve movimientos propios y de sus subcuentas
             ordenados por fecha."""
@@ -527,6 +541,9 @@ class CuentaAcumulativa(Cuenta):
         for sc in self.subcuentas.all():
             result = result | sc.movs(order_by=order_by)
         return result.order_by(order_by)
+
+    def movs_conversion(self) -> models.QuerySet:
+        return models.QuerySet()
 
     def agregar_subcuenta(self, nombre, slug, titular=None):
         titular = titular or self.titular

@@ -310,14 +310,13 @@ class TestMetodoDividirEntre(TestCase):
 
         self.assertEqual(self.cta1.fecha_conversion, date(2020, 10, 5))
 
-    def test_movimientos_tienen_fecha_igual_a_la_de_conversion(self):
+    def test_movimientos_de_traspaso_de_saldo_tienen_fecha_igual_a_la_de_conversion(self):
         fecha = date(2020, 10, 5)
 
         self.cta1.dividir_entre(*self.subcuentas, fecha=fecha)
 
         self.assertEqual(list(self.cta1.movs_directos())[-2].fecha, fecha)
         self.assertEqual(list(self.cta1.movs_directos())[-1].fecha, fecha)
-
     def test_no_acepta_fecha_de_conversion_anterior_a_la_de_cualquier_movimiento_de_la_cuenta(self):
         fecha = date(2020, 1, 1)
         Movimiento.crear(

@@ -1,9 +1,10 @@
 from datetime import date
+from unittest.mock import patch, MagicMock
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
-from diario.models import Cuenta, Movimiento, Titular, Saldo
+from diario.models import Cuenta, Movimiento, Titular, Saldo, CuentaAcumulativa
 from utils.errors import ErrorCuentaEsAcumulativa, \
     CUENTA_ACUMULATIVA_EN_MOVIMIENTO
 from utils.helpers_tests import dividir_en_dos_subcuentas
@@ -381,3 +382,57 @@ class TestSaldo(TestCase):
             self.cta_acum.saldo,
             160-70
         )
+
+
+class TestSave(TestCase):
+
+    def setUp(self):
+        self.cta1 = Cuenta.crear(
+            'Efectivo', 'E',
+            fecha_creacion=date(2011, 1, 1)
+        )
+        Movimiento.crear(
+            concepto='00000',
+            importe=100,
+            cta_entrada=self.cta1,
+            fecha=date(2019, 1, 1)
+        )
+        Movimiento.crear(
+            concepto='00000', importe=150, cta_entrada=self.cta1,
+            fecha=date(2019, 1, 1)
+        )
+        self.subcuentas = [
+            {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 50},
+            {'nombre': 'Cajón de arriba', 'slug': 'ecaj', 'saldo': 200},
+        ]
+
+    from unittest import skip
+
+    @patch('diario.models.cuenta.CuentaAcumulativa.movs_conversion')
+    def test_permite_modificar_fecha_de_conversion_de_cuenta(self, mock_movs):
+        mock_movs.return_value = [MagicMock(), MagicMock()]
+        self.cta1 = self.cta1.dividir_y_actualizar(*self.subcuentas, fecha=date(2020, 10, 5))
+        self.cta1.fecha_conversion = date(2021, 1, 6)
+        self.cta1.full_clean()
+        self.cta1.save()
+
+        self.assertEqual(self.cta1.fecha_conversion, date(2021, 1, 6))
+
+    @patch('diario.models.cuenta.CuentaAcumulativa.movs_conversion')
+    def test_si_se_modifica_fecha_de_conversion_de_cuenta_se_modifica_fecha_de_movimientos_de_traspaso_de_saldo(self, mock_movs):
+        sc1, sc2 = self.cta1.dividir_entre(*self.subcuentas, fecha=date(2020, 10, 5))
+        mov1 = Movimiento.tomar(cta_entrada=sc1)
+        mov2 = Movimiento.tomar(cta_entrada=sc2)
+        mock_movs.return_value = [mov1, mov2]
+
+        self.cta1 = CuentaAcumulativa.tomar(slug=self.cta1.slug)
+        self.cta1.fecha_conversion = date(2021, 1, 6)
+        self.cta1.full_clean()
+        self.cta1.save()
+
+        self.assertEqual(mov1.fecha, date(2021, 1, 6))
+        self.assertEqual(mov2.fecha, date(2021, 1, 6))
+
+    @skip
+    def test_no_permite_cambiar_fecha_de_conversion_por_una_anterior_a_la_de_cualquier_movimiento_de_la_cuenta(self):
+        self.fail()
