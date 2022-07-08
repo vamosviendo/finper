@@ -424,6 +424,14 @@ class TestSave(TestCase):
 
         self.assertEqual(self.cta1.fecha_conversion, date(2021, 1, 6))
 
+    def test_permite_modificar_fecha_de_conversion_de_cuenta_por_fecha_posterior(self):
+        self.cta1 = self.cta1.dividir_y_actualizar(*self.subcuentas, fecha=date(2020, 10, 5))
+        self.cta1.fecha_conversion = date(2021, 10, 6)
+        self.cta1.full_clean()
+        self.cta1.save()
+
+        self.assertEqual(self.cta1.fecha_conversion, date(2021, 10, 6))
+
     def test_si_se_modifica_fecha_de_conversion_de_cuenta_se_modifica_fecha_de_movimientos_de_traspaso_de_saldo(
             self):
         sc1, sc2 = self.cta1.dividir_entre(*self.subcuentas, fecha=date(2020, 10, 5))

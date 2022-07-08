@@ -1557,6 +1557,18 @@ class TestModelMovimientoSaveModificaFecha(TestModelMovimientoSave):
         mov1.save()
         self.assertEqual(mov1.fecha, date(2022, 1, 5))
 
+    def test_permite_modificar_fecha_de_movimiento_de_traspaso_de_saldo_por_fecha_posterior(self):
+        subc1, subc2 = self.cuenta1.dividir_entre(
+            ['subc1', 'sc1', 10],
+            ['subc2', 'sc2'],
+            fecha=date(2022, 1, 1),
+        )
+        mov1 = Movimiento.tomar(cta_entrada=subc1)
+        mov1.fecha = date(2022, 1, 5)
+        mov1.full_clean()
+        mov1.save()
+        self.assertEqual(mov1.fecha, date(2022, 1, 5))
+
     def test_si_se_modifica_fecha_de_un_movimiento_de_traspaso_de_saldo_se_modifica_fecha_de_conversion_de_cuenta_y_de_los_movimientos_restantes_de_traspaso_de_saldo(self):
         subc1, subc2, subc3 = self.cuenta1.dividir_entre(
             ['subc1', 'sc1', 10],

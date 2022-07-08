@@ -72,10 +72,11 @@ class MovimientoCleaner:
                         errors.CUENTA_ACUMULATIVA_RETIRADA
                     )
                 # No se admiten movimientos posteriores a conversión de cuenta en acumulativa
-                if self.mov.fecha > cuenta_vieja.fecha_conversion:
+                if self.mov.fecha > cuenta_vieja.fecha_conversion and not self.mov.convierte_cuenta:
                     raise errors.ErrorCuentaEsAcumulativa(
                         f'{errors.FECHA_POSTERIOR_A_CONVERSION}'
-                        f'{cuenta_vieja.fecha_conversion}'
+                        f'{cuenta_vieja.fecha_conversion} '
+                        f'(es {self.mov.fecha})'
                     )
 
             if cuenta and cuenta.es_acumulativa:
@@ -85,7 +86,7 @@ class MovimientoCleaner:
                     raise errors.ErrorCuentaEsAcumulativa(
                         errors.CUENTA_ACUMULATIVA_AGREGADA
                     )
-                if self.mov.fecha > cuenta.fecha_conversion:
+                if self.mov.fecha > cuenta.fecha_conversion and not self.mov.convierte_cuenta:
                     raise ValidationError(
                         message=errors.CUENTA_ACUMULATIVA_EN_MOVIMIENTO
                     )
