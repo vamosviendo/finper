@@ -416,12 +416,7 @@ class TestSave(TestCase):
             {'nombre': 'Cajón de arriba', 'slug': 'ecaj', 'saldo': 200},
         ]
 
-    @patch('diario.models.cuenta.CuentaAcumulativa.movs_conversion')
-    def test_permite_modificar_fecha_de_conversion_de_cuenta(
-            self,
-            mock_movs,
-    ):
-        mock_movs.return_value = [MagicMock(), MagicMock()]
+    def test_permite_modificar_fecha_de_conversion_de_cuenta(self):
         self.cta1 = self.cta1.dividir_y_actualizar(*self.subcuentas, fecha=date(2020, 10, 5))
         self.cta1.fecha_conversion = date(2021, 1, 6)
         self.cta1.full_clean()
@@ -429,20 +424,18 @@ class TestSave(TestCase):
 
         self.assertEqual(self.cta1.fecha_conversion, date(2021, 1, 6))
 
-    @patch('diario.models.cuenta.CuentaAcumulativa.movs_conversion')
     def test_si_se_modifica_fecha_de_conversion_de_cuenta_se_modifica_fecha_de_movimientos_de_traspaso_de_saldo(
-            self,
-            mock_movs,
-    ):
+            self):
         sc1, sc2 = self.cta1.dividir_entre(*self.subcuentas, fecha=date(2020, 10, 5))
         mov1 = Movimiento.tomar(cta_entrada=sc1)
         mov2 = Movimiento.tomar(cta_entrada=sc2)
-        mock_movs.return_value = [mov1, mov2]
 
         self.cta1 = CuentaAcumulativa.tomar(slug=self.cta1.slug)
         self.cta1.fecha_conversion = date(2021, 1, 6)
         self.cta1.full_clean()
         self.cta1.save()
+        mov1.refresh_from_db()
+        mov2.refresh_from_db()
 
         self.assertEqual(mov1.fecha, date(2021, 1, 6))
         self.assertEqual(mov2.fecha, date(2021, 1, 6))
