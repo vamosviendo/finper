@@ -16,15 +16,15 @@ from diario.utils import verificar_saldos
 
 class HomeView(TemplateView):
     template_name = 'diario/home.html'
-
-    def get(self, request, *args, **kwargs):
-        hoy = Path('hoy.mark')
-        if (datetime.date.today() >
-                datetime.date.fromtimestamp(hoy.stat().st_mtime)):
-            hoy.touch()
-            return redirect('verificar_saldos')
-
-        return super().get(request, *args, **kwargs)
+    #
+    # def get(self, request, *args, **kwargs):
+    #     hoy = Path('hoy.mark')
+    #     if (datetime.date.today() >
+    #             datetime.date.fromtimestamp(hoy.stat().st_mtime)):
+    #         hoy.touch()
+    #         return redirect('verificar_saldos')
+    #
+    #     return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
