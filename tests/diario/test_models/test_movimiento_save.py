@@ -1587,6 +1587,40 @@ class TestModelMovimientoSaveModificaFecha(TestModelMovimientoSave):
         self.assertEqual(mov2.fecha, date(2022, 1, 5))
         self.assertEqual(mov3.fecha, date(2022, 1, 5))
 
+    def test_funciona_si_se_modifica_movimiento_de_traspaso_con_cuentas_invertidas(self):
+        cuenta = Cuenta.crear("cuenta", "c", fecha_creacion=date(2022, 1, 1))
+        subc1, subc2 = cuenta.dividir_entre(
+            ['subc1', 'sc1', 10],
+            ['subc2', 'sc2'],
+            fecha=date(2022, 1, 10)
+        )
+        mov2 = Movimiento.tomar(cta_salida=subc2)
+        mov2.fecha = date(2022, 1, 5)
+        mov2.full_clean()
+        mov2.save()
+        cuenta = cuenta.tomar_de_bd()
+        mov1 = Movimiento.tomar(cta_entrada=subc1)
+
+        self.assertEqual(cuenta.fecha_conversion, date(2022, 1, 5))
+        self.assertEqual(mov1.fecha, date(2022, 1, 5))
+
+    def test_modifica_movimientos_de_traspaso_con_cuentas_invertidas(self):
+        cuenta = Cuenta.crear("cuenta", "c", fecha_creacion=date(2022, 1, 1))
+        subc1, subc2 = cuenta.dividir_entre(
+            ['subc1', 'sc1', 10],
+            ['subc2', 'sc2'],
+            fecha=date(2022, 1, 10)
+        )
+        mov1 = Movimiento.tomar(cta_entrada=subc1)
+        mov1.fecha = date(2022, 1, 5)
+        mov1.full_clean()
+        mov1.save()
+        cuenta = cuenta.tomar_de_bd()
+        mov2 = Movimiento.tomar(cta_salida=subc2)
+
+        self.assertEqual(cuenta.fecha_conversion, date(2022, 1, 5))
+        self.assertEqual(mov2.fecha, date(2022, 1, 5))
+
     def test_no_permite_modificar_fecha_de_movimiento_de_traspaso_de_saldo_por_fecha_anterior_a_la_de_cualquier_otro_movimiento_de_la_cuenta(self):
         subc1, subc2 = self.cuenta1.dividir_entre(
             ['subc1', 'sc1', 10],

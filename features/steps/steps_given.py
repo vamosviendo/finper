@@ -4,7 +4,7 @@
         @when('agrego una cuenta con nombre "{nombre}"')
         @when('agrego una cuenta')
 """
-from datetime import datetime
+from datetime import datetime, date
 
 from behave import given
 
@@ -123,10 +123,15 @@ def hay_n_cuentas(context, n):
                 titular (optativo, default: Titular por defecto)
     """
     for fila in context.table:
+        str_fecha = fila.get('fecha_creacion')
+        fecha = datetime.strptime(str_fecha, "%Y-%m-%d") \
+            if str_fecha \
+            else date.today()
         Cuenta.crear(
             fila['nombre'], fila['slug'],
             titular=Titular.tomar_o_default(titname=fila.get('titular')),
-            saldo=fila.get('saldo', 0.0)
+            saldo=fila.get('saldo', 0.0),
+            fecha_creacion=fecha,
         )
 
 
@@ -199,6 +204,26 @@ def hay_una_cuenta_acumulativa(context):
         '| efect_sub1 | es1  | 0.0   |\n'
         '| efect_sub2 | es2  | 0.0   |'
     )
+
+
+def fecha_u_hoy(str_fecha):
+    return datetime.strptime(str_fecha, "%Y-%m-%d") if str_fecha else date.today()
+
+
+@given('la cuenta "{nombre}" dividida en subcuentas con fecha "{fecha}"')
+def cuenta_dividida(context, nombre, fecha):
+    cta = Cuenta.tomar(nombre=nombre.lower())
+    subcuentas = list()
+    for fila in context.table:
+        titname = fila.get('titular', None)
+        subcuenta = dict(
+                nombre=fila['nombre'],
+                slug=fila['slug'],
+                saldo=fila['saldo'] or None,)
+        if titname:
+            subcuenta.update({'titular': Titular.tomar(titname=titname)})
+        subcuentas.append(subcuenta)
+    cta.dividir_entre(*subcuentas, fecha=fecha_u_hoy(fecha))
 
 
 @given('la cuenta "{nombre}" dividida en subcuentas')

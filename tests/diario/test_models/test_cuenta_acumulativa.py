@@ -424,7 +424,7 @@ class TestSave(TestCase):
 
         self.assertEqual(self.cta1.fecha_conversion, date(2021, 1, 6))
 
-    def test_permite_modificar_fecha_de_conversion_de_cuenta_por_fecha_posterior(self):
+    def test_permite_cambiar_fecha_de_conversion_de_cuenta_por_fecha_posterior(self):
         self.cta1 = self.cta1.dividir_y_actualizar(*self.subcuentas, fecha=date(2020, 10, 5))
         self.cta1.fecha_conversion = date(2021, 10, 6)
         self.cta1.full_clean()
@@ -438,28 +438,31 @@ class TestSave(TestCase):
         mov1 = Movimiento.tomar(cta_entrada=sc1)
         mov2 = Movimiento.tomar(cta_entrada=sc2)
 
+        # TODO usar pk o tomar_de_bd(). Ver también en otros tests
         self.cta1 = CuentaAcumulativa.tomar(slug=self.cta1.slug)
         self.cta1.fecha_conversion = date(2021, 1, 6)
         self.cta1.full_clean()
         self.cta1.save()
+        # TODO: tomar movimientos acá en vez de refresh
         mov1.refresh_from_db()
         mov2.refresh_from_db()
 
         self.assertEqual(mov1.fecha, date(2021, 1, 6))
         self.assertEqual(mov2.fecha, date(2021, 1, 6))
 
-    def test_integrativo_si_se_modifica_fecha_de_conversion_de_cuenta_se_modifica_fecha_de_movimientos_de_traspaso_de_saldo(
-            self):
-        sc1, sc2 = self.cta1.dividir_entre(*self.subcuentas, fecha=date(2020, 10, 5))
+    def test_funciona_con_cuenta_convertida_como_cta_entrada_de_movimiento_de_traspaso(self):
+        cuenta = Cuenta.crear('cuenta', 'c', fecha_creacion=date(2021, 1, 1))
+        sc1, sc2 = cuenta.dividir_entre(
+            ['subc1', 'sc1', 100],
+            ['subc2', 'sc2'],
+            fecha=date(2020, 10, 5)
+        )
+        cuenta = CuentaAcumulativa.tomar(slug=cuenta.slug)
+        cuenta.fecha_conversion = date(2021, 1, 6)
+        cuenta.full_clean()
+        cuenta.save()
         mov1 = Movimiento.tomar(cta_entrada=sc1)
-        mov2 = Movimiento.tomar(cta_entrada=sc2)
-
-        self.cta1 = CuentaAcumulativa.tomar(slug=self.cta1.slug)
-        self.cta1.fecha_conversion = date(2021, 1, 6)
-        self.cta1.full_clean()
-        self.cta1.save()
-        mov1.refresh_from_db()
-        mov2.refresh_from_db()
+        mov2 = Movimiento.tomar(cta_salida=sc2)
 
         self.assertEqual(mov1.fecha, date(2021, 1, 6))
         self.assertEqual(mov2.fecha, date(2021, 1, 6))

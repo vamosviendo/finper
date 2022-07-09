@@ -35,20 +35,27 @@ Escenario: Dividir una cuenta en subcuentas
 
 Escenario: Cambiar fecha de un movimiento de traspaso de saldos
     Dada una cuenta con los siguientes valores:
-        | nombre   | slug | saldo |
-        | Efectivo | e    | 200   |
+        | nombre   | slug | saldo | fecha_creacion |
+        | Efectivo | e    | 200   | 2021-01-05     |
 
-    Y la cuenta "efectivo" dividida en subcuentas:
+    Y la cuenta "efectivo" dividida en subcuentas con fecha "2021-01-15":
         | nombre    | slug | saldo |
         | Cajón     | ecaj | 130   |
         | Billetera | ebil |       |
 
     Cuando voy a la página "modificar movimiento" del movimiento de detalle "Saldo pasado por Efectivo a nueva subcuenta Cajón"
-    Y escribo "2021-11-11" en el campo "fecha"
+    Y escribo "2021-01-10" en el campo "fecha"
     Y cliqueo en el botón
 
-    Entonces veo que la fecha del movimiento de detalle "Saldo pasado por Efectivo a nueva subcuenta Cajón" es "2021-11-11"
-    Y veo que la fecha del movimiento de detalle "Saldo pasado por Efectivo a nueva subcuenta Bille…" es "2021-11-11"
+    Entonces veo que la fecha del movimiento de detalle "Saldo pasado por Efectivo a nueva subcuenta Cajón" es "2021-01-10"
+    Y veo que la fecha del movimiento de detalle "Saldo pasado por Efectivo a nueva subcuenta Bille…" es "2021-01-10"
+
+    Cuando voy a la página "modificar movimiento" del movimiento de detalle "Saldo pasado por Efectivo a nueva subcuenta Cajón"
+    Y escribo "2021-01-14" en el campo "fecha"
+    Y cliqueo en el botón
+
+    Entonces veo que la fecha del movimiento de detalle "Saldo pasado por Efectivo a nueva subcuenta Cajón" es "2021-01-14"
+    Y veo que la fecha del movimiento de detalle "Saldo pasado por Efectivo a nueva subcuenta Bille…" es "2021-01-14"
 
 
 

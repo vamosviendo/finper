@@ -10,6 +10,17 @@ from vvmodel.models import MiModel
 from diario.models.saldo import Saldo
 from utils.tiempo import Posicion
 
+CTA_ENTRADA = "cta_entrada"
+CTA_SALIDA = "cta_salida"
+
+
+def es_campo_cuenta_o_none(value):
+    if value not in (CTA_ENTRADA, CTA_SALIDA, None):
+        raise ValidationError(
+            f'Valor "{value}" no permitido.'
+            f'Valores permitidos: "cta_entrada", "cta_salida" o None'
+        )
+
 
 class MiDateField(models.DateField):
     """ Todavía no entiendo por qué tengo que hacer esto para pasar el
@@ -130,7 +141,10 @@ class Movimiento(MiModel):
         on_delete=models.CASCADE
     )
     id_contramov = models.IntegerField(null=True, blank=True)
-    convierte_cuenta = models.BooleanField(default=False)
+    convierte_cuenta = models.TextField(
+        null=True, blank=True,
+        validators=[es_campo_cuenta_o_none]
+    )
     es_automatico = models.BooleanField(default=False)
 
     cleaner: MovimientoCleaner = None
@@ -476,9 +490,13 @@ class Movimiento(MiModel):
 
     def _actualizar_fechas_conversion(self):
         if self._cambia_campo('fecha', contraparte=self.viejo) and self.convierte_cuenta:
-            self.cta_salida.fecha_conversion = self.fecha
-            self.cta_salida.full_clean()
-            self.cta_salida.save()
+            subcuenta = self.cta_entrada \
+                if self.convierte_cuenta == "cta_salida" \
+                else self.cta_salida
+
+            subcuenta.fecha_conversion = self.fecha
+            subcuenta.full_clean()
+            subcuenta.save()
 
     def _asignar_orden_dia(self):
         pos_min, pos_max = sorted([self.posicion, self.viejo.posicion])

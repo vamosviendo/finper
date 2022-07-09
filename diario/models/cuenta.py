@@ -441,6 +441,14 @@ class CuentaInteractiva(Cuenta):
         movimientos_incompletos = []
 
         for subcuenta in cuentas_limpias:
+            saldo = subcuenta.pop('saldo')
+            campo_cuenta, contracampo = (
+                "cta_entrada", "cta_salida"
+            ) if saldo >= 0 else (
+                "cta_salida", "cta_entrada"
+            )
+            saldo = abs(saldo)
+            dict_cuenta = {contracampo: self}
 
             try:
                 movimientos_incompletos.append(Movimiento.crear(
@@ -449,10 +457,10 @@ class CuentaInteractiva(Cuenta):
                     detalle=f'Saldo pasado por {self.nombre.capitalize()} ' 
                             f'a nueva subcuenta '
                             f'{subcuenta["nombre"].lower().capitalize()}',
-                    importe=subcuenta.pop('saldo'),
-                    cta_salida=self,
+                    importe=saldo,
                     esgratis=subcuenta.pop('esgratis', False),
-                    convierte_cuenta=True,
+                    convierte_cuenta=campo_cuenta,
+                    **dict_cuenta
                 ))
             except errors.ErrorImporteCero:
                 # Si el saldo de la subcuenta es 0, no generar movimiento
@@ -558,10 +566,10 @@ class CuentaAcumulativa(Cuenta):
         return result.order_by(order_by)
 
     def movs_conversion(self) -> models.QuerySet[Movimiento]:
-        return self.movs().filter(convierte_cuenta=True)
+        return self.movs().filter(convierte_cuenta__in=["cta_entrada", "cta_salida"])
 
     def movs_no_conversion(self):
-        return self.movs().filter(convierte_cuenta=False)
+        return self.movs().filter(convierte_cuenta=None)
 
     def agregar_subcuenta(self, nombre, slug, titular=None):
         titular = titular or self.titular
