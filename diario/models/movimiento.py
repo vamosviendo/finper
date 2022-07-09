@@ -141,8 +141,8 @@ class Movimiento(MiModel):
         on_delete=models.CASCADE
     )
     id_contramov = models.IntegerField(null=True, blank=True)
-    convierte_cuenta = models.TextField(
-        null=True, blank=True,
+    convierte_cuenta = models.CharField(
+        null=True, blank=True, max_length=11,
         validators=[es_campo_cuenta_o_none]
     )
     es_automatico = models.BooleanField(default=False)
