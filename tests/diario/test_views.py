@@ -268,61 +268,61 @@ class TestHomePage(TestCase):
     def test_si_no_hay_movimientos_pasa_0_a_saldo_general(self):
         response = self.client.get(reverse('home'))
         self.assertEqual(response.context['saldo_gral'], 0)
-
-
-class TestHomePageVerificarSaldo(TestCase):
-
-    def setUp(self):
-        super().setUp()
-
-        self.fecha = datetime.date(2021, 4, 4)
-        self.hora = datetime.datetime(2021, 4, 4)
-
-        # Falsificar datetime.date today (no se puede con @patch)
-        class FalsaFecha(datetime.date):
-            @classmethod
-            def today(cls):
-                return self.fecha
-
-        class FalsaHora(datetime.datetime):
-            @classmethod
-            def now(cls):
-                return self.hora
-
-        self.patcherf = patch('datetime.date', FalsaFecha)
-        self.patcherh = patch('datetime.datetime', FalsaHora)
-        self.patcherf.start()
-        self.patcherh.start()
-
-        # Preservar marca de fecha
-        self.hoy = Path('hoy.mark')
-        self.ayer = self.hoy.rename('ayer.mark')
-        self.hoy.touch()
-        fijar_mtime(self.hoy, datetime.datetime(2021, 4, 4))
-
-    def tearDown(self):
-        self.patcherf.stop()
-        self.patcherh.stop()
-
-        # Recuperar marca de fecha
-        self.hoy.unlink()
-        self.ayer.rename('hoy.mark')
-        super().tearDown()
-
-    def test_verifica_saldo_de_cuentas_si_cambia_la_fecha(self):
-
-        self.fecha = datetime.date(2021, 4, 5)
-        response = self.client.get(reverse('home'))
-        self.assertRedirects(
-            response, reverse('verificar_saldos'), target_status_code=302)
-
-    @patch('diario.views.Path.touch')
-    def test_actualiza_fecha_despues_de_verificar_saldos(self, mock_touch):
-        self.fecha = datetime.date(2021, 4, 5)
-        self.hora = datetime.datetime(2021, 4, 5)
-
-        self.client.get(reverse('home'))
-        mock_touch.assert_called_once()
+#
+#
+# class TestHomePageVerificarSaldo(TestCase):
+#
+#     def setUp(self):
+#         super().setUp()
+#
+#         self.fecha = datetime.date(2021, 4, 4)
+#         self.hora = datetime.datetime(2021, 4, 4)
+#
+#         # Falsificar datetime.date today (no se puede con @patch)
+#         class FalsaFecha(datetime.date):
+#             @classmethod
+#             def today(cls):
+#                 return self.fecha
+#
+#         class FalsaHora(datetime.datetime):
+#             @classmethod
+#             def now(cls):
+#                 return self.hora
+#
+#         self.patcherf = patch('datetime.date', FalsaFecha)
+#         self.patcherh = patch('datetime.datetime', FalsaHora)
+#         self.patcherf.start()
+#         self.patcherh.start()
+#
+#         # Preservar marca de fecha
+#         self.hoy = Path('hoy.mark')
+#         self.ayer = self.hoy.rename('ayer.mark')
+#         self.hoy.touch()
+#         fijar_mtime(self.hoy, datetime.datetime(2021, 4, 4))
+#
+#     def tearDown(self):
+#         self.patcherf.stop()
+#         self.patcherh.stop()
+#
+#         # Recuperar marca de fecha
+#         self.hoy.unlink()
+#         self.ayer.rename('hoy.mark')
+#         super().tearDown()
+#
+#     def test_verifica_saldo_de_cuentas_si_cambia_la_fecha(self):
+#
+#         self.fecha = datetime.date(2021, 4, 5)
+#         response = self.client.get(reverse('home'))
+#         self.assertRedirects(
+#             response, reverse('verificar_saldos'), target_status_code=302)
+#
+#     @patch('diario.views.Path.touch')
+#     def test_actualiza_fecha_despues_de_verificar_saldos(self, mock_touch):
+#         self.fecha = datetime.date(2021, 4, 5)
+#         self.hora = datetime.datetime(2021, 4, 5)
+#
+#         self.client.get(reverse('home'))
+#         mock_touch.assert_called_once()
 
 
 class TestCtaDetalle(TestCase):
