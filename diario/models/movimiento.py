@@ -315,19 +315,6 @@ class Movimiento(MiModel):
                     'importe', 'cta_entrada', 'cta_salida', 'fecha', 'orden_dia',
                     contraparte=self.viejo
             ):
-                """
-                Nota para el commit: (TODO: eliminar)
-                Lo que estamos intentando hacer es cambiar el sistema de 
-                recálculo de los saldos a partir de la modificación de
-                movimientos. El sistema anterior se basaba en restar el saldo
-                viejo y sumar el nuevo al saldo (o viceversa), lo cual era 
-                apropiado para el caso de un saldo único. El nuevo sistema se
-                basa en sumar (o restar) el nuevo importe al saldo anterior del
-                movimiento. Lo cual es más apropiado para el caso de saldos 
-                históricos.
-                Esta nota será retirada una vez que terminemos con la 
-                implementación 
-                """
                 for campo_cuenta in ('cta_entrada', 'cta_salida'):
                     self._actualizar_saldos_cuenta(campo_cuenta, mantiene_orden_dia)
 
