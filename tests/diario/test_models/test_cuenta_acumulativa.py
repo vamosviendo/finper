@@ -435,17 +435,14 @@ class TestSave(TestCase):
     def test_si_se_modifica_fecha_de_conversion_de_cuenta_se_modifica_fecha_de_movimientos_de_traspaso_de_saldo(
             self):
         sc1, sc2 = self.cta1.dividir_entre(*self.subcuentas, fecha=date(2020, 10, 5))
-        mov1 = Movimiento.tomar(cta_entrada=sc1)
-        mov2 = Movimiento.tomar(cta_entrada=sc2)
 
-        # TODO usar pk o tomar_de_bd(). Ver también en otros tests
-        self.cta1 = CuentaAcumulativa.tomar(slug=self.cta1.slug)
+        self.cta1 = self.cta1.tomar_de_bd()
         self.cta1.fecha_conversion = date(2021, 1, 6)
         self.cta1.full_clean()
         self.cta1.save()
-        # TODO: tomar movimientos acá en vez de refresh
-        mov1.refresh_from_db()
-        mov2.refresh_from_db()
+
+        mov1 = Movimiento.tomar(cta_entrada=sc1)
+        mov2 = Movimiento.tomar(cta_entrada=sc2)
 
         self.assertEqual(mov1.fecha, date(2021, 1, 6))
         self.assertEqual(mov2.fecha, date(2021, 1, 6))
@@ -457,7 +454,7 @@ class TestSave(TestCase):
             ['subc2', 'sc2'],
             fecha=date(2020, 10, 5)
         )
-        cuenta = CuentaAcumulativa.tomar(slug=cuenta.slug)
+        cuenta = cuenta.tomar_de_bd()
         cuenta.fecha_conversion = date(2021, 1, 6)
         cuenta.full_clean()
         cuenta.save()
