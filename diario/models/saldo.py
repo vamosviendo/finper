@@ -132,26 +132,6 @@ class Saldo(MiModel):
             self.posicion,
         )
 
-    def intermedios(self, otro):
-        return self.intermedios_con_posicion(otro.posicion)
-
-    def intermedios_con_posicion(self, posicion=Posicion(orden_dia=0), inclusive_od=False):
-        return Saldo.intermedios_entre_posiciones_de_cuenta(
-            cuenta=self.cuenta,
-            pos1=self.posicion,
-            pos2=posicion,
-            inclusive_od=inclusive_od
-        )
-
-    @staticmethod
-    def intermedios_entre_posiciones_de_cuenta(cuenta, pos1, pos2, inclusive_od=False):
-        pos_ant, pos_post = sorted([pos1, pos2])
-        return Saldo.posteriores_a(
-            cuenta, pos_ant, inclusive_od
-        ) & Saldo.anteriores_a(
-            cuenta, pos_post, inclusive_od
-        )
-
     def sumar_a_este_y_posteriores(self, importe):
         self._actualizar_posteriores(importe)
         self.importe += importe
