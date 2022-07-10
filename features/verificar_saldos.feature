@@ -1,5 +1,6 @@
 # language: es
 
+@skip
 Característica: Verificar saldos
     Quiero un botón que compruebe saldos contra movimientos
     y en el caso de las cuentas acumulativas compruebe saldos contra
