@@ -193,7 +193,7 @@ class Cuenta(PolymorphModel):
     def _actualizar_madre(self):
 
         try:
-            saldo_guardado = Cuenta.tomar(slug=self.slug).saldo
+            saldo_guardado = self.tomar_de_bd().saldo
         except Cuenta.DoesNotExist:
             saldo_guardado = 0.0
 
@@ -217,18 +217,18 @@ class Cuenta(PolymorphModel):
 
     def _impedir_cambio_de_cta_madre(self):
         try:
-            cta_madre_guardada = Cuenta.tomar(slug=self.slug).cta_madre
+            cta_madre_guardada = self.tomar_de_bd().cta_madre
             if self.cta_madre != cta_madre_guardada:
                 raise ValidationError('No se puede modificar cuenta madre')
-        except Cuenta.DoesNotExist:
+        except (Cuenta.DoesNotExist, AttributeError):
             pass
 
     def _impedir_cambio_de_titular(self):
         try:
-            titular_guardado = Cuenta.tomar(slug=self.slug).titular
+            titular_guardado = self.tomar_de_bd().titular
             if self.titular != titular_guardado:
                 raise errors.CambioDeTitularException
-        except Cuenta.DoesNotExist:
+        except (Cuenta.DoesNotExist, AttributeError):
             pass
 
 
@@ -347,7 +347,7 @@ class CuentaInteractiva(Cuenta):
 
     def dividir_y_actualizar(self, *subcuentas, fecha=None):
         self.dividir_entre(*subcuentas, fecha=fecha)
-        return Cuenta.tomar(slug=self.slug)
+        return self.tomar_del_slug()
 
     # Protected
 

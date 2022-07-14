@@ -78,7 +78,7 @@ class MovimientoCleaner:
                         errors.CAMBIO_IMPORTE_CON_CUENTA_ACUMULATIVA
                     )
                 # No se permite cambiar una cuenta acumulativa de un movimiento
-                if cuenta.slug != cuenta_vieja.slug:
+                if cuenta.pk != cuenta_vieja.pk:
                     raise errors.ErrorCuentaEsAcumulativa(
                         errors.CUENTA_ACUMULATIVA_RETIRADA
                     )
@@ -93,7 +93,7 @@ class MovimientoCleaner:
             if cuenta and cuenta.es_acumulativa:
                 cuenta = cuenta.como_subclase()
                 # No se permite cambiar una cuenta del movimiento por una cuenta acumulativa
-                if cuenta_vieja is None or cuenta.slug != cuenta_vieja.slug:
+                if cuenta_vieja is None or cuenta.pk != cuenta_vieja.pk:
                     raise errors.ErrorCuentaEsAcumulativa(
                         errors.CUENTA_ACUMULATIVA_AGREGADA
                     )
