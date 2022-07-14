@@ -436,7 +436,7 @@ class TestSave(TestCase):
             self):
         sc1, sc2 = self.cta1.dividir_entre(*self.subcuentas, fecha=date(2020, 10, 5))
 
-        self.cta1 = self.cta1.tomar_de_bd()
+        self.cta1 = self.cta1.tomar_del_slug()
         self.cta1.fecha_conversion = date(2021, 1, 6)
         self.cta1.full_clean()
         self.cta1.save()
@@ -454,7 +454,7 @@ class TestSave(TestCase):
             ['subc2', 'sc2'],
             fecha=date(2020, 10, 5)
         )
-        cuenta = cuenta.tomar_de_bd()
+        cuenta = cuenta.tomar_del_slug()
         cuenta.fecha_conversion = date(2021, 1, 6)
         cuenta.full_clean()
         cuenta.save()
@@ -496,7 +496,7 @@ class TestMovsConversion(TestCase):
             fecha=date(2019, 1, 1)
         )
         sc1, sc2 = self.cta1.dividir_entre(*self.subcuentas, fecha=date(2020, 10, 5))
-        self.cta1 = self.cta1.tomar_de_bd()
+        self.cta1 = self.cta1.tomar_del_slug()
 
         mov1 = Movimiento.tomar(cta_entrada=sc1)
         mov2 = Movimiento.tomar(cta_entrada=sc2)

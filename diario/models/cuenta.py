@@ -170,7 +170,7 @@ class Cuenta(PolymorphModel):
     def tiene_madre(self):
         return self.cta_madre is not None
 
-    def tomar_de_bd(self):
+    def tomar_del_slug(self):
         return Cuenta.tomar_o_nada(slug=self.slug)
 
     def hermanas(self):

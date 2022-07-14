@@ -396,9 +396,9 @@ class Movimiento(MiModel):
             su cuenta de salida/entrada se ha convertido en acumulativa, para que la
             trate como tal.
         """
-        self.cta_salida = self.cta_salida.tomar_de_bd() \
+        self.cta_salida = self.cta_salida.tomar_del_slug() \
             if self.cta_salida else None
-        self.cta_entrada = self.cta_entrada.tomar_de_bd() \
+        self.cta_entrada = self.cta_entrada.tomar_del_slug() \
             if self.cta_entrada else None
 
     def _cambia_campo(self, *args, contraparte=None):

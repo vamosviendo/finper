@@ -480,7 +480,7 @@ class DividirEntreCasosParticulares(TestCase):
             ['subcuenta 1.2', 'sc12', -40],
             fecha=self.fecha
         )
-        self.cuenta1 = self.cuenta1.tomar_de_bd()
+        self.cuenta1 = self.cuenta1.tomar_del_slug()
         self.assertEqual(sc11.saldo, -60)
         self.assertEqual(sc12.saldo, -40)
         self.assertEqual(self.cuenta1.saldo, -60-40)
@@ -491,7 +491,7 @@ class DividirEntreCasosParticulares(TestCase):
             ['subcuenta 1.2', 'sc12'],
             fecha=self.fecha
         )
-        self.cuenta1 = self.cuenta1.tomar_de_bd()
+        self.cuenta1 = self.cuenta1.tomar_del_slug()
         self.assertEqual(sc11.saldo, 0)
         self.assertEqual(sc12.saldo, -100)
         self.assertEqual(self.cuenta1.saldo, -100)
@@ -502,7 +502,7 @@ class DividirEntreCasosParticulares(TestCase):
             ['subcuenta 1.2', 'sc12'],
             fecha=self.fecha
         )
-        self.cuenta1 = self.cuenta1.tomar_de_bd()
+        self.cuenta1 = self.cuenta1.tomar_del_slug()
         self.assertEqual(sc11.saldo, -100)
         self.assertEqual(sc12.saldo, -0)
         self.assertEqual(self.cuenta1.saldo, -100)
@@ -513,7 +513,7 @@ class DividirEntreCasosParticulares(TestCase):
             ['subcuenta 1.2', 'sc12'],
             fecha=self.fecha
         )
-        self.cuenta1 = self.cuenta1.tomar_de_bd()
+        self.cuenta1 = self.cuenta1.tomar_del_slug()
         self.assertEqual(sc11.saldo, 10)
         self.assertEqual(sc12.saldo, -110)
         self.assertEqual(self.cuenta1.saldo, -100)
@@ -524,7 +524,7 @@ class DividirEntreCasosParticulares(TestCase):
             ['subcuenta 1.2', 'sc12'],
             fecha=self.fecha
         )
-        self.cuenta1 = self.cuenta1.tomar_de_bd()
+        self.cuenta1 = self.cuenta1.tomar_del_slug()
         self.assertEqual(sc11.saldo, -110)
         self.assertEqual(sc12.saldo, 10)
         self.assertEqual(self.cuenta1.saldo, -100)
@@ -535,7 +535,7 @@ class DividirEntreCasosParticulares(TestCase):
             ['subcuenta 2.2', 'sc22', 110],
             fecha=self.fecha
         )
-        self.cuenta2 = self.cuenta2.tomar_de_bd()
+        self.cuenta2 = self.cuenta2.tomar_del_slug()
         self.assertEqual(sc21.saldo, -10)
         self.assertEqual(sc22.saldo, 110)
         self.assertEqual(self.cuenta2.saldo, 100)
@@ -546,7 +546,7 @@ class DividirEntreCasosParticulares(TestCase):
             ['subcuenta 2.2', 'sc22'],
             fecha=self.fecha
         )
-        self.cuenta2 = self.cuenta2.tomar_de_bd()
+        self.cuenta2 = self.cuenta2.tomar_del_slug()
         self.assertEqual(sc21.saldo, 110)
         self.assertEqual(sc22.saldo, -10)
         self.assertEqual(self.cuenta2.saldo, 100)

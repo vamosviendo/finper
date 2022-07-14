@@ -84,7 +84,7 @@ class TestSaldoTomar(TestCase):
         )
         Movimiento.crear('mov', 50, sc11, fecha=date(2020, 1, 5))
         mov = Movimiento.crear('mov2', 20, None, sc12, fecha=date(2020, 1, 5))
-        self.cuenta1 = self.cuenta1.tomar_de_bd()
+        self.cuenta1 = self.cuenta1.tomar_del_slug()
         self.assertEqual(
             Saldo.tomar(cuenta=self.cuenta1, movimiento=mov).importe,
             50-20

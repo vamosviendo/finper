@@ -1579,7 +1579,7 @@ class TestModelMovimientoSaveModificaFecha(TestModelMovimientoSave):
         mov1.fecha = date(2022, 1, 5)
         mov1.full_clean()
         mov1.save()
-        self.cuenta1 = self.cuenta1.tomar_de_bd()
+        self.cuenta1 = self.cuenta1.tomar_del_slug()
         mov2 = Movimiento.tomar(cta_entrada=subc2)
         mov3 = Movimiento.tomar(cta_entrada=subc3)
 
@@ -1598,7 +1598,7 @@ class TestModelMovimientoSaveModificaFecha(TestModelMovimientoSave):
         mov2.fecha = date(2022, 1, 5)
         mov2.full_clean()
         mov2.save()
-        cuenta = cuenta.tomar_de_bd()
+        cuenta = cuenta.tomar_del_slug()
         mov1 = Movimiento.tomar(cta_entrada=subc1)
 
         self.assertEqual(cuenta.fecha_conversion, date(2022, 1, 5))
@@ -1615,7 +1615,7 @@ class TestModelMovimientoSaveModificaFecha(TestModelMovimientoSave):
         mov1.fecha = date(2022, 1, 5)
         mov1.full_clean()
         mov1.save()
-        cuenta = cuenta.tomar_de_bd()
+        cuenta = cuenta.tomar_del_slug()
         mov2 = Movimiento.tomar(cta_salida=subc2)
 
         self.assertEqual(cuenta.fecha_conversion, date(2022, 1, 5))
