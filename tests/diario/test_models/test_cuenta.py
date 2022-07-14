@@ -259,7 +259,7 @@ class TestModelCuentaMetodosMovsDirectos(TestModelCuentaMetodos):
             {'nombre': 'Billetera', 'slug': 'eb', 'saldo': 30, },
             {'nombre': 'Cajoncito', 'slug': 'ec', }
         )
-        self.cta1 = Cuenta.tomar(slug=self.cta1.slug)
+        self.cta1 = self.cta1.tomar_del_slug()
         mov_subcuenta = Movimiento.crear(
             concepto='movsubc', importe=10, cta_salida=subcuentas[0])
 
@@ -319,7 +319,7 @@ class TestModelCuentaMetodosMovs(TestModelCuentaMetodos):
             {'nombre': 'Billetera', 'slug': 'eb', 'saldo': 30, },
             {'nombre': 'Cajoncito', 'slug': 'ec', }
         )
-        self.cta1 = Cuenta.tomar(slug=self.cta1.slug)
+        self.cta1 = self.cta1.tomar_del_slug()
         mov_subcuenta = Movimiento.crear(
             concepto='movsubc', importe=10, cta_salida=sc11)
 
@@ -385,7 +385,7 @@ class TestModelCuentaMetodosFechaUltimoMovDirecto(TestModelCuentaMetodos):
             ['subcuenta2', 'sc2'],
             fecha=date(2021, 8, 11)
         )[0]
-        self.cta1 = Cuenta.tomar(slug=self.cta1.slug)
+        self.cta1 = self.cta1.tomar_del_slug()
 
         Movimiento.crear(
             'cuarto movimiento', 100, subcuenta1, fecha=date(2021, 8, 20))
@@ -518,9 +518,9 @@ class TestModelCuentaMetodosAncestros(TestModelCuentaMetodos):
             ['subsubsubcuenta 1', 'sssc1', 0],
             ['subsubsubcuenta 2', 'sssc2']
         )
-        subsubc1 = Cuenta.tomar(slug=subsubc1.slug)
-        subc1 = Cuenta.tomar(slug=subc1.slug)
-        cta1 = Cuenta.tomar(slug=self.cta1.slug)
+        subsubc1 = subsubc1.tomar_del_slug()
+        subc1 = subc1.tomar_del_slug()
+        cta1 = self.cta1.tomar_del_slug()
 
         self.assertEqual(
             subsubsubc1.ancestros(),
@@ -758,7 +758,7 @@ class TestMetodosSubcuentas(TestCase):
             {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 0},
             {'nombre': 'Cajón de arriba', 'slug': 'ecaj', },
         )
-        self.cta1 = Cuenta.tomar(slug=self.cta1.slug)
+        self.cta1 = self.cta1.tomar_del_slug()
 
         lista_subcuentas += lista_subcuentas[0].dividir_entre(
             {
@@ -768,9 +768,9 @@ class TestMetodosSubcuentas(TestCase):
             },
             {'nombre': 'Billetera división trasera', 'slug': 'ebdt', },
         )
-        lista_subcuentas[0] = Cuenta.tomar(slug=lista_subcuentas[0].slug)
+        lista_subcuentas[0] = lista_subcuentas[0].tomar_del_slug()
 
-        lista_subcuentas[1] = Cuenta.tomar(slug=lista_subcuentas[1].slug)
+        lista_subcuentas[1] = lista_subcuentas[1].tomar_del_slug()
         lista_subcuentas += lista_subcuentas[1].dividir_entre(
             {
                 'nombre': 'Cajita verde',
@@ -779,7 +779,7 @@ class TestMetodosSubcuentas(TestCase):
             },
             {'nombre': 'Sobre', 'slug': 'ecs', },
         )
-        lista_subcuentas[1] = Cuenta.tomar(slug=lista_subcuentas[1].slug)
+        lista_subcuentas[1] = lista_subcuentas[1].tomar_del_slug()
 
         lista_subcuentas += lista_subcuentas[2].dividir_entre(
             {
@@ -792,7 +792,7 @@ class TestMetodosSubcuentas(TestCase):
                 'slug': 'ebdr',
             },
         )
-        lista_subcuentas[2] = Cuenta.tomar(slug=lista_subcuentas[2].slug)
+        lista_subcuentas[2] = lista_subcuentas[2].tomar_del_slug()
 
         self.assertEqual(
             self.cta1.arbol_de_subcuentas(), set(lista_subcuentas))

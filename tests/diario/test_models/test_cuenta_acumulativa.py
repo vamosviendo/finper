@@ -167,7 +167,7 @@ class TestSubcuentas(TestCase):
         saldo_cta1 = self.cta1.saldo
 
         Movimiento.crear(concepto='mov', importe=45, cta_entrada=self.cta2)
-        self.cta1 = Cuenta.tomar(slug=self.cta1.slug)
+
         self.assertEqual(
             self.cta1.saldo, saldo_cta1+45,
             'Mov de entrada en subcuenta no se refleja en saldo de cta madre'
@@ -253,18 +253,15 @@ class TestSubcuentas(TestCase):
     def test_modificacion_en_movimiento_modifica_saldo_de_cta_madre(self):
         saldo_cta1 = self.cta1.saldo                        # 100
         mov = Movimiento.crear('mov', 45, self.cta2)        # 70
-        self.cta1 = Cuenta.tomar(slug=self.cta1.slug)       # 145
         self.assertEqual(self.cta1.saldo, saldo_cta1+45)
 
         mov.importe = 55        # cta1 = 155 - cta2 = 80
         mov.save()
-        self.cta1 = Cuenta.tomar(slug=self.cta1.slug)
         self.assertEqual(self.cta1.saldo, saldo_cta1+55)
 
         cta4 = Cuenta.crear('Otro banco', 'ob')
         mov.cta_entrada = cta4
         mov.save()
-        self.cta1 = Cuenta.tomar(slug=self.cta1.slug)
         self.assertEqual(self.cta1.saldo, saldo_cta1)
 
         mov.cta_entrada = self.cta2
@@ -364,7 +361,7 @@ class TestSaldo(TestCase):
             ['subcuenta 2', 'sc2'],
             fecha=self.fecha
         )
-        self.cta_acum = Cuenta.tomar(slug=cta_acum.slug)
+        self.cta_acum = cta_acum.tomar_del_slug()
         Movimiento.crear('saldo sc1', 100, self.sc1, fecha=self.fecha)
         Movimiento.crear('saldo sc2', 70, None, self.sc2, fecha=self.fecha)
 
@@ -381,7 +378,7 @@ class TestSaldo(TestCase):
             fecha=self.fecha
         )
         Movimiento.crear('saldo sc11', 60, sc11, fecha=self.fecha)
-        self.sc1 = Cuenta.tomar(slug=self.sc1.slug)
+        self.sc1 = self.sc1.tomar_del_slug()
 
         self.assertEqual(
             self.sc1.saldo,

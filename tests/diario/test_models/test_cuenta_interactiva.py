@@ -336,7 +336,7 @@ class TestMetodoDividirEntre(TestCase):
         cta2 = Cuenta.tomar(slug='ebil')
         cta3 = Cuenta.tomar(slug='ecaj')
 
-        self.cta1 = Cuenta.tomar(slug=self.cta1.slug)
+        self.cta1 = self.cta1.tomar_del_slug()
 
         self.assertEqual(self.cta1.saldo, cta2.saldo + cta3.saldo)
 

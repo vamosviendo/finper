@@ -232,7 +232,7 @@ class TestHomePage(TestCase):
             {'nombre': 'Caja de ahorro', 'slug': 'bca', 'saldo': 0},
             {'nombre': 'Cuenta corriente', 'slug': 'bcc'},
         )
-        cta2 = Cuenta.tomar(slug=cta2.slug)
+        cta2 = cta2.tomar_del_slug()
 
         response = self.client.get(reverse('home'))
 
@@ -345,13 +345,13 @@ class TestCtaDetalle(TestCase):
             reverse('cta_detalle', args=[self.cta.slug]))
         self.assertEqual(
             response.context['cuenta'],
-            Cuenta.tomar(slug=self.cta.slug)
+            self.cta.tomar_de_bd()
         )
         self.assertContains(response, self.cta.nombre)
 
     def test_pasa_subcuentas_a_template(self):
         self.cta.dividir_entre(['ea', 'ea', 40], ['eb', 'eb'])
-        self.cta = Cuenta.tomar(slug=self.cta.slug)
+        self.cta = self.cta.tomar_del_slug()
         self.assertTrue(self.cta.es_acumulativa)
 
         response = self.client.get(
@@ -390,7 +390,7 @@ class TestCtaDetalle(TestCase):
         tit2 = Titular.crear(titname='tita', nombre='Tita Pérez')
 
         self.cta.dividir_entre(['ea', 'ea', 40], ['eb', 'eb'])
-        self.cta = Cuenta.tomar(slug=self.cta.slug)
+        self.cta = self.cta.tomar_del_slug()
 
         falso_titulares.return_value = [tit1, tit2]
         response = self.client.get(
@@ -437,7 +437,7 @@ class TestCtaDetalle(TestCase):
             'e quinto movimiento', 45,
             cta_entrada=subcus[0], cta_salida=subcus[1]
         )
-        cuenta = CuentaAcumulativa.tomar(slug=self.cta.slug)
+        cuenta = self.cta.tomar_del_slug()
 
         response = self.client.get(
             reverse('cta_detalle', args=[self.cta.slug]))
