@@ -95,7 +95,7 @@ class TestSubcuentas(TestCase):
         sc41.cta_madre = self.cta1
         with self.assertRaisesMessage(
                 ValidationError,
-                'No se puede modificar cuenta madre'
+                errors.CAMBIO_CUENTA_MADRE
         ):
             sc41.full_clean()
 

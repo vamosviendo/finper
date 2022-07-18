@@ -3,22 +3,31 @@ from django.core.exceptions import ValidationError
 CAMPO_VACIO = 'Este campo es obligatorio.'
 CAMBIO_IMPORTE_CON_CUENTA_ACUMULATIVA = \
     'Movimiento tiene cuenta acumulativa. No puede modificarse el importe'
+CAMBIO_CUENTA_MADRE = 'No se puede cambiar cuenta madre'
 CAMBIO_TITULAR = 'Las cuentas no pueden cambiar de titular.'
-CUENTA_ACUMULATIVA_EN_MOVIMIENTO = \
-    'No puede usarse cuenta acumulativa en movimiento'
 CUENTA_ACUMULATIVA_AGREGADA = \
     'No puede agregarse cuenta acumulativa a movimiento'
+CUENTA_ACUMULATIVA_EN_MOVIMIENTO = \
+    'No puede usarse cuenta acumulativa en movimiento'
 CUENTA_ACUMULATIVA_RETIRADA = \
     'No puede retirarse cuenta acumulativa en movimiento'
-MOVIMIENTO_CON_CA_ELIMINADO = \
-    'Se intentó borrar un movimiento con una o más cuentas acumulativas'
+CUENTA_ACUMULATIVA_SIN_SUBCUENTAS = 'Cuenta acumulativa debe tener subcuentas'
+CUENTA_CREDITO_EN_MOV_E_S = \
+    'No se permite cuenta crédito en movimiento de entrada o salida'
+CUENTA_CREDITO_VS_NORMAL = \
+    'No se permite traspaso entre cuenta crédito y cuenta normal'
 CUENTA_INEXISTENTE = 'Debe haber una cuenta de entrada, una de salida o ambas'
 CUENTAS_IGUALES = 'Cuentas de entrada y salida no pueden ser la misma'
+ELIMINACION_MOVIMIENTO_AUTOMATICO = 'No se puede eliminar movimiento automático'
 FECHA_POSTERIOR_A_CONVERSION = 'Fecha del movimiento debe ser anterior a '
+IMPORTE_CERO = 'Se intentó crear un movimiento con importe cero'
+MODIFICACION_MOVIMIENTO_AUTOMATICO = \
+    "No se puede modificar movimiento automático"
+MOVIMIENTO_CON_CA_ELIMINADO = \
+    'Se intentó borrar un movimiento con una o más cuentas acumulativas'
 SALDO_NO_CERO = 'No se puede eliminar cuenta con saldo distinto de cero'
 SALDO_NO_COINCIDE = 'El saldo de la cuenta no coincide con sus movimientos'
 SUBCUENTAS_SIN_SALDO = 'Sólo se permite una subcuenta sin saldo'
-SLUG_MAX_LENGTH = 'Longitud máxima de 4 caracteres para slug no automático'
 
 
 class CambioDeTitularException(ValueError):

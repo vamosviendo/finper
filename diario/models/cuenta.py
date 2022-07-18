@@ -7,12 +7,13 @@ from django.db import models
 from django.db.models import Sum
 from django.urls import reverse
 
-from utils.tiempo import Posicion
+from diario.consts import *
 from diario.models.titular import Titular
 from diario.models.movimiento import Movimiento
 from diario.models.saldo import Saldo
 from utils import errors
 from utils.iterables import remove_duplicates
+from utils.tiempo import Posicion
 from vvmodel.models import PolymorphModel
 
 
@@ -210,7 +211,7 @@ class Cuenta(PolymorphModel):
 
     def _chequear_incongruencias_de_clase(self):
         if self.es_acumulativa and self.como_subclase().subcuentas.count()== 0:
-            raise errors.ErrorTipo('Cuenta acumulativa debe tener subcuentas')
+            raise errors.ErrorTipo(errors.CUENTA_ACUMULATIVA_SIN_SUBCUENTAS)
         if self.cta_madre and self.cta_madre.es_interactiva:
             raise errors.ErrorTipo(f'Cuenta interactiva "{self.cta_madre }" '
                                    f'no puede ser madre')
@@ -219,7 +220,7 @@ class Cuenta(PolymorphModel):
         try:
             cta_madre_guardada = self.tomar_de_bd().cta_madre
             if self.cta_madre != cta_madre_guardada:
-                raise ValidationError('No se puede modificar cuenta madre')
+                raise ValidationError(errors.CAMBIO_CUENTA_MADRE)
         except (Cuenta.DoesNotExist, AttributeError):
             pass
 
@@ -443,9 +444,9 @@ class CuentaInteractiva(Cuenta):
         for subcuenta in cuentas_limpias:
             saldo = subcuenta.pop('saldo')
             campo_cuenta, contracampo = (
-                "cta_entrada", "cta_salida"
+                CTA_ENTRADA, CTA_SALIDA
             ) if saldo >= 0 else (
-                "cta_salida", "cta_entrada"
+                CTA_SALIDA, CTA_ENTRADA
             )
             saldo = abs(saldo)
             dict_cuenta = {contracampo: self}
@@ -566,7 +567,7 @@ class CuentaAcumulativa(Cuenta):
         return result.order_by(order_by)
 
     def movs_conversion(self) -> models.QuerySet[Movimiento]:
-        return self.movs().filter(convierte_cuenta__in=["cta_entrada", "cta_salida"])
+        return self.movs().filter(convierte_cuenta__in=campos_cuenta)
 
     def movs_no_conversion(self):
         return self.movs().filter(convierte_cuenta=None)

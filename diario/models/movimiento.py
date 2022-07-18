@@ -4,14 +4,12 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django_ordered_field import OrderedCollectionField
 
-from utils import errors
 from vvmodel.models import MiModel
-
-from diario.models.saldo import Saldo
+from utils import errors
 from utils.tiempo import Posicion
 
-CTA_ENTRADA = "cta_entrada"
-CTA_SALIDA = "cta_salida"
+from diario.consts import *
+from diario.models.saldo import Saldo
 
 
 def es_campo_cuenta_o_none(value):
@@ -52,14 +50,12 @@ class MovimientoCleaner:
     def no_se_permite_modificar_movimientos_automaticos(self):
         if self.mov.es_automatico and self.mov.any_field_changed():
             raise errors.ErrorMovimientoAutomatico(
-                "No se puede modificar movimiento automático"
+                errors.MODIFICACION_MOVIMIENTO_AUTOMATICO
             )
 
     def no_se_permiten_movimentos_con_importe_cero(self):
         if self.mov.importe == 0:
-            raise errors.ErrorImporteCero(
-                'Se intentó crear un movimiento con importe cero'
-            )
+            raise errors.ErrorImporteCero(errors.IMPORTE_CERO)
 
     def debe_haber_al_menos_una_cuenta_y_deben_ser_distintas(self):
         if not self.mov.cta_entrada and not self.mov.cta_salida:
@@ -68,7 +64,7 @@ class MovimientoCleaner:
             raise ValidationError(message=errors.CUENTAS_IGUALES)
 
     def restricciones_con_cuenta_acumulativa(self):
-        for campo_cuenta in 'cta_entrada', 'cta_salida':
+        for campo_cuenta in campos_cuenta:
             cuenta = getattr(self.mov, campo_cuenta)
             cuenta_vieja = getattr(self.viejo, campo_cuenta)
             if cuenta_vieja and cuenta_vieja.es_acumulativa:
@@ -103,22 +99,15 @@ class MovimientoCleaner:
                     )
 
     def restricciones_con_cuenta_credito(self):
-        campos_cuenta = 'cta_entrada', 'cta_salida'
         for campo_cuenta in campos_cuenta:
             cuenta = getattr(self.mov, campo_cuenta)
             campo_contracuenta = [x for x in campos_cuenta if x != campo_cuenta][0]
             contracuenta = getattr(self.mov, campo_contracuenta)
             if cuenta and cuenta.es_cuenta_credito:
                 if not contracuenta:
-                    raise ValidationError(
-                        'No se permite cuenta crédito en movimiento de entrada '
-                        'o salida'
-                    )
+                    raise ValidationError(errors.CUENTA_CREDITO_EN_MOV_E_S)
                 if not contracuenta.es_cuenta_credito:
-                    raise ValidationError(
-                        'No se permite traspaso entre cuenta crédito y cuenta '
-                        'normal'
-                    )
+                    raise ValidationError(errors.CUENTA_CREDITO_VS_NORMAL)
                 if contracuenta != cuenta.contracuenta:
                     raise ValidationError(
                         f'"{contracuenta.nombre}" no es la contrapartida '
@@ -240,7 +229,9 @@ class Movimiento(MiModel):
 
     def delete(self, force=False, *args, **kwargs):
         if self.es_automatico and not force:
-            raise errors.ErrorMovimientoAutomatico('No se puede eliminar movimiento automático')
+            raise errors.ErrorMovimientoAutomatico(
+                errors.ELIMINACION_MOVIMIENTO_AUTOMATICO
+            )
 
         self.refresh_from_db()
         if self.tiene_cuenta_acumulativa():
@@ -294,7 +285,7 @@ class Movimiento(MiModel):
                     # El movimiento ya era una transacción no gratuita entre
                     # titulares
                     if self._cambia_campo(
-                            'fecha', 'importe', 'cta_entrada', 'cta_salida'):
+                            'fecha', 'importe', CTA_ENTRADA, CTA_SALIDA):
                         self._regenerar_contramovimiento()
                 else:
                     # El movimiento no era una transacción no gratuita entre
@@ -312,17 +303,17 @@ class Movimiento(MiModel):
             super().save(*args, **kwargs)
 
             if self._cambia_campo(
-                    'importe', 'cta_entrada', 'cta_salida', 'fecha', 'orden_dia',
+                    'importe', CTA_ENTRADA, CTA_SALIDA, 'fecha', 'orden_dia',
                     contraparte=self.viejo
             ):
-                for campo_cuenta in ('cta_entrada', 'cta_salida'):
+                for campo_cuenta in campos_cuenta:
                     self._actualizar_saldos_cuenta(campo_cuenta, mantiene_orden_dia)
 
                 self._actualizar_fechas_conversion()
 
     def refresh_from_db(self, using=None, fields=None):
         super().refresh_from_db()
-        for campo_cuenta in 'cta_entrada', 'cta_salida':
+        for campo_cuenta in campos_cuenta:
             cuenta = getattr(self, campo_cuenta)
             if cuenta:
                 setattr(self, campo_cuenta, cuenta.como_subclase())
@@ -368,7 +359,7 @@ class Movimiento(MiModel):
         return self.posicion < otro.posicion
 
     def recuperar_cuentas_credito(self):
-        cls = self.get_related_class('cta_entrada')
+        cls = self.get_related_class(CTA_ENTRADA)
         try:
             return (
                 cls.tomar(
@@ -409,7 +400,7 @@ class Movimiento(MiModel):
         return False
 
     def _generar_cuentas_credito(self):
-        cls = self.get_related_class('cta_entrada')
+        cls = self.get_related_class(CTA_ENTRADA)
         if not self.emisor or not self.receptor or self.emisor == self.receptor:
             raise errors.ErrorMovimientoNoPrestamo
         cc1 = cls.crear(
@@ -428,7 +419,7 @@ class Movimiento(MiModel):
         return cc1, cc2
 
     def _actualizar_saldos_cuenta(self, campo_cuenta, mantiene_orden_dia):
-        if campo_cuenta not in ('cta_entrada', 'cta_salida'):
+        if campo_cuenta not in campos_cuenta:
             raise ValueError(
                 'Argumento incorrecto. Debe ser "cta_entrada"'
                 ' o "cta_salida"'
@@ -439,7 +430,7 @@ class Movimiento(MiModel):
             self._entrada_pasa_a_salida,
             self._salida_pasa_a_entrada,
             self.viejo.saldo_ce,
-        ) if campo_cuenta == 'cta_entrada' else (
+        ) if campo_cuenta == CTA_ENTRADA else (
             self._salida_pasa_a_entrada,
             self._entrada_pasa_a_salida,
             self.viejo.saldo_cs,
@@ -453,14 +444,14 @@ class Movimiento(MiModel):
                 if viene_de_opuesto():
                     cuenta.recalcular_saldos_entre(self.posicion)
                 else:
-                    Saldo.generar(self, salida=(campo_cuenta == 'cta_salida'))
+                    Saldo.generar(self, salida=(campo_cuenta == CTA_SALIDA))
                 self._eliminar_saldo_de_cuenta_vieja_si_existe(cuenta_vieja, pasa_a_opuesto, saldo)
 
             elif cambia_campo('importe'):
                 cuenta.recalcular_saldos_entre(self.posicion)
 
             elif getattr(self.viejo, campo_cuenta) is None:
-                Saldo.generar(self, salida=(campo_cuenta == 'cta_salida'))
+                Saldo.generar(self, salida=(campo_cuenta == CTA_SALIDA))
 
             if cambia_campo('fecha', 'orden_dia'):
                 if not mantiene_orden_dia:
@@ -478,7 +469,7 @@ class Movimiento(MiModel):
     def _actualizar_fechas_conversion(self):
         if self._cambia_campo('fecha', contraparte=self.viejo) and self.convierte_cuenta:
             subcuenta = self.cta_entrada \
-                if self.convierte_cuenta == "cta_salida" \
+                if self.convierte_cuenta == CTA_SALIDA \
                 else self.cta_salida
 
             subcuenta.fecha_conversion = self.fecha
