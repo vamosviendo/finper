@@ -16,24 +16,46 @@ def fecha_posterior() -> date:
 
 
 @pytest.fixture
-def cuenta(fecha: date) -> Cuenta:
-    return Cuenta.crear(nombre='cuenta', slug='c', fecha_creacion=fecha)
+def cuenta(titular: Titular, fecha: date) -> Cuenta:
+    return Cuenta.crear(
+        nombre='cuenta', slug='c', titular=titular, fecha_creacion=fecha)
+
+
+@pytest.fixture
+def cuenta_ajena(otro_titular: Titular, fecha: date) -> Cuenta:
+    return Cuenta.crear(
+        nombre='cuenta ajena',
+        slug='caj',
+        titular=otro_titular,
+        fecha_creacion=fecha
+    )
 
 
 @pytest.fixture
 def entrada(cuenta: Cuenta, fecha: date) -> Movimiento:
     return Movimiento.crear(
-        concepto='Movimiento', importe=100, cta_entrada=cuenta, fecha=fecha
+        concepto='Entrada', importe=100, cta_entrada=cuenta, fecha=fecha
     )
 
 
 @pytest.fixture
 def salida_posterior(cuenta: Cuenta, fecha_posterior: date) -> Movimiento:
     return Movimiento.crear(
-        concepto='Movimiento posterior',
+        concepto='Salida posterior',
         importe=40,
         cta_salida=cuenta,
         fecha=fecha_posterior
+    )
+
+
+@pytest.fixture
+def credito(cuenta: Cuenta, cuenta_ajena: Cuenta, fecha: date) -> Movimiento:
+    return Movimiento.crear(
+        concepto='Crédito',
+        importe=100,
+        cta_entrada=cuenta,
+        cta_salida=cuenta_ajena,
+        fecha=fecha,
     )
 
 
