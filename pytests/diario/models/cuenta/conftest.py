@@ -21,6 +21,11 @@ def fecha_tardia() -> date:
 
 
 @pytest.fixture
+def fecha_tardia_plus() -> date:
+    return date(2017, 3, 14)
+
+
+@pytest.fixture
 def cuenta(titular: Titular, fecha: date) -> Cuenta:
     return Cuenta.crear(
         nombre='cuenta', slug='c', titular=titular, fecha_creacion=fecha)
