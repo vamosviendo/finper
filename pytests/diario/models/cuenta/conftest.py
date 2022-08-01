@@ -2,7 +2,7 @@ from datetime import date
 
 import pytest
 
-from diario.models import Cuenta, Titular, Movimiento, Saldo
+from diario.models import Cuenta, Titular, Movimiento, Saldo, CuentaInteractiva
 
 
 @pytest.fixture
@@ -31,25 +31,25 @@ def fecha_tardia_plus() -> date:
 
 
 @pytest.fixture
-def cuenta(titular: Titular, fecha: date) -> Cuenta:
+def cuenta(titular: Titular, fecha: date) -> CuentaInteractiva:
     return Cuenta.crear(
         nombre='cuenta', slug='c', titular=titular, fecha_creacion=fecha)
 
 
 @pytest.fixture
-def cuenta_2(titular: Titular, fecha: date) -> Cuenta:
+def cuenta_2(titular: Titular, fecha: date) -> CuentaInteractiva:
     return Cuenta.crear(
         nombre='cuenta 2', slug='c2', titular=titular, fecha_creacion=fecha)
 
 
 @pytest.fixture
-def cuenta_con_saldo(fecha: date) -> Cuenta:
+def cuenta_con_saldo(fecha: date) -> CuentaInteractiva:
     return Cuenta.crear(
         nombre='cuenta', slug='c', saldo=100, fecha_creacion=fecha)
 
 
 @pytest.fixture
-def cuenta_ajena(otro_titular: Titular, fecha: date) -> Cuenta:
+def cuenta_ajena(otro_titular: Titular, fecha: date) -> CuentaInteractiva:
     return Cuenta.crear(
         nombre='cuenta ajena',
         slug='caj',
@@ -59,7 +59,7 @@ def cuenta_ajena(otro_titular: Titular, fecha: date) -> Cuenta:
 
 
 @pytest.fixture
-def entrada_anterior(cuenta: Cuenta, fecha_anterior: date) -> Movimiento:
+def entrada_anterior(cuenta: CuentaInteractiva, fecha_anterior: date) -> Movimiento:
     return Movimiento.crear(
         concepto='Entrada anterior', importe=3,
         cta_entrada=cuenta, fecha=fecha_anterior
@@ -67,21 +67,21 @@ def entrada_anterior(cuenta: Cuenta, fecha_anterior: date) -> Movimiento:
 
 
 @pytest.fixture
-def entrada(cuenta: Cuenta, fecha: date) -> Movimiento:
+def entrada(cuenta: CuentaInteractiva, fecha: date) -> Movimiento:
     return Movimiento.crear(
         concepto='Entrada', importe=100, cta_entrada=cuenta, fecha=fecha
     )
 
 
 @pytest.fixture
-def salida(cuenta: Cuenta, fecha: date) -> Movimiento:
+def salida(cuenta: CuentaInteractiva, fecha: date) -> Movimiento:
     return Movimiento.crear(
         concepto='Salida', importe=100, cta_salida=cuenta, fecha=fecha
     )
 
 
 @pytest.fixture
-def traspaso(cuenta: Cuenta, cuenta_2: Cuenta, fecha: date) -> Movimiento:
+def traspaso(cuenta: CuentaInteractiva, cuenta_2: CuentaInteractiva, fecha: date) -> Movimiento:
     return Movimiento.crear(
         concepto='Traspaso', importe=2,
         cta_entrada=cuenta, cta_salida=cuenta_2,
@@ -90,7 +90,7 @@ def traspaso(cuenta: Cuenta, cuenta_2: Cuenta, fecha: date) -> Movimiento:
 
 
 @pytest.fixture
-def entrada_posterior_otra_cuenta(cuenta_2: Cuenta, fecha_posterior: date) -> Movimiento:
+def entrada_posterior_otra_cuenta(cuenta_2: CuentaInteractiva, fecha_posterior: date) -> Movimiento:
     return Movimiento.crear(
         concepto='Entrada posterior otra cuenta', importe=50,
         cta_entrada=cuenta_2, fecha=fecha_posterior
@@ -98,7 +98,7 @@ def entrada_posterior_otra_cuenta(cuenta_2: Cuenta, fecha_posterior: date) -> Mo
 
 
 @pytest.fixture
-def salida_posterior(cuenta: Cuenta, fecha_posterior: date) -> Movimiento:
+def salida_posterior(cuenta: CuentaInteractiva, fecha_posterior: date) -> Movimiento:
     return Movimiento.crear(
         concepto='Salida posterior',
         importe=40,
@@ -108,7 +108,7 @@ def salida_posterior(cuenta: Cuenta, fecha_posterior: date) -> Movimiento:
 
 
 @pytest.fixture
-def traspaso_posterior(cuenta: Cuenta, cuenta_2: Cuenta, fecha_posterior: date) -> Movimiento:
+def traspaso_posterior(cuenta: CuentaInteractiva, cuenta_2: CuentaInteractiva, fecha_posterior: date) -> Movimiento:
     return Movimiento.crear(
         concepto='Traspaso posterior', importe=70,
         cta_entrada=cuenta_2, cta_salida=cuenta,
@@ -117,7 +117,7 @@ def traspaso_posterior(cuenta: Cuenta, cuenta_2: Cuenta, fecha_posterior: date) 
 
 
 @pytest.fixture
-def entrada_tardia(cuenta: Cuenta, fecha_tardia: date) -> Movimiento:
+def entrada_tardia(cuenta: CuentaInteractiva, fecha_tardia: date) -> Movimiento:
     return Movimiento.crear(
         concepto='Entrada tardía', importe=80, cta_entrada=cuenta, fecha=fecha_tardia
     )
@@ -164,7 +164,7 @@ def saldo_cuenta_2(traspaso: Movimiento) -> Saldo:
 
 
 @pytest.fixture
-def credito(cuenta: Cuenta, cuenta_ajena: Cuenta, fecha: date) -> Movimiento:
+def credito(cuenta: CuentaInteractiva, cuenta_ajena: CuentaInteractiva, fecha: date) -> Movimiento:
     return Movimiento.crear(
         concepto='Crédito',
         importe=100,
