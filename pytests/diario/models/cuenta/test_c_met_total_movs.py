@@ -2,15 +2,12 @@ import pytest
 
 from diario.models import Movimiento
 
-pytestmark = [
-    pytest.mark.django_db,
-    pytest.mark.usefixtures(
+pytestmark = pytest.mark.usefixtures(
         'entrada',
         'traspaso_posterior',
         'entrada_tardia',
         'entrada_posterior_otra_cuenta'
-    ),
-]
+    )
 
 
 def test_devuelve_suma_de_importes_de_entradas_menos_suma_de_importes_de_salidas(cuenta):

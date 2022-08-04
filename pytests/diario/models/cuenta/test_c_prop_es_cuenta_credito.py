@@ -1,9 +1,5 @@
-import pytest
-
 from diario.models import Movimiento, Cuenta
 from utils.helpers_tests import dividir_en_dos_subcuentas
-
-pytestmark = pytest.mark.django_db
 
 
 def test_devuelve_false_si_cuenta_no_es_cuenta_credito(cuenta: Cuenta):

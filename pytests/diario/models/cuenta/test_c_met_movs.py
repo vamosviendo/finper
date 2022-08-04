@@ -2,8 +2,6 @@ import pytest
 
 from diario.models import Movimiento, Cuenta, CuentaInteractiva
 
-pytestmark = pytest.mark.django_db
-
 
 def test_devuelve_todos_los_movimientos_de_una_cuenta(cuenta, entrada, traspaso_posterior, entrada_tardia):
     for mov in (entrada, traspaso_posterior, entrada_tardia):

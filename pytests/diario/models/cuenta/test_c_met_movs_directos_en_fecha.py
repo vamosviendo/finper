@@ -3,8 +3,6 @@ import pytest
 from diario.models import Movimiento, Cuenta
 from utils.helpers_tests import dividir_en_dos_subcuentas
 
-pytestmark = pytest.mark.django_db
-
 
 @pytest.mark.usefixtures('entrada_tardia', 'traspaso_posterior')
 def test_con_cuenta_interactiva_devuelve_movs_de_cuenta_en_fecha(cuenta, entrada, fecha):

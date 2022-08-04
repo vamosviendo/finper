@@ -2,8 +2,6 @@ import pytest
 
 from diario.models import CuentaInteractiva, Movimiento
 
-pytestmark = pytest.mark.django_db
-
 
 @pytest.mark.usefixtures(
     'entrada',

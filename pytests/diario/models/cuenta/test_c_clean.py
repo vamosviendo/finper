@@ -4,8 +4,6 @@ from django.core.exceptions import ValidationError
 from diario.models import Cuenta
 from utils import errors
 
-pytestmark = pytest.mark.django_db
-
 
 def test_no_permite_nombres_ni_slugs_duplicados():
     Cuenta.crear(nombre='Efectivo', slug='E')

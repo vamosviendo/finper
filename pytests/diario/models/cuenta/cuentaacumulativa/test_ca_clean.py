@@ -1,8 +1,6 @@
 import pytest
 from django.core.exceptions import ValidationError
 
-pytestmark = pytest.mark.django_db
-
 
 def test_cuenta_acumulativa_debe_tener_subcuentas(cuenta_acumulativa_saldo_0):
     sc1, sc2 = cuenta_acumulativa_saldo_0.subcuentas.all()

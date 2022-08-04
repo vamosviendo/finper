@@ -1,8 +1,4 @@
-import pytest
-
 from diario.models import Saldo
-
-pytestmark = pytest.mark.django_db
 
 
 def test_recupera_saldo_al_momento_del_movimiento(cuenta, entrada, traspaso_posterior, entrada_tardia, mocker):

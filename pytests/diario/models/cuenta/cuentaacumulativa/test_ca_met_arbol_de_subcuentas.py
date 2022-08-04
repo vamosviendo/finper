@@ -1,8 +1,3 @@
-import pytest
-
-pytestmark = pytest.mark.django_db
-
-
 def test_arbol_de_subcuentas_devuelve_set_con_todas_las_cuentas_dependientes(cuenta):
     lista_subcuentas = cuenta.dividir_entre(
         {'nombre': 'subcuenta 1', 'slug': 'sc1', 'saldo': 0},

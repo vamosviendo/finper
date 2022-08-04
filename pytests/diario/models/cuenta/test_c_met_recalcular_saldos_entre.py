@@ -1,10 +1,7 @@
-import pytest
 from datetime import timedelta
 
 from diario.models import Movimiento
 from utils.tiempo import Posicion
-
-pytestmark = pytest.mark.django_db
 
 
 def test_recalcula_saldos_de_cuenta_a_partir_de_fecha_desde(cuenta, saldo, saldo_posterior):

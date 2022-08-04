@@ -2,8 +2,6 @@ import pytest
 
 from diario.models import Cuenta
 
-pytestmark = pytest.mark.django_db
-
 
 @pytest.fixture
 def subcuenta_agregada(cuenta_acumulativa):
@@ -33,5 +31,3 @@ def test_por_defecto_asigna_titular_de_cuenta_madre_a_subcuenta_agregada(subcuen
 def test_permite_asignar_titular_distinto_del_de_cuenta_madre(cuenta_acumulativa, otro_titular):
     subcuenta = cuenta_acumulativa.agregar_subcuenta('subc3', 'sc3', titular=otro_titular)
     assert subcuenta.titular == otro_titular
-
-# PROBAR FIXTURE QUE RESUMA OTROS FIXTURES

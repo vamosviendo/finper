@@ -6,8 +6,6 @@ from django.core.exceptions import ValidationError
 
 from diario.models import Cuenta
 
-pytestmark = pytest.mark.django_db
-
 
 def test_guarda_y_recupera_cuentas():
     primera_cuenta = Cuenta()

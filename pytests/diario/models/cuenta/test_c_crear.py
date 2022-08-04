@@ -5,8 +5,6 @@ from django.core.exceptions import ValidationError
 
 from diario.models import Cuenta, CuentaInteractiva
 
-pytestmark = pytest.mark.django_db
-
 
 def test_crea_cuenta():
     Cuenta.crear(nombre='Efectivo', slug='e')

@@ -1,8 +1,3 @@
-import pytest
-
-pytestmark = pytest.mark.django_db
-
-
 def test_devuelve_true_si_tiene_cta_madre_y_false_si_no(cuenta):
     sc1, sc2 = cuenta.dividir_entre(
         {'nombre': 'subcuenta 1', 'slug': 'sc1', 'saldo': 40},

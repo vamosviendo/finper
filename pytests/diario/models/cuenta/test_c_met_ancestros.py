@@ -2,8 +2,6 @@ import pytest
 
 from diario.models import CuentaInteractiva
 
-pytestmark = pytest.mark.django_db
-
 
 def test_devuelve_lista_de_todas_las_cuentas_ancestro(cuenta: CuentaInteractiva):
     subc1, subc2 = cuenta.dividir_entre(

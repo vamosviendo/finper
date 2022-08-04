@@ -2,8 +2,6 @@ import pytest
 
 from diario.models import CuentaInteractiva
 
-pytestmark = pytest.mark.django_db
-
 
 @pytest.fixture
 def subcuentas(cuenta: CuentaInteractiva):

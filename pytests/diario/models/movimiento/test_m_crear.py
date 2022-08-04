@@ -3,8 +3,6 @@ import pytest
 from diario.models import Movimiento
 from utils import errors
 
-pytestmark = pytest.mark.django_db
-
 
 def test_no_admite_cuentas_acumulativas(cuenta_acumulativa):
     with pytest.raises(

@@ -1,8 +1,4 @@
-import pytest
-
 from diario.models import Saldo
-
-pytestmark = pytest.mark.django_db
 
 
 def test_devuelve_el_ultimo_saldo_historico_de_la_cuenta(cuenta, entrada, salida_posterior):

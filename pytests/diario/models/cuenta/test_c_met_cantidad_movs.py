@@ -1,7 +1,5 @@
 import pytest
 
-pytestmark = pytest.mark.django_db
-
 
 @pytest.mark.usefixtures(
     'entrada',

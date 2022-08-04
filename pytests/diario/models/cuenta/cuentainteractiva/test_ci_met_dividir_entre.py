@@ -1,8 +1,4 @@
-import pytest
-
 from datetime import date
-
-pytestmark = pytest.mark.django_db
 
 
 def test_guarda_fecha_conversion(cuenta):
