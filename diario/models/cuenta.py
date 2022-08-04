@@ -565,4 +565,4 @@ class CuentaAcumulativa(Cuenta):
 
     def agregar_subcuenta(self, nombre, slug, titular=None):
         titular = titular or self.titular
-        Cuenta.crear(nombre, slug, cta_madre=self, titular=titular)
+        return Cuenta.crear(nombre, slug, cta_madre=self, titular=titular)
