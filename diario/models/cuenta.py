@@ -541,9 +541,6 @@ class CuentaAcumulativa(Cuenta):
 
         super().clean(*args, **kwargs)
 
-    def tirar(self):
-        raise errors.ErrorMovimientoPosteriorAConversion
-
     def manejar_cambios(self):
         if self._state.adding:
             return

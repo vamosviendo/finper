@@ -11,15 +11,6 @@ from utils.errors import ErrorCuentaEsAcumulativa, \
 from utils.helpers_tests import dividir_en_dos_subcuentas
 
 
-class TestTirar(TestCase):
-
-    def test_tirar(self):
-        cuenta = Cuenta.crear('cuenta', 'c')
-        cuenta = cuenta.dividir_y_actualizar(['subc1', 'sc1', 0], ['subc2', 'subc2'])
-        with self.assertRaises(errors.ErrorMovimientoPosteriorAConversion):
-            cuenta.tirar()
-
-
 class TestCuentaAcumulativa(TestCase):
 
     def setUp(self):
