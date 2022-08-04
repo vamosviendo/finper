@@ -5,7 +5,7 @@ pytestmark = pytest.mark.django_db
 
 
 def test_cuenta_acumulativa_debe_tener_subcuentas(cuenta_acumulativa_saldo_0):
-    sc1, sc2 = cuenta_acumulativa_saldo_0.arbol_de_subcuentas()
+    sc1, sc2 = cuenta_acumulativa_saldo_0.subcuentas.all()
     sc1.delete()
     sc2.delete()
     with pytest.raises(
