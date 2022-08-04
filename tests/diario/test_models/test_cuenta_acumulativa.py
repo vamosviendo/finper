@@ -1,10 +1,9 @@
 from datetime import date
-from unittest.mock import patch, MagicMock
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
-from diario.models import Cuenta, Movimiento, Titular, Saldo, CuentaAcumulativa
+from diario.models import Cuenta, Movimiento, Titular, Saldo
 from utils import errors
 from utils.errors import ErrorCuentaEsAcumulativa, \
     CUENTA_ACUMULATIVA_EN_MOVIMIENTO
@@ -110,48 +109,6 @@ class TestSubcuentas(TestCase):
 
         with self.assertRaises(ValidationError):
             cta4.full_clean()
-
-    def test_cuenta_no_puede_ser_subcuenta_de_una_de_sus_subcuentas(self):
-        cta4 = Cuenta.crear("Bolsillos", "ebol")
-        cta4 = cta4.dividir_y_actualizar(
-            {'nombre': 'Bolsillo campera', 'slug': 'ebca', 'saldo': 0},
-            {'nombre': 'Bolsillo pantalón', 'slug': 'ebpa'}
-        )
-        cta4.cta_madre = self.cta1
-        cta4.save()
-        self.cta1.cta_madre = cta4
-        with self.assertRaisesMessage(
-                ValidationError,
-                'Cuenta madre Bolsillos está entre las subcuentas de Efectivo '
-                'o entre las de una de sus subcuentas'
-        ):
-            self.cta1.full_clean()
-
-    def test_cuenta_no_puede_ser_subcuenta_de_una_subcuenta_de_una_de_sus_subcuentas(self):
-        cta4 = Cuenta.crear("Bolsillos", "ebol").dividir_y_actualizar(
-            {'nombre': 'Bolsillo campera', 'slug': 'ebca', 'saldo': 0},
-            {'nombre': 'Bolsillo pantalón', 'slug': 'ebpa'}
-        )
-
-        cta4.cta_madre = self.cta1
-        cta4.save()
-
-        cta5 = Cuenta.tomar(slug='ebpa').dividir_y_actualizar(
-            {
-                'nombre': 'Bolsillo delantero pantalón',
-                'slug': 'ebpd',
-                'saldo': 0
-            },
-            {'nombre': 'Bolsillo pantalón trasero', 'slug': 'ebpt'}
-        )
-
-        self.cta1.cta_madre = cta5
-        with self.assertRaisesMessage(
-                ValidationError,
-                'Cuenta madre Bolsillo pantalón está entre las subcuentas '
-                'de Efectivo o entre las de una de sus subcuentas'
-        ):
-            self.cta1.full_clean()
 
     def test_movimiento_en_subcuenta_se_refleja_en_saldo_de_cta_madre(self):
 

@@ -523,12 +523,8 @@ class CuentaAcumulativa(Cuenta):
         return sum([subc.saldo for subc in self.subcuentas.all()])
 
     def clean(self, *args, **kwargs):
-        if self.cta_madre in self.arbol_de_subcuentas():
-            raise errors.ErrorDependenciaCircular(
-                f'Cuenta madre {self.cta_madre.nombre.capitalize()} está '
-                f'entre las subcuentas de {self.nombre.capitalize()} o entre '
-                f'las de una de sus subcuentas'
-            )
+
+        super().clean(*args, **kwargs)
         movs_normales = self.movs_no_conversion()
         fecha_ultimo_mov_normal = max([m.fecha for m in movs_normales]) \
             if movs_normales.count() > 0 else date(1, 1, 1)
@@ -538,8 +534,6 @@ class CuentaAcumulativa(Cuenta):
                 f'La fecha de conversión no puede ser anterior a la del '
                 f'último movimiento de la cuenta ({fecha_ultimo_mov_normal})'
             )
-
-        super().clean(*args, **kwargs)
 
     def manejar_cambios(self):
         if self._state.adding:
