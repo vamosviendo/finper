@@ -34,7 +34,7 @@ def cuenta_ajena(otro_titular: Titular, fecha: date) -> CuentaInteractiva:
 
 
 @pytest.fixture
-def cuenta_acumulativa(cuenta_con_saldo: CuentaInteractiva) -> CuentaAcumulativa:
+def cuenta_acumulativa(cuenta_con_saldo: CuentaInteractiva, fecha: date) -> CuentaAcumulativa:
     return cuenta_con_saldo.dividir_y_actualizar(
         ['subcuenta 1 con saldo', 'scs1', 60],
         ['subcuenta 2 con saldo', 'scs2'],

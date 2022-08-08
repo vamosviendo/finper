@@ -361,14 +361,6 @@ class TestSave(TestCase):
             {'nombre': 'Cajón de arriba', 'slug': 'ecaj', 'saldo': 200},
         ]
 
-    def test_permite_modificar_fecha_de_conversion_de_cuenta(self):
-        self.cta1 = self.cta1.dividir_y_actualizar(*self.subcuentas, fecha=date(2020, 10, 5))
-        self.cta1.fecha_conversion = date(2021, 1, 6)
-        self.cta1.full_clean()
-        self.cta1.save()
-
-        self.assertEqual(self.cta1.fecha_conversion, date(2021, 1, 6))
-
     def test_permite_cambiar_fecha_de_conversion_de_cuenta_por_fecha_posterior(self):
         self.cta1 = self.cta1.dividir_y_actualizar(*self.subcuentas, fecha=date(2020, 10, 5))
         self.cta1.fecha_conversion = date(2021, 10, 6)
