@@ -1,8 +1,15 @@
 from datetime import date
+from typing import Tuple
 
 import pytest
 
-from diario.models import Titular, Cuenta, CuentaInteractiva, CuentaAcumulativa
+from diario.models import (
+    Titular,
+    Cuenta,
+    CuentaInteractiva,
+    CuentaAcumulativa,
+    Movimiento
+)
 
 
 @pytest.fixture
@@ -63,3 +70,18 @@ def cuenta_madre_de_cuenta_2(cuenta_2: CuentaInteractiva) -> CuentaAcumulativa:
         ['subcuenta 1 de cuenta 2', 'sc21', 30],
         ['subcuenta 2 de cuenta 2', 'sc22'],
     )
+
+
+@pytest.fixture
+def cuentas_credito(credito: Movimiento) -> Tuple[CuentaInteractiva]:
+    return credito.recuperar_cuentas_credito()
+
+
+@pytest.fixture
+def cuenta_credito_acreedor(cuentas_credito: Tuple[CuentaInteractiva]) -> CuentaInteractiva:
+    return cuentas_credito[0]
+
+
+@pytest.fixture
+def cuenta_credito_deudor(cuentas_credito: Tuple[CuentaInteractiva]) -> CuentaInteractiva:
+    return cuentas_credito[1]
