@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Dict
+from typing import List, Dict, Any
 
 import pytest
 
@@ -11,8 +11,8 @@ def pytest_collection_modifyitems(items):
 
 
 @pytest.fixture
-def dict_subcuentas() -> List[Dict[str, str | int]]:
+def dicts_subcuentas() -> List[Dict[str, Any]]:
     return [
-        {'nombre': 'Billetera', 'slug': 'ebil', 'saldo': 50},
-        {'nombre': 'Cajón de arriba', 'slug': 'ecaj'},
+        {'nombre': 'Subcuenta 1', 'slug': 'sc1', 'saldo': 50},
+        {'nombre': 'Subcuenta 2', 'slug': 'sc2'},
     ]

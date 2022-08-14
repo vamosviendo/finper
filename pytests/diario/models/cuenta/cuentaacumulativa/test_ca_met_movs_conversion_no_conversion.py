@@ -5,14 +5,14 @@ from diario.models import Movimiento
 
 class TestsMovConversion:
     def test_devuelve_movimientos_de_traspaso_de_saldo_generados_al_momento_de_la_conversion_en_acumulativa(
-            self, cuenta, fecha, fecha_posterior, dict_subcuentas):
+            self, cuenta, fecha, fecha_posterior, dicts_subcuentas):
         Movimiento.crear(
             concepto='00000',
             importe=100,
             cta_entrada=cuenta,
             fecha=fecha
         )
-        sc1, sc2 = cuenta.dividir_entre(*dict_subcuentas, fecha=fecha_posterior)
+        sc1, sc2 = cuenta.dividir_entre(*dicts_subcuentas, fecha=fecha_posterior)
         cuenta_acumulativa = cuenta.tomar_del_slug()
 
         mov1 = Movimiento.tomar(cta_entrada=sc1)
@@ -30,9 +30,9 @@ class TestsMovConversion:
 
 class TestMovsNoConversion:
     def test_devuelve_todos_los_movimientos_de_la_cuenta_excepto_los_de_conversion(
-            self, cuenta, entrada, salida, fecha, dict_subcuentas):
+            self, cuenta, entrada, salida, fecha, dicts_subcuentas):
         cuentaacumulativa = cuenta.dividir_y_actualizar(
-            *dict_subcuentas, fecha=fecha)
+            *dicts_subcuentas, fecha=fecha)
         assertQuerysetEqual(
             cuentaacumulativa.movs_no_conversion(),
             [entrada, salida]
