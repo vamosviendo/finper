@@ -1177,7 +1177,7 @@ class TestModelMovimientoMetodoConceptoMovimientoCredito(TestCase):
         self.mov = Movimiento()
 
     def test_si_cuenta_acreedora_tiene_saldo_positivo_devuelve_aumento_de_credito(self):
-        self.cuenta_acreedora.cargar_saldo(100)
+        Movimiento.crear('saldo ca', 100, self.cuenta_acreedora)
         self.assertEqual(
             self.mov._concepto_movimiento_credito(
                 self.cuenta_acreedora,
@@ -1187,8 +1187,8 @@ class TestModelMovimientoMetodoConceptoMovimientoCredito(TestCase):
         )
 
     def test_si_cuenta_acreedora_tiene_saldo_negativo_e_importe_es_igual_a_saldo_de_cuenta_deudora_devuelve_cancelacion_de_credito(self):
-        self.cuenta_acreedora.cargar_saldo(-100)
-        self.cuenta_deudora.cargar_saldo(100)
+        Movimiento.crear('saldo_ca', 100, None, self.cuenta_acreedora)
+        Movimiento.crear('saldo_cd', 100, self.cuenta_deudora)
         self.mov.importe = 100
         self.assertEqual(
             self.mov._concepto_movimiento_credito(
@@ -1199,8 +1199,8 @@ class TestModelMovimientoMetodoConceptoMovimientoCredito(TestCase):
         )
 
     def test_si_cuenta_acreedora_tiene_saldo_negativo_e_importe_no_es_igual_a_saldo_de_cuenta_deudora_devuelve_pago_a_cuenta_de_credito(self):
-        self.cuenta_acreedora.cargar_saldo(-100)
-        self.cuenta_deudora.cargar_saldo(100)
+        Movimiento.crear('saldo_ca', 100, None, self.cuenta_acreedora)
+        Movimiento.crear('saldo_cd', 100, self.cuenta_deudora)
         self.mov.importe = 80
         self.assertEqual(
             self.mov._concepto_movimiento_credito(
