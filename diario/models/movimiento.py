@@ -75,7 +75,7 @@ class MovimientoCleaner:
             cuenta_vieja = getattr(self.viejo, campo_cuenta)
             if cuenta_vieja and cuenta_vieja.es_acumulativa:
                 # No se permite cambiar importe de un movimiento con cuenta acumulativa
-                if self.mov._cambia_campo('importe'):
+                if self.mov.cambia_campo('importe'):
                     raise errors.ErrorCuentaEsAcumulativa(
                         errors.CAMBIO_IMPORTE_CON_CUENTA_ACUMULATIVA
                     )
@@ -296,7 +296,7 @@ class Movimiento(MiModel):
                 if self.id_contramov:
                     # El movimiento ya era una transacción no gratuita entre
                     # titulares
-                    if self._cambia_campo(
+                    if self.cambia_campo(
                             'fecha', 'importe', CTA_ENTRADA, CTA_SALIDA):
                         self._regenerar_contramovimiento()
                 else:
@@ -314,7 +314,7 @@ class Movimiento(MiModel):
             self._actualizar_cuenta_convertida_en_acumulativa()
             super().save(*args, **kwargs)
 
-            if self._cambia_campo(
+            if self.cambia_campo(
                     'importe', CTA_ENTRADA, CTA_SALIDA, 'fecha', 'orden_dia',
                     contraparte=self.viejo
             ):
@@ -370,6 +370,13 @@ class Movimiento(MiModel):
     def es_anterior_a(self, otro: Movimiento) -> bool:
         return self.posicion < otro.posicion
 
+    def cambia_campo(self, *args, contraparte: Movimiento = None) -> bool:
+        mov_guardado = contraparte or self.tomar_de_bd()
+        for campo in args:
+            if getattr(self, campo) != getattr(mov_guardado, campo):
+                return True
+        return False
+
     def recuperar_cuentas_credito(self) -> Tuple:
         cls = self.get_related_class(CTA_ENTRADA)
         try:
@@ -403,13 +410,6 @@ class Movimiento(MiModel):
             if self.cta_salida else None
         self.cta_entrada = self.cta_entrada.tomar_del_slug() \
             if self.cta_entrada else None
-
-    def _cambia_campo(self, *args, contraparte: Movimiento = None) -> bool:
-        mov_guardado = contraparte or self.tomar_de_bd()
-        for campo in args:
-            if getattr(self, campo) != getattr(mov_guardado, campo):
-                return True
-        return False
 
     def _generar_cuentas_credito(self) -> Tuple:
         cls = self.get_related_class(CTA_ENTRADA)
@@ -449,7 +449,7 @@ class Movimiento(MiModel):
         )
 
         def cambia_campo(*args) -> bool:
-            return self._cambia_campo(*args, contraparte=self.viejo)
+            return self.cambia_campo(*args, contraparte=self.viejo)
 
         if cuenta is not None:
             if cambia_campo(campo_cuenta):
@@ -479,7 +479,7 @@ class Movimiento(MiModel):
                 cuenta_vieja, pasa_a_opuesto, saldo)
 
     def _actualizar_fechas_conversion(self):
-        if self._cambia_campo('fecha', contraparte=self.viejo) and self.convierte_cuenta:
+        if self.cambia_campo('fecha', contraparte=self.viejo) and self.convierte_cuenta:
             subcuenta = self.cta_entrada \
                 if self.convierte_cuenta == CTA_SALIDA \
                 else self.cta_salida

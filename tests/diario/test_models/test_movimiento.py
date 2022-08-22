@@ -787,7 +787,7 @@ class TestModelMovimientoMetodoStr(TestModelMovimiento):
         )
         self.assertEqual(
             str(mov1),
-            '2021-03-22 Retiro de efectivo: 250.2 +cuenta titular 1 -banco'
+            '2021-03-22 Retiro de efectivo: 250.20 +cuenta titular 1 -banco'
         )
 
     def test_muestra_movimiento_sin_cuenta_de_salida(self):
@@ -799,7 +799,7 @@ class TestModelMovimientoMetodoStr(TestModelMovimiento):
         )
         self.assertEqual(
             str(mov2),
-            '2021-03-22 Carga de saldo: 500 +cuenta titular 1'
+            '2021-03-22 Carga de saldo: 500.00 +cuenta titular 1'
         )
 
     def test_muestra_movimiento_sin_cuenta_de_entrada(self):
@@ -1041,15 +1041,15 @@ class TestModelMovimientoMetodoCambiaCampo(TestModelMovimiento):
         self.mov1.importe = 156
 
     def test_devuelve_true_si_hay_cambio_en_alguno_de_los_campos_dados(self):
-        self.assertTrue(self.mov1._cambia_campo('importe', 'fecha'))
+        self.assertTrue(self.mov1.cambia_campo('importe', 'fecha'))
 
     def test_devuelve_false_si_no_hay_cambio_en_ninguno_de_los_campos_dados(self):
-        self.assertFalse(self.mov1._cambia_campo('concepto', 'fecha'))
+        self.assertFalse(self.mov1.cambia_campo('concepto', 'fecha'))
 
     def test_acepta_un_movimiento_contra_el_cual_comparar(self):
         mov2 = Movimiento(concepto='Movimento', importe=156, cta_entrada=self.cuenta1)
-        self.assertTrue(self.mov1._cambia_campo('concepto', contraparte=mov2))
-        self.assertFalse(self.mov1._cambia_campo('importe', contraparte=mov2))
+        self.assertTrue(self.mov1.cambia_campo('concepto', contraparte=mov2))
+        self.assertFalse(self.mov1.cambia_campo('importe', contraparte=mov2))
 
 
 class TestModelMovimientoMetodoCrearMovimientoCredito(
