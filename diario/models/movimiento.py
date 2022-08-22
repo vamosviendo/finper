@@ -1,3 +1,6 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING, List, Tuple
+
 from datetime import date
 
 from django.core.exceptions import ValidationError
@@ -11,8 +14,11 @@ from utils.tiempo import Posicion
 from diario.consts import *
 from diario.models.saldo import Saldo
 
+if TYPE_CHECKING:
+    from diario.models import Titular, CuentaInteractiva, Cuenta
 
-def es_campo_cuenta_o_none(value):
+
+def es_campo_cuenta_o_none(value: str):
     if value not in (CTA_ENTRADA, CTA_SALIDA, None):
         raise ValidationError(
             f'Valor "{value}" no permitido.'
@@ -36,7 +42,7 @@ class MiDateField(models.DateField):
 
 class MovimientoCleaner:
 
-    def __init__(self, mov, viejo):
+    def __init__(self, mov: "Movimiento", viejo: "Movimiento"):
         self.mov = mov
         self.viejo = viejo
 
@@ -143,34 +149,31 @@ class Movimiento(MiModel):
         ordering = ('fecha', 'orden_dia')
 
     @property
-    def importe(self):
+    def importe(self) -> float:
         return self._importe
 
     @importe.setter
-    def importe(self, valor):
+    def importe(self, valor: float | int):
         self._importe = round(float(valor), 2)
 
     @property
-    def emisor(self):
+    def emisor(self) -> Titular:
         if self.cta_salida:
             return self.cta_salida.titular
 
     @property
-    def receptor(self):
+    def receptor(self) -> Titular:
         if self.cta_entrada:
             return self.cta_entrada.titular
 
     @property
-    def posicion(self):
+    def posicion(self) -> Posicion:
         return Posicion(fecha=self.fecha, orden_dia=self.orden_dia)
 
     def __str__(self):
-        importe = self.importe \
-            if self.importe != round(self.importe) \
-            else int(self.importe)
 
-        string = \
-            f'{self.fecha.strftime("%Y-%m-%d")} {self.concepto}: {importe}'
+        string = f'{self.fecha.strftime("%Y-%m-%d")} {self.concepto}: ' \
+            f'{self.importe:.2f}'
 
         if self.cta_entrada:
             string += f' +{self.cta_entrada}'
@@ -179,8 +182,13 @@ class Movimiento(MiModel):
         return string
 
     @classmethod
-    def crear(cls, concepto, importe, cta_entrada=None, cta_salida=None,
-              esgratis=False, **kwargs):
+    def crear(cls,
+              concepto: str,
+              importe: float | int,
+              cta_entrada: CuentaInteractiva = None,
+              cta_salida: CuentaInteractiva = None,
+              esgratis: bool = False,
+              **kwargs) -> Movimiento:
 
         importe = float(importe)
 
@@ -203,7 +211,7 @@ class Movimiento(MiModel):
         return movimiento
 
     @classmethod
-    def tomar(cls, **kwargs):
+    def tomar(cls, **kwargs) -> Movimiento:
         mov = super().tomar(**kwargs)
         mov.cta_entrada = mov.cta_entrada.actualizar_subclase() \
             if mov.cta_entrada else None
@@ -227,7 +235,7 @@ class Movimiento(MiModel):
 
         cleaning.restricciones_con_cuenta_credito()
 
-    def delete(self, force=False, *args, **kwargs):
+    def delete(self, force: bool = False, *args, **kwargs):
         if self.es_automatico and not force:
             raise errors.ErrorMovimientoAutomatico(
                 errors.ELIMINACION_MOVIMIENTO_AUTOMATICO
@@ -249,7 +257,11 @@ class Movimiento(MiModel):
         if self.id_contramov:
             self._eliminar_contramovimiento()
 
-    def save(self, *args, mantiene_orden_dia=False, esgratis=False, **kwargs):
+    def save(self,
+             *args,
+             mantiene_orden_dia: bool = False,
+             esgratis: bool = False,
+             **kwargs):
         """
         Si el movimiento es nuevo (no existía antes, está siendo creado)
         - Generar saldo para cuentas de entrada y/o salida al momento del
@@ -311,41 +323,41 @@ class Movimiento(MiModel):
 
                 self._actualizar_fechas_conversion()
 
-    def refresh_from_db(self, using=None, fields=None):
+    def refresh_from_db(self, using: str = None, fields: List[str] = None):
         super().refresh_from_db()
         for campo_cuenta in campos_cuenta:
             cuenta = getattr(self, campo_cuenta)
             if cuenta:
                 setattr(self, campo_cuenta, cuenta.como_subclase())
 
-    def saldo_ce(self):
+    def saldo_ce(self) -> Saldo:
         try:
             return self.cta_entrada.saldo_set.get(movimiento=self)
         except AttributeError:
             raise AttributeError(
                 f'Movimiento "{self.concepto}" no tiene cuenta de entrada')
 
-    def saldo_cs(self):
+    def saldo_cs(self) -> Saldo:
         try:
             return self.cta_salida.saldo_set.get(movimiento=self)
         except AttributeError:
             raise AttributeError(
                 f'Movimiento "{self.concepto}" no tiene cuenta de salida')
 
-    def tiene_cuenta_acumulativa(self):
+    def tiene_cuenta_acumulativa(self) -> bool:
         if self.tiene_cta_entrada_acumulativa():
             return True
         if self.tiene_cta_salida_acumulativa():
             return True
         return False
 
-    def tiene_cta_entrada_acumulativa(self):
+    def tiene_cta_entrada_acumulativa(self) -> bool:
         return self.cta_entrada and self.cta_entrada.es_acumulativa
 
-    def tiene_cta_salida_acumulativa(self):
+    def tiene_cta_salida_acumulativa(self) -> bool:
         return self.cta_salida and self.cta_salida.es_acumulativa
 
-    def es_prestamo_o_devolucion(self):
+    def es_prestamo_o_devolucion(self) -> bool:
         """ Devuelve True si
             - hay cuenta de entrada y cuenta de salida
             - las cuentas de entrada y salida pertenecen a distinto titular
@@ -355,10 +367,10 @@ class Movimiento(MiModel):
                 self.receptor != self.emisor and
                 not self.esgratis)
 
-    def es_anterior_a(self, otro):
+    def es_anterior_a(self, otro: Movimiento) -> bool:
         return self.posicion < otro.posicion
 
-    def recuperar_cuentas_credito(self):
+    def recuperar_cuentas_credito(self) -> Tuple:
         cls = self.get_related_class(CTA_ENTRADA)
         try:
             return (
@@ -392,14 +404,14 @@ class Movimiento(MiModel):
         self.cta_entrada = self.cta_entrada.tomar_del_slug() \
             if self.cta_entrada else None
 
-    def _cambia_campo(self, *args, contraparte=None):
+    def _cambia_campo(self, *args, contraparte: Movimiento = None) -> bool:
         mov_guardado = contraparte or self.tomar_de_bd()
         for campo in args:
             if getattr(self, campo) != getattr(mov_guardado, campo):
                 return True
         return False
 
-    def _generar_cuentas_credito(self):
+    def _generar_cuentas_credito(self) -> Tuple:
         cls = self.get_related_class(CTA_ENTRADA)
         if not self.emisor or not self.receptor or self.emisor == self.receptor:
             raise errors.ErrorMovimientoNoPrestamo
@@ -418,7 +430,7 @@ class Movimiento(MiModel):
         )
         return cc1, cc2
 
-    def _actualizar_saldos_cuenta(self, campo_cuenta, mantiene_orden_dia):
+    def _actualizar_saldos_cuenta(self, campo_cuenta: str, mantiene_orden_dia: bool):
         if campo_cuenta not in campos_cuenta:
             raise ValueError(
                 'Argumento incorrecto. Debe ser "cta_entrada"'
@@ -436,7 +448,7 @@ class Movimiento(MiModel):
             self.viejo.saldo_cs,
         )
 
-        def cambia_campo(*args):
+        def cambia_campo(*args) -> bool:
             return self._cambia_campo(*args, contraparte=self.viejo)
 
         if cuenta is not None:
@@ -484,29 +496,29 @@ class Movimiento(MiModel):
                 else Movimiento.filtro(fecha=pos_min.fecha).count()
             super().save()
 
-    def _eliminar_saldo_de_cuenta_vieja_si_existe(self, cuenta_vieja, pasa_a_opuesto, saldo):
+    def _eliminar_saldo_de_cuenta_vieja_si_existe(self, cuenta_vieja: Cuenta, pasa_a_opuesto: callable, saldo: callable):
         if cuenta_vieja is not None and not pasa_a_opuesto():
             saldo().eliminar()
 
-    def _cambia_cta_entrada(self):
+    def _cambia_cta_entrada(self) -> bool:
         return (
             self.cta_entrada and self.viejo.cta_entrada
             and self.cta_entrada != self.viejo.cta_entrada
         )
 
-    def _cambia_cta_salida(self):
+    def _cambia_cta_salida(self) -> bool:
         return (
             self.cta_salida and self.viejo.cta_salida
             and self.cta_salida != self.viejo.cta_salida
         )
 
-    def _salida_pasa_a_entrada(self):
+    def _salida_pasa_a_entrada(self) -> bool:
         return (
             self.cta_entrada and self.viejo.cta_salida
             and self.cta_entrada == self.viejo.cta_salida
         )
 
-    def _entrada_pasa_a_salida(self):
+    def _entrada_pasa_a_salida(self) -> bool:
         return (
             self.cta_salida and self.viejo.cta_entrada
             and self.cta_salida == self.viejo.cta_entrada
@@ -559,7 +571,9 @@ class Movimiento(MiModel):
         self._eliminar_contramovimiento()
         self._crear_movimiento_credito()
 
-    def _concepto_movimiento_credito(self, cuenta_acreedora, cuenta_deudora):
+    def _concepto_movimiento_credito(self,
+                                     cuenta_acreedora: CuentaInteractiva,
+                                     cuenta_deudora: CuentaInteractiva) -> str:
 
         if cuenta_acreedora.saldo > 0:  # (1)
             concepto = 'Aumento de crédito'
