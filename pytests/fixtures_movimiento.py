@@ -79,3 +79,20 @@ def credito(cuenta: CuentaInteractiva, cuenta_ajena: CuentaInteractiva, fecha: d
         cta_salida=cuenta_ajena,
         fecha=fecha,
     )
+
+
+@pytest.fixture
+def donacion(cuenta: CuentaInteractiva, cuenta_ajena: CuentaInteractiva, fecha: date) -> Movimiento:
+    return Movimiento.crear(
+        concepto='Donación',
+        importe=100,
+        cta_entrada=cuenta,
+        cta_salida=cuenta_ajena,
+        fecha=fecha,
+        esgratis=True,
+    )
+
+
+@pytest.fixture
+def contramov_credito(credito: Movimiento) -> Movimiento:
+    return Movimiento.tomar(id=credito.id_contramov)
