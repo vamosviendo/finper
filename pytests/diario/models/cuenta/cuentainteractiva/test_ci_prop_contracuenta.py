@@ -1,8 +1,8 @@
-def test_devuelve_campo_contracuenta_en_cuenta_credito_de_deudor(cuenta_credito_deudor):
+def test_devuelve_contenido_de_campo_contracuenta_en_cuenta_credito_de_deudor(cuenta_credito_deudor):
     assert cuenta_credito_deudor.contracuenta == cuenta_credito_deudor._contracuenta
 
 
-def test_devuelve_campo_relacionado_con_contracuenta_en_cuenta_credito_de_acreedor(cuenta_credito_acreedor):
+def test_devuelve_contenido_de_campo_relacionado_con_contracuenta_en_cuenta_credito_de_acreedor(cuenta_credito_acreedor):
     assert cuenta_credito_acreedor.contracuenta == cuenta_credito_acreedor._cuentacontra
 
 

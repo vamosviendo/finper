@@ -426,7 +426,7 @@ class Movimiento(MiModel):
                    f'y {self.emisor.titname}',
             slug=f'_{self.receptor.titname}-{self.emisor.titname}',
             titular=self.receptor,
-            contracuenta=cc1
+            _contracuenta=cc1
         )
         return cc1, cc2
 

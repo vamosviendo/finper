@@ -261,17 +261,17 @@ class CuentaInteractiva(Cuenta):
 
     @property
     def contracuenta(self):
+        """ En cuentas crédito, devuelve la cuenta crédito del titular
+            de la cuenta contrapartida en el movimiento de crédito, o viceversa.
+            En cuentas normales, devuelve None
+        """
         if self._contracuenta:
             return self._contracuenta
-
         try:
             return self._cuentacontra
         except CuentaInteractiva._cuentacontra.RelatedObjectDoesNotExist:
+            # no es cuenta crédito
             return None
-
-    @contracuenta.setter
-    def contracuenta(self, cuenta):
-        self._contracuenta = cuenta
 
     def corregir_saldo(self):
         saldo = self.ultimo_saldo
