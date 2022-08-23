@@ -1,7 +1,7 @@
 import pytest
 from django.core.exceptions import ValidationError
 
-from diario.models import Saldo
+from diario.models import Saldo, Movimiento
 from utils import errors
 
 
@@ -57,13 +57,18 @@ def test_suma_importe_a_saldos_posteriores_de_cta_salida(cuenta, salida, salida_
         saldo_posterior + salida.importe
 
 
-def test_elimina_contramovimiento(mocker, credito):
-    mock_eliminar_contramovimiento = mocker.patch(
-        'diario.models.Movimiento._eliminar_contramovimiento',
-        autospec=True
-    )
+def test_en_mov_credito_elimina_contramovimiento(credito):
+    id_contramovimiento = credito.id_contramov
     credito.delete()
-    mock_eliminar_contramovimiento.assert_called_once_with(credito)
+    with pytest.raises(Movimiento.DoesNotExist):
+        Movimiento.tomar(id=id_contramovimiento)
+
+
+def test_si_al_eliminar_mov_credito_se_cancela_deuda_retira_titular_cta_entrada_de_deudores_de_titular_cta_salida(
+        credito, titular, otro_titular):
+    assert titular in otro_titular.deudores.all()
+    credito.delete()
+    assert titular not in otro_titular.deudores.all()
 
 
 def test_repone_saldo_de_cuentas_credito(credito, contramov_credito):
