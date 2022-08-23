@@ -1,4 +1,10 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
 from datetime import date
+
+if TYPE_CHECKING:
+    from diario.models import MiDateField
 
 
 def hoy():
@@ -7,7 +13,7 @@ def hoy():
 
 class Posicion:
 
-    def __init__(self, fecha: date = None, orden_dia: int = 0):
+    def __init__(self, fecha: date | MiDateField = None, orden_dia: int = 0):
         self.fecha = fecha
         self.orden_dia = orden_dia
 
