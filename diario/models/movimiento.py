@@ -184,7 +184,7 @@ class Movimiento(MiModel):
     @classmethod
     def crear(cls,
               concepto: str,
-              importe: float | int,
+              importe: float | int | str,
               cta_entrada: CuentaInteractiva = None,
               cta_salida: CuentaInteractiva = None,
               esgratis: bool = False,

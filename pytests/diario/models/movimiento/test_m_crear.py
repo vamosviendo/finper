@@ -3,7 +3,7 @@ from unittest.mock import call
 
 import pytest
 
-from diario.models import Movimiento, Saldo
+from diario.models import Movimiento, Saldo, Cuenta
 from utils import errors
 
 
@@ -104,6 +104,7 @@ def test_mov_traspaso_llama_a_generar_saldo_con_salida_false_para_cta_entrada_y_
     mov = Movimiento.crear('Nuevo mov', 20, cuenta, cuenta_2)
     assert mock_generar.call_args_list == [call(mov, salida=False), call(mov, salida=True)]
 
+
 def test_integrativo_genera_saldo_para_cta_entrada(cuenta):
     saldo_anterior_cuenta = cuenta.saldo
     mov = Movimiento.crear('Nuevo mov', 20, cuenta)
@@ -129,3 +130,116 @@ def test_integrativo_crear_movimiento_en_fecha_antigua_modifica_saldos_de_fechas
     mov_anterior = Movimiento.crear('Movimiento anterior', 30, cuenta, fecha=fecha_anterior)
     assert Saldo.tomar(cuenta=cuenta, movimiento=entrada).importe == importe_saldo + mov_anterior.importe
 
+
+class TestMovimientoEntreCuentasDeDistintosTitulares:
+    def test_genera_contramovimiento(self, cuenta, cuenta_ajena):
+        cantidad = Movimiento.cantidad()
+        mov = Movimiento.crear('Crédito', 100, cuenta, cuenta_ajena)
+        assert Movimiento.cantidad() == cantidad + 2
+        assert Movimiento.primere().concepto == 'Constitución de crédito'
+        assert Movimiento.primere().importe == mov.importe
+
+    def test_guarda_id_de_contramovimiento_en_movimiento(self, cuenta, cuenta_ajena):
+        mov = Movimiento.crear('Credito', 100, cuenta, cuenta_ajena)
+        contramov = Movimiento.tomar(concepto='Constitución de crédito')
+        assert mov.id_contramov == contramov.id
+
+    def test_contramovimiento_generado_se_marca_como_automatico(self, credito):
+        contramov = Movimiento.tomar(id=credito.id_contramov)
+        assert contramov.es_automatico
+
+    @pytest.mark.parametrize('imp, fixt_ce, fixt_cs, concepto', [
+        (10, 'cuenta', 'cuenta_ajena', 'Aumento de crédito'),
+        (100, 'cuenta_ajena', 'cuenta', 'Cancelación de crédito'),
+        (80, 'cuenta_ajena', 'cuenta', 'Pago a cuenta de crédito'),
+    ])
+    def test_genera_concepto_de_contramovimiento_segun_situacion_de_credito_existente(
+            self, credito, imp, fixt_ce, fixt_cs, concepto, request):
+        ce = request.getfixturevalue(fixt_ce)
+        cs = request.getfixturevalue(fixt_cs)
+        mov = Movimiento.crear('Entre titulares', imp, ce, cs)
+        assert Movimiento.tomar(id=mov.id_contramov).concepto == concepto
+
+    def test_si_cuenta_acreedora_tiene_saldo_cero_concepto_contramovimiento_es_constitución_de_credito(
+            self, credito):
+        Movimiento.crear('Devolución', credito.importe, credito.cta_salida, credito.cta_entrada)
+        mov = Movimiento.crear('Nuevo crédito', 100, credito.cta_entrada, credito.cta_salida)
+        assert Movimiento.tomar(id=mov.id_contramov).concepto == 'Constitución de crédito'
+
+    def test_genera_cuentas_credito_si_no_existen(self, cuenta, cuenta_ajena):
+        cant_cuentas = Cuenta.cantidad()
+        with pytest.raises(Cuenta.DoesNotExist):
+            Cuenta.tomar(slug='_titular-otro')
+        with pytest.raises(Cuenta.DoesNotExist):
+            Cuenta.tomar(slug='_otro-titular')
+        Movimiento.crear('Credito', 100, cuenta, cuenta_ajena)
+        assert Cuenta.cantidad() == cant_cuentas + 2
+        Cuenta.tomar(slug='_titular-otro')  # doesn't raise
+        Cuenta.tomar(slug='_otro-titular')  # doesn't raise
+
+    def test_no_genera_cuentas_credito_si_ya_existen(self, credito):
+        cant_cuentas = Cuenta.cantidad()
+        Movimiento.crear('Crédito', 100, credito.cta_entrada, credito.cta_salida)
+        assert Cuenta.cantidad() == cant_cuentas
+
+    def test_si_ya_existe_un_credito_de_sentido_inverso_resta_importe_de_saldo_de_cuenta_credito(
+            self, credito, cuenta_2, cuenta_ajena_2):
+        importe = Movimiento.tomar(id=credito.id_contramov).cta_entrada.saldo
+        Movimiento.crear('Devolución', 60, cuenta_ajena_2, cuenta_2)
+        assert Movimiento.tomar(id=credito.id_contramov).cta_entrada.saldo == importe - 60
+
+    def test_si_ya_existe_un_credito_de_sentido_inverso_suma_importe_a_saldo_de_cuenta_deuda(
+            self, credito, cuenta_2, cuenta_ajena_2):
+        importe = Movimiento.tomar(id=credito.id_contramov).cta_salida.saldo
+        Movimiento.crear('Devolución', 60, cuenta_ajena_2, cuenta_2)
+        assert Movimiento.tomar(id=credito.id_contramov).cta_salida.saldo == importe + 60
+
+    def test_si_receptor_no_es_acreedor_de_emisor_agrega_receptor_como_deudor_de_emisor(
+            self, credito):
+        assert credito.cta_entrada.titular in credito.cta_salida.titular.deudores.all()
+
+    def test_si_receptor_es_acreedor_de_emisor_no_agrega_receptor_como_deudor_de_emisor(
+            self, credito):
+        mov = Movimiento.crear('Devolución', 60, credito.cta_salida, credito.cta_entrada)
+        assert mov.cta_entrada.titular not in credito.cta_salida.titular.deudores.all()
+
+    def test_si_se_devuelve_el_total_de_lo_adeudado_se_cancela_deuda_entre_emisor_y_receptor(
+            self, credito, mocker):
+        mock_cancelar_deuda_de = mocker.patch(
+            'diario.models.Titular.cancelar_deuda_de',
+            autospec=True
+        )
+        Movimiento.crear(
+            'Devolución total', credito.importe,
+            credito.cta_salida, credito.cta_entrada
+        )
+        mock_cancelar_deuda_de.assert_called_once_with(
+            credito.cta_salida.titular,
+            credito.cta_entrada.titular
+        )
+
+    def test_si_no_se_devuelve_el_total_de_lo_adeudado_no_se_cancela_deuda(self, credito, mocker):
+        mock_cancelar_deuda_de = mocker.patch('diario.models.Titular.cancelar_deuda_de')
+        Movimiento.crear(
+            'Devolución parcial', credito.importe - 1,
+            credito.cta_salida, credito.cta_entrada
+        )
+        mock_cancelar_deuda_de.assert_not_called()
+
+    def test_si_se_devuelve_mas_de_lo_adeudado_se_invierte_relacion_crediticia(self, credito):
+        Movimiento.crear(
+            'Devolución excesiva', credito.importe + 1,
+            credito.cta_salida, credito.cta_entrada
+        )
+        assert credito.cta_entrada.titular not in credito.cta_salida.titular.deudores.all()
+        assert credito.cta_salida.titular in credito.cta_entrada.titular.deudores.all()
+
+    def test_si_es_un_pago_a_cuenta_no_modifica_relacion_crediticia(self, credito):
+        deudores_tit1 = list(credito.cta_entrada.titular.deudores.all())
+        deudores_tit2 = list(credito.cta_salida.titular.deudores.all())
+        Movimiento.crear(
+            'Pago a cuenta', credito.importe - 1,
+            credito.cta_salida, credito.cta_entrada
+        )
+        assert list(credito.cta_entrada.titular.deudores.all()) == deudores_tit1
+        assert list(credito.cta_salida.titular.deudores.all()) == deudores_tit2

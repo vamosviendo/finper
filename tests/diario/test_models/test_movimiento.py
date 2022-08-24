@@ -1220,7 +1220,6 @@ class TestModelMovimientoMetodoConceptoMovimientoCredito(TestCase):
         )
 
 
-
 class TestModelMovimientoMetodoGestionarTransferencia(TestModelMovimiento):
 
     def setUp(self):
