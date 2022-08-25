@@ -122,3 +122,13 @@ def test_cuenta_credito_solo_puede_moverse_contra_su_contracuenta(
         'de "préstamo entre otro y titular"'
     ):
         mov_no.full_clean()
+
+
+def test_no_se_permite_modificar_movimiento_automatico(credito):
+    contramov = Movimiento.tomar(id=credito.id_contramov)
+    contramov.concepto = 'otro concepto'
+    with pytest.raises(
+            ValidationError,
+            match="No se puede modificar movimiento automático"
+    ):
+        contramov.full_clean()
