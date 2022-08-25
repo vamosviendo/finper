@@ -2,12 +2,56 @@ from datetime import date, timedelta
 from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
+from django.test import TestCase
 
 from diario.models import Cuenta, Movimiento, Titular, Saldo
 from utils import errors
 from utils.helpers_tests import dividir_en_dos_subcuentas
 
-from .test_movimiento import TestModelMovimientoSave
+
+class TestModelMovimiento(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.cuenta1 = Cuenta.crear(
+            nombre='Cuenta titular 1',
+            slug='ct1',
+            fecha_creacion=date(2011, 1, 1)
+        )
+
+
+class TestModelMovimientoSave(TestModelMovimiento):
+    """ Saldos después de setUp:
+        self.cuenta1: 125.0-35+50 = 140
+        self.cuenta2: = -50
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.titular2 = Titular.crear(nombre='Titular 2', titname='tit2')
+        self.cuenta2 = Cuenta.crear(
+            'cuenta 2', 'c2',
+            fecha_creacion=date(2020, 1, 5)
+        )
+        self.cuenta3 = Cuenta.crear(
+            'Cuenta otro titular', 'ct2',
+            titular=self.titular2,
+            fecha_creacion=date(2020, 1, 5)
+        )
+        self.mov1 = Movimiento.crear(
+            'entrada', 125, self.cuenta1, fecha=date(2021, 1, 5))
+        self.mov2 = Movimiento.crear(
+            'salida', 35, None, self.cuenta1, fecha=date(2021, 1, 10))
+        self.mov3 = Movimiento.crear(
+            'traspaso', 50, self.cuenta1, self.cuenta2, fecha=date(2021, 1, 11)
+        )
+
+    def refresh_ctas(self, *args):
+        self.cuenta1.refresh_from_db()
+        self.cuenta2.refresh_from_db()
+        self.cuenta3.refresh_from_db()
+        for arg in args:
+            arg.refresh_from_db()
 
 
 class TestModelMovimientoSaveGeneral(TestModelMovimientoSave):
@@ -207,20 +251,6 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
             -50-35
         )
 
-    def test_modificar_cta_entrada_funciona_en_movimientos_de_traspaso(self):
-        cuenta3 = Cuenta.crear('Cuenta 3', 'c3')
-        self.mov3.cta_entrada = cuenta3
-        self.mov3.save()
-
-        with self.assertRaises(Saldo.DoesNotExist):
-            Saldo.objects.get(cuenta=self.cuenta1, movimiento=self.mov3)
-
-        self.assertEqual(cuenta3.saldo_set.count(), 1)
-        self.assertEqual(
-            cuenta3.saldo_en_mov(self.mov3),
-            50
-        )
-
     def test_modificar_cta_salida_funciona_en_movimientos_de_traspaso(self):
         cuenta3 = Cuenta.crear('Cuenta 3', 'c3')
         self.mov3.cta_salida = cuenta3
@@ -371,7 +401,7 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
     def test_cuenta_de_salida_pasa_a_ser_de_entrada_y_cuenta_nueva_de_salida_en_traspaso(self):
         """ Suma dos veces importe a saldo de vieja cta_salida (ahora
             cta_entrada) al momento del movimiento.
-            Desaparece saldo de nueva cta_salida al momento del movimiento"""
+            Desaparece saldo de cta_salida original al momento del movimiento"""
         cuenta3 = Cuenta.crear('Cuenta corriente', 'cc')
 
         self.mov3.cta_entrada = self.mov3.cta_salida
@@ -390,7 +420,6 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
             cuenta3.saldo_en_mov(self.mov3),
             -50
         )
-
     def test_si_cta_salida_pasa_a_entrada_y_aparece_cta_salida_nueva_en_traspaso_se_actualiza_importe_de_saldos_posteriores_de_las_tres_cuentas(self):
         cuenta3 = Cuenta.crear('cta3', 'c3', fecha_creacion=date(2021, 1, 1))
         mov4 = Movimiento.crear(
