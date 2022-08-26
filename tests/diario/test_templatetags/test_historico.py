@@ -6,7 +6,7 @@ from diario.models import Cuenta, Movimiento
 from diario.templatetags.historico import historico
 
 
-@patch('diario.models.Cuenta.saldo_historico', autospec=True)
+@patch('diario.models.Cuenta.saldo_en_mov', autospec=True)
 class TestHistorico(TestCase):
 
     def setUp(self):

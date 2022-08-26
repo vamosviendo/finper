@@ -78,16 +78,12 @@ class Cuenta(PolymorphModel):
             return self.ultimo_saldo.importe
         except AttributeError:
             return 0
-
-    def saldo_historico(self, movimiento):
+    
+    def saldo_en_mov(self, movimiento):
         try:
             return Saldo.tomar(cuenta=self, movimiento=movimiento).importe
-
         except Saldo.DoesNotExist:
             return 0
-
-    def saldo_en_mov(self, movimiento):
-        return Saldo.tomar(cuenta=self, movimiento=movimiento).importe
 
     def recalcular_saldos_entre(self,
                                 pos_desde=Posicion(orden_dia=0),

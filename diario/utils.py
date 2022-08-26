@@ -11,5 +11,5 @@ def verificar_saldos():
 
 def saldo_general_historico(mov):
     return sum([
-        cuenta.saldo_historico(mov) for cuenta in Cuenta.filtro(cta_madre=None)
+        cuenta.saldo_en_mov(mov) for cuenta in Cuenta.filtro(cta_madre=None)
     ])

@@ -42,7 +42,7 @@ class MiDateField(models.DateField):
 
 class MovimientoCleaner:
 
-    def __init__(self, mov: "Movimiento", viejo: "Movimiento"):
+    def __init__(self, mov: Movimiento, viejo: Movimiento):
         self.mov = mov
         self.viejo = viejo
 
