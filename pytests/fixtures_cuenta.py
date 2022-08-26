@@ -25,6 +25,18 @@ def cuenta_2(titular: Titular, fecha: date) -> CuentaInteractiva:
 
 
 @pytest.fixture
+def cuenta_3(titular: Titular, fecha: date) -> CuentaInteractiva:
+    return Cuenta.crear(
+        nombre='cuenta 3', slug='c3', titular=titular, fecha_creacion=fecha)
+
+
+@pytest.fixture
+def cuenta_4(titular: Titular, fecha: date) -> CuentaInteractiva:
+    return Cuenta.crear(
+        nombre='cuenta 4', slug='c4', titular=titular, fecha_creacion=fecha)
+
+
+@pytest.fixture
 def cuenta_con_saldo(titular: Titular, fecha: date) -> CuentaInteractiva:
     return Cuenta.crear(
         nombre='cuenta_con_saldo', slug='ccs', saldo=100, titular=titular, fecha_creacion=fecha)

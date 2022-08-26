@@ -23,7 +23,7 @@ def entrada(cuenta: CuentaInteractiva, fecha: date) -> Movimiento:
 @pytest.fixture
 def salida(cuenta: CuentaInteractiva, fecha: date) -> Movimiento:
     return Movimiento.crear(
-        concepto='Salida', importe=100, cta_salida=cuenta, fecha=fecha
+        concepto='Salida', importe=115, cta_salida=cuenta, fecha=fecha
     )
 
 
@@ -33,6 +33,13 @@ def traspaso(cuenta: CuentaInteractiva, cuenta_2: CuentaInteractiva, fecha: date
         concepto='Traspaso', importe=2,
         cta_entrada=cuenta, cta_salida=cuenta_2,
         fecha=fecha
+    )
+
+
+@pytest.fixture
+def entrada_otra_cuenta(cuenta_2: CuentaInteractiva, fecha: date) -> Movimiento:
+    return Movimiento.crear(
+        concepto='Entrada', importe=486, cta_entrada=cuenta_2, fecha=fecha
     )
 
 
@@ -74,7 +81,7 @@ def entrada_tardia(cuenta: CuentaInteractiva, fecha_tardia: date) -> Movimiento:
 def credito(cuenta: CuentaInteractiva, cuenta_ajena: CuentaInteractiva, fecha: date) -> Movimiento:
     return Movimiento.crear(
         concepto='Crédito',
-        importe=100,
+        importe=128,
         cta_entrada=cuenta,
         cta_salida=cuenta_ajena,
         fecha=fecha,
@@ -85,7 +92,7 @@ def credito(cuenta: CuentaInteractiva, cuenta_ajena: CuentaInteractiva, fecha: d
 def donacion(cuenta: CuentaInteractiva, cuenta_ajena: CuentaInteractiva, fecha: date) -> Movimiento:
     return Movimiento.crear(
         concepto='Donación',
-        importe=100,
+        importe=253,
         cta_entrada=cuenta,
         cta_salida=cuenta_ajena,
         fecha=fecha,
