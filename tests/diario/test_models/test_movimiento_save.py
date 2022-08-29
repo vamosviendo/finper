@@ -420,6 +420,7 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
             cuenta3.saldo_en_mov(self.mov3),
             -50
         )
+
     def test_si_cta_salida_pasa_a_entrada_y_aparece_cta_salida_nueva_en_traspaso_se_actualiza_importe_de_saldos_posteriores_de_las_tres_cuentas(self):
         cuenta3 = Cuenta.crear('cta3', 'c3', fecha_creacion=date(2021, 1, 1))
         mov4 = Movimiento.crear(
@@ -824,7 +825,7 @@ class TestModelMovimientoSaveModificaCuentas(TestModelMovimientoSave):
         movimiento = Movimiento.crear(
             'Préstamo', 30, self.cuenta3, self.cuenta1)
         contramov = Movimiento.tomar(id=movimiento.id_contramov)
-        cta_deudora = contramov.cta_salida
+        cta_acreedora = contramov.cta_entrada
 
         movimiento.cta_salida = cuenta4
         movimiento.save()

@@ -4,6 +4,11 @@ import pytest
 
 
 @pytest.fixture
+def fecha_temprana() -> date:
+    return date(2008, 4, 27)
+
+
+@pytest.fixture
 def fecha_anterior() -> date:
     return date(2010, 9, 10)
 

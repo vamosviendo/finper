@@ -6,6 +6,14 @@ from diario.models import CuentaInteractiva, Movimiento
 
 
 @pytest.fixture
+def entrada_temprana(cuenta: CuentaInteractiva, fecha_temprana: date) -> Movimiento:
+    return Movimiento.crear(
+        concepto='Entrada temprana', importe=47,
+        cta_entrada=cuenta, fecha=fecha_temprana
+    )
+
+
+@pytest.fixture
 def entrada_anterior(cuenta: CuentaInteractiva, fecha_anterior: date) -> Movimiento:
     return Movimiento.crear(
         concepto='Entrada anterior', importe=3,
