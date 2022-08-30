@@ -701,3 +701,99 @@ class TestSaveCambiaFechaConCtaAcumulativa:
         with pytest.raises(ValidationError):
             mov1.full_clean()
             mov1.save()
+
+
+def cambiar_orden(mov: Movimiento, orden: int):
+    mov.orden_dia = orden
+    mov.full_clean()
+    mov.save()
+
+
+@pytest.mark.parametrize('sentido', ['entrada', 'salida'])
+class TestSaveCambiaOrdenDia:
+    def test_si_cambia_orden_dia_a_un_orden_posterior_resta_importe_de_saldos_intermedios_de_cuenta(
+            self, sentido, entrada, salida, traspaso, entrada_otra_cuenta, request):
+        mov, s, cuenta = inferir_fixtures(sentido, request)
+        saldo_traspaso = cuenta.saldo_en_mov(traspaso)
+
+        cambiar_orden(mov, 3)
+
+        assert cuenta.saldo_en_mov(traspaso) == saldo_traspaso - s*mov.importe
+
+    def test_si_cambia_orden_dia_a_un_orden_posterior_saldo_de_cuenta_en_mov_cambiado_toma_valor_de_ultimo_saldo_anterior(
+            self, sentido, entrada, salida, traspaso, entrada_otra_cuenta, request):
+        mov, _, cuenta = inferir_fixtures(sentido, request)
+        saldo_entrada_otra_cuenta = cuenta.saldo_en_mov(entrada_otra_cuenta)
+
+        cambiar_orden(mov, 3)
+
+        assert cuenta.saldo_en_mov(mov) == saldo_entrada_otra_cuenta
+
+    def test_si_cambia_orden_dia_a_un_orden_posterior_no_modifica_importe_de_saldos_de_cuenta_posteriores_a_nueva_ubicacion_de_movimiento(
+            self, sentido, entrada, salida, traspaso, entrada_otra_cuenta, request):
+        mov, _, cuenta = inferir_fixtures(sentido, request)
+        saldo_entrada_otra_cuenta = cuenta.saldo_en_mov(entrada_otra_cuenta)
+
+        cambiar_orden(mov, 2)
+
+        assert cuenta.saldo_en_mov(entrada_otra_cuenta) == saldo_entrada_otra_cuenta
+
+    def test_si_cambia_orden_dia_a_un_orden_posterior_no_modifica_importes_de_saldos_de_cta_entrada_anteriores_a_ubicacion_anterior_de_movimiento(
+            self, sentido, request):
+        contrasentido = 'salida' if sentido == 'entrada' else 'entrada'
+        mov_anterior = request.getfixturevalue(contrasentido)
+        mov, _, cuenta = inferir_fixtures(sentido, request)
+        request.getfixturevalue('traspaso')
+        request.getfixturevalue('entrada_otra_cuenta')
+        saldo_mov_anterior = cuenta.saldo_en_mov(mov_anterior)
+
+        cambiar_orden(mov, 3)
+
+        assert cuenta.saldo_en_mov(mov_anterior) == saldo_mov_anterior
+
+    def test_si_cambia_orden_dia_a_un_orden_anterior_suma_importe_a_saldos_intermedios_de_cuenta(
+            self, sentido, traspaso, entrada_otra_cuenta, entrada, salida, request):
+        mov, s, cuenta = inferir_fixtures(sentido, request)
+        saldo_entrada_otra_cuenta = cuenta.saldo_en_mov(entrada_otra_cuenta)
+
+        cambiar_orden(mov, 0)
+
+        for m in (traspaso, entrada_otra_cuenta, entrada, salida):
+            m.refresh_from_db(fields=['orden_dia'])
+
+        assert cuenta.saldo_en_mov(entrada_otra_cuenta) == saldo_entrada_otra_cuenta + s*mov.importe
+
+    def test_si_cambia_orden_dia_a_un_orden_anterior_suma_importe_del_movimiento_a_importe_del_nuevo_ultimo_saldo_anterior_de_cuenta(
+            self, sentido, traspaso, entrada_otra_cuenta, entrada, salida, request):
+        mov, s, cuenta = inferir_fixtures(sentido, request)
+
+        cambiar_orden(mov, 1)
+
+        assert cuenta.saldo_en_mov(mov) == cuenta.saldo_en_mov(traspaso) + s*mov.importe
+
+    def test_si_cambia_orden_dia_a_un_orden_anterior_y_no_hay_saldo_anterior_de_cta_entrada_asigna_importe_del_movimiento_a_saldo_de_cuenta_en_nueva_ubicacion_del_movimiento(
+            self, sentido, traspaso, entrada_otra_cuenta, entrada, salida, request):
+        mov, s, cuenta = inferir_fixtures(sentido, request)
+
+        cambiar_orden(mov, 0)
+
+        assert cuenta.saldo_en_mov(mov) == s*mov.importe
+
+    def test_si_cambia_orden_dia_a_un_orden_anterior_no_modifica_importes_de_saldos_de_cuenta_anteriores_a_nueva_ubicacion_de_movimiento(
+            self, sentido, traspaso, entrada_otra_cuenta, entrada, salida, request):
+        mov, _, cuenta = inferir_fixtures(sentido, request)
+        saldo_traspaso = cuenta.saldo_en_mov(traspaso)
+
+        cambiar_orden(mov, 1)
+
+        assert cuenta.saldo_en_mov(traspaso) == saldo_traspaso
+
+    def test_si_cambia_orden_dia_a_un_orden_anterior_no_modifica_importes_de_saldos_de_cuenta_posteriores_a_ubicacion_anterior_de_movimiento(
+            self, sentido, traspaso, entrada_otra_cuenta, request):
+        contrasentido = 'salida' if sentido == 'entrada' else 'entrada'
+        mov, _, cuenta = inferir_fixtures(sentido, request)
+        mov_posterior = request.getfixturevalue(contrasentido)
+        saldo_mov_posterior = cuenta.saldo_en_mov(mov_posterior)
+
+        cambiar_orden(mov, 0)
+        assert cuenta.saldo_en_mov(mov_posterior) == saldo_mov_posterior
