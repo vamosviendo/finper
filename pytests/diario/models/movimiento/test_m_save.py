@@ -797,3 +797,30 @@ class TestSaveCambiaOrdenDia:
 
         cambiar_orden(mov, 0)
         assert cuenta.saldo_en_mov(mov_posterior) == saldo_mov_posterior
+
+
+@pytest.mark.parametrize('sentido', ['entrada', 'salida'])
+class TestSaveCambiaFechaYOrdenDia:
+
+    @pytest.mark.parametrize('_otro_mov, otro_orden', [
+        ('salida_posterior', 1),
+        ('entrada_anterior', 0),
+    ])
+    def test_si_cambia_fecha_y_orden_dia_a_modifica_saldos_intermedios_de_cuenta(
+            self, sentido, _otro_mov, otro_orden, request):
+        mov, s, cuenta = inferir_fixtures(sentido, request)
+        otro_mov = request.getfixturevalue(_otro_mov)
+        s2 = signo(_otro_mov == 'entrada_anterior')
+
+        saldo_otro_mov = cuenta.saldo_en_mov(otro_mov)
+
+        mov.fecha = otro_mov.fecha
+        mov.orden_dia = otro_orden
+        mov.full_clean()
+        mov.save(mantiene_orden_dia=True)
+
+        otro_mov.refresh_from_db(fields=['orden_dia'])
+
+        assert \
+            cuenta.saldo_en_mov(otro_mov) == \
+            saldo_otro_mov + s*s2*mov.importe
