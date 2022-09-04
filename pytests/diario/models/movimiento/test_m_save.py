@@ -824,3 +824,62 @@ class TestSaveCambiaFechaYOrdenDia:
         assert \
             cuenta.saldo_en_mov(otro_mov) == \
             saldo_otro_mov + s*s2*mov.importe
+
+
+@pytest.mark.parametrize('sentido', ['entrada', 'salida'])
+class TestSaveCambiaImporteYFecha:
+
+    @pytest.mark.parametrize('_otro_mov', [
+        'salida_posterior',
+        'entrada_anterior',
+    ])
+    def test_si_cambia_importe_y_fecha_resta_o_suma_importe_viejo_a_saldos_intermedios_de_cuenta_entre_antigua_y_nueva_posicion(
+            self, sentido, _otro_mov, entrada_temprana, importe_alto, request):
+        mov, s, cuenta = inferir_fixtures(sentido, request)
+        otro_mov = request.getfixturevalue(_otro_mov)
+        s2 = signo(_otro_mov == 'entrada_anterior')
+        saldo_otro_mov = cuenta.saldo_en_mov(otro_mov)
+        # si pasa a fecha posterior, resta/suma importe nuevo
+        # si pasa a fecha anterior, resta/suma importe original
+        importe = mov.importe if _otro_mov == 'salida_posterior' else importe_alto
+
+        mov.fecha = otro_mov.fecha - s2*timedelta(1)
+        mov.importe = importe_alto
+        mov.full_clean()
+        mov.save()
+
+        assert cuenta.saldo_en_mov(otro_mov) == saldo_otro_mov + s*s2*importe
+
+    @pytest.mark.parametrize('_otro_mov', [
+        'salida_posterior',
+        'entrada_anterior',
+    ])
+    def test_si_cambia_importe_y_fecha_resta_o_suma_importe_nuevo_del_movimiento_a_importe_del_nuevo_ultimo_saldo_anterior_de_cuenta(
+            self, sentido, _otro_mov, entrada_temprana, importe_alto, request):
+        mov, s, cuenta = inferir_fixtures(sentido, request)
+        otro_mov = request.getfixturevalue(_otro_mov)
+        mov_anterior = otro_mov if _otro_mov == 'salida_posterior' else entrada_temprana
+        s2 = signo(_otro_mov == 'salida_posterior')
+
+        mov.fecha = otro_mov.fecha + s2*timedelta(1)
+        mov.importe = importe_alto
+        mov.full_clean()
+        mov.save()
+
+        assert cuenta.saldo_en_mov(mov) == cuenta.saldo_en_mov(mov_anterior) + s*importe_alto
+
+    def test_si_cambia_importe_y_fecha_a_fecha_anterior_a_todos_los_movimientos_de_la_cta_salida_genera_nuevo_saldo_con_importe_del_movimiento(
+            self, sentido, entrada_anterior, importe_alto, request):
+        mov, s, cuenta = inferir_fixtures(sentido, request)
+
+        mov.fecha = entrada_anterior.fecha - timedelta(1)
+        mov.importe = importe_alto
+        mov.full_clean()
+        mov.save()
+
+        assert cuenta.saldo_en_mov(mov)
+
+        self.assertEqual(
+            Saldo.tomar(cuenta=self.cuenta2, movimiento=self.mov2).importe,
+            -38
+        )
