@@ -868,18 +868,59 @@ class TestSaveCambiaImporteYFecha:
 
         assert cuenta.saldo_en_mov(mov) == cuenta.saldo_en_mov(mov_anterior) + s*importe_alto
 
-    def test_si_cambia_importe_y_fecha_a_fecha_anterior_a_todos_los_movimientos_de_la_cta_salida_genera_nuevo_saldo_con_importe_del_movimiento(
-            self, sentido, entrada_anterior, importe_alto, request):
-        mov, s, cuenta = inferir_fixtures(sentido, request)
 
-        mov.fecha = entrada_anterior.fecha - timedelta(1)
+@pytest.mark.parametrize('sentido', ['entrada', 'salida'])
+class TestSaveCambiaImporteYOrdenDia:
+
+    def test_si_cambia_importe_y_orden_dia_a_un_orden_posterior_resta_importe_viejo_de_saldos_intermedios_de_cuenta(
+            self, sentido, entrada, salida, traspaso, entrada_otra_cuenta, importe_alto, request):
+        mov, s, cuenta = inferir_fixtures(sentido, request)
+        saldo_traspaso = cuenta.saldo_en_mov(traspaso)
+        importe = mov.importe
+
         mov.importe = importe_alto
+        mov.orden_dia = traspaso.orden_dia + 1
         mov.full_clean()
         mov.save()
 
-        assert cuenta.saldo_en_mov(mov)
+        assert cuenta.saldo_en_mov(traspaso) == saldo_traspaso - s*importe
 
-        self.assertEqual(
-            Saldo.tomar(cuenta=self.cuenta2, movimiento=self.mov2).importe,
-            -38
-        )
+    def test_si_cambia_importe_y_orden_dia_a_un_orden_posterior_suma_importe_nuevo_del_movimiento_a_importe_del_nuevo_ultimo_saldo_anterior_de_cta_entrada(
+            self, sentido, entrada, salida, traspaso, entrada_otra_cuenta, importe_alto, request):
+        mov, s, cuenta = inferir_fixtures(sentido, request)
+
+        mov.importe = importe_alto
+        mov.orden_dia = traspaso.orden_dia + 1
+        mov.full_clean()
+        mov.save()
+
+        assert \
+            cuenta.saldo_en_mov(mov) == \
+            cuenta.saldo_en_mov(traspaso) + s*importe_alto
+
+    def test_si_cambia_orden_dia_a_un_orden_anterior_suma_importe_nuevo_a_saldos_intermedios_de_cuenta(
+            self, sentido, traspaso, entrada_otra_cuenta, entrada, salida, importe_alto, request):
+        mov, s, cuenta = inferir_fixtures(sentido, request)
+        saldo_entrada_otra_cuenta = cuenta.saldo_en_mov(entrada_otra_cuenta)
+
+        mov.importe = importe_alto
+        mov.orden_dia = entrada_otra_cuenta.orden_dia - 1
+        mov.full_clean()
+        mov.save()
+        traspaso.refresh_from_db()
+        entrada_otra_cuenta.refresh_from_db()
+
+        assert \
+            cuenta.saldo_en_mov(entrada_otra_cuenta) == \
+            saldo_entrada_otra_cuenta + s*importe_alto
+
+    def test_si_cambia_importe_y_orden_dia_a_un_orden_anterior_suma_importe_nuevo_del_movimiento_a_importe_del_nuevo_ultimo_saldo_anterior_de_cta_entrada(
+            self, sentido, traspaso, entrada_otra_cuenta, entrada, salida, importe_alto, request):
+        mov, s, cuenta = inferir_fixtures(sentido, request)
+
+        mov.importe = importe_alto
+        mov.orden_dia = entrada_otra_cuenta.orden_dia
+        mov.full_clean()
+        mov.save()
+
+        assert cuenta.saldo_en_mov(mov) == cuenta.saldo_en_mov(traspaso) + s*importe_alto
