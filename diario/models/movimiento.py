@@ -93,8 +93,8 @@ class MovimientoCleaner:
                     )
 
             if cuenta and cuenta.es_acumulativa:
-                cuenta = cuenta.como_subclase()
                 # No se permite cambiar una cuenta del movimiento por una cuenta acumulativa
+                cuenta = cuenta.como_subclase()
                 if cuenta_vieja is None or cuenta.pk != cuenta_vieja.pk:
                     raise errors.ErrorCuentaEsAcumulativa(
                         errors.CUENTA_ACUMULATIVA_AGREGADA
@@ -103,6 +103,18 @@ class MovimientoCleaner:
                     raise ValidationError(
                         message=errors.CUENTA_ACUMULATIVA_EN_MOVIMIENTO
                     )
+
+                # Movimiento de traspaso de saldo no puede tener fecha anterior
+                # a la del último movimiento de la cuenta como interactiva.
+                try:
+                    ultimo_mov = [x for x in cuenta.movs() if not x.convierte_cuenta][-1]
+                    if self.mov.fecha < ultimo_mov.fecha:
+                        raise ValidationError(
+                            f"Fecha de conversión de cuenta no puede ser anterior a la "
+                            f"de su último movimiento ({ultimo_mov.fecha})"
+                        )
+                except IndexError:
+                    pass
 
     def restricciones_con_cuenta_credito(self):
         for campo_cuenta in campos_cuenta:
@@ -232,21 +244,6 @@ class Movimiento(MiModel):
         else:
             cleaning.no_se_permite_modificar_movimientos_automaticos()
             cleaning.restricciones_con_cuenta_acumulativa()
-            # TODO: refactor
-            # Movimiento de traspaso de saldo no puede tener fecha anterior a
-            # la del último movimiento de la cuenta como interactiva.
-            if self.convierte_cuenta:
-                for cuenta in (self.cta_entrada, self.cta_salida):
-                    if cuenta and cuenta.es_acumulativa:
-                        try:
-                            ultimo_mov = [x for x in cuenta.movs() if not x.convierte_cuenta][-1]
-                            if self.fecha < ultimo_mov.fecha:
-                                raise ValidationError(
-                                    f"Fecha de conversión de cuenta no puede ser anterior a la "
-                                    f"de su último movimiento ({ultimo_mov.fecha})"
-                                )
-                        except IndexError:
-                            pass
 
         cleaning.restricciones_con_cuenta_credito()
 

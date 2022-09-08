@@ -236,6 +236,8 @@ def test_no_puede_asignarse_fecha_posterior_a_conversion_en_mov_con_cuenta_acumu
     mov.fecha = cuenta.fecha_conversion + timedelta(1)
     with pytest.raises(
             errors.ErrorCuentaEsAcumulativa,
-            match=f'{errors.FECHA_POSTERIOR_A_CONVERSION}{cuenta.fecha_conversion + timedelta(1)}'
+            match=f'{errors.FECHA_POSTERIOR_A_CONVERSION}'
+                  f'{cuenta.fecha_conversion} '
+                  rf'\(es {cuenta.fecha_conversion + timedelta(1)}\)'
     ):
         mov.full_clean()
