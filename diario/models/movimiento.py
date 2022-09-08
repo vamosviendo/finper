@@ -80,7 +80,7 @@ class MovimientoCleaner:
                         errors.CAMBIO_IMPORTE_CON_CUENTA_ACUMULATIVA
                     )
                 # No se permite cambiar una cuenta acumulativa de un movimiento
-                if cuenta.pk != cuenta_vieja.pk:
+                if not cuenta or cuenta.pk != cuenta_vieja.pk:
                     raise errors.ErrorCuentaEsAcumulativa(
                         errors.CUENTA_ACUMULATIVA_RETIRADA
                     )
@@ -232,6 +232,21 @@ class Movimiento(MiModel):
         else:
             cleaning.no_se_permite_modificar_movimientos_automaticos()
             cleaning.restricciones_con_cuenta_acumulativa()
+            # TODO: refactor
+            # Movimiento de traspaso de saldo no puede tener fecha anterior a
+            # la del último movimiento de la cuenta como interactiva.
+            if self.convierte_cuenta:
+                for cuenta in (self.cta_entrada, self.cta_salida):
+                    if cuenta and cuenta.es_acumulativa:
+                        try:
+                            ultimo_mov = [x for x in cuenta.movs() if not x.convierte_cuenta][-1]
+                            if self.fecha < ultimo_mov.fecha:
+                                raise ValidationError(
+                                    f"Fecha de conversión de cuenta no puede ser anterior a la "
+                                    f"de su último movimiento ({ultimo_mov.fecha})"
+                                )
+                        except IndexError:
+                            pass
 
         cleaning.restricciones_con_cuenta_credito()
 
@@ -320,7 +335,6 @@ class Movimiento(MiModel):
             ):
                 for campo_cuenta in campos_cuenta:
                     self._actualizar_saldos_cuenta(campo_cuenta, mantiene_orden_dia)
-
                 self._actualizar_fechas_conversion()
 
     def refresh_from_db(self, using: str = None, fields: List[str] = None):
