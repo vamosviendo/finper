@@ -93,3 +93,14 @@ def test_con_force_true_no_da_error_si_se_intenta_eliminar_contramovimientos(con
     except errors.ErrorMovimientoAutomatico:
         raise AssertionError(
             'No se eliminó contramovimiento a pesar de force=True')
+
+
+@pytest.mark.parametrize('sentido', ['entrada', 'salida'])
+def test_no_puede_eliminarse_movimiento_con_cuenta_acumulativa(
+        sentido, request):
+    mov = request.getfixturevalue(f'{sentido}_con_ca')
+    with pytest.raises(
+            errors.ErrorCuentaEsAcumulativa,
+            match=errors.MOVIMIENTO_CON_CA_ELIMINADO
+    ):
+        mov.delete()

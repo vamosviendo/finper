@@ -3,6 +3,7 @@ from datetime import date
 import pytest
 
 from diario.models import CuentaInteractiva, Movimiento
+from utils.helpers_tests import dividir_en_dos_subcuentas
 
 
 @pytest.fixture
@@ -83,6 +84,34 @@ def entrada_tardia(cuenta: CuentaInteractiva, fecha_tardia: date) -> Movimiento:
     return Movimiento.crear(
         concepto='Entrada tardía', importe=80, cta_entrada=cuenta, fecha=fecha_tardia
     )
+
+
+@pytest.fixture
+def entrada_con_ca(entrada: Movimiento) -> Movimiento:
+    dividir_en_dos_subcuentas(entrada.cta_entrada)
+    entrada.refresh_from_db()
+    return entrada
+
+
+@pytest.fixture
+def salida_con_ca(salida: Movimiento) -> Movimiento:
+    dividir_en_dos_subcuentas(salida.cta_salida)
+    salida.refresh_from_db()
+    return salida
+
+
+@pytest.fixture
+def traspaso_con_cta_entrada_a(traspaso: Movimiento) -> Movimiento:
+    dividir_en_dos_subcuentas(traspaso.cta_entrada)
+    traspaso.refresh_from_db()
+    return traspaso
+
+
+@pytest.fixture
+def traspaso_con_cta_salida_a(traspaso: Movimiento) -> Movimiento:
+    dividir_en_dos_subcuentas(traspaso.cta_salida)
+    traspaso.refresh_from_db()
+    return traspaso
 
 
 @pytest.fixture
