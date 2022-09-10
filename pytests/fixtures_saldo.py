@@ -24,6 +24,11 @@ def saldo_salida(salida: Movimiento) -> Saldo:
 
 
 @pytest.fixture
+def saldo_cuenta_2(traspaso: Movimiento) -> Saldo:
+    return traspaso.saldo_cs()
+
+
+@pytest.fixture
 def saldo_traspaso_cuenta(traspaso: Movimiento) -> Saldo:
     return traspaso.saldo_ce()
 
@@ -39,10 +44,10 @@ def saldo_posterior(traspaso_posterior: Movimiento) -> Saldo:
 
 
 @pytest.fixture
-def saldo_tardio(entrada_tardia: Movimiento) -> Saldo:
-    return entrada_tardia.saldo_ce()
+def saldo_posterior_cuenta_2(entrada_posterior_otra_cuenta: Movimiento) -> Saldo:
+    return entrada_posterior_otra_cuenta.saldo_ce()
 
 
 @pytest.fixture
-def saldo_cuenta_2(traspaso: Movimiento) -> Saldo:
-    return traspaso.saldo_cs()
+def saldo_tardio(entrada_tardia: Movimiento) -> Saldo:
+    return entrada_tardia.saldo_ce()
