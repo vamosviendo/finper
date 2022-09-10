@@ -4,6 +4,11 @@ from diario.models import Movimiento, Saldo
 
 
 @pytest.fixture
+def saldo_temprano(entrada_temprana: Movimiento) -> Saldo:
+    return entrada_temprana.saldo_ce()
+
+
+@pytest.fixture
 def saldo_anterior(entrada_anterior: Movimiento) -> Saldo:
     return entrada_anterior.saldo_ce()
 
