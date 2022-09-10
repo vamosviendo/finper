@@ -2,14 +2,9 @@ from datetime import timedelta, date
 from typing import Tuple
 
 import pytest
-from django.core.exceptions import ValidationError
 
 from diario.models import Movimiento, Cuenta, CuentaInteractiva, Saldo
-from utils.helpers_tests import dividir_en_dos_subcuentas
-
-
-def signo(condicion: bool) -> int:
-    return 1 if condicion else -1
+from utils.helpers_tests import dividir_en_dos_subcuentas, signo
 
 
 def inferir_fixtures(sentido: str, request) -> Tuple[Movimiento, int, CuentaInteractiva]:
