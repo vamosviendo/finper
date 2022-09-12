@@ -5,11 +5,6 @@ from typing import List, Dict, Any
 import pytest
 
 
-def pytest_collection_modifyitems(items):
-    for item in items:
-        item.add_marker(pytest.mark.django_db)
-
-
 @pytest.fixture
 def dicts_subcuentas() -> List[Dict[str, Any]]:
     return [
