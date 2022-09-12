@@ -1,3 +1,5 @@
+from random import randint
+
 import pytest
 
 
@@ -19,3 +21,8 @@ def importe_alto():
 @pytest.fixture
 def importe_negativo():
     return -100
+
+
+@pytest.fixture
+def importe_aleatorio() -> float:
+    return randint(0, 100000) / 100
