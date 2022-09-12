@@ -1,15 +1,4 @@
-import pytest
-
 from diario.models import Titular, CuentaInteractiva
-
-
-@pytest.fixture
-def limpiar_titulares():
-    for tit in Titular.todes():
-        tit.delete()
-
-
-pytestmark = pytest.mark.usefixtures('limpiar_titulares')
 
 
 def test_guarda_y_recupera_titulares():
