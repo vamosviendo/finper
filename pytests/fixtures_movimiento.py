@@ -37,6 +37,13 @@ def salida(cuenta: CuentaInteractiva, fecha: date) -> Movimiento:
 
 
 @pytest.fixture
+def entrada_cuenta_ajena(cuenta_ajena: CuentaInteractiva, fecha: date) -> Movimiento:
+    return Movimiento.crear(
+        concepto='Entrada cuenta ajena', importe=849, cta_entrada=cuenta_ajena, fecha=fecha
+    )
+
+
+@pytest.fixture
 def traspaso(cuenta: CuentaInteractiva, cuenta_2: CuentaInteractiva, fecha: date) -> Movimiento:
     return Movimiento.crear(
         concepto='Traspaso', importe=2,
