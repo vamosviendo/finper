@@ -25,4 +25,4 @@ def importe_negativo():
 
 @pytest.fixture
 def importe_aleatorio() -> float:
-    return round(randint(0, 100000) / 100, 2)
+    return randint(0, 100000) / 100

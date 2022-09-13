@@ -2,6 +2,7 @@ from datetime import timedelta, date
 from typing import Tuple
 
 import pytest
+from pytest import approx
 
 from diario.models import Movimiento, Cuenta, CuentaInteractiva, Saldo
 from utils.helpers_tests import dividir_en_dos_subcuentas, signo
@@ -158,7 +159,7 @@ class TestSaveModificaImporte:
 
         assert \
             cuenta.saldo_en_mov(mov) == \
-            saldo_cuenta - importe_mov*s + importe_aleatorio*s
+            approx(saldo_cuenta - importe_mov*s + importe_aleatorio*s)
 
     def test_en_mov_de_traspaso_modifica_saldo_de_ambas_cuentas(
             self, traspaso, importe_aleatorio):
@@ -173,8 +174,12 @@ class TestSaveModificaImporte:
         saldo_ce.refresh_from_db(fields=['_importe'])
         saldo_cs.refresh_from_db(fields=['_importe'])
 
-        assert saldo_ce.importe == importe_saldo_ce - importe_mov + importe_aleatorio
-        assert saldo_cs.importe == importe_saldo_cs + importe_mov - importe_aleatorio
+        assert saldo_ce.importe == approx(
+            importe_saldo_ce - importe_mov + importe_aleatorio
+        )
+        assert saldo_cs.importe == approx(
+            importe_saldo_cs + importe_mov - importe_aleatorio
+        )
 
     @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
     def test_actualiza_saldos_posteriores_de_cta_entrada(
@@ -188,7 +193,7 @@ class TestSaveModificaImporte:
 
         assert \
             cuenta.saldo_en_mov(salida_posterior) == \
-            saldo_posterior_cuenta - importe_mov*s + importe_aleatorio*s
+            approx(saldo_posterior_cuenta - importe_mov*s + importe_aleatorio*s)
 
     def test_en_mov_traspaso_con_contramov_cambia_saldo_en_las_cuentas_del_contramov(
             self, credito, importe_aleatorio):
@@ -202,8 +207,12 @@ class TestSaveModificaImporte:
         credito.importe = importe_aleatorio
         credito.save()
 
-        assert cta_deudora.saldo == saldo_cd + importe_mov - importe_aleatorio
-        assert cta_acreedora.saldo == saldo_ca - importe_mov + importe_aleatorio
+        assert cta_deudora.saldo == approx(
+            saldo_cd + importe_mov - importe_aleatorio
+        )
+        assert cta_acreedora.saldo == approx(
+            saldo_ca - importe_mov + importe_aleatorio
+        )
 
 
 class TestSaveCambiaCuentas:
@@ -538,7 +547,11 @@ class TestSaveCambiaImporteYCuentas:
         assert cuenta_3.saldo_en_mov(traspaso) == s*importe_aleatorio
         assert \
             cuenta_no_cambiada.saldo_en_mov(traspaso) == \
-            saldo_anterior_cuenta_no_cambiada + s*importe_anterior - s*importe_aleatorio
+            approx(
+                saldo_anterior_cuenta_no_cambiada +
+                s*importe_anterior -
+                s*importe_aleatorio
+            )
 
 
 def cambiar_fecha(mov: Movimiento, fecha: date):
@@ -883,7 +896,9 @@ class TestSaveCambiaImporteYFecha:
         mov.full_clean()
         mov.save()
 
-        assert cuenta.saldo_en_mov(mov) == cuenta.saldo_en_mov(mov_anterior) + s*importe_aleatorio
+        assert cuenta.saldo_en_mov(mov) == approx(
+            cuenta.saldo_en_mov(mov_anterior) + s*importe_aleatorio
+        )
 
 
 @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
@@ -912,8 +927,8 @@ class TestSaveCambiaImporteYOrdenDia:
         mov.save()
 
         assert \
-            cuenta.saldo_en_mov(mov) == \
-            cuenta.saldo_en_mov(traspaso) + s*importe_aleatorio
+            cuenta.saldo_en_mov(mov), 2 == \
+            approx(cuenta.saldo_en_mov(traspaso) + s*importe_aleatorio)
 
     def test_si_cambia_orden_dia_a_un_orden_anterior_suma_importe_nuevo_a_saldos_intermedios_de_cuenta(
             self, sentido, traspaso, entrada_otra_cuenta, entrada, salida, importe_aleatorio, request):
@@ -929,7 +944,7 @@ class TestSaveCambiaImporteYOrdenDia:
 
         assert \
             cuenta.saldo_en_mov(entrada_otra_cuenta) == \
-            saldo_entrada_otra_cuenta + s*importe_aleatorio
+            approx(saldo_entrada_otra_cuenta + s*importe_aleatorio)
 
     def test_si_cambia_importe_y_orden_dia_a_un_orden_anterior_suma_importe_nuevo_del_movimiento_a_importe_del_nuevo_ultimo_saldo_anterior_de_cta_entrada(
             self, sentido, traspaso, entrada_otra_cuenta, entrada, salida, importe_aleatorio, request):
@@ -940,7 +955,9 @@ class TestSaveCambiaImporteYOrdenDia:
         mov.full_clean()
         mov.save()
 
-        assert cuenta.saldo_en_mov(mov) == cuenta.saldo_en_mov(traspaso) + s*importe_aleatorio
+        assert cuenta.saldo_en_mov(mov) == approx(
+            cuenta.saldo_en_mov(traspaso) + s*importe_aleatorio
+        )
 
 
 @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
