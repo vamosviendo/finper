@@ -1,4 +1,4 @@
-from unittest.mock import ANY
+from unittest.mock import ANY, MagicMock
 
 import pytest
 
@@ -19,8 +19,12 @@ def salida_sin_saldo(salida: Movimiento) -> Movimiento:
     return salida
 
 
-def test_crea_saldo_para_cuenta(entrada_sin_saldo, cuenta, mocker):
-    mock_crear = mocker.patch('diario.models.Saldo.crear')
+@pytest.fixture
+def mock_crear(mocker) -> MagicMock:
+    return mocker.patch('diario.models.Saldo.crear')
+
+
+def test_crea_saldo_para_cuenta(entrada_sin_saldo, cuenta, mock_crear):
     Saldo.generar(entrada_sin_saldo, cuenta)
     mock_crear.assert_called_once_with(
         cuenta=cuenta,
@@ -29,8 +33,7 @@ def test_crea_saldo_para_cuenta(entrada_sin_saldo, cuenta, mocker):
     )
 
 
-def test_con_salida_True_invierte_signo_importe(entrada_sin_saldo, cuenta, mocker):
-    mock_crear = mocker.patch('diario.models.Saldo.crear')
+def test_con_salida_True_invierte_signo_importe(entrada_sin_saldo, cuenta, mock_crear):
     Saldo.generar(entrada_sin_saldo, cuenta, salida=True)
     mock_crear.assert_called_once_with(
         cuenta=ANY,
@@ -49,10 +52,10 @@ def test_da_error_si_cuenta_no_pertenece_a_movimiento(entrada_sin_saldo, cuenta_
 
 @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
 def test_si_no_recibe_cuenta_y_salida_False_toma_cta_entrada_del_movimiento_como_cuenta(
-        sentido, mocker, request):
+        sentido, request):
     mov = request.getfixturevalue(f'{sentido}_sin_saldo')
     es_entrada = sentido == 'entrada'
-    mock_crear = mocker.patch('diario.models.Saldo.crear')
+    mock_crear = request.getfixturevalue('mock_crear')
     Saldo.generar(mov, salida=not es_entrada)
     mock_crear.assert_called_once_with(
         movimiento=ANY,
@@ -63,12 +66,12 @@ def test_si_no_recibe_cuenta_y_salida_False_toma_cta_entrada_del_movimiento_como
 
 @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
 def test_importe_de_saldo_creado_es_igual_a_suma_del_importe_del_movimiento_y_el_ultimo_saldo_anterior_de_la_cuenta(
-        entrada_anterior, sentido, cuenta, mocker, request):
+        entrada_anterior, sentido, cuenta, request):
     importe_saldo_anterior = Saldo.objects.get(cuenta=cuenta, movimiento=entrada_anterior).importe
     mov = request.getfixturevalue(f'{sentido}_sin_saldo')
     es_entrada = sentido == 'entrada'
     s = signo(es_entrada)
-    mock_crear = mocker.patch('diario.models.Saldo.crear')
+    mock_crear = request.getfixturevalue('mock_crear')
     Saldo.generar(mov, cuenta, salida=not es_entrada)
     mock_crear.assert_called_once_with(
         cuenta=ANY,
@@ -79,11 +82,11 @@ def test_importe_de_saldo_creado_es_igual_a_suma_del_importe_del_movimiento_y_el
 
 @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
 def test_importe_de_saldo_creado_no_suma_importe_de_saldo_correspondiente_a_movimiento_posterior_preexistente(
-        salida_posterior, sentido, cuenta, mocker, request):
+        salida_posterior, sentido, cuenta, request):
     mov = request.getfixturevalue(f'{sentido}_sin_saldo')
     es_entrada = sentido == 'entrada'
     s = signo(es_entrada)
-    mock_crear = mocker.patch('diario.models.Saldo.crear')
+    mock_crear = request.getfixturevalue('mock_crear')
     Saldo.generar(mov, cuenta, salida=not es_entrada)
 
     mock_crear.assert_called_once_with(

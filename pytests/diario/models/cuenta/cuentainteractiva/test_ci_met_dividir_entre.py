@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from unittest.mock import MagicMock
 
 import pytest
 from django.core.exceptions import ValidationError
@@ -7,14 +8,17 @@ from diario.models import Cuenta
 from utils.errors import ErrorMovimientoPosteriorAConversion, ErrorDeSuma
 
 
-def test_verifica_saldo_cuenta_antes_de_dividirla(mocker, cuenta, dicts_subcuentas):
-    mock_saldo_ok = mocker.patch('diario.models.cuenta.CuentaInteractiva.saldo_ok')
+@pytest.fixture
+def mock_saldo_ok(mocker) -> MagicMock:
+    return mocker.patch('diario.models.cuenta.CuentaInteractiva.saldo_ok')
+
+
+def test_verifica_saldo_cuenta_antes_de_dividirla(mock_saldo_ok, cuenta, dicts_subcuentas):
     cuenta.dividir_entre(*dicts_subcuentas)
     mock_saldo_ok.assert_called_once()
 
 
-def test_da_error_si_saldo_no_ok(mocker, cuenta, dicts_subcuentas):
-    mock_saldo_ok = mocker.patch('diario.models.cuenta.CuentaInteractiva.saldo_ok')
+def test_da_error_si_saldo_no_ok(mock_saldo_ok, cuenta, dicts_subcuentas):
     mock_saldo_ok.return_value = False
     with pytest.raises(
             ValidationError,
