@@ -89,7 +89,20 @@ def traspaso_posterior(cuenta: CuentaInteractiva, cuenta_2: CuentaInteractiva, f
 @pytest.fixture
 def entrada_tardia(cuenta: CuentaInteractiva, fecha_tardia: date) -> Movimiento:
     return Movimiento.crear(
-        concepto='Entrada tardía', importe=80, cta_entrada=cuenta, fecha=fecha_tardia
+        concepto='Entrada tardía',
+        importe=80,
+        cta_entrada=cuenta,
+        fecha=fecha_tardia,
+    )
+
+
+@pytest.fixture
+def salida_tardia_tercera_cuenta(cuenta_3: CuentaInteractiva, fecha_tardia: date) -> Movimiento:
+    return Movimiento.crear(
+        concepto='Salida tardía tercera cuenta',
+        importe=9648.22,
+        cta_salida=cuenta_3,
+        fecha=fecha_tardia,
     )
 
 
