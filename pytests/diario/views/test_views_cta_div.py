@@ -9,14 +9,8 @@ from diario.models import Cuenta, CuentaInteractiva
 from diario.views import cta_div_view
 
 
-def patch_save():
-    mock = MagicMock()
-    mock.return_value.save.return_value.get_absolute_url.return_value = 'stub'
-    return mock
-
-
 @pytest.fixture
-def mock_form_subcuentas(mocker) -> MagicMock:
+def mock_form_subcuentas(mocker, patch_save) -> MagicMock:
     return mocker.patch('diario.views.FormSubcuentas', new_callable=patch_save)
 
 
