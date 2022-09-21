@@ -270,9 +270,7 @@ class CuentaInteractiva(Cuenta):
             return None
 
     def corregir_saldo(self):
-        saldo = self.ultimo_saldo
-        saldo.importe = self.total_movs()
-        saldo.save()
+        self.recalcular_saldos_entre(Posicion(self.fecha_creacion))
 
     def agregar_mov_correctivo(self):
         if self.saldo_ok():
