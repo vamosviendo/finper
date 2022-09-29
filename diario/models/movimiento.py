@@ -193,6 +193,16 @@ class Movimiento(MiModel):
             string += f' -{self.cta_salida}'
         return string
 
+    def str_cuentas(self):
+        result = ""
+        if self.cta_entrada:
+            result += f"+{self.cta_entrada.slug} "
+        if self.cta_salida:
+            result += f"-{self.cta_salida.slug}"
+        else:
+            result = result[:-1]
+        return result
+
     @classmethod
     def crear(cls,
               concepto: str,
