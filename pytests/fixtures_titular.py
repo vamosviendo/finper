@@ -5,6 +5,8 @@ from diario.models import Titular
 
 @pytest.fixture
 def titular() -> Titular:
+    # TODO: cuando eliminemos el titular por defecto, retirar la línea siguiente
+    Titular.todes().delete()
     return Titular.crear(titname='titular', nombre='Titular')
 
 

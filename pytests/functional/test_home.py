@@ -17,7 +17,7 @@ def hijos(classname: str, lista_elementos: List[MiWebElement | WebElement]) -> L
 
 
 def test_home(
-        browser, titular,
+        browser, titular, otro_titular,
         cuenta, cuenta_2, cuenta_3,
         entrada, traspaso, entrada_posterior_otra_cuenta):
     # vamos a la página principal
@@ -28,15 +28,16 @@ def test_home(
     titulares = browser.esperar_elementos("class_div_titular")
     assert len(titulares) == 2
     nombres = hijos("class_div_nombre_titular", titulares)
-    assert nombres[0] == "Titular por defecto"
-    assert nombres[1] == titular.nombre
+    assert nombres[0] == titular.nombre
+    assert nombres[1] == otro_titular.nombre
 
-    # El capital del primer titular es 0, ya que no tiene cuentas
+    # Vemos que cada titular de la sección de titulares muestra el capital del
+    # titular
     capitales = hijos("class_capital_titular", titulares)
-    assert capitales[0] == '0,00'
-    assert capitales[1] == float_str_coma(
+    assert capitales[0] == float_str_coma(
         cuenta.saldo + cuenta_2.saldo + cuenta_3.saldo
     )
+    assert capitales[1] == '0,00'
 
     # Vemos tres cuentas en la sección de cuentas, con nombres correspondientes
     # al slug de cada una de las cuentas existentes en mayúsculas.

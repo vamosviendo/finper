@@ -1,5 +1,9 @@
+from __future__ import annotations
+
 from selenium.webdriver.common.by import By
 
+from diario.models import Titular, Cuenta
+from utils.numeros import float_str_coma
 from vvsteps.driver import MiFirefox
 
 
@@ -17,6 +21,9 @@ class FinperFirefox(MiFirefox):
     def cliquear_en_cuenta(self, cuenta):
         self.esperar_elemento(cuenta.slug.upper(), By.LINK_TEXT).click()
 
+    def cliquear_en_titular(self, titular):
+        self.esperar_elemento(titular.nombre, By.LINK_TEXT).click()
+
     def esperar_movimiento(self, columna, contenido):
         movimientos = self.esperar_elementos('class_row_mov', By.CLASS_NAME)
         try:
@@ -30,7 +37,7 @@ class FinperFirefox(MiFirefox):
                 f'Contenido {contenido} no encontrado en columna {columna}'
             )
 
-    def comparar_movimientos(self, cuenta):
+    def comparar_movimientos_de(self, ente: Cuenta | Titular):
         """ Dada una cuenta, comparar sus movimientos con los que aparecen en
             la página. """
         conceptos_mov = [
@@ -39,14 +46,43 @@ class FinperFirefox(MiFirefox):
         )]
         assert conceptos_mov == list(
             reversed(
-                [x.concepto for x in cuenta.movs()]
+                [x.concepto for x in ente.movs()]
             )
         )
 
-    def comparar_titular(self, cuenta):
-        """ Dada una cuenta, comparar su titular con el que aparece en la
+    def comparar_titular(self, titular: Titular):
+        """ Dado un titular, comparar su nombre con el que aparece en la
             página. """
         nombre_titular = self.esperar_elemento(
             'class_div_nombre_titular', By.CLASS_NAME
         ).text.strip()
-        assert nombre_titular == cuenta.titular.nombre
+        assert nombre_titular == titular.nombre
+
+    def comparar_titular_de(self, cuenta: Cuenta):
+        """ Dada una cuenta, comparar su titular con el que aparece en la
+            página. """
+        self.comparar_titular(cuenta.titular)
+
+    def comparar_capital_de(self, titular: Titular):
+        """ Dado un titular, comparar su capital con el que aparece en la
+        página. """
+        cap = self.esperar_elemento(f'id_capital_{titular.titname}').text.strip()
+        assert \
+            cap == float_str_coma(titular.capital), \
+            f'{cap} != {float_str_coma(titular.capital)}'
+
+    def comparar_cuentas_de(self, titular: Titular):
+        """ Dado un titular, comparar sus cuentas con las que aparecen en
+            la página. """
+        divs_cuenta = [
+            x.text.strip()
+            for x in self.esperar_elementos('class_link_cuenta')
+        ]
+        slugs_cuenta = [
+            x.slug.upper()
+            for x in titular.cuentas_interactivas().order_by('slug')
+        ]
+
+        assert \
+            divs_cuenta == slugs_cuenta, \
+            f'\n{divs_cuenta} != \n{slugs_cuenta}'
