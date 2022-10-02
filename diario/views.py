@@ -209,7 +209,7 @@ class TitDetalleView(DetailView):
         context.update({
             'subcuentas': self.object.cuentas_interactivas().order_by('slug'),
             'saldo_pag': self.object.capital,
-            'movimientos': self.object.movimientos(),
+            'movimientos': self.object.movs(),
         })
         return context
 

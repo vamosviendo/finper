@@ -5,17 +5,17 @@ from utils.helpers_tests import dividir_en_dos_subcuentas
 def test_devuelve_solo_movimientos_relacionados_con_cuentas_del_titular(
         titular, entrada, salida, entrada_cuenta_ajena, donacion):
     for mov in (entrada, salida, donacion):
-        assert mov in titular.movimientos()
-    assert entrada_cuenta_ajena not in titular.movimientos()
+        assert mov in titular.movs()
+    assert entrada_cuenta_ajena not in titular.movs()
 
 
 def test_incluye_movimientos_de_cuentas_convertidas_en_acumulativas(titular, cuenta, entrada):
     dividir_en_dos_subcuentas(cuenta, saldo=15)
-    assert entrada in titular.movimientos()
+    assert entrada in titular.movs()
 
 
 def test_incluye_una_sola_vez_traspaso_entre_cuentas_del_mismo_titular(titular, traspaso):
-    assert len(titular.movimientos()) == 1
+    assert len(titular.movs()) == 1
 
 
 def test_no_incluye_movimientos_de_subcuentas_de_otro_titular_de_cuentas_que_eran_del_titular_originalmente(
@@ -41,14 +41,14 @@ def test_no_incluye_movimientos_de_subcuentas_de_otro_titular_de_cuentas_que_era
         cta_salida=sc_ajena
     )
 
-    assert mov_sc_propia in titular.movimientos()
-    assert mov_sc_ajena not in titular.movimientos()
+    assert mov_sc_propia in titular.movs()
+    assert mov_sc_ajena not in titular.movs()
 
 
 def test_devuelve_movimientos_ordenados_por_fecha(
         titular, salida_posterior, entrada_tardia, entrada, entrada_anterior):
     assert \
-        titular.movimientos() == \
+        list(titular.movs()) == \
         [entrada_anterior, entrada, salida_posterior, entrada_tardia]
 
 
@@ -57,5 +57,4 @@ def test_dentro_de_la_fecha_ordena_los_movimientos_por_orden_dia(
     traspaso.orden_dia = 1
     traspaso.save()
 
-    assert titular.movimientos() == [entrada, traspaso, salida]
-
+    assert list(titular.movs()) == [entrada, traspaso, salida]
