@@ -64,9 +64,7 @@ def test_detalle_titular(
     browser.cliquear_en_titular(titular)
 
     # Somos dirigidos a la página de detalle del titular cliqueado
-    assert \
-        reverse('tit_detalle', args=[titular.titname]) == \
-        urlparse(browser.current_url).path
+    browser.assert_url(reverse('tit_detalle', args=[titular.titname]))
 
     # Vemos el nombre del titular encabezando la página
     browser.comparar_titular(titular)

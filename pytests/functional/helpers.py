@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+from urllib.parse import urlparse
+
 from selenium.webdriver.common.by import By
 
 from diario.models import Titular, Cuenta
 from utils.numeros import float_str_coma
 from vvsteps.driver import MiFirefox
+from vvsteps.helpers import esperar
 
 
 class FinperFirefox(MiFirefox):
@@ -17,6 +20,11 @@ class FinperFirefox(MiFirefox):
     # TODO: pasar a MiFirefox
     def ir_a_pag(self, url: str = ''):
         self.get(f"{self.base_url}{url}")
+
+    # TODO: pasar a MiFirefox
+    @esperar
+    def assert_url(self, url):
+        assert url == urlparse(self.current_url).path
 
     def cliquear_en_cuenta(self, cuenta):
         self.esperar_elemento(cuenta.slug.upper(), By.LINK_TEXT).click()
