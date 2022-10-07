@@ -23,8 +23,14 @@ class FinperFirefox(MiFirefox):
 
     # TODO: pasar a MiFirefox
     @esperar
-    def assert_url(self, url):
+    def assert_url(self, url: str):
         assert url == urlparse(self.current_url).path
+
+    # TODO: pasar a MiFirefox
+    def completar_form(self, **kwargs: str):
+        for key, value in kwargs.items():
+            self.completar(f"id_{key}", value)
+        self.pulsar()
 
     def cliquear_en_cuenta(self, cuenta):
         self.esperar_elemento(cuenta.slug.upper(), By.LINK_TEXT).click()
@@ -75,9 +81,7 @@ class FinperFirefox(MiFirefox):
         """ Dado un titular, comparar su capital con el que aparece en la
         página. """
         cap = self.esperar_elemento(f'id_capital_{titular.titname}').text.strip()
-        assert \
-            cap == float_str_coma(titular.capital), \
-            f'{cap} != {float_str_coma(titular.capital)}'
+        assert cap == float_str_coma(titular.capital)
 
     def comparar_cuentas_de(self, titular: Titular):
         """ Dado un titular, comparar sus cuentas con las que aparecen en
@@ -91,6 +95,4 @@ class FinperFirefox(MiFirefox):
             for x in titular.cuentas_interactivas().order_by('slug')
         ]
 
-        assert \
-            divs_cuenta == slugs_cuenta, \
-            f'\n{divs_cuenta} != \n{slugs_cuenta}'
+        assert divs_cuenta == slugs_cuenta
