@@ -560,8 +560,7 @@ def veo_cosas(context, num, entidades):
     context.test.assertEqual(len(elementos), num)
 
 
-@then('el campo "{campo}" del formulario tiene fecha de hoy '
-      'como valor por defecto')
+@then('el campo "{campo}" del formulario tiene fecha de hoy como valor por defecto')
 def campo_muestra_fecha_de_hoy(context, campo):
     campo_fecha = context.browser.esperar_elemento(f'id_{campo}')
     context.test.assertEqual(campo_fecha.get_attribute("value"), hoy())
