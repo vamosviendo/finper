@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from urllib.parse import urlparse
 
+from django.urls import reverse
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 
 from diario.models import Titular, Cuenta
 from utils.numeros import float_str_coma
-from vvsteps.driver import MiFirefox
+from vvsteps.driver import MiFirefox, MiWebElement
 from vvsteps.helpers import esperar
 
 
@@ -26,6 +28,17 @@ class FinperFirefox(MiFirefox):
     def assert_url(self, url: str):
         assert url == urlparse(self.current_url).path
 
+    # TODO: pasar a MiFirefox o eliminar si no se la usa
+    @esperar
+    def esperar_que_no_este(self, elemento, criterio=By.ID):
+        try:
+            self.find_element(criterio, elemento)
+            raise AssertionError(
+                f'El elemento {elemento}, que no debería existir, existe'
+            )
+        except NoSuchElementException:
+            pass
+
     # TODO: pasar a MiFirefox
     def completar_form(self, **kwargs: str):
         for key, value in kwargs.items():
@@ -38,7 +51,7 @@ class FinperFirefox(MiFirefox):
     def cliquear_en_titular(self, titular):
         self.esperar_elemento(titular.nombre, By.LINK_TEXT).click()
 
-    def esperar_movimiento(self, columna, contenido):
+    def esperar_movimiento(self, columna: str, contenido: str) -> MiWebElement:
         movimientos = self.esperar_elementos('class_row_mov', By.CLASS_NAME)
         try:
             return next(
@@ -47,7 +60,7 @@ class FinperFirefox(MiFirefox):
                     == contenido
             )
         except StopIteration:
-            raise ValueError(
+            raise NoSuchElementException(
                 f'Contenido {contenido} no encontrado en columna {columna}'
             )
 
@@ -96,3 +109,8 @@ class FinperFirefox(MiFirefox):
         ]
 
         assert divs_cuenta == slugs_cuenta
+
+    def crear_movimiento(self, **kwargs):
+        self.ir_a_pag(reverse('mov_nuevo'))
+        self.completar_form(**kwargs)
+
