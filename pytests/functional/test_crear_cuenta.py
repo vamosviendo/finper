@@ -4,7 +4,7 @@ from django.urls import reverse
 
 # TODO: Agregar comentarios
 
-def test_ir_a_crear_cuenta(browser):
+def test_ir_a_crear_cuenta(browser, titular):
     """ Cuando cliqueamos en el botón "cuenta nueva" de la página principal,
         somos dirigidos a la página correspondiente"""
     browser.ir_a_pag()
