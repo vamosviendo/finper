@@ -5,4 +5,4 @@ register = template.Library()
 
 @register.simple_tag
 def historico(cuenta, mov):
-    return f'{cuenta.saldo_historico(mov):.2f}'.replace('.', ',')
+    return f'{cuenta.saldo_en_mov(mov):.2f}'.replace('.', ',')

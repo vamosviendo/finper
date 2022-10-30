@@ -1,5 +1,6 @@
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import QuerySet, Q
 
 from diario.settings_app import TITULAR_PRINCIPAL
 from vvmodel.models import MiModel
@@ -19,13 +20,12 @@ class Titular(MiModel):
         ids = [c.id for c in self.cuentas.all() if c.es_interactiva]
         return self.cuentas.filter(id__in=ids)
 
-    def movimientos(self):
-        lista_movimientos = list()
-        for cuenta in self.cuentas.all():
-            lista_movimientos += cuenta.movs_directos()
-        lista_movimientos = list(set(lista_movimientos))
-        lista_movimientos.sort(key=lambda x: (x.fecha, x.orden_dia))
-        return lista_movimientos
+    def movs(self) -> QuerySet:
+        Movimiento = self.get_related_class('cuentas').get_related_class('entradas')
+        return Movimiento.filtro(
+            Q(cta_entrada__in=self.cuentas.all()) |
+            Q(cta_salida__in=self.cuentas.all())
+        )
 
     def clean(self):
         super().clean()

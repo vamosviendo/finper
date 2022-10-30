@@ -132,11 +132,6 @@ class Saldo(MiModel):
             self.posicion,
         )
 
-    def sumar_a_este_y_posteriores(self, importe):
-        self._actualizar_posteriores(importe)
-        self.importe += importe
-        self.save()
-
     @staticmethod
     def _anterior_a(posicion, cuenta):
         return Saldo.anteriores_a(cuenta, posicion).last()

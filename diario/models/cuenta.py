@@ -78,16 +78,12 @@ class Cuenta(PolymorphModel):
             return self.ultimo_saldo.importe
         except AttributeError:
             return 0
-
-    def saldo_historico(self, movimiento):
+    
+    def saldo_en_mov(self, movimiento):
         try:
             return Saldo.tomar(cuenta=self, movimiento=movimiento).importe
-
         except Saldo.DoesNotExist:
             return 0
-
-    def saldo_en_mov(self, movimiento):
-        return Saldo.tomar(cuenta=self, movimiento=movimiento).importe
 
     def recalcular_saldos_entre(self,
                                 pos_desde=Posicion(orden_dia=0),
@@ -261,40 +257,20 @@ class CuentaInteractiva(Cuenta):
 
     @property
     def contracuenta(self):
+        """ En cuentas crédito, devuelve la cuenta crédito del titular
+            de la cuenta contrapartida en el movimiento de crédito, o viceversa.
+            En cuentas normales, devuelve None
+        """
         if self._contracuenta:
             return self._contracuenta
-
         try:
             return self._cuentacontra
         except CuentaInteractiva._cuentacontra.RelatedObjectDoesNotExist:
+            # no es cuenta crédito
             return None
 
-    @contracuenta.setter
-    def contracuenta(self, cuenta):
-        self._contracuenta = cuenta
-
-    def cargar_saldo(self, importe, fecha=None):
-        fecha = fecha or date.today()
-
-        if importe > 0:
-            Movimiento.crear(
-                concepto='Carga de saldo',
-                importe=importe,
-                cta_entrada=self,
-                fecha=fecha
-            )
-        elif importe < 0:
-            Movimiento.crear(
-                concepto='Carga de saldo',
-                importe=-importe,
-                cta_salida=self,
-                fecha=fecha
-            )
-
     def corregir_saldo(self):
-        saldo = self.ultimo_saldo
-        saldo.importe = self.total_movs()
-        saldo.save()
+        self.recalcular_saldos_entre(Posicion(self.fecha_creacion))
 
     def agregar_mov_correctivo(self):
         if self.saldo_ok():
@@ -523,12 +499,8 @@ class CuentaAcumulativa(Cuenta):
         return sum([subc.saldo for subc in self.subcuentas.all()])
 
     def clean(self, *args, **kwargs):
-        if self.cta_madre in self.arbol_de_subcuentas():
-            raise errors.ErrorDependenciaCircular(
-                f'Cuenta madre {self.cta_madre.nombre.capitalize()} está '
-                f'entre las subcuentas de {self.nombre.capitalize()} o entre '
-                f'las de una de sus subcuentas'
-            )
+
+        super().clean(*args, **kwargs)
         movs_normales = self.movs_no_conversion()
         fecha_ultimo_mov_normal = max([m.fecha for m in movs_normales]) \
             if movs_normales.count() > 0 else date(1, 1, 1)
@@ -571,4 +543,4 @@ class CuentaAcumulativa(Cuenta):
 
     def agregar_subcuenta(self, nombre, slug, titular=None):
         titular = titular or self.titular
-        Cuenta.crear(nombre, slug, cta_madre=self, titular=titular)
+        return Cuenta.crear(nombre, slug, cta_madre=self, titular=titular)

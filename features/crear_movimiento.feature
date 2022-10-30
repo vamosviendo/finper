@@ -128,12 +128,13 @@ Escenario: Crear traspaso entre cuentas de distintos titulares con deuda
     Y veo que el segundo elemento dado "movimientos" no incluye un "link" de clase "mod_mov"
 
     Cuando voy a la página "tit_detalle" del titular "Tito Gómez"
+    Y me detengo
 
-    Entonces no veo una cuenta con nombre "_tito-juan" en la grilla
+    Entonces no veo una cuenta con slug "_tito-juan" en la grilla
 
     Cuando voy a la página "tit_detalle" del titular "Juan Juánez"
 
-    Entonces no veo una cuenta con nombre "_juan-tito" en la grilla
+    Entonces no veo una cuenta con slug "_juan-tito" en la grilla
 
 
 Escenario: Crear traspaso entre cuentas de distintos titulares sin generar deuda

@@ -121,16 +121,16 @@
         </td>
 
         <td class="text-right
-                  {% include './snippets/color_importe.html' %}
+                  {{ mov.str_cuentas }}
                   numero
                   class_td_importe"
-            title="{% include './snippets/cuentas_mov.html' %}"
+            title="{{ mov.str_cuentas }}"
         >
           {{ mov.importe|floatformat:2 }}
         </td>
 
         <td class="small class_td_cuentas">
-          {% include './snippets/cuentas_mov.html' %}
+          {{ mov.str_cuentas }}
         </td>
 
         <td class="text-right numero chico fondo_resaltado class_td_general">
