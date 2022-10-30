@@ -16,5 +16,11 @@ test:
 pyunittest:
 	pytest tests/diario
 
+pyut:
+	pytest pytests/diario
+
+pyft:
+	pytest pytests/functional
+
 test-model:
 	python manage.py test tests.diario.test_models
