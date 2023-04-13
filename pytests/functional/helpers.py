@@ -15,8 +15,8 @@ from vvsteps.helpers import esperar
 class FinperFirefox(MiFirefox):
 
     # TODO: ¿pasar a MiFirefox?
-    def __init__(self, base_url=None):
-        super().__init__()
+    def __init__(self, base_url=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.base_url = base_url
 
     # TODO: pasar a MiFirefox
