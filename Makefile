@@ -2,25 +2,25 @@
 #     cd deploy_tools && git push && fab
 
 migrate:
-	python manage.py migrate
+	docker-composer run web python manage.py migrate
 
 migrations:
-	python manage.py makemigrations
+	docker-compose run web python manage.py makemigrations
 
 pytest:
-	pytest pytests
+	docker-compose run web pytest pytests
 
 test:
 	python manage.py test tests.diario
 
 pyunittest:
-	pytest tests/diario
+	docker-compose run web pytest tests/diario
 
 pyut:
-	pytest pytests/diario
+	docker-compose run web pytest pytests/diario
 
 pyft:
-	pytest pytests/functional
+	docker-compose run web pytest pytests/functional
 
 test-model:
-	python manage.py test tests.diario.test_models
+	docker-compose run web python manage.py test tests.diario.test_models
