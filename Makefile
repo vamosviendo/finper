@@ -7,6 +7,9 @@ migrate:
 migrations:
 	docker-compose run web python manage.py makemigrations
 
+server:
+	docker-compose run web python manage.py runserver
+
 pytest:
 	docker-compose run web pytest pytests
 
