@@ -2,9 +2,10 @@ from typing import List
 
 import pytest
 from django.urls import reverse
+from django.utils.formats import number_format
 from selenium.common.exceptions import NoSuchElementException
 
-from diario.models import Cuenta, Titular
+from diario.models import Cuenta
 from utils.numeros import float_str_coma
 from utils.tiempo import hoy
 from vvsteps.driver import MiWebElement
@@ -29,7 +30,7 @@ def test_crear_movimiento(browser, cuenta):
         "fecha": "2008-08-05",
         "concepto": "Entrada",
         "cta_entrada": "cuenta",
-        "importe": "50,00"
+        "importe": "50.00"
     }
 
     browser.ir_a_pag(reverse("mov_nuevo"))
@@ -55,10 +56,13 @@ def test_crear_movimiento(browser, cuenta):
     # el formulario de carga
     mov = movs[0]
 
-    for campo in ["fecha", "concepto", "importe"]:
+    for campo in ["fecha", "concepto"]:
         assert \
             mov.find_element_by_class_name(f"class_td_{campo}").text == \
             valores[campo]
+    importe_localizado = number_format(float(valores["importe"]), 2)
+    assert mov.find_element_by_class_name(f"class_td_importe").text == \
+        importe_localizado
     cuentas = mov.find_element_by_class_name("class_td_cuentas").text
     assert cuentas == f'+{cuenta.slug}'
 
@@ -66,10 +70,10 @@ def test_crear_movimiento(browser, cuenta):
     # general de la página reflejan el cambio provocado por el nuevo movimiento
     assert \
         browser.esperar_elemento(f'id_saldo_cta_{cuenta.slug}').text == \
-        valores["importe"]
+        importe_localizado
     assert \
         browser.esperar_elemento('id_div_importe_saldo_pag').text == \
-        valores["importe"]
+        importe_localizado
 
 
 def test_cuentas_acumulativas_no_aparecen_entre_las_opciones_de_cuenta(
