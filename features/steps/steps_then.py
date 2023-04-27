@@ -13,7 +13,7 @@ from vvsteps.consts import CARDINALES
 from diario.models import Cuenta, Titular
 from utils import errors
 from utils.tiempo import hoy
-from utils.numeros import float_str_coma
+from utils.numeros import float_format
 from utils.texto import truncar
 from vvsteps.helpers import table_to_str, fijar_atributo
 """ Steps en el archivo:
@@ -113,7 +113,7 @@ def subcuentas_de_detalle_cuenta_coinciden_con(context, cuenta):
             titulos[i], fila['nombre'].lower(),
             f"El nombre {fila['nombre']} no coincide con {titulos[i]}."
         )
-        saldo = float_str_coma(fila['saldo'])
+        saldo = float_format(fila['saldo'])
         context.test.assertEqual(
             saldos[i], saldo,
             f"El saldo de {fila['nombre']} es {saldos[i]}, no {saldo}."

@@ -6,7 +6,7 @@ from django.utils.formats import number_format
 from selenium.common.exceptions import NoSuchElementException
 
 from diario.models import Cuenta
-from utils.numeros import float_str_coma
+from utils.numeros import float_format
 from utils.tiempo import hoy
 from vvsteps.driver import MiWebElement
 
@@ -128,7 +128,7 @@ def test_crear_creditos_o_devoluciones(
         assert celdas_contramov[2] == f"de {emisor.nombre} a {receptor.nombre}"
 
         # - el mismo importe que el movimiento creado
-        assert celdas_mov[3] == celdas_contramov[3] == float_str_coma(importe)
+        assert celdas_mov[3] == celdas_contramov[3] == float_format(importe)
 
         # - dos cuentas generadas automáticamente a partir de los titulares,
         #   con la cuenta del titular de la cuenta de entrada del movimiento
@@ -159,7 +159,7 @@ def test_crear_creditos_o_devoluciones(
             f"préstamo entre {emisor.titname} y {receptor.titname}"
         assert \
             div_cuenta.find_element_by_class_name("class_saldo_cuenta").text == \
-            float_str_coma(saldo)
+            float_format(saldo)
 
         # Si vamos a la página de detalles del titular de la cuenta de entrada,
         # vemos entre sus cuentas la cuenta generada automáticamente que lo
@@ -174,7 +174,7 @@ def test_crear_creditos_o_devoluciones(
                 f"préstamo entre {receptor.titname} y {emisor.titname}"
             assert \
                 div_cuenta.find_element_by_class_name("class_saldo_cuenta").text == \
-                float_str_coma(-saldo)
+                float_format(-saldo)
         else:
             with pytest.raises(NoSuchElementException):
                 browser.esperar_elemento(f"id_div_cta_{slug_cta_deudora}")
@@ -262,7 +262,7 @@ def test_crear_traspaso_entre_titulares_sin_deuda(browser, cuenta, cuenta_ajena)
 
     # Y vemos que el capital del emisor disminuyó en un importe igual al del
     # movimiento que creamos
-    assert capital_emisor == float_str_coma(cuenta_ajena.titular.capital + 30)
+    assert capital_emisor == float_format(cuenta_ajena.titular.capital + 30)
 
     # Lo mismo con el titular de la cuenta de entrada.
     browser.ir_a_pag(reverse("tit_detalle", args=[cuenta.titular.titname]))
@@ -274,4 +274,4 @@ def test_crear_traspaso_entre_titulares_sin_deuda(browser, cuenta, cuenta_ajena)
     assert \
         cuenta_credito not in cuentas_pag, \
         f"Cuenta {cuenta_credito}, que no debería existir, existe"
-    assert capital_receptor == float_str_coma(cuenta.titular.capital - 30)
+    assert capital_receptor == float_format(cuenta.titular.capital - 30)

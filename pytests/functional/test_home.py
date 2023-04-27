@@ -5,7 +5,7 @@ from typing import List
 from selenium.webdriver.remote.webelement import WebElement
 
 from diario.utils import saldo_general_historico
-from utils.numeros import float_str_coma
+from utils.numeros import float_format
 from vvsteps.driver import MiWebElement
 
 
@@ -34,7 +34,7 @@ def test_home(
     # Vemos que cada titular de la sección de titulares muestra el capital del
     # titular
     capitales = hijos("class_capital_titular", titulares)
-    assert capitales[0] == float_str_coma(
+    assert capitales[0] == float_format(
         cuenta.saldo + cuenta_2.saldo + cuenta_3.saldo
     )
     assert capitales[1] == '0,00'
@@ -51,8 +51,8 @@ def test_home(
     # El saldo de cada una de las cuentas corresponde a los movimientos en los
     # que participó
     saldos = hijos("class_saldo_cuenta", cuentas)
-    assert saldos[0] == float_str_coma(entrada.importe + traspaso.importe)
-    assert saldos[1] == float_str_coma(
+    assert saldos[0] == float_format(entrada.importe + traspaso.importe)
+    assert saldos[1] == float_format(
         entrada_posterior_otra_cuenta.importe - traspaso.importe)
     assert saldos[2] == '0,00'
 
@@ -70,6 +70,6 @@ def test_home(
         mov = objs_mov[i]
         assert fechas[i] == mov.fecha.strftime('%Y-%m-%d')
         assert conceptos[i] == mov.concepto
-        assert importes[i] == float_str_coma(mov.importe)
+        assert importes[i] == float_format(mov.importe)
         assert cuentas[i] == mov.str_cuentas()
-        assert generales[i] == float_str_coma(saldo_general_historico(mov))
+        assert generales[i] == float_format(saldo_general_historico(mov))

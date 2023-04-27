@@ -7,7 +7,7 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 
 from diario.models import Titular, Cuenta
-from utils.numeros import float_str_coma
+from utils.numeros import float_format
 from vvsteps.driver import MiFirefox, MiWebElement
 from vvsteps.helpers import esperar
 
@@ -94,7 +94,7 @@ class FinperFirefox(MiFirefox):
         """ Dado un titular, comparar su capital con el que aparece en la
         página. """
         cap = self.esperar_elemento(f'id_capital_{titular.titname}').text.strip()
-        assert cap == float_str_coma(titular.capital)
+        assert cap == float_format(titular.capital)
 
     def comparar_cuentas_de(self, titular: Titular):
         """ Dado un titular, comparar sus cuentas con las que aparecen en
