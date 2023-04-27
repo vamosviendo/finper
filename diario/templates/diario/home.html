@@ -1,8 +1,28 @@
-{% extends 'diario/base_contenido.html' %}
+{% extends 'diario/base.html' %}
 {% load static %}
 {% load historico_general %}
+{% block extra-css %}
+<link rel="stylesheet" href="{% static '/diario/css/home.css' %}">
+{% endblock extra-css %}
 
-{% block titulo_pag %}Saldo general{% endblock titulo_pag %}
+{% block contenido %}
+<div class="navbar" id="titulares">
+  <a href="#">Todos</a>
+  {% for titular in titulares %}
+    <div class="subnav">
+      <button class="subnavbtn">{{ titular.nombre }}</button>
+      <div class="subnav-content">
+        {% for cuenta in titular.cuentas.all %}
+          <a href="#">{{ cuenta.nombre }}</a>
+        {% endfor %}
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock contenido %}
+
+{% comment %} Distribución anterior basada en base_contenido.html {% endcomment %}
+{% comment %}
 {% block importe_saldo_pag %}
   {{saldo_gral|floatformat:2}}
 {% endblock importe_saldo_pag %}
@@ -16,3 +36,4 @@
 {% block general %}
   {% historico_general mov %}
 {% endblock general %}
+{% endcomment %}

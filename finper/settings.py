@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'usuarios',
     'vvmodel',
     'behave_django',
+    'utils',
 ]
 
 MIDDLEWARE = [
