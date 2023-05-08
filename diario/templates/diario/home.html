@@ -52,13 +52,20 @@
 </div>
 
 <div class="div-lista div-detalles-cuenta">
-  <table>
+  <table class="menu">
     {% for cuenta in subcuentas %}
-    <tr>
-      <td>{{ cuenta.saldo }}</td>
-      <td>{{ cuenta.ultimo_saldo }}</td>
-      <td>{{ cuenta.tiene_madre }}</td>
-    </tr>
+      <tr>
+        <td>{{ cuenta.saldo }}</td>
+        <td>{{ cuenta.ultimo_saldo }}</td>
+        <td>{{ cuenta.tiene_madre }}</td>
+      </tr>
+      {% for subcuenta in cuenta.subcuentas.all %}
+        <tr>
+          <td>{{ subcuenta.saldo }}</td>
+          <td>{{ subcuenta.ultimo_saldo }}</td>
+          <td>{{ subcuenta.tiene_madre }}</td>
+        </tr>
+      {% endfor %}
     {% endfor %}
   </table>
 </div>
