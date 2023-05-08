@@ -33,8 +33,24 @@ ul.menu li {
   text-align: center;
 }
 
+table.table-striped tr:nth-child(even) {
+  background-color: #ebb786;
+}
+
+table.planilla {
+  white-space: nowrap;
+  border-collapse: collapse;
+}
+
+table.planilla td {
+  border: 0.05px solid gray;
+  padding-left: 2px;
+  padding-right: 2px;
+}
+
 .numero {
   font-family: monospace;
+  text-align: right;
 }
 
 .chico {

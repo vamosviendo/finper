@@ -64,21 +64,23 @@
 </div>
 
 <section id="id_lista_ult_movs" style="clear: both;">
-  <a href="{% url 'mov_nuevo' %}" id="id_btn_mov_nuevo" class="btn my-3 btn-primary">
+  <a href="{% url 'mov_nuevo' %}" id="id_btn_mov_nuevo">
     Movimiento nuevo
   </a>
-  <div class="table-responsive">
-    <table id="disenio-provisorio" class="table table-sm text-nowrap">
+  <div>
+    <table id="id_table_movimientos" class="table-striped planilla">
       <thead><tr>
         <th id="id_th_fecha ">Fecha</th>
         <th id="id_th_concepto">Concepto</th>
-        <th class="d-none d-lg-table-cell" id="id_th_detalle">Detalle</th>
+        <th id="id_th_detalle">Detalle</th>
         <th id="id_th_importe">Importe</th>
         <th id="id_th_cuentas">Cuentas</th>
         <th class="chico fondo_resaltado" id="id_th_general">General</th>
         {% for subc in subcuentas %}
         <th class="chico" id="id_th_{{ subc.slug }}">
-          {{ subc.slug }}
+          <div class="cell_cuenta scrollable">
+            {{ subc.slug }}
+          </div>
         </th>
         {% endfor %}
         <th>Menu</th>
@@ -86,38 +88,42 @@
 
       {% for mov in movimientos reversed %}
       <tr class="class_row_mov">
-        <td class="class_td_fecha">{{ mov.fecha|date:'Y-m-d' }}</td>
+        <td class="class_td_fecha">
+          <div class="cell_fecha scrollable">
+            {{ mov.fecha|date:'Y-m-d' }}
+          </div>
+        </td>
 
         <td class="class_td_concepto" title="{{ mov.detalle }}">
-          {{ mov.concepto }}
+          <div class="cell_concepto scrollable">
+            {{ mov.concepto }}
+          </div>
         </td>
 
-        <td class="d-none d-lg-table-cell class_td_detalle">
-          {{ mov.detalle|default_if_none:""|truncatechars:50 }}
+        <td class="class_td_detalle">
+          <div class="cell_detalle scrollable">
+            {{ mov.detalle|default_if_none:""|truncatechars:50 }}
+          </div>
         </td>
 
-        <td class="text-right
-                  {{ mov.str_cuentas }}
-                  numero
-                  class_td_importe"
-            title="{{ mov.str_cuentas }}"
-        >
+        <td class="numero class_td_importe" title="{{ mov.str_cuentas }}">
           {{ mov.importe|floatformat:2 }}
         </td>
 
-        <td class="small class_td_cuentas">
-          {{ mov.str_cuentas }}
+        <td class="class_td_cuentas">
+          <div class="cell_cuentas scrollable">
+            {{ mov.str_cuentas }}
+          </div>
         </td>
 
-        <td class="text-right numero chico fondo_resaltado class_td_general">
+        <td class="numero chico fondo_resaltado class_td_general">
           {% with mov as mov %}
             {% block general %}{% endblock general %}
           {% endwith %}
         </td>
 
         {% for subc in subcuentas %}
-        <td class="text-right
-                  {% include './snippets/color_saldos.html' %}
+        <td class="{% include './snippets/color_saldos.html' %}
                   numero chico class_td_saldo class_td_{{ subc.slug }}"
         >
           {% historico subc mov %}
@@ -127,11 +133,11 @@
         <td class="class_td_menu">
           {% if not mov.es_automatico %}
           <a href="{% url 'mov_elim' mov.id %}"
-             class="btn btn-danger btn-sm class_link_elim_mov">
+             class="class_link_elim_mov">
             B
           </a>
           <a href="{% url 'mov_mod' mov.id %}"
-             class="btn btn-primary btn-sm class_link_mod_mov">
+             class="class_link_mod_mov">
             E
           </a>
           {% endif %}
