@@ -1,6 +1,33 @@
+.div-menu {
+    width: 200px;
+    padding: 5px;
+    float: left;
+    overflow-x: scroll;
+}
+
+.div-lista {
+    padding: 10px;
+    overflow-x: scroll;
+}
+
+.div-titulares {
+    background-color: #488778;
+}
+
+.div-cuentas {
+    background-color: #EA5D34;
+}
+
+.div-subcuentas {
+    background-color: #E18F77;
+}
+
+
+
 .navbar {
     overflow: hidden;
     background-color: #333;
+    clear: both;
 }
 
 .navbar a {

@@ -1,5 +1,36 @@
-.table td {
-  font-size: 11pt;
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 9.5pt;
+}
+
+ul.menu {
+  list-style-type: none;
+  padding-left: 0px;
+  margin: 0px;
+}
+
+ul.menu li {
+  margin-bottom: 3px;
+  white-space: nowrap;
+}
+
+.menu {
+  white-space: nowrap;
+  border-spacing: 0px;
+}
+
+.menu-item {
+  width: 160px;
+}
+
+.menu-item-content {
+  width: 160px;
+  overflow: auto;
+}
+
+.menu-item-edit {
+  width: 15px;
+  text-align: center;
 }
 
 .numero {

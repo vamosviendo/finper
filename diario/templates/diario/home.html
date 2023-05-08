@@ -1,26 +1,156 @@
 {% extends 'diario/base.html' %}
 {% load static %}
+{% load historico %}
 {% load historico_general %}
 {% block extra-css %}
 <link rel="stylesheet" href="{% static '/diario/css/home.css' %}">
 {% endblock extra-css %}
 
 {% block contenido %}
-<div class="navbar" id="titulares">
-  <a href="#">Todos</a>
-  {% for titular in titulares %}
-    <div class="subnav">
-      <button class="subnavbtn">{{ titular.nombre }}</button>
-      <div class="subnav-content">
-        {% for cuenta in titular.cuentas.all %}
-          <a href="#">{{ cuenta.nombre }}</a>
-        {% endfor %}
-      </div>
-    </div>
-  {% endfor %}
+<div class="Titulo"><h1>Saldo general: {{ saldo_gral }}</h1></div>
+
+<div class="div-menu div-titulares">
+  <table class="menu" style="width: 100%;">
+    {% for titular in titulares %}
+    <tr">
+      <td class="menu-item">
+        <div class="menu-item-content">
+          {{ titular.nombre }}
+        </div>
+      </td>
+      <td class="menu-item-edit">E</td>
+      <td class="menu-item-edit">B</td>
+  </tr>
+    {% endfor %}
+  </table>
 </div>
+<div class="div-menu div-cuentas">
+  <table class="menu">
+    {% for cuenta in subcuentas %}
+      <tr>
+        <td class="menu-item">
+          <div class="menu-item-content">
+            {{ cuenta.nombre }}
+          </div>
+        </td>
+        <td class="menu-item-edit">E</td>
+        <td class="menu-item-edit">B</td>
+      </tr>
+      {% for subcuenta in cuenta.subcuentas.all %}
+      <tr class="div-subcuentas">
+        <td class="menu-item">
+          <div class="menu-item-content">
+            {{ subcuenta.nombre }}
+          </div>
+        </td>
+        <td class="menu-item-edit">E</td>
+        <td class="menu-item-edit">B</td>
+      </tr>
+      {% endfor %}
+    {% endfor %}
+  </table>
+</div>
+
+<div class="div-lista div-detalles-cuenta">
+  <table>
+    {% for cuenta in subcuentas %}
+    <tr>
+      <td>{{ cuenta.saldo }}</td>
+      <td>{{ cuenta.ultimo_saldo }}</td>
+      <td>{{ cuenta.tiene_madre }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+
+<section id="id_lista_ult_movs" style="clear: both;">
+  <a href="{% url 'mov_nuevo' %}" id="id_btn_mov_nuevo" class="btn my-3 btn-primary">
+    Movimiento nuevo
+  </a>
+  <div class="table-responsive">
+    <table id="disenio-provisorio" class="table table-sm text-nowrap">
+      <thead><tr>
+        <th id="id_th_fecha ">Fecha</th>
+        <th id="id_th_concepto">Concepto</th>
+        <th class="d-none d-lg-table-cell" id="id_th_detalle">Detalle</th>
+        <th id="id_th_importe">Importe</th>
+        <th id="id_th_cuentas">Cuentas</th>
+        <th class="chico fondo_resaltado" id="id_th_general">General</th>
+        {% for subc in subcuentas %}
+        <th class="chico" id="id_th_{{ subc.slug }}">
+          {{ subc.slug }}
+        </th>
+        {% endfor %}
+        <th>Menu</th>
+      </tr></thead>
+
+      {% for mov in movimientos reversed %}
+      <tr class="class_row_mov">
+        <td class="class_td_fecha">{{ mov.fecha|date:'Y-m-d' }}</td>
+
+        <td class="class_td_concepto" title="{{ mov.detalle }}">
+          {{ mov.concepto }}
+        </td>
+
+        <td class="d-none d-lg-table-cell class_td_detalle">
+          {{ mov.detalle|default_if_none:""|truncatechars:50 }}
+        </td>
+
+        <td class="text-right
+                  {{ mov.str_cuentas }}
+                  numero
+                  class_td_importe"
+            title="{{ mov.str_cuentas }}"
+        >
+          {{ mov.importe|floatformat:2 }}
+        </td>
+
+        <td class="small class_td_cuentas">
+          {{ mov.str_cuentas }}
+        </td>
+
+        <td class="text-right numero chico fondo_resaltado class_td_general">
+          {% with mov as mov %}
+            {% block general %}{% endblock general %}
+          {% endwith %}
+        </td>
+
+        {% for subc in subcuentas %}
+        <td class="text-right
+                  {% include './snippets/color_saldos.html' %}
+                  numero chico class_td_saldo class_td_{{ subc.slug }}"
+        >
+          {% historico subc mov %}
+        </td>
+        {% endfor %}
+
+        <td class="class_td_menu">
+          {% if not mov.es_automatico %}
+          <a href="{% url 'mov_elim' mov.id %}"
+             class="btn btn-danger btn-sm class_link_elim_mov">
+            B
+          </a>
+          <a href="{% url 'mov_mod' mov.id %}"
+             class="btn btn-primary btn-sm class_link_mod_mov">
+            E
+          </a>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+</section>
+
 {% endblock contenido %}
 
+{% block extrajs %}
+<script>
+  $(document).ready(function(){
+    $('[data-toggle="tooltip"]').tooltip();
+  });
+</script>
+{% endblock extrajs %}
 {% comment %} Distribución anterior basada en base_contenido.html {% endcomment %}
 {% comment %}
 {% block importe_saldo_pag %}
