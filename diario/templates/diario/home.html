@@ -12,18 +12,21 @@
 <div class="div-menu div-titulares">
   <table class="menu" style="width: 100%;">
     {% for titular in titulares %}
-    <tr">
-      <td class="menu-item">
-        <div class="menu-item-content">
-          {{ titular.nombre }}
-        </div>
-      </td>
-      <td class="menu-item-edit">E</td>
-      <td class="menu-item-edit">B</td>
-  </tr>
+      <tr>
+        <td class="menu-item">
+          <div class="menu-item-content">
+            {{ titular.nombre }}
+          </div>
+        </td>
+        <td class="menu-item-edit">E</td>
+        <td class="menu-item-edit">B</td>
+      </tr>
     {% endfor %}
+    <tr class="menu-item"><td>+</td></tr>
+
   </table>
 </div>
+
 <div class="div-menu div-cuentas">
   <table class="menu">
     {% for cuenta in subcuentas %}
@@ -48,6 +51,7 @@
       </tr>
       {% endfor %}
     {% endfor %}
+    <tr class="menu-item"><td>+</td></tr>
   </table>
 </div>
 
