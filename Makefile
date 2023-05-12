@@ -27,3 +27,6 @@ pyft:
 
 test-model:
 	docker-compose run web python manage.py test tests.diario.test_models
+
+parcial-tests:
+	docker-compose run web pytest pytests/diario/models/movimiento/test_m_save.py

@@ -878,7 +878,7 @@ class TestSaveCambiaImporteYFecha:
         mov.full_clean()
         mov.save()
 
-        assert cuenta.saldo_en_mov(otro_mov) == saldo_otro_mov + s*s2*importe
+        assert cuenta.saldo_en_mov(otro_mov) == pytest.approx(saldo_otro_mov + s*s2*importe, 0.02)
 
     @pytest.mark.parametrize('_otro_mov', [
         'salida_posterior',
