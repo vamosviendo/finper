@@ -3,7 +3,7 @@
 <h4>{{ mov.concepto|default:"Movimiento nuevo"}}</h4>
 <form id="id_form_movimiento" method="post">
   <div class="form-group">
-    {{ form }}
+    {{ form.as_div }}
   </div>
   <button type="submit" id="id_btn_submit" class="btn btn-primary">OK</button>
   {% csrf_token %}

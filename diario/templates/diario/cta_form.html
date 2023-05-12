@@ -3,7 +3,7 @@
 <h4>{{ cta.nombre|default:"Cuenta nueva" }}</h4>
 <form id="id_form_cuenta" method="post">
   <div class="form-group">
-    {{ form }}
+    {{ form.as_div }}
   </div>
   <button type="submit" id="id_btn_submit" class="btn btn-primary">OK</button>
   {% csrf_token %}
