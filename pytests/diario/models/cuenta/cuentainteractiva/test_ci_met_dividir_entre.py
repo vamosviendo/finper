@@ -133,7 +133,7 @@ def test_genera_movimientos_de_entrada_en_cta_madre_con_saldo_negativo(
 
 def test_agrega_subcuenta_como_contrapartida_de_cuenta_en_movimiento(
         cuenta_con_saldo, dicts_subcuentas):
-    cuenta_con_saldo.dividir_entre(*dicts_subcuentas)
+    cuenta_con_saldo = cuenta_con_saldo.dividir_y_actualizar(*dicts_subcuentas)
 
     movs = list(cuenta_con_saldo.movs_directos())[-2:]
 
@@ -144,7 +144,6 @@ def test_agrega_subcuenta_como_contrapartida_de_cuenta_en_movimiento(
 
 
 def test_acepta_mas_de_dos_subcuentas(cuenta, dicts_subcuentas):
-    saldo = cuenta.saldo
     dicts_subcuentas[1]['saldo'] = 130
     dicts_subcuentas.append(
         {'nombre': 'subcuenta 3', 'slug': 'sc3'})
@@ -179,7 +178,10 @@ def test_acepta_fecha_de_conversion_distinta_de_la_actual(cuenta, dicts_subcuent
 
 def test_movimientos_de_traspaso_de_saldo_tienen_fecha_igual_a_la_de_conversion(
         cuenta, dicts_subcuentas, fecha_posterior):
-    cuenta.dividir_entre(*dicts_subcuentas, fecha=fecha_posterior)
+    cuenta = cuenta.dividir_y_actualizar(
+        *dicts_subcuentas,
+        fecha=fecha_posterior
+    )
     assert list(cuenta.movs_directos())[-2].fecha == fecha_posterior
     assert list(cuenta.movs_directos())[-1].fecha == fecha_posterior
 

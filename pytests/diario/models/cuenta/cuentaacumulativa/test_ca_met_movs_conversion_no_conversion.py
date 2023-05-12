@@ -1,5 +1,3 @@
-from pytest_django.asserts import assertQuerysetEqual
-
 from diario.models import Movimiento
 
 
@@ -18,14 +16,11 @@ class TestsMovConversion:
         mov1 = Movimiento.tomar(cta_entrada=sc1)
         mov2 = Movimiento.tomar(cta_entrada=sc2)
 
-        assertQuerysetEqual(
-            cuenta_acumulativa.movs_conversion(),
-            [mov1, mov2]
-        )
+        assert list(cuenta_acumulativa.movs_conversion()) == [mov1, mov2]
 
     def test_si_no_se_generaron_movimientos_al_momento_de_la_conversion_en_acumulativa_devuelve_lista_vacia(
             self, cuenta_acumulativa_saldo_0):
-        assertQuerysetEqual(cuenta_acumulativa_saldo_0.movs_conversion(), [])
+        assert list(cuenta_acumulativa_saldo_0.movs_conversion()) == []
 
 
 class TestMovsNoConversion:
@@ -33,7 +28,4 @@ class TestMovsNoConversion:
             self, cuenta, entrada, salida, fecha, dicts_subcuentas):
         cuentaacumulativa = cuenta.dividir_y_actualizar(
             *dicts_subcuentas, fecha=fecha)
-        assertQuerysetEqual(
-            cuentaacumulativa.movs_no_conversion(),
-            [entrada, salida]
-        )
+        assert list(cuentaacumulativa.movs_no_conversion()) == [entrada, salida]

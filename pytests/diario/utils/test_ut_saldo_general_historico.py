@@ -31,7 +31,7 @@ def test_devuelve_suma_de_saldos_historicos_de_cuentas_al_momento_del_movimiento
 
 def test_suma_una_sola_vez_saldo_de_cuentas_acumulativas(
         cuenta, entrada_posterior_otra_cuenta, salida_tardia_tercera_cuenta, fecha_tardia_plus):
-    dividir_en_dos_subcuentas(
+    cuenta = dividir_en_dos_subcuentas(
         cuenta, saldo=3, fecha= fecha_tardia_plus)
     mov = Movimiento.crear(
         'Ultimo mov',

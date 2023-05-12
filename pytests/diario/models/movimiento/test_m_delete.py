@@ -34,11 +34,12 @@ def test_elimina_saldo_cta_salida_al_momento_del_movimiento(mocker, cuenta, sali
 
 def test_integrativo_elimina_saldo_cuentas_al_momento_del_movimiento(
         cuenta, cuenta_2, traspaso):
+    deleted_pk = traspaso.pk
     traspaso.delete()
     with pytest.raises(Saldo.DoesNotExist):
-        Saldo.objects.get(cuenta=cuenta, movimiento=traspaso)
+        Saldo.objects.get(cuenta=cuenta, movimiento__pk=deleted_pk)
     with pytest.raises(Saldo.DoesNotExist):
-        Saldo.objects.get(cuenta=cuenta_2, movimiento=traspaso)
+        Saldo.objects.get(cuenta=cuenta_2, movimiento__pk=deleted_pk)
 
 
 def test_resta_importe_de_saldos_posteriores_de_cta_entrada(cuenta, entrada, salida_posterior):
