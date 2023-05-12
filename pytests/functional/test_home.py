@@ -20,36 +20,31 @@ def test_home(
         browser, titular, otro_titular,
         cuenta, cuenta_2, cuenta_3,
         entrada, traspaso, entrada_posterior_otra_cuenta):
-    # vamos a la página principal
+    # Vamos a la página principal
     browser.ir_a_pag()
 
-    # Vemos dos titulares en la sección de titulares: el titular por defecto
-    # y el cargado por nosotros.
+    # Vemos al tope de la página el saldo general, suma de todas las cuentas de
+    # todos los titulares
+    saldo_gral = browser.esperar_elemento("id_importe_saldo_gral")
+    assert saldo_gral.text == float_format(cuenta.saldo + cuenta_2.saldo + cuenta_3.saldo)
+
+    # Vemos dos titulares en el menú de titulares
     titulares = browser.esperar_elementos("class_div_titular")
     assert len(titulares) == 2
     nombres = hijos("class_div_nombre_titular", titulares)
     assert nombres[0] == titular.nombre
     assert nombres[1] == otro_titular.nombre
 
-    # Vemos que cada titular de la sección de titulares muestra el capital del
-    # titular
-    capitales = hijos("class_capital_titular", titulares)
-    assert capitales[0] == float_format(
-        cuenta.saldo + cuenta_2.saldo + cuenta_3.saldo
-    )
-    assert capitales[1] == '0,00'
-
-    # Vemos tres cuentas en la sección de cuentas, con nombres correspondientes
-    # al slug de cada una de las cuentas existentes en mayúsculas.
+    # Vemos tres cuentas en el menú de cuentas
     cuentas = browser.find_elements_by_class_name("class_div_cuenta")
     assert len(cuentas) == 3
     nombres_cuenta = hijos("class_nombre_cuenta", cuentas)
-    assert nombres_cuenta[0] == cuenta.slug.upper()
-    assert nombres_cuenta[1] == cuenta_2.slug.upper()
-    assert nombres_cuenta[2] == cuenta_3.slug.upper()
+    assert nombres_cuenta[0] == cuenta.nombre
+    assert nombres_cuenta[1] == cuenta_2.nombre
+    assert nombres_cuenta[2] == cuenta_3.nombre
 
-    # El saldo de cada una de las cuentas corresponde a los movimientos en los
-    # que participó
+    # A la derecha de cada una de las cuentas se ve su saldo, el cual
+    # corresponde a los movimientos en los que participó
     saldos = hijos("class_saldo_cuenta", cuentas)
     assert saldos[0] == float_format(entrada.importe + traspaso.importe)
     assert saldos[1] == float_format(

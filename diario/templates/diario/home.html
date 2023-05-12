@@ -7,14 +7,16 @@
 {% endblock extra-css %}
 
 {% block contenido %}
-<div class="Titulo"><h1>Saldo general: {{ saldo_gral }}</h1></div>
+<div id = "id_div_saldo_gral" class="Titulo">
+  <h1>Saldo general: <span id="id_importe_saldo_gral">{{ saldo_gral|floatformat:2 }}</span></h1>
+</div>
 
 <div class="div-menu div-titulares">
   <table class="menu" style="width: 100%;">
     {% for titular in titulares %}
       <tr>
-        <td class="menu-item">
-          <div class="menu-item-content">
+        <td class="menu-item class_div_titular">
+          <div class="menu-item-content class_div_nombre_titular">
             {{ titular.nombre }}
           </div>
         </td>
@@ -27,18 +29,25 @@
   </table>
 </div>
 
-<div class="div-menu div-cuentas">
+<div class="div-menu">
   <table class="menu">
+    <colgroup>
+      <col span="3" class="div-cuentas"/>
+      <col span="3" class="div-detalles-cuenta"/>
+    </colgroup>
     {% for cuenta in subcuentas %}
-      <tr>
+      <tr class="class_div_cuenta">
         <td class="menu-item">
-          <div class="menu-item-content">
+          <div class="menu-item-content class_nombre_cuenta">
             {{ cuenta.nombre }}
           </div>
         </td>
         <td class="menu-item-edit">E</td>
         <td class="menu-item-edit">B</td>
-      </tr>
+        <td class="numero chico class_saldo_cuenta">{{ cuenta.saldo|floatformat:2 }}</td>
+        <td>{{ cuenta.ultimo_saldo }}</td>
+        <td>{{ cuenta.tiene_madre }}</td>
+       </tr>
       {% for subcuenta in cuenta.subcuentas.all %}
       <tr class="div-subcuentas">
         <td class="menu-item">
@@ -48,29 +57,17 @@
         </td>
         <td class="menu-item-edit">E</td>
         <td class="menu-item-edit">B</td>
-      </tr>
-      {% endfor %}
-    {% endfor %}
-    <tr class="menu-item"><td>+</td></tr>
-  </table>
-</div>
-
-<div class="div-lista div-detalles-cuenta">
-  <table class="menu">
-    {% for cuenta in subcuentas %}
-      <tr>
-        <td class="numero chico">{{ cuenta.saldo|floatformat:2 }}</td>
+        <td class="numero chico class_saldo_cuenta">{{ cuenta.saldo|floatformat:2 }}</td>
         <td>{{ cuenta.ultimo_saldo }}</td>
         <td>{{ cuenta.tiene_madre }}</td>
       </tr>
-      {% for subcuenta in cuenta.subcuentas.all %}
-        <tr>
-          <td class="numero chico">{{ subcuenta.saldo|floatformat:2 }}</td>
-          <td>{{ subcuenta.ultimo_saldo }}</td>
-          <td>{{ subcuenta.tiene_madre }}</td>
-        </tr>
       {% endfor %}
     {% endfor %}
+    <tr class="menu-item">
+      <td>+</td>
+      <td></td>
+      <td></td>
+    </tr>
   </table>
 </div>
 
@@ -129,7 +126,7 @@
 
         <td class="numero chico fondo_resaltado class_td_general">
           {% with mov as mov %}
-            {% block general %}{% endblock general %}
+            {% block general %}{% historico_general mov %}{% endblock general %}
           {% endwith %}
         </td>
 
