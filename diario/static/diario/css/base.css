@@ -20,17 +20,34 @@ ul.menu li {
 }
 
 .menu-item {
-  width: 160px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+tr.menu-row:first-of-type td div {
+  padding-top: 5px;
+}
+
+tr.menu-row:last-of-type td div {
+  padding-bottom: 5px;
 }
 
 .menu-item-content {
   width: 160px;
   overflow: auto;
+  float: left;
 }
 
 .menu-item-edit {
   width: 15px;
+  padding-left: 2.5px;
+  padding-right: 2.5px;
   text-align: center;
+  float: left;
+}
+
+.menu-item-edit:last-of-type {
+  padding-right: 0px;
 }
 
 table.table-striped tr:nth-child(even) {

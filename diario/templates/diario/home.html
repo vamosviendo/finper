@@ -11,63 +11,73 @@
   <h1>Saldo general: <span id="id_importe_saldo_gral">{{ saldo_gral|floatformat:2 }}</span></h1>
 </div>
 
-<div class="div-menu div-titulares">
-  <table class="menu" style="width: 100%;">
-    {% for titular in titulares %}
-      <tr>
-        <td class="menu-item class_div_titular">
+<div id="id_div_menu_titulares" style="float: left;">
+  <table class="menu">
+    <colgroup>
+      <col class="div-menu div-titulares"/>
+    </colgroup>
+    <tbody>
+      {% for titular in titulares %}
+      <tr class="menu-row class_div_titular">
+        <td class="menu-item">
           <div class="menu-item-content class_div_nombre_titular">
             {{ titular.nombre }}
           </div>
+          <div class="menu-item-edit">E</div>
+          <div class="menu-item-edit">B</div>
         </td>
-        <td class="menu-item-edit">E</td>
-        <td class="menu-item-edit">B</td>
       </tr>
-    {% endfor %}
-    <tr class="menu-item"><td>+</td></tr>
-
+      {% endfor %}
+      <tr class="menu-row">
+        <td class="menu-item"><div>+</div></td>
+        <td></td>
+        <td></td>
+      </tr>
+    </tbody>
   </table>
 </div>
 
-<div class="div-menu">
+<div id="id_div_menu_cuentas">
   <table class="menu">
     <colgroup>
-      <col span="3" class="div-cuentas"/>
-      <col span="3" class="div-detalles-cuenta"/>
+      <col class="div-menu div-cuentas"/>
+      <col span="3" class="div-menu div-detalles-cuenta"/>
     </colgroup>
-    {% for cuenta in subcuentas %}
-      <tr class="class_div_cuenta">
-        <td class="menu-item">
-          <div class="menu-item-content class_nombre_cuenta">
-            {{ cuenta.nombre }}
-          </div>
-        </td>
-        <td class="menu-item-edit">E</td>
-        <td class="menu-item-edit">B</td>
-        <td class="numero chico class_saldo_cuenta">{{ cuenta.saldo|floatformat:2 }}</td>
-        <td>{{ cuenta.ultimo_saldo }}</td>
-        <td>{{ cuenta.tiene_madre }}</td>
-       </tr>
-      {% for subcuenta in cuenta.subcuentas.all %}
-      <tr class="div-subcuentas">
-        <td class="menu-item">
-          <div class="menu-item-content">
-            {{ subcuenta.nombre }}
-          </div>
-        </td>
-        <td class="menu-item-edit">E</td>
-        <td class="menu-item-edit">B</td>
-        <td class="numero chico class_saldo_cuenta">{{ cuenta.saldo|floatformat:2 }}</td>
-        <td>{{ cuenta.ultimo_saldo }}</td>
-        <td>{{ cuenta.tiene_madre }}</td>
-      </tr>
+    <tbody>
+      {% for cuenta in subcuentas %}
+        <tr class="menu-row class_div_cuenta">
+          <td class="menu-item">
+            <div class="menu-item-content class_nombre_cuenta">
+              {{ cuenta.nombre }}
+            </div>
+            <div class="menu-item-edit">E</div>
+            <div class="menu-item-edit">B</div>
+          </td>
+          <td class="numero chico class_saldo_cuenta">{{ cuenta.saldo|floatformat:2 }}</td>
+          <td>{{ cuenta.ultimo_saldo }}</td>
+          <td>{{ cuenta.tiene_madre }}</td>
+        </tr>
+        {% for subcuenta in cuenta.subcuentas.all %}
+          <tr class="div-subcuentas">
+            <td class="menu-item">
+              <div class="menu-item-content">
+                {{ subcuenta.nombre }}
+              </div>
+              <div class="menu-item-edit">E</div>
+              <div class="menu-item-edit">B</div>
+            </td>
+            <td class="numero chico class_saldo_cuenta">{{ cuenta.saldo|floatformat:2 }}</td>
+            <td>{{ cuenta.ultimo_saldo }}</td>
+            <td>{{ cuenta.tiene_madre }}</td>
+          </tr>
+        {% endfor %}
       {% endfor %}
-    {% endfor %}
-    <tr class="menu-item">
-      <td>+</td>
-      <td></td>
-      <td></td>
-    </tr>
+      <tr class="menu-row">
+        <td class="menu-item"><div>+</div></td>
+        <td></td>
+        <td></td>
+      </tr>
+    </tbody>
   </table>
 </div>
 

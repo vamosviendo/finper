@@ -1,6 +1,5 @@
 .div-menu {
     padding: 5px;
-    float: left;
     overflow-x: scroll;
 }
 
@@ -10,11 +9,11 @@
 }
 
 .div-titulares {
-    background-color: #488778;
+    background-color: #488778 !important;
 }
 
 .div-cuentas {
-    background-color: #EA5D34;
+    background-color: #EA5D34 !important;
 }
 
 .div-subcuentas {
