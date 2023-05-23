@@ -1,9 +1,10 @@
 from django import template
 
+from utils.numeros import float_format
+
 register = template.Library()
 
 
 @register.simple_tag
-# TODO: reemplazar por django.utils.formats.number_format
 def historico(cuenta, mov):
-    return f'{cuenta.saldo_en_mov(mov):.2f}'.replace('.', ',')
+    return float_format(cuenta.saldo_en_mov(mov))
