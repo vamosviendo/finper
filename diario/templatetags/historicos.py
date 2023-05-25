@@ -10,3 +10,8 @@ register = template.Library()
 # TODO: unificar tags en un solo módulo
 def historico_general(movimiento):
     return float_format(saldo_general_historico(movimiento))
+
+
+@register.simple_tag
+def historico(cuenta, mov):
+    return float_format(cuenta.saldo_en_mov(mov))
