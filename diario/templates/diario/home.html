@@ -28,7 +28,11 @@
       </tr>
       {% endfor %}
       <tr class="menu-row">
-        <td class="menu-item"><div>+</div></td>
+        <td class="menu-item">
+          <div id="id_div_titular_nuevo">
+            <a href="{% url 'tit_nuevo' %}" id="id_link_titular_nuevo">+</a>
+          </div>
+        </td>
         <td></td>
         <td></td>
       </tr>
@@ -72,7 +76,11 @@
         {% endfor %}
       {% endfor %}
       <tr class="menu-row">
-        <td class="menu-item"><div>+</div></td>
+        <td class="menu-item">
+          <div id="id_div_cuenta_nueva">
+            <a href="{% url 'cta_nueva' %}" id="id_link_cuenta_nueva">+</a>
+          </div>
+        </td>
         <td></td>
         <td></td>
       </tr>
@@ -81,7 +89,7 @@
 </div>
 
 <section id="id_lista_ult_movs" style="clear: both;">
-  <a href="{% url 'mov_nuevo' %}" id="id_btn_mov_nuevo">
+  <a href="{% url 'mov_nuevo' %}" id="id_link_mov_nuevo">
     Movimiento nuevo
   </a>
   <div>

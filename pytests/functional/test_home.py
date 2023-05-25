@@ -88,3 +88,18 @@ def test_home_links(browser, titular, otro_titular, cuenta, cuenta_2, cuenta_acu
     subcuenta = cuenta_acumulativa.subcuentas.first()
     browser.cliquear_en_cuenta(subcuenta)
     browser.assert_url(reverse("cta_detalle", args=[subcuenta.slug]))
+
+    # cuando cliqueamos en el ícono de agregar titular, accedemos a la página para agregar titular nuevo
+    browser.ir_a_pag()
+    browser.esperar_elemento("id_link_titular_nuevo").click()
+    browser.assert_url(reverse("tit_nuevo"))
+
+    # cuando cliqueamos en el ícono de agregar cuenta, accedemos a la página para agregar cuenta nueva
+    browser.ir_a_pag()
+    browser.esperar_elemento("id_link_cuenta_nueva").click()
+    browser.assert_url(reverse("cta_nueva"))
+
+    # cuando cliqueamos en el link de movimiento nuevo, accedemos a la página para agregar movimiento
+    browser.ir_a_pag()
+    browser.esperar_elemento("id_link_mov_nuevo").click()
+    browser.assert_url(reverse("mov_nuevo"))
