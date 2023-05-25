@@ -20,7 +20,7 @@
       <tr class="menu-row class_div_titular">
         <td class="menu-item">
           <div class="menu-item-content class_div_nombre_titular">
-            {{ titular.nombre }}
+            <a href="{% url 'tit_detalle' titular.titname %}">{{ titular.nombre }}</a>
           </div>
           <div class="menu-item-edit">E</div>
           <div class="menu-item-edit">B</div>
@@ -47,7 +47,7 @@
         <tr class="menu-row class_div_cuenta">
           <td class="menu-item">
             <div class="menu-item-content class_nombre_cuenta">
-              {{ cuenta.nombre }}
+              <a href="{% url 'cta_detalle' cuenta.slug %}">{{ cuenta.nombre }}</a>
             </div>
             <div class="menu-item-edit">E</div>
             <div class="menu-item-edit">B</div>
@@ -57,17 +57,17 @@
           <td>{{ cuenta.tiene_madre }}</td>
         </tr>
         {% for subcuenta in cuenta.subcuentas.all %}
-          <tr class="div-subcuentas">
-            <td class="menu-item">
+          <tr class="menu-row class_div_cuenta">
+            <td class="menu-item div-subcuentas">
               <div class="menu-item-content">
-                {{ subcuenta.nombre }}
+                <a href="{% url 'cta_detalle' subcuenta.slug %}">{{ subcuenta.nombre }}</a>
               </div>
               <div class="menu-item-edit">E</div>
               <div class="menu-item-edit">B</div>
             </td>
-            <td class="numero chico class_saldo_cuenta">{{ cuenta.saldo|floatformat:2 }}</td>
-            <td>{{ cuenta.ultimo_saldo }}</td>
-            <td>{{ cuenta.tiene_madre }}</td>
+            <td class="numero chico class_saldo_cuenta div-detalles-subcuenta">{{ cuenta.saldo|floatformat:2 }}</td>
+            <td class="div-detalles-subcuenta">{{ cuenta.ultimo_saldo }}</td>
+            <td class="div-detalles-subcuenta">{{ cuenta.tiene_madre }}</td>
           </tr>
         {% endfor %}
       {% endfor %}

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import List
 
+from django.urls import reverse
 from selenium.webdriver.remote.webelement import WebElement
 
 from diario.utils import saldo_general_historico
@@ -68,3 +69,22 @@ def test_home(
         assert importes[i] == float_format(mov.importe)
         assert cuentas[i] == mov.str_cuentas()
         assert generales[i] == float_format(saldo_general_historico(mov))
+
+
+def test_home_links(browser, titular, otro_titular, cuenta, cuenta_2, cuenta_acumulativa):
+
+    # Cuando cliqueamos en un titular, vamos a la página de ese titular
+    browser.ir_a_pag()
+    browser.cliquear_en_titular(titular)
+    browser.assert_url(reverse("tit_detalle", args=[titular.titname]))
+
+    # Cuando cliqueamos en una cuenta, vamos a la página de esa cuenta
+    browser.ir_a_pag()
+    browser.cliquear_en_cuenta(cuenta_2)
+    browser.assert_url(reverse("cta_detalle", args=[cuenta_2.slug]))
+
+    # Cuando cliqueamos en una subcuenta, vamos a la página de esa subcuenta
+    browser.ir_a_pag()
+    subcuenta = cuenta_acumulativa.subcuentas.first()
+    browser.cliquear_en_cuenta(subcuenta)
+    browser.assert_url(reverse("cta_detalle", args=[subcuenta.slug]))

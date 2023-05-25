@@ -46,7 +46,7 @@ class FinperFirefox(MiFirefox):
         self.pulsar()
 
     def cliquear_en_cuenta(self, cuenta):
-        self.esperar_elemento(cuenta.slug.upper(), By.LINK_TEXT).click()
+        self.esperar_elemento(cuenta.nombre, By.LINK_TEXT).click()
 
     def cliquear_en_titular(self, titular):
         self.esperar_elemento(titular.nombre, By.LINK_TEXT).click()
