@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import List
 
 from django.urls import reverse
+from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 
 from diario.utils import saldo_general_historico
@@ -71,35 +72,76 @@ def test_home(
         assert generales[i] == float_format(saldo_general_historico(mov))
 
 
-def test_home_links(browser, titular, otro_titular, cuenta, cuenta_2, cuenta_acumulativa):
+class TestHomeLinks:
+    def test_seccion_titulares(self, browser, titular, otro_titular):
 
-    # Cuando cliqueamos en un titular, vamos a la página de ese titular
-    browser.ir_a_pag()
-    browser.cliquear_en_titular(titular)
-    browser.assert_url(reverse("tit_detalle", args=[titular.titname]))
+        # Cuando cliqueamos en un titular, vamos a la página de ese titular
+        browser.ir_a_pag()
+        browser.cliquear_en_titular(titular)
+        browser.assert_url(reverse("tit_detalle", args=[titular.titname]))
 
-    # Cuando cliqueamos en una cuenta, vamos a la página de esa cuenta
-    browser.ir_a_pag()
-    browser.cliquear_en_cuenta(cuenta_2)
-    browser.assert_url(reverse("cta_detalle", args=[cuenta_2.slug]))
+        # cuando cliqueamos en el ícono de agregar titular, accedemos a la página para agregar titular nuevo
+        browser.ir_a_pag()
+        browser.esperar_elemento("id_link_titular_nuevo").click()
+        browser.assert_url(reverse("tit_nuevo"))
 
-    # Cuando cliqueamos en una subcuenta, vamos a la página de esa subcuenta
-    browser.ir_a_pag()
-    subcuenta = cuenta_acumulativa.subcuentas.first()
-    browser.cliquear_en_cuenta(subcuenta)
-    browser.assert_url(reverse("cta_detalle", args=[subcuenta.slug]))
+        # cuando cliqueamos en el link de editar titular, accedemos a la página de edición de ese titular
+        browser.ir_a_pag()
+        browser.esperar_elemento(f"id_link_tit_mod_{titular.titname}").click()
+        browser.assert_url(reverse("tit_mod", args=[titular.titname]))
 
-    # cuando cliqueamos en el ícono de agregar titular, accedemos a la página para agregar titular nuevo
-    browser.ir_a_pag()
-    browser.esperar_elemento("id_link_titular_nuevo").click()
-    browser.assert_url(reverse("tit_nuevo"))
+        # cuando cliqueamos en el link de borrar titular, accedemos a la página de confirmación
+        browser.ir_a_pag()
+        browser.esperar_elemento(f"id_link_tit_elim_{titular.titname}").click()
+        browser.assert_url(reverse("tit_elim", args=[titular.titname]))
 
-    # cuando cliqueamos en el ícono de agregar cuenta, accedemos a la página para agregar cuenta nueva
-    browser.ir_a_pag()
-    browser.esperar_elemento("id_link_cuenta_nueva").click()
-    browser.assert_url(reverse("cta_nueva"))
+    def test_seccion_cuentas(self, browser, cuenta, cuenta_2, cuenta_acumulativa):
+        subcuenta = cuenta_acumulativa.subcuentas.first()
 
-    # cuando cliqueamos en el link de movimiento nuevo, accedemos a la página para agregar movimiento
-    browser.ir_a_pag()
-    browser.esperar_elemento("id_link_mov_nuevo").click()
-    browser.assert_url(reverse("mov_nuevo"))
+        # Cuando cliqueamos en una cuenta, vamos a la página de esa cuenta
+        browser.ir_a_pag()
+        browser.cliquear_en_cuenta(cuenta_2)
+        browser.assert_url(reverse("cta_detalle", args=[cuenta_2.slug]))
+
+        # Cuando cliqueamos en una subcuenta, vamos a la página de esa subcuenta
+        browser.ir_a_pag()
+        browser.cliquear_en_cuenta(subcuenta)
+        browser.assert_url(reverse("cta_detalle", args=[subcuenta.slug]))
+
+        # cuando cliqueamos en el ícono de agregar cuenta, accedemos a la página para agregar cuenta nueva
+        browser.ir_a_pag()
+        browser.esperar_elemento("id_link_cuenta_nueva").click()
+        browser.assert_url(reverse("cta_nueva"))
+
+        # cuando cliqueamos en el link de editar cuenta, accedemos a la página de edición de esa cuenta
+        browser.ir_a_pag()
+        browser.esperar_elemento(f"id_link_cta_mod_{cuenta.slug}").click()
+        browser.assert_url(reverse("cta_mod", args=[cuenta.slug]))
+        browser.ir_a_pag()
+        browser.esperar_elemento(f"id_link_cta_mod_{subcuenta.slug}").click()
+        browser.assert_url(reverse("cta_mod", args=[subcuenta.slug]))
+
+        # cuando cliqueamos en el link de borrar cuenta, accedemos a la página de confirmación
+        browser.ir_a_pag()
+        browser.esperar_elemento(f"id_link_cta_elim_{cuenta.slug}").click()
+        browser.assert_url(reverse("cta_elim", args=[cuenta.slug]))
+        browser.ir_a_pag()
+        browser.esperar_elemento(f"id_link_cta_elim_{subcuenta.slug}").click()
+        browser.assert_url(reverse("cta_elim", args=[subcuenta.slug]))
+
+    def test_seccion_movimientos(self, browser, entrada, salida):
+
+        # cuando cliqueamos en el link de movimiento nuevo, accedemos a la página para agregar movimiento
+        browser.ir_a_pag()
+        browser.esperar_elemento("id_link_mov_nuevo").click()
+        browser.assert_url(reverse("mov_nuevo"))
+
+        # cuando cliqueamos en el link de editar movimiento, accedemos a la página de edición de ese movimiento
+        browser.ir_a_pag()
+        browser.esperar_elemento("class_link_mod_mov", By.CLASS_NAME).click()
+        browser.assert_url(reverse("mov_mod", args=[salida.pk]))
+
+        # cuando cliqueamos en el link de borrar movimiento, accedemos a la página de confirmación
+        browser.ir_a_pag()
+        browser.esperar_elemento("class_link_elim_mov", By.CLASS_NAME).click()
+        browser.assert_url(reverse("mov_elim", args=[salida.pk]))
