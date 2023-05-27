@@ -1,7 +1,6 @@
 import pytest
 
-from diario.templatetags.historico import historico
-from diario.templatetags.historico_general import historico_general
+from diario.templatetags.historicos import historico, historico_general
 
 pytestmark = pytest.mark.django_db
 
@@ -23,7 +22,7 @@ class TestHistoricoGeneral:
     def test_llama_a_saldo_historico_general_para_obtener_saldo_historico(
             self, mocker, entrada):
         mock_saldo_historico = mocker.patch(
-            'diario.templatetags.historico_general.saldo_general_historico'
+            'diario.templatetags.historicos.saldo_general_historico'
         )
         mock_saldo_historico.return_value = 0
 
@@ -34,7 +33,7 @@ class TestHistoricoGeneral:
     def test_devuelve_string_con_saldo_historico_general_recuperado(
             self, mocker, entrada, importe_aleatorio):
         mock_saldo_historico = mocker.patch(
-            'diario.templatetags.historico_general.saldo_general_historico'
+            'diario.templatetags.historicos.saldo_general_historico'
         )
         mock_saldo_historico.return_value = importe_aleatorio
         assert \
