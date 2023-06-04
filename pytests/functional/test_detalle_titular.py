@@ -73,8 +73,16 @@ def test_detalle_titular(
     # de sus cuentas
     browser.comparar_capital_de(titular)
 
+    # Y vemos que en la sección de titulares aparecen todos los titulares
+    pytest.fail("No testeado todavía")
+
+    # Y vemos que el titular seleccionado aparece resaltado entre los demás
+    # titulares, que aparecen atenuados
+    pytest.fail("No implementado todavía")
+
     # Y vemos que sólo las cuentas del titular aparecen en la sección de cuentas
     browser.comparar_cuentas_de(titular)
 
     # Y vemos que sólo los movimientos del titular aparecen en la sección de movimientos
     browser.comparar_movimientos_de(titular)
+

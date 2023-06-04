@@ -4,10 +4,16 @@ from django.urls import reverse
 from pytest_django import asserts
 
 
-def test_usa_template_tit_detalle(client, titular):
+def test_usa_template_home(client, titular):
     response = client.get(
         reverse('tit_detalle', args=[titular.titname]))
-    asserts.assertTemplateUsed(response, 'diario/tit_detalle.html')
+    asserts.assertTemplateUsed(response, 'diario/home.html')
+
+
+def test_pasa_titular_al_template(client, titular):
+    response = client.get(
+        reverse('tit_detalle', args=[titular.titname]))
+    assert response.context['titular'] == titular
 
 
 def test_pasa_cuentas_del_titular_al_template(
@@ -35,7 +41,7 @@ def test_pasa_capital_del_titular_al_template(client, mocker, titular):
 
     response = client.get(reverse('tit_detalle', args=[titular.titname]))
 
-    assert response.context['saldo_pag'] == 252
+    assert response.context['saldo_gral'] == 252
 
 
 def test_pasa_movimientos_relacionados_con_cuentas_del_titular_al_template(

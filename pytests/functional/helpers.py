@@ -80,10 +80,10 @@ class FinperFirefox(MiFirefox):
     def comparar_titular(self, titular: Titular):
         """ Dado un titular, comparar su nombre con el que aparece en la
             página. """
-        nombre_titular = self.esperar_elemento(
-            'class_div_nombre_titular', By.CLASS_NAME
-        ).text.strip()
-        assert nombre_titular == titular.nombre
+        nombre_titular = self.esperar_elemento('id_denominacion_saldo_gral').text.strip()
+        assert \
+            nombre_titular == \
+            f"Capital de {titular.nombre}:"
 
     def comparar_titular_de(self, cuenta: Cuenta):
         """ Dada una cuenta, comparar su titular con el que aparece en la
@@ -93,7 +93,7 @@ class FinperFirefox(MiFirefox):
     def comparar_capital_de(self, titular: Titular):
         """ Dado un titular, comparar su capital con el que aparece en la
         página. """
-        cap = self.esperar_elemento(f'id_capital_{titular.titname}').text.strip()
+        cap = self.esperar_elemento('id_importe_saldo_gral').text.strip()
         assert cap == float_format(titular.capital)
 
     def comparar_cuentas_de(self, titular: Titular):

@@ -1,7 +1,3 @@
-import datetime
-from pathlib import Path
-
-from django.db.models import Sum
 from django.shortcuts import render, redirect
 from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, DeleteView, DetailView, \
@@ -200,7 +196,7 @@ class TitularNuevoView(CreateView):
 
 class TitDetalleView(DetailView):
     model = Titular
-    template_name = 'diario/tit_detalle.html'
+    template_name = 'diario/home.html'
     slug_url_kwarg = 'titname'
     slug_field = 'titname'
 
@@ -208,7 +204,7 @@ class TitDetalleView(DetailView):
         context = super().get_context_data(**kwargs)
         context.update({
             'subcuentas': self.object.cuentas_interactivas().order_by('slug'),
-            'saldo_pag': self.object.capital,
+            'saldo_gral': self.object.capital,
             'movimientos': self.object.movs(),
         })
         return context

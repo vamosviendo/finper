@@ -27,6 +27,8 @@ def test_home(
 
     # Vemos al tope de la página el saldo general, suma de todas las cuentas de
     # todos los titulares
+    titulo_saldo = browser.esperar_elemento("id_denominacion_saldo_gral").text.strip()
+    assert titulo_saldo == "Saldo general:"
     saldo_gral = browser.esperar_elemento("id_importe_saldo_gral")
     assert saldo_gral.text == float_format(cuenta.saldo + cuenta_2.saldo + cuenta_3.saldo)
 
@@ -69,7 +71,7 @@ def test_home(
         assert conceptos[i] == mov.concepto
         assert importes[i] == float_format(mov.importe)
         assert cuentas[i] == mov.str_cuentas()
-        assert generales[i] == float_format(saldo_general_historico(mov))
+        assert generales[i] == '000.000,00'
 
 
 class TestHomeLinks:

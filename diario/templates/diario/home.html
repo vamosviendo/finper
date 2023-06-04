@@ -7,7 +7,15 @@
 
 {% block contenido %}
 <div id = "id_div_saldo_gral" class="Titulo">
-  <h1>Saldo general: <span id="id_importe_saldo_gral">{{ saldo_gral|floatformat:2 }}</span></h1>
+  <h1>
+    <span id="id_denominacion_saldo_gral">
+      {% if titular %}
+        Capital de {{ titular.nombre }}:
+      {% else %}
+        Saldo general:
+      {% endif %}
+    </span>
+     <span id="id_importe_saldo_gral">{{ saldo_gral|floatformat:2 }}</span></h1>
 </div>
 <section id="id_section_titulares">
   <div id="id_div_menu_titulares" style="float: left;">
