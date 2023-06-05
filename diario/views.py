@@ -194,6 +194,10 @@ class TitularNuevoView(CreateView):
     success_url = '/'
 
 
+# TODO refactoring: TitDetalleView, CtaDetalleView, HomeView, podrían ser un
+#      solo view que pase al context distintas variables según reciba un
+#      titular, una cuenta, un movimiento, un titular y un movimiento, una
+#      cuenta y un movimiento o nada.
 class TitDetalleView(DetailView):
     model = Titular
     template_name = 'diario/home.html'
@@ -206,6 +210,7 @@ class TitDetalleView(DetailView):
             'subcuentas': self.object.cuentas_interactivas().order_by('slug'),
             'saldo_gral': self.object.capital,
             'movimientos': self.object.movs(),
+            'titulares': Titular.todes(),
         })
         return context
 

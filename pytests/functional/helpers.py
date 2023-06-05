@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from typing import List
 from urllib.parse import urlparse
 
 from django.urls import reverse
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webelement import WebElement
 
 from diario.models import Titular, Cuenta
 from utils.numeros import float_format
@@ -113,4 +115,14 @@ class FinperFirefox(MiFirefox):
     def crear_movimiento(self, **kwargs):
         self.ir_a_pag(reverse('mov_nuevo'))
         self.completar_form(**kwargs)
+
+
+def texto_en_hijos_respectivos(
+        classname: str,
+        lista_elementos: List[MiWebElement | WebElement]
+) -> List[str]:
+    return [
+        x.find_element_by_class_name(classname).text
+        for x in lista_elementos
+    ]
 

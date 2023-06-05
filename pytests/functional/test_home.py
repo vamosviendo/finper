@@ -1,21 +1,10 @@
 from __future__ import annotations
 
-from typing import List
-
 from django.urls import reverse
 from selenium.webdriver.common.by import By
-from selenium.webdriver.remote.webelement import WebElement
 
-from diario.utils import saldo_general_historico
+from .helpers import texto_en_hijos_respectivos
 from utils.numeros import float_format
-from vvsteps.driver import MiWebElement
-
-
-def hijos(classname: str, lista_elementos: List[MiWebElement | WebElement]) -> List[str]:
-    return [
-        x.find_element_by_class_name(classname).text
-        for x in lista_elementos
-    ]
 
 
 def test_home(
@@ -35,21 +24,21 @@ def test_home(
     # Vemos dos titulares en el menú de titulares
     titulares = browser.esperar_elementos("class_div_titular")
     assert len(titulares) == 2
-    nombres = hijos("class_div_nombre_titular", titulares)
+    nombres = texto_en_hijos_respectivos("class_div_nombre_titular", titulares)
     assert nombres[0] == titular.nombre
     assert nombres[1] == otro_titular.nombre
 
     # Vemos tres cuentas en el menú de cuentas
     cuentas = browser.find_elements_by_class_name("class_div_cuenta")
     assert len(cuentas) == 3
-    nombres_cuenta = hijos("class_nombre_cuenta", cuentas)
+    nombres_cuenta = texto_en_hijos_respectivos("class_nombre_cuenta", cuentas)
     assert nombres_cuenta[0] == cuenta.nombre
     assert nombres_cuenta[1] == cuenta_2.nombre
     assert nombres_cuenta[2] == cuenta_3.nombre
 
     # A la derecha de cada una de las cuentas se ve su saldo, el cual
     # corresponde a los movimientos en los que participó
-    saldos = hijos("class_saldo_cuenta", cuentas)
+    saldos = texto_en_hijos_respectivos("class_saldo_cuenta", cuentas)
     assert saldos[0] == float_format(entrada.importe + traspaso.importe)
     assert saldos[1] == float_format(
         entrada_posterior_otra_cuenta.importe - traspaso.importe)
@@ -60,11 +49,11 @@ def test_home(
     movimientos = browser.find_elements_by_class_name("class_row_mov")
     objs_mov = [entrada_posterior_otra_cuenta, traspaso, entrada]
     assert len(movimientos) == 3
-    fechas = hijos("class_td_fecha", movimientos)
-    conceptos = hijos("class_td_concepto", movimientos)
-    importes = hijos("class_td_importe", movimientos)
-    cuentas = hijos("class_td_cuentas", movimientos)
-    generales = hijos("class_td_general", movimientos)
+    fechas = texto_en_hijos_respectivos("class_td_fecha", movimientos)
+    conceptos = texto_en_hijos_respectivos("class_td_concepto", movimientos)
+    importes = texto_en_hijos_respectivos("class_td_importe", movimientos)
+    cuentas = texto_en_hijos_respectivos("class_td_cuentas", movimientos)
+    generales = texto_en_hijos_respectivos("class_td_general", movimientos)
     for i in range(0,2):
         mov = objs_mov[i]
         assert fechas[i] == mov.fecha.strftime('%Y-%m-%d')

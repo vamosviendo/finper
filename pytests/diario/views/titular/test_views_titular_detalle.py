@@ -10,6 +10,13 @@ def test_usa_template_home(client, titular):
     asserts.assertTemplateUsed(response, 'diario/home.html')
 
 
+def test_pasa_titulares_a_template(client, titular, otro_titular):
+    response = client.get(
+        reverse('tit_detalle', args=[titular.titname]))
+    assert titular in response.context.get('titulares')
+    assert otro_titular in response.context.get('titulares')
+
+
 def test_pasa_titular_al_template(client, titular):
     response = client.get(
         reverse('tit_detalle', args=[titular.titname]))

@@ -1,9 +1,8 @@
-from urllib.parse import urlparse
-
 import pytest
 from django.urls import reverse
 
-from diario.models import CuentaInteractiva, Movimiento
+from .helpers import texto_en_hijos_respectivos
+from diario.models import CuentaInteractiva, Movimiento, Titular
 
 
 @pytest.fixture
@@ -74,7 +73,11 @@ def test_detalle_titular(
     browser.comparar_capital_de(titular)
 
     # Y vemos que en la sección de titulares aparecen todos los titulares
-    pytest.fail("No testeado todavía")
+    divs_titular = browser.esperar_elementos("class_div_titular")
+    assert len(divs_titular) == Titular.cantidad()
+    nombres = texto_en_hijos_respectivos("class_div_nombre_titular", divs_titular)
+    assert nombres[0] == Titular.primere().nombre
+    assert nombres[1] == Titular.ultime().nombre
 
     # Y vemos que el titular seleccionado aparece resaltado entre los demás
     # titulares, que aparecen atenuados
