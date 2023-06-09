@@ -31,10 +31,6 @@ ul.menu li {
   padding-right: 5px;
 }
 
-.menu-item:hover {
-  background-color: #b1a891
-}
-
 tr.menu-row:first-of-type td div {
   padding-top: 5px;
 }
@@ -42,7 +38,6 @@ tr.menu-row:first-of-type td div {
 tr.menu-row:last-of-type td div {
   padding-bottom: 5px;
 }
-
 
 .menu-item-content {
   width: 160px;

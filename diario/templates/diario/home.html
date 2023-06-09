@@ -17,6 +17,7 @@
     </span>
      <span id="id_importe_saldo_gral">{{ saldo_gral|floatformat:2 }}</span></h1>
 </div>
+
 <section id="id_section_titulares">
   <div id="id_div_menu_titulares" style="float: left;">
     <table class="menu">
@@ -26,7 +27,7 @@
       <tbody>
         {% for titular in titulares %}
         <tr class="menu-row class_div_titular">
-          <td class="menu-item">
+          <td class="menu-item class_td_titular">
             <div class="menu-item-content class_div_nombre_titular">
               <a href="{% url 'tit_detalle' titular.titname %}">{{ titular.nombre }}</a>
             </div>
@@ -44,7 +45,7 @@
         </tr>
         {% endfor %}
         <tr class="menu-row">
-          <td class="menu-item">
+          <td class="menu-item class_td_titular">
             <div id="id_div_titular_nuevo">
               <a id="id_link_titular_nuevo" href="{% url 'tit_nuevo' %}">+</a>
             </div>
@@ -67,7 +68,7 @@
       <tbody>
         {% for cuenta in subcuentas %}
           <tr class="menu-row class_div_cuenta">
-            <td class="menu-item">
+            <td class="menu-item class_td_cuenta">
               <div class="menu-item-content class_nombre_cuenta">
                 <a id="id_link_cta_{{ cuenta.slug }}" href="{% url 'cta_detalle' cuenta.slug %}">{{ cuenta.nombre }}</a>
               </div>
@@ -86,7 +87,7 @@
           </tr>
           {% for subcuenta in cuenta.subcuentas.all %}
             <tr class="menu-row class_div_cuenta">
-              <td class="menu-item div-subcuentas">
+              <td class="menu-item class_td_subcuenta">
                 <div class="menu-item-content">
                   <a id="id_link_cta_{{ subcuenta.slug }}" href="{% url 'cta_detalle' subcuenta.slug %}">
                     {{ subcuenta.nombre }}
@@ -105,12 +106,12 @@
               </td>
               <td class="numero chico class_saldo_cuenta div-detalles-subcuenta">{{ subcuenta.saldo|floatformat:2 }}</td>
               <td class="div-detalles-subcuenta">{{ subcuenta.ultimo_saldo }}</td>
-              <td class="div-detalles-subcuenta">{{ subcuenta.tiene_madre }}< /td>
+              <td class="div-detalles-subcuenta">{{ subcuenta.tiene_madre }}</td>
             </tr>
           {% endfor %}
         {% endfor %}
         <tr class="menu-row">
-          <td class="menu-item">
+          <td class="menu-item class_td_cuenta">
             <div id="id_div_cuenta_nueva">
               <a href="{% url 'cta_nueva' %}" id="id_link_cuenta_nueva">+</a>
             </div>

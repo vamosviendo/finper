@@ -14,12 +14,28 @@
     background-color: #488778 !important;
 }
 
+.menu-item.class_td_titular:hover {
+    background-color: #6b8f86;
+}
+
+.menu-item.class_td_titular.selected {
+    background-color: #00af86;
+}
+
 .div-cuentas {
     background-color: #EA5D34 !important;
 }
 
-.div-subcuentas {
-    background-color: #E18F77;
+.class_td_subcuenta {
+    background-color: #e08366;
+}
+
+.menu-item.class_td_cuenta:hover {
+    background-color: #f3a086;
+}
+
+.menu-item.class_td_subcuenta:hover {
+    background-color: #f3a086;
 }
 
 .div-detalles-subcuenta {
