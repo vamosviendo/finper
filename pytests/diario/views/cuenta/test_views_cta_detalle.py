@@ -1,3 +1,4 @@
+from django.db.models.functions import Lower
 from django.urls import reverse
 from pytest_django import asserts
 
@@ -26,17 +27,17 @@ def test_pasa_subcuentas_a_template(client, cuenta_acumulativa):
         list(cuenta_acumulativa.subcuentas.all())
 
 
-def test_pasa_subcuentas_ordenadas_por_slug(client, cuenta):
+def test_pasa_subcuentas_ordenadas_por_nombre(client, cuenta):
     cuenta = cuenta.dividir_y_actualizar(
         ['aa', 'zz', 40],
-        ['bb', 'yy']
+        ['BB', 'YY']
     )
 
     response = client.get(reverse('cta_detalle', args=[cuenta.slug]))
 
     assert \
         list(response.context['subcuentas']) == \
-        list(cuenta.subcuentas.order_by('slug'))
+        list(cuenta.subcuentas.order_by(Lower('nombre')))
 
 
 def test_cuenta_interactiva_pasa_titular_a_template(client, cuenta):

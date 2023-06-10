@@ -80,7 +80,7 @@ def test_detalle_titular(
     assert nombres[1] == Titular.ultime().nombre
 
     # Y vemos que el titular seleccionado aparece resaltado entre los demás
-    # titulares, que aparecen atenuados
+    # titulares
     tds_titular = browser.esperar_elementos("class_td_titular")
     tds_titular_selected = [
         x for x in tds_titular if "selected" in x.get_attribute("class")
@@ -92,13 +92,11 @@ def test_detalle_titular(
         )
     assert div_titular_selected.text == titular.nombre
 
-    # Y vemos que el nombre del resto de los titulares aparece atenuado
-    pytest.fail("No implementado aún")
-
     # Y vemos que sólo las cuentas del titular aparecen en la sección de cuentas
     browser.comparar_cuentas_de(titular)
 
-    # Y vemos que sólo los movimientos del titular aparecen en la sección de movimientos
+    # Y vemos que sólo los movimientos del titular aparecen en la sección
+    # de movimientos
     browser.comparar_movimientos_de(titular)
 
     # Y vemos una opción "Home" debajo de todos los titulares

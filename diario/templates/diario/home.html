@@ -70,7 +70,7 @@
           <tr class="menu-row class_div_cuenta">
             <td class="menu-item class_td_cuenta">
               <div class="menu-item-content class_nombre_cuenta">
-                <a id="id_link_cta_{{ cuenta.slug }}" href="{% url 'cta_detalle' cuenta.slug %}">{{ cuenta.nombre }}</a>
+                <a id="id_link_cta_{{ cuenta.slug }}" class="class_link_cuenta" href="{% url 'cta_detalle' cuenta.slug %}">{{ cuenta.nombre }}</a>
               </div>
               <div class="menu-item-edit">
                 <a id="id_link_cta_mod_{{ cuenta.slug}}" href="{% url 'cta_mod' cuenta.slug %}">E</a>

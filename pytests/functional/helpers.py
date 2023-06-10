@@ -105,12 +105,12 @@ class FinperFirefox(MiFirefox):
             x.text.strip()
             for x in self.esperar_elementos('class_link_cuenta')
         ]
-        slugs_cuenta = [
-            x.slug.upper()
-            for x in titular.cuentas_interactivas().order_by('slug')
+        nombres_cuenta = [
+            x.nombre
+            for x in titular.cuentas_interactivas().order_by('nombre')
         ]
 
-        assert divs_cuenta == slugs_cuenta
+        assert divs_cuenta == nombres_cuenta
 
     def crear_movimiento(self, **kwargs):
         self.ir_a_pag(reverse('mov_nuevo'))

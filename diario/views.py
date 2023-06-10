@@ -1,3 +1,4 @@
+from django.db.models.functions import Lower
 from django.shortcuts import render, redirect
 from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, DeleteView, DetailView, \
@@ -29,7 +30,8 @@ class HomeView(TemplateView):
 
         context.update({
             'titulares': Titular.todes(),
-            'subcuentas': Cuenta.filtro(cta_madre=None).order_by('slug'),
+            'subcuentas': Cuenta.filtro(
+                cta_madre=None).order_by(Lower('nombre')),
             'movimientos': Movimiento.todes(),
             'saldo_gral': saldo_gral or 0,
         })
@@ -47,7 +49,7 @@ class CtaDetalleView(DetailView):
 
         context.update({
             'cuenta': cuenta,
-            'subcuentas': cuenta.subcuentas.order_by('slug')
+            'subcuentas': cuenta.subcuentas.order_by(Lower('nombre'))
                 if cuenta.es_acumulativa
                 else [],
             'movimientos': cuenta.movs(),
@@ -207,7 +209,8 @@ class TitDetalleView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({
-            'subcuentas': self.object.cuentas_interactivas().order_by('slug'),
+            'subcuentas': self.object.cuentas_interactivas().order_by(
+                Lower('nombre')),
             'saldo_gral': self.object.capital,
             'movimientos': self.object.movs(),
             'titulares': Titular.todes(),

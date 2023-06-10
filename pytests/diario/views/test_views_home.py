@@ -22,12 +22,12 @@ def test_pasa_cuentas_a_template(cuenta, cuenta_ajena, response):
     assert cuenta_ajena in response.context.get('subcuentas')
 
 
-def test_pasa_cuentas_ordenadas_por_slug(client, cuenta, cuenta_2, cuenta_ajena):
-    cuenta.slug = 'j'
+def test_pasa_cuentas_ordenadas_por_nombre(client, cuenta, cuenta_2, cuenta_ajena):
+    cuenta.nombre = 'J'
     cuenta.save()
-    cuenta_2.slug = 'z'
+    cuenta_2.nombre = 'z'
     cuenta_2.save()
-    cuenta_ajena.slug = 'a'
+    cuenta_ajena.nombre = 'a'
     cuenta_ajena.save()
     response = client.get(reverse('home'))
 
