@@ -81,11 +81,27 @@ def test_detalle_titular(
 
     # Y vemos que el titular seleccionado aparece resaltado entre los demás
     # titulares, que aparecen atenuados
-    pytest.fail("No implementado todavía")
+    tds_titular = browser.esperar_elementos("class_td_titular")
+    tds_titular_selected = [
+        x for x in tds_titular if "selected" in x.get_attribute("class")
+    ]
+    assert len(tds_titular_selected) == 1
+    div_titular_selected = \
+        tds_titular_selected[0].find_element_by_class_name(
+            "class_div_nombre_titular"
+        )
+    assert div_titular_selected.text == titular.nombre
+
+    # Y vemos que el nombre del resto de los titulares aparece atenuado
+    pytest.fail("No implementado aún")
 
     # Y vemos que sólo las cuentas del titular aparecen en la sección de cuentas
     browser.comparar_cuentas_de(titular)
 
     # Y vemos que sólo los movimientos del titular aparecen en la sección de movimientos
     browser.comparar_movimientos_de(titular)
+
+    # Y vemos una opción "Home" debajo de todos los titulares
+    # Y cuando cliqueamos en la opción "Home" somos dirigidos a la página principal
+    pytest.fail("No implementado todavía")
 

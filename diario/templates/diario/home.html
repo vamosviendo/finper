@@ -25,19 +25,19 @@
         <col class="div-menu div-titulares"/>
       </colgroup>
       <tbody>
-        {% for titular in titulares %}
+        {% for tit in titulares %}
         <tr class="menu-row class_div_titular">
-          <td class="menu-item class_td_titular">
+          <td class="menu-item class_td_titular {% if tit.nombre == titular.nombre %}selected{% endif %}">
             <div class="menu-item-content class_div_nombre_titular">
-              <a href="{% url 'tit_detalle' titular.titname %}">{{ titular.nombre }}</a>
+              <a href="{% url 'tit_detalle' tit.titname %}">{{ tit.nombre }}</a>
             </div>
             <div class="menu-item-edit">
-              <a  id="id_link_tit_mod_{{ titular.titname }}" href="{% url 'tit_mod' titular.titname %}">
+              <a  id="id_link_tit_mod_{{ tit.titname }}" href="{% url 'tit_mod' tit.titname %}">
                 E
               </a>
             </div>
             <div class="menu-item-edit">
-              <a id="id_link_tit_elim_{{ titular.titname }}" href="{% url 'tit_elim' titular.titname%}">
+              <a id="id_link_tit_elim_{{ tit.titname }}" href="{% url 'tit_elim' tit.titname%}">
                 B
               </a>
             </div>
