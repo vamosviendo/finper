@@ -101,5 +101,5 @@ def test_detalle_titular(
 
     # Y vemos una opción "Home" debajo de todos los titulares
     # Y cuando cliqueamos en la opción "Home" somos dirigidos a la página principal
-    pytest.fail("No implementado todavía")
-
+    browser.esperar_elemento("id_link_home").click()
+    browser.assert_url(reverse('home'))

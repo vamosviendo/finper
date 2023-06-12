@@ -24,6 +24,8 @@ ul.menu li {
 .menu {
   white-space: nowrap;
   border-spacing: 0px;
+  margin-left: 2px;
+  margin-right: 2px;
 }
 
 .menu-item {
