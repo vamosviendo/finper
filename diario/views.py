@@ -207,12 +207,13 @@ class TitDetalleView(DetailView):
     slug_field = 'titname'
 
     def get_context_data(self, **kwargs):
+        titular = self.object
         context = super().get_context_data(**kwargs)
         context.update({
-            'subcuentas': self.object.cuentas_interactivas().order_by(
+            'subcuentas': titular.cuentas_interactivas().order_by(
                 Lower('nombre')),
-            'saldo_gral': self.object.capital,
-            'movimientos': self.object.movs(),
+            'saldo_gral': titular.capital,
+            'movimientos': titular.movs(),
             'titulares': Titular.todes(),
         })
         return context
