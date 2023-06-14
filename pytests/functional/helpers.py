@@ -80,17 +80,21 @@ class FinperFirefox(MiFirefox):
         )
 
     def comparar_titular(self, titular: Titular):
-        """ Dado un titular, comparar su nombre con el que aparece en la
+        """ Dado un titular, comparar su nombre con el que encabeza la
             página. """
-        nombre_titular = self.esperar_elemento('id_denominacion_saldo_gral').text.strip()
-        assert \
-            nombre_titular == \
-            f"Capital de {titular.nombre}:"
+        nombre_titular = self.esperar_elemento(
+            'id_denominacion_saldo_gral'
+        ).text.strip()
+        assert nombre_titular == f"Capital de {titular.nombre}:"
 
     def comparar_titular_de(self, cuenta: Cuenta):
         """ Dada una cuenta, comparar su titular con el que aparece en la
             página. """
-        self.comparar_titular(cuenta.titular)
+        nombre_titular = self.esperar_elemento(
+            "menu-item class_td_titular selected",
+            By.CLASS_NAME
+        )
+        assert nombre_titular == cuenta.titular.nombre
 
     def comparar_capital_de(self, titular: Titular):
         """ Dado un titular, comparar su capital con el que aparece en la
@@ -111,6 +115,20 @@ class FinperFirefox(MiFirefox):
         ]
 
         assert divs_cuenta == nombres_cuenta
+
+    def comparar_cuenta(self, cuenta: Cuenta):
+        """ Dada una cuenta, comparar su nombre con el que encabeza la página.
+        """
+        nombre_cuenta = self.esperar_elemento(
+            'id_denominacion_saldo_gral'
+        ).text.strip()
+        assert nombre_cuenta == f"Saldo de {cuenta.nombre}:"
+
+    def comparar_saldo_de(self, cuenta: Cuenta):
+        """ Dada una cuenta, comparar su saldo con el que aparece en la página.
+        """
+        saldo = self.esperar_elemento('id_importe_saldo_gral').text.strip()
+        assert saldo == float_format(cuenta.saldo)
 
     def crear_movimiento(self, **kwargs):
         self.ir_a_pag(reverse('mov_nuevo'))

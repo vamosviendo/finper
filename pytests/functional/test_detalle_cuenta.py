@@ -30,22 +30,37 @@ def credito_entre_subcuentas(cuenta_de_dos_titulares: CuentaAcumulativa) -> Movi
     return Movimiento.crear('Crédito entre subcuentas', 50, scot, sctg)
 
 
-def test_detalle_de_cuentas(
+def test_detalle_de_cuenta_interactiva(
         browser,
         titular, otro_titular, titular_gordo,
-        cuenta_con_saldo, cuenta_de_dos_titulares,
-        credito_entre_subcuentas):
+        cuenta_con_saldo):
     # Vamos a la página de inicio
     browser.ir_a_pag()
 
-    # Cliqueamos en el nombre de una cuenta
+    # Cliqueamos en el nombre de una cuenta interactiva
     browser.cliquear_en_cuenta(cuenta_con_saldo)
 
-    # Vemos el titular de la cuenta y los movimientos en los que interviene
+    # Vemos el nombre de la cuenta encabezando la página
+    browser.comparar_cuenta(cuenta_con_saldo)
+
+    # Y vemos que al lado del nombre aparece el saldo de la cuenta
+    browser.comparar_saldo_de(cuenta_con_saldo)
+
+    # Y vemos que en la sección de titulares aparecen todos los titulares
+    pytest.fail('no implementado aún')
+
+    # Y vemos que el titular de la cuenta aparece resaltado
     browser.comparar_titular_de(cuenta_con_saldo)
+
+    # Y vemos que sólo los movimientos en los que interviene la cuenta aparecen
+    # en la sección de movimientos
     browser.comparar_movimientos_de(cuenta_con_saldo)
 
-    # Volvemos a la página principal y cliqueamos en el nombre de una cuenta
+
+def test_detalle_de_cuenta_acumulativa(
+        browser, cuenta_de_dos_titulares, credito_entre_subcuentas):
+
+    # Vamos a la página principal y cliqueamos en el nombre de una cuenta
     # acumulativa
     browser.ir_a_pag()
     browser.cliquear_en_cuenta(cuenta_de_dos_titulares)

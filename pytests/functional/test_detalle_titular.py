@@ -68,8 +68,7 @@ def test_detalle_titular(
     # Vemos el nombre del titular encabezando la página
     browser.comparar_titular(titular)
 
-    # Y vemos que el capital del titular es igual a la suma de los saldos
-    # de sus cuentas
+    # Y vemos que al lado del nombre aparece la suma de los saldos de sus cuentas
     browser.comparar_capital_de(titular)
 
     # Y vemos que en la sección de titulares aparecen todos los titulares

@@ -11,6 +11,8 @@
     <span id="id_denominacion_saldo_gral">
       {% if titular %}
         Capital de {{ titular.nombre }}:
+      {% elif cuenta %}
+        Saldo de {{ cuenta.nombre }}:
       {% else %}
         Saldo general:
       {% endif %}
@@ -27,7 +29,11 @@
       <tbody>
         {% for tit in titulares %}
         <tr class="menu-row class_div_titular">
-          <td class="menu-item class_td_titular {% if tit.nombre == titular.nombre %}selected{% endif %}">
+          <td class="menu-item class_td_titular
+            {% if tit.nombre == titular.nombre %}
+              selected
+            {% endif %}
+          ">
             <div class="menu-item-content class_div_nombre_titular">
               <a href="{% url 'tit_detalle' tit.titname %}">{{ tit.nombre }}</a>
             </div>
@@ -71,26 +77,29 @@
         <col span="3" class="div-menu div-detalles-cuenta"/>
       </colgroup>
       <tbody>
-        {% for cuenta in subcuentas %}
+        {% for cta in subcuentas %}
           <tr class="menu-row class_div_cuenta">
             <td class="menu-item class_td_cuenta">
               <div class="menu-item-content class_nombre_cuenta">
-                <a id="id_link_cta_{{ cuenta.slug }}" class="class_link_cuenta" href="{% url 'cta_detalle' cuenta.slug %}">{{ cuenta.nombre }}</a>
+                <a id="id_link_cta_{{ cuenta.slug }}" class="class_link_cuenta"
+                   href="{% url 'cta_detalle' cta.slug %}">
+                  {{ cta.nombre }}
+                </a>
               </div>
               <div class="menu-item-edit">
-                <a id="id_link_cta_mod_{{ cuenta.slug}}" href="{% url 'cta_mod' cuenta.slug %}">E</a>
+                <a id="id_link_cta_mod_{{ cta.slug}}" href="{% url 'cta_mod' cta.slug %}">E</a>
               </div>
               <div class="menu-item-edit">
-                <a id="id_link_cta_elim_{{ cuenta.slug }}" href="{% url 'cta_elim' cuenta.slug %}">
+                <a id="id_link_cta_elim_{{ cta.slug }}" href="{% url 'cta_elim' cta.slug %}">
                   B
                 </a>
               </div>
             </td>
-            <td class="numero chico class_saldo_cuenta">{{ cuenta.saldo|floatformat:2 }}</td>
-            <td>{{ cuenta.ultimo_saldo }}</td>
-            <td>{{ cuenta.tiene_madre }}</td>
+            <td class="numero chico class_saldo_cuenta">{{ cta.saldo|floatformat:2 }}</td>
+            <td>{{ cta.ultimo_saldo }}</td>
+            <td>{{ cta.tiene_madre }}</td>
           </tr>
-          {% for subcuenta in cuenta.subcuentas.all %}
+          {% for subcuenta in cta.subcuentas.all %}
             <tr class="menu-row class_div_cuenta">
               <td class="menu-item class_td_subcuenta">
                 <div class="menu-item-content">
@@ -189,11 +198,11 @@
           {% endwith %}
         </td>
 
-        {% for subc in subcuentas %}
+        {% for cta in subcuentas %}
         <td class="{% include './snippets/color_saldos.html' %}
-                  numero chico class_td_saldo class_td_{{ subc.slug }}"
+                  numero chico class_td_saldo class_td_{{ cta.slug }}"
         >
-          {% historico subc mov %}
+          {% historico cta mov %}
         </td>
         {% endfor %}
 
