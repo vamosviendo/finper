@@ -41,7 +41,7 @@ class HomeView(TemplateView):
 
 class CtaDetalleView(DetailView):
     model = Cuenta
-    template_name = 'diario/cta_detalle.html'
+    template_name = 'diario/home.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

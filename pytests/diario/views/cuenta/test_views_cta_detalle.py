@@ -5,10 +5,10 @@ from pytest_django import asserts
 from diario.models import Movimiento
 
 
-def test_usa_template_cta_detalle(client, cuenta):
+def test_usa_template_home(client, cuenta):
     response = client.get(
         reverse('cta_detalle', args=[cuenta.slug]))
-    asserts.assertTemplateUsed(response, 'diario/cta_detalle.html')
+    asserts.assertTemplateUsed(response, 'diario/home.html')
 
 
 def test_pasa_cuenta_a_template(client, cuenta):
