@@ -3,6 +3,7 @@ from django.urls import reverse
 from pytest_django import asserts
 
 from diario.models import Movimiento
+from utils.numeros import float_format
 
 
 def test_usa_template_home(client, cuenta):
@@ -17,6 +18,12 @@ def test_pasa_cuenta_a_template(client, cuenta):
     assert response.context['cuenta'] == cuenta
     asserts.assertContains(response, cuenta.nombre)
 
+
+def test_pasa_saldo_a_template(client, cuenta):
+    response = client.get(
+        reverse('cta_detalle', args=[cuenta.slug]))
+    assert response.context['saldo_gral'] == cuenta.saldo
+    asserts.assertContains(response, float_format(cuenta.saldo))
 
 def test_pasa_subcuentas_a_template(client, cuenta_acumulativa):
     response = client.get(

@@ -49,6 +49,7 @@ class CtaDetalleView(DetailView):
 
         context.update({
             'cuenta': cuenta,
+            'saldo_gral': cuenta.saldo,
             'subcuentas': cuenta.subcuentas.order_by(Lower('nombre'))
                 if cuenta.es_acumulativa
                 else [],
