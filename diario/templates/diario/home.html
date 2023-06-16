@@ -127,7 +127,14 @@
         <tr class="menu-row">
           <td class="menu-item class_td_cuenta">
             <div id="id_div_cuenta_nueva">
-              <a href="{% url 'cta_nueva' %}" id="id_link_cuenta_nueva">+</a>
+              <a
+                {% if cuenta %}
+                  href="{% url 'cta_div' cuenta.slug %}"
+                {% else %}
+                  href="{% url 'cta_nueva' %}"
+                {% endif %}
+                id="id_link_cuenta_nueva"
+              >+</a>
             </div>
           </td>
           <td></td>

@@ -2,6 +2,7 @@ import pytest
 from django.urls import reverse
 
 from diario.models import CuentaAcumulativa, CuentaInteractiva, Titular, Movimiento
+from pytests.functional.helpers import texto_en_hijos_respectivos
 
 
 @pytest.fixture
@@ -46,15 +47,20 @@ def test_detalle_de_cuenta_interactiva(
     # Y vemos que al lado del nombre aparece el saldo de la cuenta
     browser.comparar_saldo_de(cuenta_con_saldo)
 
-    # Y vemos que en la sección de titulares aparecen todos los titulares
-    pytest.fail('no implementado aún')
-
-    # Y vemos que el titular de la cuenta aparece resaltado
-    browser.comparar_titular_de(cuenta_con_saldo)
+    # Y vemos que en la sección de titulares aparece el titular de la cuenta
+    divs_titular = browser.esperar_elementos("class_div_titular")
+    assert len(divs_titular) == 1
+    nombres = texto_en_hijos_respectivos("class_div_nombre_titular", divs_titular)
+    assert nombres[0] == cuenta_con_saldo.titular.nombre
 
     # Y vemos que sólo los movimientos en los que interviene la cuenta aparecen
     # en la sección de movimientos
     browser.comparar_movimientos_de(cuenta_con_saldo)
+
+    # Cuando cliqueamos en el ícono de agregar cuenta, accedemos a la página
+    # de dividir cuenta en subcuentas
+    browser.esperar_elemento("id_link_cuenta_nueva").click()
+    browser.assert_url(reverse('cta_div', args=[cuenta_con_saldo.slug]))
 
 
 def test_detalle_de_cuenta_acumulativa(
