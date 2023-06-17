@@ -30,6 +30,10 @@
     background-color: #e08366;
 }
 
+.acumulativa {
+    background-color: #b44929;
+}
+
 .menu-item.class_td_cuenta:hover {
     background-color: #f3a086;
 }

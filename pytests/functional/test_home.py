@@ -3,13 +3,14 @@ from __future__ import annotations
 from django.urls import reverse
 from selenium.webdriver.common.by import By
 
+from diario.models import Movimiento
 from .helpers import texto_en_hijos_respectivos
 from utils.numeros import float_format
 
 
 def test_home(
         browser, titular, otro_titular,
-        cuenta, cuenta_2, cuenta_3,
+        cuenta, cuenta_2, cuenta_3, cuenta_acumulativa,
         entrada, traspaso, entrada_posterior_otra_cuenta):
     # Vamos a la página principal
     browser.ir_a_pag()
@@ -19,22 +20,34 @@ def test_home(
     titulo_saldo = browser.esperar_elemento("id_denominacion_saldo_gral").text.strip()
     assert titulo_saldo == "Saldo general:"
     saldo_gral = browser.esperar_elemento("id_importe_saldo_gral")
-    assert saldo_gral.text == float_format(cuenta.saldo + cuenta_2.saldo + cuenta_3.saldo)
+    assert saldo_gral.text == float_format(
+        cuenta.saldo + cuenta_2.saldo + cuenta_3.saldo + cuenta_acumulativa.saldo
+    )
 
     # Vemos dos titulares en el menú de titulares
     titulares = browser.esperar_elementos("class_div_titular")
-    assert len(titulares) == 2
+    assert len(titulares) == 3
     nombres = texto_en_hijos_respectivos("class_div_nombre_titular", titulares)
     assert nombres[0] == titular.nombre
     assert nombres[1] == otro_titular.nombre
 
-    # Vemos tres cuentas en el menú de cuentas
+    # Vemos seis cuentas en el menú de cuentas (4 cuentas y 2 subcuentas)
     cuentas = browser.find_elements_by_class_name("class_div_cuenta")
-    assert len(cuentas) == 3
+    assert len(cuentas) == 6
     nombres_cuenta = texto_en_hijos_respectivos("class_nombre_cuenta", cuentas)
     assert nombres_cuenta[0] == cuenta.nombre
     assert nombres_cuenta[1] == cuenta_2.nombre
     assert nombres_cuenta[2] == cuenta_3.nombre
+    assert nombres_cuenta[3] == cuenta_acumulativa.nombre
+    assert nombres_cuenta[4] == cuenta_acumulativa.subcuentas.first().nombre
+    assert nombres_cuenta[5] == cuenta_acumulativa.subcuentas.last().nombre
+
+    # Vemos que la cuenta acumulativa es presentada en un color más oscuro,
+    # y las subcuentas en un color más claro
+    tds_cuenta = browser.find_elements_by_class_name("class_td_cuenta")
+    assert "acumulativa" in tds_cuenta[3].get_attribute("class")
+    assert "class_td_subcuenta" in tds_cuenta[4].get_attribute("class")
+    assert "class_td_subcuenta" in tds_cuenta[5].get_attribute("class")
 
     # A la derecha de cada una de las cuentas se ve su saldo, el cual
     # corresponde a los movimientos en los que participó
@@ -44,18 +57,19 @@ def test_home(
         entrada_posterior_otra_cuenta.importe - traspaso.importe)
     assert saldos[2] == '0,00'
 
-    # Vemos tres movimientos en la sección de movimientos, con conceptos
+    # Vemos seis movimientos en la sección de movimientos, con conceptos
     # correspondientes al concepto de cada uno de los movimientos existentes.
-    movimientos = browser.find_elements_by_class_name("class_row_mov")
-    objs_mov = [entrada_posterior_otra_cuenta, traspaso, entrada]
-    assert len(movimientos) == 3
-    fechas = texto_en_hijos_respectivos("class_td_fecha", movimientos)
-    conceptos = texto_en_hijos_respectivos("class_td_concepto", movimientos)
-    importes = texto_en_hijos_respectivos("class_td_importe", movimientos)
-    cuentas = texto_en_hijos_respectivos("class_td_cuentas", movimientos)
-    generales = texto_en_hijos_respectivos("class_td_general", movimientos)
-    for i in range(0,2):
-        mov = objs_mov[i]
+    webelements_mov = browser.find_elements_by_class_name("class_row_mov")
+    webelements_mov.reverse()
+    objects_mov = Movimiento.todes()
+    assert len(webelements_mov) == 6
+    fechas = texto_en_hijos_respectivos("class_td_fecha", webelements_mov)
+    conceptos = texto_en_hijos_respectivos("class_td_concepto", webelements_mov)
+    importes = texto_en_hijos_respectivos("class_td_importe", webelements_mov)
+    cuentas = texto_en_hijos_respectivos("class_td_cuentas", webelements_mov)
+    generales = texto_en_hijos_respectivos("class_td_general", webelements_mov)
+
+    for i, mov in enumerate(objects_mov):
         assert fechas[i] == mov.fecha.strftime('%Y-%m-%d')
         assert conceptos[i] == mov.concepto
         assert importes[i] == float_format(mov.importe)

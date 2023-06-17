@@ -79,7 +79,7 @@
       <tbody>
         {% for cta in subcuentas %}
           <tr class="menu-row class_div_cuenta">
-            <td class="menu-item class_td_cuenta">
+            <td class="menu-item class_td_cuenta {% if cta.es_acumulativa %}acumulativa{% endif %}">
               <div class="menu-item-content class_nombre_cuenta">
                 <a id="id_link_cta_{{ cuenta.slug }}" class="class_link_cuenta"
                    href="{% url 'cta_detalle' cta.slug %}">
@@ -101,8 +101,8 @@
           </tr>
           {% for subcuenta in cta.subcuentas.all %}
             <tr class="menu-row class_div_cuenta">
-              <td class="menu-item class_td_subcuenta">
-                <div class="menu-item-content">
+              <td class="menu-item class_td_cuenta class_td_subcuenta">
+                <div class="menu-item-content class_nombre_cuenta">
                   <a id="id_link_cta_{{ subcuenta.slug }}" href="{% url 'cta_detalle' subcuenta.slug %}">
                     {{ subcuenta.nombre }}
                   </a>
