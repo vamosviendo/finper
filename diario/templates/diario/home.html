@@ -29,11 +29,7 @@
       <tbody>
         {% for tit in titulares %}
         <tr class="menu-row class_div_titular">
-          <td class="menu-item class_td_titular
-            {% if tit.nombre == titular.nombre %}
-              selected
-            {% endif %}
-          ">
+          <td class="menu-item class_td_titular{% if tit.nombre == titular.nombre %} selected{% endif %}">
             <div class="menu-item-content class_div_nombre_titular">
               <a href="{% url 'tit_detalle' tit.titname %}">{{ tit.nombre }}</a>
             </div>

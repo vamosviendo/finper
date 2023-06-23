@@ -8,7 +8,7 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 
-from diario.models import Titular, Cuenta
+from diario.models import Titular, Cuenta, CuentaInteractiva, CuentaAcumulativa
 from utils.numeros import float_format
 from vvsteps.driver import MiFirefox, MiWebElement
 from vvsteps.helpers import esperar
@@ -87,14 +87,19 @@ class FinperFirefox(MiFirefox):
         ).text.strip()
         assert nombre_titular == f"Capital de {titular.nombre}:"
 
-    def comparar_titular_de(self, cuenta: Cuenta):
-        """ Dada una cuenta, comparar su titular con el que aparece en la
-            página. """
-        nombre_titular = self.esperar_elemento(
-            "menu-item class_td_titular selected",
-            By.CLASS_NAME
-        )
-        assert nombre_titular == cuenta.titular.nombre
+    def comparar_titulares_de(
+            self, cuenta: CuentaInteractiva | CuentaAcumulativa):
+        """ Dada una cuenta, comparar su titular o titulares con el o los
+            que aparecen en la página. """
+        nombres_titular = [cuenta.titular.nombre] if cuenta.es_interactiva \
+            else [x.nombre for x in cuenta.titulares]
+        textos_titular = [
+            x.text for x in self.esperar_elementos(
+                ".menu-item-content.class_div_nombre_titular",
+                By.CSS_SELECTOR
+            )
+        ]
+        assert nombres_titular == textos_titular
 
     def comparar_capital_de(self, titular: Titular):
         """ Dado un titular, comparar su capital con el que aparece en la
@@ -123,6 +128,15 @@ class FinperFirefox(MiFirefox):
             'id_denominacion_saldo_gral'
         ).text.strip()
         assert nombre_cuenta == f"Saldo de {cuenta.nombre}:"
+
+    def comparar_subcuentas_de(self, cuenta: CuentaAcumulativa):
+        """ Dada una cuenta acumulativa, comparar sus subcuentas con las que
+            aparecen en la página. """
+        nombres_subcuenta = [
+            x.text for x in self.esperar_elementos('class_link_cuenta')]
+        assert nombres_subcuenta == [
+            x.nombre for x in cuenta.subcuentas.all()
+        ]
 
     def comparar_saldo_de(self, cuenta: Cuenta):
         """ Dada una cuenta, comparar su saldo con el que aparece en la página.

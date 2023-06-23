@@ -26,7 +26,7 @@ def test_home(
 
     # Vemos dos titulares en el menú de titulares
     titulares = browser.esperar_elementos("class_div_titular")
-    assert len(titulares) == 3
+    assert len(titulares) == 2
     nombres = texto_en_hijos_respectivos("class_div_nombre_titular", titulares)
     assert nombres[0] == titular.nombre
     assert nombres[1] == otro_titular.nombre

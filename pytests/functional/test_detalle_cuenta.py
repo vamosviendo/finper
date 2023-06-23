@@ -71,31 +71,36 @@ def test_detalle_de_cuenta_acumulativa(
     browser.ir_a_pag()
     browser.cliquear_en_cuenta(cuenta_de_dos_titulares)
 
+    # Vemos el nombre de la cuenta encabezando la página
+    browser.comparar_cuenta(cuenta_de_dos_titulares)
+
+    # Y vemos que al lado del nombre aparece el saldo de la cuenta
+    browser.comparar_saldo_de(cuenta_de_dos_titulares)
+
     # Vemos las subcuentas de la cuenta acumulativa, los titulares de las
     # subcuentas y los movimientos relacionados con ella o sus subcuentas
-    nombres_subcuenta = [x.text for x in browser.esperar_elementos(
-        'class_link_cuenta'
-    )]
-    assert nombres_subcuenta == [
-        x.slug.upper() for x in cuenta_de_dos_titulares.subcuentas.all()
-    ]
-
-    nombres_titular = [
-        x.text.strip() for x in browser.esperar_elementos(
-            'class_div_nombre_titular'
-    )]
-    assert nombres_titular == [
-        x.nombre for x in cuenta_de_dos_titulares.titulares
-    ]
+    browser.comparar_subcuentas_de(cuenta_de_dos_titulares)
+    browser.comparar_titulares_de(cuenta_de_dos_titulares)
     browser.comparar_movimientos_de(cuenta_de_dos_titulares)
 
     # Cliqueamos en el nombre de la primera subcuenta
     primera_subcuenta = cuenta_de_dos_titulares.subcuentas.first()
     browser.cliquear_en_cuenta(primera_subcuenta)
 
-    # Vemos el titular de la primera subcuenta y los movimientos en los que
+    # Vemos el nombre de la cuenta encabezando la página
+    browser.comparar_cuenta(primera_subcuenta)
+
+    # Y vemos que al lado del nombre aparece el saldo de la cuenta
+    browser.comparar_saldo_de(primera_subcuenta)
+
+    # Y vemos que antes del nombre y saldo de la cuenta aparece en tipografía
+    # menos destacada el nombre y saldo de su cuenta madre
+    pytest.fail('TODO saldo de cuenta madre')
+
+    # Y vemos el titular de la primera subcuenta y los movimientos en los que
     # interviene
-    browser.comparar_titular_de(primera_subcuenta)
+
+    browser.comparar_titulares_de(primera_subcuenta)
     browser.comparar_movimientos_de(primera_subcuenta)
 
     # Volvemos a la página de la cuenta acumulativa y cliqueamos en el nombre
@@ -108,5 +113,5 @@ def test_detalle_de_cuenta_acumulativa(
 
     # Vemos el titular de la segunda subcuenta y los movimientos en los que
     # interviene
-    browser.comparar_titular_de(segunda_subcuenta)
+    browser.comparar_titulares_de(segunda_subcuenta)
     browser.comparar_movimientos_de(segunda_subcuenta)
