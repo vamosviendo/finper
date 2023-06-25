@@ -35,11 +35,6 @@ class Cuenta(PolymorphModel):
         null=True, blank=True,
         on_delete=models.CASCADE,
     )
-    titular = models.ForeignKey('diario.Titular',
-                                related_name='cuentas',
-                                on_delete=models.CASCADE,
-                                blank=True,
-                                default=Titular.por_defecto)
     fecha_creacion = models.DateField(default=date.today)
 
     class Meta:
@@ -112,7 +107,6 @@ class Cuenta(PolymorphModel):
         super().clean_fields(exclude=exclude)
 
     def clean(self, *args, **kwargs):
-        self._impedir_cambio_de_titular()
         self._impedir_cambio_de_cta_madre()
         self._chequear_incongruencias_de_clase()
 
@@ -220,14 +214,6 @@ class Cuenta(PolymorphModel):
         except (Cuenta.DoesNotExist, AttributeError):
             pass
 
-    def _impedir_cambio_de_titular(self):
-        try:
-            titular_guardado = self.tomar_de_bd().titular
-            if self.titular != titular_guardado:
-                raise errors.CambioDeTitularException
-        except (Cuenta.DoesNotExist, AttributeError):
-            pass
-
 
 class CuentaInteractiva(Cuenta):
 
@@ -237,6 +223,12 @@ class CuentaInteractiva(Cuenta):
         related_name='_cuentacontra',
         on_delete=models.CASCADE
     )
+    titular = models.ForeignKey('diario.Titular',
+                                related_name='cuentas',
+                                on_delete=models.CASCADE,
+                                blank=True,
+                                default=Titular.por_defecto)
+
 
     @classmethod
     def crear(cls, nombre, slug, cta_madre=None, saldo=None, **kwargs):
@@ -254,6 +246,10 @@ class CuentaInteractiva(Cuenta):
             )
 
         return cuenta_nueva
+
+    def clean(self):
+        super().clean()
+        self._impedir_cambio_de_titular()
 
     @property
     def contracuenta(self):
@@ -399,6 +395,7 @@ class CuentaInteractiva(Cuenta):
 
     def _convertirse_en_acumulativa(self, fecha=None):
         fecha = fecha or date.today()
+        titular = self.titular
         pk_preservado = self.pk
 
         self.delete(keep_parents=True)
@@ -410,6 +407,7 @@ class CuentaInteractiva(Cuenta):
         )
         cuenta_acumulativa.fecha_conversion = fecha
         cuenta_acumulativa._state.adding = True
+        cuenta_acumulativa.titular_original = titular
         cuenta_acumulativa.save()
         return cuenta_acumulativa
 
@@ -469,10 +467,21 @@ class CuentaInteractiva(Cuenta):
 
         return cuentas_creadas
 
+    def _impedir_cambio_de_titular(self):
+        try:
+            titular_guardado = self.tomar_de_bd().titular
+            if self.titular != titular_guardado:
+                raise errors.CambioDeTitularException
+        except (Cuenta.DoesNotExist, AttributeError):
+            pass
+
 
 class CuentaAcumulativa(Cuenta):
 
     fecha_conversion = models.DateField()
+    titular_original = models.ForeignKey('diario.Titular',
+                                related_name='ex_cuentas',
+                                on_delete=models.CASCADE,)
 
     @property
     def titulares(self):
@@ -541,6 +550,5 @@ class CuentaAcumulativa(Cuenta):
     def movs_no_conversion(self):
         return self.movs().filter(convierte_cuenta=None)
 
-    def agregar_subcuenta(self, nombre, slug, titular=None):
-        titular = titular or self.titular
+    def agregar_subcuenta(self, nombre, slug, titular):
         return Cuenta.crear(nombre, slug, cta_madre=self, titular=titular)

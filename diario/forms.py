@@ -96,12 +96,12 @@ class FormCrearSubcuenta(forms.Form):
     def __init__(self, *args, **kwargs):
         self.cuenta = CuentaAcumulativa.tomar(slug=kwargs.pop('cuenta'))
         super().__init__(*args, **kwargs)
-        self.fields['titular'].initial = self.cuenta.titular
+        self.fields['titular'].initial = self.cuenta.titular_original
 
     def clean(self):
         self.cleaned_data = super().clean()
         self.cleaned_data['titular'] = \
-            self.cleaned_data.get('titular') or self.cuenta.titular
+            self.cleaned_data.get('titular') or self.cuenta.titular_original
         return self.cleaned_data
 
     def save(self):

@@ -24,7 +24,9 @@ class Titular(MiModel):
         Movimiento = self.get_related_class('cuentas').get_related_class('entradas')
         return Movimiento.filtro(
             Q(cta_entrada__in=self.cuentas.all()) |
-            Q(cta_salida__in=self.cuentas.all())
+            Q(cta_salida__in=self.cuentas.all()) |
+            Q(cta_entrada__in=self.ex_cuentas.all()) |
+            Q(cta_salida__in=self.ex_cuentas.all())
         )
 
     def clean(self):

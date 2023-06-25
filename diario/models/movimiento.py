@@ -169,14 +169,29 @@ class Movimiento(MiModel):
         self._importe = round(float(valor), 2)
 
     @property
-    def emisor(self) -> Titular:
-        if self.cta_salida:
-            return self.cta_salida.titular
+    def emisor(self) -> Titular | None:
+        try:
+            if self.cta_salida.es_interactiva:
+                try:
+                    return self.cta_salida.titular
+                except AttributeError:
+                    return self.cta_salida.como_subclase().titular
+            return self.cta_salida.titular_original
+        except AttributeError:
+            return None
 
     @property
-    def receptor(self) -> Titular:
-        if self.cta_entrada:
-            return self.cta_entrada.titular
+    def receptor(self) -> Titular | None:
+        try:
+            if self.cta_entrada.es_interactiva:
+                try:
+                    return self.cta_entrada.titular
+                except AttributeError:
+                    return self.cta_entrada.como_subclase().titular
+            return self.cta_entrada.titular_original
+        except AttributeError:
+            return None
+
 
     @property
     def posicion(self) -> Posicion:

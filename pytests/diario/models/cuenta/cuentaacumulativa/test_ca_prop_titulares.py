@@ -1,5 +1,5 @@
 def test_devuelve_lista_de_titulares_de_subcuentas_sin_elementos_repetidos(cuenta_acumulativa, titular, otro_titular):
-    cuenta_acumulativa.agregar_subcuenta('subcuenta 3', 'sc3')
+    cuenta_acumulativa.agregar_subcuenta('subcuenta 3', 'sc3', titular)
     sc1, sc2, sc3 = cuenta_acumulativa.subcuentas.all()
     sc1.titular = titular
     sc1.save()

@@ -51,9 +51,11 @@ def test_muestra_todos_los_titulares_en_campo_titular(formsubcuenta, otro_titula
         [t.nombre for t in Titular.todes()]
 
 
-def test_muestra_por_defecto_titular_de_cuenta_madre(
+def test_muestra_por_defecto_titular_original_de_cuenta_madre(
         formsubcuenta, cuenta_acumulativa, otro_titular, titular_gordo):
-    assert formsubcuenta.fields['titular'].initial == cuenta_acumulativa.titular
+    assert \
+        formsubcuenta.fields['titular'].initial == \
+        cuenta_acumulativa.titular_original
 
 
 def test_pasa_datos_correctamente_al_salvar_form(

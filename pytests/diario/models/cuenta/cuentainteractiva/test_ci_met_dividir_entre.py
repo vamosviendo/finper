@@ -86,6 +86,15 @@ def test_si_recibe_titular_none_usa_titular_por_defecto(cuenta, dicts_subcuentas
     assert sc1.titular == cuenta.titular
 
 
+def test_convierte_titular_en_titular_original(cuenta, dicts_subcuentas, otro_titular):
+    titular = cuenta.titular
+    for dict in dicts_subcuentas:
+        dict.update({'titular': otro_titular})
+
+    ca = cuenta.dividir_y_actualizar(dicts_subcuentas)
+    assert ca.titular_original == titular
+
+
 def test_genera_movimientos_de_salida_en_cta_madre_con_saldo_positivo(cuenta_con_saldo, dicts_subcuentas):
     movs_cuenta_antes = cuenta_con_saldo.movs_directos().count()
     importe1 = dicts_subcuentas[0]['saldo']
