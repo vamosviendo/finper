@@ -1,8 +1,10 @@
 import pytest
 from django.urls import reverse
+from selenium.webdriver.common.by import By
 
 from diario.models import CuentaAcumulativa, CuentaInteractiva, Titular, Movimiento
 from pytests.functional.helpers import texto_en_hijos_respectivos
+from utils.numeros import float_format
 
 
 @pytest.fixture
@@ -53,7 +55,7 @@ def test_detalle_de_cuenta_interactiva(
     nombres = texto_en_hijos_respectivos("class_div_nombre_titular", divs_titular)
     assert nombres[0] == cuenta_con_saldo.titular.nombre
 
-    # Y vemos que sólo los movimientos en los que interviene la cuenta aparecen
+    # Y vemos que solo los movimientos en los que interviene la cuenta aparecen
     # en la sección de movimientos
     browser.comparar_movimientos_de(cuenta_con_saldo)
 
@@ -95,7 +97,14 @@ def test_detalle_de_cuenta_acumulativa(
 
     # Y vemos que antes del nombre y saldo de la cuenta aparece en tipografía
     # menos destacada el nombre y saldo de su cuenta madre
-    pytest.fail('TODO saldo de cuenta madre')
+    saldo_cta_madre = browser.esperar_elemento("class_div_saldo_ancestro", By.CLASS_NAME).text
+    assert \
+        saldo_cta_madre == \
+        f"Saldo de cuenta madre {cuenta_de_dos_titulares.nombre}: " \
+        f"{float_format(cuenta_de_dos_titulares.saldo)}"
+
+    # Y vemos que luego del nombre y saldo de la cuenta aprece en tipografía
+    # menos destacada el nombre y saldo de sus hermanas de cuenta
 
     # Y vemos el titular de la primera subcuenta y los movimientos en los que
     # interviene
@@ -115,3 +124,66 @@ def test_detalle_de_cuenta_acumulativa(
     # interviene
     browser.comparar_titulares_de(segunda_subcuenta)
     browser.comparar_movimientos_de(segunda_subcuenta)
+
+
+def test_detalle_de_subcuenta(browser, titular, cuenta_de_dos_titulares):
+    # Dadas dos subcuentas de una cuenta acumulativa
+    scot, sctg = cuenta_de_dos_titulares.subcuentas.all()
+
+    # Y una de esas subcuentas a la vez dividida en tres subcuentas
+    scot_pk = scot.pk
+    ssc1, ssc2, ssc3 = scot.dividir_entre(
+        {
+            'nombre': 'subsubuenta 1',
+            'slug': 'ssc1',
+            'saldo': 10,
+            'titular': scot.titular
+        },
+        {
+            'nombre': 'subsubcuenta 2',
+            'slug': 'ssc2',
+            'saldo': 20,
+            'titular': sctg.titular
+        },
+        {
+            'nombre': 'subsubcuenta 3',
+            'slug': 'ssc3',
+            'titular': titular
+        },
+    )
+    scot = CuentaAcumulativa.tomar(pk=scot_pk)
+
+    # Cuando vamos a la página de la primer sub-subcuenta
+    browser.ir_a_pag(
+        reverse('cta_detalle', args=[ssc1.slug])
+    )
+
+    # Vemos el nombre de la cuenta encabezando la página
+    browser.comparar_cuenta(ssc1)
+
+    # Y vemos que al lado del nombre aparece el saldo de la cuenta
+    browser.comparar_saldo_de(ssc1)
+
+    # Y vemos que antes del nombre y saldo de la cuenta aparece en tipografía
+    # menos destacada el nombre y saldo de sus cuentas ancestro
+    saldos_ancestro = [
+        x.text for x in browser.esperar_elementos("class_div_saldo_ancestro")
+    ]
+    assert \
+        saldos_ancestro == [
+            f"Saldo de cuenta madre {cuenta_de_dos_titulares.nombre}: "
+            f"{float_format(cuenta_de_dos_titulares.saldo)}",
+            f"Saldo de cuenta madre {scot.nombre}: "
+            f"{float_format(scot.saldo)}",
+        ]
+
+    # Y vemos que luego del nombre y saldo de la cuenta aparece en la misma
+    # tipografía menos destacada el nombre y saldo de sus cuentas hermanas
+    saldos_hermana = [
+        x.text for x in browser.esperar_elementos("class_div_saldo_hermana")
+    ]
+    assert \
+        saldos_hermana == [
+            f"Saldo de cuenta hermana subsubcuenta 2: {float_format(ssc2.saldo)}",
+            f"Saldo de cuenta hermana subsubcuenta 3: {float_format(ssc3.saldo)}",
+        ]
