@@ -35,6 +35,13 @@ class HomeView(TemplateView):
             'movimientos': Movimiento.todes(),
             'saldo_gral': saldo_gral or 0,
         })
+        if kwargs.get('ctaname'):
+            cuenta = Cuenta.tomar(slug=kwargs['ctaname'])
+            context['cuenta'] = cuenta
+            context['titulares'] = [cuenta.titular] if cuenta.es_interactiva else cuenta.titulares
+            context['saldo_gral'] = cuenta.saldo
+            context['movimientos'] = cuenta.movs()
+            context['subcuentas'] = cuenta.subcuentas.all() if cuenta.es_acumulativa else []
 
         return context
 

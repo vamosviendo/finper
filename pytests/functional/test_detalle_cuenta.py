@@ -2,29 +2,9 @@ import pytest
 from django.urls import reverse
 from selenium.webdriver.common.by import By
 
-from diario.models import CuentaAcumulativa, CuentaInteractiva, Titular, Movimiento
+from diario.models import CuentaAcumulativa, Movimiento
 from pytests.functional.helpers import texto_en_hijos_respectivos
 from utils.numeros import float_format
-
-
-@pytest.fixture
-def cuenta_de_dos_titulares(
-        titular_gordo: Titular,
-        cuenta_ajena: CuentaInteractiva,
-) -> CuentaAcumulativa:
-    return cuenta_ajena.dividir_y_actualizar(
-        {
-            'nombre': 'Subcuenta otro titular',
-            'slug': 'scot',
-            'saldo': cuenta_ajena.saldo - 10
-        },
-        {
-            'nombre': 'Subcuenta titular gordo',
-            'slug': 'sctg',
-            'saldo': 10,
-            'titular': titular_gordo
-        }
-    )
 
 
 @pytest.fixture
@@ -36,7 +16,7 @@ def credito_entre_subcuentas(cuenta_de_dos_titulares: CuentaAcumulativa) -> Movi
 def test_detalle_de_cuenta_interactiva(
         browser,
         titular, otro_titular, titular_gordo,
-        cuenta_con_saldo):
+        cuenta_con_saldo, entrada_otra_cuenta):
     # Vamos a la página de inicio
     browser.ir_a_pag()
 
@@ -55,9 +35,13 @@ def test_detalle_de_cuenta_interactiva(
     nombres = texto_en_hijos_respectivos("class_div_nombre_titular", divs_titular)
     assert nombres[0] == cuenta_con_saldo.titular.nombre
 
+    # Y vemos que no aparecen cuentas en la sección de cuentas
+    assert browser.esperar_elementos('class_link_cuenta', fail=False) == []
+
     # Y vemos que solo los movimientos en los que interviene la cuenta aparecen
     # en la sección de movimientos
     browser.comparar_movimientos_de(cuenta_con_saldo)
+    assert not set(cuenta_con_saldo.movs()) == set(Movimiento.todes())
 
     # Cuando cliqueamos en el ícono de agregar cuenta, accedemos a la página
     # de dividir cuenta en subcuentas
@@ -66,7 +50,7 @@ def test_detalle_de_cuenta_interactiva(
 
 
 def test_detalle_de_cuenta_acumulativa(
-        browser, cuenta_de_dos_titulares, credito_entre_subcuentas):
+        browser, entrada_otra_cuenta, cuenta_de_dos_titulares, credito_entre_subcuentas):
 
     # Vamos a la página principal y cliqueamos en el nombre de una cuenta
     # acumulativa

@@ -106,12 +106,12 @@ class TestHomeLinks:
         # Cuando cliqueamos en una cuenta, vamos a la página de esa cuenta
         browser.ir_a_pag()
         browser.cliquear_en_cuenta(cuenta_2)
-        browser.assert_url(reverse("cta_detalle", args=[cuenta_2.slug]))
+        browser.assert_url(reverse("cuenta", args=[cuenta_2.slug]))
 
         # Cuando cliqueamos en una subcuenta, vamos a la página de esa subcuenta
         browser.ir_a_pag()
         browser.cliquear_en_cuenta(subcuenta)
-        browser.assert_url(reverse("cta_detalle", args=[subcuenta.slug]))
+        browser.assert_url(reverse("cuenta", args=[subcuenta.slug]))
 
         # cuando cliqueamos en el ícono de agregar cuenta, accedemos a la página para agregar cuenta nueva
         browser.ir_a_pag()

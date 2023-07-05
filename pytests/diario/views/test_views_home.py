@@ -56,6 +56,48 @@ def test_pasa_saldo_general_a_template(
     assert response.context.get('saldo_gral') == cuenta.saldo + cuenta_2.saldo
 
 
+def test_si_recibe_slug_de_cuenta_pasa_cuenta_a_template(cuenta, client):
+    response = client.get(reverse('cuenta', args=[cuenta.slug]))
+    assert response.context.get('cuenta') is not None
+    assert response.context['cuenta'] == cuenta
+
+
+def test_si_recibe_slug_de_cuenta_interactiva_pasa_lista_con_titular_de_cuenta_como_titulares(
+        cuenta, otro_titular, client):
+    response = client.get(reverse('cuenta', args=[cuenta.slug]))
+    assert list(response.context['titulares']) == [cuenta.titular]
+
+
+def test_si_recibe_slug_de_cuenta_acumulativa_pasa_lista_de_titulares_de_la_cuenta(
+        cuenta_de_dos_titulares, titular_gordo, client):
+    response = client.get(reverse('cuenta', args=[cuenta_de_dos_titulares.slug]))
+    assert list(response.context['titulares']) == cuenta_de_dos_titulares.titulares
+
+
+def test_si_recibe_slug_de_cuenta_pasa_saldo_de_cuenta_como_saldo_general(
+        cuenta_con_saldo, entrada, client):
+    response = client.get(reverse('cuenta', args=[cuenta_con_saldo.slug]))
+    assert response.context['saldo_gral'] == cuenta_con_saldo.saldo
+
+
+def test_si_recibe_slug_de_cuenta_pasa_movimientos_de_la_cuenta_recibida(
+        cuenta, entrada, salida, entrada_otra_cuenta, client):
+    response = client.get(reverse('cuenta', args=[cuenta.slug]))
+    assert list(response.context['movimientos']) == list(cuenta.movs())
+
+
+def test_si_recibe_slug_de_cuenta_acumulativa_pasa_subcuentas_de_la_cuenta_recibida(
+        cuenta_acumulativa, cuenta, client):
+    response = client.get(reverse('cuenta', args=[cuenta_acumulativa.slug]))
+    assert list(response.context['subcuentas']) == list(cuenta_acumulativa.subcuentas.all())
+
+
+def test_si_recibe_slug_de_cuenta_interactiva_pasa_lista_vacia_de_subcuentas(
+        cuenta, cuenta_2, client):
+    response = client.get(reverse('cuenta', args=[cuenta.slug]))
+    assert len(response.context['subcuentas']) == 0
+
+
 def test_considera_solo_cuentas_independientes_para_calcular_saldo_gral(
         cuenta, cuenta_2, entrada, entrada_otra_cuenta, salida, client):
     cuenta_2.dividir_entre(

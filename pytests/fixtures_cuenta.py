@@ -105,6 +105,26 @@ def cuenta_acumulativa_saldo_0(cuenta: CuentaInteractiva) -> CuentaAcumulativa:
 
 
 @pytest.fixture
+def cuenta_de_dos_titulares(
+        titular_gordo: Titular,
+        cuenta_ajena: CuentaInteractiva,
+) -> CuentaAcumulativa:
+    return cuenta_ajena.dividir_y_actualizar(
+        {
+            'nombre': 'Subcuenta otro titular',
+            'slug': 'scot',
+            'saldo': cuenta_ajena.saldo - 10
+        },
+        {
+            'nombre': 'Subcuenta titular gordo',
+            'slug': 'sctg',
+            'saldo': 10,
+            'titular': titular_gordo
+        }
+    )
+
+
+@pytest.fixture
 def cuenta_acumulativa_ajena(cuenta_ajena: CuentaInteractiva) -> CuentaAcumulativa:
     return cuenta_ajena.dividir_y_actualizar(
         ['subcuenta 1 ajena', 'sc1', 0],
