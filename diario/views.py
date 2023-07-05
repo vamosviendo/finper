@@ -26,22 +26,28 @@ class HomeView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        saldo_gral = sum([c.saldo for c in Cuenta.filtro(cta_madre=None)])
-
-        context.update({
-            'titulares': Titular.todes(),
-            'subcuentas': Cuenta.filtro(
-                cta_madre=None).order_by(Lower('nombre')),
-            'movimientos': Movimiento.todes(),
-            'saldo_gral': saldo_gral or 0,
-        })
         if kwargs.get('ctaname'):
             cuenta = Cuenta.tomar(slug=kwargs['ctaname'])
-            context['cuenta'] = cuenta
-            context['titulares'] = [cuenta.titular] if cuenta.es_interactiva else cuenta.titulares
-            context['saldo_gral'] = cuenta.saldo
-            context['movimientos'] = cuenta.movs()
-            context['subcuentas'] = cuenta.subcuentas.all() if cuenta.es_acumulativa else []
+            context.update({
+                'saldo_gral': cuenta.saldo,
+                'movimientos': cuenta.movs(),
+                'cuenta': cuenta,
+                'titulares': [cuenta.titular]
+                    if cuenta.es_interactiva
+                    else cuenta.titulares,
+                'subcuentas': cuenta.subcuentas.all()
+                    if cuenta.es_acumulativa
+                    else [],
+            })
+        else:
+            context.update({
+                'saldo_gral':
+                    sum([c.saldo for c in Cuenta.filtro(cta_madre=None)]),
+                'movimientos': Movimiento.todes(),
+                'titulares': Titular.todes(),
+                'subcuentas':
+                    Cuenta.filtro(cta_madre=None).order_by(Lower('nombre')),
+            })
 
         return context
 
