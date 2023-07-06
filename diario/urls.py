@@ -19,6 +19,7 @@ from diario import views
 
 urlpatterns = [
     path('c/<slug:ctaname>/', views.HomeView.as_view(), name='cuenta'),
+    path('t/<slug:titname>/', views.HomeView.as_view(), name='titular'),
     path('cta_nueva', views.CtaNuevaView.as_view(), name='cta_nueva'),
     path('cta_detalle/<slug:slug>/', views.CtaDetalleView.as_view(), name='cta_detalle'),
     path('cta_elim/<slug:slug>', views.CtaElimView.as_view(), name='cta_elim'),

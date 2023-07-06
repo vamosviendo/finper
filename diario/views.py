@@ -29,24 +29,34 @@ class HomeView(TemplateView):
         if kwargs.get('ctaname'):
             cuenta = Cuenta.tomar(slug=kwargs['ctaname'])
             context.update({
-                'saldo_gral': cuenta.saldo,
-                'movimientos': cuenta.movs(),
                 'cuenta': cuenta,
+                'saldo_gral': cuenta.saldo,
                 'titulares': [cuenta.titular]
                     if cuenta.es_interactiva
                     else cuenta.titulares,
                 'subcuentas': cuenta.subcuentas.all()
                     if cuenta.es_acumulativa
                     else [],
+                'movimientos': cuenta.movs(),
+            })
+        elif kwargs.get('titname'):
+            titular = Titular.tomar(titname=kwargs['titname'])
+            context.update({
+                'titular': titular,
+                'saldo_gral': titular.capital,
+                'titulares': Titular.todes(),
+                'subcuentas':
+                    titular.cuentas_interactivas().order_by(Lower('nombre')),
+                'movimientos': titular.movs(),
             })
         else:
             context.update({
                 'saldo_gral':
                     sum([c.saldo for c in Cuenta.filtro(cta_madre=None)]),
-                'movimientos': Movimiento.todes(),
                 'titulares': Titular.todes(),
                 'subcuentas':
                     Cuenta.filtro(cta_madre=None).order_by(Lower('nombre')),
+                'movimientos': Movimiento.todes(),
             })
 
         return context

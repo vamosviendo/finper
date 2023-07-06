@@ -2,6 +2,7 @@ import pytest
 from django.urls import reverse
 from pytest_django import asserts
 
+
 @pytest.fixture
 def response(client):
     return client.get(reverse('home'))
@@ -96,6 +97,45 @@ def test_si_recibe_slug_de_cuenta_interactiva_pasa_lista_vacia_de_subcuentas(
         cuenta, cuenta_2, client):
     response = client.get(reverse('cuenta', args=[cuenta.slug]))
     assert len(response.context['subcuentas']) == 0
+
+
+def test_si_recibe_titname_pasa_titular_a_template(
+        titular, client):
+    response = client.get(reverse('titular', args=[titular.titname]))
+    assert response.context.get('titular') is not None
+    assert response.context['titular'] == titular
+
+
+def test_si_recibe_titname_pasa_saldo_a_template(entrada, entrada_cuenta_ajena, client):
+    titular = entrada.cta_entrada.titular
+    response = client.get(reverse('titular', args=[titular.titname]))
+    assert response.context['saldo_gral'] == titular.capital
+
+
+def test_si_recibe_titname_pasa_titulares_a_template(titular, otro_titular, client):
+    response = client.get(reverse('titular', args=[titular.titname]))
+    assert list(response.context['titulares']) == [titular, otro_titular]
+
+
+def test_si_recibe_titname_pasa_cuentas_del_titular_a_template(
+        cuenta_2, cuenta, cuenta_ajena, client):
+    titular = cuenta.titular
+    response = client.get(reverse('titular', args=[titular.titname]))
+    assert set(response.context['subcuentas']) == {cuenta, cuenta_2}
+
+
+def test_si_recibe_titname_pasa_cuentas_del_titular_ordenadas_por_nombre(
+        cuenta_2, cuenta, cuenta_ajena, client):
+    titular = cuenta.titular
+    response = client.get(reverse('titular', args=[titular.titname]))
+    assert list(response.context['subcuentas']) == [cuenta, cuenta_2]
+
+
+def test_si_recibe_titname_pasa_movimientos_del_titular_a_template(
+        entrada, salida, traspaso, entrada_cuenta_ajena, client):
+    titular = entrada.cta_entrada.titular
+    response = client.get(reverse('titular', args=[titular.titname]))
+    assert list(response.context['movimientos']) == list(titular.movs())
 
 
 def test_considera_solo_cuentas_independientes_para_calcular_saldo_gral(
