@@ -49,6 +49,12 @@ class HomeView(TemplateView):
                     titular.cuentas_interactivas().order_by(Lower('nombre')),
                 'movimientos': titular.movs(),
             })
+        elif kwargs.get('pk'):
+            movimiento = Movimiento.tomar(pk=kwargs['pk'])
+            context.update({
+                'movimiento': movimiento,
+                'movimientos': Movimiento.todes(),
+            })
         else:
             context.update({
                 'saldo_gral':

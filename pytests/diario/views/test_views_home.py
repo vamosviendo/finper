@@ -138,6 +138,17 @@ def test_si_recibe_titname_pasa_movimientos_del_titular_a_template(
     assert list(response.context['movimientos']) == list(titular.movs())
 
 
+def test_si_recibe_id_de_movimiento_pasa_movimiento_a_template(entrada, salida, client):
+    response = client.get(reverse('movimiento', args=[salida.pk]))
+    assert response.context.get('movimiento') is not None
+    assert response.context['movimiento'] == salida
+
+
+def test_si_recibe_id_de_movimiento_pasa_todos_los_movimientos_a_template(entrada, salida, traspaso, client):
+    response = client.get(reverse('movimiento', args=[salida.pk]))
+    assert list(response.context['movimientos']) == [entrada, salida, traspaso]
+
+
 def test_considera_solo_cuentas_independientes_para_calcular_saldo_gral(
         cuenta, cuenta_2, entrada, entrada_otra_cuenta, salida, client):
     cuenta_2.dividir_entre(

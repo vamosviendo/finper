@@ -1,5 +1,9 @@
 /* TODO: retirar estilos obsoletos */
 
+table.table-striped tr.mov_selected {
+    background-color: #e4c202;
+}
+
 .div-menu {
     padding: 5px;
     overflow-x: scroll;
