@@ -8,7 +8,7 @@ from diario.forms import FormCuenta, FormMovimiento, FormSubcuentas, \
     FormCrearSubcuenta
 from diario.models import Cuenta, CuentaInteractiva, CuentaAcumulativa, \
     Movimiento, Titular
-from diario.utils import verificar_saldos
+from diario.utils import saldo_general_historico, verificar_saldos
 
 
 class HomeView(TemplateView):
@@ -54,6 +54,7 @@ class HomeView(TemplateView):
             context.update({
                 'movimiento': movimiento,
                 'movimientos': Movimiento.todes(),
+                'saldo_gral': saldo_general_historico(movimiento),
             })
         else:
             context.update({

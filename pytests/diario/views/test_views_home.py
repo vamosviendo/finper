@@ -2,6 +2,8 @@ import pytest
 from django.urls import reverse
 from pytest_django import asserts
 
+from diario.utils import saldo_general_historico
+
 
 @pytest.fixture
 def response(client):
@@ -147,6 +149,17 @@ def test_si_recibe_id_de_movimiento_pasa_movimiento_a_template(entrada, salida, 
 def test_si_recibe_id_de_movimiento_pasa_todos_los_movimientos_a_template(entrada, salida, traspaso, client):
     response = client.get(reverse('movimiento', args=[salida.pk]))
     assert list(response.context['movimientos']) == [entrada, salida, traspaso]
+
+
+def test_si_recibe_id_de_movimiento_pasa_saldo_general_a_la_pagina(entrada, salida, client):
+    response = client.get(reverse('movimiento', args=[salida.pk]))
+    assert response.context.get('saldo_gral') is not None
+
+
+def test_si_recibe_id_de_movimiento_pasa_saldo_historico_al_momento_del_movimiento_como_saldo_gral(
+        entrada, salida, salida_posterior, client):
+    response = client.get(reverse('movimiento', args=[salida.pk]))
+    assert response.context['saldo_gral'] == saldo_general_historico(salida)
 
 
 def test_considera_solo_cuentas_independientes_para_calcular_saldo_gral(
