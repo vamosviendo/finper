@@ -54,6 +54,8 @@ class HomeView(TemplateView):
             context.update({
                 'movimiento': movimiento,
                 'movimientos': Movimiento.todes(),
+                'subcuentas':
+                    Cuenta.filtro(cta_madre=None).order_by(Lower('nombre')),
                 'saldo_gral': saldo_general_historico(movimiento),
             })
         else:

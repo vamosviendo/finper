@@ -112,9 +112,13 @@
                 </a>
               </div>
             </td>
-            <td class="numero chico class_saldo_cuenta">{{ cta.saldo|floatformat:2 }}</td>
-            <td>{{ cta.ultimo_saldo }}</td>
-            <td>{{ cta.tiene_madre }}</td>
+            <td class="numero chico class_saldo_cuenta">
+              {% if movimiento %}
+                {% historico cta movimiento %}
+              {% else %}
+                {{ cta.saldo|floatformat:2 }}
+              {% endif %}
+            </td>
           </tr>
           {% for subcuenta in cta.subcuentas.all %}
             <tr class="menu-row class_div_cuenta">
@@ -135,9 +139,13 @@
                   </a>
                 </div>
               </td>
-              <td class="numero chico class_saldo_cuenta div-detalles-subcuenta">{{ subcuenta.saldo|floatformat:2 }}</td>
-              <td class="div-detalles-subcuenta">{{ subcuenta.ultimo_saldo }}</td>
-              <td class="div-detalles-subcuenta">{{ subcuenta.tiene_madre }}</td>
+              <td class="numero chico class_saldo_cuenta div-detalles-subcuenta">
+                {% if movimiento %}
+                  {% historico subcuenta movimiento %}
+                {% else %}
+                  {{ subcuenta.saldo|floatformat:2 }}
+                {% endif %}
+              </td>
             </tr>
           {% endfor %}
         {% endfor %}

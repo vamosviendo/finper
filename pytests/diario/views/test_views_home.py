@@ -156,10 +156,20 @@ def test_si_recibe_id_de_movimiento_pasa_saldo_general_a_la_pagina(entrada, sali
     assert response.context.get('saldo_gral') is not None
 
 
-def test_si_recibe_id_de_movimiento_pasa_saldo_historico_al_momento_del_movimiento_como_saldo_gral(
+def test_si_recibe_id_de_movimiento_pasa_saldo_general_historico_al_momento_del_movimiento_como_saldo_gral(
         entrada, salida, salida_posterior, client):
     response = client.get(reverse('movimiento', args=[salida.pk]))
     assert response.context['saldo_gral'] == saldo_general_historico(salida)
+
+
+def test_si_recibe_id_de_movimiento_pasa_cuentas_independientes(
+        entrada, salida, entrada_otra_cuenta, cuenta_acumulativa, client):
+    cuenta = entrada.cta_entrada
+    otra_cuenta = entrada_otra_cuenta.cta_entrada
+    response = client.get(reverse('movimiento', args=[salida.pk]))
+    assert response.context.get('subcuentas') is not None
+    assert list(response.context['subcuentas']) == \
+           [cuenta, otra_cuenta, cuenta_acumulativa]
 
 
 def test_considera_solo_cuentas_independientes_para_calcular_saldo_gral(
