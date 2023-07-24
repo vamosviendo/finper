@@ -31,6 +31,11 @@ def test_home(
     assert nombres[0] == titular.nombre
     assert nombres[1] == otro_titular.nombre
 
+    # Vemos que al lado de cada titular aparece su capital
+    capitales = texto_en_hijos_respectivos("class_capital_titular", titulares)
+    assert capitales[0] == float_format(titular.capital)
+    assert capitales[1] == float_format(otro_titular.capital)
+
     # Vemos seis cuentas en el menú de cuentas (4 cuentas y 2 subcuentas)
     cuentas = browser.find_elements_by_class_name("class_div_cuenta")
     assert len(cuentas) == 6
@@ -83,7 +88,7 @@ class TestHomeLinks:
         # Cuando cliqueamos en un titular, vamos a la página de ese titular
         browser.ir_a_pag()
         browser.cliquear_en_titular(titular)
-        browser.assert_url(reverse("tit_detalle", args=[titular.titname]))
+        browser.assert_url(reverse("titular", args=[titular.titname]))
 
         # cuando cliqueamos en el ícono de agregar titular, accedemos a la página para agregar titular nuevo
         browser.ir_a_pag()
