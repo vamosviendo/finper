@@ -29,7 +29,6 @@ class HomeView(TemplateView):
         if kwargs.get('ctaname'):
             cuenta = Cuenta.tomar(slug=kwargs['ctaname'])
             context.update({
-                'cuenta': cuenta,
                 'saldo_gral': cuenta.saldo,
                 'titulares': [cuenta.titular]
                     if cuenta.es_interactiva
@@ -38,25 +37,27 @@ class HomeView(TemplateView):
                     if cuenta.es_acumulativa
                     else [],
                 'movimientos': cuenta.movs(),
+                'cuenta': cuenta,
             })
         elif kwargs.get('titname'):
             titular = Titular.tomar(titname=kwargs['titname'])
             context.update({
-                'titular': titular,
                 'saldo_gral': titular.capital,
                 'titulares': Titular.todes(),
                 'subcuentas':
                     titular.cuentas_interactivas().order_by(Lower('nombre')),
                 'movimientos': titular.movs(),
+                'titular': titular,
             })
         elif kwargs.get('pk'):
             movimiento = Movimiento.tomar(pk=kwargs['pk'])
             context.update({
-                'movimiento': movimiento,
-                'movimientos': Movimiento.todes(),
+                'saldo_gral': saldo_general_historico(movimiento),
+                'titulares': Titular.todes(),
                 'subcuentas':
                     Cuenta.filtro(cta_madre=None).order_by(Lower('nombre')),
-                'saldo_gral': saldo_general_historico(movimiento),
+                'movimientos': Movimiento.todes(),
+                'movimiento': movimiento,
             })
         else:
             context.update({

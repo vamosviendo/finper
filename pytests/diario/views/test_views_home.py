@@ -172,6 +172,15 @@ def test_si_recibe_id_de_movimiento_pasa_cuentas_independientes(
            [cuenta, otra_cuenta, cuenta_acumulativa]
 
 
+def test_si_recibe_id_de_movimiento_pasa_titulares(
+        entrada, salida, entrada_cuenta_ajena, client):
+    titular = entrada.cta_entrada.titular
+    otro_titular = entrada_cuenta_ajena.cta_entrada.titular
+    response = client.get(reverse('movimiento', args=[salida.pk]))
+    assert response.context.get('titulares') is not None
+    assert list(response.context['titulares']) == [titular, otro_titular]
+
+
 def test_considera_solo_cuentas_independientes_para_calcular_saldo_gral(
         cuenta, cuenta_2, entrada, entrada_otra_cuenta, salida, client):
     cuenta_2.dividir_entre(
