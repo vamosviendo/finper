@@ -16,6 +16,9 @@ class Titular(MiModel):
     def capital(self):
         return sum([c.saldo for c in self.cuentas_interactivas()])
 
+    def capital_historico(self, movimiento):
+        return sum(c.saldo_en_mov(movimiento) for c in self.cuentas_interactivas())
+
     def cuentas_interactivas(self):
         ids = [c.id for c in self.cuentas.all() if c.es_interactiva]
         return self.cuentas.filter(id__in=ids)
