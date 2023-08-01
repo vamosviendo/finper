@@ -1,4 +1,4 @@
-from diario.models import Cuenta
+from diario.models import Cuenta, Titular
 from diario.utils import saldo_general_historico
 from utils.numeros import float_format
 
@@ -29,5 +29,10 @@ def test_detalle_movimiento(browser, entrada, salida, traspaso, cuenta_acumulati
         x.text for x in browser.esperar_elementos("class_saldo_cuenta")]
     for index, cta in enumerate(Cuenta.todes()):
         assert saldos_historicos[index] == float_format(cta.saldo_en_mov(salida))
-    import pytest
-    pytest.fail('ni siquiera está escrito el test para el capital histórico')
+
+    # Y al lado de cada titular aparece el capital del titular al momento del
+    # movimiento seleccionado
+    capitales_historicos = [
+        x.text for x in browser.esperar_elementos("class_capital_titular")]
+    for index, titular in enumerate(Titular.todes()):
+        assert capitales_historicos[index] == float_format(titular.capital_historico(salida))
