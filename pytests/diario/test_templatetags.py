@@ -1,6 +1,6 @@
 import pytest
 
-from diario.templatetags.historicos import historico, historico_general
+from diario.templatetags.historicos import cap_historico, historico, historico_general
 
 pytestmark = pytest.mark.django_db
 
@@ -39,3 +39,16 @@ class TestHistoricoGeneral:
         assert \
             historico_general(entrada) == \
             f'{importe_aleatorio:.2f}'.replace('.', ',')
+
+
+class TestCapHistorico:
+
+    def test_devuelve_string_con_capital_historico_de_titular_al_momento_del_movimiento(
+            self, mocker, titular, cuenta, entrada, importe_aleatorio):
+        mock_capital_historico = mocker.patch('diario.models.Titular.capital_historico', autospec=True)
+        mock_capital_historico.return_value = importe_aleatorio
+
+        result = cap_historico(titular, entrada)
+
+        mock_capital_historico.assert_called_once_with(titular, entrada)
+        assert result == f'{importe_aleatorio:.2f}'.replace('.', ',')

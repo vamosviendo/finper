@@ -15,3 +15,8 @@ def historico_general(movimiento):
 @register.simple_tag
 def historico(cuenta, mov):
     return float_format(cuenta.saldo_en_mov(mov))
+
+
+@register.simple_tag
+def cap_historico(titular, mov):
+    return float_format(titular.capital_historico(mov))
