@@ -55,7 +55,7 @@ def test_detalle_titular(
         browser,
         titular,
         cuenta_titular, cuenta_2_titular,
-        entrada_titular, credito_entre_titulares,
+        credito_entre_titulares,
 ):
     # Dados dos titulares
     # Vamos a la página de inicio y cliqueamos en el primer titular
@@ -97,6 +97,26 @@ def test_detalle_titular(
     # Y vemos que sólo los movimientos del titular aparecen en la sección
     # de movimientos
     browser.comparar_movimientos_de(titular)
+
+    # Si cliqueamos en un movimiento, solo aparecen los movimientos del
+    # titular en la sección de movimientos, con el movimiento cliqueado
+    # resaltado
+    links_movimiento = browser.esperar_elementos("class_link_movimiento")
+    links_movimiento[1].click()
+    browser.comparar_movimientos_de(titular)
+    movs_pagina = browser.esperar_elementos("class_row_mov")
+    assert "mov_selected" in movs_pagina[1].get_attribute("class")
+
+    # Y vemos que en el saldo de la página aparece el capital histórico del
+    # titular al momento del movimiento
+    browser.comparar_capital_historico_de(titular, titular.movs()[2])
+
+    # Y al lado de cada cuenta del titular aparece el saldo histórico al
+    # momento del movimiento seleccionado, y no aparece ninguna cuenta que no
+    # pertenezca al titular
+
+    # Y al lado de cada titular aparece el capital histórico del titular al
+    # momento del movimiento seleccionado.
 
     # Y vemos una opción "Home" debajo de todos los titulares
     # Y cuando cliqueamos en la opción "Home" somos dirigidos a la página principal

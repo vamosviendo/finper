@@ -181,6 +181,45 @@ def test_si_recibe_id_de_movimiento_pasa_titulares(
     assert list(response.context['titulares']) == [titular, otro_titular]
 
 
+def test_si_recibe_titname_e_id_de_movimiento_pasa_solo_movimientos_de_cuentas_del_titular(
+        entrada, salida, entrada_cuenta_ajena, client):
+    titular = entrada.cta_entrada.titular
+    otro_titular = entrada_cuenta_ajena.cta_entrada.titular
+    response = client.get(
+        reverse(
+            'titular_movimiento',
+            args=[titular.titname, salida.pk]
+        )
+    )
+    assert response.context.get('movimientos') is not None
+    assert list(response.context['movimientos']) == list(titular.movs())
+
+
+def test_si_recibe_titname_e_id_de_movimiento_pasa_movimiento_seleccionado(
+        entrada, salida, client):
+    titular = entrada.cta_entrada.titular
+    response = client.get(
+        reverse(
+            'titular_movimiento',
+            args=[titular.titname, salida.pk]
+        )
+    )
+    assert response.context.get('movimiento') is not None
+    assert response.context['movimiento'] == salida
+
+
+def test_si_recibe_titname_e_id_de_movimiento_pasa_capital_historico_de_titular_en_movimiento_como_saldo_gral(
+        entrada, salida, entrada_otra_cuenta, client):
+    titular = entrada.cta_entrada.titular
+    response = client.get(
+        reverse(
+            'titular_movimiento',
+            args=[titular.titname, salida.pk])
+    )
+    assert response.context.get('saldo_gral') is not None
+    assert response.context['saldo_gral'] == titular.capital_historico(salida)
+
+
 def test_considera_solo_cuentas_independientes_para_calcular_saldo_gral(
         cuenta, cuenta_2, entrada, entrada_otra_cuenta, salida, client):
     cuenta_2.dividir_entre(

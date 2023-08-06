@@ -4,9 +4,6 @@ from utils.numeros import float_format
 
 
 def test_detalle_movimiento(browser, entrada, salida, traspaso, cuenta_acumulativa):
-    cuenta = entrada.cta_entrada
-    cuenta_2 = traspaso.cta_salida
-    subc1, subc2 = cuenta_acumulativa.subcuentas.all()
     browser.ir_a_pag()
     links_movimiento = browser.esperar_elementos("class_link_movimiento")
 

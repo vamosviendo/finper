@@ -8,7 +8,7 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 
-from diario.models import Titular, Cuenta, CuentaInteractiva, CuentaAcumulativa
+from diario.models import Titular, Cuenta, CuentaInteractiva, CuentaAcumulativa, Movimiento
 from utils.numeros import float_format
 from vvsteps.driver import MiFirefox, MiWebElement
 from vvsteps.helpers import esperar
@@ -106,6 +106,13 @@ class FinperFirefox(MiFirefox):
         página. """
         cap = self.esperar_elemento('id_importe_saldo_gral').text.strip()
         assert cap == float_format(titular.capital)
+
+    def comparar_capital_historico_de(self, titular: Titular, movimiento: Movimiento):
+        """ Dado un titular y un movimiento, comparar el capital histórico del
+            titular al momento del movimiento con el que aparece como saldo
+            general de la página"""
+        cap = self.esperar_elemento('id_importe_saldo_gral').text.strip()
+        assert cap == float_format(titular.capital_historico(movimiento))
 
     def comparar_cuentas_de(self, titular: Titular):
         """ Dado un titular, comparar sus cuentas con las que aparecen en

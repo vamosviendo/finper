@@ -13,6 +13,7 @@ from diario.utils import saldo_general_historico, verificar_saldos
 
 class HomeView(TemplateView):
     template_name = 'diario/home.html'
+
     #
     # def get(self, request, *args, **kwargs):
     #     hoy = Path('hoy.mark')
@@ -39,16 +40,23 @@ class HomeView(TemplateView):
                 'movimientos': cuenta.movs(),
                 'cuenta': cuenta,
             })
+
         elif kwargs.get('titname'):
             titular = Titular.tomar(titname=kwargs['titname'])
+            movimiento = None if kwargs.get('pk') is None \
+                else Movimiento.tomar(pk=kwargs['pk'])
             context.update({
-                'saldo_gral': titular.capital,
+                'saldo_gral': titular.capital
+                    if movimiento is None
+                    else titular.capital_historico(movimiento),
                 'titulares': Titular.todes(),
                 'subcuentas':
                     titular.cuentas_interactivas().order_by(Lower('nombre')),
                 'movimientos': titular.movs(),
                 'titular': titular,
+                'movimiento': movimiento,
             })
+
         elif kwargs.get('pk'):
             movimiento = Movimiento.tomar(pk=kwargs['pk'])
             context.update({
@@ -59,6 +67,7 @@ class HomeView(TemplateView):
                 'movimientos': Movimiento.todes(),
                 'movimiento': movimiento,
             })
+
         else:
             context.update({
                 'saldo_gral':
