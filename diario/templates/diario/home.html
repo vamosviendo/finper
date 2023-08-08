@@ -20,7 +20,13 @@
     <h1>
       <span id="id_denominacion_saldo_gral">
         {% if titular %}
-          Capital de {{ titular.nombre }}:
+          {% if movimiento %}
+            Capital histórico de {{ titular.nombre }}
+            en movimiento {{ movimiento.orden_dia }}
+            del {{ movimiento.fecha|date:"Y-m-d" }} ({{ movimiento.concepto }}):
+          {% else %}
+            Capital de {{ titular.nombre }}:
+          {% endif %}
         {% elif cuenta %}
           Saldo de {{ cuenta.nombre }}:
         {% else %}

@@ -1,6 +1,7 @@
 import pytest
 from django.urls import reverse
 
+from utils.numeros import float_format
 from .helpers import texto_en_hijos_respectivos
 from diario.models import CuentaInteractiva, Movimiento, Titular
 
@@ -109,14 +110,31 @@ def test_detalle_titular(
 
     # Y vemos que en el saldo de la página aparece el capital histórico del
     # titular al momento del movimiento
-    browser.comparar_capital_historico_de(titular, titular.movs()[2])
+    nombre_titular = browser.esperar_elemento(
+        'id_denominacion_saldo_gral'
+    ).text.strip()
+    movimiento = titular.movs()[2]
+
+    assert nombre_titular == (f"Capital histórico de {titular.nombre} "
+                              f"en movimiento {movimiento.orden_dia} "
+                              f"del {movimiento.fecha} ({movimiento.concepto}):")
+    browser.comparar_capital_historico_de(titular, movimiento)
 
     # Y al lado de cada cuenta del titular aparece el saldo histórico al
     # momento del movimiento seleccionado, y no aparece ninguna cuenta que no
     # pertenezca al titular
+    browser.comparar_cuentas_de(titular)
+    saldos_historicos = [
+        x.text for x in browser.esperar_elementos("class_saldo_cuenta")]
+    for index, cta in enumerate(titular.cuentas.all()):
+        assert saldos_historicos[index] == float_format(cta.saldo_en_mov(movimiento))
 
     # Y al lado de cada titular aparece el capital histórico del titular al
     # momento del movimiento seleccionado.
+    capitales_historicos = [
+        x.text for x in browser.esperar_elementos("class_capital_titular")]
+    for index, titular in enumerate(Titular.todes()):
+        assert capitales_historicos[index] == float_format(titular.capital_historico(movimiento))
 
     # Y vemos una opción "Home" debajo de todos los titulares
     # Y cuando cliqueamos en la opción "Home" somos dirigidos a la página principal
