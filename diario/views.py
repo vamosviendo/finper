@@ -35,7 +35,9 @@ class HomeView(TemplateView):
 
         if cuenta:
             context.update({
-                'saldo_gral': cuenta.saldo,
+                'saldo_gral': cuenta.saldo
+                    if movimiento is None
+                    else cuenta.saldo_en_mov(movimiento),
                 'titulares': [cuenta.titular]
                     if cuenta.es_interactiva
                     else cuenta.titulares,

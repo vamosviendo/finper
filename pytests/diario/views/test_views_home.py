@@ -227,6 +227,14 @@ def test_si_recibe_slug_de_cuenta_e_id_de_movimiento_pasa_movimiento_seleccionad
     assert response.context['movimiento'] == salida
 
 
+def test_si_recibe_slug_de_cuenta_e_id_de_movimiento_pasa_saldo_historico_de_cuenta_en_movimiento_como_saldo_gral(
+        entrada, salida, salida_posterior, client):
+    cuenta = entrada.cta_entrada
+    response = client.get(reverse('cuenta_movimiento', args=[cuenta.slug, salida.pk]))
+    assert response.context.get('saldo_gral') is not None
+    assert response.context['saldo_gral'] == cuenta.saldo_en_mov(salida)
+
+
 def test_considera_solo_cuentas_independientes_para_calcular_saldo_gral(
         cuenta, cuenta_2, entrada, entrada_otra_cuenta, salida, client):
     cuenta_2.dividir_entre(
