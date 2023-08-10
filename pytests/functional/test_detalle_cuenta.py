@@ -16,37 +16,68 @@ def credito_entre_subcuentas(cuenta_de_dos_titulares: CuentaAcumulativa) -> Movi
 def test_detalle_de_cuenta_interactiva(
         browser,
         titular, otro_titular, titular_gordo,
-        cuenta_con_saldo, entrada_otra_cuenta):
+        cuenta, entrada, salida, salida_posterior, entrada_otra_cuenta):
     # Vamos a la página de inicio
     browser.ir_a_pag()
 
     # Cliqueamos en el nombre de una cuenta interactiva
-    browser.cliquear_en_cuenta(cuenta_con_saldo)
+    browser.cliquear_en_cuenta(cuenta)
 
     # Vemos el nombre de la cuenta encabezando la página
-    browser.comparar_cuenta(cuenta_con_saldo)
+    browser.comparar_cuenta(cuenta)
 
     # Y vemos que al lado del nombre aparece el saldo de la cuenta
-    browser.comparar_saldo_de(cuenta_con_saldo)
+    browser.comparar_saldo_de(cuenta)
 
     # Y vemos que en la sección de titulares aparece el titular de la cuenta
     divs_titular = browser.esperar_elementos("class_div_titular")
     assert len(divs_titular) == 1
     nombres = texto_en_hijos_respectivos("class_div_nombre_titular", divs_titular)
-    assert nombres[0] == cuenta_con_saldo.titular.nombre
+    assert nombres[0] == cuenta.titular.nombre
 
     # Y vemos que no aparecen cuentas en la sección de cuentas
     assert browser.esperar_elementos('class_link_cuenta', fail=False) == []
 
     # Y vemos que solo los movimientos en los que interviene la cuenta aparecen
     # en la sección de movimientos
-    browser.comparar_movimientos_de(cuenta_con_saldo)
-    assert not set(cuenta_con_saldo.movs()) == set(Movimiento.todes())
+    browser.comparar_movimientos_de(cuenta)
+    assert set(cuenta.movs()) != set(Movimiento.todes())
 
     # Cuando cliqueamos en el ícono de agregar cuenta, accedemos a la página
     # de dividir cuenta en subcuentas
     browser.esperar_elemento("id_link_cuenta_nueva").click()
-    browser.assert_url(reverse('cta_div', args=[cuenta_con_saldo.slug]))
+    browser.assert_url(reverse('cta_div', args=[cuenta.slug]))
+
+    # Cuando cliqueamos en un movimiento, sólo se muestran los movimientos
+    # relacionados con la cuenta, con el movimiento cliqueado resaltado
+    browser.ir_a_pag(reverse('cuenta', args=[cuenta.slug]))
+    links_movimiento = browser.esperar_elementos("class_link_movimiento")
+    links_movimiento[1].click()
+    browser.comparar_movimientos_de(cuenta)
+    assert set(cuenta.movs()) != set(Movimiento.todes())
+    movs_pagina = browser.esperar_elementos("class_row_mov")
+    assert "mov_selected" in movs_pagina[1].get_attribute("class")
+
+    # Y vemos que en el saldo de la página aparece el saldo histórico
+    # de la cuenta al momento del movimiento
+    nombre_cuenta = browser.esperar_elemento(
+        'id_denominacion_saldo_gral'
+    ).text.strip()
+    movimiento = cuenta.movs()[1]
+
+    assert nombre_cuenta == (f"Saldo histórico de {cuenta.nombre} "
+                              f"en movimiento {movimiento.orden_dia} "
+                              f"del {movimiento.fecha} ({movimiento.concepto}):")
+    browser.comparar_saldo_historico_de(cuenta, movimiento)
+
+    # Y al lado del titular de la cuenta (que es el único que se ve) aparece
+    # su capital histórico al momento del movimiento
+    divs_titular = browser.esperar_elementos("class_div_titular")
+    assert len(divs_titular) == 1
+    nombres = texto_en_hijos_respectivos("class_div_nombre_titular", divs_titular)
+    assert nombres[0] == cuenta.titular.nombre
+    capitales = texto_en_hijos_respectivos("class_capital_titular", divs_titular)
+    assert capitales[0] == float_format(titular.capital_historico(movimiento))
 
 
 def test_detalle_de_cuenta_acumulativa(

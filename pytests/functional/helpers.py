@@ -151,6 +151,12 @@ class FinperFirefox(MiFirefox):
         saldo = self.esperar_elemento('id_importe_saldo_gral').text.strip()
         assert saldo == float_format(cuenta.saldo)
 
+    def comparar_saldo_historico_de(self, cuenta: Cuenta, movimiento: Movimiento):
+        """ Dada una cuenta, comparar su saldo con el que aparece en la página.
+        """
+        saldo = self.esperar_elemento('id_importe_saldo_gral').text.strip()
+        assert saldo == float_format(cuenta.saldo_en_mov(movimiento))
+
     def crear_movimiento(self, **kwargs):
         self.ir_a_pag(reverse('mov_nuevo'))
         self.completar_form(**kwargs)

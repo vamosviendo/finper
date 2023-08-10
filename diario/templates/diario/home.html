@@ -6,6 +6,7 @@
 {% endblock extra-css %}
 
 {% block contenido %}
+
 <section id="id_section_saldos">
   {% if cuenta and cuenta.tiene_madre %}
     <div id="id_div_saldos_madre">
@@ -28,7 +29,13 @@
             Capital de {{ titular.nombre }}:
           {% endif %}
         {% elif cuenta %}
-          Saldo de {{ cuenta.nombre }}:
+          {% if movimiento %}
+            Saldo histórico de {{ cuenta.nombre }}
+            en movimiento {{ movimiento.orden_dia }}
+            del {{ movimiento.fecha|date:"Y-m-d" }} ({{ movimiento.concepto }}):
+          {% else %}
+            Saldo de {{ cuenta.nombre }}:
+          {% endif %}
         {% else %}
           Saldo general:
         {% endif %}
@@ -220,6 +227,8 @@
             <a href="
                 {% if titular %}
                   {% url 'titular_movimiento' titular.titname mov.pk %}
+                {% elif cuenta %}
+                  {% url 'cuenta_movimiento' cuenta.slug mov.pk %}
                 {% else %}
                   {% url 'movimiento' mov.pk %}
                 {% endif %}"
