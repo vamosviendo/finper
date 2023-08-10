@@ -220,6 +220,13 @@ def test_si_recibe_titname_e_id_de_movimiento_pasa_capital_historico_de_titular_
     assert response.context['saldo_gral'] == titular.capital_historico(salida)
 
 
+def test_si_recibe_slug_de_cuenta_e_id_de_movimiento_pasa_movimiento_seleccionado(entrada, salida, client):
+    cuenta = entrada.cta_entrada
+    response = client.get(reverse('cuenta_movimiento', args=[cuenta.slug, salida.pk]))
+    assert response.context.get('movimiento') is not None
+    assert response.context['movimiento'] == salida
+
+
 def test_considera_solo_cuentas_independientes_para_calcular_saldo_gral(
         cuenta, cuenta_2, entrada, entrada_otra_cuenta, salida, client):
     cuenta_2.dividir_entre(

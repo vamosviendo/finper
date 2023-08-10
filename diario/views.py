@@ -26,9 +26,14 @@ class HomeView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        movimiento = None if kwargs.get('pk') is None \
+            else Movimiento.tomar(pk=kwargs['pk'])
+        cuenta = None if kwargs.get('ctaname') is None \
+            else Cuenta.tomar(slug=kwargs['ctaname'])
+        titular = None if kwargs.get('titname') is None \
+            else Titular.tomar(titname=kwargs['titname'])
 
-        if kwargs.get('ctaname'):
-            cuenta = Cuenta.tomar(slug=kwargs['ctaname'])
+        if cuenta:
             context.update({
                 'saldo_gral': cuenta.saldo,
                 'titulares': [cuenta.titular]
@@ -39,12 +44,10 @@ class HomeView(TemplateView):
                     else [],
                 'movimientos': cuenta.movs(),
                 'cuenta': cuenta,
+                'movimiento': movimiento,
             })
 
-        elif kwargs.get('titname'):
-            titular = Titular.tomar(titname=kwargs['titname'])
-            movimiento = None if kwargs.get('pk') is None \
-                else Movimiento.tomar(pk=kwargs['pk'])
+        elif titular:
             context.update({
                 'saldo_gral': titular.capital
                     if movimiento is None
@@ -57,8 +60,7 @@ class HomeView(TemplateView):
                 'movimiento': movimiento,
             })
 
-        elif kwargs.get('pk'):
-            movimiento = Movimiento.tomar(pk=kwargs['pk'])
+        elif movimiento:
             context.update({
                 'saldo_gral': saldo_general_historico(movimiento),
                 'titulares': Titular.todes(),
