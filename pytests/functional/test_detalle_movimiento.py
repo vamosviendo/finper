@@ -9,7 +9,8 @@ def test_detalle_movimiento(browser, entrada, salida, traspaso, cuenta_acumulati
 
     # Cuando cliqueamos en un movimiento, el movimiento aparece como
     # seleccionado
-    assert "mov_selected" not in links_movimiento[4].get_attribute("class")
+    movimientos = browser.esperar_elementos("class_row_mov")
+    assert "mov_selected" not in movimientos[4].get_attribute("class")
     links_movimiento[4].click()
     movimientos = browser.esperar_elementos("class_row_mov")
     assert "mov_selected" in movimientos[4].get_attribute("class")
