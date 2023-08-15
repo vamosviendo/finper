@@ -2,7 +2,7 @@ import pytest
 from django.urls import reverse
 from selenium.webdriver.common.by import By
 
-from diario.models import CuentaAcumulativa, Movimiento
+from diario.models import CuentaAcumulativa, CuentaInteractiva, Movimiento
 from pytests.functional.helpers import texto_en_hijos_respectivos
 from utils.numeros import float_format
 
@@ -11,6 +11,25 @@ from utils.numeros import float_format
 def credito_entre_subcuentas(cuenta_de_dos_titulares: CuentaAcumulativa) -> Movimiento:
     scot, sctg = cuenta_de_dos_titulares.subcuentas.all()
     return Movimiento.crear('Crédito entre subcuentas', 50, scot, sctg)
+
+
+@pytest.fixture
+def subcuenta_otro_titular(cuenta_de_dos_titulares: CuentaAcumulativa) -> CuentaInteractiva:
+    return cuenta_de_dos_titulares.subcuentas.first()
+
+
+@pytest.fixture
+def subcuenta_titular_gordo(cuenta_de_dos_titulares: CuentaAcumulativa) -> CuentaInteractiva:
+    return cuenta_de_dos_titulares.subcuentas.last()
+
+
+@pytest.fixture
+def entrada_subcuenta(subcuenta_otro_titular: CuentaInteractiva) -> Movimiento:
+    return Movimiento.crear(
+        concepto="Entrada en subcuenta otro titular",
+        importe=33,
+        cta_entrada=subcuenta_otro_titular
+    )
 
 
 def test_detalle_de_cuenta_interactiva(
@@ -81,7 +100,7 @@ def test_detalle_de_cuenta_interactiva(
 
 
 def test_detalle_de_cuenta_acumulativa(
-        browser, entrada_otra_cuenta, cuenta_de_dos_titulares, credito_entre_subcuentas):
+        browser, entrada_otra_cuenta, cuenta_de_dos_titulares, credito_entre_subcuentas, entrada_subcuenta):
 
     # Vamos a la página principal y cliqueamos en el nombre de una cuenta
     # acumulativa
@@ -120,6 +139,15 @@ def test_detalle_de_cuenta_acumulativa(
 
     # Y vemos que luego del nombre y saldo de la cuenta aprece en tipografía
     # menos destacada el nombre y saldo de sus hermanas de cuenta
+    saldos_ctas_hermanas = [
+        x.text for x in browser.esperar_elementos("class_div_saldo_hermana")
+    ]
+    assert len(saldos_ctas_hermanas) == primera_subcuenta.hermanas().count()
+    for index, hermana in enumerate(primera_subcuenta.hermanas()):
+        assert \
+            saldos_ctas_hermanas[index] == \
+            f"Saldo de cuenta hermana {hermana.nombre}: " \
+            f"{float_format(hermana.saldo)}"
 
     # Y vemos el titular de la primera subcuenta y los movimientos en los que
     # interviene
@@ -139,6 +167,47 @@ def test_detalle_de_cuenta_acumulativa(
     # interviene
     browser.comparar_titulares_de(segunda_subcuenta)
     browser.comparar_movimientos_de(segunda_subcuenta)
+
+    # Volvemos a la página de la cuenta acumulativa y cliqueamos en un
+    # movimiento
+    browser.ir_a_pag(
+        reverse('cta_detalle', args=[cuenta_de_dos_titulares.slug])
+    )
+    links_movimiento = browser.esperar_elementos("class_link_movimiento")
+    links_movimiento[1].click()
+
+    # Vemos que en la sección de movimientos aparecen los movimientos de la
+    # cuenta o sus subcuentas, con el movimiento cliqueado resaltado
+    browser.comparar_movimientos_de(cuenta_de_dos_titulares)
+    movimientos = browser.esperar_elementos("class_row_mov")
+    assert "mov_selected" in movimientos[1].get_attribute("class")
+
+    # Y vemos que en el saldo general de la página aparece el saldo histórico
+    # de la cuenta acumulativa al momento del movimiento
+    movimiento = cuenta_de_dos_titulares.movs().order_by(
+        '-fecha', '-orden_dia')[1]
+    assert movimiento.concepto == movimientos[1].find_element_by_class_name(
+        "class_td_concepto").text
+    assert \
+        cuenta_de_dos_titulares.saldo != \
+        cuenta_de_dos_titulares.saldo_en_mov(cuenta_de_dos_titulares.movs()[1])
+    assert \
+        browser.esperar_elemento("id_importe_saldo_gral").text == \
+        float_format(cuenta_de_dos_titulares.saldo_en_mov(movimiento))
+
+    # Y vemos que al lado de cada una de las subcuentas aparece el saldo
+    # histórico de la subcuenta al momento del movimiento
+    saldos_historicos = [
+        x.text for x in browser.esperar_elementos("class_saldo_cuenta")]
+    for index, cta in enumerate(cuenta_de_dos_titulares.subcuentas.all()):
+        assert saldos_historicos[index] == float_format(cta.saldo_en_mov(movimiento))
+
+    # Y vemos que al lado de cada uno de los titulares aparece el capital
+    # histórico del titular al momento del movimiento
+    capitales_historicos = [
+        x.text for x in browser.esperar_elementos("class_capital_titular")]
+    for index, titular in enumerate(cuenta_de_dos_titulares.titulares):
+        assert capitales_historicos[index] == float_format(titular.capital_historico(movimiento))
 
 
 def test_detalle_de_subcuenta(browser, titular, cuenta_de_dos_titulares):
