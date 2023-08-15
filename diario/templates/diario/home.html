@@ -12,7 +12,12 @@
     <div id="id_div_saldos_madre">
       {% for cta in cuenta.ancestros reversed %}
         <div class="class_div_saldo_ancestro">
-          Saldo de cuenta madre {{ cta.nombre }}: {{ cta.saldo|floatformat:2 }}
+          Saldo de cuenta madre {{ cta.nombre }}:
+          {% if movimiento %}
+            {% historico cta movimiento %}
+          {% else %}
+            {{ cta.saldo|floatformat:2 }}
+          {% endif %}
         </div>
       {% endfor %}
     </div>
@@ -47,7 +52,12 @@
     <div id="id_div_saldos_hermana">
       {% for cta in cuenta.hermanas %}
         <div class="class_div_saldo_hermana">
-          Saldo de cuenta hermana {{ cta.nombre }}: {{ cta.saldo|floatformat:2 }}
+          Saldo de cuenta hermana {{ cta.nombre }}:
+          {% if movimiento %}
+            {% historico cta movimiento %}
+          {% else %}
+            {{ cta.saldo|floatformat:2 }}
+          {% endif %}
         </div>
       {% endfor %}
     </div>

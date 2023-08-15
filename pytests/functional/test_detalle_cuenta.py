@@ -67,7 +67,7 @@ def test_detalle_de_cuenta_interactiva(
     browser.esperar_elemento("id_link_cuenta_nueva").click()
     browser.assert_url(reverse('cta_div', args=[cuenta.slug]))
 
-    # Cuando cliqueamos en un movimiento, sólo se muestran los movimientos
+    # Cuando cliqueamos en un movimiento, solo se muestran los movimientos
     # relacionados con la cuenta, con el movimiento cliqueado resaltado
     browser.ir_a_pag(reverse('cuenta', args=[cuenta.slug]))
     links_movimiento = browser.esperar_elementos("class_link_movimiento")
@@ -190,7 +190,7 @@ def test_detalle_de_cuenta_acumulativa(
         "class_td_concepto").text
     assert \
         cuenta_de_dos_titulares.saldo != \
-        cuenta_de_dos_titulares.saldo_en_mov(cuenta_de_dos_titulares.movs()[1])
+        cuenta_de_dos_titulares.saldo_en_mov(movimiento)
     assert \
         browser.esperar_elemento("id_importe_saldo_gral").text == \
         float_format(cuenta_de_dos_titulares.saldo_en_mov(movimiento))
@@ -235,9 +235,46 @@ def test_detalle_de_subcuenta(browser, titular, cuenta_de_dos_titulares):
             'titular': titular
         },
     )
-    scot = CuentaAcumulativa.tomar(pk=scot_pk)
 
-    # Cuando vamos a la página de la primer sub-subcuenta
+    # Y algunos movimientos de las tres sub-subcuentas
+    Movimiento.crear(
+        concepto='entrada en subsubcuenta 1',
+        importe=34,
+        cta_entrada=ssc1,
+    )
+    Movimiento.crear(
+        concepto='entrada en subsubcuenta 2',
+        importe=25,
+        cta_entrada=ssc2,
+    )
+    Movimiento.crear(
+        concepto='entrada en subsubcuenta 3',
+        importe=28,
+        cta_entrada=ssc3,
+    )
+    Movimiento.crear(
+        concepto='otra entrada en subsubcuenta 1',
+        importe=158,
+        cta_entrada=ssc1,
+    )
+    Movimiento.crear(
+        concepto='otra entrada en subsubcuenta 2',
+        importe=242,
+        cta_entrada=ssc2,
+    )
+    Movimiento.crear(
+        concepto='otra entrada en subsubcuenta 3',
+        importe=281,
+        cta_entrada=ssc3,
+    )
+    Movimiento.crear(
+        concepto='salida de subsubcuenta 1',
+        importe=49,
+        cta_salida=ssc1,
+    )
+    scot_acumulativa = CuentaAcumulativa.tomar(pk=scot_pk)
+
+    # Cuando vamos a la página de la primera sub-subcuenta
     browser.ir_a_pag(
         reverse('cta_detalle', args=[ssc1.slug])
     )
@@ -257,8 +294,8 @@ def test_detalle_de_subcuenta(browser, titular, cuenta_de_dos_titulares):
         saldos_ancestro == [
             f"Saldo de cuenta madre {cuenta_de_dos_titulares.nombre}: "
             f"{float_format(cuenta_de_dos_titulares.saldo)}",
-            f"Saldo de cuenta madre {scot.nombre}: "
-            f"{float_format(scot.saldo)}",
+            f"Saldo de cuenta madre {scot_acumulativa.nombre}: "
+            f"{float_format(scot_acumulativa.saldo)}",
         ]
 
     # Y vemos que luego del nombre y saldo de la cuenta aparece en la misma
@@ -271,3 +308,42 @@ def test_detalle_de_subcuenta(browser, titular, cuenta_de_dos_titulares):
             f"Saldo de cuenta hermana subsubcuenta 2: {float_format(ssc2.saldo)}",
             f"Saldo de cuenta hermana subsubcuenta 3: {float_format(ssc3.saldo)}",
         ]
+
+    # Cliqueamos en un movimiento
+    links_movimiento = browser.esperar_elementos("class_link_movimiento")
+    links_movimiento[2].click()
+
+    # Vemos que en la sección de movimientos aparecen los movimientos de la
+    # cuenta o sus subcuentas, con el movimiento cliqueado resaltado
+    browser.comparar_movimientos_de(ssc1)
+    movimientos = browser.esperar_elementos("class_row_mov")
+    assert "mov_selected" in movimientos[2].get_attribute("class")
+
+    # Y vemos que en el saldo general de la página aparece el saldo histórico
+    # de la cuenta acumulativa al momento del movimiento
+    movimiento = ssc1.movs().order_by('-fecha', '-orden_dia')[2]
+    assert movimiento.concepto == movimientos[2].find_element_by_class_name(
+        "class_td_concepto").text
+    assert \
+        ssc1.saldo != ssc1.saldo_en_mov(movimiento)
+    assert \
+        browser.esperar_elemento("id_importe_saldo_gral").text == \
+        float_format(ssc1.saldo_en_mov(movimiento))
+
+    # Y vemos que al lado de cada una de las cuentas ancestro aparece el
+    # saldo histórico de la cuenta al momento del movimiento
+    saldos_historicos = [
+        x.text for x in browser.esperar_elementos("class_div_saldo_ancestro")]
+    for index, cta in enumerate(reversed(ssc1.ancestros())):
+        assert saldos_historicos[index].replace(
+            f'Saldo de cuenta madre {cta.nombre}: ', ''
+        ) == float_format(cta.saldo_en_mov(movimiento))
+
+    # Y vemos que al lado de cada una de las subcuentas hermanas aparece el
+    # saldo histórico de la subcuenta al momento del movimiento
+    saldos_historicos = [
+        x.text for x in browser.esperar_elementos("class_div_saldo_hermana")]
+    for index, cta in enumerate(ssc1.hermanas()):
+        assert saldos_historicos[index].replace(
+            f'Saldo de cuenta hermana {cta.nombre}: ', ''
+        ) == float_format(cta.saldo_en_mov(movimiento))
