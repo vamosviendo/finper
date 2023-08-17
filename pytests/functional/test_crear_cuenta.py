@@ -8,7 +8,7 @@ def test_ir_a_crear_cuenta(browser, titular):
     """ Cuando cliqueamos en el botón "cuenta nueva" de la página principal,
         somos dirigidos a la página correspondiente"""
     browser.ir_a_pag()
-    browser.esperar_elemento("id_btn_cta_nueva").click()
+    browser.esperar_elemento("id_link_cuenta_nueva").click()
     browser.assert_url(reverse("cta_nueva"))
 
 
@@ -26,9 +26,7 @@ def test_crear_cuenta(browser, titular):
     # Vemos que la cuenta creada aparece entre las cuentas de la página de
     # inicio
     links_cuenta = browser.esperar_elementos("class_link_cuenta")
-    slugs_cuenta = [x.text.strip() for x in links_cuenta]
-    nombres_cuenta = [x.get_attribute("title") for x in links_cuenta]
-    assert "CN" in slugs_cuenta
+    nombres_cuenta = [x.text.strip() for x in links_cuenta]
     assert "cuenta nueva" in nombres_cuenta
 
 

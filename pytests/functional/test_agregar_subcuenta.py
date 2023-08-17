@@ -7,10 +7,7 @@ def test_agregar_subcuenta(browser, cuenta_acumulativa):
     # acumulativa y luego en el botón "Agregar subcuenta" que aparece en la
     # página de modificación de la cuenta
     browser.ir_a_pag()
-    browser.esperar_elemento(
-        f'#id_div_cta_{cuenta_acumulativa.slug} .link_mod_cuenta',
-        By.CSS_SELECTOR
-    ).click()
+    browser.esperar_elemento(f'id_link_cta_mod_{cuenta_acumulativa.slug}').click()
     browser.esperar_elemento('id_btn_agregar').click()
 
     # En el formulario que aparece, escribimos nombre y slug para la nueva
@@ -28,7 +25,7 @@ def test_agregar_subcuenta(browser, cuenta_acumulativa):
         x.text.strip()
         for x in browser.esperar_elementos('class_link_cuenta')
     ]
-    assert "SC3" in divs_cuenta
+    assert "subcuenta 3" in divs_cuenta
 
 
 def test_agregar_subcuenta_otro_titular(
@@ -52,4 +49,4 @@ def test_agregar_subcuenta_otro_titular(
         x.text.strip()
         for x in browser.esperar_elementos('class_link_cuenta')
     ]
-    assert "SC3" in divs_cuenta
+    assert "subcuenta 3" in divs_cuenta

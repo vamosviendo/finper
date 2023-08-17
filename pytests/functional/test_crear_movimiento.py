@@ -19,7 +19,7 @@ def test_ir_a_crear_movimiento(browser, cuenta):
     """ Cuando cliqueamos en el botón "Movimiento nuevo" de la página principal,
         somos dirigidos a la página correspondiente"""
     browser.ir_a_pag()
-    browser.esperar_elemento("id_btn_mov_nuevo").click()
+    browser.esperar_elemento("id_link_mov_nuevo").click()
     browser.assert_url(reverse("mov_nuevo"))
 
 
@@ -72,7 +72,7 @@ def test_crear_movimiento(browser, cuenta):
         browser.esperar_elemento(f'id_saldo_cta_{cuenta.slug}').text == \
         importe_localizado
     assert \
-        browser.esperar_elemento('id_div_importe_saldo_pag').text == \
+        browser.esperar_elemento('id_importe_saldo_gral').text == \
         importe_localizado
 
 
@@ -98,7 +98,6 @@ def test_crear_creditos_o_devoluciones(
         cuenta_2, cuenta_ajena_2):
 
     def chequear_mov_y_contramov(
-            # TODO CORREGIR MÁRGENES
             concepto: str, importe: float,
             cta_entrada: Cuenta, cta_salida: Cuenta,
             concepto_contramov: str, saldo: float):
@@ -151,33 +150,27 @@ def test_crear_creditos_o_devoluciones(
         # vemos entre sus cuentas la cuenta generada automáticamente que lo
         # muestra como acreedor, con saldo igual a {saldo}
         browser.ir_a_pag(reverse('tit_detalle', args=[emisor.titname]))
-        div_cuenta = browser.esperar_elemento(f"id_div_cta_{slug_cta_acreedora}")
-        link_cuenta = div_cuenta.find_element_by_class_name("class_link_cuenta")
-        assert link_cuenta.text == f"{slug_cta_acreedora.upper()}"
+        link_cuenta = browser.esperar_elemento(f"id_link_cta_{slug_cta_acreedora}")
+        saldo_cuenta = browser.esperar_elemento(f"id_saldo_cta_{slug_cta_acreedora}")
         assert \
-            link_cuenta.get_attribute("title") == \
+            link_cuenta.text == \
             f"préstamo entre {emisor.titname} y {receptor.titname}"
-        assert \
-            div_cuenta.find_element_by_class_name("class_saldo_cuenta").text == \
-            float_format(saldo)
+        assert saldo_cuenta.text == float_format(saldo)
 
         # Si vamos a la página de detalles del titular de la cuenta de entrada,
         # vemos entre sus cuentas la cuenta generada automáticamente que lo
         # muestra como deudor, con saldo igual al negativo de {saldo}
-        if saldo != 0:  # TODO REFACTOR usar un solo if else
+        if saldo != 0:
             browser.ir_a_pag(reverse('tit_detalle', args=[receptor.titname]))
-            div_cuenta = browser.esperar_elemento(f"id_div_cta_{slug_cta_deudora}")
-            link_cuenta = div_cuenta.find_element_by_class_name("class_link_cuenta")
-            assert link_cuenta.text == f"{slug_cta_deudora.upper()}"
+            link_cuenta = browser.esperar_elemento(f"id_link_cta_{slug_cta_deudora}")
+            saldo_cuenta = browser.esperar_elemento(f"id_saldo_cta_{slug_cta_deudora}")
             assert \
-                link_cuenta.get_attribute("title") == \
+                link_cuenta.text == \
                 f"préstamo entre {receptor.titname} y {emisor.titname}"
-            assert \
-                div_cuenta.find_element_by_class_name("class_saldo_cuenta").text == \
-                float_format(-saldo)
+            assert saldo_cuenta.text == float_format(-saldo)
         else:
             with pytest.raises(NoSuchElementException):
-                browser.esperar_elemento(f"id_div_cta_{slug_cta_deudora}")
+                browser.esperar_elemento(f"id_link_cta_{slug_cta_deudora}")
 
     # Si generamos un movimiento entre cuentas de distintos titulares, se
     # genera un contramovimiento por el mismo importes entre cuentas

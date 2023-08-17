@@ -88,7 +88,7 @@
               </a>
             </div>
           </td>
-          <td class="numero chico class_capital_titular">
+          <td id="id_capital_{{ tit.titname }}" class="numero chico class_capital_titular">
             {% if movimiento %}
               {% cap_historico tit movimiento %}
             {% else %}
@@ -128,13 +128,13 @@
           <tr class="menu-row class_div_cuenta">
             <td class="menu-item class_td_cuenta {% if cta.es_acumulativa %}acumulativa{% endif %}">
               <div class="menu-item-content class_nombre_cuenta">
-                <a id="id_link_cta_{{ cuenta.slug }}" class="class_link_cuenta"
+                <a id="id_link_cta_{{ cta.slug }}" class="class_link_cuenta"
                    href="{% url 'cuenta' cta.slug %}">
                   {{ cta.nombre }}
                 </a>
               </div>
               <div class="menu-item-edit">
-                <a id="id_link_cta_mod_{{ cta.slug}}" href="{% url 'cta_mod' cta.slug %}">E</a>
+                <a id="id_link_cta_mod_{{ cta.slug }}" href="{% url 'cta_mod' cta.slug %}">E</a>
               </div>
               <div class="menu-item-edit">
                 <a id="id_link_cta_elim_{{ cta.slug }}" href="{% url 'cta_elim' cta.slug %}">
@@ -142,7 +142,7 @@
                 </a>
               </div>
             </td>
-            <td class="numero chico class_saldo_cuenta">
+            <td id="id_saldo_cta_{{ cta.slug }}" class="numero chico class_saldo_cuenta">
               {% if movimiento %}
                 {% historico cta movimiento %}
               {% else %}
@@ -169,7 +169,7 @@
                   </a>
                 </div>
               </td>
-              <td class="numero chico class_saldo_cuenta div-detalles-subcuenta">
+              <td id="id_saldo_cta_{{ subcuenta.slug }}" class="numero chico class_saldo_cuenta div-detalles-subcuenta">
                 {% if movimiento %}
                   {% historico subcuenta movimiento %}
                 {% else %}
