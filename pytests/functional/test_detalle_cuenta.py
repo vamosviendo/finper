@@ -276,7 +276,7 @@ def test_detalle_de_subcuenta(browser, titular, cuenta_de_dos_titulares):
 
     # Cuando vamos a la página de la primera sub-subcuenta
     browser.ir_a_pag(
-        reverse('cta_detalle', args=[ssc1.slug])
+        reverse('cuenta', args=[ssc1.slug])
     )
 
     # Vemos el nombre de la cuenta encabezando la página

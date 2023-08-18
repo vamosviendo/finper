@@ -101,6 +101,26 @@ def test_si_recibe_slug_de_cuenta_interactiva_pasa_lista_vacia_de_subcuentas(
     assert len(response.context['subcuentas']) == 0
 
 
+def test_si_recibe_slug_de_subcuenta_pasa_lista_de_ancestros(cuenta_acumulativa, client):
+    sc1, sc2 = cuenta_acumulativa.subcuentas.all()
+    ssc11, ssc12 = sc1.dividir_entre(
+        {
+            'nombre': 'subsubuenta 1',
+            'slug': 'ssc1',
+            'saldo': 10,
+            'titular': sc1.titular
+        },
+        {
+            'nombre': 'subsubcuenta 2',
+            'slug': 'ssc2',
+            'titular': sc1.titular
+        }
+    )
+    response = client.get(reverse('cuenta', args=[ssc11.slug]))
+    assert response.context.get('ancestros') is not None
+    assert response.context['ancestros'] == list(reversed(ssc11.ancestros()))
+
+
 def test_si_recibe_titname_pasa_titular_a_template(
         titular, client):
     response = client.get(reverse('titular', args=[titular.titname]))

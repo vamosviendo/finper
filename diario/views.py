@@ -48,6 +48,8 @@ class HomeView(TemplateView):
                 'cuenta': cuenta,
                 'movimiento': movimiento,
             })
+            if cuenta.tiene_madre():
+                context.update({'ancestros': list(reversed(cuenta.ancestros()))})
 
         elif titular:
             context.update({

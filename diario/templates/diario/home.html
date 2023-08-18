@@ -8,9 +8,9 @@
 {% block contenido %}
 
 <section id="id_section_saldos">
-  {% if cuenta and cuenta.tiene_madre %}
+  {% if ancestros %}
     <div id="id_div_saldos_madre">
-      {% for cta in cuenta.ancestros reversed %}
+      {% for cta in ancestros %}
         <div class="class_div_saldo_ancestro">
           Saldo de cuenta madre {{ cta.nombre }}:
           {% if movimiento %}
