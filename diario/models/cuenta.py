@@ -116,8 +116,7 @@ class Cuenta(PolymorphModel):
         super().delete(*args, **kwargs)
 
     def get_absolute_url(self):
-        # BUSCAR Y REEMPLAZAR URL 'cta_detalle' (¿retirar url?)
-        return reverse('cta_detalle', args=[self.slug])
+        return reverse('cuenta', args=[self.slug])
 
     def movs_directos(self):
         """ Devuelve entradas y salidas de la cuenta sin los de sus subcuentas

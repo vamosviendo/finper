@@ -87,29 +87,6 @@ class HomeView(TemplateView):
         return context
 
 
-class CtaDetalleView(DetailView):
-    model = Cuenta
-    template_name = 'diario/home.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        cuenta = self.object.como_subclase()
-
-        context.update({
-            'cuenta': cuenta,
-            'saldo_gral': cuenta.saldo,
-            'subcuentas': cuenta.subcuentas.order_by(Lower('nombre'))
-                if cuenta.es_acumulativa
-                else [],
-            'movimientos': cuenta.movs(),
-            'titulares': cuenta.titulares
-                if cuenta.es_acumulativa
-                else [cuenta.titular],
-        })
-
-        return context
-
-
 class CtaNuevaView(CreateView):
     model = CuentaInteractiva
     form_class = FormCuenta

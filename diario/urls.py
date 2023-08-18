@@ -24,7 +24,6 @@ urlpatterns = [
     path('cm/<slug:ctaname>/<int:pk>', views.HomeView.as_view(), name='cuenta_movimiento'),
     path('tm/<slug:titname>/<int:pk>', views.HomeView.as_view(), name='titular_movimiento'),
     path('cta_nueva', views.CtaNuevaView.as_view(), name='cta_nueva'),
-    path('cta_detalle/<slug:slug>/', views.CtaDetalleView.as_view(), name='cta_detalle'),
     path('cta_elim/<slug:slug>', views.CtaElimView.as_view(), name='cta_elim'),
     path('cta_mod/<slug:slug>', views.CtaModView.as_view(), name='cta_mod'),
     path('cta_div/<slug:slug>', views.cta_div_view, name='cta_div'),

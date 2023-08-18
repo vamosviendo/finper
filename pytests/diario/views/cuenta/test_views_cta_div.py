@@ -138,5 +138,5 @@ def test_integrativo_redirige_a_pagina_de_cuenta(
         client, cuenta_con_saldo, int_response):
     asserts.assertRedirects(
         int_response,
-        reverse('cta_detalle', args=[cuenta_con_saldo.slug]),
+        reverse('cuenta', args=[cuenta_con_saldo.slug]),
     )
