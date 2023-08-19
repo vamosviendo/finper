@@ -149,7 +149,7 @@ def test_crear_creditos_o_devoluciones(
         # Si vamos a la página de detalles del titular de la cuenta de salida,
         # vemos entre sus cuentas la cuenta generada automáticamente que lo
         # muestra como acreedor, con saldo igual a {saldo}
-        browser.ir_a_pag(reverse('tit_detalle', args=[emisor.titname]))
+        browser.ir_a_pag(reverse('titular', args=[emisor.titname]))
         link_cuenta = browser.esperar_elemento(f"id_link_cta_{slug_cta_acreedora}")
         saldo_cuenta = browser.esperar_elemento(f"id_saldo_cta_{slug_cta_acreedora}")
         assert \
@@ -161,7 +161,7 @@ def test_crear_creditos_o_devoluciones(
         # vemos entre sus cuentas la cuenta generada automáticamente que lo
         # muestra como deudor, con saldo igual al negativo de {saldo}
         if saldo != 0:
-            browser.ir_a_pag(reverse('tit_detalle', args=[receptor.titname]))
+            browser.ir_a_pag(reverse('titular', args=[receptor.titname]))
             link_cuenta = browser.esperar_elemento(f"id_link_cta_{slug_cta_deudora}")
             saldo_cuenta = browser.esperar_elemento(f"id_saldo_cta_{slug_cta_deudora}")
             assert \
@@ -214,11 +214,11 @@ def test_crear_traspaso_entre_titulares_sin_deuda(browser, cuenta, cuenta_ajena)
     # Antes de empezar, tomamos los valores de los capitales mostrados en las
     # páginas de detalle de los titulares cuyas cuentas usaremos
     browser.ir_a_pag(
-        reverse("tit_detalle", args=[cuenta_ajena.titular.titname]))
+        reverse("titular", args=[cuenta_ajena.titular.titname]))
     capital_emisor = browser.esperar_elemento(
         f"id_capital_{cuenta_ajena.titular.titname}").text
     browser.ir_a_pag(
-        reverse("tit_detalle", args=[cuenta.titular.titname]))
+        reverse("titular", args=[cuenta.titular.titname]))
     capital_receptor = browser.esperar_elemento(
         f"id_capital_{cuenta.titular.titname}").text
 
@@ -243,7 +243,7 @@ def test_crear_traspaso_entre_titulares_sin_deuda(browser, cuenta, cuenta_ajena)
     # Si vamos a la página de detalles del titular de la cuenta de salida
     # (emisor), vemos que entre sus cuentas no hay ninguna generada automáticamente, sólo
     # las cuentas regulares-
-    browser.ir_a_pag(reverse("tit_detalle", args=[cuenta_ajena.titular.titname]))
+    browser.ir_a_pag(reverse("titular", args=[cuenta_ajena.titular.titname]))
     cuentas_pag = [
         x.text for x in browser.esperar_elementos("class_link_cuenta")
     ]
@@ -258,7 +258,7 @@ def test_crear_traspaso_entre_titulares_sin_deuda(browser, cuenta, cuenta_ajena)
     assert capital_emisor == float_format(cuenta_ajena.titular.capital + 30)
 
     # Lo mismo con el titular de la cuenta de entrada.
-    browser.ir_a_pag(reverse("tit_detalle", args=[cuenta.titular.titname]))
+    browser.ir_a_pag(reverse("titular", args=[cuenta.titular.titname]))
     cuentas_pag = [
         x.text for x in browser.esperar_elementos("class_link_cuenta")
     ]
