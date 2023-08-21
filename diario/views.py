@@ -32,9 +32,15 @@ class HomeView(TemplateView):
             else Cuenta.tomar(slug=kwargs['ctaname'])
         titular = None if kwargs.get('titname') is None \
             else Titular.tomar(titname=kwargs['titname'])
+        movimiento_en_titulo = "" if movimiento is None \
+            else f" histórico en movimiento {movimiento.orden_dia} " \
+                 f"del {movimiento.fecha} ({movimiento.concepto})"
+
+        context['titulo_saldo_gral'] = 'Saldo general'
 
         if cuenta:
             context.update({
+                'titulo_saldo_gral': f'Saldo de {cuenta.nombre}{movimiento_en_titulo}',
                 'saldo_gral': cuenta.saldo
                     if movimiento is None
                     else cuenta.saldo_en_mov(movimiento),
@@ -53,6 +59,7 @@ class HomeView(TemplateView):
 
         elif titular:
             context.update({
+                'titulo_saldo_gral': f'Capital de {titular.nombre}{movimiento_en_titulo}',
                 'saldo_gral': titular.capital
                     if movimiento is None
                     else titular.capital_historico(movimiento),
@@ -66,6 +73,7 @@ class HomeView(TemplateView):
 
         elif movimiento:
             context.update({
+                'titulo_saldo_gral': f'Saldo general{movimiento_en_titulo}',
                 'saldo_gral': saldo_general_historico(movimiento),
                 'titulares': Titular.todes(),
                 'subcuentas':

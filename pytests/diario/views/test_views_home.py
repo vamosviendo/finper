@@ -59,6 +59,11 @@ def test_pasa_saldo_general_a_template(
     assert response.context.get('saldo_gral') == cuenta.saldo + cuenta_2.saldo
 
 
+def test_pasa_titulo_de_saldo_general_a_template(response):
+    assert response.context.get('titulo_saldo_gral') is not None
+    assert response.context['titulo_saldo_gral'] == "Saldo general"
+
+
 def test_si_recibe_slug_de_cuenta_pasa_cuenta_a_template(cuenta, client):
     response = client.get(reverse('cuenta', args=[cuenta.slug]))
     assert response.context.get('cuenta') is not None
@@ -93,6 +98,11 @@ def test_si_recibe_slug_de_cuenta_acumulativa_pasa_subcuentas_de_la_cuenta_recib
         cuenta_acumulativa, cuenta, client):
     response = client.get(reverse('cuenta', args=[cuenta_acumulativa.slug]))
     assert list(response.context['subcuentas']) == list(cuenta_acumulativa.subcuentas.all())
+
+
+def test_si_recibe_slug_de_cuenta_pasa_titulo_de_saldo_gral_con_cuenta(cuenta, client):
+    response = client.get(reverse('cuenta', args=[cuenta.slug]))
+    assert response.context['titulo_saldo_gral'] == f"Saldo de {cuenta.nombre}"
 
 
 def test_si_recibe_slug_de_cuenta_interactiva_pasa_lista_vacia_de_subcuentas(
@@ -132,6 +142,11 @@ def test_si_recibe_titname_pasa_saldo_a_template(entrada, entrada_cuenta_ajena, 
     titular = entrada.cta_entrada.titular
     response = client.get(reverse('titular', args=[titular.titname]))
     assert response.context['saldo_gral'] == titular.capital
+
+
+def test_si_recibe_titname_pasa_titulo_de_saldo_con_titular_a_template(titular, client):
+    response = client.get(reverse('titular', args=[titular.titname]))
+    assert response.context['titulo_saldo_gral'] == f"Capital de {titular.nombre}"
 
 
 def test_si_recibe_titname_pasa_titulares_a_template(titular, otro_titular, client):
@@ -201,6 +216,15 @@ def test_si_recibe_id_de_movimiento_pasa_titulares(
     assert list(response.context['titulares']) == [titular, otro_titular]
 
 
+def test_si_recibe_id_de_movimiento_pasa_titulo_de_saldo_gral_con_movimiento(
+        entrada, client):
+    response = client.get(reverse('movimiento', args=[entrada.pk]))
+    assert (
+            response.context['titulo_saldo_gral'] ==
+            f'Saldo general histórico en movimiento {entrada.orden_dia} '
+            f'del {entrada.fecha} ({entrada.concepto})')
+
+
 def test_si_recibe_titname_e_id_de_movimiento_pasa_solo_movimientos_de_cuentas_del_titular(
         entrada, salida, entrada_cuenta_ajena, client):
     titular = entrada.cta_entrada.titular
@@ -240,6 +264,20 @@ def test_si_recibe_titname_e_id_de_movimiento_pasa_capital_historico_de_titular_
     assert response.context['saldo_gral'] == titular.capital_historico(salida)
 
 
+def test_si_recibe_titname_e_id_de_movimiento_pasa_titulo_de_saldo_gral_con_titular_y_movimiento(entrada, client):
+    titular = entrada.cta_entrada.titular
+    response = client.get(
+        reverse(
+            'titular_movimiento',
+            args=[titular.titname, entrada.pk])
+    )
+    assert response.context.get('titulo_saldo_gral') is not None
+    assert \
+        response.context['titulo_saldo_gral'] == \
+        f"Capital de {titular.nombre} histórico en movimiento {entrada.orden_dia} "\
+        f"del {entrada.fecha} ({entrada.concepto})"
+
+
 def test_si_recibe_slug_de_cuenta_e_id_de_movimiento_pasa_movimiento_seleccionado(entrada, salida, client):
     cuenta = entrada.cta_entrada
     response = client.get(reverse('cuenta_movimiento', args=[cuenta.slug, salida.pk]))
@@ -253,6 +291,16 @@ def test_si_recibe_slug_de_cuenta_e_id_de_movimiento_pasa_saldo_historico_de_cue
     response = client.get(reverse('cuenta_movimiento', args=[cuenta.slug, salida.pk]))
     assert response.context.get('saldo_gral') is not None
     assert response.context['saldo_gral'] == cuenta.saldo_en_mov(salida)
+
+
+def test_si_recibe_slug_de_cuenta_e_id_de_movimiento_pasa_titulo_de_saldo_historico_con_cuenta_y_movimiento(
+        entrada, client):
+    cuenta = entrada.cta_entrada
+    response = client.get(reverse('cuenta_movimiento', args=[cuenta.slug, entrada.pk]))
+    assert (
+        response.context['titulo_saldo_gral'] ==
+        f'Saldo de {cuenta.nombre} histórico en movimiento {entrada.orden_dia} '
+        f'del {entrada.fecha} ({entrada.concepto})')
 
 
 def test_considera_solo_cuentas_independientes_para_calcular_saldo_gral(
