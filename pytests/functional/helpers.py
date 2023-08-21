@@ -132,7 +132,7 @@ class FinperFirefox(MiFirefox):
         """ Dada una cuenta, comparar su nombre con el que encabeza la página.
         """
         nombre_cuenta = self.esperar_elemento(
-            'id_denominacion_saldo_gral'
+            'id_titulo_saldo_gral'
         ).text.strip()
         assert nombre_cuenta == f"Saldo de {cuenta.nombre}:"
 
