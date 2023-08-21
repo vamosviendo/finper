@@ -24,27 +24,7 @@
   {% endif %}
   <div id = "id_div_saldo_gral" class="Titulo">
     <h1>
-      <span id="id_denominacion_saldo_gral">
-        {% if titular %}
-          {% if movimiento %}
-            Capital histórico de {{ titular.nombre }}
-            en movimiento {{ movimiento.orden_dia }}
-            del {{ movimiento.fecha|date:"Y-m-d" }} ({{ movimiento.concepto }}):
-          {% else %}
-            Capital de {{ titular.nombre }}:
-          {% endif %}
-        {% elif cuenta %}
-          {% if movimiento %}
-            Saldo histórico de {{ cuenta.nombre }}
-            en movimiento {{ movimiento.orden_dia }}
-            del {{ movimiento.fecha|date:"Y-m-d" }} ({{ movimiento.concepto }}):
-          {% else %}
-            Saldo de {{ cuenta.nombre }}:
-          {% endif %}
-        {% else %}
-          Saldo general:
-        {% endif %}
-      </span>
+      <span id="id_titulo_saldo_gral">{{ titulo_saldo_gral }}:</span>
       <span id="id_importe_saldo_gral">{{ saldo_gral|floatformat:2 }}</span>
     </h1>
   </div>

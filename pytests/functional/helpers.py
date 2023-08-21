@@ -83,7 +83,7 @@ class FinperFirefox(MiFirefox):
         """ Dado un titular, comparar su nombre con el que encabeza la
             página. """
         nombre_titular = self.esperar_elemento(
-            'id_denominacion_saldo_gral'
+            'id_titulo_saldo_gral'
         ).text.strip()
         assert nombre_titular == f"Capital de {titular.nombre}:"
 

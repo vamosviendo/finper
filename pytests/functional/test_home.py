@@ -17,7 +17,7 @@ def test_home(
 
     # Vemos al tope de la página el saldo general, suma de todas las cuentas de
     # todos los titulares
-    titulo_saldo = browser.esperar_elemento("id_denominacion_saldo_gral").text.strip()
+    titulo_saldo = browser.esperar_elemento("id_titulo_saldo_gral").text.strip()
     assert titulo_saldo == "Saldo general:"
     saldo_gral = browser.esperar_elemento("id_importe_saldo_gral")
     assert saldo_gral.text == float_format(

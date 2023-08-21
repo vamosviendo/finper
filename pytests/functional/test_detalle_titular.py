@@ -111,11 +111,11 @@ def test_detalle_titular(
     # Y vemos que en el saldo de la página aparece el capital histórico del
     # titular al momento del movimiento
     nombre_titular = browser.esperar_elemento(
-        'id_denominacion_saldo_gral'
+        'id_titulo_saldo_gral'
     ).text.strip()
     movimiento = titular.movs()[2]
 
-    assert nombre_titular == (f"Capital histórico de {titular.nombre} "
+    assert nombre_titular == (f"Capital de {titular.nombre} histórico "
                               f"en movimiento {movimiento.orden_dia} "
                               f"del {movimiento.fecha} ({movimiento.concepto}):")
     browser.comparar_capital_historico_de(titular, movimiento)
