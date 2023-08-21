@@ -10,14 +10,9 @@
 <section id="id_section_saldos">
   {% if ancestros %}
     <div id="id_div_saldos_madre">
-      {% for cta in ancestros %}
+      {% for ancestro in ancestros %}
         <div class="class_div_saldo_ancestro">
-          Saldo de cuenta madre {{ cta.nombre }}:
-          {% if movimiento %}
-            {% historico cta movimiento %}
-          {% else %}
-            {{ cta.saldo|floatformat:2 }}
-          {% endif %}
+          Saldo de cuenta madre {{ ancestro.nombre }}: {{ ancestro.saldo|floatformat:2 }}
         </div>
       {% endfor %}
     </div>
