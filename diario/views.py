@@ -56,13 +56,21 @@ class HomeView(TemplateView):
             })
             if cuenta.tiene_madre():
                 context.update(
-                    {'ancestros':
-                         [
-                             {
-                                 'nombre': x.nombre,
-                                 'saldo': x.saldo_en_mov(movimiento) if movimiento else x.saldo
-                             } for x in reversed(cuenta.ancestros())
-                         ]
+                    {
+                        'ancestros':
+                             [
+                                 {
+                                     'nombre': x.nombre,
+                                     'saldo': x.saldo_en_mov(movimiento) if movimiento else x.saldo
+                                 } for x in reversed(cuenta.ancestros())
+                             ],
+                        'hermanas':                              [
+                                 {
+                                     'nombre': x.nombre,
+                                     'saldo': x.saldo_en_mov(movimiento) if movimiento else x.saldo
+                                 } for x in cuenta.hermanas()
+                             ],
+
                     }
                 )
 
