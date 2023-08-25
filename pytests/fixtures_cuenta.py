@@ -93,6 +93,7 @@ def cuenta_acumulativa(cuenta_con_saldo: CuentaInteractiva, fecha: date) -> Cuen
     return cuenta_con_saldo.dividir_y_actualizar(
         ['subcuenta 1 con saldo', 'scs1', 60],
         ['subcuenta 2 con saldo', 'scs2'],
+        fecha=fecha
     )
 
 

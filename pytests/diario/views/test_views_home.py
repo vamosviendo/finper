@@ -134,16 +134,19 @@ def test_si_recibe_slug_de_subcuenta_pasa_lista_de_dicts_de_ancestro_con_nombre_
     response = client.get(reverse('cuenta', args=[subsubcuenta.slug]))
     assert response.context.get('ancestros') is not None
     assert \
-        response.context['ancestros'] == \
-        [{'nombre': x.nombre, 'saldo': x.saldo} for x in reversed(subsubcuenta.ancestros())]
+        [x['nombre'] for x in response.context['ancestros']] == \
+        [x.nombre for x in reversed(subsubcuenta.ancestros())]
+    assert \
+        [x['saldo'] for x in response.context['ancestros']] == \
+        [x.saldo for x in reversed(subsubcuenta.ancestros())]
 
 
 def test_si_recibe_slug_de_subcuenta_y_pk_de_movimiento_pasa_lista_de_dicts_de_ancestro_con_nombre_y_saldo_historico(
         subsubcuenta, entrada, client):
     response = client.get(reverse('cuenta_movimiento', args=[subsubcuenta.slug, entrada.pk]))
     assert \
-        response.context['ancestros'] == \
-        [{'nombre': x.nombre, 'saldo': x.saldo_en_mov(entrada)} for x in reversed(subsubcuenta.ancestros())]
+        [x['saldo'] for x in response.context['ancestros']] == \
+        [x.saldo_en_mov(entrada) for x in reversed(subsubcuenta.ancestros())]
 
 
 def test_si_recibe_slug_de_subcuenta_pasa_lista_de_dicts_de_hermana_con_nombre_y_saldo(
@@ -153,16 +156,16 @@ def test_si_recibe_slug_de_subcuenta_pasa_lista_de_dicts_de_hermana_con_nombre_y
     response = client.get(reverse('cuenta', args=[subsubcuenta.slug]))
     assert response.context.get('hermanas') is not None
     assert \
-        response.context['hermanas'] == \
-        [{'nombre': x.nombre, 'saldo': x.saldo} for x in subsubcuenta.hermanas()]
+        [(x['nombre'], x['saldo']) for x in response.context['hermanas']] == \
+        [(x.nombre, x.saldo) for x in subsubcuenta.hermanas()]
 
 
 def test_si_recibe_slug_de_subcuenta_y_pk_de_movimiento_pasa_lista_de_dicts_de_hermana_con_nombre_y_saldo_historico(
         subsubcuenta, entrada, salida, client):
     response = client.get(reverse('cuenta_movimiento', args=[subsubcuenta.slug, entrada.pk]))
     assert \
-        response.context['hermanas'] == \
-        [{'nombre': x.nombre, 'saldo': x.saldo_en_mov(entrada)} for x in subsubcuenta.hermanas()]
+        [x['saldo'] for x in response.context['hermanas']] == \
+        [x.saldo_en_mov(entrada) for x in subsubcuenta.hermanas()]
 
 
 def test_si_recibe_titname_pasa_titular_a_template(

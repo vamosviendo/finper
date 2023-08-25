@@ -1,14 +1,14 @@
 from django.db.models.functions import Lower
 from django.shortcuts import render, redirect
 from django.urls import reverse, reverse_lazy
-from django.views.generic import CreateView, DeleteView, DetailView, \
-    TemplateView, UpdateView
+from django.views.generic import CreateView, DeleteView, TemplateView, \
+    UpdateView
 
 from diario.forms import FormCuenta, FormMovimiento, FormSubcuentas, \
     FormCrearSubcuenta
 from diario.models import Cuenta, CuentaInteractiva, CuentaAcumulativa, \
     Movimiento, Titular
-from diario.utils import saldo_general_historico, verificar_saldos
+from diario.utils import saldo_general_historico, verificar_saldos, cuenta2dict
 
 
 class HomeView(TemplateView):
@@ -55,24 +55,12 @@ class HomeView(TemplateView):
                 'movimiento': movimiento,
             })
             if cuenta.tiene_madre():
-                context.update(
-                    {
-                        'ancestros':
-                             [
-                                 {
-                                     'nombre': x.nombre,
-                                     'saldo': x.saldo_en_mov(movimiento) if movimiento else x.saldo
-                                 } for x in reversed(cuenta.ancestros())
-                             ],
-                        'hermanas':                              [
-                                 {
-                                     'nombre': x.nombre,
-                                     'saldo': x.saldo_en_mov(movimiento) if movimiento else x.saldo
-                                 } for x in cuenta.hermanas()
-                             ],
-
-                    }
-                )
+                context.update({
+                    'ancestros': [cuenta2dict(x, movimiento)
+                                 for x in reversed(cuenta.ancestros())],
+                    'hermanas': [cuenta2dict(x, movimiento)
+                                for x in cuenta.hermanas()],
+                })
 
         elif titular:
             context.update({
