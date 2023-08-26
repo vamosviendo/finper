@@ -94,7 +94,7 @@
         <col span="3" class="div-menu div-detalles-cuenta"/>
       </colgroup>
       <tbody>
-        {% for cta in subcuentas %}
+        {% for cta in cuentas %}
           <tr class="menu-row class_div_cuenta">
             <td class="menu-item class_td_cuenta {% if cta.es_acumulativa %}acumulativa{% endif %}">
               <div class="menu-item-content class_nombre_cuenta">
@@ -184,10 +184,10 @@
         <th id="id_th_importe">Importe</th>
         <th id="id_th_cuentas">Cuentas</th>
         <th class="chico fondo_resaltado" id="id_th_general">General</th>
-        {% for subc in subcuentas %}
-        <th class="chico" id="id_th_{{ subc.slug }}">
+        {% for cta in cuentas %}
+        <th class="chico" id="id_th_{{ cta.slug }}">
           <div class="cell_cuenta scrollable">
-            {{ subc.slug }}
+            {{ cta.slug }}
           </div>
         </th>
         {% endfor %}
@@ -240,7 +240,7 @@
           {% endwith %}
         </td>
 
-        {% for cta in subcuentas %}
+        {% for cta in cuentas %}
         <td class="{% include './snippets/color_saldos.html' %}
                   numero chico class_td_saldo class_td_{{ cta.slug }}"
         >

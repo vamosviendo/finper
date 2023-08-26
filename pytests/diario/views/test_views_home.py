@@ -40,8 +40,8 @@ def test_pasa_titulares_a_template(titular, otro_titular, response):
 
 
 def test_pasa_cuentas_a_template(cuenta, cuenta_ajena, response):
-    assert cuenta in response.context.get('subcuentas')
-    assert cuenta_ajena in response.context.get('subcuentas')
+    assert cuenta in response.context.get('cuentas')
+    assert cuenta_ajena in response.context.get('cuentas')
 
 
 def test_pasa_cuentas_ordenadas_por_nombre(client, cuenta, cuenta_2, cuenta_ajena):
@@ -54,7 +54,7 @@ def test_pasa_cuentas_ordenadas_por_nombre(client, cuenta, cuenta_2, cuenta_ajen
     response = client.get(reverse('home'))
 
     assert \
-        list(response.context.get('subcuentas')) == \
+        list(response.context.get('cuentas')) == \
         [cuenta_ajena, cuenta, cuenta_2]
 
 
@@ -64,7 +64,7 @@ def test_pasa_movimientos_a_template(entrada, salida, traspaso, response):
 
 
 def test_pasa_solo_cuentas_independientes_a_template(cuenta, cuenta_acumulativa, response):
-    cuentas = response.context['subcuentas']
+    cuentas = response.context['cuentas']
     sc1, sc2 = cuenta_acumulativa.arbol_de_subcuentas()
 
     assert cuenta in cuentas
@@ -116,7 +116,7 @@ def test_si_recibe_slug_de_cuenta_pasa_movimientos_de_la_cuenta_recibida(
 def test_si_recibe_slug_de_cuenta_acumulativa_pasa_subcuentas_de_la_cuenta_recibida(
         cuenta_acumulativa, cuenta, client):
     response = client.get(reverse('cuenta', args=[cuenta_acumulativa.slug]))
-    assert list(response.context['subcuentas']) == list(cuenta_acumulativa.subcuentas.all())
+    assert list(response.context['cuentas']) == list(cuenta_acumulativa.subcuentas.all())
 
 
 def test_si_recibe_slug_de_cuenta_pasa_titulo_de_saldo_gral_con_cuenta(cuenta, client):
@@ -127,7 +127,7 @@ def test_si_recibe_slug_de_cuenta_pasa_titulo_de_saldo_gral_con_cuenta(cuenta, c
 def test_si_recibe_slug_de_cuenta_interactiva_pasa_lista_vacia_de_subcuentas(
         cuenta, cuenta_2, client):
     response = client.get(reverse('cuenta', args=[cuenta.slug]))
-    assert len(response.context['subcuentas']) == 0
+    assert len(response.context['cuentas']) == 0
 
 
 def test_si_recibe_slug_de_subcuenta_pasa_lista_de_dicts_de_ancestro_con_nombre_y_saldo(subsubcuenta, client):
@@ -195,14 +195,14 @@ def test_si_recibe_titname_pasa_cuentas_del_titular_a_template(
         cuenta_2, cuenta, cuenta_ajena, client):
     titular = cuenta.titular
     response = client.get(reverse('titular', args=[titular.titname]))
-    assert set(response.context['subcuentas']) == {cuenta, cuenta_2}
+    assert set(response.context['cuentas']) == {cuenta, cuenta_2}
 
 
 def test_si_recibe_titname_pasa_cuentas_del_titular_ordenadas_por_nombre(
         cuenta_2, cuenta, cuenta_ajena, client):
     titular = cuenta.titular
     response = client.get(reverse('titular', args=[titular.titname]))
-    assert list(response.context['subcuentas']) == [cuenta, cuenta_2]
+    assert list(response.context['cuentas']) == [cuenta, cuenta_2]
 
 
 def test_si_recibe_titname_pasa_movimientos_del_titular_a_template(
@@ -239,8 +239,8 @@ def test_si_recibe_id_de_movimiento_pasa_cuentas_independientes(
     cuenta = entrada.cta_entrada
     otra_cuenta = entrada_otra_cuenta.cta_entrada
     response = client.get(reverse('movimiento', args=[salida.pk]))
-    assert response.context.get('subcuentas') is not None
-    assert list(response.context['subcuentas']) == \
+    assert response.context.get('cuentas') is not None
+    assert list(response.context['cuentas']) == \
            [cuenta, otra_cuenta, cuenta_acumulativa]
 
 
