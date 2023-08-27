@@ -8,7 +8,7 @@ from diario.forms import FormCuenta, FormMovimiento, FormSubcuentas, \
     FormCrearSubcuenta
 from diario.models import Cuenta, CuentaInteractiva, CuentaAcumulativa, \
     Movimiento, Titular
-from diario.utils import saldo_general_historico, verificar_saldos, cuenta2dict
+from diario.utils import saldo_general_historico, verificar_saldos
 
 
 class HomeView(TemplateView):
@@ -39,28 +39,7 @@ class HomeView(TemplateView):
         context['titulo_saldo_gral'] = 'Saldo general'
 
         if cuenta:
-            context.update({
-                'titulo_saldo_gral': f'Saldo de {cuenta.nombre}{movimiento_en_titulo}',
-                'saldo_gral': cuenta.saldo
-                    if movimiento is None
-                    else cuenta.saldo_en_mov(movimiento),
-                'titulares': [cuenta.titular]
-                    if cuenta.es_interactiva
-                    else cuenta.titulares,
-                'cuentas': cuenta.subcuentas.all()
-                    if cuenta.es_acumulativa
-                    else [],
-                'movimientos': cuenta.movs(),
-                'cuenta': cuenta,
-                'movimiento': movimiento,
-            })
-            if cuenta.tiene_madre():
-                context.update({
-                    'ancestros': [cuenta2dict(x, movimiento)
-                                 for x in reversed(cuenta.ancestros())],
-                    'hermanas': [cuenta2dict(x, movimiento)
-                                for x in cuenta.hermanas()],
-                })
+            context.update(cuenta.as_template_context(movimiento))
 
         elif titular:
             context.update({

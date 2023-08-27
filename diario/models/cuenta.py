@@ -179,6 +179,37 @@ class Cuenta(PolymorphModel):
 
         return lista_ancestros
 
+    def as_template_context(self, movimiento=None, es_hermana=False):
+        movimiento_en_titulo = \
+            f" histórico en movimiento {movimiento.orden_dia} " \
+            f"del {movimiento.fecha} ({movimiento.concepto})" if movimiento \
+            else ""
+
+        context = {
+            'cuenta': self,
+            'nombre': self.nombre,
+            'titulares': [self.titular] if self.es_interactiva else self.titulares,
+            'movimientos': self.movs(),
+            'movimiento': movimiento,
+            'cuentas': self.subcuentas.all() if self.es_acumulativa else Cuenta.objects.none(),
+            'saldo_gral': self.saldo_en_mov(movimiento) if movimiento else self.saldo,
+            'titulo_saldo_gral': f'Saldo de {self.nombre}{movimiento_en_titulo}',
+        }
+
+        if self.tiene_madre():
+            context.update({
+                'ancestros': [
+                    x.as_template_context(movimiento)
+                    for x in reversed(self.ancestros())
+                ],
+                'hermanas': [
+                    x.as_template_context(movimiento, es_hermana=True)
+                    for x in self.hermanas()
+                ] if not es_hermana else None,    # Evita recursión infinita
+            })
+
+        return context
+
     # Métodos protegidos
 
     def _actualizar_madre(self):

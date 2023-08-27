@@ -10,25 +10,6 @@ def response(client):
     return client.get(reverse('home'))
 
 
-@pytest.fixture
-def subsubcuenta(cuenta_acumulativa):
-    sc1, sc2 = cuenta_acumulativa.subcuentas.all()
-    ssc11, ssc12 = sc1.dividir_entre(
-        {
-            'nombre': 'subsubuenta 1',
-            'slug': 'ssc1',
-            'saldo': 10,
-            'titular': sc1.titular
-        },
-        {
-            'nombre': 'subsubcuenta 2',
-            'slug': 'ssc2',
-            'titular': sc1.titular
-        }
-    )
-    return ssc11
-
-
 def test_usa_template_home(client):
     response = client.get('/')
     asserts.assertTemplateUsed(response, 'diario/home.html')
@@ -83,89 +64,138 @@ def test_pasa_titulo_de_saldo_general_a_template(response):
     assert response.context['titulo_saldo_gral'] == "Saldo general"
 
 
-def test_si_recibe_slug_de_cuenta_pasa_cuenta_a_template(cuenta, client):
+def test_si_recibe_slug_de_cuenta_actualiza_context_con_datos_de_cuenta(cuenta, mocker, client):
+    mock_atc = mocker.patch('diario.models.Cuenta.as_template_context', autospec=True)
+    mock_atc.return_value = {
+        'titulo_saldo_gral': f'Saldo de {cuenta.nombre}',
+        'saldo_gral': cuenta.saldo,
+        'titulares': [cuenta.titular],
+        'cuentas': [],
+        'movimientos': cuenta.movs(),
+        'cuenta': cuenta,
+    }
     response = client.get(reverse('cuenta', args=[cuenta.slug]))
-    assert response.context.get('cuenta') is not None
-    assert response.context['cuenta'] == cuenta
+    for key, value in cuenta.as_template_context().items():
+        assert response.context.get(key) is not None
+        assert response.context[key] == value
 
 
-def test_si_recibe_slug_de_cuenta_interactiva_pasa_lista_con_titular_de_cuenta_como_titulares(
-        cuenta, otro_titular, client):
-    response = client.get(reverse('cuenta', args=[cuenta.slug]))
-    assert list(response.context['titulares']) == [cuenta.titular]
+def test_si_recibe_slug_de_cuenta_e_id_de_movimiento_actualiza_context_con_datos_historicos_de_cuenta_al_momento_del_movimiento(
+        cuenta, entrada, mocker, client):
+    mock_atc = mocker.patch('diario.models.Cuenta.as_template_context', autospec=True)
+    mock_atc.return_value = {
+        'titulo_saldo_gral': f'Saldo de {cuenta.nombre}',
+        'saldo_gral': cuenta.saldo_en_mov(entrada),
+        'titulares': [cuenta.titular],
+        'cuentas': [],
+        'movimientos': cuenta.movs(),
+        'movimiento': entrada,
+        'cuenta': cuenta,
+    }
+    response = client.get(reverse('cuenta_movimiento', args=[cuenta.slug, entrada.pk]))
+    for key, value in cuenta.as_template_context().items():
+        assert response.context.get(key) is not None
+        assert response.context[key] == value
 
 
-def test_si_recibe_slug_de_cuenta_acumulativa_pasa_lista_de_titulares_de_la_cuenta(
-        cuenta_de_dos_titulares, titular_gordo, client):
-    response = client.get(reverse('cuenta', args=[cuenta_de_dos_titulares.slug]))
-    assert list(response.context['titulares']) == cuenta_de_dos_titulares.titulares
+class TestsIntegrativos:
 
+    def test_si_recibe_slug_de_cuenta_pasa_cuenta_a_template(self, cuenta, client):
+        response = client.get(reverse('cuenta', args=[cuenta.slug]))
+        assert response.context.get('cuenta') is not None
+        assert response.context['cuenta'] == cuenta
 
-def test_si_recibe_slug_de_cuenta_pasa_saldo_de_cuenta_como_saldo_general(
-        cuenta_con_saldo, entrada, client):
-    response = client.get(reverse('cuenta', args=[cuenta_con_saldo.slug]))
-    assert response.context['saldo_gral'] == cuenta_con_saldo.saldo
+    def test_si_recibe_slug_de_cuenta_interactiva_pasa_lista_con_titular_de_cuenta_como_titulares(
+            self, cuenta, otro_titular, client):
+        response = client.get(reverse('cuenta', args=[cuenta.slug]))
+        assert list(response.context['titulares']) == [cuenta.titular]
 
+    def test_si_recibe_slug_de_cuenta_acumulativa_pasa_lista_de_titulares_de_la_cuenta(
+            self, cuenta_de_dos_titulares, titular_gordo, client):
+        response = client.get(reverse('cuenta', args=[cuenta_de_dos_titulares.slug]))
+        assert list(response.context['titulares']) == cuenta_de_dos_titulares.titulares
 
-def test_si_recibe_slug_de_cuenta_pasa_movimientos_de_la_cuenta_recibida(
-        cuenta, entrada, salida, entrada_otra_cuenta, client):
-    response = client.get(reverse('cuenta', args=[cuenta.slug]))
-    assert list(response.context['movimientos']) == list(cuenta.movs())
+    def test_si_recibe_slug_de_cuenta_pasa_saldo_de_cuenta_como_saldo_general(
+            self, cuenta_con_saldo, entrada, client):
+        response = client.get(reverse('cuenta', args=[cuenta_con_saldo.slug]))
+        assert response.context['saldo_gral'] == cuenta_con_saldo.saldo
 
+    def test_si_recibe_slug_de_cuenta_pasa_movimientos_de_la_cuenta_recibida(
+            self, cuenta, entrada, salida, entrada_otra_cuenta, client):
+        response = client.get(reverse('cuenta', args=[cuenta.slug]))
+        assert list(response.context['movimientos']) == list(cuenta.movs())
 
-def test_si_recibe_slug_de_cuenta_acumulativa_pasa_subcuentas_de_la_cuenta_recibida(
-        cuenta_acumulativa, cuenta, client):
-    response = client.get(reverse('cuenta', args=[cuenta_acumulativa.slug]))
-    assert list(response.context['cuentas']) == list(cuenta_acumulativa.subcuentas.all())
+    def test_si_recibe_slug_de_cuenta_acumulativa_pasa_subcuentas_de_la_cuenta_recibida(
+            self, cuenta_acumulativa, cuenta, client):
+        response = client.get(reverse('cuenta', args=[cuenta_acumulativa.slug]))
+        assert list(response.context['cuentas']) == list(cuenta_acumulativa.subcuentas.all())
 
+    def test_si_recibe_slug_de_cuenta_pasa_titulo_de_saldo_gral_con_cuenta(self, cuenta, client):
+        response = client.get(reverse('cuenta', args=[cuenta.slug]))
+        assert response.context['titulo_saldo_gral'] == f"Saldo de {cuenta.nombre}"
 
-def test_si_recibe_slug_de_cuenta_pasa_titulo_de_saldo_gral_con_cuenta(cuenta, client):
-    response = client.get(reverse('cuenta', args=[cuenta.slug]))
-    assert response.context['titulo_saldo_gral'] == f"Saldo de {cuenta.nombre}"
+    def test_si_recibe_slug_de_cuenta_interactiva_pasa_lista_vacia_de_subcuentas(
+            self, cuenta, cuenta_2, client):
+        response = client.get(reverse('cuenta', args=[cuenta.slug]))
+        assert len(response.context['cuentas']) == 0
 
+    def test_si_recibe_slug_de_subcuenta_pasa_lista_de_dicts_de_ancestro_con_nombre_y_saldo(
+            self, subsubcuenta, client):
+        response = client.get(reverse('cuenta', args=[subsubcuenta.slug]))
+        assert response.context.get('ancestros') is not None
+        assert \
+            [x['nombre'] for x in response.context['ancestros']] == \
+            [x.nombre for x in reversed(subsubcuenta.ancestros())]
+        assert \
+            [x['saldo_gral'] for x in response.context['ancestros']] == \
+            [x.saldo for x in reversed(subsubcuenta.ancestros())]
 
-def test_si_recibe_slug_de_cuenta_interactiva_pasa_lista_vacia_de_subcuentas(
-        cuenta, cuenta_2, client):
-    response = client.get(reverse('cuenta', args=[cuenta.slug]))
-    assert len(response.context['cuentas']) == 0
+    def test_si_recibe_slug_de_subcuenta_y_pk_de_movimiento_pasa_lista_de_dicts_de_ancestro_con_nombre_y_saldo_historico(
+            self, subsubcuenta, entrada, client):
+        response = client.get(reverse('cuenta_movimiento', args=[subsubcuenta.slug, entrada.pk]))
+        assert \
+            [x['saldo_gral'] for x in response.context['ancestros']] == \
+            [x.saldo_en_mov(entrada) for x in reversed(subsubcuenta.ancestros())]
 
+    def test_si_recibe_slug_de_subcuenta_pasa_lista_de_dicts_de_hermana_con_nombre_y_saldo(
+            self, subsubcuenta, client):
+        madre = subsubcuenta.cta_madre
+        madre.agregar_subcuenta('subsubcuenta 3', 'ssc3', subsubcuenta.titular)
+        response = client.get(reverse('cuenta', args=[subsubcuenta.slug]))
+        assert response.context.get('hermanas') is not None
+        assert \
+            [(x['nombre'], x['saldo_gral']) for x in response.context['hermanas']] == \
+            [(x.nombre, x.saldo) for x in subsubcuenta.hermanas()]
 
-def test_si_recibe_slug_de_subcuenta_pasa_lista_de_dicts_de_ancestro_con_nombre_y_saldo(subsubcuenta, client):
-    response = client.get(reverse('cuenta', args=[subsubcuenta.slug]))
-    assert response.context.get('ancestros') is not None
-    assert \
-        [x['nombre'] for x in response.context['ancestros']] == \
-        [x.nombre for x in reversed(subsubcuenta.ancestros())]
-    assert \
-        [x['saldo'] for x in response.context['ancestros']] == \
-        [x.saldo for x in reversed(subsubcuenta.ancestros())]
+    def test_si_recibe_slug_de_cuenta_e_id_de_movimiento_pasa_movimiento_seleccionado(
+            self, entrada, salida, client):
+        cuenta = entrada.cta_entrada
+        response = client.get(reverse('cuenta_movimiento', args=[cuenta.slug, salida.pk]))
+        assert response.context.get('movimiento') is not None
+        assert response.context['movimiento'] == salida
 
+    def test_si_recibe_slug_de_cuenta_e_id_de_movimiento_pasa_saldo_historico_de_cuenta_en_movimiento_como_saldo_gral(
+            self, entrada, salida, salida_posterior, client):
+        cuenta = entrada.cta_entrada
+        response = client.get(reverse('cuenta_movimiento', args=[cuenta.slug, salida.pk]))
+        assert response.context.get('saldo_gral') is not None
+        assert response.context['saldo_gral'] == cuenta.saldo_en_mov(salida)
 
-def test_si_recibe_slug_de_subcuenta_y_pk_de_movimiento_pasa_lista_de_dicts_de_ancestro_con_nombre_y_saldo_historico(
-        subsubcuenta, entrada, client):
-    response = client.get(reverse('cuenta_movimiento', args=[subsubcuenta.slug, entrada.pk]))
-    assert \
-        [x['saldo'] for x in response.context['ancestros']] == \
-        [x.saldo_en_mov(entrada) for x in reversed(subsubcuenta.ancestros())]
+    def test_si_recibe_slug_de_cuenta_e_id_de_movimiento_pasa_titulo_de_saldo_historico_con_cuenta_y_movimiento(
+            self, entrada, client):
+        cuenta = entrada.cta_entrada
+        response = client.get(reverse('cuenta_movimiento', args=[cuenta.slug, entrada.pk]))
+        assert (
+            response.context['titulo_saldo_gral'] ==
+            f'Saldo de {cuenta.nombre} histórico en movimiento {entrada.orden_dia} '
+            f'del {entrada.fecha} ({entrada.concepto})')
 
-
-def test_si_recibe_slug_de_subcuenta_pasa_lista_de_dicts_de_hermana_con_nombre_y_saldo(
-        subsubcuenta, client):
-    madre = subsubcuenta.cta_madre
-    madre.agregar_subcuenta('subsubcuenta 3', 'ssc3', subsubcuenta.titular)
-    response = client.get(reverse('cuenta', args=[subsubcuenta.slug]))
-    assert response.context.get('hermanas') is not None
-    assert \
-        [(x['nombre'], x['saldo']) for x in response.context['hermanas']] == \
-        [(x.nombre, x.saldo) for x in subsubcuenta.hermanas()]
-
-
-def test_si_recibe_slug_de_subcuenta_y_pk_de_movimiento_pasa_lista_de_dicts_de_hermana_con_nombre_y_saldo_historico(
-        subsubcuenta, entrada, salida, client):
-    response = client.get(reverse('cuenta_movimiento', args=[subsubcuenta.slug, entrada.pk]))
-    assert \
-        [x['saldo'] for x in response.context['hermanas']] == \
-        [x.saldo_en_mov(entrada) for x in subsubcuenta.hermanas()]
+    def test_si_recibe_slug_de_subcuenta_y_pk_de_movimiento_pasa_lista_de_dicts_de_hermana_con_nombre_y_saldo_historico(
+            self, subsubcuenta, entrada, salida, client):
+        response = client.get(reverse('cuenta_movimiento', args=[subsubcuenta.slug, entrada.pk]))
+        assert \
+            [x['saldo_gral'] for x in response.context['hermanas']] == \
+            [x.saldo_en_mov(entrada) for x in subsubcuenta.hermanas()]
 
 
 def test_si_recibe_titname_pasa_titular_a_template(
@@ -313,31 +343,6 @@ def test_si_recibe_titname_e_id_de_movimiento_pasa_titulo_de_saldo_gral_con_titu
         response.context['titulo_saldo_gral'] == \
         f"Capital de {titular.nombre} histórico en movimiento {entrada.orden_dia} "\
         f"del {entrada.fecha} ({entrada.concepto})"
-
-
-def test_si_recibe_slug_de_cuenta_e_id_de_movimiento_pasa_movimiento_seleccionado(entrada, salida, client):
-    cuenta = entrada.cta_entrada
-    response = client.get(reverse('cuenta_movimiento', args=[cuenta.slug, salida.pk]))
-    assert response.context.get('movimiento') is not None
-    assert response.context['movimiento'] == salida
-
-
-def test_si_recibe_slug_de_cuenta_e_id_de_movimiento_pasa_saldo_historico_de_cuenta_en_movimiento_como_saldo_gral(
-        entrada, salida, salida_posterior, client):
-    cuenta = entrada.cta_entrada
-    response = client.get(reverse('cuenta_movimiento', args=[cuenta.slug, salida.pk]))
-    assert response.context.get('saldo_gral') is not None
-    assert response.context['saldo_gral'] == cuenta.saldo_en_mov(salida)
-
-
-def test_si_recibe_slug_de_cuenta_e_id_de_movimiento_pasa_titulo_de_saldo_historico_con_cuenta_y_movimiento(
-        entrada, client):
-    cuenta = entrada.cta_entrada
-    response = client.get(reverse('cuenta_movimiento', args=[cuenta.slug, entrada.pk]))
-    assert (
-        response.context['titulo_saldo_gral'] ==
-        f'Saldo de {cuenta.nombre} histórico en movimiento {entrada.orden_dia} '
-        f'del {entrada.fecha} ({entrada.concepto})')
 
 
 def test_considera_solo_cuentas_independientes_para_calcular_saldo_gral(

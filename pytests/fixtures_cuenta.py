@@ -134,6 +134,25 @@ def cuenta_acumulativa_ajena(cuenta_ajena: CuentaInteractiva) -> CuentaAcumulati
 
 
 @pytest.fixture
+def subsubcuenta(cuenta_acumulativa: CuentaAcumulativa) -> CuentaInteractiva:
+    sc1, sc2 = cuenta_acumulativa.subcuentas.all()
+    ssc11, ssc12 = sc1.dividir_entre(
+        {
+            'nombre': 'subsubuenta 1',
+            'slug': 'ssc1',
+            'saldo': 10,
+            'titular': sc1.titular
+        },
+        {
+            'nombre': 'subsubcuenta 2',
+            'slug': 'ssc2',
+            'titular': sc1.titular
+        }
+    )
+    return ssc11
+
+
+@pytest.fixture
 def cuenta_madre_de_cuenta_2(cuenta_2: CuentaInteractiva) -> CuentaAcumulativa:
     return cuenta_2.dividir_y_actualizar(
         ['subcuenta 1 de cuenta 2', 'sc21', 30],
