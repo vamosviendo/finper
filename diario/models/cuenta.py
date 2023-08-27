@@ -188,10 +188,8 @@ class Cuenta(PolymorphModel):
         context = {
             'cuenta': self,
             'nombre': self.nombre,
-            'titulares': [self.titular] if self.es_interactiva else self.titulares,
             'movimientos': self.movs(),
             'movimiento': movimiento,
-            'cuentas': self.subcuentas.all() if self.es_acumulativa else Cuenta.objects.none(),
             'saldo_gral': self.saldo_en_mov(movimiento) if movimiento else self.saldo,
             'titulo_saldo_gral': f'Saldo de {self.nombre}{movimiento_en_titulo}',
         }
@@ -352,6 +350,14 @@ class CuentaInteractiva(Cuenta):
     def dividir_y_actualizar(self, *subcuentas, fecha=None):
         self.dividir_entre(*subcuentas, fecha=fecha)
         return self.tomar_del_slug()
+
+    def as_template_context(self, movimiento=None, es_hermana=False):
+        context = super().as_template_context(movimiento, es_hermana)
+        context.update({
+            'titulares': [self.titular],
+            'cuentas': Cuenta.objects.none(),
+        })
+        return context
 
     # Protected
 
@@ -583,3 +589,11 @@ class CuentaAcumulativa(Cuenta):
 
     def agregar_subcuenta(self, nombre, slug, titular):
         return Cuenta.crear(nombre, slug, cta_madre=self, titular=titular)
+
+    def as_template_context(self, movimiento=None, es_hermana=False):
+        context = super().as_template_context(movimiento, es_hermana)
+        context.update({
+            'titulares': self.titulares,
+            'cuentas': self.subcuentas.all(),
+        })
+        return context

@@ -64,13 +64,23 @@ def test_pasa_titulo_de_saldo_general_a_template(response):
     assert response.context['titulo_saldo_gral'] == "Saldo general"
 
 
-def test_si_recibe_slug_de_cuenta_actualiza_context_con_datos_de_cuenta(cuenta, mocker, client):
-    mock_atc = mocker.patch('diario.models.Cuenta.as_template_context', autospec=True)
-    mock_atc.return_value = {
+def test_si_recibe_slug_de_cuenta_actualiza_context_con_datos_de_cuenta(
+        cuenta, cuenta_acumulativa, mocker, client):
+    mock_atci = mocker.patch('diario.models.CuentaInteractiva.as_template_context', autospec=True)
+    mock_atca = mocker.patch('diario.models.CuentaAcumulativa.as_template_context', autospec=True)
+    mock_atci.return_value = {
         'titulo_saldo_gral': f'Saldo de {cuenta.nombre}',
         'saldo_gral': cuenta.saldo,
         'titulares': [cuenta.titular],
         'cuentas': [],
+        'movimientos': cuenta.movs(),
+        'cuenta': cuenta,
+    }
+    mock_atca.return_value = {
+        'titulo_saldo_gral': f'Saldo de {cuenta_acumulativa.nombre}',
+        'saldo_gral': cuenta_acumulativa.saldo,
+        'titulares': cuenta_acumulativa.titulares,
+        'cuentas': cuenta_acumulativa.subcuentas.all(),
         'movimientos': cuenta.movs(),
         'cuenta': cuenta,
     }
@@ -79,10 +89,15 @@ def test_si_recibe_slug_de_cuenta_actualiza_context_con_datos_de_cuenta(cuenta, 
         assert response.context.get(key) is not None
         assert response.context[key] == value
 
+    response = client.get(reverse('cuenta', args=[cuenta_acumulativa.slug]))
+    for key, value in cuenta_acumulativa.as_template_context().items():
+        assert response.context.get(key) is not None
+        assert response.context[key] == value
+
 
 def test_si_recibe_slug_de_cuenta_e_id_de_movimiento_actualiza_context_con_datos_historicos_de_cuenta_al_momento_del_movimiento(
         cuenta, entrada, mocker, client):
-    mock_atc = mocker.patch('diario.models.Cuenta.as_template_context', autospec=True)
+    mock_atc = mocker.patch('diario.models.CuentaInteractiva.as_template_context', autospec=True)
     mock_atc.return_value = {
         'titulo_saldo_gral': f'Saldo de {cuenta.nombre}',
         'saldo_gral': cuenta.saldo_en_mov(entrada),
@@ -95,7 +110,7 @@ def test_si_recibe_slug_de_cuenta_e_id_de_movimiento_actualiza_context_con_datos
     response = client.get(reverse('cuenta_movimiento', args=[cuenta.slug, entrada.pk]))
     for key, value in cuenta.as_template_context().items():
         assert response.context.get(key) is not None
-        assert response.context[key] == value
+        assert response.context[key] == value, f"key: {key}"
 
 
 class TestsIntegrativos:
