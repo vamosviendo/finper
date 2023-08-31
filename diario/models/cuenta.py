@@ -179,7 +179,7 @@ class Cuenta(PolymorphModel):
 
         return lista_ancestros
 
-    def as_template_context(self, movimiento=None, es_hermana=False):
+    def as_template_context(self, movimiento=None, recursive=True):
         movimiento_en_titulo = \
             f" histórico en movimiento {movimiento.orden_dia} " \
             f"del {movimiento.fecha} ({movimiento.concepto})" if movimiento \
@@ -188,22 +188,23 @@ class Cuenta(PolymorphModel):
         context = {
             'cuenta': self,
             'nombre': self.nombre,
-            'movimientos': self.movs(),
+            'slug': self.slug,
+            'movimientos': list(self.movs()),
             'movimiento': movimiento,
             'saldo_gral': self.saldo_en_mov(movimiento) if movimiento else self.saldo,
             'titulo_saldo_gral': f'Saldo de {self.nombre}{movimiento_en_titulo}',
         }
 
-        if self.tiene_madre():
+        if self.tiene_madre() and recursive:
             context.update({
                 'ancestros': [
-                    x.as_template_context(movimiento)
+                    x.as_template_context(movimiento, recursive=False)
                     for x in reversed(self.ancestros())
                 ],
                 'hermanas': [
-                    x.as_template_context(movimiento, es_hermana=True)
+                    x.as_template_context(movimiento, recursive=False)
                     for x in self.hermanas()
-                ] if not es_hermana else None,    # Evita recursión infinita
+                ],
             })
 
         return context
@@ -351,11 +352,11 @@ class CuentaInteractiva(Cuenta):
         self.dividir_entre(*subcuentas, fecha=fecha)
         return self.tomar_del_slug()
 
-    def as_template_context(self, movimiento=None, es_hermana=False):
-        context = super().as_template_context(movimiento, es_hermana)
+    def as_template_context(self, movimiento=None, recursive=True):
+        context = super().as_template_context(movimiento, recursive)
         context.update({
             'titulares': [self.titular],
-            'cuentas': Cuenta.objects.none(),
+            'cuentas': list(),
         })
         return context
 
@@ -590,10 +591,13 @@ class CuentaAcumulativa(Cuenta):
     def agregar_subcuenta(self, nombre, slug, titular):
         return Cuenta.crear(nombre, slug, cta_madre=self, titular=titular)
 
-    def as_template_context(self, movimiento=None, es_hermana=False):
-        context = super().as_template_context(movimiento, es_hermana)
+    def as_template_context(self, movimiento=None, recursive=True):
+        context = super().as_template_context(movimiento, recursive)
         context.update({
             'titulares': self.titulares,
-            'cuentas': self.subcuentas.all(),
+            'cuentas': [
+                x.as_template_context(movimiento, recursive=False)
+                for x in self.subcuentas.all()
+            ],
         })
         return context
