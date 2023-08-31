@@ -36,6 +36,15 @@ def test_si_cuenta_es_acumulativa_incluye_subcuentas_en_formato_dict(cuenta_acum
         ]
 
 
+def test_si_cuenta_es_acumulativa_clave_es_acumulativa_es_True(cuenta_acumulativa):
+    context = cuenta_acumulativa.as_template_context()
+    assert context['es_acumulativa'] is True
+
+
+def test_si_cuenta_es_interactiva_clave_es_acumulativa_es_False(context):
+    assert context['es_acumulativa'] is False
+
+
 def test_si_cuenta_es_acumulativa_y_recibe_movimiento_toma_saldo_en_mov_de_subcuentas_como_saldo(
         cuenta_acumulativa):
     sc1, sc2 = cuenta_acumulativa.subcuentas.all()

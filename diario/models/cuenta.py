@@ -192,6 +192,7 @@ class Cuenta(PolymorphModel):
             'movimientos': list(self.movs()),
             'movimiento': movimiento,
             'saldo_gral': self.saldo_en_mov(movimiento) if movimiento else self.saldo,
+            'es_acumulativa': self.es_acumulativa,
             'titulo_saldo_gral': f'Saldo de {self.nombre}{movimiento_en_titulo}',
         }
 
