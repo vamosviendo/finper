@@ -8,11 +8,6 @@ def context(cuenta):
     return cuenta.as_template_context()
 
 
-def test_cuenta_se_incluye_a_si_misma(context, cuenta):
-    assert context.get('cuenta') is not None
-    assert context['cuenta'] == cuenta
-
-
 def test_incluye_nombre_de_cuenta(context, cuenta):
     assert context.get('nombre') is not None
     assert context['nombre'] == cuenta.nombre

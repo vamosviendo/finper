@@ -186,7 +186,6 @@ class Cuenta(PolymorphModel):
             else ""
 
         context = {
-            'cuenta': self,
             'nombre': self.nombre,
             'slug': self.slug,
             'movimientos': list(self.movs()),

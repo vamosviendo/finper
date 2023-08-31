@@ -145,8 +145,8 @@
           <td class="menu-item class_td_cuenta">
             <div id="id_div_cuenta_nueva">
               <a
-                {% if cuenta %}
-                  href="{% url 'cta_div' cuenta.slug %}"
+                {% if slug %}
+                  href="{% url 'cta_div' slug %}"
                 {% else %}
                   href="{% url 'cta_nueva' %}"
                 {% endif %}
@@ -187,7 +187,7 @@
       </tr></thead>
 
       {% for mov in movimientos reversed %}
-      <tr class="class_row_mov{% if mov == movimiento%} mov_selected{% endif %}">
+      <tr class="class_row_mov{% if mov == movimiento %} mov_selected{% endif %}">
         <td class="class_td_fecha">
           <div class="cell_fecha scrollable">
             {{ mov.fecha|date:'Y-m-d' }}
@@ -199,8 +199,8 @@
             <a href="
                 {% if titular %}
                   {% url 'titular_movimiento' titular.titname mov.pk %}
-                {% elif cuenta %}
-                  {% url 'cuenta_movimiento' cuenta.slug mov.pk %}
+                {% elif slug %}
+                  {% url 'cuenta_movimiento' slug mov.pk %}
                 {% else %}
                   {% url 'movimiento' mov.pk %}
                 {% endif %}"

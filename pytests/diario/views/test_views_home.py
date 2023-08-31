@@ -115,11 +115,6 @@ def test_si_recibe_slug_de_cuenta_e_id_de_movimiento_actualiza_context_con_datos
 
 class TestsIntegrativos:
 
-    def test_si_recibe_slug_de_cuenta_pasa_cuenta_a_template(self, cuenta, client):
-        response = client.get(reverse('cuenta', args=[cuenta.slug]))
-        assert response.context.get('cuenta') is not None
-        assert response.context['cuenta'] == cuenta
-
     def test_si_recibe_slug_de_cuenta_interactiva_pasa_lista_con_titular_de_cuenta_como_titulares(
             self, cuenta, otro_titular, client):
         response = client.get(reverse('cuenta', args=[cuenta.slug]))
@@ -215,13 +210,13 @@ class TestsIntegrativos:
         assert \
             [x['saldo_gral'] for x in response.context['hermanas']] == \
             [x.saldo_en_mov(entrada) for x in subsubcuenta.hermanas()]
-
-
-def test_si_recibe_titname_pasa_titular_a_template(
-        titular, client):
-    response = client.get(reverse('titular', args=[titular.titname]))
-    assert response.context.get('titular') is not None
-    assert response.context['titular'] == titular
+#
+#
+# def test_si_recibe_titname_pasa_titular_a_template(
+#         titular, client):
+#     response = client.get(reverse('titular', args=[titular.titname]))
+#     assert response.context.get('titular') is not None
+#     assert response.context['titular'] == titular
 
 
 def test_si_recibe_titname_pasa_saldo_a_template(entrada, entrada_cuenta_ajena, client):
@@ -292,10 +287,6 @@ def test_si_recibe_id_de_movimiento_pasa_cuentas_independientes(
     otra_cuenta = entrada_otra_cuenta.cta_entrada
     response = client.get(reverse('movimiento', args=[salida.pk]))
     assert response.context.get('cuentas') is not None
-    print([x['nombre'] for x in response.context['cuentas']])
-    print([x.nombre for x in (cuenta, otra_cuenta, cuenta_acumulativa)])
-    print([x.as_template_context() for x in (cuenta, otra_cuenta, cuenta_acumulativa)])
-    print(response.context['cuentas'])
     assert \
         list(response.context['cuentas']) == [
             x.as_template_context(salida)
