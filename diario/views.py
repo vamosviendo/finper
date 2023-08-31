@@ -48,8 +48,10 @@ class HomeView(TemplateView):
                     if movimiento is None
                     else titular.capital_historico(movimiento),
                 'titulares': Titular.todes(),
-                'cuentas':
-                    titular.cuentas_interactivas().order_by(Lower('nombre')),
+                'cuentas': [
+                    x.as_template_context(movimiento) for x in
+                    titular.cuentas_interactivas().order_by(Lower('nombre'))
+                ],
                 'movimientos': titular.movs(),
                 'titular': titular,
                 'movimiento': movimiento,
@@ -60,8 +62,10 @@ class HomeView(TemplateView):
                 'titulo_saldo_gral': f'Saldo general{movimiento_en_titulo}',
                 'saldo_gral': saldo_general_historico(movimiento),
                 'titulares': Titular.todes(),
-                'cuentas':
-                    Cuenta.filtro(cta_madre=None).order_by(Lower('nombre')),
+                'cuentas': [
+                    x.as_template_context(movimiento) for x in
+                    Cuenta.filtro(cta_madre=None).order_by(Lower('nombre'))
+                ],
                 'movimientos': Movimiento.todes(),
                 'movimiento': movimiento,
             })
@@ -71,8 +75,10 @@ class HomeView(TemplateView):
                 'saldo_gral':
                     sum([c.saldo for c in Cuenta.filtro(cta_madre=None)]),
                 'titulares': Titular.todes(),
-                'cuentas':
-                    Cuenta.filtro(cta_madre=None).order_by(Lower('nombre')),
+                'cuentas': [
+                    x.as_template_context() for x in
+                    Cuenta.filtro(cta_madre=None).order_by(Lower('nombre'))
+                ],
                 'movimientos': Movimiento.todes(),
             })
 

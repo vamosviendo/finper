@@ -113,14 +113,10 @@
               </div>
             </td>
             <td id="id_saldo_cta_{{ cta.slug }}" class="numero chico class_saldo_cuenta">
-              {% if movimiento %}
-                {% historico cta movimiento %}
-              {% else %}
-                {{ cta.saldo|floatformat:2 }}
-              {% endif %}
+              {{ cta.saldo_gral|floatformat:2 }}
             </td>
           </tr>
-          {% for subcuenta in cta.subcuentas.all %}
+          {% for subcuenta in cta.cuentas %}
             <tr class="menu-row class_div_cuenta">
               <td class="menu-item class_td_cuenta class_td_subcuenta">
                 <div class="menu-item-content class_nombre_cuenta">
@@ -140,11 +136,7 @@
                 </div>
               </td>
               <td id="id_saldo_cta_{{ subcuenta.slug }}" class="numero chico class_saldo_cuenta div-detalles-subcuenta">
-                {% if movimiento %}
-                  {% historico subcuenta movimiento %}
-                {% else %}
-                  {{ subcuenta.saldo|floatformat:2 }}
-                {% endif %}
+                {{ subcuenta.saldo_gral|floatformat:2 }}
               </td>
             </tr>
           {% endfor %}
@@ -244,7 +236,7 @@
         <td class="{% include './snippets/color_saldos.html' %}
                   numero chico class_td_saldo class_td_{{ cta.slug }}"
         >
-          {% historico cta mov %}
+          {{ cta.saldo_gral|floatformat:2 }}
         </td>
         {% endfor %}
 
@@ -275,19 +267,3 @@
   });
 </script>
 {% endblock extrajs %}
-{% comment %} Distribución anterior basada en base_contenido.html {% endcomment %}
-{% comment %}
-{% block importe_saldo_pag %}
-  {{saldo_gral|floatformat:2}}
-{% endblock importe_saldo_pag %}
-
-{% block verificar_saldos %}
-<a href="{% url 'verificar_saldos' %}" id="id_btn_verificar_saldos" class="btn my-3 btn-primary">
-  Verificar saldos
-</a>
-{% endblock verificar_saldos %}
-
-{% block general %}
-  {% historico_general mov %}
-{% endblock general %}
-{% endcomment %}
