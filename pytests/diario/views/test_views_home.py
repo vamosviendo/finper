@@ -85,11 +85,13 @@ def test_si_recibe_slug_de_cuenta_actualiza_context_con_datos_de_cuenta(
         'cuenta': cuenta,
     }
     response = client.get(reverse('cuenta', args=[cuenta.slug]))
+    mock_atci.assert_called_once_with(cuenta, None)
     for key, value in cuenta.as_template_context().items():
         assert response.context.get(key) is not None
         assert response.context[key] == value
 
     response = client.get(reverse('cuenta', args=[cuenta_acumulativa.slug]))
+    mock_atca.assert_called_once_with(cuenta_acumulativa, None)
     for key, value in cuenta_acumulativa.as_template_context().items():
         assert response.context.get(key) is not None
         assert response.context[key] == value
@@ -108,6 +110,7 @@ def test_si_recibe_slug_de_cuenta_e_id_de_movimiento_actualiza_context_con_datos
         'cuenta': cuenta,
     }
     response = client.get(reverse('cuenta_movimiento', args=[cuenta.slug, entrada.pk]))
+    mock_atc.assert_called_once_with(cuenta, entrada)
     for key, value in cuenta.as_template_context().items():
         assert response.context.get(key) is not None
         assert response.context[key] == value, f"key: {key}"
