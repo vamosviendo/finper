@@ -355,7 +355,7 @@ class CuentaInteractiva(Cuenta):
     def as_template_context(self, movimiento=None, recursive=True):
         context = super().as_template_context(movimiento, recursive)
         context.update({
-            'titulares': [self.titular],
+            'titulares': [self.titular.as_template_context(movimiento)],
             'cuentas': list(),
         })
         return context
@@ -594,7 +594,7 @@ class CuentaAcumulativa(Cuenta):
     def as_template_context(self, movimiento=None, recursive=True):
         context = super().as_template_context(movimiento, recursive)
         context.update({
-            'titulares': self.titulares,
+            'titulares': [x.as_template_context(movimiento) for x in self.titulares],
             'cuentas': [
                 x.as_template_context(movimiento, recursive=False)
                 for x in self.subcuentas.all()

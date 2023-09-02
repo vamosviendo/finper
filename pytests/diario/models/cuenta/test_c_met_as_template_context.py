@@ -18,8 +18,15 @@ def test_incluye_slug_de_cuenta(context, cuenta):
     assert context['slug'] == cuenta.slug
 
 
-def test_si_cuenta_es_interactiva_incluye_lista_con_titular_de_cuenta_como_titulares(context, cuenta):
-    assert list(context['titulares']) == [cuenta.titular]
+def test_si_cuenta_es_interactiva_incluye_lista_con_titular_de_cuenta_en_formato_dict_como_titulares(
+        context, cuenta):
+    assert context['titulares'] == [cuenta.titular.as_template_context()]
+
+
+def test_si_cuenta_es_interactiva_y_recibe_movimiento_incluye_capital_historico_como_capital_del_titular(
+        cuenta, entrada, salida):
+    context = cuenta.as_template_context(entrada)
+    assert context['titulares'][0]['capital'] == cuenta.titular.capital_historico(entrada)
 
 
 def test_si_cuenta_es_acumulativa_incluye_subcuentas_en_formato_dict(cuenta_acumulativa):
@@ -50,10 +57,22 @@ def test_si_cuenta_es_acumulativa_y_recibe_movimiento_toma_saldo_en_mov_de_subcu
     assert context['cuentas'][0]['saldo_gral'] == sc1.saldo_en_mov(entrada)
 
 
-def test_si_cuenta_es_acumulativa_incluye_lista_de_titulares_de_la_cuenta(cuenta_de_dos_titulares):
+def test_si_cuenta_es_acumulativa_incluye_lista_de_titulares_de_la_cuenta_en_formato_dict(
+        cuenta_de_dos_titulares):
     context = cuenta_de_dos_titulares.as_template_context()
-    assert list(context['titulares']) == cuenta_de_dos_titulares.titulares
+    assert context['titulares'] == [
+        x.as_template_context() for x in cuenta_de_dos_titulares.titulares]
 
+
+def test_si_cuenta_es_acumulativa_y_recibe_movimiento_toma_capital_historico_como_capital_de_titulares(
+        cuenta_de_dos_titulares):
+    sc1, sc2 = cuenta_de_dos_titulares.subcuentas.all()
+    entrada = Movimiento.crear('entrada en subcuenta', 80, cta_entrada=sc1)
+    Movimiento.crear('otra entrada en subcuenta', 30, cta_entrada=sc1)
+    Movimiento.crear('entrada en otra subcuenta', 50, cta_entrada=sc2)
+    context = cuenta_de_dos_titulares.as_template_context(entrada)
+    for titular in context['titulares']:
+        assert titular['capital'] == titular['titular'].capital_historico(entrada)
 
 def test_incluye_saldo_de_cuenta_como_saldo_general(cuenta_con_saldo):
     context = cuenta_con_saldo.as_template_context()
@@ -65,7 +84,7 @@ def test_incluye_movimientos_de_la_cuenta(cuenta, entrada, salida, entrada_otra_
     assert list(context['movimientos']) == [entrada, salida]
 
 
-def test_si_cuenta_es_acumulativa_incluye_sub_subcuentas_como_cuentas_en_formato_dict(cuenta_acumulativa):
+def test_si_cuenta_es_acumulativa_incluye_subcuentas_como_cuentas_en_formato_dict(cuenta_acumulativa):
     context = cuenta_acumulativa.as_template_context()
     assert context['cuentas'] == [
         x.as_template_context(recursive=False)
