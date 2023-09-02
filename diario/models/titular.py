@@ -84,3 +84,30 @@ class Titular(MiModel):
             self.titname, reemplazo='_')
         if '-' in self.titname:
             raise ValidationError('No se admite guión en titname')
+
+    def as_template_context(self, movimiento=None, es_elemento_principal=False):
+        movimiento_en_titulo = \
+            f" histórico en movimiento {movimiento.orden_dia} " \
+            f"del {movimiento.fecha} ({movimiento.concepto})" if movimiento \
+            else ""
+        capital = self.capital_historico(movimiento) if movimiento \
+            else self.capital
+
+        context = {
+            'titular': self,
+            'titname': self.titname,
+            'nombre': self.nombre,
+            'capital': capital,
+            'titulo_saldo_gral':
+                f'Capital de {self.nombre}{movimiento_en_titulo}',
+            'movimientos': list(self.movs()),
+            'movimiento': movimiento,
+        }
+        if es_elemento_principal:
+            context.update({
+                'saldo_gral': capital,
+                'cuentas':
+                    [x.as_template_context(movimiento) for x in self.cuentas.all()],
+            })
+
+        return context
