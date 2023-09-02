@@ -43,25 +43,20 @@ class HomeView(TemplateView):
 
         elif titular:
             context.update({
-                'titulo_saldo_gral': f'Capital de {titular.nombre}{movimiento_en_titulo}',
-                'saldo_gral': titular.capital
-                    if movimiento is None
-                    else titular.capital_historico(movimiento),
-                'titulares': Titular.todes(),
-                'cuentas': [
-                    x.as_template_context(movimiento) for x in
-                    titular.cuentas_interactivas().order_by(Lower('nombre'))
-                ],
-                'movimientos': titular.movs(),
-                'titular': titular,
-                'movimiento': movimiento,
+                'titulares': [
+                    x.as_template_context(movimiento)
+                    for x in Titular.todes()
+                ]
             })
+            context.update(titular.as_template_context(
+                    movimiento, es_elemento_principal=True
+            ))
 
         elif movimiento:
             context.update({
                 'titulo_saldo_gral': f'Saldo general{movimiento_en_titulo}',
                 'saldo_gral': saldo_general_historico(movimiento),
-                'titulares': Titular.todes(),
+                'titulares': [x.as_template_context(movimiento) for x in Titular.todes()],
                 'cuentas': [
                     x.as_template_context(movimiento) for x in
                     Cuenta.filtro(cta_madre=None).order_by(Lower('nombre'))

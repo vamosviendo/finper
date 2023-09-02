@@ -116,17 +116,60 @@ def test_si_recibe_slug_de_cuenta_e_id_de_movimiento_actualiza_context_con_datos
         assert response.context[key] == value, f"key: {key}"
 
 
+def test_si_recibe_titname_actualiza_context_con_datos_de_titular(
+        titular, cuenta, cuenta_2, entrada, salida, mocker, client):
+    mock_atc = mocker.patch('diario.models.Titular.as_template_context', autospec=True)
+    mock_atc.return_value = {
+            'titular': titular,
+            'titname': titular.titname,
+            'saldo_gral': titular.capital,
+            'titulo_saldo_gral':
+                f'Capital de {titular.nombre}',
+            'cuentas': [x.as_template_context() for x in (cuenta, cuenta_2)],
+            'movimientos': [entrada, salida],
+        }
+    response = client.get(reverse('titular', args=[titular.titname]))
+    mock_atc.assert_called_with(titular, None, True)
+    for key, value in mock_atc.return_value.items():
+        assert response.context[key] == value
+
+
+def test_si_recibe_titname_y_pk_de_movimiento_actualiza_context_con_datos_de_titular_al_momento_del_movimiento(
+        titular, cuenta, cuenta_2, entrada, salida, mocker, client):
+    mock_atc = mocker.patch('diario.models.Titular.as_template_context', autospec=True)
+    mock_atc.return_value = {
+            'titular': titular,
+            'titname': titular.titname,
+            'saldo_gral': titular.capital,
+            'titulo_saldo_gral':
+                f'Capital de {titular.nombre}',
+            'cuentas': [x.as_template_context() for x in (cuenta, cuenta_2)],
+            'movimientos': [entrada, salida],
+            'movimiento': entrada,
+        }
+    response = client.get(
+        reverse(
+            'titular_movimiento',
+            args=[titular.titname, entrada.pk]
+        )
+    )
+    mock_atc.assert_called_with(titular, entrada, True)
+    for key, value in mock_atc.return_value.items():
+        assert response.context[key] == value
+
+
 class TestsIntegrativos:
 
     def test_si_recibe_slug_de_cuenta_interactiva_pasa_lista_con_titular_de_cuenta_como_titulares(
             self, cuenta, otro_titular, client):
         response = client.get(reverse('cuenta', args=[cuenta.slug]))
-        assert list(response.context['titulares']) == [cuenta.titular]
+        assert response.context['titulares'] == [cuenta.titular.as_template_context()]
 
     def test_si_recibe_slug_de_cuenta_acumulativa_pasa_lista_de_titulares_de_la_cuenta(
             self, cuenta_de_dos_titulares, titular_gordo, client):
         response = client.get(reverse('cuenta', args=[cuenta_de_dos_titulares.slug]))
-        assert list(response.context['titulares']) == cuenta_de_dos_titulares.titulares
+        assert response.context['titulares'] == [
+            x.as_template_context() for x in cuenta_de_dos_titulares.titulares]
 
     def test_si_recibe_slug_de_cuenta_pasa_saldo_de_cuenta_como_saldo_general(
             self, cuenta_con_saldo, entrada, client):
@@ -213,53 +256,107 @@ class TestsIntegrativos:
         assert \
             [x['saldo_gral'] for x in response.context['hermanas']] == \
             [x.saldo_en_mov(entrada) for x in subsubcuenta.hermanas()]
-#
-#
-# def test_si_recibe_titname_pasa_titular_a_template(
-#         titular, client):
-#     response = client.get(reverse('titular', args=[titular.titname]))
-#     assert response.context.get('titular') is not None
-#     assert response.context['titular'] == titular
 
+    def test_si_recibe_titname_e_id_de_movimiento_pasa_solo_movimientos_de_cuentas_del_titular(
+            self, entrada, salida, entrada_cuenta_ajena, client):
+        titular = entrada.cta_entrada.titular
+        otro_titular = entrada_cuenta_ajena.cta_entrada.titular
+        response = client.get(
+            reverse(
+                'titular_movimiento',
+                args=[titular.titname, salida.pk]
+            )
+        )
+        assert response.context.get('movimientos') is not None
+        assert list(response.context['movimientos']) == list(titular.movs())
 
-def test_si_recibe_titname_pasa_saldo_a_template(entrada, entrada_cuenta_ajena, client):
-    titular = entrada.cta_entrada.titular
-    response = client.get(reverse('titular', args=[titular.titname]))
-    assert response.context['saldo_gral'] == titular.capital
+    def test_si_recibe_titname_e_id_de_movimiento_pasa_movimiento_seleccionado(
+            self, entrada, salida, client):
+        titular = entrada.cta_entrada.titular
+        response = client.get(
+            reverse(
+                'titular_movimiento',
+                args=[titular.titname, salida.pk]
+            )
+        )
+        assert response.context.get('movimiento') is not None
+        assert response.context['movimiento'] == salida
 
+    def test_si_recibe_titname_e_id_de_movimiento_pasa_capital_historico_de_titular_en_movimiento_como_saldo_gral(
+            self, entrada, salida, entrada_otra_cuenta, client):
+        titular = entrada.cta_entrada.titular
+        response = client.get(
+            reverse(
+                'titular_movimiento',
+                args=[titular.titname, salida.pk])
+        )
+        assert response.context.get('saldo_gral') is not None
+        assert response.context['saldo_gral'] == titular.capital_historico(salida)
 
-def test_si_recibe_titname_pasa_titulo_de_saldo_con_titular_a_template(titular, client):
-    response = client.get(reverse('titular', args=[titular.titname]))
-    assert response.context['titulo_saldo_gral'] == f"Capital de {titular.nombre}"
+    def test_si_recibe_titname_e_id_de_movimiento_pasa_titulo_de_saldo_gral_con_titular_y_movimiento(
+            self, entrada, client):
+        titular = entrada.cta_entrada.titular
+        response = client.get(
+            reverse(
+                'titular_movimiento',
+                args=[titular.titname, entrada.pk])
+        )
+        assert response.context.get('titulo_saldo_gral') is not None
+        assert \
+            response.context['titulo_saldo_gral'] == \
+            f"Capital de {titular.nombre} histórico en movimiento {entrada.orden_dia} "\
+            f"del {entrada.fecha} ({entrada.concepto})"
+
+    def test_si_recibe_titname_pasa_titular_a_template(
+            self, titular, client):
+        response = client.get(reverse('titular', args=[titular.titname]))
+        assert response.context.get('titular') is not None
+        assert response.context['titular'] == titular
+
+    def test_si_recibe_titname_pasa_saldo_a_template(self, entrada, entrada_cuenta_ajena, client):
+        titular = entrada.cta_entrada.titular
+        response = client.get(reverse('titular', args=[titular.titname]))
+        assert response.context['saldo_gral'] == titular.capital
+
+    def test_si_recibe_titname_pasa_titulo_de_saldo_con_titular_a_template(self, titular, client):
+        response = client.get(reverse('titular', args=[titular.titname]))
+        assert response.context['titulo_saldo_gral'] == f"Capital de {titular.nombre}"
+
+    def test_si_recibe_titname_pasa_cuentas_del_titular_a_template(
+            self, cuenta_2, cuenta, cuenta_ajena, client):
+        titular = cuenta.titular
+        response = client.get(reverse('titular', args=[titular.titname]))
+        for c in response.context['cuentas']:
+            assert c in [cuenta.as_template_context(), cuenta_2.as_template_context()]
+
+    def test_si_recibe_titname_pasa_cuentas_del_titular_ordenadas_por_nombre(
+            self, cuenta_2, cuenta, cuenta_ajena, client):
+        titular = cuenta.titular
+        response = client.get(reverse('titular', args=[titular.titname]))
+        assert \
+            list(response.context['cuentas']) == \
+            [x.as_template_context() for x in (cuenta, cuenta_2)]
+
+    def test_si_recibe_titname_pasa_movimientos_del_titular_a_template(
+            self, entrada, salida, traspaso, entrada_cuenta_ajena, client):
+        titular = entrada.cta_entrada.titular
+        response = client.get(reverse('titular', args=[titular.titname]))
+        assert list(response.context['movimientos']) == list(titular.movs())
 
 
 def test_si_recibe_titname_pasa_titulares_a_template(titular, otro_titular, client):
     response = client.get(reverse('titular', args=[titular.titname]))
-    assert list(response.context['titulares']) == [titular, otro_titular]
-
-
-def test_si_recibe_titname_pasa_cuentas_del_titular_a_template(
-        cuenta_2, cuenta, cuenta_ajena, client):
-    titular = cuenta.titular
-    response = client.get(reverse('titular', args=[titular.titname]))
-    for c in response.context['cuentas']:
-        assert c in [cuenta.as_template_context(), cuenta_2.as_template_context()]
-
-
-def test_si_recibe_titname_pasa_cuentas_del_titular_ordenadas_por_nombre(
-        cuenta_2, cuenta, cuenta_ajena, client):
-    titular = cuenta.titular
-    response = client.get(reverse('titular', args=[titular.titname]))
     assert \
-        list(response.context['cuentas']) == \
-        [x.as_template_context() for x in (cuenta, cuenta_2)]
+        list(response.context['titulares']) == \
+        [x.as_template_context() for x in (titular, otro_titular)]
 
 
-def test_si_recibe_titname_pasa_movimientos_del_titular_a_template(
-        entrada, salida, traspaso, entrada_cuenta_ajena, client):
-    titular = entrada.cta_entrada.titular
-    response = client.get(reverse('titular', args=[titular.titname]))
-    assert list(response.context['movimientos']) == list(titular.movs())
+def test_si_recibe_titname_e_id_de_movimiento_pasa_saldo_historico_de_titulares_al_momento_del_movimiento(
+        titular, otro_titular, entrada, salida, entrada_cuenta_ajena, client):
+    response = client.get(reverse('titular_movimiento', args=[titular.titname, entrada.pk]))
+    assert \
+        [x['capital'] for x in response.context['titulares']] == \
+        [x.capital_historico(entrada) for x in (titular, otro_titular)]
 
 
 def test_si_recibe_id_de_movimiento_pasa_movimiento_a_template(entrada, salida, client):
@@ -297,13 +394,21 @@ def test_si_recibe_id_de_movimiento_pasa_cuentas_independientes(
         ]
 
 
-def test_si_recibe_id_de_movimiento_pasa_titulares(
+def test_si_recibe_id_de_movimiento_pasa_titulares_en_formato_dict(
         entrada, salida, entrada_cuenta_ajena, client):
     titular = entrada.cta_entrada.titular
     otro_titular = entrada_cuenta_ajena.cta_entrada.titular
     response = client.get(reverse('movimiento', args=[salida.pk]))
     assert response.context.get('titulares') is not None
-    assert list(response.context['titulares']) == [titular, otro_titular]
+    assert list(response.context['titulares']) == [
+        x.as_template_context(salida) for x in (titular, otro_titular)]
+
+
+def test_si_si_recibe_id_de_movimiento_pasa_capital_historico_de_titulares_al_momento_del_movimiento(
+        entrada, salida, entrada_cuenta_ajena, client):
+    response = client.get(reverse('movimiento', args=[salida.pk]))
+    for tit in response.context.get('titulares'):
+        assert tit['capital'] == tit['titular'].capital_historico(salida)
 
 
 def test_si_recibe_id_de_movimiento_pasa_titulo_de_saldo_gral_con_movimiento(
@@ -313,59 +418,6 @@ def test_si_recibe_id_de_movimiento_pasa_titulo_de_saldo_gral_con_movimiento(
             response.context['titulo_saldo_gral'] ==
             f'Saldo general histórico en movimiento {entrada.orden_dia} '
             f'del {entrada.fecha} ({entrada.concepto})')
-
-
-def test_si_recibe_titname_e_id_de_movimiento_pasa_solo_movimientos_de_cuentas_del_titular(
-        entrada, salida, entrada_cuenta_ajena, client):
-    titular = entrada.cta_entrada.titular
-    otro_titular = entrada_cuenta_ajena.cta_entrada.titular
-    response = client.get(
-        reverse(
-            'titular_movimiento',
-            args=[titular.titname, salida.pk]
-        )
-    )
-    assert response.context.get('movimientos') is not None
-    assert list(response.context['movimientos']) == list(titular.movs())
-
-
-def test_si_recibe_titname_e_id_de_movimiento_pasa_movimiento_seleccionado(
-        entrada, salida, client):
-    titular = entrada.cta_entrada.titular
-    response = client.get(
-        reverse(
-            'titular_movimiento',
-            args=[titular.titname, salida.pk]
-        )
-    )
-    assert response.context.get('movimiento') is not None
-    assert response.context['movimiento'] == salida
-
-
-def test_si_recibe_titname_e_id_de_movimiento_pasa_capital_historico_de_titular_en_movimiento_como_saldo_gral(
-        entrada, salida, entrada_otra_cuenta, client):
-    titular = entrada.cta_entrada.titular
-    response = client.get(
-        reverse(
-            'titular_movimiento',
-            args=[titular.titname, salida.pk])
-    )
-    assert response.context.get('saldo_gral') is not None
-    assert response.context['saldo_gral'] == titular.capital_historico(salida)
-
-
-def test_si_recibe_titname_e_id_de_movimiento_pasa_titulo_de_saldo_gral_con_titular_y_movimiento(entrada, client):
-    titular = entrada.cta_entrada.titular
-    response = client.get(
-        reverse(
-            'titular_movimiento',
-            args=[titular.titname, entrada.pk])
-    )
-    assert response.context.get('titulo_saldo_gral') is not None
-    assert \
-        response.context['titulo_saldo_gral'] == \
-        f"Capital de {titular.nombre} histórico en movimiento {entrada.orden_dia} "\
-        f"del {entrada.fecha} ({entrada.concepto})"
 
 
 def test_considera_solo_cuentas_independientes_para_calcular_saldo_gral(

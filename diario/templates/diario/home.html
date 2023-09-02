@@ -59,11 +59,7 @@
             </div>
           </td>
           <td id="id_capital_{{ tit.titname }}" class="numero chico class_capital_titular">
-            {% if movimiento %}
-              {% cap_historico tit movimiento %}
-            {% else %}
-              {{ tit.capital|floatformat:2 }}
-            {% endif %}
+            {{ tit.capital|floatformat:2 }}
           </td>
         </tr>
         {% endfor %}
