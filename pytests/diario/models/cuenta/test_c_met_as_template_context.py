@@ -5,7 +5,7 @@ from diario.models import Movimiento
 
 @pytest.fixture
 def context(cuenta):
-    return cuenta.as_template_context()
+    return cuenta.as_template_context(es_elemento_principal=True)
 
 
 def test_incluye_nombre_de_cuenta(context, cuenta):
@@ -30,16 +30,16 @@ def test_si_cuenta_es_interactiva_y_recibe_movimiento_incluye_capital_historico_
 
 
 def test_si_cuenta_es_acumulativa_incluye_subcuentas_en_formato_dict(cuenta_acumulativa):
-    context = cuenta_acumulativa.as_template_context()
+    context = cuenta_acumulativa.as_template_context(es_elemento_principal=True)
     assert \
         list(context['cuentas']) == [
-            x.as_template_context(recursive=False)
+            x.as_template_context()
             for x in cuenta_acumulativa.subcuentas.all()
         ]
 
 
 def test_si_cuenta_es_acumulativa_clave_es_acumulativa_es_True(cuenta_acumulativa):
-    context = cuenta_acumulativa.as_template_context()
+    context = cuenta_acumulativa.as_template_context(es_elemento_principal=True)
     assert context['es_acumulativa'] is True
 
 
@@ -59,7 +59,7 @@ def test_si_cuenta_es_acumulativa_y_recibe_movimiento_toma_saldo_en_mov_de_subcu
 
 def test_si_cuenta_es_acumulativa_incluye_lista_de_titulares_de_la_cuenta_en_formato_dict(
         cuenta_de_dos_titulares):
-    context = cuenta_de_dos_titulares.as_template_context()
+    context = cuenta_de_dos_titulares.as_template_context(es_elemento_principal=True)
     assert context['titulares'] == [
         x.as_template_context() for x in cuenta_de_dos_titulares.titulares]
 
@@ -75,19 +75,19 @@ def test_si_cuenta_es_acumulativa_y_recibe_movimiento_toma_capital_historico_com
         assert titular['capital'] == titular['titular'].capital_historico(entrada)
 
 def test_incluye_saldo_de_cuenta_como_saldo_general(cuenta_con_saldo):
-    context = cuenta_con_saldo.as_template_context()
+    context = cuenta_con_saldo.as_template_context(es_elemento_principal=True)
     assert context['saldo_gral'] == cuenta_con_saldo.saldo
 
 
 def test_incluye_movimientos_de_la_cuenta(cuenta, entrada, salida, entrada_otra_cuenta):
-    context = cuenta.as_template_context()
+    context = cuenta.as_template_context(es_elemento_principal=True)
     assert list(context['movimientos']) == [entrada, salida]
 
 
 def test_si_cuenta_es_acumulativa_incluye_subcuentas_como_cuentas_en_formato_dict(cuenta_acumulativa):
-    context = cuenta_acumulativa.as_template_context()
+    context = cuenta_acumulativa.as_template_context(es_elemento_principal=True)
     assert context['cuentas'] == [
-        x.as_template_context(recursive=False)
+        x.as_template_context()
         for x in cuenta_acumulativa.subcuentas.all()
     ]
 
@@ -101,7 +101,7 @@ def test_incluye_titulo_de_saldo_gral_con_cuenta(context, cuenta):
 
 
 def test_si_cuenta_tiene_madre_incluye_lista_de_dicts_de_ancestro_con_nombre_y_saldo(subsubcuenta):
-    context = subsubcuenta.as_template_context()
+    context = subsubcuenta.as_template_context(es_elemento_principal=True)
     assert context.get('ancestros') is not None
     assert \
         [x['nombre'] for x in context['ancestros']] == \
@@ -114,7 +114,7 @@ def test_si_cuenta_tiene_madre_incluye_lista_de_dicts_de_ancestro_con_nombre_y_s
 def test_si_cuenta_tiene_madre_incluye_lista_de_dicts_de_cuentas_hermanas_con_nombre_y_saldo(subsubcuenta):
     madre = subsubcuenta.cta_madre
     madre.agregar_subcuenta('subsubcuenta 3', 'ssc3', subsubcuenta.titular)
-    context = subsubcuenta.as_template_context()
+    context = subsubcuenta.as_template_context(es_elemento_principal=True)
     assert context.get('hermanas') is not None
     assert \
         [x['nombre'] for x in context['hermanas']] == \
@@ -150,7 +150,7 @@ def test_si_recibe_movimiento_incluye_titulo_de_saldo_historico_con_cuenta_y_mov
 
 def test_si_cuenta_tiene_madre_y_recibe_movimiento_incluye_lista_de_dicts_de_ancestro_con_nombre_y_saldo_historico(
         subsubcuenta, entrada):
-    context = subsubcuenta.as_template_context(movimiento=entrada)
+    context = subsubcuenta.as_template_context(movimiento=entrada, es_elemento_principal=True)
     assert \
         [x['saldo_gral'] for x in context['ancestros']] == \
         [x.saldo_en_mov(entrada) for x in reversed(subsubcuenta.ancestros())]
@@ -158,7 +158,7 @@ def test_si_cuenta_tiene_madre_y_recibe_movimiento_incluye_lista_de_dicts_de_anc
 
 def test_si_cuenta_tiene_madre_y_recibe_movimiento_incluye_lista_de_dicts_de_hermana_con_nombre_y_saldo_historico(
         subsubcuenta, entrada, salida, client):
-    context = subsubcuenta.as_template_context(movimiento=entrada)
+    context = subsubcuenta.as_template_context(movimiento=entrada, es_elemento_principal=True)
     assert \
         [x['saldo_gral'] for x in context['hermanas']] == \
         [x.saldo_en_mov(entrada) for x in subsubcuenta.hermanas()]

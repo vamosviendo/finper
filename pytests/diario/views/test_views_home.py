@@ -85,13 +85,13 @@ def test_si_recibe_slug_de_cuenta_actualiza_context_con_datos_de_cuenta(
         'cuenta': cuenta,
     }
     response = client.get(reverse('cuenta', args=[cuenta.slug]))
-    mock_atci.assert_called_once_with(cuenta, None)
+    mock_atci.assert_called_once_with(cuenta, None, True)
     for key, value in cuenta.as_template_context().items():
         assert response.context.get(key) is not None
         assert response.context[key] == value
 
     response = client.get(reverse('cuenta', args=[cuenta_acumulativa.slug]))
-    mock_atca.assert_called_once_with(cuenta_acumulativa, None)
+    mock_atca.assert_called_once_with(cuenta_acumulativa, None, True)
     for key, value in cuenta_acumulativa.as_template_context().items():
         assert response.context.get(key) is not None
         assert response.context[key] == value
@@ -110,7 +110,7 @@ def test_si_recibe_slug_de_cuenta_e_id_de_movimiento_actualiza_context_con_datos
         'cuenta': cuenta,
     }
     response = client.get(reverse('cuenta_movimiento', args=[cuenta.slug, entrada.pk]))
-    mock_atc.assert_called_once_with(cuenta, entrada)
+    mock_atc.assert_called_once_with(cuenta, entrada, True)
     for key, value in cuenta.as_template_context().items():
         assert response.context.get(key) is not None
         assert response.context[key] == value, f"key: {key}"
@@ -186,7 +186,7 @@ class TestsIntegrativos:
         response = client.get(reverse('cuenta', args=[cuenta_acumulativa.slug]))
         assert \
             response.context['cuentas'] == [
-                x.as_template_context(recursive=False)
+                x.as_template_context()
                 for x in cuenta_acumulativa.subcuentas.all()
             ]
 

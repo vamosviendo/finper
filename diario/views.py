@@ -39,7 +39,9 @@ class HomeView(TemplateView):
         context['titulo_saldo_gral'] = 'Saldo general'
 
         if cuenta:
-            context.update(cuenta.as_template_context(movimiento))
+            context.update(cuenta.as_template_context(
+                movimiento, es_elemento_principal=True
+            ))
 
         elif titular:
             context.update({
