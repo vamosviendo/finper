@@ -39,18 +39,18 @@ class HomeView(TemplateView):
         context['titulo_saldo_gral'] = 'Saldo general'
 
         if cuenta:
-            context.update(cuenta.as_template_context(
+            context.update(cuenta.as_view_context(
                 movimiento, es_elemento_principal=True
             ))
 
         elif titular:
             context.update({
                 'titulares': [
-                    x.as_template_context(movimiento)
+                    x.as_view_context(movimiento)
                     for x in Titular.todes()
                 ]
             })
-            context.update(titular.as_template_context(
+            context.update(titular.as_view_context(
                     movimiento, es_elemento_principal=True
             ))
 
@@ -58,9 +58,9 @@ class HomeView(TemplateView):
             context.update({
                 'titulo_saldo_gral': f'Saldo general{movimiento_en_titulo}',
                 'saldo_gral': saldo_general_historico(movimiento),
-                'titulares': [x.as_template_context(movimiento) for x in Titular.todes()],
+                'titulares': [x.as_view_context(movimiento) for x in Titular.todes()],
                 'cuentas': [
-                    x.as_template_context(movimiento) for x in
+                    x.as_view_context(movimiento) for x in
                     Cuenta.filtro(cta_madre=None).order_by(Lower('nombre'))
                 ],
                 'movimientos': Movimiento.todes(),
@@ -73,7 +73,7 @@ class HomeView(TemplateView):
                     sum([c.saldo for c in Cuenta.filtro(cta_madre=None)]),
                 'titulares': Titular.todes(),
                 'cuentas': [
-                    x.as_template_context() for x in
+                    x.as_view_context() for x in
                     Cuenta.filtro(cta_madre=None).order_by(Lower('nombre'))
                 ],
                 'movimientos': Movimiento.todes(),

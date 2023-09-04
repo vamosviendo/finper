@@ -179,7 +179,7 @@ class Cuenta(PolymorphModel):
 
         return lista_ancestros
 
-    def as_template_context(self, movimiento=None, es_elemento_principal=False):
+    def as_view_context(self, movimiento=None, es_elemento_principal=False):
         movimiento_en_titulo = \
             f" histórico en movimiento {movimiento.orden_dia} " \
             f"del {movimiento.fecha} ({movimiento.concepto})" if movimiento \
@@ -198,11 +198,11 @@ class Cuenta(PolymorphModel):
         if self.tiene_madre() and es_elemento_principal:
             context.update({
                 'ancestros': [
-                    x.as_template_context(movimiento)
+                    x.as_view_context(movimiento)
                     for x in reversed(self.ancestros())
                 ],
                 'hermanas': [
-                    x.as_template_context(movimiento)
+                    x.as_view_context(movimiento)
                     for x in self.hermanas()
                 ],
             })
@@ -352,10 +352,10 @@ class CuentaInteractiva(Cuenta):
         self.dividir_entre(*subcuentas, fecha=fecha)
         return self.tomar_del_slug()
 
-    def as_template_context(self, movimiento=None, es_elemento_principal=False):
-        context = super().as_template_context(movimiento, es_elemento_principal)
+    def as_view_context(self, movimiento=None, es_elemento_principal=False):
+        context = super().as_view_context(movimiento, es_elemento_principal)
         context.update({
-            'titulares': [self.titular.as_template_context(movimiento)],
+            'titulares': [self.titular.as_view_context(movimiento)],
             'cuentas': list(),
         })
         return context
@@ -591,10 +591,10 @@ class CuentaAcumulativa(Cuenta):
     def agregar_subcuenta(self, nombre, slug, titular):
         return Cuenta.crear(nombre, slug, cta_madre=self, titular=titular)
 
-    def as_template_context(self, movimiento=None, es_elemento_principal=False):
-        context = super().as_template_context(movimiento, es_elemento_principal)
+    def as_view_context(self, movimiento=None, es_elemento_principal=False):
+        context = super().as_view_context(movimiento, es_elemento_principal)
         context.update({
-            'titulares': [x.as_template_context(movimiento) for x in self.titulares],
-            'cuentas': [x.as_template_context(movimiento) for x in self.subcuentas.all()],
+            'titulares': [x.as_view_context(movimiento) for x in self.titulares],
+            'cuentas': [x.as_view_context(movimiento) for x in self.subcuentas.all()],
         })
         return context

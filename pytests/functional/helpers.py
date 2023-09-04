@@ -75,7 +75,7 @@ class FinperFirefox(MiFirefox):
         )]
         assert conceptos_mov == list(
             reversed([x.concepto for x in ente.movs()])
-        ) if isinstance(ente, Titular) else ente.as_template_context()['movimientos']
+        ) if isinstance(ente, Titular) else ente.as_view_context()['movimientos']
 
     def comparar_titular(self, titular: Titular):
         """ Dado un titular, comparar su nombre con el que encabeza la
