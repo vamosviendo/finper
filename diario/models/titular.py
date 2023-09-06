@@ -90,14 +90,13 @@ class Titular(MiModel):
             f" histórico en movimiento {movimiento.orden_dia} " \
             f"del {movimiento.fecha} ({movimiento.concepto})" if movimiento \
             else ""
-        capital = self.capital_historico(movimiento) if movimiento \
-            else self.capital
 
         context = {
             'titular': self,
             'titname': self.titname,
             'nombre': self.nombre,
-            'capital': capital,
+            'capital': self.capital_historico(movimiento) if movimiento
+                else self.capital,
             'titulo_saldo_gral':
                 f'Capital de {self.nombre}{movimiento_en_titulo}',
             'movimientos': list(self.movs()),
@@ -105,7 +104,7 @@ class Titular(MiModel):
         }
         if es_elemento_principal:
             context.update({
-                'saldo_gral': capital,
+                'saldo_gral': context['capital'],
                 'cuentas':
                     [x.as_view_context(movimiento) for x in self.cuentas.all()],
             })
