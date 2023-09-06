@@ -190,22 +190,27 @@ class Cuenta(PolymorphModel):
             'slug': self.slug,
             'movimientos': list(self.movs()),
             'movimiento': movimiento,
-            'saldo_gral': self.saldo_en_mov(movimiento) if movimiento else self.saldo,
+            'saldo': self.saldo_en_mov(movimiento) if movimiento else self.saldo,
             'es_acumulativa': self.es_acumulativa,
-            'titulo_saldo_gral': f'Saldo de {self.nombre}{movimiento_en_titulo}',
         }
 
-        if self.tiene_madre() and es_elemento_principal:
+        if es_elemento_principal:
             context.update({
-                'ancestros': [
-                    x.as_view_context(movimiento)
-                    for x in reversed(self.ancestros())
-                ],
-                'hermanas': [
-                    x.as_view_context(movimiento)
-                    for x in self.hermanas()
-                ],
+                'saldo_gral': context['saldo'],
+                'titulo_saldo_gral':
+                    f'Saldo de {self.nombre}{movimiento_en_titulo}',
             })
+            if self.tiene_madre():
+                context.update({
+                    'ancestros': [
+                        x.as_view_context(movimiento)
+                        for x in reversed(self.ancestros())
+                    ],
+                    'hermanas': [
+                        x.as_view_context(movimiento)
+                        for x in self.hermanas()
+                    ],
+                })
 
         return context
 

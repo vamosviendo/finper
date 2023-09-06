@@ -207,14 +207,14 @@ class TestsIntegrativos:
             [x['nombre'] for x in response.context['ancestros']] == \
             [x.nombre for x in reversed(subsubcuenta.ancestros())]
         assert \
-            [x['saldo_gral'] for x in response.context['ancestros']] == \
+            [x['saldo'] for x in response.context['ancestros']] == \
             [x.saldo for x in reversed(subsubcuenta.ancestros())]
 
     def test_si_recibe_slug_de_subcuenta_y_pk_de_movimiento_pasa_lista_de_dicts_de_ancestro_con_nombre_y_saldo_historico(
             self, subsubcuenta, entrada, client):
         response = client.get(reverse('cuenta_movimiento', args=[subsubcuenta.slug, entrada.pk]))
         assert \
-            [x['saldo_gral'] for x in response.context['ancestros']] == \
+            [x['saldo'] for x in response.context['ancestros']] == \
             [x.saldo_en_mov(entrada) for x in reversed(subsubcuenta.ancestros())]
 
     def test_si_recibe_slug_de_subcuenta_pasa_lista_de_dicts_de_hermana_con_nombre_y_saldo(
@@ -224,7 +224,7 @@ class TestsIntegrativos:
         response = client.get(reverse('cuenta', args=[subsubcuenta.slug]))
         assert response.context.get('hermanas') is not None
         assert \
-            [(x['nombre'], x['saldo_gral']) for x in response.context['hermanas']] == \
+            [(x['nombre'], x['saldo']) for x in response.context['hermanas']] == \
             [(x.nombre, x.saldo) for x in subsubcuenta.hermanas()]
 
     def test_si_recibe_slug_de_cuenta_e_id_de_movimiento_pasa_movimiento_seleccionado(
@@ -254,7 +254,7 @@ class TestsIntegrativos:
             self, subsubcuenta, entrada, salida, client):
         response = client.get(reverse('cuenta_movimiento', args=[subsubcuenta.slug, entrada.pk]))
         assert \
-            [x['saldo_gral'] for x in response.context['hermanas']] == \
+            [x['saldo'] for x in response.context['hermanas']] == \
             [x.saldo_en_mov(entrada) for x in subsubcuenta.hermanas()]
 
     def test_si_recibe_titname_e_id_de_movimiento_pasa_solo_movimientos_de_cuentas_del_titular(
