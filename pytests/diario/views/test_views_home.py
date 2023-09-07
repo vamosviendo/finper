@@ -2,6 +2,7 @@ import pytest
 from django.urls import reverse
 from pytest_django import asserts
 
+from diario.models import Titular
 from diario.utils import saldo_general_historico
 
 
@@ -307,12 +308,6 @@ class TestsIntegrativos:
             f"Capital de {titular.nombre} histórico en movimiento {entrada.orden_dia} "\
             f"del {entrada.fecha} ({entrada.concepto})"
 
-    def test_si_recibe_titname_pasa_titular_a_template(
-            self, titular, client):
-        response = client.get(reverse('titular', args=[titular.titname]))
-        assert response.context.get('titular') is not None
-        assert response.context['titular'] == titular
-
     def test_si_recibe_titname_pasa_saldo_a_template(self, entrada, entrada_cuenta_ajena, client):
         titular = entrada.cta_entrada.titular
         response = client.get(reverse('titular', args=[titular.titname]))
@@ -408,7 +403,8 @@ def test_si_si_recibe_id_de_movimiento_pasa_capital_historico_de_titulares_al_mo
         entrada, salida, entrada_cuenta_ajena, client):
     response = client.get(reverse('movimiento', args=[salida.pk]))
     for tit in response.context.get('titulares'):
-        assert tit['capital'] == tit['titular'].capital_historico(salida)
+        assert tit['capital'] == Titular.tomar(
+            titname=tit['titname']).capital_historico(salida)
 
 
 def test_si_recibe_id_de_movimiento_pasa_titulo_de_saldo_gral_con_movimiento(

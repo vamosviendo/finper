@@ -1,6 +1,6 @@
 import pytest
 
-from diario.models import Movimiento
+from diario.models import Movimiento, Titular
 
 
 @pytest.fixture
@@ -74,7 +74,9 @@ def test_si_cuenta_es_acumulativa_y_recibe_movimiento_toma_capital_historico_com
     Movimiento.crear('entrada en otra subcuenta', 50, cta_entrada=sc2)
     context = cuenta_de_dos_titulares.as_view_context(entrada)
     for titular in context['titulares']:
-        assert titular['capital'] == titular['titular'].capital_historico(entrada)
+        assert \
+            titular['capital'] == \
+            Titular.tomar(titname=titular['titname']).capital_historico(entrada)
 
 
 def test_incluye_movimientos_de_la_cuenta(cuenta, entrada, salida, entrada_otra_cuenta):

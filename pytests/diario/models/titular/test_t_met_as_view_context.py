@@ -6,11 +6,6 @@ def context(titular):
     return titular.as_view_context()
 
 
-def test_incluye_titular(titular, context):
-    assert context.get('titular') is not None
-    assert context['titular'] == titular
-
-
 def test_incluye_titname(titular, context):
     assert context.get('titname') is not None
     assert context['titname'] == titular.titname

@@ -92,7 +92,6 @@ class Titular(MiModel):
             else ""
 
         context = {
-            'titular': self,
             'titname': self.titname,
             'nombre': self.nombre,
             'capital': self.capital_historico(movimiento) if movimiento
