@@ -74,7 +74,7 @@ class FinperFirefox(MiFirefox):
                 '.class_row_mov td.class_td_concepto', By.CSS_SELECTOR
         )]
         assert conceptos_mov == [
-            x.concepto for x in reversed(ente.as_view_context()['movimientos'])
+            x['concepto'] for x in reversed(ente.as_view_context()['movimientos'])
         ]
 
     def comparar_titular(self, titular: Titular):

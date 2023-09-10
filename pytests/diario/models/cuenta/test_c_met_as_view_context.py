@@ -79,9 +79,9 @@ def test_si_cuenta_es_acumulativa_y_recibe_movimiento_toma_capital_historico_com
             Titular.tomar(titname=titular['titname']).capital_historico(entrada)
 
 
-def test_incluye_movimientos_de_la_cuenta(cuenta, entrada, salida, entrada_otra_cuenta):
+def test_incluye_movimientos_de_la_cuenta_como_dict(cuenta, entrada, salida, entrada_otra_cuenta):
     context = cuenta.as_view_context(es_elemento_principal=True)
-    assert list(context['movimientos']) == [entrada, salida]
+    assert context['movimientos'] == [x.as_view_context() for x in[entrada, salida]]
 
 
 def test_si_cuenta_es_acumulativa_incluye_subcuentas_como_cuentas_en_formato_dict(cuenta_acumulativa):

@@ -1,6 +1,5 @@
 {% extends 'diario/base.html' %}
 {% load static %}
-{% load historicos %}
 {% block extra-css %}
 <link rel="stylesheet" href="{% static '/diario/css/home.css' %}">
 {% endblock extra-css %}
@@ -183,7 +182,7 @@
       </tr></thead>
 
       {% for mov in movimientos reversed %}
-      <tr class="class_row_mov{% if mov == movimiento %} mov_selected{% endif %}">
+      <tr class="class_row_mov{% if mov.pk == pk %} mov_selected{% endif %}">
         <td class="class_td_fecha">
           <div class="cell_fecha scrollable">
             {{ mov.fecha|date:'Y-m-d' }}
@@ -238,11 +237,11 @@
 
         <td class="class_td_menu">
           {% if not mov.es_automatico %}
-          <a href="{% url 'mov_elim' mov.id %}"
+          <a href="{% url 'mov_elim' mov.pk %}"
              class="class_link_elim_mov">
             B
           </a>
-          <a href="{% url 'mov_mod' mov.id %}"
+          <a href="{% url 'mov_mod' mov.pk %}"
              class="class_link_mod_mov">
             E
           </a>

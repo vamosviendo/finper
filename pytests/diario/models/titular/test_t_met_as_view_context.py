@@ -32,23 +32,23 @@ def test_cuentas_del_titular_se_ordenan_por_nombre(titular, cuenta_2, cuenta):
         [x.as_view_context() for x in (cuenta, cuenta_2)]
 
 
-def test_incluye_movimientos_del_titular(
+def test_incluye_movimientos_del_titular_en_formato_dict(
         entrada, salida, traspaso, entrada_cuenta_ajena, context):
-    assert context['movimientos'] == [entrada, salida, traspaso]
+    assert context['movimientos'] == [x.as_view_context() for x in [entrada, salida, traspaso]]
 
 
-def test_si_recibe_movimiento_incluye_solo_movimientos_de_cuentas_del_titular(
+def test_si_recibe_movimiento_incluye_solo_movimientos_de_cuentas_del_titular_como_dict(
         entrada, salida, entrada_cuenta_ajena):
     titular = entrada.cta_entrada.titular
     context = titular.as_view_context(entrada)
-    assert context['movimientos'] == [entrada, salida]
+    assert context['movimientos'] == [x.as_view_context() for x in [entrada, salida]]
 
 
-def test_si_recibe_movimiento_incluye_movimiento_seleccionado(entrada, salida):
+def test_si_recibe_movimiento_incluye_movimiento_seleccionado_en_formato_dict(entrada, salida):
     titular = entrada.cta_entrada.titular
     context = titular.as_view_context(salida)
     assert context.get('movimiento') is not None
-    assert context['movimiento'] == salida
+    assert context['movimiento'] == salida.as_view_context()
 
 
 def test_si_recibe_movimiento_incluye_capital_historico_de_titular_en_movimiento_como_capital(

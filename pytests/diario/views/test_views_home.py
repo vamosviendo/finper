@@ -2,7 +2,7 @@ import pytest
 from django.urls import reverse
 from pytest_django import asserts
 
-from diario.models import Titular
+from diario.models import Titular, Cuenta
 from diario.utils import saldo_general_historico
 
 
@@ -42,7 +42,7 @@ def test_pasa_cuentas_ordenadas_por_nombre(client, cuenta, cuenta_2, cuenta_ajen
 
 def test_pasa_movimientos_a_template(entrada, salida, traspaso, response):
     for mov in (entrada, salida, traspaso):
-        assert mov in response.context.get('movimientos')
+        assert mov.as_view_context() in response.context.get('movimientos')
 
 
 def test_pasa_solo_cuentas_independientes_a_template(cuenta, cuenta_acumulativa, response):
@@ -67,32 +67,32 @@ def test_pasa_titulo_de_saldo_general_a_template(response):
 
 def test_si_recibe_slug_de_cuenta_actualiza_context_con_datos_de_cuenta(
         cuenta, cuenta_acumulativa, mocker, client):
-    mock_atci = mocker.patch('diario.models.CuentaInteractiva.as_view_context', autospec=True)
-    mock_atca = mocker.patch('diario.models.CuentaAcumulativa.as_view_context', autospec=True)
-    mock_atci.return_value = {
+    mock_avci = mocker.patch('diario.models.CuentaInteractiva.as_view_context', autospec=True)
+    mock_avca = mocker.patch('diario.models.CuentaAcumulativa.as_view_context', autospec=True)
+    mock_avci.return_value = {
         'titulo_saldo_gral': f'Saldo de {cuenta.nombre}',
         'saldo_gral': cuenta.saldo,
         'titulares': [cuenta.titular],
         'cuentas': [],
         'movimientos': cuenta.movs(),
-        'cuenta': cuenta,
+        'slug': cuenta.slug,
     }
-    mock_atca.return_value = {
+    mock_avca.return_value = {
         'titulo_saldo_gral': f'Saldo de {cuenta_acumulativa.nombre}',
         'saldo_gral': cuenta_acumulativa.saldo,
         'titulares': cuenta_acumulativa.titulares,
         'cuentas': cuenta_acumulativa.subcuentas.all(),
         'movimientos': cuenta.movs(),
-        'cuenta': cuenta,
+        'slug': cuenta.slug,
     }
     response = client.get(reverse('cuenta', args=[cuenta.slug]))
-    mock_atci.assert_called_once_with(cuenta, None, True)
+    mock_avci.assert_called_once_with(cuenta, None, True)
     for key, value in cuenta.as_view_context().items():
         assert response.context.get(key) is not None
         assert response.context[key] == value
 
     response = client.get(reverse('cuenta', args=[cuenta_acumulativa.slug]))
-    mock_atca.assert_called_once_with(cuenta_acumulativa, None, True)
+    mock_avca.assert_called_once_with(cuenta_acumulativa, None, True)
     for key, value in cuenta_acumulativa.as_view_context().items():
         assert response.context.get(key) is not None
         assert response.context[key] == value
@@ -100,18 +100,18 @@ def test_si_recibe_slug_de_cuenta_actualiza_context_con_datos_de_cuenta(
 
 def test_si_recibe_slug_de_cuenta_e_id_de_movimiento_actualiza_context_con_datos_historicos_de_cuenta_al_momento_del_movimiento(
         cuenta, entrada, mocker, client):
-    mock_atc = mocker.patch('diario.models.CuentaInteractiva.as_view_context', autospec=True)
-    mock_atc.return_value = {
+    mock_avc = mocker.patch('diario.models.CuentaInteractiva.as_view_context', autospec=True)
+    mock_avc.return_value = {
         'titulo_saldo_gral': f'Saldo de {cuenta.nombre}',
         'saldo_gral': cuenta.saldo_en_mov(entrada),
         'titulares': [cuenta.titular],
         'cuentas': [],
         'movimientos': cuenta.movs(),
         'movimiento': entrada,
-        'cuenta': cuenta,
+        'slug': cuenta.slug,
     }
     response = client.get(reverse('cuenta_movimiento', args=[cuenta.slug, entrada.pk]))
-    mock_atc.assert_called_once_with(cuenta, entrada, True)
+    mock_avc.assert_called_once_with(cuenta, entrada, True)
     for key, value in cuenta.as_view_context().items():
         assert response.context.get(key) is not None
         assert response.context[key] == value, f"key: {key}"
@@ -119,9 +119,8 @@ def test_si_recibe_slug_de_cuenta_e_id_de_movimiento_actualiza_context_con_datos
 
 def test_si_recibe_titname_actualiza_context_con_datos_de_titular(
         titular, cuenta, cuenta_2, entrada, salida, mocker, client):
-    mock_atc = mocker.patch('diario.models.Titular.as_view_context', autospec=True)
-    mock_atc.return_value = {
-            'titular': titular,
+    mock_avc = mocker.patch('diario.models.Titular.as_view_context', autospec=True)
+    mock_avc.return_value = {
             'titname': titular.titname,
             'saldo_gral': titular.capital,
             'titulo_saldo_gral':
@@ -130,9 +129,23 @@ def test_si_recibe_titname_actualiza_context_con_datos_de_titular(
             'movimientos': [entrada, salida],
         }
     response = client.get(reverse('titular', args=[titular.titname]))
-    mock_atc.assert_called_with(titular, None, True)
-    for key, value in mock_atc.return_value.items():
+    mock_avc.assert_called_with(titular, None, True)
+    for key, value in mock_avc.return_value.items():
         assert response.context[key] == value
+
+
+def test_si_recibe_pk_de_movimiento_actualiza_context_con_datos_de_movimiento(
+        entrada, salida, mocker, client):
+    mock_avc = mocker.patch('diario.models.Movimiento.as_view_context', autospec=True)
+    mock_avc.return_value = {
+        'pk': entrada.pk,
+        'saldo_gral': saldo_general_historico(entrada),
+        'titulares': [x.as_view_context() for x in Titular.todes()],
+        'cuentas': [x.as_view_context() for x in Cuenta.todes()],
+        'movimientos': [entrada, salida],
+    }
+    response = client.get(reverse('movimiento', args=[entrada.pk]))
+    mock_avc.assert_called_with(entrada)
 
 
 def test_si_recibe_titname_y_pk_de_movimiento_actualiza_context_con_datos_de_titular_al_momento_del_movimiento(
@@ -177,10 +190,12 @@ class TestsIntegrativos:
         response = client.get(reverse('cuenta', args=[cuenta_con_saldo.slug]))
         assert response.context['saldo_gral'] == cuenta_con_saldo.saldo
 
-    def test_si_recibe_slug_de_cuenta_pasa_movimientos_de_la_cuenta_recibida(
+    def test_si_recibe_slug_de_cuenta_pasa_movimientos_de_la_cuenta_recibida_en_formato_dict(
             self, cuenta, entrada, salida, entrada_otra_cuenta, client):
         response = client.get(reverse('cuenta', args=[cuenta.slug]))
-        assert list(response.context['movimientos']) == list(cuenta.movs())
+        assert \
+            response.context['movimientos'] == \
+            [x.as_view_context() for x in cuenta.movs()]
 
     def test_si_recibe_slug_de_cuenta_acumulativa_pasa_subcuentas_de_la_cuenta_recibida_sin_ancestros_ni_hermanas(
             self, cuenta_acumulativa, cuenta, client):
@@ -269,9 +284,11 @@ class TestsIntegrativos:
             )
         )
         assert response.context.get('movimientos') is not None
-        assert list(response.context['movimientos']) == list(titular.movs())
+        assert \
+            response.context['movimientos'] == \
+            [x.as_view_context() for x in titular.movs()]
 
-    def test_si_recibe_titname_e_id_de_movimiento_pasa_movimiento_seleccionado(
+    def test_si_recibe_titname_e_id_de_movimiento_pasa_movimiento_seleccionado_en_formato_dict(
             self, entrada, salida, client):
         titular = entrada.cta_entrada.titular
         response = client.get(
@@ -281,7 +298,7 @@ class TestsIntegrativos:
             )
         )
         assert response.context.get('movimiento') is not None
-        assert response.context['movimiento'] == salida
+        assert response.context['movimiento'] == salida.as_view_context()
 
     def test_si_recibe_titname_e_id_de_movimiento_pasa_capital_historico_de_titular_en_movimiento_como_saldo_gral(
             self, entrada, salida, entrada_otra_cuenta, client):
@@ -332,11 +349,13 @@ class TestsIntegrativos:
             list(response.context['cuentas']) == \
             [x.as_view_context() for x in (cuenta, cuenta_2)]
 
-    def test_si_recibe_titname_pasa_movimientos_del_titular_a_template(
+    def test_si_recibe_titname_pasa_movimientos_del_titular_a_template_en_formato_dict(
             self, entrada, salida, traspaso, entrada_cuenta_ajena, client):
         titular = entrada.cta_entrada.titular
         response = client.get(reverse('titular', args=[titular.titname]))
-        assert list(response.context['movimientos']) == list(titular.movs())
+        assert \
+            list(response.context['movimientos']) == \
+            [x.as_view_context() for x in titular.movs()]
 
 
 def test_si_recibe_titname_pasa_titulares_a_template(titular, otro_titular, client):
@@ -352,22 +371,20 @@ def test_si_recibe_titname_e_id_de_movimiento_pasa_saldo_historico_de_titulares_
     assert \
         [x['capital'] for x in response.context['titulares']] == \
         [x.capital_historico(entrada) for x in (titular, otro_titular)]
+#
+#
+# def test_si_recibe_id_de_movimiento_pasa_movimiento_a_template(entrada, salida, client):
+#     response = client.get(reverse('movimiento', args=[salida.pk]))
+#     assert response.context.get('movimiento') is not None
+#     assert response.context['movimiento'] == salida
 
 
-def test_si_recibe_id_de_movimiento_pasa_movimiento_a_template(entrada, salida, client):
-    response = client.get(reverse('movimiento', args=[salida.pk]))
-    assert response.context.get('movimiento') is not None
-    assert response.context['movimiento'] == salida
-
-
-def test_si_recibe_id_de_movimiento_pasa_todos_los_movimientos_a_template(entrada, salida, traspaso, client):
-    response = client.get(reverse('movimiento', args=[salida.pk]))
-    assert list(response.context['movimientos']) == [entrada, salida, traspaso]
-
-
-def test_si_recibe_id_de_movimiento_pasa_saldo_general_a_la_pagina(entrada, salida, client):
-    response = client.get(reverse('movimiento', args=[salida.pk]))
-    assert response.context.get('saldo_gral') is not None
+def test_si_recibe_id_de_movimiento_pasa_todos_los_movimientos_en_formato_dict_a_template(
+        entrada, salida, traspaso, client):
+    response = client.get(reverse('movimiento', args=[entrada.pk]))
+    assert \
+        list(response.context['movimientos']) == \
+        [x.as_view_context() for x in [entrada, salida, traspaso]]
 
 
 def test_si_recibe_id_de_movimiento_pasa_saldo_general_historico_al_momento_del_movimiento_como_saldo_gral(
@@ -376,7 +393,7 @@ def test_si_recibe_id_de_movimiento_pasa_saldo_general_historico_al_momento_del_
     assert response.context['saldo_gral'] == saldo_general_historico(salida)
 
 
-def test_si_recibe_id_de_movimiento_pasa_cuentas_independientes(
+def test_si_recibe_id_de_movimiento_pasa_cuentas_independientes_en_formato_dict(
         entrada, salida, entrada_otra_cuenta, cuenta_acumulativa, client):
     cuenta = entrada.cta_entrada
     otra_cuenta = entrada_otra_cuenta.cta_entrada
@@ -397,14 +414,6 @@ def test_si_recibe_id_de_movimiento_pasa_titulares_en_formato_dict(
     assert response.context.get('titulares') is not None
     assert list(response.context['titulares']) == [
         x.as_view_context(salida) for x in (titular, otro_titular)]
-
-
-def test_si_si_recibe_id_de_movimiento_pasa_capital_historico_de_titulares_al_momento_del_movimiento(
-        entrada, salida, entrada_cuenta_ajena, client):
-    response = client.get(reverse('movimiento', args=[salida.pk]))
-    for tit in response.context.get('titulares'):
-        assert tit['capital'] == Titular.tomar(
-            titname=tit['titname']).capital_historico(salida)
 
 
 def test_si_recibe_id_de_movimiento_pasa_titulo_de_saldo_gral_con_movimiento(

@@ -188,7 +188,7 @@ class Cuenta(PolymorphModel):
         context = {
             'nombre': self.nombre,
             'slug': self.slug,
-            'movimientos': list(self.movs()),
+            'movimientos': [x.as_view_context() for x in self.movs()],
             'movimiento': movimiento,
             'saldo': self.saldo_en_mov(movimiento) if movimiento else self.saldo,
             'es_acumulativa': self.es_acumulativa,

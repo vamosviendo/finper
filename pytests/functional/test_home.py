@@ -70,6 +70,7 @@ def test_home(
     assert len(webelements_mov) == 6
     fechas = texto_en_hijos_respectivos("class_td_fecha", webelements_mov)
     conceptos = texto_en_hijos_respectivos("class_td_concepto", webelements_mov)
+    detalles = texto_en_hijos_respectivos('class_td_detalle', webelements_mov)
     importes = texto_en_hijos_respectivos("class_td_importe", webelements_mov)
     cuentas = texto_en_hijos_respectivos("class_td_cuentas", webelements_mov)
     generales = texto_en_hijos_respectivos("class_td_general", webelements_mov)
@@ -77,6 +78,7 @@ def test_home(
     for i, mov in enumerate(objects_mov):
         assert fechas[i] == mov.fecha.strftime('%Y-%m-%d')
         assert conceptos[i] == mov.concepto
+        assert detalles[i] == ("" if mov.detalle is None else f"{mov.detalle[:49]}…")
         assert importes[i] == float_format(mov.importe)
         assert cuentas[i] == mov.str_cuentas()
         assert generales[i] == '000.000,00'

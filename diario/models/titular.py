@@ -98,8 +98,8 @@ class Titular(MiModel):
                 else self.capital,
             'titulo_saldo_gral':
                 f'Capital de {self.nombre}{movimiento_en_titulo}',
-            'movimientos': list(self.movs()),
-            'movimiento': movimiento,
+            'movimientos': [x.as_view_context() for x in self.movs()],
+            'movimiento': movimiento.as_view_context() if movimiento else None,
         }
         if es_elemento_principal:
             context.update({

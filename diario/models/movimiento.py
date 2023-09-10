@@ -426,6 +426,21 @@ class Movimiento(MiModel):
         except cls.DoesNotExist:
             return None, None
 
+    def as_view_context(self):
+        context = {
+            'pk': self.pk,
+            'concepto': self.concepto,
+            'detalle': self.detalle,
+            'fecha': self.fecha,
+            'importe': self.importe,
+            'str_cuentas': self.str_cuentas(),
+            'es_automatico': self.es_automatico,
+        }
+
+        return context
+
+    # Métodos protegidos
+
     def _actualizar_cuenta_convertida_en_acumulativa(self):
         """ Este paso es necesario para el caso en el que se divide una cuenta
             en subcuentas convirtiéndola en acumulativa (ver
