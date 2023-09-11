@@ -384,8 +384,13 @@ def test_si_recibe_id_de_movimiento_pasa_todos_los_movimientos_en_formato_dict_a
         entrada, salida, traspaso, client):
     response = client.get(reverse('movimiento', args=[entrada.pk]))
     assert \
-        list(response.context['movimientos']) == \
+        response.context['movimientos'] == \
         [x.as_view_context() for x in [entrada, salida, traspaso]]
+
+
+def test_si_recibe_id_de_movimiento_pasa_movimiento_en_formato_dict_a_template(entrada, client):
+    response = client.get(reverse('movimiento', args=[entrada.pk]))
+    assert response.context['movimiento'] == entrada.as_view_context()
 
 
 def test_si_recibe_id_de_movimiento_pasa_saldo_general_historico_al_momento_del_movimiento_como_saldo_gral(

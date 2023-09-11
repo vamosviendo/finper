@@ -96,13 +96,6 @@ def test_si_cuenta_es_interactiva_incluye_lista_vacia_como_cuentas(context, cuen
     assert len(context['cuentas']) == 0
 
 
-def test_si_recibe_movimiento_incluye_movimiento_recibido(entrada, salida, client):
-    cuenta = entrada.cta_entrada
-    context = cuenta.as_view_context(movimiento=salida)
-    assert context.get('movimiento') is not None
-    assert context['movimiento'] == salida.as_view_context()
-
-
 def test_si_recibe_movimiento_incluye_saldo_historico_de_cuenta_en_movimiento_como_saldo(
         entrada, salida, salida_posterior):
     cuenta = entrada.cta_entrada

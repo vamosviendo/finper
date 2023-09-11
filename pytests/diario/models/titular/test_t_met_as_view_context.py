@@ -40,13 +40,6 @@ def test_si_recibe_movimiento_incluye_solo_movimientos_de_cuentas_del_titular_co
     assert context['movimientos'] == [x.as_view_context() for x in [entrada, salida]]
 
 
-def test_si_recibe_movimiento_incluye_movimiento_seleccionado_en_formato_dict(entrada, salida):
-    titular = entrada.cta_entrada.titular
-    context = titular.as_view_context(salida)
-    assert context.get('movimiento') is not None
-    assert context['movimiento'] == salida.as_view_context()
-
-
 def test_si_recibe_movimiento_incluye_capital_historico_de_titular_en_movimiento_como_capital(
         entrada, salida, entrada_otra_cuenta):
     titular = entrada.cta_entrada.titular

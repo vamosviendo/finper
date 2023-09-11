@@ -93,7 +93,6 @@ class Titular(MiModel):
             'capital': self.capital_historico(movimiento) if movimiento
                 else self.capital,
             'movimientos': [x.as_view_context() for x in self.movs()],
-            'movimiento': movimiento.as_view_context() if movimiento else None,
         }
         if es_elemento_principal:
             context.update({
