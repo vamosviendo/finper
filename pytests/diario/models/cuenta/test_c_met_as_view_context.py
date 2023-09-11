@@ -100,7 +100,7 @@ def test_si_recibe_movimiento_incluye_movimiento_recibido(entrada, salida, clien
     cuenta = entrada.cta_entrada
     context = cuenta.as_view_context(movimiento=salida)
     assert context.get('movimiento') is not None
-    assert context['movimiento'] == salida
+    assert context['movimiento'] == salida.as_view_context()
 
 
 def test_si_recibe_movimiento_incluye_saldo_historico_de_cuenta_en_movimiento_como_saldo(

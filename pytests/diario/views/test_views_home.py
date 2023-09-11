@@ -263,7 +263,7 @@ class TestsIntegrativos:
         cuenta = entrada.cta_entrada
         response = client.get(reverse('cuenta_movimiento', args=[cuenta.slug, salida.pk]))
         assert response.context.get('movimiento') is not None
-        assert response.context['movimiento'] == salida
+        assert response.context['movimiento'] == salida.as_view_context()
 
     def test_si_recibe_slug_de_cuenta_e_id_de_movimiento_pasa_saldo_historico_de_cuenta_en_movimiento_como_saldo_gral(
             self, entrada, salida, salida_posterior, client):
