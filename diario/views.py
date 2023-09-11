@@ -37,8 +37,9 @@ class HomeView(TemplateView):
             f"del {movimiento.fecha} ({movimiento.concepto})" \
             if movimiento else ""
 
-        context['titulo_saldo_gral'] = 'Saldo general'
-        context['movimiento'] = movimiento.as_view_context() if movimiento else None
+        context.update({
+            'movimiento': movimiento.as_view_context() if movimiento else None
+        })
 
         if cuenta:
             context.update(cuenta.as_view_context(
@@ -52,7 +53,7 @@ class HomeView(TemplateView):
 
         elif titular:
             context.update(titular.as_view_context(
-                    movimiento, es_elemento_principal=True
+                movimiento, es_elemento_principal=True
             ))
             context.update({
                 'saldo_gral': context['capital'],
@@ -64,29 +65,23 @@ class HomeView(TemplateView):
                 ],
             })
 
-        elif movimiento:
-            context.update(movimiento.as_view_context())
+        else:
+            if movimiento:
+                context.update(movimiento.as_view_context())
+
             context.update({
-                'saldo_gral': saldo_general_historico(movimiento),
+                'saldo_gral':
+                    saldo_general_historico(movimiento) if movimiento
+                    else sum(c.saldo for c in Cuenta.filtro(cta_madre=None)),
+                'titulo_saldo_gral': f'Saldo general{movimiento_en_titulo}',
+                'titulares': [
+                    x.as_view_context(movimiento) for x in Titular.todes()
+                ],
+                'movimientos': [x.as_view_context() for x in Movimiento.todes()],
                 'cuentas': [
                     x.as_view_context(movimiento) for x in
                     Cuenta.filtro(cta_madre=None).order_by(Lower('nombre'))
                 ],
-                'titulares': [x.as_view_context(movimiento) for x in Titular.todes()],
-                'movimientos': [x.as_view_context() for x in Movimiento.todes()],
-                'titulo_saldo_gral': f'Saldo general{movimiento_en_titulo}',
-            })
-
-        else:
-            context.update({
-                'saldo_gral':
-                    sum([c.saldo for c in Cuenta.filtro(cta_madre=None)]),
-                'titulares': Titular.todes(),
-                'cuentas': [
-                    x.as_view_context() for x in
-                    Cuenta.filtro(cta_madre=None).order_by(Lower('nombre'))
-                ],
-                'movimientos': [x.as_view_context() for x in Movimiento.todes()],
             })
 
         return context

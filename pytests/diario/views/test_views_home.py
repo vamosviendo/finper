@@ -16,8 +16,8 @@ def test_usa_template_home(client):
 
 
 def test_pasa_titulares_a_template(titular, otro_titular, response):
-    assert titular in response.context.get('titulares')
-    assert otro_titular in response.context.get('titulares')
+    assert titular.as_view_context() in response.context.get('titulares')
+    assert otro_titular.as_view_context() in response.context.get('titulares')
 
 
 def test_pasa_cuentas_a_template(cuenta, cuenta_ajena, response):
