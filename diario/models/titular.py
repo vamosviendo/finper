@@ -86,24 +86,17 @@ class Titular(MiModel):
             raise ValidationError('No se admite guión en titname')
 
     def as_view_context(self, movimiento=None, es_elemento_principal=False):
-        movimiento_en_titulo = \
-            f" histórico en movimiento {movimiento.orden_dia} " \
-            f"del {movimiento.fecha} ({movimiento.concepto})" if movimiento \
-            else ""
 
         context = {
             'titname': self.titname,
             'nombre': self.nombre,
             'capital': self.capital_historico(movimiento) if movimiento
                 else self.capital,
-            'titulo_saldo_gral':
-                f'Capital de {self.nombre}{movimiento_en_titulo}',
             'movimientos': [x.as_view_context() for x in self.movs()],
             'movimiento': movimiento.as_view_context() if movimiento else None,
         }
         if es_elemento_principal:
             context.update({
-                'saldo_gral': context['capital'],
                 'cuentas':
                     [x.as_view_context(movimiento) for x in self.cuentas.all()],
             })

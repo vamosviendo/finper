@@ -180,11 +180,6 @@ class Cuenta(PolymorphModel):
         return lista_ancestros
 
     def as_view_context(self, movimiento=None, es_elemento_principal=False):
-        movimiento_en_titulo = \
-            f" histórico en movimiento {movimiento.orden_dia} " \
-            f"del {movimiento.fecha} ({movimiento.concepto})" if movimiento \
-            else ""
-
         context = {
             'nombre': self.nombre,
             'slug': self.slug,
@@ -195,11 +190,6 @@ class Cuenta(PolymorphModel):
         }
 
         if es_elemento_principal:
-            context.update({
-                'saldo_gral': context['saldo'],
-                'titulo_saldo_gral':
-                    f'Saldo de {self.nombre}{movimiento_en_titulo}',
-            })
             if self.tiene_madre():
                 context.update({
                     'ancestros': [

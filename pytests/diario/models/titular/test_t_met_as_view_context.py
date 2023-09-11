@@ -21,10 +21,6 @@ def test_incluye_capital_del_titular(entrada, context):
     assert context['capital'] == titular.capital
 
 
-def test_incluye_titulo_de_saldo_con_titular(titular, context):
-    assert context['titulo_saldo_gral'] == f"Capital de {titular.nombre}"
-
-
 def test_cuentas_del_titular_se_ordenan_por_nombre(titular, cuenta_2, cuenta):
     context = titular.as_view_context(es_elemento_principal=True)
     assert \
@@ -58,29 +54,13 @@ def test_si_recibe_movimiento_incluye_capital_historico_de_titular_en_movimiento
     assert context['capital'] == titular.capital_historico(entrada)
 
 
-@pytest.mark.xfail
 def test_si_recibe_movimiento_incluye_saldo_historico_de_cuentas_del_titular(
         cuenta, cuenta_2, entrada, salida):
-    print("Todavía no se configuró correctamente la clave saldo en Cuenta.as_view_context()")
     titular = cuenta.titular
-    context = titular.as_view_context(entrada)
+    context = titular.as_view_context(entrada, es_elemento_principal=True)
     assert \
         [x['saldo'] for x in context['cuentas']] == \
         [x.as_view_context(entrada)['saldo'] for x in (cuenta, cuenta_2)]
-
-
-def test_si_recibe_movimiento_incluye_titulo_de_saldo_gral_con_titular_y_movimiento(entrada):
-    titular = entrada.cta_entrada.titular
-    context = titular.as_view_context(entrada)
-    assert \
-        context['titulo_saldo_gral'] == \
-        f"Capital de {titular.nombre} histórico en movimiento {entrada.orden_dia} "\
-        f"del {entrada.fecha} ({entrada.concepto})"
-
-
-def test_si_es_elemento_principal_incluye_saldo_gral_igual_al_capital(titular):
-    context = titular.as_view_context(es_elemento_principal=True)
-    assert context['saldo_gral'] == context['capital']
 
 
 def test_si_es_elemento_principal_incluye_cuentas_del_titular(

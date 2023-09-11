@@ -111,36 +111,16 @@ def test_si_recibe_movimiento_incluye_saldo_historico_de_cuenta_en_movimiento_co
     assert context['saldo'] == cuenta.saldo_en_mov(salida)
 
 
-def test_si_es_elemento_principal_incluye_saldo_gral_igual_al_saldo_de_la_cuenta(cuenta):
-    context = cuenta.as_view_context(es_elemento_principal=True)
-    assert context.get('saldo_gral') is not None
-    assert context['saldo_gral'] == context['saldo']
-
-
 def test_si_no_es_elemento_principal_no_incluye_saldo_gral(cuenta):
     context = cuenta.as_view_context(es_elemento_principal=False)
     with pytest.raises(KeyError):
         print(context['saldo_gral'])
 
 
-def test_si_es_elemento_principal_incluye_titulo_de_saldo_gral_con_cuenta(cuenta):
-    context = cuenta.as_view_context(es_elemento_principal=True)
-    assert context['titulo_saldo_gral'] == f"Saldo de {cuenta.nombre}"
-
-
 def test_si_no_es_elemento_principal_no_incluye_titulo_de_saldo_gral(cuenta):
     context = cuenta.as_view_context(es_elemento_principal=False)
     with pytest.raises(KeyError):
         print(context['titulo_saldo_gral'])
-
-
-def test_si_es_elemento_principal_y_recibe_movimiento_incluye_titulo_de_saldo_historico_con_cuenta_y_movimiento(entrada):
-    cuenta = entrada.cta_entrada
-    context = cuenta.as_view_context(movimiento=entrada, es_elemento_principal=True)
-    assert (
-        context['titulo_saldo_gral'] ==
-        f'Saldo de {cuenta.nombre} histórico en movimiento {entrada.orden_dia} '
-        f'del {entrada.fecha} ({entrada.concepto})')
 
 
 def test_si_cuenta_es_elemento_principal_y_tiene_madre_incluye_lista_de_dicts_de_ancestro_con_nombre_y_saldo(subsubcuenta):
@@ -184,7 +164,6 @@ def test_si_cuenta_es_elemento_principal_y_no_tiene_madre_no_incluye_lista_de_di
         print(context['hermanas'])
     with pytest.raises(KeyError):
         print(context['ancestros'])
-
 
 
 def test_si_cuenta_es_elemento_principal_y_tiene_madre_y_recibe_movimiento_incluye_lista_de_dicts_de_ancestro_con_nombre_y_saldo_historico(
