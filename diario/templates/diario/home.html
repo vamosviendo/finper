@@ -93,21 +93,21 @@
           <tr class="menu-row class_div_cuenta">
             <td class="menu-item class_td_cuenta {% if cta.es_acumulativa %}acumulativa{% endif %}">
               <div class="menu-item-content class_nombre_cuenta">
-                <a id="id_link_cta_{{ cta.slug }}" class="class_link_cuenta"
-                   href="{% url 'cuenta' cta.slug %}">
+                <a id="id_link_cta_{{ cta.ctaname }}" class="class_link_cuenta"
+                   href="{% url 'cuenta' cta.ctaname %}">
                   {{ cta.nombre }}
                 </a>
               </div>
               <div class="menu-item-edit">
-                <a id="id_link_cta_mod_{{ cta.slug }}" href="{% url 'cta_mod' cta.slug %}">E</a>
+                <a id="id_link_cta_mod_{{ cta.ctaname }}" href="{% url 'cta_mod' cta.ctaname %}">E</a>
               </div>
               <div class="menu-item-edit">
-                <a id="id_link_cta_elim_{{ cta.slug }}" href="{% url 'cta_elim' cta.slug %}">
+                <a id="id_link_cta_elim_{{ cta.ctaname }}" href="{% url 'cta_elim' cta.ctaname %}">
                   B
                 </a>
               </div>
             </td>
-            <td id="id_saldo_cta_{{ cta.slug }}" class="numero chico class_saldo_cuenta">
+            <td id="id_saldo_cta_{{ cta.ctaname }}" class="numero chico class_saldo_cuenta">
               {{ cta.saldo|floatformat:2 }}
             </td>
           </tr>
@@ -115,22 +115,22 @@
             <tr class="menu-row class_div_cuenta">
               <td class="menu-item class_td_cuenta class_td_subcuenta">
                 <div class="menu-item-content class_nombre_cuenta">
-                  <a id="id_link_cta_{{ subcuenta.slug }}" href="{% url 'cuenta' subcuenta.slug %}">
+                  <a id="id_link_cta_{{ subcuenta.ctaname }}" href="{% url 'cuenta' subcuenta.ctaname %}">
                     {{ subcuenta.nombre }}
                   </a>
                 </div>
                 <div class="menu-item-edit">
-                  <a id="id_link_cta_mod_{{ subcuenta.slug }}" href="{% url 'cta_mod' subcuenta.slug %}">
+                  <a id="id_link_cta_mod_{{ subcuenta.ctaname }}" href="{% url 'cta_mod' subcuenta.ctaname %}">
                     E
                   </a>
                 </div>
                 <div class="menu-item-edit">
-                  <a id="id_link_cta_elim_{{ subcuenta.slug }}" href="{% url 'cta_elim' subcuenta.slug %}">
+                  <a id="id_link_cta_elim_{{ subcuenta.ctaname }}" href="{% url 'cta_elim' subcuenta.ctaname %}">
                     B
                   </a>
                 </div>
               </td>
-              <td id="id_saldo_cta_{{ subcuenta.slug }}" class="numero chico class_saldo_cuenta div-detalles-subcuenta">
+              <td id="id_saldo_cta_{{ subcuenta.ctaname }}" class="numero chico class_saldo_cuenta div-detalles-subcuenta">
                 {{ subcuenta.saldo|floatformat:2 }}
               </td>
             </tr>
@@ -140,8 +140,8 @@
           <td class="menu-item class_td_cuenta">
             <div id="id_div_cuenta_nueva">
               <a
-                {% if slug %}
-                  href="{% url 'cta_div' slug %}"
+                {% if ctaname %}
+                  href="{% url 'cta_div' ctaname %}"
                 {% else %}
                   href="{% url 'cta_nueva' %}"
                 {% endif %}
@@ -172,9 +172,9 @@
         <th id="id_th_cuentas">Cuentas</th>
         <th class="chico fondo_resaltado" id="id_th_general">General</th>
         {% for cta in cuentas %}
-        <th class="chico" id="id_th_{{ cta.slug }}">
+        <th class="chico" id="id_th_{{ cta.ctaname }}">
           <div class="cell_cuenta scrollable">
-            {{ cta.slug }}
+            {{ cta.ctaname }}
           </div>
         </th>
         {% endfor %}
@@ -194,8 +194,8 @@
             <a href="
                 {% if titname %}
                   {% url 'titular_movimiento' titname mov.pk %}
-                {% elif slug %}
-                  {% url 'cuenta_movimiento' slug mov.pk %}
+                {% elif ctaname %}
+                  {% url 'cuenta_movimiento' ctaname mov.pk %}
                 {% else %}
                   {% url 'movimiento' mov.pk %}
                 {% endif %}"
@@ -229,7 +229,7 @@
 
         {% for cta in cuentas %}
         <td class="{% include './snippets/color_saldos.html' %}
-                  numero chico class_td_saldo class_td_{{ cta.slug }}"
+                  numero chico class_td_saldo class_td_{{ cta.ctaname }}"
         >
           {{ cta.saldo|floatformat:2 }}
         </td>

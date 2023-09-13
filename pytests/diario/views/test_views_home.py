@@ -71,20 +71,23 @@ def test_si_recibe_slug_de_cuenta_actualiza_context_con_datos_de_cuenta(
     mock_avci.return_value = {
         'nombre': cuenta.nombre,
         'saldo': cuenta.saldo,
-        'titulares': [cuenta.titular],
+        'titulares': [cuenta.titular.as_view_context()],
         'cuentas': [],
-        'movimientos': cuenta.movs(),
-        'slug': cuenta.slug,
+        'movimientos': [m.as_view_context() for m in cuenta.movs()],
+        'ctaname': cuenta.slug,
     }
     mock_avca.return_value = {
         'nombre': cuenta_acumulativa.nombre,
         'saldo': cuenta_acumulativa.saldo,
-        'titulares': cuenta_acumulativa.titulares,
-        'cuentas': cuenta_acumulativa.subcuentas.all(),
-        'movimientos': cuenta.movs(),
-        'slug': cuenta.slug,
+        'titulares': [t.as_view_context() for t in cuenta_acumulativa.titulares],
+        'cuentas': [c.as_view_context() for c in cuenta_acumulativa.subcuentas.all()],
+        'movimientos': [m.as_view_context() for m in cuenta.movs()],
+        'ctaname': cuenta.slug,
     }
+    mock_avca.reset_mock()
+    mock_avci.reset_mock()
     response = client.get(reverse('cuenta', args=[cuenta.slug]))
+
     mock_avci.assert_called_once_with(cuenta, None, True)
     for key, value in cuenta.as_view_context().items():
         assert response.context.get(key) is not None

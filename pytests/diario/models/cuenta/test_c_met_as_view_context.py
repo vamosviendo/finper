@@ -13,9 +13,9 @@ def test_incluye_nombre_de_cuenta(context, cuenta):
     assert context['nombre'] == cuenta.nombre
 
 
-def test_incluye_slug_de_cuenta(context, cuenta):
-    assert context.get('slug') is not None
-    assert context['slug'] == cuenta.slug
+def test_incluye_slug_de_cuenta_como_clave_ctaname(context, cuenta):
+    assert context.get('ctaname') is not None
+    assert context['ctaname'] == cuenta.slug
 
 
 def test_si_cuenta_es_interactiva_incluye_lista_con_titular_de_cuenta_en_formato_dict_como_titulares(
