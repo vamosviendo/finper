@@ -93,19 +93,13 @@ class TestHomeLinks:
         browser.assert_url(reverse("titular", args=[titular.titname]))
 
         # cuando cliqueamos en el ícono de agregar titular, accedemos a la página para agregar titular nuevo
-        browser.ir_a_pag()
-        browser.esperar_elemento("id_link_titular_nuevo").click()
-        browser.assert_url(reverse("tit_nuevo"))
+        browser.verificar_link('titular_nuevo', 'tit_nuevo')
 
         # cuando cliqueamos en el link de editar titular, accedemos a la página de edición de ese titular
-        browser.ir_a_pag()
-        browser.esperar_elemento(f"id_link_tit_mod_{titular.titname}").click()
-        browser.assert_url(reverse("tit_mod", args=[titular.titname]))
+        browser.verificar_link(f'tit_mod_{titular.titname}', 'tit_mod', [titular.titname])
 
         # cuando cliqueamos en el link de borrar titular, accedemos a la página de confirmación
-        browser.ir_a_pag()
-        browser.esperar_elemento(f"id_link_tit_elim_{titular.titname}").click()
-        browser.assert_url(reverse("tit_elim", args=[titular.titname]))
+        browser.verificar_link(f'tit_elim_{titular.titname}', 'tit_elim', [titular.titname])
 
     def test_seccion_cuentas(self, browser, cuenta, cuenta_2, cuenta_acumulativa):
         subcuenta = cuenta_acumulativa.subcuentas.first()
@@ -121,39 +115,23 @@ class TestHomeLinks:
         browser.assert_url(reverse("cuenta", args=[subcuenta.slug]))
 
         # cuando cliqueamos en el ícono de agregar cuenta, accedemos a la página para agregar cuenta nueva
-        browser.ir_a_pag()
-        browser.esperar_elemento("id_link_cuenta_nueva").click()
-        browser.assert_url(reverse("cta_nueva"))
+        browser.verificar_link('cuenta_nueva', 'cta_nueva')
 
         # cuando cliqueamos en el link de editar cuenta, accedemos a la página de edición de esa cuenta
-        browser.ir_a_pag()
-        browser.esperar_elemento(f"id_link_cta_mod_{cuenta.slug}").click()
-        browser.assert_url(reverse("cta_mod", args=[cuenta.slug]))
-        browser.ir_a_pag()
-        browser.esperar_elemento(f"id_link_cta_mod_{subcuenta.slug}").click()
-        browser.assert_url(reverse("cta_mod", args=[subcuenta.slug]))
+        browser.verificar_link(f'cta_mod_{cuenta.slug}', 'cta_mod', [cuenta.slug])
+        browser.verificar_link(f'cta_mod_{subcuenta.slug}', 'cta_mod', [subcuenta.slug])
 
         # cuando cliqueamos en el link de borrar cuenta, accedemos a la página de confirmación
-        browser.ir_a_pag()
-        browser.esperar_elemento(f"id_link_cta_elim_{cuenta.slug}").click()
-        browser.assert_url(reverse("cta_elim", args=[cuenta.slug]))
-        browser.ir_a_pag()
-        browser.esperar_elemento(f"id_link_cta_elim_{subcuenta.slug}").click()
-        browser.assert_url(reverse("cta_elim", args=[subcuenta.slug]))
+        browser.verificar_link(f'cta_elim_{cuenta.slug}', 'cta_elim', [cuenta.slug])
+        browser.verificar_link(f'cta_elim_{subcuenta.slug}', 'cta_elim', [subcuenta.slug])
 
     def test_seccion_movimientos(self, browser, entrada, salida):
 
         # cuando cliqueamos en el link de movimiento nuevo, accedemos a la página para agregar movimiento
-        browser.ir_a_pag()
-        browser.esperar_elemento("id_link_mov_nuevo").click()
-        browser.assert_url(reverse("mov_nuevo"))
+        browser.verificar_link('mov_nuevo', 'mov_nuevo')
 
         # cuando cliqueamos en el link de editar movimiento, accedemos a la página de edición de ese movimiento
-        browser.ir_a_pag()
-        browser.esperar_elemento("class_link_mod_mov", By.CLASS_NAME).click()
-        browser.assert_url(reverse("mov_mod", args=[salida.pk]))
+        browser.verificar_link('mod_mov', 'mov_mod', [salida.pk], By.CLASS_NAME)
 
         # cuando cliqueamos en el link de borrar movimiento, accedemos a la página de confirmación
-        browser.ir_a_pag()
-        browser.esperar_elemento("class_link_elim_mov", By.CLASS_NAME).click()
-        browser.assert_url(reverse("mov_elim", args=[salida.pk]))
+        browser.verificar_link('elim_mov', 'mov_elim', [salida.pk], By.CLASS_NAME)

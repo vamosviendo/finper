@@ -119,8 +119,20 @@ def test_detalle_de_cuenta_acumulativa(
     browser.comparar_titulares_de(cuenta_de_dos_titulares)
     browser.comparar_movimientos_de(cuenta_de_dos_titulares)
 
-    # Cliqueamos en el nombre de la primera subcuenta
+    # Cuando cliqueamos en el ícono de agregar cuenta, accedemos a la página
+    # de agregar subcuenta
+    browser.esperar_elemento("id_link_cuenta_nueva").click()
+    browser.assert_url(reverse(
+        'cta_agregar_subc',
+        args=[cuenta_de_dos_titulares.slug])
+    )
+
+    # Volvemos a la página de la cuenta y cliqueamos en el nombre de la
+    # primera subcuenta
     primera_subcuenta = cuenta_de_dos_titulares.subcuentas.first()
+    browser.ir_a_pag(
+        reverse('cuenta', args=[cuenta_de_dos_titulares.slug])
+    )
     browser.cliquear_en_cuenta(primera_subcuenta)
 
     # Vemos el nombre de la cuenta encabezando la página

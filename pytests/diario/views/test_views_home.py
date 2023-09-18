@@ -275,9 +275,9 @@ def test_si_recibe_id_de_movimiento_pasa_titulo_de_saldo_gral_con_movimiento(
         entrada, client):
     response = client.get(reverse('movimiento', args=[entrada.pk]))
     assert (
-            response.context['titulo_saldo_gral'] ==
-            f'Saldo general histórico en movimiento {entrada.orden_dia} '
-            f'del {entrada.fecha} ({entrada.concepto})')
+        response.context['titulo_saldo_gral'] ==
+        f'Saldo general histórico en movimiento {entrada.orden_dia} '
+        f'del {entrada.fecha} ({entrada.concepto})')
 
 
 def test_considera_solo_cuentas_independientes_para_calcular_saldo_gral(

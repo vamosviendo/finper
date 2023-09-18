@@ -155,6 +155,22 @@ class FinperFirefox(MiFirefox):
         saldo = self.esperar_elemento('id_importe_saldo_gral').text.strip()
         assert saldo == float_format(cuenta.saldo_en_mov(movimiento))
 
+    def verificar_link(
+            self,
+            nombre: str,
+            viewname: str,
+            args: list = None,
+            criterio: str = By.ID,
+            url_inicial: str = '',
+    ):
+        self.ir_a_pag(url_inicial)
+        if criterio == By.CLASS_NAME:
+            tipo = "class"
+        else:
+            tipo = "id"
+        self.esperar_elemento(f"{tipo}_link_{nombre}", criterio).click()
+        self.assert_url(reverse(viewname, args=args))
+
     def crear_movimiento(self, **kwargs):
         self.ir_a_pag(reverse('mov_nuevo'))
         self.completar_form(**kwargs)
