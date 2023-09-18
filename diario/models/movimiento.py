@@ -192,10 +192,13 @@ class Movimiento(MiModel):
         except AttributeError:
             return None
 
-
     @property
     def posicion(self) -> Posicion:
         return Posicion(fecha=self.fecha, orden_dia=self.orden_dia)
+
+    @property
+    def identidad(self):
+        return f"{self.fecha.year}{self.fecha.month:02d}{self.fecha.day:02d}{self.orden_dia:02d}"
 
     def __str__(self):
 
