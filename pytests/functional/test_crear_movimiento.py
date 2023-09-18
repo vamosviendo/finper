@@ -48,7 +48,7 @@ def test_crear_movimiento(browser, cuenta):
     browser.completar_form(**valores)
 
     # En la lista de movimientos, aparece un movimiento nuevo
-    lista_movs = browser.esperar_elemento("id_lista_ult_movs")
+    lista_movs = browser.esperar_elemento("id_section_movimientos")
     movs = lista_movs.find_elements_by_tag_name("tr")[1:]   # se descarta el encabezado
     assert len(movs) == 1
 
