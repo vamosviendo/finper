@@ -44,10 +44,12 @@
         <tr class="menu-row class_div_titular">
           <td class="menu-item class_td_titular{% if tit.nombre == nombre %} selected{% endif %}">
             <div class="menu-item-content class_div_nombre_titular">
-              <a href="{% url 'titular' tit.titname %}">{{ tit.nombre }}</a>
+              <a id="id_link_tit_{{ tit.titname }}" class="class_link_titular" href="{% url 'titular' tit.titname %}">
+                {{ tit.nombre }}
+              </a>
             </div>
             <div class="menu-item-edit">
-              <a  id="id_link_tit_mod_{{ tit.titname }}" href="{% url 'tit_mod' tit.titname %}">
+              <a id="id_link_tit_mod_{{ tit.titname }}" href="{% url 'tit_mod' tit.titname %}">
                 E
               </a>
             </div>

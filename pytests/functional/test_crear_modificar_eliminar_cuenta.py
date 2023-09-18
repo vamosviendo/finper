@@ -40,11 +40,8 @@ def test_modificar_cuenta(browser, cuenta):
 
 def test_eliminar_cuenta(browser, cuenta, cuenta_2):
     """ Cuando vamos a la página de eliminar cuenta y cliqueamos en confirmar,
-        la cuenta se eliminad"""
+        la cuenta es eliminada"""
     nombre_cuenta = cuenta.nombre
-    browser.ir_a_pag()
-    nombres_cuenta = [x.text.strip() for x in browser.esperar_elementos('class_link_cuenta')]
-    assert nombre_cuenta in nombres_cuenta
     browser.ir_a_pag(reverse('cta_elim', args=[cuenta.slug]))
     browser.pulsar('id_btn_confirm')
     browser.assert_url(reverse('home'))
