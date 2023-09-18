@@ -100,7 +100,8 @@ def test_detalle_de_cuenta_interactiva(
 
 
 def test_detalle_de_cuenta_acumulativa(
-        browser, entrada_otra_cuenta, cuenta_de_dos_titulares, credito_entre_subcuentas, entrada_subcuenta):
+        browser, entrada_otra_cuenta, cuenta_de_dos_titulares,
+        credito_entre_subcuentas, entrada_subcuenta):
 
     # Vamos a la página principal y cliqueamos en el nombre de una cuenta
     # acumulativa
