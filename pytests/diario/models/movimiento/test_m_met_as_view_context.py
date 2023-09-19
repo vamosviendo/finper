@@ -13,6 +13,11 @@ def test_incluye_id_de_movimiento(entrada, context):
     assert context['pk'] == entrada.pk
 
 
+def test_incluye_identidad_de_movimiento(entrada, context):
+    assert context.get('identidad') is not None
+    assert context['identidad'] == entrada.identidad
+
+
 def test_incluye_concepto_de_movimiento(entrada, context):
     assert context.get('concepto') is not None
     assert context['concepto'] == entrada.concepto

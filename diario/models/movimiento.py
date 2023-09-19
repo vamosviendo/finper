@@ -432,6 +432,7 @@ class Movimiento(MiModel):
     def as_view_context(self):
         context = {
             'pk': self.pk,
+            'identidad': self.identidad,
             'concepto': self.concepto,
             'detalle': self.detalle,
             'fecha': self.fecha,

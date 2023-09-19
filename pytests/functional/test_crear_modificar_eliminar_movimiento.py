@@ -4,6 +4,7 @@ import pytest
 from django.urls import reverse
 from django.utils.formats import number_format
 from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.common.by import By
 
 from diario.models import Cuenta
 from utils.numeros import float_format
@@ -13,14 +14,6 @@ from vvsteps.driver import MiWebElement
 
 def textos_hijos(elemento: MiWebElement, tag_subelem: str) -> List[str]:
     return [x.text for x in elemento.find_elements_by_tag_name(tag_subelem)]
-
-
-def test_ir_a_crear_movimiento(browser, cuenta):
-    """ Cuando cliqueamos en el botón "Movimiento nuevo" de la página principal,
-        somos dirigidos a la página correspondiente"""
-    browser.ir_a_pag()
-    browser.esperar_elemento("id_link_mov_nuevo").click()
-    browser.assert_url(reverse("mov_nuevo"))
 
 
 def test_crear_movimiento(browser, cuenta):
@@ -268,3 +261,20 @@ def test_crear_traspaso_entre_titulares_sin_deuda(browser, cuenta, cuenta_ajena)
         cuenta_credito not in cuentas_pag, \
         f"Cuenta {cuenta_credito}, que no debería existir, existe"
     assert capital_receptor == float_format(cuenta.titular.capital - 30)
+
+
+def test_modificar_movimiento(browser, entrada, cuenta_2):
+    browser.ir_a_pag(reverse('mov_mod', args=[entrada.pk]))
+    browser.completar_form(
+        concepto='Movimiento con concepto modificado',
+        cta_entrada='cuenta 2',
+        importe='124',
+    )
+    browser.assert_url(reverse('home'))
+    concepto_movimiento = browser.esperar_elemento(f"id_link_mov_{entrada.identidad}").text.strip()
+    assert concepto_movimiento == "Movimiento con concepto modificado"
+    fila_movimiento = browser.esperar_elemento(f"id_row_mov_{entrada.identidad}")
+    cuentas_movimiento = fila_movimiento.esperar_elemento('class_td_cuentas', By.CLASS_NAME).text.strip()
+    assert cuentas_movimiento == '+c2'
+    importe_movimiento = fila_movimiento.esperar_elemento('class_td_importe', By.CLASS_NAME).text.strip()
+    assert importe_movimiento == "124,00"

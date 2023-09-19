@@ -188,7 +188,7 @@
       </tr></thead>
 
       {% for mov in movimientos reversed %}
-      <tr class="class_row_mov{% if mov.pk == pk %} mov_selected{% endif %}">
+      <tr id="id_row_mov_{{ mov.identidad }}" class="class_row_mov{% if mov.pk == pk %} mov_selected{% endif %}">
         <td class="class_td_fecha">
           <div class="cell_fecha scrollable">
             {{ mov.fecha|date:'Y-m-d' }}
@@ -205,6 +205,7 @@
                 {% else %}
                   {% url 'movimiento' mov.pk %}
                 {% endif %}"
+               id="id_link_mov_{{ mov.identidad }}"
                class="class_link_movimiento">
               {{ mov.concepto }}
             </a>
