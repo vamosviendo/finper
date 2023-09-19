@@ -278,3 +278,12 @@ def test_modificar_movimiento(browser, entrada, cuenta_2):
     assert cuentas_movimiento == '+c2'
     importe_movimiento = fila_movimiento.esperar_elemento('class_td_importe', By.CLASS_NAME).text.strip()
     assert importe_movimiento == "124,00"
+
+
+def test_eliminar_movimiento(browser, entrada, salida):
+    concepto = entrada.concepto
+    browser.ir_a_pag(reverse('mov_elim', args=[entrada.pk]))
+    browser.pulsar('id_btn_confirm')
+    browser.assert_url(reverse('home'))
+    conceptos = [x.text.strip() for x in browser.esperar_elementos('class_link_movimiento')]
+    assert concepto not in conceptos
