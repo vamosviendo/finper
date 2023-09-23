@@ -62,7 +62,17 @@ class Saldo(MiModel):
         cuenta = kwargs['cuenta']
         movimiento = kwargs['movimiento']
 
-        if cuenta.es_acumulativa:
+        if cuenta.movs_directos().count() > 0:
+            orden_ult_mov = cuenta.movs_directos().last().orden_dia
+        else:
+            orden_ult_mov = -1
+
+        if cuenta.es_acumulativa and (
+                movimiento.fecha > cuenta.fecha_conversion or (
+                    movimiento.fecha == cuenta.fecha_conversion and
+                    movimiento.orden_dia > orden_ult_mov
+            )
+        ):
             importe = 0
             for c in cuenta.subcuentas.all():
                 try:
