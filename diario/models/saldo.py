@@ -62,24 +62,23 @@ class Saldo(MiModel):
         cuenta = kwargs['cuenta']
         movimiento = kwargs['movimiento']
 
-        if cuenta.movs_directos().count() > 0:
-            orden_ult_mov = cuenta.movs_directos().last().orden_dia
-        else:
-            orden_ult_mov = -1
+        if cuenta.es_acumulativa:
+            try:
+                orden_ult_mov = cuenta.movs_directos().last().orden_dia
+            except AttributeError:  # No hay movimientos
+                orden_ult_mov = -1
 
-        if cuenta.es_acumulativa and (
-                movimiento.fecha > cuenta.fecha_conversion or (
-                    movimiento.fecha == cuenta.fecha_conversion and
-                    movimiento.orden_dia > orden_ult_mov
-            )
-        ):
-            importe = 0
-            for c in cuenta.subcuentas.all():
-                try:
-                    importe += Saldo.tomar(cuenta=c, movimiento=movimiento).importe
-                except Saldo.DoesNotExist:
-                    pass
-            return Saldo(cuenta=cuenta, movimiento=movimiento, importe=importe)
+            orden_movimiento = f'{movimiento.fecha.strftime("%Y%m%d")}{movimiento.orden_dia}'
+            orden_conversion = f'{cuenta.fecha_conversion.strftime("%Y%m%d")}{orden_ult_mov}'
+
+            if orden_movimiento > orden_conversion:
+                importe = 0
+                for c in cuenta.subcuentas.all():
+                    try:
+                        importe += Saldo.tomar(cuenta=c, movimiento=movimiento).importe
+                    except Saldo.DoesNotExist:
+                        pass
+                return Saldo(cuenta=cuenta, movimiento=movimiento, importe=importe)
 
         try:
             return super().tomar(**kwargs)
