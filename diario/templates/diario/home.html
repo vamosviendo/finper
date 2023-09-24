@@ -228,20 +228,6 @@
           </div>
         </td>
 
-        <td class="numero chico fondo_resaltado class_td_general">
-          {% with mov as mov %}
-            {% block general %}000.000,00{% endblock general %}
-          {% endwith %}
-        </td>
-
-        {% for cta in cuentas %}
-        <td class="{% include './snippets/color_saldos.html' %}
-                  numero chico class_td_saldo class_td_{{ cta.ctaname }}"
-        >
-          {{ cta.saldo|floatformat:2 }}
-        </td>
-        {% endfor %}
-
         <td class="class_td_menu">
           {% if not mov.es_automatico %}
           <a href="{% url 'mov_elim' mov.pk %}"
