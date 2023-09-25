@@ -56,8 +56,8 @@ def test_crear_movimiento(browser, cuenta):
     importe_localizado = number_format(float(valores["importe"]), 2)
     assert mov.find_element_by_class_name(f"class_td_importe").text == \
         importe_localizado
-    cuentas = mov.find_element_by_class_name("class_td_cuentas").text
-    assert cuentas == f'+{cuenta.slug}'
+    cuenta_mov = mov.find_element_by_class_name("class_td_cta_entrada").text
+    assert cuenta_mov == cuenta.nombre
 
     # El saldo de la cuenta sobre la que se realizó el movimiento y el saldo
     # general de la página reflejan el cambio provocado por el nuevo movimiento
@@ -96,6 +96,8 @@ def test_crear_creditos_o_devoluciones(
             concepto_contramov: str, saldo: float):
         receptor = cta_entrada.titular
         emisor = cta_salida.titular
+        nombre_cta_acreedora = f'préstamo entre {emisor.titname} y {receptor.titname}'
+        nombre_cta_deudora = f'préstamo entre {receptor.titname} y {emisor.titname}'
         slug_cta_acreedora = f'_{emisor.titname}-{receptor.titname}'
         slug_cta_deudora = f'_{receptor.titname}-{emisor.titname}'
 
@@ -125,10 +127,10 @@ def test_crear_creditos_o_devoluciones(
         # - dos cuentas generadas automáticamente a partir de los titulares,
         #   con la cuenta del titular de la cuenta de entrada del movimiento
         #   creado como cuenta de salida, y viceversa
-        assert celdas_mov[4] == f"+{cta_entrada.slug} -{cta_salida.slug}"
-        assert \
-            celdas_contramov[4] == \
-            f"+{slug_cta_acreedora} -{slug_cta_deudora}"
+        assert celdas_mov[4] == cta_entrada.nombre
+        assert celdas_mov[5] == cta_salida.nombre
+        assert celdas_contramov[4] == nombre_cta_acreedora
+        assert celdas_contramov[5] == nombre_cta_deudora
 
         # - a diferencia del movimiento creado manualmente, no muestra botones
         #   de editar o borrar.
@@ -274,8 +276,8 @@ def test_modificar_movimiento(browser, entrada, cuenta_2):
     concepto_movimiento = browser.esperar_elemento(f"id_link_mov_{entrada.identidad}").text.strip()
     assert concepto_movimiento == "Movimiento con concepto modificado"
     fila_movimiento = browser.esperar_elemento(f"id_row_mov_{entrada.identidad}")
-    cuentas_movimiento = fila_movimiento.esperar_elemento('class_td_cuentas', By.CLASS_NAME).text.strip()
-    assert cuentas_movimiento == '+c2'
+    cuenta_movimiento = fila_movimiento.esperar_elemento('class_td_cta_entrada', By.CLASS_NAME).text.strip()
+    assert cuenta_movimiento == cuenta_2.nombre
     importe_movimiento = fila_movimiento.esperar_elemento('class_td_importe', By.CLASS_NAME).text.strip()
     assert importe_movimiento == "124,00"
 

@@ -175,15 +175,8 @@
         <th id="id_th_concepto">Concepto</th>
         <th id="id_th_detalle">Detalle</th>
         <th id="id_th_importe">Importe</th>
-        <th id="id_th_cuentas">Cuentas</th>
-        <th class="chico fondo_resaltado" id="id_th_general">General</th>
-        {% for cta in cuentas %}
-        <th class="chico" id="id_th_{{ cta.ctaname }}">
-          <div class="cell_cuenta scrollable">
-            {{ cta.ctaname }}
-          </div>
-        </th>
-        {% endfor %}
+        <th id="id_th_cta_entrada">Entra en</th>
+        <th id="id_th_cta_salida">Sale de</th>
         <th>Menu</th>
       </tr></thead>
 
@@ -222,11 +215,18 @@
           {{ mov.importe|floatformat:2 }}
         </td>
 
-        <td class="class_td_cuentas">
+        <td class="class_td_cta_entrada">
           <div class="cell_cuentas scrollable">
-            {{ mov.str_cuentas }}
+            {{ mov.cta_entrada }}
           </div>
         </td>
+
+        <td class="class_td_cta_salida">
+          <div class="cell_cuentas scrollable">
+            {{ mov.cta_salida }}
+          </div>
+        </td>
+
 
         <td class="class_td_menu">
           {% if not mov.es_automatico %}

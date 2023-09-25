@@ -72,14 +72,24 @@ def test_home(
     conceptos = texto_en_hijos_respectivos("class_td_concepto", webelements_mov)
     detalles = texto_en_hijos_respectivos('class_td_detalle', webelements_mov)
     importes = texto_en_hijos_respectivos("class_td_importe", webelements_mov)
-    cuentas = texto_en_hijos_respectivos("class_td_cuentas", webelements_mov)
+    ctas_entrada = texto_en_hijos_respectivos("class_td_cta_entrada", webelements_mov)
+    ctas_salida = texto_en_hijos_respectivos("class_td_cta_salida", webelements_mov)
 
     for i, mov in enumerate(objects_mov):
         assert fechas[i] == mov.fecha.strftime('%Y-%m-%d')
         assert conceptos[i] == mov.concepto
         assert detalles[i] == ("" if mov.detalle is None else f"{mov.detalle[:49]}…")
         assert importes[i] == float_format(mov.importe)
-        assert cuentas[i] == mov.str_cuentas()
+
+        try:
+            assert ctas_entrada[i] == mov.cta_entrada.nombre
+        except AttributeError:
+            assert ctas_entrada[i] == ""
+
+        try:
+            assert ctas_salida[i] == mov.cta_salida.nombre
+        except AttributeError:
+            assert ctas_salida[i] == ""
 
 
 class TestHomeLinks:

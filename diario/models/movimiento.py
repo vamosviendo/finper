@@ -437,9 +437,12 @@ class Movimiento(MiModel):
             'detalle': self.detalle,
             'fecha': self.fecha,
             'importe': self.importe,
-            'str_cuentas': self.str_cuentas(),
             'es_automatico': self.es_automatico,
         }
+        if self.cta_entrada is not None:
+            context.update({'cta_entrada': self.cta_entrada.nombre})
+        if self.cta_salida is not None:
+            context.update({'cta_salida': self.cta_salida.nombre})
 
         return context
 

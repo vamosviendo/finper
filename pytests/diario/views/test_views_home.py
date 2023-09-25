@@ -168,7 +168,7 @@ def test_si_recibe_pk_de_movimiento_actualiza_context_con_datos_de_movimiento(
         'detalle': entrada.detalle,
         'fecha': entrada.fecha,
         'importe': entrada.importe,
-        'str_cuentas': entrada.str_cuentas(),
+        'cta_entrada': entrada.cta_entrada,
         'es_automatico': entrada.es_automatico,
     }
     response = client.get(reverse('movimiento', args=[entrada.pk]))

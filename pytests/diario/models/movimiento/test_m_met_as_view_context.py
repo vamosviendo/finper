@@ -41,9 +41,24 @@ def test_incluye_importe_de_movimiento(entrada, context):
     assert context['importe'] == entrada.importe
 
 
-def test_incluye_string_con_cuentas_de_movimiento(entrada, context):
-    assert context.get('str_cuentas') is not None
-    assert context['str_cuentas'] == entrada.str_cuentas()
+def test_incluye_cta_entrada_de_movimiento_de_entrada(entrada, context):
+    assert context.get('cta_entrada') is not None
+    assert context['cta_entrada'] == entrada.cta_entrada.nombre
+
+
+def test_incluye_cta_salida_de_movimiento_de_salida(salida):
+    context = salida.as_view_context()
+    assert context.get('cta_salida') is not None
+    assert context['cta_salida'] == salida.cta_salida.nombre
+
+
+def test_no_incluye_cta_salida_de_movimiento_de_entrada(entrada, context):
+    assert context.get('cta_salida') is None
+
+
+def test_no_incluye_cta_entrada_de_movimiento_de_salida(salida):
+    context = salida.as_view_context()
+    assert context.get('cta_entrada') is None
 
 
 def test_incluye_indicador_de_movimiento_automatico(entrada, credito):
