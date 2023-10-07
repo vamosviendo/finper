@@ -111,6 +111,66 @@ class FormCrearSubcuenta(forms.Form):
         return self.cuenta
 
 
+class FormDividirCuenta(forms.Form):
+    form_0_nombre = forms.CharField()
+    form_0_slug = forms.CharField()
+    form_0_saldo = forms.FloatField(required=False)
+    form_0_titular = forms.ModelChoiceField(
+        queryset=Titular.todes(),
+        required=False,
+        empty_label=None,
+    )
+    form_0_esgratis = forms.BooleanField(
+        required=False,
+        initial=False
+    )
+    form_1_nombre = forms.CharField()
+    form_1_slug = forms.CharField()
+    form_1_saldo = forms.FloatField(required=False)
+    form_1_titular = forms.ModelChoiceField(
+        queryset=Titular.todes(),
+        required=False,
+        empty_label=None,
+    )
+    form_1_esgratis = forms.BooleanField(
+        required=False,
+        initial=False
+    )
+
+    def __init__(self, *args, cuenta, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.cuenta_madre = CuentaInteractiva.tomar(slug=cuenta)
+        self.subcuentas = []
+        self.fields['form_0_titular'].initial = self.cuenta_madre.titular
+        self.fields['form_1_titular'].initial = self.cuenta_madre.titular
+
+    def clean(self):
+        cleaned_data = super().clean()
+        print('CLEANED DATA:', cleaned_data)
+        cleaned_data['form_0_titular'] = \
+            cleaned_data.get('form_0_titular') or self.cuenta_madre.titular
+        cleaned_data['form_1_titular'] = \
+            cleaned_data.get('form_1_titular') or self.cuenta_madre.titular
+
+        self.subcuentas = [{
+            'nombre': cleaned_data['form_0_nombre'],
+            'slug': cleaned_data['form_0_slug'],
+            'saldo': cleaned_data['form_0_saldo'],
+            'titular': cleaned_data['form_0_titular'],
+            'esgratis': cleaned_data['form_0_esgratis'],
+        }, {
+            'nombre': cleaned_data['form_1_nombre'],
+            'slug': cleaned_data['form_1_slug'],
+            'saldo': cleaned_data['form_1_saldo'],
+            'titular': cleaned_data['form_1_titular'],
+            'esgratis': cleaned_data['form_1_esgratis'],
+        }]
+        return self.subcuentas
+
+    def save(self):
+        return self.cuenta_madre.dividir_y_actualizar(*self.subcuentas, fecha=None)
+
+
 class FormMovimiento(forms.ModelForm):
 
     importe = forms.FloatField()
