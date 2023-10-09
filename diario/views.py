@@ -4,7 +4,7 @@ from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, DeleteView, TemplateView, \
     UpdateView
 
-from diario.forms import FormCuenta, FormMovimiento, FormSubcuentas, \
+from diario.forms import FormCuenta, FormMovimiento, FormDividirCuenta, \
     FormCrearSubcuenta
 from diario.models import Cuenta, CuentaInteractiva, CuentaAcumulativa, \
     Movimiento, Titular
@@ -140,17 +140,16 @@ class CtaModView(UpdateView):
 
 
 def cta_div_view(request, slug):
-    global formset
     if request.method == 'GET':
-        formset = FormSubcuentas(cuenta=slug)
+        form = FormDividirCuenta(cuenta=slug)
 
     if request.method == 'POST':
-        formset = FormSubcuentas(data=request.POST, cuenta=slug)
-        if formset.is_valid():
-            cuenta = formset.save()
+        form = FormDividirCuenta(data=request.POST, cuenta=slug)
+        if form.is_valid():
+            cuenta = form.save()
             return redirect(cuenta)
 
-    return render(request, 'diario/cta_div_formset.html', {'formset': formset})
+    return render(request, 'diario/cta_div_form.html', {'form': form})
 
 
 def cta_agregar_subc_view(request, slug):

@@ -10,8 +10,8 @@ from diario.views import cta_div_view
 
 
 @pytest.fixture
-def mock_form_subcuentas(mocker, patch_save) -> MagicMock:
-    return mocker.patch('diario.views.FormSubcuentas', new_callable=patch_save)
+def mock_form_dividir_cuenta(mocker, patch_save) -> MagicMock:
+    return mocker.patch('diario.views.FormDividirCuenta', new_callable=patch_save)
 
 
 @pytest.fixture
@@ -23,14 +23,12 @@ def mock_render(mocker) -> MagicMock:
 def request_2_subcuentas() -> HttpRequest:
     req = HttpRequest()
     req.method = 'POST'
-    req.POST['form-TOTAL_FORMS'] = 2
-    req.POST['form-INITIAL_FORMS'] = 0
-    req.POST['form-0-nombre'] = 'Subcuenta 1'
-    req.POST['form-0-slug'] = 'sc1'
-    req.POST['form-0-saldo'] = 50
-    req.POST['form-1-nombre'] = 'Subcuenta 2'
-    req.POST['form-1-slug'] = 'sc2'
-    req.POST['form-1-saldo'] = 200
+    req.POST['form_0_nombre'] = 'Subcuenta 1'
+    req.POST['form_0_slug'] = 'sc1'
+    req.POST['form_0_saldo'] = 50
+    req.POST['form_1_nombre'] = 'Subcuenta 2'
+    req.POST['form_1_slug'] = 'sc2'
+    req.POST['form_1_saldo'] = 200
     return req
 
 
@@ -39,51 +37,49 @@ def int_response(client, cuenta_con_saldo: CuentaInteractiva) -> HttpResponse:
     return client.post(
         reverse('cta_div', args=[cuenta_con_saldo.slug]),
         data={
-            'form-TOTAL_FORMS': 2,
-            'form-INITIAL_FORMS': 0,
-            'form-0-nombre': 'Subcuenta 1',
-            'form-0-slug': 'sc1',
-            'form-0-saldo': 50,
-            'form-1-nombre': 'Subcuenta 2',
-            'form-1-slug': 'sc2',
-            'form-1-saldo': cuenta_con_saldo.saldo - 50,
+            'form_0_nombre': 'Subcuenta 1',
+            'form_0_slug': 'sc1',
+            'form_0_saldo': 50,
+            'form_1_nombre': 'Subcuenta 2',
+            'form_1_slug': 'sc2',
+            'form_1_saldo': cuenta_con_saldo.saldo - 50,
         }
     )
 
 
-def test_usa_template_cta_div_formset(client, cuenta):
+def test_usa_template_cta_div_form(client, cuenta):
     response = client.get(reverse('cta_div', args=[cuenta.slug]))
-    asserts.assertTemplateUsed(response, 'diario/cta_div_formset.html')
+    asserts.assertTemplateUsed(response, 'diario/cta_div_form.html')
 
 
-def test_muestra_form_subcuentas_al_acceder_a_pagina(
-        client, cuenta, mock_render, mock_form_subcuentas):
-    falso_form = mock_form_subcuentas.return_value
+def test_muestra_form_dividir_cuenta_al_acceder_a_pagina(
+        client, cuenta, mock_render, mock_form_dividir_cuenta):
+    falso_form = mock_form_dividir_cuenta.return_value
     request = HttpRequest()
     request.method = 'GET'
 
     cta_div_view(request, slug=cuenta.slug)
 
-    mock_form_subcuentas.assert_called_once_with(cuenta=cuenta.slug)
+    mock_form_dividir_cuenta.assert_called_once_with(cuenta=cuenta.slug)
     mock_render.assert_called_once_with(
         request,
-        'diario/cta_div_formset.html',
-        {'formset': falso_form}
+        'diario/cta_div_form.html',
+        {'form': falso_form}
     )
 
 
 def test_pasa_datos_post_y_cta_original_a_form_subcuentas(
-        client, cuenta, mock_form_subcuentas, request_2_subcuentas):
+        client, cuenta, mock_form_dividir_cuenta, request_2_subcuentas):
     cta_div_view(request_2_subcuentas, slug=cuenta.slug)
-    mock_form_subcuentas.assert_called_with(
+    mock_form_dividir_cuenta.assert_called_with(
         data=request_2_subcuentas.POST,
         cuenta=cuenta.slug,
     )
 
 
 def test_guarda_form_si_los_datos_son_validos(
-        client, cuenta, mock_form_subcuentas, request_2_subcuentas):
-    falso_form = mock_form_subcuentas.return_value
+        client, cuenta, mock_form_dividir_cuenta, request_2_subcuentas):
+    falso_form = mock_form_dividir_cuenta.return_value
     falso_form.is_valid.return_value = True
 
     cta_div_view(request_2_subcuentas, slug=cuenta.slug)
@@ -92,9 +88,9 @@ def test_guarda_form_si_los_datos_son_validos(
 
 
 def test_redirige_a_destino_si_el_form_es_valido(
-        client, cuenta, mocker, mock_form_subcuentas, request_2_subcuentas):
+        client, cuenta, mocker, mock_form_dividir_cuenta, request_2_subcuentas):
     mock_redirect = mocker.patch('diario.views.redirect')
-    falso_form = mock_form_subcuentas.return_value
+    falso_form = mock_form_dividir_cuenta.return_value
     falso_form.is_valid.return_value = True
 
     response = cta_div_view(request_2_subcuentas, slug=cuenta.slug)
@@ -103,8 +99,8 @@ def test_redirige_a_destino_si_el_form_es_valido(
 
 
 def test_no_guarda_form_si_los_datos_no_son_validos(
-        client, cuenta, mock_form_subcuentas, request_2_subcuentas):
-    falso_form = mock_form_subcuentas.return_value
+        client, cuenta, mock_form_dividir_cuenta, request_2_subcuentas):
+    falso_form = mock_form_dividir_cuenta.return_value
     falso_form.is_valid.return_value = False
 
     cta_div_view(request_2_subcuentas, slug=cuenta.slug)
@@ -112,8 +108,8 @@ def test_no_guarda_form_si_los_datos_no_son_validos(
 
 
 def test_vuelve_a_mostrar_template_y_form_con_form_no_valido(
-        client, cuenta, mock_render, mock_form_subcuentas, request_2_subcuentas):
-    falso_form = mock_form_subcuentas.return_value
+        client, cuenta, mock_render, mock_form_dividir_cuenta, request_2_subcuentas):
+    falso_form = mock_form_dividir_cuenta.return_value
     falso_form.is_valid.return_value = False
 
     response = cta_div_view(request_2_subcuentas, slug=cuenta.slug)
@@ -121,8 +117,8 @@ def test_vuelve_a_mostrar_template_y_form_con_form_no_valido(
     assert response == mock_render.return_value
     mock_render.assert_called_once_with(
         request_2_subcuentas,
-        'diario/cta_div_formset.html',
-        {'formset': falso_form},
+        'diario/cta_div_form.html',
+        {'form': falso_form},
     )
 
 

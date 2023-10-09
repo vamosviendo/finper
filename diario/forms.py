@@ -50,41 +50,6 @@ class FormSubcuenta(forms.Form):
         return self.cleaned_data
 
 
-class CuentaBaseFormset(BaseFormSet):
-    def add_fields(self, form, index):
-        super().add_fields(form, index)
-        form.fields['esgratis'] = forms.BooleanField(
-            required=False,
-            initial=False
-        )
-
-
-CuentaFormset = forms.formset_factory(form=FormSubcuenta, formset=CuentaBaseFormset, extra=2)
-
-
-class FormSubcuentas(CuentaFormset):
-
-    def __init__(self, *args, **kwargs):
-        self.cuenta = kwargs.pop('cuenta')
-        super().__init__(*args, **kwargs)
-        self.cuenta_madre = CuentaInteractiva.tomar(slug=self.cuenta)
-        self.tit_default = self.cuenta_madre.titular
-        for form in list(self):
-            form.fields['titular'].initial = self.tit_default
-            form.cuenta_madre = self.cuenta_madre
-
-    def clean(self):
-        self.subcuentas = [form.cleaned_data for form in list(self)]
-        saldos = [dicc.get('saldo') for dicc in self.subcuentas]
-        if hay_mas_de_un_none_en(saldos):
-            raise ValidationError('Sólo se permite una cuenta sin saldo')
-
-        return self.subcuentas
-
-    def save(self):
-        return self.cuenta_madre.dividir_y_actualizar(*self.subcuentas)
-
-
 class FormCrearSubcuenta(forms.Form):
     nombre = forms.CharField()
     slug = forms.CharField()
@@ -146,7 +111,6 @@ class FormDividirCuenta(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
-        print('CLEANED DATA:', cleaned_data)
         cleaned_data['form_0_titular'] = \
             cleaned_data.get('form_0_titular') or self.cuenta_madre.titular
         cleaned_data['form_1_titular'] = \
@@ -165,6 +129,10 @@ class FormDividirCuenta(forms.Form):
             'titular': cleaned_data['form_1_titular'],
             'esgratis': cleaned_data['form_1_esgratis'],
         }]
+        saldos = [dicc.get('saldo') for dicc in self.subcuentas]
+        if hay_mas_de_un_none_en(saldos):
+            raise ValidationError('Sólo se permite una cuenta sin saldo')
+
         return self.subcuentas
 
     def save(self):

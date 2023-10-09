@@ -2,6 +2,7 @@ from typing import Any, Dict, List
 from unittest.mock import MagicMock
 
 import pytest
+from django.forms import fields
 
 from diario.forms import FormDividirCuenta
 from diario.models import CuentaInteractiva, Titular
@@ -82,3 +83,74 @@ def test_save_devuelve_cuenta_madre(mock_dividir_y_actualizar, cuenta_con_saldo,
     form.is_valid()
     cuenta = form.save()
     assert cuenta == cuenta_con_saldo
+
+
+def test_acepta_un_campo_saldo_vacio(form):
+    form.data.pop('form_1_saldo')
+    assert form.is_valid()
+
+
+def test_no_acepta_mas_de_un_campo_saldo_vacio(form):
+    form.data.pop('form_0_saldo')
+    form.data.pop('form_1_saldo')
+    assert not form.is_valid()
+
+
+def test_muestra_campos_titular(form):
+    assert 'form_0_titular' in form.fields.keys()
+    assert 'form_1_titular' in form.fields.keys()
+
+
+def test_muestra_todos_los_titulares_en_campo_titular(
+        form, otro_titular, titular_gordo):
+    nombres = [t.nombre for t in Titular.todes()]
+    assert \
+        [x[1] for x in form.fields['form_0_titular'].choices] == nombres
+    assert \
+        [x[1] for x in form.fields['form_1_titular'].choices] == nombres
+
+
+def test_muestra_por_defecto_titular_de_cuenta_madre(
+        form, cuenta, otro_titular, titular_gordo):
+    assert form.fields['form_0_titular'].initial == cuenta.titular
+
+
+def test_no_muestra_opcion_nula_en_campo_titular(form):
+    assert '' not in [x[0] for x in form.fields['form_0_titular'].choices]
+
+
+def test_pasa_titulares_correctamente_al_salvar_form(
+        mock_dividir_y_actualizar, form, otro_titular):
+    form.data.update({'form_1_titular': otro_titular})
+    form.is_valid()
+    form.save()
+    assert mock_dividir_y_actualizar.call_args[0][1]['titular'] == otro_titular
+
+
+def test_muestra_campo_esgratis(form):
+    assert 'form_0_esgratis' in form.fields.keys()
+    assert 'form_1_esgratis' in form.fields.keys()
+    assert isinstance(form.fields['form_0_esgratis'], fields.BooleanField)
+
+
+def test_campo_esgratis_no_seleccionado_por_defecto(form):
+    assert form.fields['form_0_esgratis'].initial is False
+
+
+def test_campo_esgratis_seleccionado_en_subcuenta_con_otro_titular_no_genera_movimiento_credito(
+        mock_crear_movimiento_credito, form, otro_titular):
+
+    form.data.update({'form_1_titular': otro_titular})
+    form.data.update({'form_1_esgratis': True})
+    form.full_clean()
+    form.save()
+    mock_crear_movimiento_credito.assert_not_called()
+
+
+def test_campo_esgratis_no_seleccionado_en_subcuenta_con_otro_titular_genera_movimiento_credito(
+        mock_crear_movimiento_credito, form, otro_titular):
+    form.data.update({'form_1_titular': otro_titular})
+    form.data.update({'form_1_esgratis': False})
+    form.full_clean()
+    mov = form.save().subcuentas.last().movs()[0]
+    mock_crear_movimiento_credito.assert_called_once_with(mov)
