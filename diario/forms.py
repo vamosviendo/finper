@@ -1,6 +1,7 @@
+from datetime import date
+
 from django import forms
 from django.core.exceptions import ValidationError
-from django.forms import BaseFormSet
 
 from diario.models import CuentaAcumulativa, CuentaInteractiva, Movimiento, Titular
 from utils.iterables import hay_mas_de_un_none_en
@@ -77,6 +78,11 @@ class FormCrearSubcuenta(forms.Form):
 
 
 class FormDividirCuenta(forms.Form):
+    fecha = forms.DateField(
+        required=False,
+        initial=date.today(),
+        widget=forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'})
+    )
     form_0_nombre = forms.CharField()
     form_0_slug = forms.CharField()
     form_0_saldo = forms.FloatField(required=False)
@@ -106,6 +112,7 @@ class FormDividirCuenta(forms.Form):
         super().__init__(*args, **kwargs)
         self.cuenta_madre = CuentaInteractiva.tomar(slug=cuenta)
         self.subcuentas = []
+        self.fecha = None
         self.fields['form_0_titular'].initial = self.cuenta_madre.titular
         self.fields['form_1_titular'].initial = self.cuenta_madre.titular
 
@@ -129,6 +136,7 @@ class FormDividirCuenta(forms.Form):
             'titular': cleaned_data['form_1_titular'],
             'esgratis': cleaned_data['form_1_esgratis'],
         }]
+        self.fecha = cleaned_data['fecha']
         saldos = [dicc.get('saldo') for dicc in self.subcuentas]
         if hay_mas_de_un_none_en(saldos):
             raise ValidationError('Sólo se permite una cuenta sin saldo')
@@ -136,7 +144,10 @@ class FormDividirCuenta(forms.Form):
         return self.subcuentas
 
     def save(self):
-        return self.cuenta_madre.dividir_y_actualizar(*self.subcuentas, fecha=None)
+        return self.cuenta_madre.dividir_y_actualizar(
+            *self.subcuentas,
+            fecha=self.fecha
+        )
 
 
 class FormMovimiento(forms.ModelForm):

@@ -1,17 +1,19 @@
+from datetime import date
 from typing import Any, Dict, List
 from unittest.mock import MagicMock
 
 import pytest
-from django.forms import fields
+from django.forms import fields, DateInput
 
 from diario.forms import FormDividirCuenta
 from diario.models import CuentaInteractiva, Titular
 
 
 @pytest.fixture
-def form(cuenta_con_saldo: CuentaInteractiva, otro_titular: Titular) -> FormDividirCuenta:
+def form(cuenta_con_saldo: CuentaInteractiva, otro_titular: Titular, fecha: date) -> FormDividirCuenta:
     return FormDividirCuenta(
         data={
+            'fecha': fecha,
             'form_0_nombre': 'Subcuenta 1',
             'form_0_slug': 'sc1',
             'form_0_saldo': 50,
@@ -59,11 +61,11 @@ def mock_dividir_y_actualizar(mocker) -> MagicMock:
     )
 
 
-def test_save_divide_cuenta(mocker, form, cuenta_con_saldo, subcuentas):
+def test_save_divide_cuenta(mocker, form, cuenta_con_saldo, subcuentas, fecha):
     mock_dividir_entre = mocker.patch('diario.forms.CuentaInteractiva.dividir_entre', autospec=True)
     form.is_valid()
     form.save()
-    mock_dividir_entre.assert_called_once_with(cuenta_con_saldo, *subcuentas, fecha=None)
+    mock_dividir_entre.assert_called_once_with(cuenta_con_saldo, *subcuentas, fecha=fecha)
 
 
 def test_save_llama_a_clean(mocker, form, subcuentas):
@@ -154,3 +156,15 @@ def test_campo_esgratis_no_seleccionado_en_subcuenta_con_otro_titular_genera_mov
     form.full_clean()
     mov = form.save().subcuentas.last().movs()[0]
     mock_crear_movimiento_credito.assert_called_once_with(mov)
+
+
+def test_muestra_campo_fecha(form):
+    assert 'fecha' in form.fields.keys()
+
+
+def test_campo_fecha_muestra_fecha_de_hoy_por_defecto(form):
+    assert form.fields['fecha'].initial == date.today()
+
+
+def test_campo_fecha_usa_widget_de_seleccion_de_fecha(form):
+    assert type(form.fields['fecha'].widget) == DateInput
