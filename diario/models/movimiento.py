@@ -467,14 +467,16 @@ class Movimiento(MiModel):
             nombre=f'Préstamo entre {self.emisor.titname} '
                    f'y {self.receptor.titname}',
             slug=f'_{self.emisor.titname}-{self.receptor.titname}',
-            titular=self.emisor
+            titular=self.emisor,
+            fecha_creacion=self.fecha
         )
         cc2 = cls.crear(
             nombre=f'Préstamo entre {self.receptor.titname} '
                    f'y {self.emisor.titname}',
             slug=f'_{self.receptor.titname}-{self.emisor.titname}',
             titular=self.receptor,
-            _contracuenta=cc1
+            _contracuenta=cc1,
+            fecha_creacion=self.fecha
         )
         return cc1, cc2
 

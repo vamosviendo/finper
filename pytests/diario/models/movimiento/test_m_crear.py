@@ -177,6 +177,12 @@ class TestMovimientoEntreCuentasDeDistintosTitulares:
         Cuenta.tomar(slug='_titular-otro')  # doesn't raise
         Cuenta.tomar(slug='_otro-titular')  # doesn't raise
 
+    def test_asigna_a_cuentas_generadas_fecha_del_movimiento_como_fecha_de_creacion(
+            self, cuenta, cuenta_ajena, fecha):
+        Movimiento.crear('Credito', 100, cuenta, cuenta_ajena, fecha=fecha)
+        assert Cuenta.tomar(slug='_titular-otro').fecha_creacion == fecha
+        assert Cuenta.tomar(slug='_otro-titular').fecha_creacion == fecha
+
     def test_no_genera_cuentas_credito_si_ya_existen(self, credito):
         cant_cuentas = Cuenta.cantidad()
         Movimiento.crear('Crédito', 100, credito.cta_entrada, credito.cta_salida)
