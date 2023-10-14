@@ -143,3 +143,12 @@ class ErrorCuentaNoFiguraEnMovimiento(ValidationError):
             message='Cuenta no figura en movimiento'
     ):
         super().__init__(message)
+
+
+class ErrorMovimientoAnteriorAFechaCreacion(ValidationError):
+
+    def __init__(
+            self,
+            message='Movimiento anterior a la fecha de creación de la cuenta'
+    ):
+        super().__init__(message)

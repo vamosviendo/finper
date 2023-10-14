@@ -20,7 +20,7 @@ def test_crear_movimiento(browser, cuenta):
     """ Cuando vamos a la página de cuenta nueva y completamos el formulario,
         aparece un movimiento nuevo al tope de la lista de movimientos. """
     valores = {
-        "fecha": "2008-08-05",
+        "fecha": "2010-12-05",
         "concepto": "Entrada",
         "cta_entrada": "cuenta",
         "importe": "50.00"

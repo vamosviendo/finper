@@ -27,7 +27,6 @@ def test_dividir_cuenta(browser, cuenta, otro_titular):
     assert subcuentas == ['primera subcuenta', 'segunda subcuenta']
 
 
-@pytest.mark.xfail
 def test_dividir_cuenta_con_saldo_y_fecha(
         browser, cuenta_con_saldo, otro_titular, importe, fecha):
     browser.ir_a_pag(reverse('cta_div', args=[cuenta_con_saldo.slug]))
@@ -42,4 +41,4 @@ def test_dividir_cuenta_con_saldo_y_fecha(
         'form_1_titular': 'Otro Titular',
         'form_1_esgratis': True
     })
-
+    pytest.fail('COMPLETAR')

@@ -5,7 +5,8 @@ import pytest
 from pytest import approx
 
 from diario.models import Movimiento, Cuenta, CuentaInteractiva, Saldo
-from utils.helpers_tests import dividir_en_dos_subcuentas, signo
+from utils.helpers_tests import \
+    cambiar_fecha, cambiar_fecha_creacion, dividir_en_dos_subcuentas, signo
 
 
 def inferir_fixtures(sentido: str, request) -> Tuple[Movimiento, int, CuentaInteractiva]:
@@ -554,12 +555,6 @@ class TestSaveCambiaImporteYCuentas:
             )
 
 
-def cambiar_fecha(mov: Movimiento, fecha: date):
-    mov.fecha = fecha
-    mov.full_clean()
-    mov.save()
-
-
 @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
 class TestSaveCambiaFecha:
 
@@ -630,6 +625,7 @@ class TestSaveCambiaFecha:
     def test_si_cambia_fecha_a_fecha_anterior_suma_importe_a_saldos_intermedios_de_cuenta_entre_antigua_y_nueva_posicion_de_movimiento(
             self, sentido, fecha_temprana, entrada_temprana, entrada_anterior, request):
         mov, s, cuenta = inferir_fixtures(sentido, request)
+        cambiar_fecha_creacion(cuenta, fecha_temprana)
         saldo_anterior = cuenta.saldo_en_mov(entrada_anterior)
 
         cambiar_fecha(mov, fecha_temprana)
@@ -639,7 +635,7 @@ class TestSaveCambiaFecha:
     def test_si_cambia_fecha_a_una_fecha_anterior_suma_importe_del_movimiento_a_importe_del_nuevo_ultimo_saldo_anterior_de_cuenta(
             self, sentido, entrada_temprana, entrada_anterior, request):
         mov, s, cuenta = inferir_fixtures(sentido, request)
-
+        cambiar_fecha_creacion(cuenta, entrada_temprana.fecha)
         cambiar_fecha(mov, entrada_temprana.fecha + timedelta(1))
 
         assert cuenta.saldo_en_mov(mov) == cuenta.saldo_en_mov(entrada_temprana) + s*mov.importe
@@ -647,7 +643,7 @@ class TestSaveCambiaFecha:
     def test_si_cambia_fecha_a_una_fecha_anterior_y_no_hay_saldo_anterior_de_cuenta_asigna_importe_del_movimiento_a_saldo_de_cuenta_en_nueva_ubicacion_del_movimiento(
             self, sentido, fecha_temprana, entrada_anterior, request):
         mov, s, cuenta = inferir_fixtures(sentido, request)
-
+        cambiar_fecha_creacion(cuenta, fecha_temprana)
         cambiar_fecha(mov, fecha_temprana)
 
         assert cuenta.saldo_en_mov(mov) == s*mov.importe
@@ -664,6 +660,7 @@ class TestSaveCambiaFecha:
     def test_si_cambia_fecha_a_una_fecha_anterior_no_modifica_importes_de_saldos_de_cta_entrada_posteriores_a_ubicacion_anterior_de_movimiento(
             self, sentido, entrada_anterior, salida_posterior, fecha_temprana, request):
         mov, _, cuenta = inferir_fixtures(sentido, request)
+        cambiar_fecha_creacion(cuenta, fecha_temprana)
         saldo_posterior = cuenta.saldo_en_mov(salida_posterior)
 
         cambiar_fecha(mov, fecha_temprana)
@@ -872,6 +869,7 @@ class TestSaveCambiaImporteYFecha:
         # si pasa a fecha posterior, resta/suma importe nuevo
         # si pasa a fecha anterior, resta/suma importe original
         importe = mov.importe if _otro_mov == 'salida_posterior' else importe_aleatorio
+        cambiar_fecha_creacion(cuenta, entrada_temprana.fecha)
 
         mov.fecha = otro_mov.fecha - s2*timedelta(1)
         mov.importe = importe_aleatorio
@@ -888,6 +886,7 @@ class TestSaveCambiaImporteYFecha:
             self, sentido, _otro_mov, entrada_temprana, importe_aleatorio, request):
         mov, s, cuenta = inferir_fixtures(sentido, request)
         otro_mov = request.getfixturevalue(_otro_mov)
+        cambiar_fecha_creacion(cuenta, entrada_temprana.fecha)
         mov_anterior = otro_mov if _otro_mov == 'salida_posterior' else entrada_temprana
         s2 = signo(_otro_mov == 'salida_posterior')
 
@@ -990,7 +989,7 @@ class TestSaveCambiaCuentasYFecha:
             self, sentido, cuenta_2, entrada_anterior, entrada_temprana, request):
         mov, s, cuenta = inferir_fixtures(sentido, request)
         saldo_anterior = cuenta.saldo_en_mov(entrada_anterior)
-        print('SALDO ANTERIOR:', saldo_anterior)
+        cambiar_fecha_creacion(cuenta_2, entrada_temprana.fecha)
 
         setattr(mov, f'cta_{sentido}', cuenta_2)
         mov.fecha = entrada_anterior.fecha - timedelta(1)
@@ -1002,6 +1001,7 @@ class TestSaveCambiaCuentasYFecha:
     def test_si_cambia_cta_entrada_y_fecha_a_anterior_suma_importe_solo_a_saldos_de_cuenta_nueva_a_partir_de_nueva_ubicacion_del_movimiento(
             self, sentido, cuenta_2, entrada_anterior, entrada_temprana, request):
         mov, s, cuenta = inferir_fixtures(sentido, request)
+        cambiar_fecha_creacion(cuenta_2, entrada_temprana.fecha)
         saldo_anterior = cuenta_2.saldo_en_mov(entrada_anterior)
         saldo_temprano = cuenta_2.saldo_en_mov(entrada_temprana)
 

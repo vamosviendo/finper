@@ -582,8 +582,14 @@ class CuentaAcumulativa(Cuenta):
     def movs_no_conversion(self):
         return self.movs().filter(convierte_cuenta=None)
 
-    def agregar_subcuenta(self, nombre, slug, titular):
-        return Cuenta.crear(nombre, slug, cta_madre=self, titular=titular)
+    def agregar_subcuenta(self, nombre, slug, titular, fecha=None):
+        return Cuenta.crear(
+            nombre=nombre,
+            slug=slug,
+            cta_madre=self,
+            titular=titular,
+            fecha_creacion=fecha or date.today()
+        )
 
     def as_view_context(self, movimiento=None, es_elemento_principal=False):
         context = super().as_view_context(movimiento, es_elemento_principal)

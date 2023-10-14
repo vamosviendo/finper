@@ -197,32 +197,20 @@ def test_no_puede_agregarse_cuenta_acumulativa(sentido, cuenta_acumulativa, requ
         mov.full_clean()
 
 
-def test_no_permite_modificar_fecha_de_movimiento_de_traspaso_de_saldo_por_fecha_anterior_a_la_de_cualquier_otro_movimiento_de_la_cuenta_convertida(
-        cuenta, entrada, salida_posterior, fecha_tardia, fecha_anterior):
-    subc1, subc2 = cuenta.dividir_entre(
-        ['subc1', 'sc1', -159],
-        ['subc2', 'sc2'],
-        fecha=fecha_tardia,
-    )
-    mov1 = Movimiento.tomar(cta_salida=subc1)
-    mov2 = Movimiento.tomar(cta_entrada=subc2)
-
-    mov1.fecha = salida_posterior.fecha - timedelta(1)
-    mov2.fecha = salida_posterior.fecha - timedelta(1)
-
+def test_no_permite_fecha_anterior_a_creacion_de_cuenta(fecha, fecha_anterior):
+    cuenta = Cuenta.crear('Cuenta', 'cta', fecha_creacion=fecha)
+    entrada = Movimiento(concepto='Entrada', importe=10, cta_entrada=cuenta, fecha=fecha_anterior)
+    salida = Movimiento(concepto='Salida', importe=20, cta_salida=cuenta, fecha=fecha_anterior)
     with pytest.raises(
-            ValidationError,
-            match=rf"Fecha de conversión de cuenta no puede ser anterior a la "
-                  rf"de su último movimiento \({salida_posterior.fecha}\)"
+        errors.ErrorMovimientoAnteriorAFechaCreacion,
+        match='Movimiento anterior a la fecha de creación de la cuenta'
     ):
-        mov1.full_clean()
-
+        entrada.clean()
     with pytest.raises(
-            ValidationError,
-            match=rf"Fecha de conversión de cuenta no puede ser anterior a la "
-                  rf"de su último movimiento \({salida_posterior.fecha}\)"
+        errors.ErrorMovimientoAnteriorAFechaCreacion,
+        match='Movimiento anterior a la fecha de creación de la cuenta'
     ):
-        mov2.full_clean()
+        salida.clean()
 
 
 @pytest.mark.parametrize('sentido', ['entrada', 'salida'])

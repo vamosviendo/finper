@@ -102,6 +102,7 @@ def cuenta_acumulativa_saldo_0(cuenta: CuentaInteractiva) -> CuentaAcumulativa:
     return cuenta.dividir_y_actualizar(
         ['subcuenta 1 saldo 0', 'sc1', 0],
         ['subcuenta 2 saldo 0', 'sc2'],
+        fecha=cuenta.fecha_creacion
     )
 
 

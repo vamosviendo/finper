@@ -69,6 +69,14 @@ class MovimientoCleaner:
         if self.mov.cta_entrada == self.mov.cta_salida:
             raise ValidationError(message=errors.CUENTAS_IGUALES)
 
+    def no_se_permite_fecha_anterior_a_creacion_de_cuenta(self):
+        for cuenta in self.mov.cta_entrada, self.mov.cta_salida:
+            if cuenta is not None and self.mov.fecha < cuenta.fecha_creacion:
+                raise errors.ErrorMovimientoAnteriorAFechaCreacion(
+                    f'Movimiento anterior a la fecha de creación de '
+                    f'la cuenta "{cuenta.nombre}"\n'
+                    f'({self.mov.fecha} < {cuenta.fecha_creacion})')
+
     def restricciones_con_cuenta_acumulativa(self):
         for campo_cuenta in campos_cuenta:
             cuenta = getattr(self.mov, campo_cuenta)
@@ -103,18 +111,6 @@ class MovimientoCleaner:
                     raise ValidationError(
                         message=errors.CUENTA_ACUMULATIVA_EN_MOVIMIENTO
                     )
-
-                # Movimiento de traspaso de saldo no puede tener fecha anterior
-                # a la del último movimiento de la cuenta como interactiva.
-                try:
-                    ultimo_mov = [x for x in cuenta.movs() if not x.convierte_cuenta][-1]
-                    if self.mov.fecha < ultimo_mov.fecha:
-                        raise ValidationError(
-                            f"Fecha de conversión de cuenta no puede ser anterior a la "
-                            f"de su último movimiento ({ultimo_mov.fecha})"
-                        )
-                except IndexError:
-                    pass
 
     def restricciones_con_cuenta_credito(self):
         for campo_cuenta in campos_cuenta:
@@ -256,6 +252,7 @@ class Movimiento(MiModel):
 
         cleaning.no_se_permiten_movimentos_con_importe_cero()
         cleaning.debe_haber_al_menos_una_cuenta_y_deben_ser_distintas()
+        cleaning.no_se_permite_fecha_anterior_a_creacion_de_cuenta()
 
         if self._state.adding:
             cleaning.no_se_admiten_movimientos_nuevos_sobre_cuentas_acumulativas()

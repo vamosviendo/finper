@@ -3,11 +3,12 @@ from datetime import date
 import pytest
 
 from diario.models import CuentaInteractiva, Movimiento
-from utils.helpers_tests import dividir_en_dos_subcuentas
+from utils.helpers_tests import cambiar_fecha_creacion, dividir_en_dos_subcuentas
 
 
 @pytest.fixture
 def entrada_temprana(cuenta: CuentaInteractiva, fecha_temprana: date) -> Movimiento:
+    cambiar_fecha_creacion(cuenta, fecha_temprana)
     return Movimiento.crear(
         concepto='Entrada temprana', importe=47,
         cta_entrada=cuenta, fecha=fecha_temprana
@@ -16,6 +17,7 @@ def entrada_temprana(cuenta: CuentaInteractiva, fecha_temprana: date) -> Movimie
 
 @pytest.fixture
 def entrada_anterior(cuenta: CuentaInteractiva, fecha_anterior: date) -> Movimiento:
+    cambiar_fecha_creacion(cuenta, fecha_anterior)
     return Movimiento.crear(
         concepto='Entrada anterior', importe=3,
         cta_entrada=cuenta, fecha=fecha_anterior
