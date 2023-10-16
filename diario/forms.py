@@ -2,6 +2,7 @@ from datetime import date
 
 from django import forms
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 
 from diario.models import CuentaAcumulativa, CuentaInteractiva, Movimiento, Titular
 from utils.iterables import hay_mas_de_un_none_en
@@ -18,12 +19,13 @@ class FormCuenta(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['fecha_creacion'].initial = timezone.now().date()
         for _, campo in self.fields.items():
             agregar_clase(campo, 'form-control')
 
     class Meta:
         model = CuentaInteractiva
-        fields = ('nombre', 'slug', 'titular', )
+        fields = ('nombre', 'slug', 'titular', 'fecha_creacion', )
 
     def clean_slug(self):
         data = self.cleaned_data.get('slug')

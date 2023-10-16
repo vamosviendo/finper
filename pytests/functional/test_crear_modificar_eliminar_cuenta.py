@@ -2,14 +2,15 @@ import pytest
 from django.urls import reverse
 
 
-def test_crear_cuenta(browser, titular):
+def test_crear_cuenta(browser, titular, fecha):
     """ Cuando vamos a la página de cuenta nueva y completamos el formulario,
         aparece una cuenta nueva entre las cuentas del sitio. """
     browser.ir_a_pag(reverse("cta_nueva"))
     browser.completar_form(
         nombre="cuenta nueva",
         slug="cn",
-        titular="Titular"
+        titular=titular.nombre,
+        fecha_creacion=fecha,
     )
     browser.assert_url(reverse("home"))
 
@@ -25,13 +26,14 @@ def test_crear_cuenta_con_saldo(browser, titular):
     ...
 
 
-def test_modificar_cuenta(browser, cuenta):
+def test_modificar_cuenta(browser, cuenta, fecha_anterior):
     """ Cuando vamos a la página de modificar cuenta y completamos el
         formulario, la cuenta se modifica"""
     browser.ir_a_pag(reverse('cta_mod', args=[cuenta.slug]))
     browser.completar_form(
         nombre="cuenta con nombre modificado",
         slug="ccnm",
+        fecha_creacion=fecha_anterior,
     )
     browser.assert_url(reverse("home"))
     nombre_cuenta = browser.esperar_elemento("id_link_cta_ccnm").text.strip()

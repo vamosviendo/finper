@@ -24,20 +24,20 @@ def test_no_permite_modificar_titular(client, cuenta, otro_titular):
 
 
 @pytest.mark.parametrize('cta', ['cuenta', 'cuenta_acumulativa'])
-def test_post_guarda_cambios_en_cuenta_interactiva_o_acumulativa(client, cta, request):
+def test_post_guarda_cambios_en_cuenta_interactiva_o_acumulativa(client, cta, fecha, request):
     cuenta = request.getfixturevalue(cta)
     client.post(
         reverse('cta_mod', args=[cuenta.slug]),
-        data={'nombre': 'Cuento', 'slug': 'Slag'}
+        data={'nombre': 'Cuento', 'slug': 'Slag', 'fecha_creacion': fecha}
     )
     cuenta.refresh_from_db()
     assert cuenta.nombre == 'cuento'
     assert cuenta.slug == 'slag'
 
 
-def test_post_redirige_a_home(client, cuenta):
+def test_post_redirige_a_home(client, cuenta, fecha):
     response = client.post(
         reverse('cta_mod', args=[cuenta.slug]),
-        data={'nombre': 'Nombro', 'slug': 'slag'}
+        data={'nombre': 'Nombro', 'slug': 'slag', 'fecha_creacion': fecha}
     )
     asserts.assertRedirects(response, reverse('home'))
