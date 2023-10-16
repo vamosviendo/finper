@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import QuerySet, Q
+from django.utils import timezone
 
 from diario.settings_app import TITULAR_PRINCIPAL
 from vvmodel.models import MiModel
@@ -10,6 +11,7 @@ from vvutils.text import mi_slugify
 class Titular(MiModel):
     titname = models.CharField(max_length=100, unique=True)
     nombre = models.CharField(max_length=100, blank=True)
+    fecha_alta = models.DateField(default=timezone.now)
     deudores = models.ManyToManyField('Titular', related_name='acreedores')
 
     @property

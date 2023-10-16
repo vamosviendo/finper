@@ -1,13 +1,14 @@
 from django.urls import reverse
 
 
-def test_crear_titular(browser):
+def test_crear_titular(browser, fecha):
     """ Cuando vamos a la página de titular nuevo y completamos el formulario,
         aparece un titular nuevo entre los titulares del sitio. """
     browser.ir_a_pag(reverse("tit_nuevo"))
     browser.completar_form(
         nombre="titular nuevo",
         titname="tn",
+        fecha_alta=fecha,
     )
     browser.assert_url(reverse("home"))
 

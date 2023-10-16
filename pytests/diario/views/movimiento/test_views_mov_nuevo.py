@@ -28,7 +28,7 @@ def test_usa_template_mov_form(cuenta, response):
     asserts.assertTemplateUsed(response, 'diario/mov_form.html')
 
 
-def test_si_no_hay_cuentas_redirige_a_crear_cuenta(response):
+def test_si_no_hay_cuentas_redirige_a_crear_cuenta(response, titular):
     asserts.assertRedirects(response, reverse('cta_nueva'))
 
 

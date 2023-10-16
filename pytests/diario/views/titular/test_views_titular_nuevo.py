@@ -7,8 +7,8 @@ def test_get_usa_template_tit_form(client):
     asserts.assertTemplateUsed(response, 'diario/tit_form.html')
 
 
-def test_post_redirige_a_home(client):
+def test_post_redirige_a_home(client, fecha):
     response = client.post(
         reverse('tit_nuevo'),
-        data={'titname': 'tito', 'nombre': 'Tito Gómez'})
+        data={'titname': 'tito', 'nombre': 'Tito Gómez', 'fecha_alta': fecha})
     asserts.assertRedirects(response, reverse('home'))

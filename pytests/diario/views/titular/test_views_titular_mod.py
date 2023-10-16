@@ -17,9 +17,14 @@ def test_muestra_campo_titname(client, titular):
     assert 'titname' in response.context['form'].fields.keys()
 
 
-def test_post_redirige_a_home(client, titular):
+def test_muestra_campo_fecha_alta(client, titular):
+    response = client.get(reverse('tit_mod', args=[titular.titname]))
+    assert 'fecha_alta' in response.context['form'].fields.keys()
+
+
+def test_post_redirige_a_home(client, titular, fecha):
     response = client.post(
         reverse('tit_mod', args=[titular.titname]),
-        data={'titname': 'nuevo'}
+        data={'titname': 'nuevo', 'fecha_alta': fecha}
     )
     asserts.assertRedirects(response, reverse('home'))

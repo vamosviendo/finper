@@ -216,7 +216,7 @@ class MovModView(UpdateView):
 
 class TitularNuevoView(CreateView):
     model = Titular
-    fields = ['titname', 'nombre']
+    fields = ['titname', 'nombre', 'fecha_alta']
     template_name = 'diario/tit_form.html'
     success_url = '/'
 
@@ -234,7 +234,7 @@ class TitModView(UpdateView):
     slug_url_kwarg = 'titname'
     slug_field = 'titname'
     success_url = reverse_lazy('home')
-    fields = ['titname', 'nombre']
+    fields = ['titname', 'nombre', 'fecha_alta']
 
 
 class CorregirSaldo(TemplateView):

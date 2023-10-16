@@ -10,7 +10,7 @@ def test_si_no_hay_titulares_redirige_a_crear_titular_con_get(client):
     asserts.assertRedirects(response, reverse('tit_nuevo'))
 
 
-def test_usa_template_cta_form(client):
+def test_usa_template_cta_form(client, titular):
     response = client.get(reverse('cta_nueva'))
     asserts.assertTemplateUsed(response, 'diario/cta_form.html')
 
