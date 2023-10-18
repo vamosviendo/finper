@@ -1,6 +1,13 @@
 from unittest.mock import ANY
 
+import pytest
+
 from diario.models import CuentaInteractiva, Movimiento, Cuenta
+
+
+@pytest.fixture(autouse=True)
+def tit(titular):
+    return titular
 
 
 def test_llama_a_metodo_crear_de_clase_cuenta(mocker):

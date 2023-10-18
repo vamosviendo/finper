@@ -5,7 +5,7 @@ from diario.models import Cuenta
 from utils import errors
 
 
-def test_no_permite_nombres_ni_slugs_duplicados():
+def test_no_permite_nombres_ni_slugs_duplicados(titular):
     Cuenta.crear(nombre='Efectivo', slug='E')
     cuenta2 = Cuenta(nombre='Efectivo', slug='EF')
 

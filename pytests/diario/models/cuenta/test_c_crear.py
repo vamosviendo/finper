@@ -6,8 +6,8 @@ from django.core.exceptions import ValidationError
 from diario.models import Cuenta, CuentaInteractiva
 
 
-def test_crea_cuenta():
-    Cuenta.crear(nombre='Efectivo', slug='e')
+def test_crea_cuenta(titular):
+    Cuenta.crear(nombre='Efectivo', slug='e', titular=titular)
     assert Cuenta.cantidad() == 1
 
 
@@ -22,9 +22,13 @@ def test_cuenta_creada_es_interactiva(cuenta):
     assert isinstance(cuenta, CuentaInteractiva)
 
 
-def test_devuelve_cuenta_creada():
-    cuenta = Cuenta.crear(nombre='Efectivo', slug='E')
-    assert (cuenta.nombre, cuenta.slug) == ('efectivo', 'e')
+def test_devuelve_cuenta_creada(titular):
+    cuenta = Cuenta.crear(nombre='Efectivo', slug='E', titular=titular)
+    assert (
+        cuenta.nombre, cuenta.slug, cuenta.titular
+    ) == (
+        'efectivo', 'e', titular
+    )
 
 
 def test_no_permite_nombre_vacio():

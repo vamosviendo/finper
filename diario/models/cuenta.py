@@ -250,9 +250,8 @@ class CuentaInteractiva(Cuenta):
     titular = models.ForeignKey('diario.Titular',
                                 related_name='cuentas',
                                 on_delete=models.CASCADE,
-                                blank=True,
-                                default=Titular.por_defecto)
-
+                                null=True,
+                                blank=True)
 
     @classmethod
     def crear(cls, nombre, slug, cta_madre=None, saldo=None, **kwargs):
@@ -273,6 +272,7 @@ class CuentaInteractiva(Cuenta):
 
     def clean(self):
         super().clean()
+        self._corregir_titular_vacio()
         self._impedir_cambio_de_titular()
 
     @property
@@ -498,6 +498,13 @@ class CuentaInteractiva(Cuenta):
                 movimientos_incompletos[i].save()
 
         return cuentas_creadas
+
+    def _corregir_titular_vacio(self):
+        if self.titular is None:
+            titular = Titular.primere()
+            if titular is None:
+                raise ValidationError('Tiene que haber al menos un titular')
+            self.titular = titular
 
     def _impedir_cambio_de_titular(self):
         try:

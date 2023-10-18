@@ -197,7 +197,7 @@ def test_no_puede_agregarse_cuenta_acumulativa(sentido, cuenta_acumulativa, requ
         mov.full_clean()
 
 
-def test_no_permite_fecha_anterior_a_creacion_de_cuenta(fecha, fecha_anterior):
+def test_no_permite_fecha_anterior_a_creacion_de_cuenta(fecha, fecha_anterior, titular):
     cuenta = Cuenta.crear('Cuenta', 'cta', fecha_creacion=fecha)
     entrada = Movimiento(concepto='Entrada', importe=10, cta_entrada=cuenta, fecha=fecha_anterior)
     salida = Movimiento(concepto='Salida', importe=20, cta_salida=cuenta, fecha=fecha_anterior)

@@ -7,6 +7,11 @@ from django.core.exceptions import ValidationError
 from diario.models import Cuenta
 
 
+@pytest.fixture(autouse=True)
+def tit(titular):
+    return titular
+
+
 def test_guarda_y_recupera_cuentas():
     primera_cuenta = Cuenta()
     primera_cuenta.nombre = 'Primera cuenta'

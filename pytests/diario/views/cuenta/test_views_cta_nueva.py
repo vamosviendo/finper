@@ -1,7 +1,13 @@
+import pytest
 from django.urls import reverse
 from pytest_django import asserts
 
 from diario.models import Titular, Cuenta, CuentaInteractiva
+
+
+@pytest.fixture(autouse=True)
+def tit(titular):
+    return titular
 
 
 def test_si_no_hay_titulares_redirige_a_crear_titular_con_get(client):
@@ -10,7 +16,7 @@ def test_si_no_hay_titulares_redirige_a_crear_titular_con_get(client):
     asserts.assertRedirects(response, reverse('tit_nuevo'))
 
 
-def test_usa_template_cta_form(client, titular):
+def test_usa_template_cta_form(client):
     response = client.get(reverse('cta_nueva'))
     asserts.assertTemplateUsed(response, 'diario/cta_form.html')
 

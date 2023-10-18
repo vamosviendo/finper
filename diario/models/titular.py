@@ -3,7 +3,6 @@ from django.db import models
 from django.db.models import QuerySet, Q
 from django.utils import timezone
 
-from diario.settings_app import TITULAR_PRINCIPAL
 from vvmodel.models import MiModel
 from vvutils.text import mi_slugify
 
@@ -41,21 +40,6 @@ class Titular(MiModel):
 
     def __str__(self):
         return self.nombre
-
-    @classmethod
-    def por_defecto(cls):
-        titular, created = cls.objects.get_or_create(
-            titname=TITULAR_PRINCIPAL['titname'],
-            nombre=TITULAR_PRINCIPAL['nombre'],
-        )
-        return titular.pk
-
-    @classmethod
-    def tomar_o_default(cls, **kwargs):
-        try:
-            return cls.tomar(**kwargs)
-        except cls.DoesNotExist:
-            return cls.tomar(pk=cls.por_defecto())
 
     def es_acreedor_de(self, otro):
         return self in otro.acreedores.all()

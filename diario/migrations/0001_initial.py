@@ -82,7 +82,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('cuenta_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='diario.cuenta')),
                 ('_contracuenta', models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='_cuentacontra', to='diario.cuentainteractiva')),
-                ('titular', models.ForeignKey(blank=True, default=diario.models.titular.Titular.por_defecto, on_delete=django.db.models.deletion.CASCADE, related_name='cuentas', to='diario.titular')),
+                ('titular', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='cuentas', to='diario.titular')),
             ],
             options={
                 'abstract': False,
