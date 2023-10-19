@@ -5,7 +5,7 @@ from django.views.generic import CreateView, DeleteView, TemplateView, \
     UpdateView
 
 from diario.forms import FormCuenta, FormMovimiento, FormDividirCuenta, \
-    FormCrearSubcuenta
+    FormCrearSubcuenta, FormTitular
 from diario.models import Cuenta, CuentaInteractiva, CuentaAcumulativa, \
     Movimiento, Titular
 from diario.utils import saldo_general_historico, verificar_saldos
@@ -216,8 +216,8 @@ class MovModView(UpdateView):
 
 class TitularNuevoView(CreateView):
     model = Titular
-    fields = ['titname', 'nombre', 'fecha_alta']
     template_name = 'diario/tit_form.html'
+    form_class = FormTitular
     success_url = '/'
 
 
@@ -231,10 +231,10 @@ class TitElimView(DeleteView):
 class TitModView(UpdateView):
     model = Titular
     template_name = 'diario/tit_form.html'
+    form_class = FormTitular
     slug_url_kwarg = 'titname'
     slug_field = 'titname'
     success_url = reverse_lazy('home')
-    fields = ['titname', 'nombre', 'fecha_alta']
 
 
 class CorregirSaldo(TemplateView):

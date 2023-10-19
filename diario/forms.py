@@ -201,3 +201,13 @@ class FormMovimiento(forms.ModelForm):
         self.instance.importe = self.cleaned_data['importe']
         self.instance.esgratis = self.cleaned_data['esgratis']
         return super().save(*args, **kwargs)
+
+
+class FormTitular(forms.ModelForm):
+
+    class Meta:
+        model = Titular
+        fields = ('titname', 'nombre', 'fecha_alta')
+        widgets = {
+            'fecha_alta': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+        }
