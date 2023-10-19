@@ -1,5 +1,7 @@
 from datetime import date
 
+from django import forms
+
 from diario.forms import FormCuenta
 
 
@@ -16,6 +18,13 @@ def test_no_acepta_guion_bajo_inicial_en_slug():
 def test_muestra_campo_fecha_creacion():
     formcta = FormCuenta()
     assert 'fecha_creacion' in formcta.fields.keys()
+
+
+def test_campo_fecha_creacion_usa_widget_DateInput():
+    formcta = FormCuenta()
+    field_fecha_creacion = formcta.fields['fecha_creacion']
+    assert isinstance(field_fecha_creacion.widget, forms.DateInput)
+    assert field_fecha_creacion.widget.format == '%Y-%m-%d'
 
 
 def test_campo_fecha_creacion_muestra_fecha_actual_como_valor_por_defecto():

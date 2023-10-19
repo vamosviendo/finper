@@ -26,6 +26,9 @@ class FormCuenta(forms.ModelForm):
     class Meta:
         model = CuentaInteractiva
         fields = ('nombre', 'slug', 'titular', 'fecha_creacion', )
+        widgets = {
+            'fecha_creacion': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+        }
 
     def clean_slug(self):
         data = self.cleaned_data.get('slug')
