@@ -109,6 +109,7 @@ class Cuenta(PolymorphModel):
     def clean(self, *args, **kwargs):
         self._impedir_cambio_de_cta_madre()
         self._chequear_incongruencias_de_clase()
+        self._verificar_fecha_creacion()
 
     def delete(self, *args, **kwargs):
         if self.saldo != 0:
@@ -237,6 +238,14 @@ class Cuenta(PolymorphModel):
                 raise ValidationError(errors.CAMBIO_CUENTA_MADRE)
         except (Cuenta.DoesNotExist, AttributeError):
             pass
+
+    def _verificar_fecha_creacion(self):
+        pass
+        if self.tiene_madre() and self.fecha_creacion < self.cta_madre.fecha_conversion:
+            raise ValidationError(
+                f'Fecha de creación anterior a fecha de conversión'
+                f'. de cuenta madre'
+            )
 
 
 class CuentaInteractiva(Cuenta):
@@ -552,6 +561,22 @@ class CuentaAcumulativa(Cuenta):
         movs_normales = self.movs_no_conversion()
         fecha_ultimo_mov_normal = max([m.fecha for m in movs_normales]) \
             if movs_normales.count() > 0 else date(1, 1, 1)
+
+        if self.fecha_creacion > self.fecha_conversion:
+            raise ValidationError(
+                f"La fecha de creación de la cuenta {self.nombre} "
+                f"({self.fecha_creacion}) no puede ser posterior a su "
+                f"fecha de conversión ({self.fecha_conversion})"
+            )
+
+        for cuenta in self.subcuentas.all():
+            if self.fecha_conversion > cuenta.fecha_creacion:
+                raise ValidationError(
+                    f"La fecha de conversión de la cuenta {self.nombre} "
+                    f"({self.fecha_conversion}) no puede ser posterior a la "
+                    f"fecha de creación de su subcuenta {cuenta.nombre} "
+                    f"({cuenta.fecha_creacion})"
+                )
 
         if self.fecha_conversion < fecha_ultimo_mov_normal:
             raise errors.ErrorMovimientoPosteriorAConversion(

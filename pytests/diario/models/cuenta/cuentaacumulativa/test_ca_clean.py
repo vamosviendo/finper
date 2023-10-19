@@ -1,3 +1,5 @@
+import datetime
+
 import pytest
 from django.core.exceptions import ValidationError
 
@@ -22,5 +24,21 @@ def test_no_se_puede_asignar_cta_madre_a_cta_interactiva_existente(cuenta_2, cue
 def test_no_se_puede_asignar_cta_madre_a_cta_acumulativa_existente(cuenta_acumulativa, cuenta_acumulativa_saldo_0):
     cuenta_acumulativa.cta_madre = cuenta_acumulativa_saldo_0
 
+    with pytest.raises(ValidationError):
+        cuenta_acumulativa.full_clean()
+
+
+def test_no_puede_tener_fecha_de_conversion_posterior_a_la_fecha_de_creacion_de_sus_subcuentas(
+        cuenta_acumulativa):
+    sc1, sc2 = cuenta_acumulativa.subcuentas.all()
+    sc1.fecha_creacion = sc2.fecha_creacion + datetime.timedelta(3)
+    sc1.save()
+    cuenta_acumulativa.fecha_conversion = sc2.fecha_creacion + datetime.timedelta(1)
+    with pytest.raises(ValidationError):
+        cuenta_acumulativa.full_clean()
+
+
+def test_no_puede_tener_fecha_de_creacion_posterior_a_la_fecha_de_conversion(cuenta_acumulativa):
+    cuenta_acumulativa.fecha_creacion = cuenta_acumulativa.fecha_conversion + datetime.timedelta(1)
     with pytest.raises(ValidationError):
         cuenta_acumulativa.full_clean()

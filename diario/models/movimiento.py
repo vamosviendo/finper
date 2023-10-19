@@ -527,11 +527,15 @@ class Movimiento(MiModel):
 
     def _actualizar_fechas_conversion(self):
         if self.cambia_campo('fecha', contraparte=self.viejo) and self.convierte_cuenta:
-            subcuenta = self.cta_entrada \
+            cuenta = self.cta_entrada \
                 if self.convierte_cuenta == CTA_SALIDA \
                 else self.cta_salida
+            subcuenta = self.cta_salida if cuenta == self.cta_entrada else self.cta_entrada
 
-            subcuenta.fecha_conversion = self.fecha
+            cuenta.fecha_conversion = subcuenta.fecha_creacion = self.fecha
+            # Se omite cuenta.full_clean() para evitar error de fecha de
+            # conversión posterior a fecha de creación de subcuentas
+            cuenta.save()
             subcuenta.full_clean()
             subcuenta.save()
 

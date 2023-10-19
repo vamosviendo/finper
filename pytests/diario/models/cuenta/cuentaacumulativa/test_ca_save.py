@@ -11,7 +11,16 @@ def nueva_fecha(cuenta_acumulativa: CuentaAcumulativa) -> date:
     return cuenta_acumulativa.fecha_conversion + timedelta(10)
 
 
-def test_permite_cambiar_fecha_de_conversion_de_cuenta_por_fecha_posterior(cuenta_acumulativa, nueva_fecha):
+@pytest.fixture
+def subcuentas_posteriores(cuenta_acumulativa: CuentaAcumulativa, nueva_fecha: date) -> None:
+    for sc in cuenta_acumulativa.subcuentas.all():
+        sc.fecha_creacion = nueva_fecha
+        sc.full_clean()
+        sc.save()
+
+
+def test_permite_cambiar_fecha_de_conversion_de_cuenta_por_fecha_posterior_si_no_es_posterior_a_fecha_de_creacion_de_sus_subcuentas(
+        cuenta_acumulativa, nueva_fecha, subcuentas_posteriores):
     cuenta_acumulativa.fecha_conversion = nueva_fecha
     cuenta_acumulativa.full_clean()
     cuenta_acumulativa.save()
@@ -20,7 +29,7 @@ def test_permite_cambiar_fecha_de_conversion_de_cuenta_por_fecha_posterior(cuent
 
 
 def test_si_se_modifica_fecha_de_conversion_de_cuenta_se_modifica_fecha_de_movimientos_de_traspaso_de_saldo(
-        cuenta_acumulativa, nueva_fecha):
+        cuenta_acumulativa, nueva_fecha, subcuentas_posteriores):
     cuenta_acumulativa.fecha_conversion = nueva_fecha
     cuenta_acumulativa.full_clean()
     cuenta_acumulativa.save()
