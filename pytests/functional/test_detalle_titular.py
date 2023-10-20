@@ -115,7 +115,7 @@ def test_detalle_titular(
     ).text.strip()
     movimiento = titular.movs()[2]
 
-    assert nombre_titular == (f"Capital de {titular.nombre} histórico "
+    assert nombre_titular == (f"Capital de {titular.nombre} "
                               f"en movimiento {movimiento.orden_dia} "
                               f"del {movimiento.fecha} ({movimiento.concepto}):")
     browser.comparar_capital_historico_de(titular, movimiento)

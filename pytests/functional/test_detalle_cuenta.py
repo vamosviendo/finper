@@ -42,11 +42,9 @@ def test_detalle_de_cuenta_interactiva(
     # Cliqueamos en el nombre de una cuenta interactiva
     browser.cliquear_en_cuenta(cuenta)
 
-    # Vemos el nombre de la cuenta encabezando la página
+    # Vemos el nombre de la cuenta encabezando la página, con su fecha de
+    # creación y su saldo
     browser.comparar_cuenta(cuenta)
-
-    # Y vemos que al lado del nombre aparece el saldo de la cuenta
-    browser.comparar_saldo_de(cuenta)
 
     # Y vemos que en la sección de titulares aparece el titular de la cuenta
     divs_titular = browser.esperar_elementos("class_div_titular")
@@ -84,7 +82,7 @@ def test_detalle_de_cuenta_interactiva(
     ).text.strip()
     movimiento = cuenta.movs()[1]
 
-    assert nombre_cuenta == (f"Saldo de {cuenta.nombre} histórico "
+    assert nombre_cuenta == (f"{cuenta.nombre} (fecha alta: {cuenta.fecha_creacion}) "
                               f"en movimiento {movimiento.orden_dia} "
                               f"del {movimiento.fecha} ({movimiento.concepto}):")
     browser.comparar_saldo_historico_de(cuenta, movimiento)

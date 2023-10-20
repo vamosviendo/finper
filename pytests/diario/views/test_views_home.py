@@ -75,6 +75,7 @@ def test_si_recibe_slug_de_cuenta_actualiza_context_con_datos_de_cuenta(
         'cuentas': [],
         'movimientos': [m.as_view_context() for m in cuenta.movs()],
         'ctaname': cuenta.slug,
+        'fecha_alta': cuenta.fecha_creacion,
     }
     mock_avca.return_value = {
         'nombre': cuenta_acumulativa.nombre,
@@ -83,6 +84,7 @@ def test_si_recibe_slug_de_cuenta_actualiza_context_con_datos_de_cuenta(
         'cuentas': [c.as_view_context() for c in cuenta_acumulativa.subcuentas.all()],
         'movimientos': [m.as_view_context() for m in cuenta.movs()],
         'ctaname': cuenta.slug,
+        'fecha_alta': cuenta.fecha_creacion
     }
     mock_avca.reset_mock()
     mock_avci.reset_mock()
@@ -108,7 +110,7 @@ def test_si_recibe_slug_de_cuenta_pasa_saldo_de_cuenta_como_saldo_general(
 
 def test_si_recibe_slug_de_cuenta_pasa_titulo_de_saldo_gral_con_cuenta(cuenta, client):
     response = client.get(reverse('cuenta', args=[cuenta.slug]))
-    assert response.context['titulo_saldo_gral'] == f"Saldo de {cuenta.nombre}"
+    assert response.context['titulo_saldo_gral'] == f"{cuenta.nombre} (fecha alta: {cuenta.fecha_creacion})"
 
 
 def test_si_recibe_slug_de_cuenta_e_id_de_movimiento_actualiza_context_con_datos_historicos_de_cuenta_al_momento_del_movimiento(
@@ -122,6 +124,7 @@ def test_si_recibe_slug_de_cuenta_e_id_de_movimiento_actualiza_context_con_datos
         'movimientos': cuenta.movs(),
         'movimiento': entrada,
         'slug': cuenta.slug,
+        'fecha_alta': cuenta.fecha_creacion,
     }
     response = client.get(reverse('cuenta_movimiento', args=[cuenta.slug, entrada.pk]))
     mock_avc.assert_called_once_with(cuenta, entrada, True)
@@ -136,7 +139,7 @@ def test_si_recibe_slug_de_cuenta_e_id_de_movimiento_pasa_titulo_de_saldo_histor
     response = client.get(reverse('cuenta_movimiento', args=[cuenta.slug, entrada.pk]))
     assert (
         response.context['titulo_saldo_gral'] ==
-        f'Saldo de {cuenta.nombre} histórico en movimiento {entrada.orden_dia} '
+        f'{cuenta.nombre} (fecha alta: {cuenta.fecha_creacion}) en movimiento {entrada.orden_dia} '
         f'del {entrada.fecha} ({entrada.concepto})')
 
 
@@ -225,7 +228,7 @@ def test_si_recibe_titname_e_id_de_movimiento_pasa_titulo_de_saldo_gral_con_titu
     assert response.context.get('titulo_saldo_gral') is not None
     assert \
         response.context['titulo_saldo_gral'] == \
-        f"Capital de {titular.nombre} histórico en movimiento {entrada.orden_dia} " \
+        f"Capital de {titular.nombre} en movimiento {entrada.orden_dia} " \
         f"del {entrada.fecha} ({entrada.concepto})"
 
 
@@ -276,7 +279,7 @@ def test_si_recibe_id_de_movimiento_pasa_titulo_de_saldo_gral_con_movimiento(
     response = client.get(reverse('movimiento', args=[entrada.pk]))
     assert (
         response.context['titulo_saldo_gral'] ==
-        f'Saldo general histórico en movimiento {entrada.orden_dia} '
+        f'Saldo general en movimiento {entrada.orden_dia} '
         f'del {entrada.fecha} ({entrada.concepto})')
 
 

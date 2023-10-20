@@ -129,10 +129,10 @@ class FinperFirefox(MiFirefox):
     def comparar_cuenta(self, cuenta: Cuenta):
         """ Dada una cuenta, comparar su nombre con el que encabeza la página.
         """
-        nombre_cuenta = self.esperar_elemento(
-            'id_titulo_saldo_gral'
-        ).text.strip()
-        assert nombre_cuenta == f"Saldo de {cuenta.nombre}:"
+        titulo = self.esperar_elemento('id_div_saldo_gral').text.strip()
+        assert titulo == \
+               f"{cuenta.nombre} (fecha alta: {cuenta.fecha_creacion}): " \
+               f"{float_format(cuenta.saldo)}"
 
     def comparar_subcuentas_de(self, cuenta: CuentaAcumulativa):
         """ Dada una cuenta acumulativa, comparar sus subcuentas con las que

@@ -33,7 +33,7 @@ class HomeView(TemplateView):
         titular = Titular.tomar(titname=kwargs['titname']) \
             if kwargs.get('titname') else None
         movimiento_en_titulo = \
-            f" histórico en movimiento {movimiento.orden_dia} " \
+            f" en movimiento {movimiento.orden_dia} " \
             f"del {movimiento.fecha} ({movimiento.concepto})" \
             if movimiento else ""
 
@@ -48,7 +48,8 @@ class HomeView(TemplateView):
             context.update({
                 'saldo_gral': context['saldo'],
                 'titulo_saldo_gral':
-                    f"Saldo de {context['nombre']}{movimiento_en_titulo}",
+                    f"{context['nombre']} (fecha alta: {context['fecha_alta']})"
+                    f"{movimiento_en_titulo}",
             })
 
         elif titular:

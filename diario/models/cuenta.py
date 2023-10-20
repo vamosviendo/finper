@@ -187,6 +187,7 @@ class Cuenta(PolymorphModel):
             'movimientos': [x.as_view_context() for x in self.movs()],
             'saldo': self.saldo_en_mov(movimiento) if movimiento else self.saldo,
             'es_acumulativa': self.es_acumulativa,
+            'fecha_alta': self.fecha_creacion,
         }
 
         if es_elemento_principal:

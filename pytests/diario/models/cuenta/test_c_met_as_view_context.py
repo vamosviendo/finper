@@ -18,6 +18,11 @@ def test_incluye_slug_de_cuenta_como_clave_ctaname(context, cuenta):
     assert context['ctaname'] == cuenta.slug
 
 
+def test_incluye_fecha_de_creacion_de_cuenta(context, cuenta):
+    assert context.get('fecha_alta') is not None
+    assert context['fecha_alta'] == cuenta.fecha_creacion
+
+
 def test_si_cuenta_es_interactiva_incluye_lista_con_titular_de_cuenta_en_formato_dict_como_titulares(
         context, cuenta):
     assert context['titulares'] == [cuenta.titular.as_view_context()]
@@ -102,18 +107,6 @@ def test_si_recibe_movimiento_incluye_saldo_historico_de_cuenta_en_movimiento_co
     context = cuenta.as_view_context(movimiento=salida)
     assert context.get('saldo') is not None
     assert context['saldo'] == cuenta.saldo_en_mov(salida)
-
-
-def test_si_no_es_elemento_principal_no_incluye_saldo_gral(cuenta):
-    context = cuenta.as_view_context(es_elemento_principal=False)
-    with pytest.raises(KeyError):
-        print(context['saldo_gral'])
-
-
-def test_si_no_es_elemento_principal_no_incluye_titulo_de_saldo_gral(cuenta):
-    context = cuenta.as_view_context(es_elemento_principal=False)
-    with pytest.raises(KeyError):
-        print(context['titulo_saldo_gral'])
 
 
 def test_si_cuenta_es_elemento_principal_y_tiene_madre_incluye_lista_de_dicts_de_ancestro_con_nombre_y_saldo(subsubcuenta):
