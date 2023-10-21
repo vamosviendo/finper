@@ -100,7 +100,7 @@ def test_mov_salida_llama_a_generar_saldo_con_salida_True(mock_generar, cuenta):
     mock_generar.assert_called_once_with(mov, salida=True)
 
 
-def test_mov_traspaso_llama_a_generar_saldo_con_salida_false_para_cta_entrada_y_salida_True_para_cta_salida(
+def test_mov_traspaso_llama_a_generar_saldo_con_salida_False_para_cta_entrada_y_salida_True_para_cta_salida(
         mock_generar, cuenta, cuenta_2):
     mov = Movimiento.crear('Nuevo mov', 20, cuenta, cuenta_2)
     assert mock_generar.call_args_list == [call(mov, salida=False), call(mov, salida=True)]
