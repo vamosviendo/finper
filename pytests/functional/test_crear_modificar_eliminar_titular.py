@@ -18,13 +18,14 @@ def test_crear_titular(browser, fecha):
     assert nombre_titular == "titular nuevo"
 
 
-def test_modificar_titular(browser, titular):
+def test_modificar_titular(browser, titular, fecha_anterior):
     """ Cuando vamos a la página de modificar titular y completamos el
         formulario, vemos el titular modificado en la página principal """
     browser.ir_a_pag(reverse('tit_mod', args=[titular.titname]))
     browser.completar_form(
         nombre="titular con nombre modificado",
         titname="tcnm",
+        fecha_alta=fecha_anterior,
     )
     browser.assert_url(reverse('home'))
 
