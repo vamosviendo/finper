@@ -57,6 +57,10 @@ class FormSubcuenta(forms.Form):
 
 
 class FormCrearSubcuenta(forms.Form):
+    fecha = forms.DateField(
+        initial=date.today(),
+        widget=forms.DateInput(format="%Y-%m-%d", attrs={'type': 'date'})
+    )
     nombre = forms.CharField()
     slug = forms.CharField()
     titular = forms.ModelChoiceField(
@@ -76,9 +80,7 @@ class FormCrearSubcuenta(forms.Form):
         return self.cleaned_data
 
     def save(self):
-        self.cuenta.agregar_subcuenta(
-            *[self.cleaned_data[x] for x in self.cleaned_data.keys()],
-        )
+        self.cuenta.agregar_subcuenta(**self.cleaned_data)
         return self.cuenta
 
 

@@ -1,19 +1,15 @@
 from django.urls import reverse
-from selenium.webdriver.common.by import By
 
 
-def test_agregar_subcuenta(browser, cuenta_acumulativa):
-    # Vamos a la página principal, cliqueamos en botón "Edit" de una cuenta
-    # acumulativa y luego en el botón "Agregar subcuenta" que aparece en la
-    # página de modificación de la cuenta
-    browser.ir_a_pag()
-    browser.esperar_elemento(f'id_link_cta_mod_{cuenta_acumulativa.slug}').click()
-    browser.esperar_elemento('id_btn_agregar').click()
+def test_agregar_subcuenta(browser, cuenta_acumulativa, fecha_posterior):
+    # Vamos a la página "Agregar subcuenta"
+    browser.ir_a_pag(reverse('cta_agregar_subc', args=[cuenta_acumulativa.slug]))
 
     # En el formulario que aparece, escribimos nombre y slug para la nueva
     # subcuenta a agregar
     browser.completar("id_nombre", "subcuenta 3")
     browser.completar("id_slug", "sc3")
+    browser.completar("id_fecha", fecha_posterior)
     browser.pulsar()
 
     # Somos dirigidos a la página de detalle de la cuenta acumulativa
@@ -26,6 +22,13 @@ def test_agregar_subcuenta(browser, cuenta_acumulativa):
         for x in browser.esperar_elementos('class_link_cuenta')
     ]
     assert "subcuenta 3" in divs_cuenta
+
+    # Vamos a la página de detalle de la cuenta, donde comprobamos
+    # que su fecha de creación coincide con la fecha que ingresamos en
+    # el formulario
+    browser.ir_a_pag(reverse('cuenta', args=['sc3']))
+    titulo_pag = browser.esperar_elemento("id_titulo_saldo_gral").text.strip()
+    assert fecha_posterior.strftime("%Y-%m-%d") in titulo_pag
 
 
 def test_agregar_subcuenta_otro_titular(
