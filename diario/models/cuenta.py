@@ -241,7 +241,6 @@ class Cuenta(PolymorphModel):
             pass
 
     def _verificar_fecha_creacion(self):
-        pass
         if self.tiene_madre() and self.fecha_creacion < self.cta_madre.fecha_conversion:
             raise ValidationError(
                 f'Fecha de creación anterior a fecha de conversión'
@@ -284,6 +283,7 @@ class CuentaInteractiva(Cuenta):
         super().clean()
         self._corregir_titular_vacio()
         self._impedir_cambio_de_titular()
+        self._verificar_fecha_creacion_interactiva()
 
     @property
     def contracuenta(self):
@@ -524,6 +524,10 @@ class CuentaInteractiva(Cuenta):
         except (Cuenta.DoesNotExist, AttributeError):
             pass
 
+    def _verificar_fecha_creacion_interactiva(self):
+        if self.fecha_creacion < self.titular.fecha_alta:
+            raise ValidationError('Fecha de creación anterior a fecha de alta de titular')
+
 
 class CuentaAcumulativa(Cuenta):
 
@@ -562,6 +566,16 @@ class CuentaAcumulativa(Cuenta):
         movs_normales = self.movs_no_conversion()
         fecha_ultimo_mov_normal = max([m.fecha for m in movs_normales]) \
             if movs_normales.count() > 0 else date(1, 1, 1)
+
+        for titular in self.titulares:
+            if self.fecha_creacion < titular.fecha_alta:
+                raise ValidationError(
+                    f"Fecha de creación de la cuenta {self.nombre} "
+                    f"({self.fecha_creacion}) posterior a la "
+                    f"fecha de alta de uno de sus titulares "
+                    f"({titular} - {titular.fecha_alta})"
+                )
+
 
         if self.fecha_creacion > self.fecha_conversion:
             raise ValidationError(

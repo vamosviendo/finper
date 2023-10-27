@@ -1,6 +1,9 @@
+from __future__ import annotations
 from datetime import date
 
-from diario.models import Cuenta, CuentaInteractiva, CuentaAcumulativa, Movimiento
+from django.core.exceptions import ValidationError
+
+from diario.models import CuentaInteractiva, CuentaAcumulativa, Movimiento
 
 
 def cambiar_fecha(mov: Movimiento, fecha: date):
@@ -9,9 +12,13 @@ def cambiar_fecha(mov: Movimiento, fecha: date):
     mov.save()
 
 
-def cambiar_fecha_creacion(cuenta: Cuenta, fecha: date):
+def cambiar_fecha_creacion(cuenta: CuentaInteractiva | CuentaAcumulativa, fecha: date):
     cuenta.fecha_creacion = fecha
-    cuenta.full_clean()
+    try:
+        cuenta.full_clean()
+    except ValidationError:
+        cuenta.titular.fecha_alta = fecha
+        cuenta.titular.full_clean()
     cuenta.save()
 
 

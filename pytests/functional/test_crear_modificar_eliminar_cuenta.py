@@ -33,7 +33,6 @@ def test_modificar_cuenta(browser, cuenta, fecha_anterior):
     browser.completar_form(
         nombre="cuenta con nombre modificado",
         slug="ccnm",
-        fecha_creacion=fecha_anterior,
     )
     browser.assert_url(reverse("home"))
     nombre_cuenta = browser.esperar_elemento("id_link_cta_ccnm").text.strip()
