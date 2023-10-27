@@ -19,10 +19,17 @@ CUENTA_CREDITO_VS_NORMAL = \
 CUENTA_INEXISTENTE = 'Debe haber una cuenta de entrada, una de salida o ambas'
 CUENTAS_IGUALES = 'Cuentas de entrada y salida no pueden ser la misma'
 ELIMINACION_MOVIMIENTO_AUTOMATICO = 'No se puede eliminar movimiento automático'
+FECHA_ANTERIOR_A_CUENTA_MADRE = 'Fecha de creación anterior a fecha de conversión ' \
+                                'de cuenta madre'
+FECHA_ANTERIOR_A_ALTA_TITULAR = 'Fecha de creación anterior a fecha de alta de titular'
+FECHA_CONVERSION_POSTERIOR_A_CREACION_SUBCUENTA = 'La fecha de conversión de ' \
+    'una cuenta acumulativa no puede ser posterior a la fecha de creación de ' \
+    'una de sus subcuentas'
+FECHA_CREACION_POSTERIOR_A_CONVERSION = 'La fecha de creación de una cuenta acumulativa ' \
+    ' no puede ser posterior a su fecha de conversión'
 FECHA_POSTERIOR_A_CONVERSION = 'Fecha del movimiento debe ser anterior a '
 IMPORTE_CERO = 'Se intentó crear un movimiento con importe cero'
-MODIFICACION_MOVIMIENTO_AUTOMATICO = \
-    "No se puede modificar movimiento automático"
+MODIFICACION_MOVIMIENTO_AUTOMATICO = 'No se puede modificar movimiento automático'
 MOVIMIENTO_CON_CA_ELIMINADO = \
     'Se intentó borrar un movimiento con una o más cuentas acumulativas'
 SALDO_NO_CERO = 'No se puede eliminar cuenta con saldo distinto de cero'
@@ -34,6 +41,13 @@ class CambioDeTitularException(ValueError):
     """ Se intentó cambiar el titular de una cuenta"""
     def __init__(self, message=CAMBIO_TITULAR):
         super().__init__(message)
+
+
+class CambioDeCuentaMadreException(ValidationError):
+    """ Se intentó cambiar la cuenta madre de una cuenta"""
+    def __init__(self, message=CAMBIO_CUENTA_MADRE):
+        super().__init__(message)
+
 
 
 class SaldoNoCeroException(ValueError):
@@ -90,6 +104,26 @@ class ErrorCuentaEsAcumulativa(TypeError):
         super().__init__(message)
 
 
+class ErrorFechaAnteriorAAltaTitular(ValidationError):
+    def __init__(self, message=FECHA_ANTERIOR_A_ALTA_TITULAR):
+        super().__init__(message)
+
+
+class ErrorFechaAnteriorACuentaMadre(ValidationError):
+    def __init__(self, message=FECHA_ANTERIOR_A_CUENTA_MADRE):
+        super().__init__(message)
+
+
+class ErrorFechaCreacionPosteriorAConversion(ValidationError):
+    def __init__(self, message=FECHA_CREACION_POSTERIOR_A_CONVERSION):
+        super().__init__(message)
+
+
+class ErrorFechaConversionPosteriorACreacionSubcuenta(ValidationError):
+    def __init__(self, message=FECHA_CONVERSION_POSTERIOR_A_CREACION_SUBCUENTA):
+        super().__init__(message)
+
+
 class ErrorImporteCero(ValueError):
 
     def __init__(
@@ -138,10 +172,7 @@ class ErrorMovimientoAutomatico(ValidationError):
 
 class ErrorCuentaNoFiguraEnMovimiento(ValidationError):
 
-    def __init__(
-            self,
-            message='Cuenta no figura en movimiento'
-    ):
+    def __init__(self, message='Cuenta no figura en movimiento'):
         super().__init__(message)
 
 
@@ -151,4 +182,9 @@ class ErrorMovimientoAnteriorAFechaCreacion(ValidationError):
             self,
             message='Movimiento anterior a la fecha de creación de la cuenta'
     ):
+        super().__init__(message)
+
+
+class ErrorNoHayTitulares(ValidationError):
+    def __init__(self, message='Tiene que haber al menos un titular'):
         super().__init__(message)

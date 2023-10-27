@@ -106,7 +106,7 @@ class Cuenta(PolymorphModel):
         self._pasar_nombre_y_slug_a_minuscula()
         super().clean_fields(exclude=exclude)
 
-    def clean(self, *args, **kwargs):
+    def clean(self):
         self._impedir_cambio_de_cta_madre()
         self._chequear_incongruencias_de_clase()
         self._verificar_fecha_creacion()
@@ -236,16 +236,13 @@ class Cuenta(PolymorphModel):
         try:
             cta_madre_guardada = self.tomar_de_bd().cta_madre
             if self.cta_madre != cta_madre_guardada:
-                raise ValidationError(errors.CAMBIO_CUENTA_MADRE)
+                raise errors.CambioDeCuentaMadreException
         except (Cuenta.DoesNotExist, AttributeError):
             pass
 
     def _verificar_fecha_creacion(self):
         if self.tiene_madre() and self.fecha_creacion < self.cta_madre.fecha_conversion:
-            raise ValidationError(
-                f'Fecha de creación anterior a fecha de conversión'
-                f'. de cuenta madre'
-            )
+            raise errors.ErrorFechaAnteriorACuentaMadre
 
 
 class CuentaInteractiva(Cuenta):
@@ -513,7 +510,7 @@ class CuentaInteractiva(Cuenta):
         if self.titular is None:
             titular = Titular.primere()
             if titular is None:
-                raise ValidationError('Tiene que haber al menos un titular')
+                raise errors.ErrorNoHayTitulares
             self.titular = titular
 
     def _impedir_cambio_de_titular(self):
@@ -526,7 +523,7 @@ class CuentaInteractiva(Cuenta):
 
     def _verificar_fecha_creacion_interactiva(self):
         if self.fecha_creacion < self.titular.fecha_alta:
-            raise ValidationError('Fecha de creación anterior a fecha de alta de titular')
+            raise errors.ErrorFechaAnteriorAAltaTitular
 
 
 class CuentaAcumulativa(Cuenta):
@@ -560,46 +557,9 @@ class CuentaAcumulativa(Cuenta):
     def saldo(self):
         return sum([subc.saldo for subc in self.subcuentas.all()])
 
-    def clean(self, *args, **kwargs):
-
-        super().clean(*args, **kwargs)
-        movs_normales = self.movs_no_conversion()
-        fecha_ultimo_mov_normal = max([m.fecha for m in movs_normales]) \
-            if movs_normales.count() > 0 else date(1, 1, 1)
-
-        for titular in self.titulares:
-            if self.fecha_creacion < titular.fecha_alta:
-                raise ValidationError(
-                    f"Fecha de creación de la cuenta {self.nombre} "
-                    f"({self.fecha_creacion}) posterior a la "
-                    f"fecha de alta de uno de sus titulares "
-                    f"({titular} - {titular.fecha_alta})"
-                )
-
-
-        if self.fecha_creacion > self.fecha_conversion:
-            raise ValidationError(
-                f"La fecha de creación de la cuenta {self.nombre} "
-                f"({self.fecha_creacion}) no puede ser posterior a su "
-                f"fecha de conversión ({self.fecha_conversion})"
-            )
-
-        for cuenta in self.subcuentas.all():
-            if self.fecha_conversion > cuenta.fecha_creacion:
-                raise ValidationError(
-                    f"La fecha de conversión de la cuenta {self.nombre} "
-                    f"({self.fecha_conversion}) no puede ser posterior a la "
-                    f"fecha de creación de su subcuenta {cuenta.nombre} "
-                    f"({cuenta.fecha_creacion})"
-                )
-
-        if self.fecha_conversion < fecha_ultimo_mov_normal:
-            raise errors.ErrorMovimientoPosteriorAConversion(
-                f'La fecha de conversión no puede ser anterior a la del '
-                f'último movimiento de la cuenta ({fecha_ultimo_mov_normal})'
-            )
-
-        super().clean(*args, **kwargs)
+    def clean(self):
+        super().clean()
+        self._verificar_fechas()
 
     def manejar_cambios(self):
         if self._state.adding:
@@ -645,3 +605,38 @@ class CuentaAcumulativa(Cuenta):
             'cuentas': [x.as_view_context(movimiento) for x in self.subcuentas.all()],
         })
         return context
+
+    def _verificar_fechas(self):
+        for titular in self.titulares:
+            if self.fecha_creacion < titular.fecha_alta:
+                raise errors.ErrorFechaAnteriorAAltaTitular(
+                    f"Fecha de creación de la cuenta {self.nombre} "
+                    f"({self.fecha_creacion}) posterior a la "
+                    f"fecha de alta de uno de sus titulares "
+                    f"({titular} - {titular.fecha_alta})"
+                )
+
+        if self.fecha_creacion > self.fecha_conversion:
+            raise errors.ErrorFechaCreacionPosteriorAConversion(
+                f"La fecha de creación de la cuenta {self.nombre} "
+                f"({self.fecha_creacion}) no puede ser posterior a su "
+                f"fecha de conversión ({self.fecha_conversion})"
+            )
+
+        for cuenta in self.subcuentas.all():
+            if self.fecha_conversion > cuenta.fecha_creacion:
+                raise errors.ErrorFechaConversionPosteriorACreacionSubcuenta(
+                    f"La fecha de conversión de la cuenta {self.nombre} "
+                    f"({self.fecha_conversion}) no puede ser posterior a la "
+                    f"fecha de creación de su subcuenta {cuenta.nombre} "
+                    f"({cuenta.fecha_creacion})"
+                )
+
+        movs_normales = self.movs_no_conversion()
+        fecha_ultimo_mov_normal = max([m.fecha for m in movs_normales]) \
+            if movs_normales.count() > 0 else date(1, 1, 1)
+        if self.fecha_conversion < fecha_ultimo_mov_normal:
+            raise errors.ErrorMovimientoPosteriorAConversion(
+                f'La fecha de conversión no puede ser anterior a la del '
+                f'último movimiento de la cuenta ({fecha_ultimo_mov_normal})'
+            )
