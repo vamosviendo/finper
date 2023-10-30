@@ -6,8 +6,8 @@ from diario.models import Titular, Cuenta, CuentaInteractiva
 
 
 @pytest.fixture(autouse=True)
-def tit(titular):
-    return titular
+def titular_principal(titular_principal):
+    return titular_principal
 
 
 def test_si_no_hay_titulares_redirige_a_crear_titular_con_get(client):

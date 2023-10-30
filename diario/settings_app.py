@@ -1,4 +1,1 @@
-TITULAR_PRINCIPAL = {
-    'titname': 'default',
-    'nombre': 'Titular por defecto'
-}
+TITULAR_PRINCIPAL = 'default'

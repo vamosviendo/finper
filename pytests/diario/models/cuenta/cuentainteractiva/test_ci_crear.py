@@ -6,8 +6,8 @@ from diario.models import CuentaInteractiva, Movimiento, Cuenta
 
 
 @pytest.fixture(autouse=True)
-def tit(titular):
-    return titular
+def titular_principal(titular_principal):
+    return titular_principal
 
 
 def test_llama_a_metodo_crear_de_clase_cuenta(mocker):

@@ -38,7 +38,7 @@ def test_detalle_movimiento(browser, entrada, salida, traspaso, cuenta_acumulati
         assert capitales_historicos[index] == float_format(titular.capital_historico(salida))
 
 
-def test_detalle_movimiento_en_cuenta_acumulativa(browser, titular, otro_titular, fecha):
+def test_detalle_movimiento_en_cuenta_acumulativa(browser, titular, otro_titular, titular_principal, fecha):
     # Creamos una cuenta
     browser.ir_a_pag(reverse('cta_nueva'))
     browser.completar_form(

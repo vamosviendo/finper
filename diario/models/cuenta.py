@@ -11,6 +11,7 @@ from diario.consts import *
 from diario.models.titular import Titular
 from diario.models.movimiento import Movimiento
 from diario.models.saldo import Saldo
+from diario.settings_app import TITULAR_PRINCIPAL
 from utils import errors
 from utils.iterables import remove_duplicates
 from utils.tiempo import Posicion
@@ -508,9 +509,10 @@ class CuentaInteractiva(Cuenta):
 
     def _corregir_titular_vacio(self):
         if self.titular is None:
-            titular = Titular.primere()
-            if titular is None:
-                raise errors.ErrorNoHayTitulares
+            try:
+                titular = Titular.tomar(titname=TITULAR_PRINCIPAL)
+            except Titular.DoesNotExist:
+                raise errors.ErrorTitularPorDefectoInexistente
             self.titular = titular
 
     def _impedir_cambio_de_titular(self):

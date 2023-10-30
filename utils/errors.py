@@ -185,6 +185,15 @@ class ErrorMovimientoAnteriorAFechaCreacion(ValidationError):
         super().__init__(message)
 
 
+class ErrorTitularPorDefectoInexistente(ValidationError):
+    def __init__(
+            self,
+            message='Titular por defecto inexistente. '
+                    'Revisar TITULAR_PRINCIPAL en diario/settings_app.py'
+    ):
+        super().__init__(message)
+
+
 class ErrorNoHayTitulares(ValidationError):
     def __init__(self, message='Tiene que haber al menos un titular'):
         super().__init__(message)

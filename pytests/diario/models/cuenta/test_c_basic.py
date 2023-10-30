@@ -62,7 +62,7 @@ def test_slug_no_permite_caracteres_no_alfanumericos():
         Cuenta.crear(nombre='Efectivo', slug='E!ec')
 
 
-def test_cuentas_se_ordenan_por_nombre():
+def test_cuentas_se_ordenan_por_nombre(titular_principal):
     cuenta1 = Cuenta.crear(nombre='Efectivo', slug='E')
     cuenta2 = Cuenta.crear(nombre='Banco', slug='ZZ')
     cuenta3 = Cuenta.crear(nombre='Cuenta Corriente', slug='CC')
