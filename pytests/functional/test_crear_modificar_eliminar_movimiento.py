@@ -217,7 +217,6 @@ def test_crear_traspaso_entre_titulares_sin_deuda(browser, cuenta, cuenta_ajena)
     capital_receptor = browser.esperar_elemento(
         f"id_capital_{cuenta.titular.titname}").text
 
-
     # Completamos el form de movimiento nuevo, seleccionando cuentas de
     # titulares distintos en los campos de cuentas. Cliqueamos en la casilla
     # "esgratis"
@@ -266,6 +265,8 @@ def test_crear_traspaso_entre_titulares_sin_deuda(browser, cuenta, cuenta_ajena)
 
 
 def test_modificar_movimiento(browser, entrada, cuenta_2):
+    # Las modificaciones hechas mediante el formulario de movimiento se ven
+    # reflejadas en el movimiento que se muestra en la página principal
     browser.ir_a_pag(reverse('mov_mod', args=[entrada.pk]))
     browser.completar_form(
         concepto='Movimiento con concepto modificado',
@@ -282,7 +283,21 @@ def test_modificar_movimiento(browser, entrada, cuenta_2):
     assert importe_movimiento == "124,00"
 
 
+def test_convertir_entrada_en_traspaso_entre_titulares(browser, entrada, cuenta_ajena):
+    # Cuando se agrega a un movimiento de entrada una cuenta ajena como cuenta
+    # de salida, se genera un contramovimiento con la misma fecha del movimiento
+    browser.ir_a_pag()
+    cantidad_movimientos = len(browser.esperar_elementos('class_row_mov'))
+    browser.ir_a_pag(reverse('mov_mod', args=[entrada.pk]))
+    browser.completar_form(cta_salida=cuenta_ajena.nombre, esgratis='False')
+    assert len(browser.esperar_elementos('class_row_mov')) == cantidad_movimientos + 1
+    mov_nuevo = browser.esperar_elemento('class_row_mov', By.CLASS_NAME)
+    assert mov_nuevo.esperar_elemento('class_td_concepto', By.CLASS_NAME).text == 'Constitución de crédito'
+    assert mov_nuevo.esperar_elemento('class_td_fecha', By.CLASS_NAME).text == entrada.fecha.strftime("%Y-%m-%d")
+
+
 def test_eliminar_movimiento(browser, entrada, salida):
+    # Cuando se elimina un movimiento desaparece de la página principal
     concepto = entrada.concepto
     browser.ir_a_pag(reverse('mov_elim', args=[entrada.pk]))
     browser.pulsar('id_btn_confirm')
