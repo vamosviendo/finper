@@ -6,7 +6,7 @@ from django.utils.formats import number_format
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 
-from diario.models import Cuenta
+from diario.models import Cuenta, CuentaInteractiva
 from utils.numeros import float_format
 from utils.tiempo import hoy
 from vvsteps.driver import MiWebElement
@@ -85,124 +85,138 @@ def test_cuentas_acumulativas_no_aparecen_entre_las_opciones_de_cuenta(
 
 
 def test_crear_creditos_o_devoluciones(
-        browser,
-        titular, otro_titular,
-        cuenta, cuenta_ajena,
-        cuenta_2, cuenta_ajena_2):
-
-    def chequear_mov_y_contramov(
-            concepto: str, importe: float,
-            cta_entrada: Cuenta, cta_salida: Cuenta,
-            concepto_contramov: str, saldo: float):
-        receptor = cta_entrada.titular
-        emisor = cta_salida.titular
-        nombre_cta_acreedora = f'préstamo entre {emisor.titname} y {receptor.titname}'
-        nombre_cta_deudora = f'préstamo entre {receptor.titname} y {emisor.titname}'
-        slug_cta_acreedora = f'_{emisor.titname}-{receptor.titname}'
-        slug_cta_deudora = f'_{receptor.titname}-{emisor.titname}'
-
-        # Completamos el form de movimiento nuevo, seleccionando cuentas de
-        # titulares distintos en los campos de cuentas
-        browser.crear_movimiento(
-            concepto=concepto,
-            importe=str(importe),
-            cta_entrada=cta_entrada.nombre,
-            cta_salida=cta_salida.nombre
-        )
-
-        # Vemos que además del movimiento creado se generó un movimiento automático
-        # con las siguientes características:
-        # - concepto "{concepto}"
-        mov = browser.esperar_movimiento("concepto", concepto)
-        contramov = browser.esperar_movimiento("concepto", concepto_contramov)
-        celdas_mov = textos_hijos(mov, "td")
-        celdas_contramov = textos_hijos(contramov, "td")
-
-        # - los nombres de los titulares en el detalle
-        assert celdas_contramov[2] == f"de {emisor.nombre} a {receptor.nombre}"
-
-        # - el mismo importe que el movimiento creado
-        assert celdas_mov[3] == celdas_contramov[3] == float_format(importe)
-
-        # - dos cuentas generadas automáticamente a partir de los titulares,
-        #   con la cuenta del titular de la cuenta de entrada del movimiento
-        #   creado como cuenta de salida, y viceversa
-        assert celdas_mov[4] == cta_entrada.nombre
-        assert celdas_mov[5] == cta_salida.nombre
-        assert celdas_contramov[4] == nombre_cta_acreedora
-        assert celdas_contramov[5] == nombre_cta_deudora
-
-        # - a diferencia del movimiento creado manualmente, no muestra botones
-        #   de editar o borrar.
-        assert mov.find_element_by_class_name("class_link_elim_mov").text == "B"
-        assert mov.find_element_by_class_name("class_link_mod_mov").text == "E"
-        with pytest.raises(NoSuchElementException):
-            contramov.find_element_by_class_name("class_link_elim_mov")
-        with pytest.raises(NoSuchElementException):
-            contramov.find_element_by_class_name("class_link_mod_mov")
-
-        # Si vamos a la página de detalles del titular de la cuenta de salida,
-        # vemos entre sus cuentas la cuenta generada automáticamente que lo
-        # muestra como acreedor, con saldo igual a {saldo}
-        browser.ir_a_pag(reverse('titular', args=[emisor.titname]))
-        link_cuenta = browser.esperar_elemento(f"id_link_cta_{slug_cta_acreedora}")
-        saldo_cuenta = browser.esperar_elemento(f"id_saldo_cta_{slug_cta_acreedora}")
-        assert \
-            link_cuenta.text == \
-            f"préstamo entre {emisor.titname} y {receptor.titname}"
-        assert saldo_cuenta.text == float_format(saldo)
-
-        # Si vamos a la página de detalles del titular de la cuenta de entrada,
-        # vemos entre sus cuentas la cuenta generada automáticamente que lo
-        # muestra como deudor, con saldo igual al negativo de {saldo}
-        if saldo != 0:
-            browser.ir_a_pag(reverse('titular', args=[receptor.titname]))
-            link_cuenta = browser.esperar_elemento(f"id_link_cta_{slug_cta_deudora}")
-            saldo_cuenta = browser.esperar_elemento(f"id_saldo_cta_{slug_cta_deudora}")
-            assert \
-                link_cuenta.text == \
-                f"préstamo entre {receptor.titname} y {emisor.titname}"
-            assert saldo_cuenta.text == float_format(-saldo)
-        else:
-            with pytest.raises(NoSuchElementException):
-                browser.esperar_elemento(f"id_link_cta_{slug_cta_deudora}")
-
+        browser, cuenta, cuenta_ajena, cuenta_2, cuenta_ajena_2):
     # Si generamos un movimiento entre cuentas de distintos titulares, se
     # genera un contramovimiento por el mismo importes entre cuentas
     # generadas automáticamente con los titulares invertidos
-    chequear_mov_y_contramov(
-        "Préstamo", 30, cuenta, cuenta_ajena, "Constitución de crédito", 30
+
+    # Completamos el form de movimiento nuevo, seleccionando cuentas de
+    # titulares distintos en los campos de cuentas
+    browser.crear_movimiento(
+        concepto="Préstamo",
+        importe="30",
+        cta_entrada=cuenta.nombre,
+        cta_salida=cuenta_ajena.nombre
     )
+    emisor = cuenta_ajena.titular
+    receptor = cuenta.titular
+
+    # Vemos que además del movimiento creado se generó un movimiento automático
+    # con las siguientes características:
+    # - concepto "{concepto}"
+    mov = browser.esperar_movimiento("concepto", "Préstamo")
+    contramov = browser.esperar_movimiento("concepto", "Constitución de crédito")
+    celdas_mov = textos_hijos(mov, "td")
+    celdas_contramov = textos_hijos(contramov, "td")
+
+    # - los nombres de los titulares en el detalle
+    assert celdas_contramov[2] == f"de {emisor.nombre} a {receptor.nombre}"
+
+    # - el mismo importe que el movimiento creado
+    assert celdas_mov[3] == celdas_contramov[3] == float_format(30)
+
+    # - dos cuentas generadas automáticamente a partir de los titulares,
+    #   con la cuenta del titular de la cuenta de entrada del movimiento
+    #   creado como cuenta de salida, y viceversa
+    assert celdas_mov[4] == cuenta.nombre
+    assert celdas_mov[5] == cuenta_ajena.nombre
+    assert celdas_contramov[4] == f"préstamo de {emisor.nombre} a {receptor.nombre}".lower()
+    assert celdas_contramov[5] == f"deuda de {receptor.nombre} con {emisor.nombre}".lower()
+
+    # - a diferencia del movimiento creado manualmente, no muestra botones
+    #   de editar o borrar.
+    assert mov.find_element_by_class_name("class_link_elim_mov").text == "B"
+    assert mov.find_element_by_class_name("class_link_mod_mov").text == "E"
+    with pytest.raises(NoSuchElementException):
+        contramov.find_element_by_class_name("class_link_elim_mov")
+    with pytest.raises(NoSuchElementException):
+        contramov.find_element_by_class_name("class_link_mod_mov")
+
+    # Si vamos a la página de detalles del titular de la cuenta de salida,
+    # vemos entre sus cuentas la cuenta generada automáticamente que lo
+    # muestra como acreedor, con saldo igual a {saldo}
+    browser.ir_a_pag(reverse('titular', args=[emisor.titname]))
+    link_cuenta = browser.esperar_elemento(f"id_link_cta__{emisor.titname}-{receptor.titname}")
+    saldo_cuenta = browser.esperar_elemento(f"id_saldo_cta__{emisor.titname}-{receptor.titname}")
+    assert \
+        link_cuenta.text == \
+        f"préstamo de {emisor.nombre} a {receptor.nombre}".lower()
+    assert saldo_cuenta.text == float_format(30)
 
     # Si generamos otro movimiento entre las mismas cuentas, el
     # contramovimiento se genera con concepto "Aumento de crédito" y el
     # saldo de las cuentas automáticas suma el importe del movimiento
-    chequear_mov_y_contramov(
-        "Otro préstamo", 10, cuenta, cuenta_ajena, "Aumento de crédito", 40
+    browser.crear_movimiento(
+        concepto="Otro préstamo",
+        importe="10",
+        cta_entrada=cuenta.nombre,
+        cta_salida=cuenta_ajena.nombre
     )
+    contramov = browser.esperar_movimiento("concepto", "Aumento de crédito")
+    celdas_contramov = textos_hijos(contramov, "td")
+    assert celdas_contramov[3] == float_format(10)
+    assert celdas_contramov[4] == f"préstamo de {emisor.nombre} a {receptor.nombre}".lower()
+    assert celdas_contramov[5] == f"deuda de {receptor.nombre} con {emisor.nombre}".lower()
+    saldo_cuenta_acreedora = browser.esperar_elemento(f"id_saldo_cta__{emisor.titname}-{receptor.titname}")
+    saldo_cuenta_deudora = browser.esperar_elemento(f"id_saldo_cta__{receptor.titname}-{emisor.titname}")
+    assert saldo_cuenta_acreedora.text == float_format(30+10)
+    assert saldo_cuenta_deudora.text == float_format(-30-10)
 
     # Si generamos un movimiento entre las mismas cuentas pero invertidas,
     # el contramovimiento se genera con concepto "Pago a cuenta de crédito" y
     # el importe se resta del saldo de las cuentas automáticas
-    chequear_mov_y_contramov(
-        "Devolución parcial", 15, cuenta_ajena, cuenta,
-        "Pago a cuenta de crédito", -25
+    browser.crear_movimiento(
+        concepto="Devolución parcial",
+        importe="15",
+        cta_entrada=cuenta_ajena.nombre,
+        cta_salida=cuenta.nombre
     )
+    contramov = browser.esperar_movimiento("concepto", "Pago a cuenta de crédito")
+    celdas_contramov = textos_hijos(contramov, "td")
+    assert celdas_contramov[3] == float_format(15)
+    assert celdas_contramov[4] == f"deuda de {receptor.nombre} con {emisor.nombre}".lower()
+    assert celdas_contramov[5] == f"préstamo de {emisor.nombre} a {receptor.nombre}".lower()
+    saldo_cuenta_acreedora = browser.esperar_elemento(f"id_saldo_cta__{emisor.titname}-{receptor.titname}")
+    saldo_cuenta_deudora = browser.esperar_elemento(f"id_saldo_cta__{receptor.titname}-{emisor.titname}")
+    assert saldo_cuenta_acreedora.text == float_format(30+10-15)
+    assert saldo_cuenta_deudora.text == float_format(-30-10+15)
 
     # Si generamos un movimiento entre otras cuentas de los mismos titulares,
     # sucede lo mismo que si usáramos las cuentas originales
-    chequear_mov_y_contramov(
-        "Devolución parcial con otras cuentas", 7, cuenta_ajena_2, cuenta_2,
-        "Pago a cuenta de crédito", -18
+    browser.crear_movimiento(
+        concepto="Devolución parcial con otras cuentas",
+        importe="7",
+        cta_entrada=cuenta_ajena_2.nombre,
+        cta_salida=cuenta_2.nombre
     )
+    contramov = browser.esperar_movimiento("concepto", "Pago a cuenta de crédito")
+    celdas_contramov = textos_hijos(contramov, "td")
+    assert celdas_contramov[3] == float_format(7)
+    assert celdas_contramov[4] == f"deuda de {receptor.nombre} con {emisor.nombre}".lower()
+    assert celdas_contramov[5] == f"préstamo de {emisor.nombre} a {receptor.nombre}".lower()
+    saldo_cuenta_acreedora = browser.esperar_elemento(f"id_saldo_cta__{emisor.titname}-{receptor.titname}")
+    saldo_cuenta_deudora = browser.esperar_elemento(f"id_saldo_cta__{receptor.titname}-{emisor.titname}")
+    assert saldo_cuenta_acreedora.text == float_format(30+10-15-7)
+    assert saldo_cuenta_deudora.text == float_format(-30-10+15+7)
 
     # Si generamos un movimiento entre ambos titulares con importe igual al
     # total de la deuda, el contramovimiento se genera con concepto
     # "Cancelación de crédito"...
-    chequear_mov_y_contramov(
-        "Devolución total", 18, cuenta_ajena, cuenta,
-        "Cancelación de crédito", 0
+    browser.crear_movimiento(
+        concepto="Devolución total",
+        importe="2",
+        cta_entrada=cuenta.nombre,
+        cta_salida=cuenta_ajena.nombre
     )
+    contramov = browser.esperar_movimiento("concepto", "Cancelación de crédito")
+    celdas_contramov = textos_hijos(contramov, "td")
+    assert celdas_contramov[3] == float_format(2)
+    assert celdas_contramov[4] == f"deuda de {receptor.nombre} con {emisor.nombre}".lower()
+    assert celdas_contramov[5] == f"préstamo de {emisor.nombre} a {receptor.nombre}".lower()
+    saldo_cuenta_acreedora = browser.esperar_elemento(f"id_saldo_cta__{emisor.titname}-{receptor.titname}")
+    saldo_cuenta_deudora = browser.esperar_elemento(f"id_saldo_cta__{receptor.titname}-{emisor.titname}")
+    assert saldo_cuenta_acreedora.text == float_format(30+10-15-7-18)
+    assert saldo_cuenta_deudora.text == float_format(-30-10+15+7+18)
 
 
 def test_crear_traspaso_entre_titulares_sin_deuda(browser, cuenta, cuenta_ajena):

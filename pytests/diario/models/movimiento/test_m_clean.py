@@ -104,13 +104,10 @@ def test_cuenta_credito_no_puede_ser_cta_salida_contra_cta_entrada_normal(
 
 def test_cuenta_credito_solo_puede_moverse_contra_su_contracuenta(
         cuenta_credito_acreedor, cuenta_ajena, titular_gordo):
-    # cc12, cc21 = self.generar_cuentas_credito()
-    # titular3 = Titular.crear(nombre='Titular 3', titname='tit3')
     cuenta_gorda = Cuenta.crear(
         nombre='Cuenta titular gordo', slug='ctg', titular=titular_gordo)
     mov = Movimiento.crear(
         'Otro préstamo', 70, cuenta_ajena, cuenta_gorda)
-    # cc32, cc23 = movimiento2.recuperar_cuentas_credito()
     ca_gordo_otro, _ = mov.recuperar_cuentas_credito()
     mov_no = Movimiento(
         concepto='Movimiento entre cuentas incompatibles',
@@ -121,8 +118,8 @@ def test_cuenta_credito_solo_puede_moverse_contra_su_contracuenta(
 
     with pytest.raises(
         ValidationError,
-        match='"préstamo entre gordo y otro" no es la contrapartida '
-        'de "préstamo entre otro y titular"'
+        match='"préstamo de titular gordo a otro titular" no es la contrapartida '
+        'de "préstamo de otro titular a titular"'
     ):
         mov_no.full_clean()
 

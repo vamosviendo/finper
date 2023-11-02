@@ -49,8 +49,8 @@ class TestSaveMovimientoEntreCuentasDeDistintosTitulares:
         credito_no_guardado.save()
         assert Cuenta.cantidad() == 4
 
-        cc1 = list(Cuenta.todes())[-2]
-        cc2 = list(Cuenta.todes())[-1]
+        cc1 = list(Cuenta.todes())[-1]
+        cc2 = list(Cuenta.todes())[-2]
         assert cc1.slug == '_otro-titular'
         assert cc2.slug == '_titular-otro'
 

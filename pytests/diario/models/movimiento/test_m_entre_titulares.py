@@ -53,10 +53,17 @@ def test_integrativo_genera_cuenta_credito_y_subcuentas_y_movimiento(cuenta, cue
     assert Cuenta.cantidad() == 4
     assert Movimiento.cantidad() == 2
 
-    cuenta_deudora = Cuenta.tomar(slug='_titular-otro')
     cuenta_acreedora = Cuenta.tomar(slug='_otro-titular')
+    cuenta_deudora = Cuenta.tomar(slug='_titular-otro')
+
     assert cuenta_acreedora.saldo == movimiento.importe
     assert cuenta_deudora.saldo == -cuenta_acreedora.saldo
+
+    assert cuenta_acreedora.titular == cuenta_ajena.titular
+    assert cuenta_deudora.titular == cuenta.titular
+
+    assert cuenta_acreedora.nombre == f'Préstamo de {cuenta_ajena.titular.nombre} a {cuenta.titular.nombre}'.lower()
+    assert cuenta_deudora.nombre == f'Deuda de {cuenta.titular.nombre} con {cuenta_ajena.titular.nombre}'.lower()
 
     mov_credito = Movimiento.tomar(concepto='Constitución de crédito')
     assert mov_credito.detalle == 'de Otro Titular a Titular'

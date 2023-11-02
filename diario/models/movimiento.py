@@ -461,15 +461,15 @@ class Movimiento(MiModel):
         if not self.emisor or not self.receptor or self.emisor == self.receptor:
             raise errors.ErrorMovimientoNoPrestamo
         cc1 = cls.crear(
-            nombre=f'Préstamo entre {self.emisor.titname} '
-                   f'y {self.receptor.titname}',
+            nombre=f'Préstamo de {self.emisor.nombre} '
+                   f'a {self.receptor.nombre}',
             slug=f'_{self.emisor.titname}-{self.receptor.titname}',
             titular=self.emisor,
             fecha_creacion=self.fecha
         )
         cc2 = cls.crear(
-            nombre=f'Préstamo entre {self.receptor.titname} '
-                   f'y {self.emisor.titname}',
+            nombre=f'Deuda de {self.receptor.nombre} '
+                   f'con {self.emisor.nombre}',
             slug=f'_{self.receptor.titname}-{self.emisor.titname}',
             titular=self.receptor,
             _contracuenta=cc1,
