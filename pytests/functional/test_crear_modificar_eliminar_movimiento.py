@@ -199,6 +199,27 @@ def test_crear_creditos_o_devoluciones(
     assert saldo_cuenta_acreedora.text == float_format(30+10-15-7)
     assert saldo_cuenta_deudora.text == float_format(-30-10+15+7)
 
+    # Si generamos un movimiento entre ambos titulares con importe mayor al
+    # total de la deuda:
+    # - el contramovimiento se genera con concepto ""
+    # - las cuentas crédito cambian de nombre y de slug (deuda de receptor con emisor se convierte en
+    #   préstamo de receptor a emisor y viceversa)
+    browser.crear_movimiento(
+        concepto="Devolución con exceso",
+        importe="20",
+        cta_entrada=cuenta_ajena.nombre,
+        cta_salida=cuenta.nombre
+    )
+    contramov = browser.esperar_movimiento("concepto", "Pago en exceso de crédito")
+    celdas_contramov = textos_hijos(contramov, "td")
+    assert celdas_contramov[3] == float_format(20)
+    assert celdas_contramov[4] == f"préstamo de {receptor.nombre} a {emisor.nombre}".lower()
+    assert celdas_contramov[5] == f"deuda de {emisor.nombre} con {receptor.nombre}".lower()
+    saldo_cuenta_acreedora = browser.esperar_elemento(f"id_saldo_cta__{receptor.titname}-{emisor.titname}")
+    saldo_cuenta_deudora = browser.esperar_elemento(f"id_saldo_cta__{emisor.titname}-{receptor.titname}")
+    assert saldo_cuenta_acreedora.text == float_format(-30-10+15+7+20)
+    assert saldo_cuenta_deudora.text == float_format(30+10-15-7-20)
+
     # Si generamos un movimiento entre ambos titulares con importe igual al
     # total de la deuda, el contramovimiento se genera con concepto
     # "Cancelación de crédito"...

@@ -154,6 +154,7 @@ class TestMovimientoEntreCuentasDeDistintosTitulares:
         (10, 'cuenta', 'cuenta_ajena', 'Aumento de crédito'),
         (128, 'cuenta_ajena', 'cuenta', 'Cancelación de crédito'),
         (80, 'cuenta_ajena', 'cuenta', 'Pago a cuenta de crédito'),
+        (150, 'cuenta_ajena', 'cuenta', 'Pago en exceso de crédito'),
     ])
     def test_genera_concepto_de_contramovimiento_segun_situacion_de_credito_existente(
             self, credito, imp, fixt_ce, fixt_cs, concepto, request):

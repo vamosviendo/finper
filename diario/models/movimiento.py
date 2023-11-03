@@ -623,14 +623,14 @@ class Movimiento(MiModel):
         self._crear_movimiento_credito()
 
     def _concepto_movimiento_credito(self,
-                                     cuenta_acreedora: CuentaInteractiva,
-                                     cuenta_deudora: CuentaInteractiva) -> str:
+                                     cuenta_emisora: CuentaInteractiva,
+                                     cuenta_receptora: CuentaInteractiva) -> str:
 
-        if cuenta_acreedora.saldo > 0:  # (1)
+        if cuenta_emisora.saldo > 0:  # (1)
             concepto = 'Aumento de crédito'
-        elif cuenta_acreedora.saldo < 0:
-            concepto = 'Cancelación de crédito' \
-                if self.importe == cuenta_deudora.saldo \
+        elif cuenta_emisora.saldo < 0:
+            concepto = 'Cancelación de crédito' if self.importe == cuenta_receptora.saldo \
+                else 'Pago en exceso de crédito' if self.importe > cuenta_receptora.saldo \
                 else 'Pago a cuenta de crédito'
         else:
             concepto = 'Constitución de crédito'
