@@ -456,27 +456,6 @@ class Movimiento(MiModel):
         self.cta_entrada = self.cta_entrada.tomar_del_slug() \
             if self.cta_entrada else None
 
-    def _generar_cuentas_credito(self) -> Tuple:
-        cls = self.get_related_class(CTA_ENTRADA)
-        if not self.emisor or not self.receptor or self.emisor == self.receptor:
-            raise errors.ErrorMovimientoNoPrestamo
-        cc1 = cls.crear(
-            nombre=f'Préstamo de {self.emisor.nombre} '
-                   f'a {self.receptor.nombre}',
-            slug=f'_{self.emisor.titname}-{self.receptor.titname}',
-            titular=self.emisor,
-            fecha_creacion=self.fecha
-        )
-        cc2 = cls.crear(
-            nombre=f'Deuda de {self.receptor.nombre} '
-                   f'con {self.emisor.nombre}',
-            slug=f'_{self.receptor.titname}-{self.emisor.titname}',
-            titular=self.receptor,
-            _contracuenta=cc1,
-            fecha_creacion=self.fecha
-        )
-        return cc1, cc2
-
     def _actualizar_saldos_cuenta(self, campo_cuenta: str, mantiene_orden_dia: bool):
         if campo_cuenta not in campos_cuenta:
             raise ValueError(
@@ -575,6 +554,18 @@ class Movimiento(MiModel):
             and self.cta_salida == self.viejo.cta_entrada
         )
 
+    def _gestionar_transferencia(self):
+        if self.receptor not in self.emisor.acreedores.all():
+            self.emisor.deudores.add(self.receptor)
+        else:
+            deuda = self.emisor.deuda_con(self.receptor)
+            if self.importe >= deuda:
+                self.receptor.cancelar_deuda_de(self.emisor)
+                if self.importe > deuda:
+                    self.emisor.deudores.add(self.receptor)
+                    self._regenerar_nombres_de_cuentas_credito()
+        self._crear_movimiento_credito()
+
     def _crear_movimiento_credito(self):
         # TODO: ¿manejar con try/except?
         cuenta_acreedora, cuenta_deudora = self.recuperar_cuentas_credito()
@@ -597,17 +588,26 @@ class Movimiento(MiModel):
         )
         self.id_contramov = contramov.id
 
-    def _gestionar_transferencia(self):
-        if self.receptor not in self.emisor.acreedores.all():
-            self.emisor.deudores.add(self.receptor)
-        else:
-            deuda = self.emisor.deuda_con(self.receptor)
-            if self.importe >= deuda:
-                self.receptor.cancelar_deuda_de(self.emisor)
-                if self.importe > deuda:
-                    self.emisor.deudores.add(self.receptor)
-                    self._regenerar_nombres_de_cuentas_credito()
-        self._crear_movimiento_credito()
+    def _generar_cuentas_credito(self) -> Tuple:
+        cls = self.get_related_class(CTA_ENTRADA)
+        if not self.emisor or not self.receptor or self.emisor == self.receptor:
+            raise errors.ErrorMovimientoNoPrestamo
+        cc1 = cls.crear(
+            nombre=f'Préstamo de {self.emisor.nombre} '
+                   f'a {self.receptor.nombre}',
+            slug=f'_{self.emisor.titname}-{self.receptor.titname}',
+            titular=self.emisor,
+            fecha_creacion=self.fecha
+        )
+        cc2 = cls.crear(
+            nombre=f'Deuda de {self.receptor.nombre} '
+                   f'con {self.emisor.nombre}',
+            slug=f'_{self.receptor.titname}-{self.emisor.titname}',
+            titular=self.receptor,
+            _contracuenta=cc1,
+            fecha_creacion=self.fecha
+        )
+        return cc1, cc2
 
     def _regenerar_nombres_de_cuentas_credito(self):
         ce = self.emisor.cuenta_credito_con(self.receptor)
