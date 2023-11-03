@@ -606,7 +606,17 @@ class Movimiento(MiModel):
                 self.receptor.cancelar_deuda_de(self.emisor)
                 if self.importe > deuda:
                     self.emisor.deudores.add(self.receptor)
+                    self._regenerar_nombres_de_cuentas_credito()
         self._crear_movimiento_credito()
+
+    def _regenerar_nombres_de_cuentas_credito(self):
+        ce = self.emisor.cuenta_credito_con(self.receptor)
+        cs = self.receptor.cuenta_credito_con(self.emisor)
+        ce.nombre = f'Préstamo de {self.emisor.nombre} a {self.receptor.nombre}'
+        cs.nombre = f'Deuda de {self.receptor.nombre} con {self.emisor.nombre}'
+        for c in ce, cs:
+            c.full_clean()
+            c.save()
 
     def _eliminar_contramovimiento(self):
         contramov = Movimiento.tomar(id=self.id_contramov)
