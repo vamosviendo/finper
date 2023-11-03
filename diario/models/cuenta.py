@@ -8,6 +8,7 @@ from django.db.models import Sum
 from django.urls import reverse
 
 from diario.consts import *
+from diario.fields import CaseInsensitiveCharField
 from diario.models.titular import Titular
 from diario.models.movimiento import Movimiento
 from diario.models.saldo import Saldo
@@ -27,7 +28,7 @@ def signo(condicion):
 
 
 class Cuenta(PolymorphModel):
-    nombre = models.CharField(max_length=100, unique=True)
+    nombre = CaseInsensitiveCharField(max_length=100, unique=True)
     slug = models.CharField(
         max_length=20, unique=True, validators=[alfaminusculas])
     cta_madre = models.ForeignKey(
@@ -104,7 +105,7 @@ class Cuenta(PolymorphModel):
         return self.saldo_set.last()
 
     def clean_fields(self, exclude=None):
-        self._pasar_nombre_y_slug_a_minuscula()
+        self._pasar_slug_a_minuscula()
         super().clean_fields(exclude=exclude)
 
     def clean(self):
@@ -220,11 +221,9 @@ class Cuenta(PolymorphModel):
             self.cta_madre.saldo -= saldo_guardado
             self.cta_madre.save()
 
-    def _pasar_nombre_y_slug_a_minuscula(self):
+    def _pasar_slug_a_minuscula(self):
         if self.slug:
             self.slug = self.slug.lower()
-        if self.nombre:
-            self.nombre = self.nombre.lower()
 
     def _chequear_incongruencias_de_clase(self):
         if self.es_acumulativa and self.como_subclase().subcuentas.count()== 0:

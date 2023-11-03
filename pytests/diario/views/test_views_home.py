@@ -27,11 +27,11 @@ def test_pasa_cuentas_a_template(cuenta, cuenta_ajena, response):
 
 def test_pasa_cuentas_ordenadas_por_nombre(client, cuenta, cuenta_2, cuenta_ajena):
     cuenta.nombre = 'J'
-    cuenta.save()
     cuenta_2.nombre = 'z'
-    cuenta_2.save()
     cuenta_ajena.nombre = 'a'
-    cuenta_ajena.save()
+    for c in cuenta, cuenta_2, cuenta_ajena:
+        c.full_clean()
+        c.save()
     response = client.get(reverse('home'))
 
     assert \

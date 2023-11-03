@@ -20,6 +20,12 @@ def test_no_permite_nombres_ni_slugs_duplicados(titular_principal):
         cuenta3.full_clean()
 
 
+def test_no_permite_nombres_duplicados_con_distintas_mayusculas(cuenta):
+    cuenta2 = Cuenta(nombre='CUENTA', slug='xx')
+    with pytest.raises(ValidationError):
+        cuenta2.full_clean()
+
+
 def test_no_permite_slug_vacio():
     cuenta = Cuenta(nombre='Efectivo')
     with pytest.raises(ValidationError):
