@@ -2,6 +2,11 @@ import pytest
 from django.urls import reverse
 
 
+@pytest.fixture(autouse=True)
+def mock_titular_principal(mocker, titular):
+    return mocker.patch('diario.forms.TITULAR_PRINCIPAL', titular.titname)
+
+
 def test_crear_cuenta(browser, titular, fecha):
     """ Cuando vamos a la página de cuenta nueva y completamos el formulario,
         aparece una cuenta nueva entre las cuentas del sitio. """

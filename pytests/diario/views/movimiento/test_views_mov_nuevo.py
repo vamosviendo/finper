@@ -24,6 +24,11 @@ def response_post(client, fecha, importe, cuenta) -> HttpResponse:
     )
 
 
+@pytest.fixture(autouse=True)
+def mock_titular_principal(mocker, titular):
+    return mocker.patch('diario.forms.TITULAR_PRINCIPAL', titular.titname)
+
+
 def test_usa_template_mov_form(cuenta, response):
     asserts.assertTemplateUsed(response, 'diario/mov_form.html')
 

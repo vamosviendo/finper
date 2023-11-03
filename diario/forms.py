@@ -5,6 +5,8 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from diario.models import CuentaAcumulativa, CuentaInteractiva, Movimiento, Titular
+from diario.settings_app import TITULAR_PRINCIPAL
+
 from utils.iterables import hay_mas_de_un_none_en
 
 
@@ -20,6 +22,7 @@ class FormCuenta(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['fecha_creacion'].initial = timezone.now().date()
+        self.fields['titular'].initial = Titular.tomar(titname=TITULAR_PRINCIPAL)
         for _, campo in self.fields.items():
             agregar_clase(campo, 'form-control')
 

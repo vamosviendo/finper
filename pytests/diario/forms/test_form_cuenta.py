@@ -1,8 +1,16 @@
+import pytest
+
 from datetime import date
 
 from django import forms
 
 from diario.forms import FormCuenta
+from diario.models import Titular
+
+
+@pytest.fixture(autouse=True)
+def mock_titular_principal(mocker, titular):
+    return mocker.patch('diario.forms.TITULAR_PRINCIPAL', titular.titname)
 
 
 def test_no_acepta_cuentas_sin_slug():
@@ -30,3 +38,8 @@ def test_campo_fecha_creacion_usa_widget_DateInput():
 def test_campo_fecha_creacion_muestra_fecha_actual_como_valor_por_defecto():
     formcta = FormCuenta()
     assert formcta.fields['fecha_creacion'].initial == date.today()
+
+
+def test_campo_titular_muestra_titular_principal_como_valor_por_defecto(mock_titular_principal):
+    formcta = FormCuenta()
+    assert formcta.fields['titular'].initial == Titular.tomar(titname=mock_titular_principal)

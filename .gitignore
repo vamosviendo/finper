@@ -9,6 +9,7 @@ __pycache__
 .idea
 .swp
 .tags
+diario/settings_app.py
 
 .project
 .pydevproject
