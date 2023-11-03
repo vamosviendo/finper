@@ -414,7 +414,7 @@ class Movimiento(MiModel):
                     slug=f'_{self.receptor.titname}'
                          f'-{self.emisor.titname}'))
         except cls.DoesNotExist:
-            return None, None
+            return self._generar_cuentas_credito()
 
     def as_view_context(self):
         context = {
@@ -567,10 +567,7 @@ class Movimiento(MiModel):
         self._crear_movimiento_credito()
 
     def _crear_movimiento_credito(self):
-        # TODO: ¿manejar con try/except?
         cuenta_acreedora, cuenta_deudora = self.recuperar_cuentas_credito()
-        if cuenta_acreedora is None:
-            cuenta_acreedora, cuenta_deudora = self._generar_cuentas_credito()
 
         concepto = self._concepto_movimiento_credito(
             cuenta_acreedora, cuenta_deudora)
