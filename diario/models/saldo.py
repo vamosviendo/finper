@@ -10,6 +10,7 @@ la consulta a base de datos y ver cuál es más rápido, en una de esas calcular
 es más rápido y hago desaparecer este modelo).
 """
 import operator
+from typing import Self, TYPE_CHECKING
 
 from django.db import models
 
@@ -17,6 +18,10 @@ from utils import errors
 from vvmodel.models import MiModel
 
 from utils.tiempo import Posicion
+
+
+if TYPE_CHECKING:
+    from diario.models import Movimiento, Cuenta, CuentaInteractiva
 
 
 class Saldo(MiModel):
@@ -31,34 +36,34 @@ class Saldo(MiModel):
         unique_together = ['cuenta', 'movimiento']
         ordering = ['movimiento']
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'{self.cuenta} al {self.movimiento.fecha} - {self.movimiento.orden_dia}: {self.importe}'
 
     @property
-    def importe(self):
+    def importe(self) -> float:
         return self._importe
 
     @importe.setter
-    def importe(self, valor):
+    def importe(self, valor: float):
         self._importe = round(valor, 2)
 
     @property
-    def posicion(self):
+    def posicion(self) -> Posicion:
         return self.movimiento.posicion
 
     @property
-    def viene_de_entrada(self):
+    def viene_de_entrada(self) -> bool:
         try:
             return self == self.movimiento.saldo_ce()
         except AttributeError:
             return False
 
     @property
-    def viene_de_salida(self):
+    def viene_de_salida(self) -> bool:
         return not self.viene_de_entrada
 
     @classmethod
-    def tomar(cls, **kwargs):
+    def tomar(cls, **kwargs) -> Self:
         cuenta = kwargs['cuenta']
         movimiento = kwargs['movimiento']
 
@@ -94,7 +99,7 @@ class Saldo(MiModel):
             return result
 
     @classmethod
-    def generar(cls, mov, cuenta=None, salida=False):
+    def generar(cls, mov: 'Movimiento', cuenta: 'CuentaInteractiva' = None, salida: bool = False) -> Self:
         importe = mov.importe if not salida else -mov.importe
         cuenta = cuenta or (mov.cta_salida if salida else mov.cta_entrada)
         if cuenta not in (mov.cta_entrada, mov.cta_salida):
@@ -123,7 +128,7 @@ class Saldo(MiModel):
         self.delete()
         self.cuenta.recalcular_saldos_entre(self.posicion)
 
-    def anterior(self):
+    def anterior(self) -> Self:
         return Saldo._anterior_a(
             self.posicion,
             self.cuenta
@@ -142,11 +147,15 @@ class Saldo(MiModel):
         )
 
     @staticmethod
-    def _anterior_a(posicion, cuenta):
+    def _anterior_a(posicion: Posicion, cuenta: models.ForeignKey['Cuenta']) -> 'Saldo':
         return Saldo.anteriores_a(cuenta, posicion).last()
 
     @staticmethod
-    def anteriores_a(cuenta, posicion=Posicion(), inclusive_od=False):
+    def anteriores_a(
+            cuenta: models.ForeignKey['Cuenta'],
+            posicion: Posicion = Posicion(),
+            inclusive_od: bool = False
+    ) -> models.QuerySet['Saldo']:
         es_anterior = operator.le if inclusive_od else operator.lt
         ids = [
             saldo.id for saldo in cuenta.saldo_set.all()
@@ -156,7 +165,11 @@ class Saldo(MiModel):
         return cuenta.saldo_set.filter(id__in=ids)
 
     @staticmethod
-    def posteriores_a(cuenta, posicion=Posicion(), inclusive_od=False):
+    def posteriores_a(
+            cuenta: models.ForeignKey['Cuenta'],
+            posicion: Posicion = Posicion(),
+            inclusive_od: bool = False
+    ) -> models.QuerySet['Saldo']:
         es_posterior = operator.ge if inclusive_od else operator.gt
         ids = [
             saldo.id for saldo in cuenta.saldo_set.all()
@@ -165,7 +178,7 @@ class Saldo(MiModel):
 
         return cuenta.saldo_set.filter(id__in=ids)
 
-    def _actualizar_posteriores(self, importe):
+    def _actualizar_posteriores(self, importe: float):
         for saldo_post in self.posteriores():
             saldo_post.importe += importe
             saldo_post.save()

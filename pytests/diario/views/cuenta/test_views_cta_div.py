@@ -25,10 +25,10 @@ def request_2_subcuentas() -> HttpRequest:
     req.method = 'POST'
     req.POST['form_0_nombre'] = 'Subcuenta 1'
     req.POST['form_0_slug'] = 'sc1'
-    req.POST['form_0_saldo'] = 50
+    req.POST['form_0_saldo'] = '50'
     req.POST['form_1_nombre'] = 'Subcuenta 2'
     req.POST['form_1_slug'] = 'sc2'
-    req.POST['form_1_saldo'] = 200
+    req.POST['form_1_saldo'] = '200'
     return req
 
 

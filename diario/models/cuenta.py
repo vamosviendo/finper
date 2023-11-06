@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 from datetime import date
+from typing import Optional, Self, List, Sequence, Set
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
-from django.db.models import Sum
 from django.urls import reverse
 
 from diario.consts import *
@@ -43,7 +45,7 @@ class Cuenta(PolymorphModel):
         ordering = ('nombre', )
 
     @classmethod
-    def crear(cls, nombre, slug, cta_madre=None, finalizar=False, **kwargs):
+    def crear(cls, nombre: str, slug: str, cta_madre: 'CuentaAcumulativa' = None, finalizar=False, **kwargs) -> Self:
 
         if finalizar:
             cuenta_nueva = super().crear(nombre=nombre, slug=slug,
@@ -58,33 +60,33 @@ class Cuenta(PolymorphModel):
         return self.nombre
 
     @property
-    def es_interactiva(self):
+    def es_interactiva(self) -> bool:
         return str(self.content_type) == 'diario | cuenta interactiva'
 
     @property
-    def es_acumulativa(self):
+    def es_acumulativa(self) -> bool:
         return str(self.content_type) == 'diario | cuenta acumulativa'
 
     @property
-    def es_cuenta_credito(self):
+    def es_cuenta_credito(self) -> bool:
         return self.has_not_none_attr('contracuenta')
 
     @property
-    def saldo(self):
+    def saldo(self) -> float:
         try:
             return self.ultimo_saldo.importe
         except AttributeError:
             return 0
     
-    def saldo_en_mov(self, movimiento):
+    def saldo_en_mov(self, movimiento: Movimiento) -> float:
         try:
             return Saldo.tomar(cuenta=self, movimiento=movimiento).importe
         except Saldo.DoesNotExist:
             return 0
 
     def recalcular_saldos_entre(self,
-                                pos_desde=Posicion(orden_dia=0),
-                                pos_hasta=Posicion(orden_dia=100000000)):
+                                pos_desde: Posicion = Posicion(orden_dia=0),
+                                pos_hasta: Posicion = Posicion(orden_dia=100000000)):
         pos_hasta.fecha = pos_hasta.fecha or date.today()
         pos_hasta.orden_dia = pos_hasta.orden_dia or 100000000
 
@@ -101,10 +103,10 @@ class Cuenta(PolymorphModel):
             saldo.save()
 
     @property
-    def ultimo_saldo(self):
+    def ultimo_saldo(self) -> Saldo:
         return self.saldo_set.last()
 
-    def clean_fields(self, exclude=None):
+    def clean_fields(self, exclude: Sequence[str] = None):
         self._pasar_slug_a_minuscula()
         super().clean_fields(exclude=exclude)
 
@@ -118,19 +120,19 @@ class Cuenta(PolymorphModel):
             raise errors.SaldoNoCeroException
         super().delete(*args, **kwargs)
 
-    def get_absolute_url(self):
+    def get_absolute_url(self) -> str:
         return reverse('cuenta', args=[self.slug])
 
-    def movs_directos(self):
+    def movs_directos(self) -> models.QuerySet[Movimiento]:
         """ Devuelve entradas y salidas de la cuenta sin los de sus subcuentas
         """
         return self.entradas.all() | self.salidas.all()
 
-    def movs_directos_en_fecha(self, fecha):
+    def movs_directos_en_fecha(self, fecha) -> models.QuerySet[Movimiento]:
         """ Devuelve movimientos directos de la cuenta en una fecha dada"""
         return self.movs_directos().filter(fecha=fecha)
 
-    def movs(self, order_by='fecha'):
+    def movs(self, order_by: str='fecha') -> models.QuerySet[Movimiento]:
         """ Devuelve movimientos propios y de sus subcuentas
             ordenados por fecha.
             Antes de protestar que devuelve lo mismo que movs_directos()
@@ -138,41 +140,41 @@ class Cuenta(PolymorphModel):
             """
         return self.movs_directos().order_by(order_by)
 
-    def movs_en_fecha(self, fecha):
+    def movs_en_fecha(self, fecha: date) -> models.QuerySet[Movimiento]:
         """ Devuelve movimientos propios y de sus subcuentas en una fecha dada.
         Ver comentario anterior."""
         return self.movs().filter(fecha=fecha)
 
-    def cantidad_movs(self):
+    def cantidad_movs(self) -> int:
         return self.entradas.count() + self.salidas.count()
 
-    def total_movs(self):
+    def total_movs(self) -> float:
         """ Devuelve suma de los importes de los movimientos de la cuenta"""
         total_entradas = self.entradas.all() \
-                             .aggregate(Sum('_importe'))['_importe__sum'] or 0
+                             .aggregate(models.Sum('_importe'))['_importe__sum'] or 0
         total_salidas = self.salidas.all()\
-                            .aggregate(Sum('_importe'))['_importe__sum'] or 0
+                            .aggregate(models.Sum('_importe'))['_importe__sum'] or 0
 
         return round(total_entradas - total_salidas, 2)
 
-    def fecha_ultimo_mov_directo(self):
+    def fecha_ultimo_mov_directo(self) -> Optional[date]:
         try:
             return self.movs_directos().order_by('fecha').last().fecha
         except AttributeError:
             return None
 
-    def tiene_madre(self):
+    def tiene_madre(self) -> bool:
         return self.cta_madre is not None
 
-    def tomar_del_slug(self):
+    def tomar_del_slug(self) -> Self:
         return Cuenta.tomar_o_nada(slug=self.slug)
 
-    def hermanas(self):
+    def hermanas(self) -> Optional[models.QuerySet[Self]]:
         if self.cta_madre:
             return self.cta_madre.subcuentas.all().exclude(pk=self.pk)
         return None
 
-    def ancestros(self):
+    def ancestros(self) -> list[Self]:
         cta_madre = self.cta_madre
         lista_ancestros = []
 
@@ -182,7 +184,7 @@ class Cuenta(PolymorphModel):
 
         return lista_ancestros
 
-    def as_view_context(self, movimiento=None, es_elemento_principal=False):
+    def as_view_context(self, movimiento: Movimiento = None, es_elemento_principal: bool = False) -> dict:
         context = {
             'nombre': self.nombre,
             'ctaname': self.slug,
@@ -260,7 +262,7 @@ class CuentaInteractiva(Cuenta):
                                 blank=True)
 
     @classmethod
-    def crear(cls, nombre, slug, cta_madre=None, saldo=None, **kwargs):
+    def crear(cls, nombre: str, slug: str, cta_madre: Cuenta = None, saldo: float = None, **kwargs) -> Self:
 
         cuenta_nueva = super().crear(nombre=nombre, slug=slug,
                                      cta_madre=cta_madre, finalizar=True,
@@ -283,7 +285,7 @@ class CuentaInteractiva(Cuenta):
         self._verificar_fecha_creacion_interactiva()
 
     @property
-    def contracuenta(self):
+    def contracuenta(self) -> Optional[Self]:
         """ En cuentas crédito, devuelve la cuenta crédito del titular
             de la cuenta contrapartida en el movimiento de crédito, o viceversa.
             En cuentas normales, devuelve None
@@ -299,7 +301,7 @@ class CuentaInteractiva(Cuenta):
     def corregir_saldo(self):
         self.recalcular_saldos_entre(Posicion(self.fecha_creacion))
 
-    def agregar_mov_correctivo(self):
+    def agregar_mov_correctivo(self) -> Optional[Movimiento]:
         if self.saldo_ok():
             return None
         saldo = self.ultimo_saldo
@@ -321,10 +323,14 @@ class CuentaInteractiva(Cuenta):
         saldo.save()
         return mov
 
-    def saldo_ok(self):
+    def saldo_ok(self) -> bool:
         return self.saldo == self.total_movs()
 
-    def dividir_entre(self, *subcuentas, fecha=None):
+    def dividir_entre(
+            self,
+            *subcuentas: dict[str, str | float] | Sequence[str | float],
+            fecha: date = None
+    ) -> List[Self]:
         fecha = fecha or date.today()
         try:
             if fecha < self.fecha_ultimo_mov_directo():
@@ -349,11 +355,11 @@ class CuentaInteractiva(Cuenta):
         )
         return cuentas_creadas
 
-    def dividir_y_actualizar(self, *subcuentas, fecha=None):
+    def dividir_y_actualizar(self, *subcuentas: Sequence[dict | Sequence], fecha: date = None) -> Cuenta | CuentaAcumulativa:
         self.dividir_entre(*subcuentas, fecha=fecha)
         return self.tomar_del_slug()
 
-    def as_view_context(self, movimiento=None, es_elemento_principal=False):
+    def as_view_context(self, movimiento: Movimiento = None, es_elemento_principal: bool = False) -> dict:
         context = super().as_view_context(movimiento, es_elemento_principal)
         context.update({
             'titulares': [self.titular.as_view_context(movimiento)],
@@ -363,7 +369,7 @@ class CuentaInteractiva(Cuenta):
 
     # Protected
 
-    def _ajustar_subcuentas(self, subcuentas):
+    def _ajustar_subcuentas(self, subcuentas: Sequence[dict | Sequence]) -> List[dict]:
         """ Verificar que todas las subcuentas sean diccionarios y
             que todas tengan saldo y tomar las acciones correspondientes
             en caso de que no sea así."""
@@ -415,7 +421,7 @@ class CuentaInteractiva(Cuenta):
         return subcuentas_limpias
 
     @staticmethod
-    def _asegurar_dict(subcuenta):
+    def _asegurar_dict(subcuenta: Sequence | dict) -> dict:
         """ Recibe un dict, lista o tupla con información de cuenta y
             los convierte a dict si es necesario."""
         if type(subcuenta) in (tuple, list):
@@ -432,7 +438,7 @@ class CuentaInteractiva(Cuenta):
 
         return dic_subcuenta
 
-    def _convertirse_en_acumulativa(self, fecha=None):
+    def _convertirse_en_acumulativa(self, fecha: date = None) -> CuentaAcumulativa:
         fecha = fecha or date.today()
         titular = self.titular
         pk_preservado = self.pk
@@ -450,7 +456,7 @@ class CuentaInteractiva(Cuenta):
         cuenta_acumulativa.save()
         return cuenta_acumulativa
 
-    def _vaciar_saldo(self, cuentas_limpias, fecha=None):
+    def _vaciar_saldo(self, cuentas_limpias: List[dict], fecha: date = None) -> List[Movimiento]:
         fecha = fecha or date.today()
         movimientos_incompletos = []
 
@@ -484,7 +490,11 @@ class CuentaInteractiva(Cuenta):
 
     @staticmethod
     def _generar_subcuentas(
-            cuentas_limpias, movimientos_incompletos, cta_madre, fecha):
+            cuentas_limpias: List[dict],
+            movimientos_incompletos: List[Movimiento],
+            cta_madre: CuentaAcumulativa,
+            fecha: date
+    ) -> List[CuentaInteractiva]:
 
         cuentas_creadas = list()
 
@@ -535,7 +545,7 @@ class CuentaAcumulativa(Cuenta):
                                 on_delete=models.CASCADE,)
 
     @property
-    def titulares(self):
+    def titulares(self) -> List[Titular]:
         titulares = list()
         subcuentas = list(self.subcuentas.all())
 
@@ -547,7 +557,7 @@ class CuentaAcumulativa(Cuenta):
 
         return remove_duplicates(titulares)
 
-    def arbol_de_subcuentas(self):
+    def arbol_de_subcuentas(self) -> Set[Cuenta]:
         todas_las_subcuentas = set(self.subcuentas.all())
         for cuenta in self.subcuentas.all():
             if cuenta.es_acumulativa:
@@ -555,7 +565,7 @@ class CuentaAcumulativa(Cuenta):
         return todas_las_subcuentas
 
     @property
-    def saldo(self):
+    def saldo(self) -> float:
         return sum([subc.saldo for subc in self.subcuentas.all()])
 
     def clean(self):
@@ -576,7 +586,7 @@ class CuentaAcumulativa(Cuenta):
         self.manejar_cambios()
         super().save(*args, **kwargs)
 
-    def movs(self, order_by='fecha'):
+    def movs(self, order_by: str = 'fecha') -> models.QuerySet[Movimiento]:
         """ Devuelve movimientos propios y de sus subcuentas
             ordenados por fecha."""
         result = super().movs(order_by=order_by)
@@ -587,10 +597,10 @@ class CuentaAcumulativa(Cuenta):
     def movs_conversion(self) -> models.QuerySet[Movimiento]:
         return self.movs().filter(convierte_cuenta__in=campos_cuenta)
 
-    def movs_no_conversion(self):
+    def movs_no_conversion(self) -> models.QuerySet[Movimiento]:
         return self.movs().filter(convierte_cuenta=None)
 
-    def agregar_subcuenta(self, nombre, slug, titular, fecha=None):
+    def agregar_subcuenta(self, nombre: str, slug: str, titular: Titular, fecha: date = None) -> Cuenta:
         return Cuenta.crear(
             nombre=nombre,
             slug=slug,
@@ -599,7 +609,7 @@ class CuentaAcumulativa(Cuenta):
             fecha_creacion=fecha or date.today()
         )
 
-    def as_view_context(self, movimiento=None, es_elemento_principal=False):
+    def as_view_context(self, movimiento: Movimiento = None, es_elemento_principal: bool = False) -> dict:
         context = super().as_view_context(movimiento, es_elemento_principal)
         context.update({
             'titulares': [x.as_view_context(movimiento) for x in self.titulares],

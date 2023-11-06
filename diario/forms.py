@@ -1,7 +1,9 @@
 from datetime import date
+from typing import List
 
 from django import forms
 from django.core.exceptions import ValidationError
+from django.forms import Field
 from django.utils import timezone
 
 from diario.models import CuentaAcumulativa, CuentaInteractiva, Movimiento, Titular
@@ -10,7 +12,7 @@ from diario.settings_app import TITULAR_PRINCIPAL
 from utils.iterables import hay_mas_de_un_none_en
 
 
-def agregar_clase(campo, clase):
+def agregar_clase(campo: Field, clase: str):
     if campo.widget.attrs.get('class'):
         campo.widget.attrs['class'] += ' form-control'
     else:
@@ -33,7 +35,7 @@ class FormCuenta(forms.ModelForm):
             'fecha_creacion': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
         }
 
-    def clean_slug(self):
+    def clean_slug(self) -> str:
         data = self.cleaned_data.get('slug')
         if data.startswith('_'):
             raise forms.ValidationError(
@@ -52,7 +54,7 @@ class FormSubcuenta(forms.Form):
         empty_label=None,
     )
 
-    def clean(self):
+    def clean(self) -> dict:
         self.cleaned_data = super().clean()
         self.cleaned_data['titular'] = \
             self.cleaned_data['titular'] or self.cuenta_madre.titular
@@ -126,7 +128,7 @@ class FormDividirCuenta(forms.Form):
         self.fields['form_0_titular'].initial = self.cuenta_madre.titular
         self.fields['form_1_titular'].initial = self.cuenta_madre.titular
 
-    def clean(self):
+    def clean(self) -> List[dict]:
         cleaned_data = super().clean()
         cleaned_data['form_0_titular'] = \
             cleaned_data.get('form_0_titular') or self.cuenta_madre.titular
@@ -153,7 +155,7 @@ class FormDividirCuenta(forms.Form):
 
         return self.subcuentas
 
-    def save(self):
+    def save(self) -> CuentaAcumulativa:
         return self.cuenta_madre.dividir_y_actualizar(
             *self.subcuentas,
             fecha=self.fecha
@@ -192,7 +194,7 @@ class FormMovimiento(forms.ModelForm):
             'importe': forms.NumberInput(attrs={'step': 0.01}),
         }
 
-    def clean(self):
+    def clean(self) -> dict:
         cleaned_data = super().clean()
         concepto = cleaned_data.get('concepto')
         if concepto.lower() == 'movimiento correctivo':
@@ -205,7 +207,7 @@ class FormMovimiento(forms.ModelForm):
             )
         return cleaned_data
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs) -> Movimiento:
         self.instance.importe = self.cleaned_data['importe']
         self.instance.esgratis = self.cleaned_data['esgratis']
         return super().save(*args, **kwargs)

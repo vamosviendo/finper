@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, List, Tuple
+from typing import TYPE_CHECKING, List, Tuple, Optional
 
 from datetime import date
 
@@ -165,7 +165,7 @@ class Movimiento(MiModel):
         self._importe = round(float(valor), 2)
 
     @property
-    def emisor(self) -> Titular | None:
+    def emisor(self) -> Optional[Titular]:
         try:
             if self.cta_salida.es_interactiva:
                 try:
@@ -177,7 +177,7 @@ class Movimiento(MiModel):
             return None
 
     @property
-    def receptor(self) -> Titular | None:
+    def receptor(self) -> Optional[Titular]:
         try:
             if self.cta_entrada.es_interactiva:
                 try:
