@@ -14,4 +14,6 @@ diario/settings_app.py
 .project
 .pydevproject
 .settings
+.mypy_cache
+.pytest_cache
 vfinper-old

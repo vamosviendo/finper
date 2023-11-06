@@ -9,6 +9,7 @@ def test_no_admite_guion_en_titname():
     with pytest.raises(ValidationError):
         titular.full_clean()
 
+
 def test_reemplaza_espacios_por_guiones_bajos():
     titular = Titular(nombre='Titular Titularini', titname='ti ti')
     titular.full_clean()

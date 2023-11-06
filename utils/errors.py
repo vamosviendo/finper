@@ -185,6 +185,15 @@ class ErrorMovimientoAnteriorAFechaCreacion(ValidationError):
         super().__init__(message)
 
 
+class ErrorMonedaBaseInexistente(ValidationError):
+    def __init__(
+            self,
+            message='Moneda base inexistente. '
+                    'Revisar MONEDA_BASE en diario/settings_app.py'
+    ):
+        super().__init__(message)
+
+
 class ErrorTitularPorDefectoInexistente(ValidationError):
     def __init__(
             self,

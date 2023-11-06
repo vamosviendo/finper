@@ -1,1 +1,3 @@
+MONEDA_BASE = None
+
 TITULAR_PRINCIPAL = 'default'
