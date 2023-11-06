@@ -5,16 +5,16 @@ from utils import errors
 
 
 @pytest.fixture
-def mock_moneda_base(mocker, moneda):
-    return mocker.patch('diario.utils.MONEDA_BASE', moneda.monname)
+def mock_moneda_base(mocker, peso):
+    return mocker.patch('diario.utils.MONEDA_BASE', peso.monname)
 
 
-def test_devuelve_moneda_base_tomada_de_settings_app(moneda, moneda_2, mock_moneda_base):
-    assert moneda_base() != moneda_2
-    assert moneda_base() == moneda
+def test_devuelve_moneda_base_tomada_de_settings_app(peso, dolar, mock_moneda_base):
+    assert moneda_base() != dolar
+    assert moneda_base() == peso
 
 
-def test_si_no_encuentra_moneda_base_tira_error_moneda_base_inexistente(moneda, moneda_2, mock_moneda_base):
-    moneda.delete()
+def test_si_no_encuentra_moneda_base_tira_error_moneda_base_inexistente(peso, dolar, mock_moneda_base):
+    peso.delete()
     with pytest.raises(errors.ErrorMonedaBaseInexistente):
         moneda_base()
