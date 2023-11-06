@@ -22,7 +22,7 @@ def cambiar_fecha_creacion(cuenta: CuentaInteractiva | CuentaAcumulativa, fecha:
     cuenta.save()
 
 
-def dividir_en_dos_subcuentas(cuenta: CuentaInteractiva, saldo=0, fecha=None) -> CuentaAcumulativa:
+def dividir_en_dos_subcuentas(cuenta: CuentaInteractiva, saldo: float = 0, fecha: date = None) -> CuentaAcumulativa:
     return cuenta.dividir_y_actualizar(
         ['subcuenta 1', 'sc1', saldo],
         ['subcuenta 2', 'sc2'],

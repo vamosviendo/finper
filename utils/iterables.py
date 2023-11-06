@@ -1,7 +1,7 @@
 from django.http import QueryDict
 
 
-def hay_mas_de_un_none_en(lista):
+def hay_mas_de_un_none_en(lista: list) -> bool:
     """ Devuelve True si [lista] tiene más de un None entre sus elementos."""
     nones = 0
     for elemento in lista:
@@ -11,12 +11,12 @@ def hay_mas_de_un_none_en(lista):
                 return True
 
 
-def remove_duplicates(lista):
+def remove_duplicates(lista: list) -> list:
     """ Recibe una lista y la devuelve sin elementos duplicados."""
     return list(set(lista))
 
 
-def dict2querydict(datos):
+def dict2querydict(datos: dict) -> QueryDict:
     qd = QueryDict('', mutable=True)
     qd.update(datos)
     return qd

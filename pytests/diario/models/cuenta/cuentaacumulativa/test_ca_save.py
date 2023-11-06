@@ -13,7 +13,7 @@ def nueva_fecha(cuenta_acumulativa: CuentaAcumulativa) -> date:
 
 @pytest.fixture
 def subcuentas_posteriores(cuenta_acumulativa: CuentaAcumulativa, nueva_fecha: date) -> None:
-    for sc in cuenta_acumulativa.subcuentas.all():
+    for sc in cuenta_acumulativa.subcuentas.all():  # type: ignore
         sc.fecha_creacion = nueva_fecha
         sc.full_clean()
         sc.save()
