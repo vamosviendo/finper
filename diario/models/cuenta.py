@@ -45,8 +45,11 @@ class Cuenta(PolymorphModel):
         ordering = ('nombre', )
 
     @classmethod
-    def crear(cls, nombre: str, slug: str, cta_madre: 'CuentaAcumulativa' = None, finalizar=False, **kwargs) -> Self:
+    def crear(cls, nombre: str, slug: str, cta_madre: 'CuentaAcumulativa' = None, finalizar=False, **kwargs) -> CuentaInteractiva:
+        """
 
+        @rtype: object
+        """
         if finalizar:
             cuenta_nueva = super().crear(nombre=nombre, slug=slug,
                                          cta_madre=cta_madre, **kwargs)
