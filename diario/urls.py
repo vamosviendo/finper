@@ -34,6 +34,7 @@ urlpatterns = [
     path('mov_nuevo', views.MovNuevoView.as_view(), name='mov_nuevo'),
     path('mov_elim/<int:pk>', views.MovElimView.as_view(), name='mov_elim'),
     path('mov_mod/<int:pk>', views.MovModView.as_view(), name='mov_mod'),
+    path('mon_nueva', views.MonNuevaView.as_view(), name='mon_nueva'),
     # URLs de verificación / corrección de saldos
     path('verificar_saldos', views.verificar_saldos_view, name='verificar_saldos'),
     path('corregir_saldo', views.CorregirSaldo.as_view(), name='corregir_saldo'),

@@ -7,7 +7,7 @@ from django.views.generic import CreateView, DeleteView, TemplateView, \
 from diario.forms import FormCuenta, FormMovimiento, FormDividirCuenta, \
     FormCrearSubcuenta, FormTitular
 from diario.models import Cuenta, CuentaInteractiva, CuentaAcumulativa, \
-    Movimiento, Titular
+    Movimiento, Titular, Moneda
 from diario.utils import saldo_general_historico, verificar_saldos
 
 
@@ -235,6 +235,13 @@ class TitModView(UpdateView):
     form_class = FormTitular
     slug_url_kwarg = 'titname'
     slug_field = 'titname'
+    success_url = reverse_lazy('home')
+
+
+class MonNuevaView(CreateView):
+    model = Moneda
+    template_name = 'diario/moneda_form.html'
+    fields = '__all__'
     success_url = reverse_lazy('home')
 
 
