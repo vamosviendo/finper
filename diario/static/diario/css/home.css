@@ -50,6 +50,18 @@ table.table-striped tr.mov_selected {
     background-color: #f0e6c7;
 }
 
+.div-monedas {
+    background-color: #e4c202;
+}
+
+.menu-item.class_td_moneda:hover {
+    background-color: #d4c56b;
+}
+
+.menu-item.class_td_titular.selected {
+    background-color: #e48a02;
+}
+
 .cell_fecha {
     max-width: 65px;
 }
