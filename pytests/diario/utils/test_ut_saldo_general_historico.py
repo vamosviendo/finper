@@ -1,7 +1,7 @@
 from datetime import timedelta
 
 from diario.models import Saldo, Movimiento
-from diario.utils import saldo_general_historico
+from diario.utils.utils_saldo import saldo_general_historico
 from utils.helpers_tests import dividir_en_dos_subcuentas
 
 

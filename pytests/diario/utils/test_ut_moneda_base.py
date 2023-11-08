@@ -1,12 +1,7 @@
 import pytest
 
-from diario.utils import moneda_base
+from diario.utils.utils_moneda import moneda_base
 from utils import errors
-
-
-@pytest.fixture
-def mock_moneda_base(mocker, peso):
-    return mocker.patch('diario.utils.MONEDA_BASE', peso.monname)
 
 
 def test_devuelve_moneda_base_tomada_de_settings_app(peso, dolar, mock_moneda_base):

@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from diario.utils import verificar_saldos
+from diario.utils.utils_saldo import verificar_saldos
 
 
 @pytest.fixture

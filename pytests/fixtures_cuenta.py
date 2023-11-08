@@ -8,7 +8,7 @@ from diario.models import (
     Cuenta,
     CuentaInteractiva,
     CuentaAcumulativa,
-    Movimiento
+    Movimiento, Moneda
 )
 
 
@@ -174,3 +174,15 @@ def cuenta_credito_acreedor(cuentas_credito: Tuple[CuentaInteractiva]) -> Cuenta
 @pytest.fixture
 def cuenta_credito_deudor(cuentas_credito: Tuple[CuentaInteractiva]) -> CuentaInteractiva:
     return cuentas_credito[1]
+
+
+@pytest.fixture
+def cuenta_en_dolares(titular: Titular, fecha: date, dolar: Moneda) -> CuentaInteractiva:
+    return Cuenta.crear(
+        nombre='cuenta en dolares', slug='cd', titular=titular, fecha_creacion=fecha, moneda=dolar)
+
+
+@pytest.fixture
+def cuenta_en_euros(titular: Titular, fecha: date, euro: Moneda) -> CuentaInteractiva:
+    return Cuenta.crear(
+        nombre='cuenta en euros', slug='ce', titular=titular, fecha_creacion=fecha, moneda=euro)

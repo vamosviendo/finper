@@ -1,3 +1,6 @@
+from typing import Optional
+from unittest.mock import MagicMock
+
 import pytest
 
 from diario.models import Moneda
@@ -28,3 +31,11 @@ def euro() -> Moneda:
         monname='eu',
         cotizacion=1105.82,
     )
+
+
+@pytest.fixture(autouse=True)
+def mock_moneda_base(mocker, request) -> Optional[MagicMock]:
+    if 'nomonbase' in request.keywords:
+        return
+    peso = request.getfixturevalue('peso')
+    return mocker.patch('diario.utils.utils_moneda.MONEDA_BASE', peso.monname)

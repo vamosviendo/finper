@@ -1,7 +1,10 @@
+import pytest
+
 from diario.models import Moneda
 
 
-def test_guarda_y_recupera_monedas():
+@pytest.mark.nomonbase
+def test_guarda_y_recupera_monedas(mock_moneda_base):
     moneda = Moneda()
     moneda.nombre = "Moneda"
     moneda.monname = "mn"

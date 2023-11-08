@@ -1,7 +1,7 @@
 from django import template
 
 from diario.models import Movimiento, Cuenta, Titular
-from diario.utils import saldo_general_historico
+from diario.utils.utils_saldo import saldo_general_historico
 from utils.numeros import float_format
 
 register = template.Library()

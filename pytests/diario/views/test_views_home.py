@@ -2,7 +2,7 @@ import pytest
 from django.urls import reverse
 from pytest_django import asserts
 
-from diario.utils import saldo_general_historico
+from diario.utils.utils_saldo import saldo_general_historico
 
 
 @pytest.fixture

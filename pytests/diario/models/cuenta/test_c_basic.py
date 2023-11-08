@@ -68,3 +68,24 @@ def test_cuentas_se_ordenan_por_nombre(titular_principal):
     cuenta3 = Cuenta.crear(nombre='Cuenta Corriente', slug='CC')
 
     assert list(Cuenta.todes()) == [cuenta2, cuenta3, cuenta1]
+
+
+def test_cuenta_se_relaciona_con_una_moneda(peso, dolar):
+    cuenta = Cuenta(nombre='Cuenta en pesos', slug='c', moneda=peso)
+    cuenta.full_clean()
+    cuenta.save()
+    cuenta_recuperada = Cuenta.tomar(slug='c')
+    assert cuenta_recuperada.moneda == peso
+    cuenta_en_us = Cuenta(nombre='Cuenta en dolares', slug='d', moneda=dolar)
+    cuenta_en_us.full_clean()
+    cuenta_en_us.save()
+    cuenta_recuperada = Cuenta.tomar(slug='d')
+    assert cuenta_recuperada.moneda == dolar
+
+
+def test_toma_moneda_base_como_moneda_por_defecto(peso):
+    cuenta = Cuenta(nombre='Cuenta', slug='c')
+    cuenta.full_clean()
+    cuenta.save()
+    cuenta_recuperada = Cuenta.tomar(slug='c')
+    assert cuenta_recuperada.moneda == peso

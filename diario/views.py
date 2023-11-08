@@ -8,7 +8,7 @@ from diario.forms import FormCuenta, FormMovimiento, FormDividirCuenta, \
     FormCrearSubcuenta, FormTitular
 from diario.models import Cuenta, CuentaInteractiva, CuentaAcumulativa, \
     Movimiento, Titular, Moneda
-from diario.utils import saldo_general_historico, verificar_saldos
+from diario.utils.utils_saldo import saldo_general_historico, verificar_saldos
 
 
 class HomeView(TemplateView):
