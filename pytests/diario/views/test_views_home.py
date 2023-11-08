@@ -39,6 +39,11 @@ def test_pasa_cuentas_ordenadas_por_nombre(client, cuenta, cuenta_2, cuenta_ajen
         [x.as_view_context() for x in [cuenta_ajena, cuenta, cuenta_2]]
 
 
+def test_pasa_monedas_a_template(peso, dolar, euro, response):
+    for moneda in (peso, dolar, euro):
+        assert moneda.as_view_context() in response.context.get('monedas')
+
+
 def test_pasa_movimientos_a_template(entrada, salida, traspaso, response):
     for mov in (entrada, salida, traspaso):
         assert mov.as_view_context() in response.context.get('movimientos')

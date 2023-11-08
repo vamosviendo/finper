@@ -38,7 +38,8 @@ class HomeView(TemplateView):
             if movimiento else ""
 
         context.update({
-            'movimiento': movimiento.as_view_context() if movimiento else None
+            'movimiento': movimiento.as_view_context() if movimiento else None,
+            'monedas': [m.as_view_context() for m in Moneda.todes()]
         })
 
         if cuenta:
