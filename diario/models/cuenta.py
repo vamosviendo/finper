@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import Optional, Self, List, Sequence, Set
+from typing import Optional, Self, List, Sequence, Set, Any
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
@@ -187,7 +187,11 @@ class Cuenta(PolymorphModel):
 
         return lista_ancestros
 
-    def as_view_context(self, movimiento: Movimiento = None, es_elemento_principal: bool = False) -> dict:
+    def as_view_context(
+            self,
+            movimiento: Movimiento = None,
+            es_elemento_principal: bool = False
+    ) -> dict[str, str | float | bool | date | list[dict[str, Any]]]:
         context = {
             'nombre': self.nombre,
             'ctaname': self.slug,
@@ -362,7 +366,11 @@ class CuentaInteractiva(Cuenta):
         self.dividir_entre(*subcuentas, fecha=fecha)
         return self.tomar_del_slug()
 
-    def as_view_context(self, movimiento: Movimiento = None, es_elemento_principal: bool = False) -> dict:
+    def as_view_context(
+            self,
+            movimiento: Movimiento = None,
+            es_elemento_principal: bool = False
+    ) -> dict[str, str | float | bool | date | list[Optional[dict[str, Any]]]]:
         context = super().as_view_context(movimiento, es_elemento_principal)
         context.update({
             'titulares': [self.titular.as_view_context(movimiento)],
@@ -612,7 +620,11 @@ class CuentaAcumulativa(Cuenta):
             fecha_creacion=fecha or date.today()
         )
 
-    def as_view_context(self, movimiento: Movimiento = None, es_elemento_principal: bool = False) -> dict:
+    def as_view_context(
+            self,
+            movimiento: Movimiento = None,
+            es_elemento_principal: bool = False
+    ) -> dict[str, str | float | bool | date | list[dict[str, Any]]]:
         context = super().as_view_context(movimiento, es_elemento_principal)
         context.update({
             'titulares': [x.as_view_context(movimiento) for x in self.titulares],
