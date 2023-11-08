@@ -143,3 +143,14 @@ class TestHomeLinks:
 
         # cuando cliqueamos en el link de borrar movimiento, accedemos a la página de confirmación
         browser.verificar_link('elim_mov', 'mov_elim', [salida.pk], By.CLASS_NAME)
+
+    def test_seccion_monedas(self, browser, peso):
+
+        # cuando cliqueamos en el link de moneda nueva, accedemos a la página para agregar movimiento
+        browser.verificar_link('moneda_nueva', 'mon_nueva')
+
+        # cuando cliqueamos en el link de editar movimiento, accedemos a la página de edición de ese movimiento
+        browser.verificar_link(f'mon_mod_{peso.monname}', 'mon_mod', [peso.monname])
+
+        # cuando cliqueamos en el link de borrar movimiento, accedemos a la página de confirmación
+        browser.verificar_link(f'mon_elim_{peso.monname}', 'mon_elim', [peso.monname])
