@@ -1,4 +1,6 @@
-from typing import TYPE_CHECKING, Self, Optional
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Self, Optional, Any
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -76,7 +78,11 @@ class Titular(MiModel):
         if '-' in self.titname:
             raise ValidationError('No se admite guión en titname')
 
-    def as_view_context(self, movimiento: 'Movimiento' = None, es_elemento_principal: bool = False) -> dict:
+    def as_view_context(
+            self,
+            movimiento: 'Movimiento' = None,
+            es_elemento_principal: bool = False
+    ) -> dict[str, str | float, list[dict[str, Any]]]:
 
         context = {
             'titname': self.titname,
