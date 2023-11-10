@@ -8,8 +8,8 @@ from vvmodel.models import MiModel
 
 
 class Moneda(MiModel):
-    monname = models.CharField(max_length=100)
-    nombre = models.CharField(max_length=100)
+    monname = models.CharField(max_length=100, unique=True)
+    nombre = models.CharField(max_length=100, unique=True)
     cotizacion = models.FloatField()
 
     def __str__(self):
