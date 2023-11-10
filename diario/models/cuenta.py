@@ -83,6 +83,9 @@ class Cuenta(PolymorphModel):
             return self.ultimo_saldo.importe
         except AttributeError:
             return 0
+
+    def saldo_en(self, otra_moneda: Moneda) -> float:
+        return self.saldo * self.moneda.cotizacion_en(otra_moneda)
     
     def saldo_en_mov(self, movimiento: Movimiento) -> float:
         try:
@@ -200,7 +203,7 @@ class Cuenta(PolymorphModel):
             'ctaname': self.slug,
             'movimientos': [x.as_view_context() for x in self.movs()],
             'saldo': self.saldo_en_mov(movimiento) if movimiento else self.saldo,
-            'saldos': {m.monname: self.saldo * self.moneda.cotizacion_en(m) for m in Moneda.todes()},
+            'saldos': {m.monname: self.saldo_en(m) for m in Moneda.todes()},
             'es_acumulativa': self.es_acumulativa,
             'fecha_alta': self.fecha_creacion,
             'moneda': self.moneda.as_view_context(),
