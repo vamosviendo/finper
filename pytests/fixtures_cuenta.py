@@ -59,30 +59,6 @@ def cuenta_con_saldo_negativo(titular: Titular, fecha: date) -> CuentaInteractiv
 
 
 @pytest.fixture
-def cuenta_con_saldo_en_dolares(titular: Titular, fecha: date, dolar: Moneda) -> CuentaInteractiva:
-    return Cuenta.crear(
-        nombre='cuenta con saldo en dolares',
-        slug='ccsd',
-        saldo=100,
-        titular=titular,
-        fecha_creacion=fecha,
-        moneda=dolar,
-    )
-
-
-@pytest.fixture
-def cuenta_con_saldo_en_euros(titular: Titular, fecha: date, euro: Moneda) -> CuentaInteractiva:
-    return Cuenta.crear(
-        nombre='cuenta con saldo en euros',
-        slug='ccse',
-        saldo=100,
-        titular=titular,
-        fecha_creacion=fecha,
-        moneda=euro,
-    )
-
-
-@pytest.fixture
 def cuenta_ajena(otro_titular: Titular, fecha: date) -> CuentaInteractiva:
     return Cuenta.crear(
         nombre='cuenta ajena',
@@ -210,3 +186,36 @@ def cuenta_en_dolares(titular: Titular, fecha: date, dolar: Moneda) -> CuentaInt
 def cuenta_en_euros(titular: Titular, fecha: date, euro: Moneda) -> CuentaInteractiva:
     return Cuenta.crear(
         nombre='cuenta en euros', slug='ce', titular=titular, fecha_creacion=fecha, moneda=euro)
+
+
+@pytest.fixture
+def cuenta_con_saldo_en_dolares(titular: Titular, fecha: date, dolar: Moneda) -> CuentaInteractiva:
+    return Cuenta.crear(
+        nombre='cuenta con saldo en dolares',
+        slug='ccsd',
+        saldo=100,
+        titular=titular,
+        fecha_creacion=fecha,
+        moneda=dolar,
+    )
+
+
+@pytest.fixture
+def cuenta_con_saldo_en_euros(titular: Titular, fecha: date, euro: Moneda) -> CuentaInteractiva:
+    return Cuenta.crear(
+        nombre='cuenta con saldo en euros',
+        slug='ccse',
+        saldo=100,
+        titular=titular,
+        fecha_creacion=fecha,
+        moneda=euro,
+    )
+
+
+@pytest.fixture
+def cuenta_acumulativa_en_dolares(cuenta_con_saldo_en_dolares: CuentaInteractiva, fecha: date) -> CuentaAcumulativa:
+    return cuenta_con_saldo_en_dolares.dividir_y_actualizar(
+        ['subcuenta 1 con saldo', 'scs1', 60],
+        ['subcuenta 2 con saldo', 'scs2'],
+        fecha=fecha
+    )

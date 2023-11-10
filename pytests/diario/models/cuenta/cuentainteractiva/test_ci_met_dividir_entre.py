@@ -263,3 +263,9 @@ def test_marca_movimientos_de_traspaso_de_saldos_como_convierte_cuenta(cuenta, d
 
     assert mov1.convierte_cuenta
     assert mov2.convierte_cuenta
+
+
+def test_subcuentas_toman_moneda_de_cuenta_madre(cuenta_en_dolares, dicts_subcuentas, dolar):
+    sc1, sc2 = cuenta_en_dolares.dividir_entre(*dicts_subcuentas)
+    assert sc1.moneda == dolar
+    assert sc2.moneda == dolar

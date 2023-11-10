@@ -42,3 +42,8 @@ def test_permite_asignar_fecha_de_creacion_a_subcuenta_agregada(
 def test_toma_fecha_actual_por_defecto(cuenta_acumulativa, titular):
     subcuenta = cuenta_acumulativa.agregar_subcuenta('subc3', 'sc3', titular=titular)
     assert subcuenta.fecha_creacion == date.today()
+
+
+def test_subcuenta_agregada_toma_moneda_de_cuenta_madre(cuenta_acumulativa_en_dolares, titular, dolar):
+    subcuenta = cuenta_acumulativa_en_dolares.agregar_subcuenta('subc3', 'sc3', titular=titular)
+    assert subcuenta.moneda == dolar

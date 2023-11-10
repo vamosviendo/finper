@@ -531,7 +531,8 @@ class CuentaInteractiva(Cuenta):
                 Cuenta.crear(
                     **subcuenta,
                     cta_madre=cta_madre,
-                    fecha_creacion=fecha
+                    fecha_creacion=fecha,
+                    moneda=cta_madre.moneda,
                 )
             )
 
@@ -634,7 +635,8 @@ class CuentaAcumulativa(Cuenta):
             slug=slug,
             cta_madre=self,
             titular=titular,
-            fecha_creacion=fecha or date.today()
+            fecha_creacion=fecha or date.today(),
+            moneda=self.moneda,
         )
 
     def as_view_context(
