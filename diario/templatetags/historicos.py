@@ -8,7 +8,6 @@ register = template.Library()
 
 
 @register.simple_tag
-# TODO: unificar tags en un solo módulo
 def historico_general(movimiento: Movimiento) -> str:
     return float_format(saldo_general_historico(movimiento))
 

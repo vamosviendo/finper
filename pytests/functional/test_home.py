@@ -92,6 +92,23 @@ def test_home(
             assert ctas_salida[i] == ""
 
 
+def test_home_monedas(
+        browser, cuenta_con_saldo, cuenta_con_saldo_en_dolares, cuenta_con_saldo_en_euros, peso, dolar, euro):
+    # Vemos que al lado de cada cuenta aparece una columna por cada moneda, con
+    # su saldo expresado en esa moneda. Si la moneda de la columna coincide con
+    # la de la cuenta, aparece resaltada.
+    browser.ir_a_pag()
+    for cuenta in (cuenta_con_saldo, cuenta_con_saldo_en_dolares, cuenta_con_saldo_en_euros):
+        for moneda in (peso, dolar, euro):
+            saldo_mon = browser.esperar_elemento(f"id_saldo_cta_{cuenta.slug}_{moneda.monname}")
+            assert saldo_mon.text == float_format(cuenta.saldo / moneda.cotizacion)
+            classname = saldo_mon.get_attribute("class")
+            if moneda == cuenta.moneda:
+                assert "mon_selected" in classname
+            else:
+                assert "mon_selected" not in classname
+
+
 class TestHomeLinks:
     def test_seccion_titulares(self, browser, titular, otro_titular):
 

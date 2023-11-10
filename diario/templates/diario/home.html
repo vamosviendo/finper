@@ -109,9 +109,11 @@
                 </a>
               </div>
             </td>
-            <td id="id_saldo_cta_{{ cta.ctaname }}" class="numero chico class_saldo_cuenta">
-              {{ cta.saldo|floatformat:2 }}
-            </td>
+            {% for mon in monedas %}
+              <td id="id_saldo_cta_{{ cta.ctaname }}_{{ mon.monname}}" class="numero chico class_saldo_cuenta">
+                {{ cta.saldos|dict_key:mon.monname|floatformat:2 }}
+              </td>
+            {% endfor %}
           </tr>
           {% for subcuenta in cta.cuentas %}
             <tr class="menu-row class_div_cuenta">
@@ -132,9 +134,11 @@
                   </a>
                 </div>
               </td>
-              <td id="id_saldo_cta_{{ subcuenta.ctaname }}" class="numero chico class_saldo_cuenta div-detalles-subcuenta">
-                {{ subcuenta.saldo|floatformat:2 }}
-              </td>
+              {% for mon in monedas %}
+                <td id="id_saldo_cta_{{ subcuenta.ctaname }}" class="numero chico class_saldo_cuenta div-detalles-subcuenta">
+                  {{ subcuenta.saldos|dict_key:mon.monname|floatformat:2 }}
+                </td>
+              {% endfor %}
             </tr>
           {% endfor %}
         {% endfor %}

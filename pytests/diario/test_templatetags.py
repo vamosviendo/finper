@@ -1,5 +1,6 @@
 import pytest
 
+from diario.templatetags.dict_key import dict_key
 from diario.templatetags.historicos import cap_historico, historico, historico_general
 
 pytestmark = pytest.mark.django_db
@@ -52,3 +53,11 @@ class TestCapHistorico:
 
         mock_capital_historico.assert_called_once_with(titular, entrada)
         assert result == f'{importe_aleatorio:.2f}'.replace('.', ',')
+
+
+class TestDictKey:
+    def test_devuelve_el_valor_de_una_clave_de_diccionario(self):
+        dicc = {'val_1': 1, 'val_2': 2, 'val_3': 'a'}
+        assert dict_key(dicc, 'val_1') == 1
+        assert dict_key(dicc, 'val_2') == 2
+        assert dict_key(dicc, 'val_3') == 'a'

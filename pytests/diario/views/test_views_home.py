@@ -76,6 +76,7 @@ def test_si_recibe_slug_de_cuenta_actualiza_context_con_datos_de_cuenta(
     mock_avci.return_value = {
         'nombre': cuenta.nombre,
         'saldo': cuenta.saldo,
+        'saldos': {'p': cuenta.saldo},
         'titulares': [cuenta.titular.as_view_context()],
         'cuentas': [],
         'movimientos': [m.as_view_context() for m in cuenta.movs()],

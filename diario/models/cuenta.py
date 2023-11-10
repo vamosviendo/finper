@@ -12,6 +12,7 @@ from django.urls import reverse
 from diario.consts import *
 from diario.fields import CaseInsensitiveCharField
 from diario.models.titular import Titular
+from diario.models.moneda import Moneda
 from diario.models.movimiento import Movimiento
 from diario.models.saldo import Saldo
 from diario.settings_app import TITULAR_PRINCIPAL
@@ -193,12 +194,13 @@ class Cuenta(PolymorphModel):
             self,
             movimiento: Movimiento = None,
             es_elemento_principal: bool = False
-    ) -> dict[str, str | float | bool | date | list[dict[str, Any]]]:
+    ) -> dict[str, str | float | bool | date | list[dict[str, Any]] | dict[str, float]]:
         context = {
             'nombre': self.nombre,
             'ctaname': self.slug,
             'movimientos': [x.as_view_context() for x in self.movs()],
             'saldo': self.saldo_en_mov(movimiento) if movimiento else self.saldo,
+            'saldos': {m.monname: self.saldo * self.moneda.cotizacion_en(m) for m in Moneda.todes()},
             'es_acumulativa': self.es_acumulativa,
             'fecha_alta': self.fecha_creacion,
         }

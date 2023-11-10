@@ -34,6 +34,14 @@ def test_si_cuenta_es_interactiva_y_recibe_movimiento_incluye_capital_historico_
     assert context['titulares'][0]['capital'] == cuenta.titular.capital_historico(entrada)
 
 
+def test_incluye_dict_de_saldos_expresados_en_distintas_monedas(cuenta_con_saldo, peso, dolar, euro):
+    context = cuenta_con_saldo.as_view_context()
+    assert context.get('saldos') is not None
+    assert type(context['saldos']) is dict
+    for moneda in (peso, dolar, euro):
+        assert context['saldos'][moneda.monname] == cuenta_con_saldo.saldo * cuenta_con_saldo.moneda.cotizacion_en(moneda)
+
+
 def test_si_cuenta_es_acumulativa_incluye_subcuentas_en_formato_dict(cuenta_acumulativa):
     context = cuenta_acumulativa.as_view_context(es_elemento_principal=True)
     assert \
