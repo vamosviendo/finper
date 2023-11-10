@@ -12,6 +12,9 @@ class Moneda(MiModel):
     nombre = models.CharField(max_length=100)
     cotizacion = models.FloatField()
 
+    def __str__(self):
+        return self.nombre
+
     def cotizacion_en(self, otra_moneda: Self) -> float:
         return self.cotizacion / otra_moneda.cotizacion
 
