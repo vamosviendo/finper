@@ -23,6 +23,11 @@ def test_incluye_fecha_de_creacion_de_cuenta(context, cuenta):
     assert context['fecha_alta'] == cuenta.fecha_creacion
 
 
+def test_incluye_moneda_como_dict(context, cuenta):
+    assert context.get('moneda') is not None
+    assert context['moneda'] == cuenta.moneda.as_view_context()
+
+
 def test_si_cuenta_es_interactiva_incluye_lista_con_titular_de_cuenta_en_formato_dict_como_titulares(
         context, cuenta):
     assert context['titulares'] == [cuenta.titular.as_view_context()]

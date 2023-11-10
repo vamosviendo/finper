@@ -203,6 +203,7 @@ class Cuenta(PolymorphModel):
             'saldos': {m.monname: self.saldo * self.moneda.cotizacion_en(m) for m in Moneda.todes()},
             'es_acumulativa': self.es_acumulativa,
             'fecha_alta': self.fecha_creacion,
+            'moneda': self.moneda.as_view_context(),
         }
 
         if es_elemento_principal:

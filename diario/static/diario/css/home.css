@@ -50,6 +50,14 @@ table.table-striped tr.mov_selected {
     background-color: #f0e6c7;
 }
 
+.class_saldo_cuenta {
+    color: #888;
+}
+
+.mon_cuenta {
+    color: #000;
+}
+
 .div-monedas {
     background-color: #e4c202;
 }
