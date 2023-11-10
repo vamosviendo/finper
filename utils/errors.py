@@ -4,7 +4,8 @@ CAMPO_VACIO = 'Este campo es obligatorio.'
 CAMBIO_IMPORTE_CON_CUENTA_ACUMULATIVA = \
     'Movimiento tiene cuenta acumulativa. No puede modificarse el importe'
 CAMBIO_CUENTA_MADRE = 'No se puede cambiar cuenta madre'
-CAMBIO_TITULAR = 'Las cuentas no pueden cambiar de titular.'
+CAMBIO_MONEDA = "Las cuentas no pueden cambiar de moneda"
+CAMBIO_TITULAR = 'Las cuentas no pueden cambiar de titular'
 CUENTA_ACUMULATIVA_AGREGADA = \
     'No puede agregarse cuenta acumulativa a movimiento'
 CUENTA_ACUMULATIVA_EN_MOVIMIENTO = \
@@ -48,6 +49,11 @@ class CambioDeCuentaMadreException(ValidationError):
     def __init__(self, message=CAMBIO_CUENTA_MADRE):
         super().__init__(message)
 
+
+class CambioDeMonedaException(ValidationError):
+    """ Se intentó cambiar la moneda de una cuenta"""
+    def __init__(self, message=CAMBIO_MONEDA):
+        super().__init__(message)
 
 
 class SaldoNoCeroException(ValueError):

@@ -121,6 +121,7 @@ class Cuenta(PolymorphModel):
 
     def clean(self):
         self._impedir_cambio_de_cta_madre()
+        self._impedir_cambio_de_moneda()
         self._chequear_incongruencias_de_clase()
         self._verificar_fecha_creacion()
 
@@ -254,6 +255,14 @@ class Cuenta(PolymorphModel):
             cta_madre_guardada = self.tomar_de_bd().cta_madre
             if self.cta_madre != cta_madre_guardada:
                 raise errors.CambioDeCuentaMadreException
+        except (Cuenta.DoesNotExist, AttributeError):
+            pass
+
+    def _impedir_cambio_de_moneda(self):
+        try:
+            moneda_guardada = self.tomar_de_bd().moneda
+            if self.moneda != moneda_guardada:
+                raise errors.CambioDeMonedaException
         except (Cuenta.DoesNotExist, AttributeError):
             pass
 
