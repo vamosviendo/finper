@@ -15,6 +15,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='cuenta',
             name='moneda',
-            field=models.ForeignKey(default=diario.utils.utils_moneda.moneda_base, on_delete=django.db.models.deletion.CASCADE, to='diario.moneda'),
+            field=models.ForeignKey(default=diario.utils.utils_moneda.id_moneda_base, on_delete=django.db.models.deletion.CASCADE, to='diario.moneda'),
         ),
     ]

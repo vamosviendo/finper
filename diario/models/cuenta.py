@@ -15,7 +15,7 @@ from diario.models.titular import Titular
 from diario.models.movimiento import Movimiento
 from diario.models.saldo import Saldo
 from diario.settings_app import TITULAR_PRINCIPAL
-from diario.utils.utils_moneda import moneda_base
+from diario.utils.utils_moneda import id_moneda_base
 from utils import errors
 from utils.iterables import remove_duplicates
 from utils.tiempo import Posicion
@@ -41,7 +41,7 @@ class Cuenta(PolymorphModel):
         on_delete=models.CASCADE,
     )
     fecha_creacion = models.DateField(default=date.today)
-    moneda = models.ForeignKey('Moneda', on_delete=models.CASCADE, default=moneda_base)
+    moneda = models.ForeignKey(Moneda, on_delete=models.CASCADE, default=id_moneda_base)
 
     class Meta:
         ordering = ('nombre', )
