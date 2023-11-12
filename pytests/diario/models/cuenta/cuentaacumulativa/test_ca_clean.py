@@ -4,6 +4,7 @@ import pytest
 from django.core.exceptions import ValidationError
 
 from utils import errors
+from vvmodel.errors import ErrorCambioEnCampoFijo
 
 
 def test_cuenta_acumulativa_debe_tener_subcuentas(cuenta_acumulativa_saldo_0):
@@ -19,14 +20,20 @@ def test_cuenta_acumulativa_debe_tener_subcuentas(cuenta_acumulativa_saldo_0):
 def test_no_se_puede_asignar_cta_madre_a_cta_interactiva_existente(cuenta_2, cuenta_acumulativa):
     cuenta_2.cta_madre = cuenta_acumulativa
 
-    with pytest.raises(errors.CambioDeCuentaMadreException):
+    with pytest.raises(
+            ErrorCambioEnCampoFijo,
+            match="No se puede cambiar valor del campo 'cta_madre'"
+    ):
         cuenta_2.clean()
 
 
 def test_no_se_puede_asignar_cta_madre_a_cta_acumulativa_existente(cuenta_acumulativa, cuenta_acumulativa_saldo_0):
     cuenta_acumulativa.cta_madre = cuenta_acumulativa_saldo_0
 
-    with pytest.raises(errors.CambioDeCuentaMadreException):
+    with pytest.raises(
+            ErrorCambioEnCampoFijo,
+            match="No se puede cambiar valor del campo 'cta_madre'"
+    ):
         cuenta_acumulativa.clean()
 
 

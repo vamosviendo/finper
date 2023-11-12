@@ -120,8 +120,8 @@ class Cuenta(PolymorphModel):
         super().clean_fields(exclude=exclude)
 
     def clean(self):
-        self._impedir_cambio_de_cta_madre()
-        self._impedir_cambio_de_moneda()
+        self.impedir_cambio('cta_madre')
+        self.impedir_cambio('moneda')
         self._chequear_incongruencias_de_clase()
         self._verificar_fecha_creacion()
 
@@ -250,22 +250,6 @@ class Cuenta(PolymorphModel):
             raise errors.ErrorTipo(f'Cuenta interactiva "{self.cta_madre }" '
                                    f'no puede ser madre')
 
-    def _impedir_cambio_de_cta_madre(self):
-        try:
-            cta_madre_guardada = self.tomar_de_bd().cta_madre
-            if self.cta_madre != cta_madre_guardada:
-                raise errors.CambioDeCuentaMadreException
-        except (Cuenta.DoesNotExist, AttributeError):
-            pass
-
-    def _impedir_cambio_de_moneda(self):
-        try:
-            moneda_guardada = self.tomar_de_bd().moneda
-            if self.moneda != moneda_guardada:
-                raise errors.CambioDeMonedaException
-        except (Cuenta.DoesNotExist, AttributeError):
-            pass
-
     def _verificar_fecha_creacion(self):
         if self.tiene_madre() and self.fecha_creacion < self.cta_madre.fecha_conversion:
             raise errors.ErrorFechaAnteriorACuentaMadre
@@ -305,7 +289,7 @@ class CuentaInteractiva(Cuenta):
     def clean(self):
         super().clean()
         self._corregir_titular_vacio()
-        self._impedir_cambio_de_titular()
+        self.impedir_cambio('titular')
         self._verificar_fecha_creacion_interactiva()
 
     @property
@@ -552,14 +536,6 @@ class CuentaInteractiva(Cuenta):
             except Titular.DoesNotExist:
                 raise errors.ErrorTitularPorDefectoInexistente
             self.titular = titular
-
-    def _impedir_cambio_de_titular(self):
-        try:
-            titular_guardado = self.tomar_de_bd().titular
-            if self.titular != titular_guardado:
-                raise errors.CambioDeTitularException
-        except (Cuenta.DoesNotExist, AttributeError):
-            pass
 
     def _verificar_fecha_creacion_interactiva(self):
         if self.fecha_creacion < self.titular.fecha_alta:

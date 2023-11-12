@@ -1,8 +1,8 @@
 import pytest
-from django.core.exceptions import ValidationError
 
 from diario.models import CuentaInteractiva
 from utils import errors
+from vvmodel.errors import ErrorCambioEnCampoFijo
 
 
 @pytest.fixture
@@ -31,7 +31,10 @@ def test_si_no_existe_el_titular_por_defecto_da_error_de_validacion(
 def test_cuenta_no_puede_cambiar_de_titular(cuenta, titular, otro_titular):
     cuenta.titular = otro_titular
 
-    with pytest.raises(errors.CambioDeTitularException):
+    with pytest.raises(
+            ErrorCambioEnCampoFijo,
+            match="No se puede cambiar valor del campo 'titular'"
+    ):
         cuenta.clean()
 
 

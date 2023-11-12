@@ -3,6 +3,8 @@ import datetime
 import pytest
 from django.core.exceptions import ValidationError
 
+from vvmodel.errors import ErrorCambioEnCampoFijo
+
 from diario.models import Cuenta
 from utils import errors
 
@@ -42,5 +44,8 @@ def test_subcuenta_no_puede_tener_fecha_de_creacion_anterior_a_la_fecha_de_conve
 
 def test_cuenta_no_puede_cambiar_de_moneda(cuenta, dolar):
     cuenta.moneda = dolar
-    with pytest.raises(errors.CambioDeMonedaException):
+    with pytest.raises(
+            ErrorCambioEnCampoFijo,
+            match="No se puede cambiar valor del campo 'moneda'"
+    ):
         cuenta.clean()
