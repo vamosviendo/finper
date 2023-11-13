@@ -61,9 +61,7 @@ def test_crear_movimiento(browser, cuenta):
 
     # El saldo de la cuenta sobre la que se realizó el movimiento y el saldo
     # general de la página reflejan el cambio provocado por el nuevo movimiento
-    assert \
-        browser.esperar_elemento(f'id_saldo_cta_{cuenta.slug}').text == \
-        importe_localizado
+    assert browser.esperar_saldo_en_moneda_de_cuenta(cuenta.slug).text == importe_localizado
     assert \
         browser.esperar_elemento('id_importe_saldo_gral').text == \
         importe_localizado
@@ -137,7 +135,7 @@ def test_crear_creditos_o_devoluciones(
     # muestra como acreedor, con saldo igual a {saldo}
     browser.ir_a_pag(reverse('titular', args=[emisor.titname]))
     link_cuenta = browser.esperar_elemento(f"id_link_cta__{emisor.titname}-{receptor.titname}")
-    saldo_cuenta = browser.esperar_elemento(f"id_saldo_cta__{emisor.titname}-{receptor.titname}")
+    saldo_cuenta = browser.esperar_saldo_en_moneda_de_cuenta(f"_{emisor.titname}-{receptor.titname}")
     assert \
         link_cuenta.text == \
         f"préstamo de {emisor.nombre} a {receptor.nombre}".lower()
@@ -157,8 +155,8 @@ def test_crear_creditos_o_devoluciones(
     assert celdas_contramov[3] == float_format(10)
     assert celdas_contramov[4] == f"préstamo de {emisor.nombre} a {receptor.nombre}".lower()
     assert celdas_contramov[5] == f"deuda de {receptor.nombre} con {emisor.nombre}".lower()
-    saldo_cuenta_acreedora = browser.esperar_elemento(f"id_saldo_cta__{emisor.titname}-{receptor.titname}")
-    saldo_cuenta_deudora = browser.esperar_elemento(f"id_saldo_cta__{receptor.titname}-{emisor.titname}")
+    saldo_cuenta_acreedora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{emisor.titname}-{receptor.titname}")
+    saldo_cuenta_deudora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{receptor.titname}-{emisor.titname}")
     assert saldo_cuenta_acreedora.text == float_format(30+10)
     assert saldo_cuenta_deudora.text == float_format(-30-10)
 
@@ -176,8 +174,8 @@ def test_crear_creditos_o_devoluciones(
     assert celdas_contramov[3] == float_format(15)
     assert celdas_contramov[4] == f"deuda de {receptor.nombre} con {emisor.nombre}".lower()
     assert celdas_contramov[5] == f"préstamo de {emisor.nombre} a {receptor.nombre}".lower()
-    saldo_cuenta_acreedora = browser.esperar_elemento(f"id_saldo_cta__{emisor.titname}-{receptor.titname}")
-    saldo_cuenta_deudora = browser.esperar_elemento(f"id_saldo_cta__{receptor.titname}-{emisor.titname}")
+    saldo_cuenta_acreedora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{emisor.titname}-{receptor.titname}")
+    saldo_cuenta_deudora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{receptor.titname}-{emisor.titname}")
     assert saldo_cuenta_acreedora.text == float_format(30+10-15)
     assert saldo_cuenta_deudora.text == float_format(-30-10+15)
 
@@ -194,8 +192,8 @@ def test_crear_creditos_o_devoluciones(
     assert celdas_contramov[3] == float_format(7)
     assert celdas_contramov[4] == f"deuda de {receptor.nombre} con {emisor.nombre}".lower()
     assert celdas_contramov[5] == f"préstamo de {emisor.nombre} a {receptor.nombre}".lower()
-    saldo_cuenta_acreedora = browser.esperar_elemento(f"id_saldo_cta__{emisor.titname}-{receptor.titname}")
-    saldo_cuenta_deudora = browser.esperar_elemento(f"id_saldo_cta__{receptor.titname}-{emisor.titname}")
+    saldo_cuenta_acreedora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{emisor.titname}-{receptor.titname}")
+    saldo_cuenta_deudora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{receptor.titname}-{emisor.titname}")
     assert saldo_cuenta_acreedora.text == float_format(30+10-15-7)
     assert saldo_cuenta_deudora.text == float_format(-30-10+15+7)
 
@@ -215,8 +213,8 @@ def test_crear_creditos_o_devoluciones(
     assert celdas_contramov[3] == float_format(20)
     assert celdas_contramov[4] == f"préstamo de {receptor.nombre} a {emisor.nombre}".lower()
     assert celdas_contramov[5] == f"deuda de {emisor.nombre} con {receptor.nombre}".lower()
-    saldo_cuenta_acreedora = browser.esperar_elemento(f"id_saldo_cta__{receptor.titname}-{emisor.titname}")
-    saldo_cuenta_deudora = browser.esperar_elemento(f"id_saldo_cta__{emisor.titname}-{receptor.titname}")
+    saldo_cuenta_acreedora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{receptor.titname}-{emisor.titname}")
+    saldo_cuenta_deudora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{emisor.titname}-{receptor.titname}")
     assert saldo_cuenta_acreedora.text == float_format(-30-10+15+7+20)
     assert saldo_cuenta_deudora.text == float_format(30+10-15-7-20)
 
@@ -234,8 +232,8 @@ def test_crear_creditos_o_devoluciones(
     assert celdas_contramov[3] == float_format(2)
     assert celdas_contramov[4] == f"deuda de {emisor.nombre} con {receptor.nombre}".lower()
     assert celdas_contramov[5] == f"préstamo de {receptor.nombre} a {emisor.nombre}".lower()
-    saldo_cuenta_acreedora = browser.esperar_elemento(f"id_saldo_cta__{emisor.titname}-{receptor.titname}")
-    saldo_cuenta_deudora = browser.esperar_elemento(f"id_saldo_cta__{receptor.titname}-{emisor.titname}")
+    saldo_cuenta_acreedora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{emisor.titname}-{receptor.titname}")
+    saldo_cuenta_deudora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{receptor.titname}-{emisor.titname}")
     assert saldo_cuenta_acreedora.text == float_format(30+10-15-7-18)
     assert saldo_cuenta_deudora.text == float_format(-30-10+15+7+18)
 

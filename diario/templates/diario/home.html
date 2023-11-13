@@ -92,7 +92,7 @@
       </colgroup>
       <tbody>
         {% for cta in cuentas %}
-          <tr class="menu-row class_div_cuenta">
+          <tr id=id_row_cta_{{ cta.ctaname }} class="menu-row class_div_cuenta">
             <td class="menu-item class_td_cuenta {% if cta.es_acumulativa %}acumulativa{% endif %}">
               <div class="menu-item-content class_nombre_cuenta">
                 <a id="id_link_cta_{{ cta.ctaname }}" class="class_link_cuenta"

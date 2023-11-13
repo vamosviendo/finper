@@ -66,6 +66,11 @@ class FinperFirefox(MiFirefox):
                 f'Contenido {contenido} no encontrado en columna {columna}'
             )
 
+    def esperar_saldo_en_moneda_de_cuenta(self, slug: str) -> MiWebElement:
+        return self\
+            .esperar_elemento(f'id_row_cta_{slug}')\
+            .esperar_elemento(f'.class_saldo_cuenta.mon_cuenta', By.CSS_SELECTOR)
+
     def comparar_movimientos_de(self, ente: Cuenta | Titular):
         """ Dada una cuenta, comparar sus movimientos con los que aparecen en
             la página. """

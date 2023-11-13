@@ -3,7 +3,7 @@ import pytest
 from django.urls import reverse
 
 from diario.models import Cuenta, Titular, Movimiento
-from diario.utils import saldo_general_historico
+from diario.utils.utils_saldo import saldo_general_historico
 from utils.numeros import float_format
 
 
@@ -94,7 +94,7 @@ def test_detalle_movimiento_en_cuenta_acumulativa(
     link_mov_1.click()
     saldo_sc1 = browser.esperar_elemento('id_saldo_cta_psc')
     saldo_sc2 = browser.esperar_elemento('id_saldo_cta_ssc')
-    saldo_c = browser.esperar_elemento('id_saldo_cta_c')
+    saldo_c = browser.esperar_saldo_en_moneda_de_cuenta('c')
     assert saldo_sc1.text == '110,00'
     assert saldo_sc2.text == '0,00'
     assert saldo_c.text == '110,00'
@@ -103,7 +103,7 @@ def test_detalle_movimiento_en_cuenta_acumulativa(
     link_mov_2.click()
     saldo_sc1 = browser.esperar_elemento('id_saldo_cta_psc')
     saldo_sc2 = browser.esperar_elemento('id_saldo_cta_ssc')
-    saldo_c = browser.esperar_elemento('id_saldo_cta_c')
+    saldo_c = browser.esperar_saldo_en_moneda_de_cuenta('c')
     assert saldo_sc1.text == '110,00'
     assert saldo_sc2.text == '88,00'
     assert saldo_c.text == '198,00'
