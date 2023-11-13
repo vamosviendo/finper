@@ -44,7 +44,7 @@ def test_incluye_dict_de_saldos_expresados_en_distintas_monedas(cuenta_con_saldo
     assert context.get('saldos') is not None
     assert type(context['saldos']) is dict
     for moneda in (peso, dolar, euro):
-        assert context['saldos'][moneda.monname] == cuenta_con_saldo.saldo * cuenta_con_saldo.moneda.cotizacion_en(moneda)
+        assert context['saldos'][moneda.monname] == cuenta_con_saldo.saldo_en(moneda)
 
 
 def test_si_cuenta_es_acumulativa_incluye_subcuentas_en_formato_dict(cuenta_acumulativa):
@@ -120,6 +120,14 @@ def test_si_recibe_movimiento_incluye_saldo_historico_de_cuenta_en_movimiento_co
     context = cuenta.as_view_context(movimiento=salida)
     assert context.get('saldo') is not None
     assert context['saldo'] == cuenta.saldo_en_mov(salida)
+
+
+def test_si_recibe_movimiento_incluye_saldos_historicos_de_cuenta_en_movimiento_en_dict_de_saldos(
+        entrada, salida, salida_posterior, peso, dolar, euro):
+    cuenta = entrada.cta_entrada
+    context = cuenta.as_view_context(movimiento=salida)
+    for moneda in (peso, dolar, euro):
+        assert context['saldos'][moneda.monname] == cuenta.saldo_en_mov_en(salida, moneda)
 
 
 def test_si_cuenta_es_elemento_principal_y_tiene_madre_incluye_lista_de_dicts_de_ancestro_con_nombre_y_saldo(subsubcuenta):
