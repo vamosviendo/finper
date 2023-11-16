@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django_ordered_field import OrderedCollectionField
 
+from diario.utils.utils_moneda import id_moneda_base
 from vvmodel.models import MiModel
 from utils import errors
 from utils.tiempo import Posicion
@@ -135,6 +136,10 @@ class Movimiento(MiModel):
     concepto = models.CharField(max_length=120)
     detalle = models.TextField(blank=True, null=True)
     _importe = models.FloatField()
+    moneda = models.ForeignKey(
+        'diario.Moneda', related_name='movimientos', default=id_moneda_base,
+        on_delete=models.CASCADE
+    )
     cta_entrada = models.ForeignKey(
         'diario.Cuenta', related_name='entradas', null=True, blank=True,
         on_delete=models.CASCADE

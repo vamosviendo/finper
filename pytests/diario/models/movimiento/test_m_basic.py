@@ -1,4 +1,4 @@
-from diario.models import Movimiento
+from diario.models import Movimiento, Moneda
 
 
 def test_guarda_y_recupera_movimientos(fecha, cuenta, cuenta_2):
@@ -10,6 +10,7 @@ def test_guarda_y_recupera_movimientos(fecha, cuenta, cuenta_2):
     mov.cta_entrada = cuenta
     mov.cta_salida = cuenta_2
     mov.detalle = "Detalle del movimiento"
+    mov.moneda = cuenta.moneda
     mov.save()
 
     assert Movimiento.cantidad() == cantidad_movimientos + 1
@@ -22,6 +23,7 @@ def test_guarda_y_recupera_movimientos(fecha, cuenta, cuenta_2):
     assert mov_guardado.cta_entrada == cuenta
     assert mov_guardado.cta_salida == cuenta_2
     assert mov_guardado.detalle == "Detalle del movimiento"
+    assert mov_guardado.moneda == cuenta.moneda
 
 
 def test_cta_entrada_se_relaciona_con_cuenta(cuenta, fecha):
@@ -29,6 +31,7 @@ def test_cta_entrada_se_relaciona_con_cuenta(cuenta, fecha):
     mov.cta_entrada = cuenta
     mov.save()
     assert mov in cuenta.entradas.all()
+
 
 def test_cta_salida_se_relaciona_con_cuenta(cuenta, fecha):
     mov = Movimiento(fecha=fecha, concepto='Pago en efectivo', importe=100)
@@ -68,3 +71,10 @@ def test_dentro_de_fecha_movimientos_se_ordenan_por_campo_orden_dia(cuenta, fech
     mov2.refresh_from_db()
 
     assert list(Movimiento.todes()) == [mov3, mov1, mov2]
+
+
+def test_moneda_base_es_moneda_por_defecto(cuenta, fecha, mock_moneda_base):
+    mov = Movimiento(fecha=fecha, concepto='Pago en efectivo', importe=100, cta_entrada=cuenta)
+    mov.full_clean()
+    mov.save()
+    assert mov.moneda == Moneda.tomar(monname=mock_moneda_base)
