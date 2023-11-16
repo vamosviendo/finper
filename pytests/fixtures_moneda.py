@@ -19,6 +19,7 @@ def peso() -> Moneda:
 def dolar() -> Moneda:
     return Moneda.crear(
         nombre='Dolar',
+        plural='dólares',
         monname='uss',
         cotizacion=805.0,
     )
