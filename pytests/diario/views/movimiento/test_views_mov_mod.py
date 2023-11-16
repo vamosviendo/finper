@@ -16,6 +16,7 @@ def cambio_concepto(client, entrada: Movimiento) -> HttpResponse:
             'concepto': 'Concepto nuevo',
             'importe': entrada.importe,
             'cta_entrada': entrada.cta_entrada.pk,
+            'moneda': entrada.cta_entrada.moneda.pk,
         }
     )
 
@@ -94,6 +95,7 @@ def test_permite_modificar_fecha_de_movimiento_con_cuenta_acumulativa(
             'fecha': fecha_posterior,
             'concepto': entrada.concepto,
             'importe': entrada.importe,
+            'moneda': entrada.cta_entrada.moneda.pk,
         }
     )
     entrada.refresh_from_db()
@@ -112,7 +114,8 @@ def test_si_se_selecciona_esgratis_en_movimiento_entre_titulares_desaparece_cont
             'importe': credito.importe,
             'cta_entrada': credito.cta_entrada.pk,
             'cta_salida': credito.cta_salida.pk,
-            'esgratis': True
+            'moneda': credito.cta_entrada.moneda.pk,
+            'esgratis': True,
         }
     )
     assert Movimiento.filtro(id=id_contramov).count() == 0

@@ -6,8 +6,7 @@ from django.utils.formats import number_format
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 
-from diario.models import Cuenta, CuentaInteractiva
-from utils.numeros import float_format
+from utils.numeros import float_format, format_float
 from utils.tiempo import hoy
 from vvsteps.driver import MiWebElement
 
@@ -295,6 +294,35 @@ def test_crear_traspaso_entre_titulares_sin_deuda(browser, cuenta, cuenta_ajena)
         cuenta_credito not in cuentas_pag, \
         f"Cuenta {cuenta_credito}, que no debería existir, existe"
     assert capital_receptor == float_format(cuenta.titular.capital - 30)
+
+
+def test_crear_movimiento_con_cuenta_en_moneda_no_base(browser, cuenta_en_dolares, euro, fecha, importe):
+    browser.ir_a_pag()
+    # Dada una cuenta en dolares
+    saldo_base_original = format_float(browser.esperar_saldo_en_moneda_de_cuenta(cuenta_en_dolares.slug).text)
+
+    # Cuando generamos un movimiento de entrada sobre dicha cuenta
+    browser.crear_movimiento(
+        concepto='Movimiento en dólares',
+        importe=str(importe),
+        fecha=fecha,
+        cta_entrada=cuenta_en_dolares.nombre,
+        moneda=euro.nombre,
+    )
+    # Si seleccionamos para el importe una moneda distinta de la moneda de
+    # la cuenta, recibimos un mensaje de error
+    lista_errores = browser.esperar_elemento("ul.errorlist", By.CSS_SELECTOR)
+    assert "El movimiento debe ser expresado en dólares" in lista_errores.text
+
+    # Si seleccionamos para el importe la moneda de la cuenta, se nos permite
+    # completar el movimiento
+    browser.completar("id_moneda", cuenta_en_dolares.moneda.nombre)
+
+    # Somos dirigidos a la página principal donde podemos ver que el saldo
+    # principal de la cuenta cambió en el importe registrado en el movimiento,
+    browser.assert_url(reverse('home'))
+    saldo_base = browser.esperar_saldo_en_moneda_de_cuenta(cuenta_en_dolares.slug)
+    assert saldo_base.text == float_format(saldo_base_original + importe)
 
 
 def test_modificar_movimiento(browser, entrada, cuenta_2):

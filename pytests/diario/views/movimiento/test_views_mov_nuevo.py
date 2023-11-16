@@ -19,7 +19,8 @@ def response_post(client, fecha, importe, cuenta) -> HttpResponse:
             'fecha': fecha,
             'concepto': 'mov nuevo',
             'importe': importe,
-            'cta_entrada': cuenta.id,
+            'cta_entrada': cuenta.pk,
+            'moneda': cuenta.moneda.pk,
         }
     )
 
@@ -90,7 +91,8 @@ def test_movimiento_entre_titulares_llama_a_metodo_registrar_credito(
             'concepto': 'movimiento entre titulares',
             'importe': importe,
             'cta_entrada': cuenta.id,
-            'cta_salida': cuenta_ajena.id
+            'cta_salida': cuenta_ajena.pk,
+            'moneda': cuenta.moneda.pk,
         }
     )
     mov = Movimiento.ultime()

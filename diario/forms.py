@@ -6,8 +6,8 @@ from django.core.exceptions import ValidationError
 from django.forms import Field
 from django.utils import timezone
 
-from diario.models import CuentaAcumulativa, CuentaInteractiva, Movimiento, Titular
-from diario.settings_app import TITULAR_PRINCIPAL
+from diario.models import CuentaAcumulativa, CuentaInteractiva, Movimiento, Titular, Moneda
+from diario.settings_app import TITULAR_PRINCIPAL, MONEDA_BASE
 
 from utils.iterables import hay_mas_de_un_none_en
 
@@ -166,15 +166,14 @@ class FormMovimiento(forms.ModelForm):
 
     importe = forms.FloatField()
     esgratis = forms.BooleanField(required=False, initial=False)
+    moneda = forms.ModelChoiceField(queryset=Moneda.todes(), empty_label=None)
 
     def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         instance = kwargs.get('instance')
         if instance:
-            kwargs['initial'] = {
-                'importe': instance.importe,
-            }
-
-        super().__init__(*args, **kwargs)
+            self.fields['importe'].initial = instance.importe
+        self.fields['moneda'].initial = Moneda.tomar(monname=MONEDA_BASE)
 
         try:
             if instance.id_contramov is None:

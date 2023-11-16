@@ -5,7 +5,7 @@ from django.core.exceptions import NON_FIELD_ERRORS
 from django.forms import fields
 
 from diario.forms import FormMovimiento
-from diario.models import CuentaInteractiva
+from diario.models import CuentaInteractiva, Moneda
 from utils import errors
 
 
@@ -16,6 +16,7 @@ def formmov(cuenta: CuentaInteractiva, fecha: date) -> FormMovimiento:
         'concepto': 'movimiento bien formado',
         'importe': 150,
         'cta_entrada': cuenta,
+        'moneda': cuenta.moneda,
     })
 
 
@@ -89,3 +90,20 @@ def test_campo_esgratis_seleccionado_en_movimiento_entre_titulares_no_genera_mov
     formmov.full_clean()
     formmov.save()
     mock_crear_movimiento_credito.assert_not_called()
+
+
+def test_muestra_campo_moneda():
+    formmov = FormMovimiento()
+    assert 'moneda' in formmov.fields.keys()
+    assert isinstance(formmov.fields['moneda'], fields.ChoiceField)
+
+
+def test_campo_moneda_muestra_monedas_existentes(peso, dolar, euro):
+    formmov = FormMovimiento()
+    print([c[1] for c in formmov.fields['moneda'].choices])
+    assert [c[1] for c in formmov.fields['moneda'].choices] == [m.nombre for m in (peso, dolar, euro)]
+
+
+def test_campo_moneda_muestra_moneda_base_como_valor_por_defecto(mock_moneda_base):
+    formmov = FormMovimiento()
+    assert formmov.fields['moneda'].initial == Moneda.tomar(monname=mock_moneda_base)
