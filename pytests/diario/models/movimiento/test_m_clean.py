@@ -226,3 +226,16 @@ def test_no_puede_asignarse_fecha_posterior_a_conversion_en_mov_con_cuenta_acumu
                   rf'\(es {cuenta.fecha_conversion + timedelta(1)}\)'
     ):
         mov.full_clean()
+
+
+def test_no_admite_moneda_que_no_sea_la_de_alguna_de_las_cuentas_intervinientes(
+        cuenta_en_euros, cuenta_en_dolares, peso):
+    mov = Movimiento(
+        concepto='Compra de euros con dólares',
+        importe=10,
+        cta_entrada=cuenta_en_euros,
+        cta_salida=cuenta_en_dolares,
+        moneda=peso,
+    )
+    with pytest.raises(errors.ErrorMonedaNoPermitida):
+        mov.clean()

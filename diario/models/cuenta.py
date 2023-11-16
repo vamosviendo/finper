@@ -288,7 +288,8 @@ class CuentaInteractiva(Cuenta):
                 concepto=f'Saldo inicial de {cuenta_nueva.nombre}',
                 importe=saldo,
                 cta_entrada=cuenta_nueva,
-                fecha=cuenta_nueva.fecha_creacion
+                fecha=cuenta_nueva.fecha_creacion,
+                moneda=cuenta_nueva.moneda,
             )
 
         return cuenta_nueva
@@ -499,6 +500,7 @@ class CuentaInteractiva(Cuenta):
                     importe=saldo,
                     esgratis=subcuenta.pop('esgratis', False),
                     convierte_cuenta=campo_cuenta,
+                    moneda=self.moneda,
                     **dict_cuenta
                 ))
             except errors.ErrorImporteCero:

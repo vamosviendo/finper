@@ -7,7 +7,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django_ordered_field import OrderedCollectionField
 
-from diario.utils.utils_moneda import id_moneda_base
+from diario.utils.utils_moneda import id_moneda_base, moneda_base
 from vvmodel.models import MiModel
 from utils import errors
 from utils.tiempo import Posicion
@@ -69,6 +69,15 @@ class MovimientoCleaner:
             raise ValidationError(message=errors.CUENTA_INEXISTENTE)
         if self.mov.cta_entrada == self.mov.cta_salida:
             raise ValidationError(message=errors.CUENTAS_IGUALES)
+
+    def no_se_permite_moneda_distinta_de_las_de_cuentas(self):
+        monedas_permitidas = set()
+        for cuenta in self.mov.cta_entrada, self.mov.cta_salida:
+            if cuenta is not None:
+                monedas_permitidas.update({cuenta.moneda})
+
+        if self.mov.moneda not in monedas_permitidas:
+            raise errors.ErrorMonedaNoPermitida
 
     def no_se_permite_fecha_anterior_a_creacion_de_cuenta(self):
         for cuenta in self.mov.cta_entrada, self.mov.cta_salida:
@@ -136,7 +145,7 @@ class Movimiento(MiModel):
     concepto = models.CharField(max_length=120)
     detalle = models.TextField(blank=True, null=True)
     _importe = models.FloatField()
-    moneda = models.ForeignKey(
+    moneda = models.ForeignKey(     # Determina en qué moneda está expresado el importe del movimiento
         'diario.Moneda', related_name='movimientos', default=id_moneda_base,
         on_delete=models.CASCADE
     )
@@ -257,6 +266,7 @@ class Movimiento(MiModel):
 
         cleaning.no_se_permiten_movimentos_con_importe_cero()
         cleaning.debe_haber_al_menos_una_cuenta_y_deben_ser_distintas()
+        cleaning.no_se_permite_moneda_distinta_de_las_de_cuentas()
         cleaning.no_se_permite_fecha_anterior_a_creacion_de_cuenta()
 
         if self._state.adding:

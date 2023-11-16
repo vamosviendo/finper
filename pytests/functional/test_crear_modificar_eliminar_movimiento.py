@@ -325,6 +325,22 @@ def test_crear_movimiento_con_cuenta_en_moneda_no_base(browser, cuenta_en_dolare
     assert saldo_base.text == float_format(saldo_base_original + importe)
 
 
+def test_crear_traspaso_entre_cuentas_en_distinta_moneda(browser, cuenta_con_saldo, cuenta_con_saldo_en_dolares, fecha):
+    # Dadas una cuenta en pesos y una cuenta en dólares
+
+    # Si vamos a generar un movimiento de traspaso de una a otra
+
+    # Vemos que junto al campo "importe" aparece un campo "moneda"
+
+    # Este campo nos permite seleccionar la moneda en la que estará expresado
+    # el movimiento, siendo las opciones las monedas de las dos cuentas
+    # intervinientes.
+    browser.crear_movimiento(
+
+    )
+    ...
+
+
 def test_modificar_movimiento(browser, entrada, cuenta_2):
     # Las modificaciones hechas mediante el formulario de movimiento se ven
     # reflejadas en el movimiento que se muestra en la página principal

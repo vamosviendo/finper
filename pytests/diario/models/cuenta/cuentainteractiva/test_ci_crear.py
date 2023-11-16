@@ -32,7 +32,21 @@ def test_pasa_fecha_creacion_a_movimiento_inicial(mocker, fecha):
         concepto=ANY,
         importe=ANY,
         cta_entrada=ANY,
-        fecha=fecha
+        fecha=fecha,
+        moneda=ANY,
+    )
+
+
+def test_pasa_moneda_de_cuenta_creada_a_movimiento_inicial(mocker, fecha):
+    mock_crear_mov = mocker.patch('diario.models.cuenta.Movimiento.crear')
+    ci = CuentaInteractiva.crear(
+        nombre='Cuenta Interactiva', slug='ci', saldo=155, fecha_creacion=fecha)
+    mock_crear_mov.assert_called_once_with(
+        concepto=ANY,
+        importe=ANY,
+        cta_entrada=ANY,
+        fecha=ANY,
+        moneda=ci.moneda,
     )
 
 

@@ -212,3 +212,8 @@ class ErrorTitularPorDefectoInexistente(ValidationError):
 class ErrorNoHayTitulares(ValidationError):
     def __init__(self, message='Tiene que haber al menos un titular'):
         super().__init__(message)
+
+
+class ErrorMonedaNoPermitida(ValidationError):
+    def __init__(self, message='Debe usarse la moneda base o la de alguna de las cuentas intervinientes'):
+        super().__init__(message)
