@@ -215,5 +215,9 @@ class ErrorNoHayTitulares(ValidationError):
 
 
 class ErrorMonedaNoPermitida(ValidationError):
-    def __init__(self, message='Debe usarse la moneda base o la de alguna de las cuentas intervinientes'):
+    def __init__(
+            self,
+            message='El movimiento debe ser expresado en la moneda '
+                    'de alguna de las cuentas intervinientes'
+    ):
         super().__init__(message)

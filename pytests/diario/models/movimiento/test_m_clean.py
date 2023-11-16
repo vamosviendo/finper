@@ -228,14 +228,29 @@ def test_no_puede_asignarse_fecha_posterior_a_conversion_en_mov_con_cuenta_acumu
         mov.full_clean()
 
 
+@pytest.fixture
+def none():
+    return None
+
+
+@pytest.mark.parametrize('cta_entrada, cta_salida, mensaje', [
+    ('cuenta_en_euros', 'none', 'euros'),
+    ('none', 'cuenta_en_dolares', 'dólares'),
+    ('cuenta_en_euros', 'cuenta_en_dolares', 'euros o dólares'),
+])
 def test_no_admite_moneda_que_no_sea_la_de_alguna_de_las_cuentas_intervinientes(
-        cuenta_en_euros, cuenta_en_dolares, peso):
+        cta_entrada, cta_salida, mensaje, peso, request):
+    ce = request.getfixturevalue(cta_entrada)
+    cs = request.getfixturevalue(cta_salida)
     mov = Movimiento(
-        concepto='Compra de euros con dólares',
+        concepto='Movimiento en monedas',
         importe=10,
-        cta_entrada=cuenta_en_euros,
-        cta_salida=cuenta_en_dolares,
+        cta_entrada=ce,
+        cta_salida=cs,
         moneda=peso,
     )
-    with pytest.raises(errors.ErrorMonedaNoPermitida):
+    with pytest.raises(
+            errors.ErrorMonedaNoPermitida,
+            match=f'El movimiento debe ser expresado en {mensaje}',
+    ):
         mov.clean()

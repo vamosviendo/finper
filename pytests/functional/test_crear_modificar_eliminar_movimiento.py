@@ -317,6 +317,7 @@ def test_crear_movimiento_con_cuenta_en_moneda_no_base(browser, cuenta_en_dolare
     # Si seleccionamos para el importe la moneda de la cuenta, se nos permite
     # completar el movimiento
     browser.completar("id_moneda", cuenta_en_dolares.moneda.nombre)
+    browser.pulsar()
 
     # Somos dirigidos a la página principal donde podemos ver que el saldo
     # principal de la cuenta cambió en el importe registrado en el movimiento,

@@ -77,7 +77,15 @@ class MovimientoCleaner:
                 monedas_permitidas.update({cuenta.moneda})
 
         if self.mov.moneda not in monedas_permitidas:
-            raise errors.ErrorMonedaNoPermitida
+            if self.mov.cta_entrada:
+                monedas = self.mov.cta_entrada.moneda.plural
+                if self.mov.cta_salida:
+                    monedas += f' o {self.mov.cta_salida.moneda.plural}'
+            else:
+                monedas = self.mov.cta_salida.moneda.plural
+            raise errors.ErrorMonedaNoPermitida(
+                message=f'El movimiento debe ser expresado en {monedas}'
+            )
 
     def no_se_permite_fecha_anterior_a_creacion_de_cuenta(self):
         for cuenta in self.mov.cta_entrada, self.mov.cta_salida:
