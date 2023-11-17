@@ -166,7 +166,6 @@ class FormMovimiento(forms.ModelForm):
 
     importe = forms.FloatField()
     esgratis = forms.BooleanField(required=False, initial=False)
-    moneda = forms.ModelChoiceField(queryset=Moneda.todes(), empty_label=None)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -186,7 +185,7 @@ class FormMovimiento(forms.ModelForm):
 
     class Meta:
         model = Movimiento
-        fields = ('fecha', 'concepto', 'detalle', 'cta_entrada', 'cta_salida')
+        fields = ('fecha', 'concepto', 'detalle', 'cta_entrada', 'cta_salida', 'moneda')
         widgets = {
             'detalle': forms.TextInput,
             'fecha': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
