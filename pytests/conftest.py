@@ -1,3 +1,6 @@
+import pytest
+
+
 pytest_plugins = [
     "pytests.fixtures_cuenta",
     "pytests.fixtures_fecha",
@@ -7,3 +10,8 @@ pytest_plugins = [
     "pytests.fixtures_saldo",
     "pytests.fixtures_titular",
 ]
+
+
+@pytest.fixture
+def none():
+    return None

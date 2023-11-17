@@ -296,50 +296,52 @@ def test_crear_traspaso_entre_titulares_sin_deuda(browser, cuenta, cuenta_ajena)
     assert capital_receptor == float_format(cuenta.titular.capital - 30)
 
 
-def test_crear_movimiento_con_cuenta_en_moneda_no_base(browser, cuenta_en_dolares, euro, fecha, importe):
+@pytest.mark.parametrize('cta_entrada, cta_salida, moneda', [
+    ('cuenta_en_dolares', 'none', 'euro'),
+    ('none', 'cuenta_en_euros', 'dolar'),
+    ('cuenta_en_dolares', 'cuenta_con_saldo_en_dolares', 'peso'),
+])
+def test_crear_movimiento_con_cuenta_en_moneda_no_base(
+        browser, cta_entrada, cta_salida, moneda, fecha, importe, request):
+    ce = request.getfixturevalue(cta_entrada)
+    cs = request.getfixturevalue(cta_salida)
+    moneda = request.getfixturevalue(moneda)
+    moneda_correcta = ce.moneda if ce else cs.moneda
     browser.ir_a_pag()
-    # Dada una cuenta en dolares
-    saldo_base_original = format_float(browser.esperar_saldo_en_moneda_de_cuenta(cuenta_en_dolares.slug).text)
 
-    # Cuando generamos un movimiento de entrada sobre dicha cuenta
+    # Dadas dos cuentas en una misma moneda
+    saldo_base_original_ce = format_float(browser.esperar_saldo_en_moneda_de_cuenta(ce.slug).text) if ce else None
+    saldo_base_original_cs = format_float(browser.esperar_saldo_en_moneda_de_cuenta(cs.slug).text) if cs else None
+
+    # Cuando generamos un movimiento sobre una o ambas cuentas
     browser.crear_movimiento(
         concepto='Movimiento en dólares',
         importe=str(importe),
         fecha=fecha,
-        cta_entrada=cuenta_en_dolares.nombre,
-        moneda=euro.nombre,
+        cta_entrada=ce.nombre if ce else None,
+        cta_salida= cs.nombre if cs else None,
+        moneda=moneda.nombre,
     )
+
     # Si seleccionamos para el importe una moneda distinta de la moneda de
     # la cuenta, recibimos un mensaje de error
     lista_errores = browser.esperar_elemento("ul.errorlist", By.CSS_SELECTOR)
-    assert "El movimiento debe ser expresado en dólares" in lista_errores.text
+    assert f"El movimiento debe ser expresado en {moneda_correcta.plural}" in lista_errores.text
 
-    # Si seleccionamos para el importe la moneda de la cuenta, se nos permite
+    # Si seleccionamos para el importe la moneda de las cuentas, se nos permite
     # completar el movimiento
-    browser.completar("id_moneda", cuenta_en_dolares.moneda.nombre)
+    browser.completar("id_moneda", moneda_correcta.nombre)
     browser.pulsar()
 
     # Somos dirigidos a la página principal donde podemos ver que el saldo
-    # principal de la cuenta cambió en el importe registrado en el movimiento,
+    # principal de la o las cuentas cambió en el importe registrado en el movimiento,
     browser.assert_url(reverse('home'))
-    saldo_base = browser.esperar_saldo_en_moneda_de_cuenta(cuenta_en_dolares.slug)
-    assert saldo_base.text == float_format(saldo_base_original + importe)
-
-
-def test_crear_traspaso_entre_cuentas_en_distinta_moneda(browser, cuenta_con_saldo, cuenta_con_saldo_en_dolares, fecha):
-    # Dadas una cuenta en pesos y una cuenta en dólares
-
-    # Si vamos a generar un movimiento de traspaso de una a otra
-
-    # Vemos que junto al campo "importe" aparece un campo "moneda"
-
-    # Este campo nos permite seleccionar la moneda en la que estará expresado
-    # el movimiento, siendo las opciones las monedas de las dos cuentas
-    # intervinientes.
-    browser.crear_movimiento(
-
-    )
-    ...
+    if ce:
+        saldo_base = browser.esperar_saldo_en_moneda_de_cuenta(ce.slug)
+        assert saldo_base.text == float_format(saldo_base_original_ce + importe)
+    if cs:
+        saldo_base = browser.esperar_saldo_en_moneda_de_cuenta(cs.slug)
+        assert saldo_base.text == float_format(saldo_base_original_cs - importe)
 
 
 def test_modificar_movimiento(browser, entrada, cuenta_2):
