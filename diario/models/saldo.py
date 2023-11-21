@@ -117,7 +117,7 @@ class Saldo(MiModel):
 
         saldo: 'Saldo' = cls.crear(
             cuenta=cuenta,
-            importe=importe_saldo_anterior + importe,
+            importe=importe_saldo_anterior + importe * mov.moneda.cotizacion / cuenta.moneda.cotizacion,
             movimiento=mov
         )
         saldo._actualizar_posteriores(importe)

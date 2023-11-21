@@ -2,7 +2,7 @@ from datetime import date
 
 import pytest
 
-from diario.models import CuentaInteractiva, Movimiento
+from diario.models import CuentaInteractiva, Movimiento, Moneda
 from utils.helpers_tests import cambiar_fecha_creacion, dividir_en_dos_subcuentas
 
 
@@ -162,3 +162,20 @@ def donacion(cuenta: CuentaInteractiva, cuenta_ajena: CuentaInteractiva, fecha: 
 @pytest.fixture
 def contramov_credito(credito: Movimiento) -> Movimiento:
     return Movimiento.tomar(id=credito.id_contramov)
+
+
+@pytest.fixture
+def mov_distintas_monedas(
+        cuenta_con_saldo_en_dolares: CuentaInteractiva,
+        cuenta_con_saldo_en_euros: CuentaInteractiva,
+        fecha: date,
+        dolar: Moneda,
+) -> Movimiento:
+    return Movimiento.crear(
+        concepto='Movimiento en distintas monedas',
+        cta_entrada=cuenta_con_saldo_en_euros,
+        cta_salida=cuenta_con_saldo_en_dolares,
+        importe=10,
+        fecha=fecha,
+        moneda=dolar,
+    )

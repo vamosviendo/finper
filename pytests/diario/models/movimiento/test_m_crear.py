@@ -3,7 +3,7 @@ from unittest.mock import call
 
 import pytest
 
-from diario.models import Movimiento, Saldo, Cuenta
+from diario.models import Movimiento, Saldo, Cuenta, CuentaInteractiva, Moneda
 from utils import errors
 from utils.helpers_tests import cambiar_fecha_creacion
 
@@ -131,6 +131,34 @@ def test_integrativo_crear_movimiento_en_fecha_antigua_modifica_saldos_de_fechas
     importe_saldo = Saldo.tomar(cuenta=cuenta, movimiento=entrada).importe
     mov_anterior = Movimiento.crear('Movimiento anterior', 30, cuenta, fecha=fecha_anterior)
     assert Saldo.tomar(cuenta=cuenta, movimiento=entrada).importe == importe_saldo + mov_anterior.importe
+
+
+@pytest.mark.parametrize('cta_entrada, cta_salida, moneda', [
+    ('cuenta_con_saldo_en_euros', 'cuenta_con_saldo_en_dolares', 'dolar'),
+    ('cuenta_con_saldo_en_euros', 'cuenta_con_saldo_en_dolares', 'euro'),
+    ('cuenta_con_saldo_en_dolares', 'cuenta_con_saldo_en_euros', 'dolar'),
+    ('cuenta_con_saldo_en_dolares', 'cuenta_con_saldo_en_euros', 'euro'),
+])
+def test_impacta_en_saldo_de_cada_cuenta_segun_la_cotizacion_de_su_moneda(
+        cta_entrada, cta_salida, moneda, fecha, request):
+    ce: CuentaInteractiva = request.getfixturevalue(cta_entrada)
+    cs: CuentaInteractiva = request.getfixturevalue(cta_salida)
+    mon_mov: Moneda = request.getfixturevalue(moneda)
+    saldo_ce = ce.saldo
+    saldo_cs = cs.saldo
+
+    Movimiento.crear(
+        concepto='Movimiento entre cuentas con distinta moneda',
+        cta_entrada=ce,
+        cta_salida=cs,
+        importe=10,
+        fecha=fecha,
+        moneda=mon_mov,
+    )
+    ce.refresh_from_db()
+    cs.refresh_from_db()
+    assert ce.saldo == saldo_ce + round((10 * mon_mov.cotizacion / ce.moneda.cotizacion), 2)
+    assert cs.saldo == saldo_cs - round((10 * mon_mov.cotizacion / cs.moneda.cotizacion), 2)
 
 
 class TestMovimientoEntreCuentasDeDistintosTitulares:

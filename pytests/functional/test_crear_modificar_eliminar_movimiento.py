@@ -344,6 +344,56 @@ def test_crear_movimiento_con_cuenta_en_moneda_no_base(
         assert saldo_base.text == float_format(saldo_base_original_cs - importe)
 
 
+@pytest.mark.parametrize('moneda', ['euro', 'dolar'])
+def test_crear_traspaso_entre_cuentas_en_distinta_moneda(
+        browser, cuenta_con_saldo_en_euros, cuenta_con_saldo_en_dolares, moneda, peso, fecha, request):
+    moneda_mov = request.getfixturevalue(moneda)
+    browser.ir_a_pag()
+    importe = 20
+
+    # Dadas dos cuentas en monedas distintas
+    saldo_base_original_ce = format_float(
+        browser.esperar_saldo_en_moneda_de_cuenta(
+            cuenta_con_saldo_en_euros.slug
+        ).text
+    )
+    saldo_base_original_cs = format_float(
+        browser.esperar_saldo_en_moneda_de_cuenta(
+            cuenta_con_saldo_en_dolares.slug
+        ).text
+    )
+
+    # Cuando generamos un movimiento de traspaso entre ambas cuentas
+    browser.crear_movimiento(
+        concepto='Compra de euros con dólares',
+        importe=str(importe),
+        fecha=fecha,
+        cta_entrada=cuenta_con_saldo_en_euros.nombre,
+        cta_salida=cuenta_con_saldo_en_dolares.nombre,
+        moneda=peso.nombre,
+    )
+
+    # Si seleccionamos para el importe una moneda distinta de la moneda de
+    # la cuenta, recibimos un mensaje de error
+    lista_errores = browser.esperar_elemento("ul.errorlist", By.CSS_SELECTOR)
+    assert f"El movimiento debe ser expresado en euros o dólares" in lista_errores.text
+
+    # Si seleccionamos para el importe la moneda de alguna de las cuentas, se nos permite
+    # completar el movimiento
+    browser.completar("id_moneda", moneda_mov.nombre)
+    browser.pulsar()
+
+    # Somos dirigidos a la página principal donde podemos ver que el saldo
+    # principal de la o las cuentas cambió en el importe registrado en el movimiento,
+    browser.assert_url(reverse('home'))
+    importe_en_euros = importe / cuenta_con_saldo_en_euros.moneda.cotizacion * moneda_mov.cotizacion
+    importe_en_dolares = importe / cuenta_con_saldo_en_dolares.moneda.cotizacion * moneda_mov.cotizacion
+    saldo_base = browser.esperar_saldo_en_moneda_de_cuenta(cuenta_con_saldo_en_euros.slug)
+    assert saldo_base.text == float_format(saldo_base_original_ce + importe_en_euros)
+    saldo_base = browser.esperar_saldo_en_moneda_de_cuenta(cuenta_con_saldo_en_dolares.slug)
+    assert saldo_base.text == float_format(saldo_base_original_cs - importe_en_dolares)
+
+
 def test_modificar_movimiento(browser, entrada, cuenta_2):
     # Las modificaciones hechas mediante el formulario de movimiento se ven
     # reflejadas en el movimiento que se muestra en la página principal

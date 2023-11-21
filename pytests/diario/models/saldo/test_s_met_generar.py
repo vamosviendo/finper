@@ -80,6 +80,19 @@ def test_importe_de_saldo_creado_es_igual_a_suma_del_importe_del_movimiento_y_el
     )
 
 
+def test_si_moneda_del_movimiento_es_distinta_de_la_de_la_cuenta_suma_importe_del_movimiento_ajustado_segun_ambas_cotizaciones(
+        mov_distintas_monedas, cuenta_con_saldo_en_euros, mock_crear):
+    Saldo.objects.get(cuenta=cuenta_con_saldo_en_euros, movimiento=mov_distintas_monedas).delete()
+    saldo_anterior = Saldo.objects.filter(cuenta=cuenta_con_saldo_en_euros).last().importe
+    Saldo.generar(mov_distintas_monedas, cuenta_con_saldo_en_euros)
+    print('saldo anterior:', saldo_anterior)
+    mock_crear.assert_called_once_with(
+        cuenta=cuenta_con_saldo_en_euros,
+        movimiento=mov_distintas_monedas,
+        importe=saldo_anterior + mov_distintas_monedas.importe * mov_distintas_monedas.moneda.cotizacion / cuenta_con_saldo_en_euros.moneda.cotizacion,
+    )
+
+
 @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
 def test_importe_de_saldo_creado_no_suma_importe_de_saldo_correspondiente_a_movimiento_posterior_preexistente(
         salida_posterior, sentido, cuenta, request):

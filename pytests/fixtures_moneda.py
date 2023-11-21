@@ -30,7 +30,7 @@ def euro() -> Moneda:
     return Moneda.crear(
         nombre='Euro',
         monname='eu',
-        cotizacion=1105.82,
+        cotizacion=1100,
     )
 
 
