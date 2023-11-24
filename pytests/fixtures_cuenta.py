@@ -215,7 +215,7 @@ def cuenta_con_saldo_en_euros(titular: Titular, fecha: date, euro: Moneda) -> Cu
 @pytest.fixture
 def cuenta_acumulativa_en_dolares(cuenta_con_saldo_en_dolares: CuentaInteractiva, fecha: date) -> CuentaAcumulativa:
     return cuenta_con_saldo_en_dolares.dividir_y_actualizar(
-        ['subcuenta 1 con saldo', 'scs1', 60],
-        ['subcuenta 2 con saldo', 'scs2'],
+        ['subcuenta 1 con saldo en dólares', 'scsd1', 60],
+        ['subcuenta 2 con saldo en dólares', 'scsd2'],
         fecha=fecha
     )

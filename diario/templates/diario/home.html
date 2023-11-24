@@ -138,7 +138,10 @@
                 </div>
               </td>
               {% for mon in monedas %}
-                <td id="id_saldo_cta_{{ subcuenta.ctaname }}" class="numero chico class_saldo_cuenta div-detalles-subcuenta">
+                <td
+                    id="id_saldo_cta_{{ subcuenta.ctaname }}_{{ mon.monname }}"
+                    class="numero chico class_saldo_cuenta div-detalles-subcuenta {% if mon.monname == cta.moneda.monname%} mon_cuenta{% endif %}"
+                >
                   {{ subcuenta.saldos|dict_key:mon.monname|floatformat:2 }}
                 </td>
               {% endfor %}

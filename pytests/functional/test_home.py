@@ -93,12 +93,28 @@ def test_home(
 
 
 def test_home_monedas(
-        browser, cuenta_con_saldo, cuenta_con_saldo_en_dolares, cuenta_con_saldo_en_euros, peso, dolar, euro):
+        browser, cuenta_con_saldo, cuenta_con_saldo_en_dolares, cuenta_con_saldo_en_euros,
+        peso, dolar, euro, request):
     # Vemos que al lado de cada cuenta aparece una columna por cada moneda, con
     # su saldo expresado en esa moneda. Si la moneda de la columna coincide con
     # la de la cuenta, aparece resaltada.
     browser.ir_a_pag()
     for cuenta in (cuenta_con_saldo, cuenta_con_saldo_en_dolares, cuenta_con_saldo_en_euros):
+        for moneda in (peso, dolar, euro):
+            saldo_mon = browser.esperar_elemento(f"id_saldo_cta_{cuenta.slug}_{moneda.monname}")
+            assert saldo_mon.text == float_format(cuenta.saldo_en(moneda))
+            classname = saldo_mon.get_attribute("class")
+            if moneda == cuenta.moneda:
+                assert "mon_cuenta" in classname
+            else:
+                assert "mon_cuenta" not in classname
+    cuenta_acumulativa = request.getfixturevalue('cuenta_acumulativa')
+    cuenta_acumulativa_en_dolares = request.getfixturevalue('cuenta_acumulativa_en_dolares')
+    browser.ir_a_pag()
+
+    # Esto también se aplica a las subcuentas de una cuenta acumulativa
+    subcuentas = list(cuenta_acumulativa.subcuentas.all() | cuenta_acumulativa_en_dolares.subcuentas.all())
+    for cuenta in subcuentas:
         for moneda in (peso, dolar, euro):
             saldo_mon = browser.esperar_elemento(f"id_saldo_cta_{cuenta.slug}_{moneda.monname}")
             assert saldo_mon.text == float_format(cuenta.saldo_en(moneda))
