@@ -92,61 +92,7 @@
       </colgroup>
       <tbody>
         {% for cta in cuentas %}
-          <tr id=id_row_cta_{{ cta.ctaname }} class="menu-row class_div_cuenta">
-            <td class="menu-item class_td_cuenta {% if cta.es_acumulativa %}acumulativa{% endif %}">
-              <div class="menu-item-content class_nombre_cuenta">
-                <a id="id_link_cta_{{ cta.ctaname }}" class="class_link_cuenta"
-                   href="{% url 'cuenta' cta.ctaname %}">
-                  {{ cta.nombre }}
-                </a>
-              </div>
-              <div class="menu-item-edit">
-                <a id="id_link_cta_mod_{{ cta.ctaname }}" href="{% url 'cta_mod' cta.ctaname %}">E</a>
-              </div>
-              <div class="menu-item-edit">
-                <a id="id_link_cta_elim_{{ cta.ctaname }}" href="{% url 'cta_elim' cta.ctaname %}">
-                  B
-                </a>
-              </div>
-            </td>
-            {% for mon in monedas %}
-              <td
-                  id="id_saldo_cta_{{ cta.ctaname }}_{{ mon.monname}}"
-                  class="numero chico class_saldo_cuenta{% if mon.monname == cta.moneda.monname%} mon_cuenta{% endif %}"
-              >
-                {{ cta.saldos|dict_key:mon.monname|floatformat:2 }}
-              </td>
-            {% endfor %}
-          </tr>
-          {% for subcuenta in cta.cuentas %}
-            <tr class="menu-row class_div_cuenta">
-              <td class="menu-item class_td_cuenta class_td_subcuenta">
-                <div class="menu-item-content class_nombre_cuenta">
-                  <a id="id_link_cta_{{ subcuenta.ctaname }}" href="{% url 'cuenta' subcuenta.ctaname %}">
-                    {{ subcuenta.nombre }}
-                  </a>
-                </div>
-                <div class="menu-item-edit">
-                  <a id="id_link_cta_mod_{{ subcuenta.ctaname }}" href="{% url 'cta_mod' subcuenta.ctaname %}">
-                    E
-                  </a>
-                </div>
-                <div class="menu-item-edit">
-                  <a id="id_link_cta_elim_{{ subcuenta.ctaname }}" href="{% url 'cta_elim' subcuenta.ctaname %}">
-                    B
-                  </a>
-                </div>
-              </td>
-              {% for mon in monedas %}
-                <td
-                    id="id_saldo_cta_{{ subcuenta.ctaname }}_{{ mon.monname }}"
-                    class="numero chico class_saldo_cuenta div-detalles-subcuenta {% if mon.monname == cta.moneda.monname%} mon_cuenta{% endif %}"
-                >
-                  {{ subcuenta.saldos|dict_key:mon.monname|floatformat:2 }}
-                </td>
-              {% endfor %}
-            </tr>
-          {% endfor %}
+          {% include "diario/snippets/cuenta.html" with cta=cta monedas=monedas subc=False %}
         {% endfor %}
         <tr class="menu-row">
           <td class="menu-item class_td_cuenta">

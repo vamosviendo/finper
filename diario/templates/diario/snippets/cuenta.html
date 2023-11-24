@@ -1,0 +1,27 @@
+<tr id=id_row_cta_{{ cta.ctaname }} class="menu-row class_div_cuenta">
+  <td class="menu-item class_td_cuenta
+            {% if cta.es_acumulativa %} acumulativa{% endif %}
+            {% if subc %} class_td_subcuenta{% endif %}"
+  >
+    <div class="menu-item-content class_nombre_cuenta">
+      <a id="id_link_cta_{{ cta.ctaname }}" class="class_link_cuenta"
+         href="{% url 'cuenta' cta.ctaname %}">
+        {{ cta.nombre }}
+      </a>
+    </div>
+    <div class="menu-item-edit">
+      <a id="id_link_cta_mod_{{ cta.ctaname }}" href="{% url 'cta_mod' cta.ctaname %}">E</a>
+    </div>
+    <div class="menu-item-edit">
+      <a id="id_link_cta_elim_{{ cta.ctaname }}" href="{% url 'cta_elim' cta.ctaname %}">
+        B
+      </a>
+    </div>
+  </td>
+  {% for mon in monedas %}
+    {% include "diario/snippets/saldo_en_moneda.html" with cta=cta mon=mon %}
+  {% endfor %}
+</tr>
+{% for subcuenta in cta.cuentas %}
+  {% include "diario/snippets/cuenta.html" with cta=subcuenta monedas=monedas subc=True %}
+{% endfor %}
