@@ -25,12 +25,14 @@ class FormCuenta(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['fecha_creacion'].initial = timezone.now().date()
         self.fields['titular'].initial = Titular.tomar(titname=TITULAR_PRINCIPAL)
+        self.fields['moneda'].initial = Moneda.tomar(monname=MONEDA_BASE)
+        self.fields['moneda'].required = False
         for _, campo in self.fields.items():
             agregar_clase(campo, 'form-control')
 
     class Meta:
         model = CuentaInteractiva
-        fields = ('nombre', 'slug', 'titular', 'fecha_creacion', )
+        fields = ('nombre', 'slug', 'titular', 'fecha_creacion', 'moneda', )
         widgets = {
             'fecha_creacion': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
         }

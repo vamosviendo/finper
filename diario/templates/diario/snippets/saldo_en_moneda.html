@@ -1,6 +1,7 @@
 <td
     id="id_saldo_cta_{{ cta.ctaname }}_{{ mon.monname }}"
-    class="numero chico class_saldo_cuenta div-detalles-subcuenta {% if mon.monname == cta.moneda.monname%} mon_cuenta{% endif %}"
+    class="numero chico class_saldo_cuenta div-detalles-subcuenta
+          {% if mon.monname == cta.moneda.monname%} mon_cuenta{% endif %}"
 >
   {{ cta.saldos|dict_key:mon.monname|floatformat:2 }}
 </td>

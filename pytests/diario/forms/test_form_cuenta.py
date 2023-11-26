@@ -4,7 +4,7 @@ from django import forms
 from django.utils import timezone
 
 from diario.forms import FormCuenta
-from diario.models import Titular
+from diario.models import Titular, Moneda
 
 
 @pytest.fixture(autouse=True)
@@ -42,3 +42,13 @@ def test_campo_fecha_creacion_muestra_fecha_actual_como_valor_por_defecto():
 def test_campo_titular_muestra_titular_principal_como_valor_por_defecto(mock_titular_principal):
     formcta = FormCuenta()
     assert formcta.fields['titular'].initial == Titular.tomar(titname=mock_titular_principal)
+
+
+def test_muestra_campo_moneda():
+    formcta = FormCuenta()
+    assert 'moneda' in formcta.fields.keys()
+
+
+def test_campo_moneda_muestra_moneda_base_como_valor_por_defecto(mock_moneda_base):
+    formcta = FormCuenta()
+    assert formcta.fields['moneda'].initial == Moneda.tomar(monname=mock_moneda_base)

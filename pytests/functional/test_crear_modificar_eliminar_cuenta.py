@@ -1,5 +1,6 @@
 import pytest
 from django.urls import reverse
+from selenium.webdriver.common.by import By
 
 
 @pytest.fixture(autouse=True)
@@ -24,6 +25,21 @@ def test_crear_cuenta(browser, titular, fecha):
     links_cuenta = browser.esperar_elementos("class_link_cuenta")
     nombres_cuenta = [x.text.strip() for x in links_cuenta]
     assert "cuenta nueva" in nombres_cuenta
+
+
+def test_crear_cuenta_en_otra_moneda(browser, titular, fecha, dolar):
+    browser.ir_a_pag(reverse("cta_nueva"))
+    browser.completar_form(
+        nombre="cuenta en dólares",
+        slug="cd",
+        titular=titular.nombre,
+        fecha_creacion=fecha,
+        moneda=dolar.nombre,
+    )
+    # Vemos que la cuenta creada tiene resaltado como saldo principal el saldo
+    # en dólares
+    saldo_cuenta = browser.esperar_elemento("id_row_cta_cd").esperar_elemento("mon_cuenta", By.CLASS_NAME)
+    assert saldo_cuenta.get_attribute("id") == f"id_saldo_cta_cd_{dolar.monname}"
 
 
 @pytest.mark.xfail
