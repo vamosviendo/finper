@@ -393,6 +393,9 @@ class Movimiento(MiModel):
             raise AttributeError(
                 f'Movimiento "{self.concepto}" no tiene cuenta de salida')
 
+    def importe_en(self, otra_moneda):
+        return self.importe * self.moneda.cotizacion_en(otra_moneda)
+
     def tiene_cuenta_acumulativa(self) -> bool:
         if self.tiene_cta_entrada_acumulativa():
             return True
