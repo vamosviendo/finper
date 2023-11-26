@@ -84,6 +84,10 @@ class Cuenta(PolymorphModel):
         except AttributeError:
             return 0
 
+    @property
+    def cotizacion(self) -> float:
+        return self.moneda.cotizacion
+
     def saldo_en(self, otra_moneda: Moneda) -> float:
         return self.saldo * self.moneda.cotizacion_en(otra_moneda)
     

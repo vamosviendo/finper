@@ -215,8 +215,12 @@ class Movimiento(MiModel):
         return Posicion(fecha=self.fecha, orden_dia=self.orden_dia)
 
     @property
-    def identidad(self):
+    def identidad(self) -> str:
         return f"{self.fecha.year}{self.fecha.month:02d}{self.fecha.day:02d}{self.orden_dia:02d}"
+
+    @property
+    def cotizacion(self) -> float:
+        return self.moneda.cotizacion
 
     def __str__(self):
 

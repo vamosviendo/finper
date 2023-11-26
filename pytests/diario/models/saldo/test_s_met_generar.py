@@ -89,7 +89,7 @@ def test_si_moneda_del_movimiento_es_distinta_de_la_de_la_cuenta_suma_importe_de
     mock_crear.assert_called_once_with(
         cuenta=cuenta_con_saldo_en_euros,
         movimiento=mov_distintas_monedas,
-        importe=saldo_anterior + mov_distintas_monedas.importe * mov_distintas_monedas.moneda.cotizacion / cuenta_con_saldo_en_euros.moneda.cotizacion,
+        importe=saldo_anterior + mov_distintas_monedas.importe * mov_distintas_monedas.cotizacion / cuenta_con_saldo_en_euros.cotizacion,
     )
 
 

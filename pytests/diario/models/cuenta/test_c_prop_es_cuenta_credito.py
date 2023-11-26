@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from diario.models import Movimiento, Cuenta, CuentaInteractiva
-from utils.helpers_tests import dividir_en_dos_subcuentas
+from diario.models import Movimiento, Cuenta
 
 
 def test_devuelve_false_si_cuenta_no_es_cuenta_credito(cuenta: Cuenta):

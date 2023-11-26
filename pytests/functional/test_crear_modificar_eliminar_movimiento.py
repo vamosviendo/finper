@@ -386,8 +386,8 @@ def test_crear_traspaso_entre_cuentas_en_distinta_moneda(
     # Somos dirigidos a la página principal donde podemos ver que el saldo
     # principal de la o las cuentas cambió en el importe registrado en el movimiento,
     browser.assert_url(reverse('home'))
-    importe_en_euros = importe / cuenta_con_saldo_en_euros.moneda.cotizacion * moneda_mov.cotizacion
-    importe_en_dolares = importe / cuenta_con_saldo_en_dolares.moneda.cotizacion * moneda_mov.cotizacion
+    importe_en_euros = importe / cuenta_con_saldo_en_euros.cotizacion * moneda_mov.cotizacion
+    importe_en_dolares = importe / cuenta_con_saldo_en_dolares.cotizacion * moneda_mov.cotizacion
     saldo_base = browser.esperar_saldo_en_moneda_de_cuenta(cuenta_con_saldo_en_euros.slug)
     assert saldo_base.text == float_format(saldo_base_original_ce + importe_en_euros)
     saldo_base = browser.esperar_saldo_en_moneda_de_cuenta(cuenta_con_saldo_en_dolares.slug)
