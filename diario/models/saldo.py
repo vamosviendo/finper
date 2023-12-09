@@ -27,7 +27,6 @@ if TYPE_CHECKING:
 class Saldo(MiModel):
 
     cuenta = models.ForeignKey('diario.Cuenta', on_delete=models.CASCADE)
-    # fecha = models.DateField()
     movimiento = models.ForeignKey(
         'diario.Movimiento', on_delete=models.CASCADE)
     _importe = models.FloatField()

@@ -51,3 +51,13 @@ def saldo_posterior_cuenta_2(entrada_posterior_otra_cuenta: Movimiento) -> Saldo
 @pytest.fixture
 def saldo_tardio(entrada_tardia: Movimiento) -> Saldo:
     return entrada_tardia.saldo_ce()
+
+
+@pytest.fixture
+def saldo_cuenta_en_dolares(mov_distintas_monedas: Movimiento) -> Saldo:
+    return mov_distintas_monedas.saldo_cs()
+
+
+@pytest.fixture
+def saldo_cuenta_en_euros(mov_distintas_monedas: Movimiento) -> Saldo:
+    return mov_distintas_monedas.saldo_ce()

@@ -1063,3 +1063,32 @@ class TestSaveCambiaEsGratis:
         assert donacion.id_contramov is not None
         assert Movimiento.tomar(id=donacion.id_contramov).concepto == "Constitución de crédito"
         assert Movimiento.tomar(id=donacion.id_contramov).detalle == "de Otro Titular a Titular"
+
+
+class TestSaveCambiaMoneda:
+
+    def test_si_cambia_moneda_en_traspaso_entre_cuentas_en_distinta_moneda_se_recalcula_importe(
+            self, mov_distintas_monedas, euro):
+        importe_en_euros = round(mov_distintas_monedas.importe_en(euro), 2)
+
+        mov_distintas_monedas.moneda = euro
+        mov_distintas_monedas.full_clean()
+        mov_distintas_monedas.save()
+
+        assert mov_distintas_monedas.importe == importe_en_euros
+
+    def test_si_cambia_moneda_en_traspaso_entre_cuentas_en_distinta_moneda_no_modifica_saldos_de_cuentas(
+            self, mov_distintas_monedas, euro):
+        ceu = mov_distintas_monedas.cta_entrada
+        cdl = mov_distintas_monedas.cta_salida
+        saldo_ceu = ceu.saldo
+        saldo_cdl = cdl.saldo
+
+        mov_distintas_monedas.moneda = euro
+        mov_distintas_monedas.full_clean()
+        mov_distintas_monedas.save()
+        ceu.refresh_from_db()
+        cdl.refresh_from_db()
+
+        assert ceu.saldo == saldo_ceu
+        assert cdl.saldo == saldo_cdl

@@ -325,7 +325,7 @@ class Movimiento(MiModel):
 
         Si el movimiento existía (está siendo modificado)
         - Chequear si cambió alguno de los "campos sensibles" (fecha, importe,
-          cta_entrada, cta_salida).
+          cta_entrada, cta_salida, moneda).
         - Si cambió alguno de estos campos, actualizar saldos:
         """
         if self._state.adding:   # Movimiento nuevo
@@ -366,6 +366,10 @@ class Movimiento(MiModel):
                     self._eliminar_contramovimiento()
 
             self._actualizar_cuenta_convertida_en_acumulativa()
+
+            if self.cambia_campo('moneda', contraparte=self.viejo):
+                self.importe = self.viejo.importe_en(self.moneda)
+
             super().save(*args, **kwargs)
 
             if self.cambia_campo(
