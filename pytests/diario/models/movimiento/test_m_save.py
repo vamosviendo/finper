@@ -1069,7 +1069,7 @@ class TestSaveCambiaMoneda:
 
     def test_si_cambia_moneda_en_traspaso_entre_cuentas_en_distinta_moneda_se_recalcula_importe(
             self, mov_distintas_monedas, euro):
-        importe_en_euros = round(mov_distintas_monedas.importe_en(euro), 2)
+        importe_en_euros = mov_distintas_monedas.importe_en(euro)
 
         mov_distintas_monedas.moneda = euro
         mov_distintas_monedas.full_clean()

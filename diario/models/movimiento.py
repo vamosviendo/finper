@@ -402,7 +402,7 @@ class Movimiento(MiModel):
                 f'Movimiento "{self.concepto}" no tiene cuenta de salida')
 
     def importe_en(self, otra_moneda):
-        return self.importe * self.moneda.cotizacion_en(otra_moneda)
+        return round(self.importe * self.moneda.cotizacion_en(otra_moneda), 2)
 
     def tiene_cuenta_acumulativa(self) -> bool:
         if self.tiene_cta_entrada_acumulativa():
