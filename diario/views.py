@@ -246,6 +246,22 @@ class MonNuevaView(CreateView):
     success_url = reverse_lazy('home')
 
 
+class MonModView(UpdateView):
+    model = Moneda
+    template_name = 'diario/moneda_form.html'
+    slug_url_kwarg = 'monname'
+    slug_field = 'monname'
+    fields = '__all__'
+    success_url = reverse_lazy('home')
+
+
+class MonElimView(DeleteView):
+    model = Moneda
+    slug_url_kwarg = 'monname'
+    slug_field = 'monname'
+    success_url = reverse_lazy('home')
+
+
 class CorregirSaldo(TemplateView):
     template_name = 'diario/corregir_saldo.html'
 

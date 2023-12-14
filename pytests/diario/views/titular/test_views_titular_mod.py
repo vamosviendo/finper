@@ -4,7 +4,7 @@ from pytest_django import asserts
 from diario.forms import FormTitular
 
 
-def test_usa_template_cta_form(client, titular):
+def test_usa_template_tit_form(client, titular):
     response = client.get(reverse('tit_mod', args=[titular.titname]))
     asserts.assertTemplateUsed(response, 'diario/tit_form.html')
 
