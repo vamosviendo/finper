@@ -1,3 +1,0 @@
-MONEDA_BASE = 'p'
-
-TITULAR_PRINCIPAL = 'default'
