@@ -3,20 +3,12 @@ from typing import List
 
 from django import forms
 from django.core.exceptions import ValidationError
-from django.forms import Field
 from django.utils import timezone
 
 from diario.models import CuentaAcumulativa, CuentaInteractiva, Movimiento, Titular, Moneda
 from diario.settings_app import TITULAR_PRINCIPAL, MONEDA_BASE
 
 from utils.iterables import hay_mas_de_un_none_en
-
-
-def agregar_clase(campo: Field, clase: str):
-    if campo.widget.attrs.get('class'):
-        campo.widget.attrs['class'] += ' form-control'
-    else:
-        campo.widget.attrs['class'] = 'form-control'
 
 
 class FormCuenta(forms.ModelForm):
@@ -27,8 +19,6 @@ class FormCuenta(forms.ModelForm):
         self.fields['titular'].initial = Titular.tomar(titname=TITULAR_PRINCIPAL)
         self.fields['moneda'].initial = Moneda.tomar(monname=MONEDA_BASE)
         self.fields['moneda'].required = False
-        for _, campo in self.fields.items():
-            agregar_clase(campo, 'form-control')
 
     class Meta:
         model = CuentaInteractiva
@@ -44,23 +34,6 @@ class FormCuenta(forms.ModelForm):
                 'No se permite guión bajo inicial en slug', code='guionbajo')
 
         return data
-
-
-class FormSubcuenta(forms.Form):
-    nombre = forms.CharField()
-    slug = forms.CharField()
-    saldo = forms.FloatField(required=False)
-    titular = forms.ModelChoiceField(
-        queryset=Titular.todes(),
-        required=False,
-        empty_label=None,
-    )
-
-    def clean(self) -> dict:
-        self.cleaned_data = super().clean()
-        self.cleaned_data['titular'] = \
-            self.cleaned_data['titular'] or self.cuenta_madre.titular
-        return self.cleaned_data
 
 
 class FormCrearSubcuenta(forms.Form):
@@ -92,6 +65,7 @@ class FormCrearSubcuenta(forms.Form):
 
 
 class FormDividirCuenta(forms.Form):
+    # TODO: Refactor
     fecha = forms.DateField(
         required=False,
         initial=date.today(),
@@ -181,9 +155,6 @@ class FormMovimiento(forms.ModelForm):
                 self.fields['esgratis'].initial = True
         except AttributeError:  # form not bound - instance = None
             pass
-
-        for campo in self.fields.values():
-            agregar_clase(campo, 'form-control')
 
     class Meta:
         model = Movimiento
