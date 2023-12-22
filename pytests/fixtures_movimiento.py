@@ -1,6 +1,8 @@
 from datetime import date
+from random import randint
 
 import pytest
+from django.db.models import QuerySet
 
 from diario.models import CuentaInteractiva, Movimiento, Moneda
 from utils.helpers_tests import cambiar_fecha_creacion, dividir_en_dos_subcuentas
@@ -201,3 +203,28 @@ def mov_distintas_monedas(
         fecha=fecha,
         moneda=dolar,
     )
+
+
+@pytest.fixture
+def conjunto_movimientos_varios_dias(cuenta, cuenta_2, cuenta_ajena, cuenta_ajena_2, request) -> QuerySet[Movimiento]:
+    cuentas = list(CuentaInteractiva.todes())
+    for x in range(1,18):
+        y = randint(0, len(cuentas)-1)
+        movs_del_dia = randint(1, 4)
+        for z in range(1, movs_del_dia):
+            cta = cuentas[y]
+            if x not in {5, 13}:
+                mov = Movimiento(
+                    concepto=f'Movimiento {x}',
+                    importe=request.getfixturevalue('importe_aleatorio'),
+                    fecha=date(2022, 5, day=x)
+                )
+                if (y%2) == 0:
+                    mov.cta_entrada = cta
+                else:
+                    mov.cta_salida = cta
+                mov.full_clean()
+                mov.save()
+    return Movimiento.todes()
+
+
