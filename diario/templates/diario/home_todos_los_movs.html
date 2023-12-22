@@ -164,11 +164,9 @@
 </section>
 
 <section id="id_section_movimientos" style="clear: both;">
-  <div id="id_div_mov_nuevo" class="menu-item">
-    <a href="{% url 'mov_nuevo' %}" id="id_link_mov_nuevo">
-      Movimiento nuevo
-    </a>
-  </div>
+  <a href="{% url 'mov_nuevo' %}" id="id_link_mov_nuevo">
+    Movimiento nuevo
+  </a>
   <div>
     <table id="id_table_movimientos" class="table-striped planilla">
       <thead><tr>
@@ -180,6 +178,7 @@
         <th id="id_th_cta_salida">Sale de</th>
         <th>Menu</th>
       </tr></thead>
+
       {% for mov in movimientos reversed %}
       <tr id="id_row_mov_{{ mov.identidad }}" class="class_row_mov{% if mov.pk == pk %} mov_selected{% endif %}">
         <td class="class_td_fecha">
