@@ -4,4 +4,4 @@ from vvmodel.models import MiModel
 
 
 class Dia (MiModel):
-    fecha = models.DateField()
+    fecha = models.DateField(unique=True)

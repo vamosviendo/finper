@@ -3,6 +3,7 @@ import pytest
 
 pytest_plugins = [
     "pytests.fixtures_cuenta",
+    "pytests.fixtures_dia",
     "pytests.fixtures_fecha",
     "pytests.fixtures_importe",
     "pytests.fixtures_moneda",
