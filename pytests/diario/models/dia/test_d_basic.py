@@ -26,3 +26,9 @@ def test_se_ordena_por_fecha_ascendente(fecha, fecha_posterior, fecha_tardia):
     dia = Dia.crear(fecha=fecha)
 
     assert list(Dia.todes()) == [dia, dia_posterior, dia_tardio]
+
+
+def test_no_permite_dias_sin_fecha():
+    dia = Dia()
+    with pytest.raises(ValidationError):
+        dia.full_clean()
