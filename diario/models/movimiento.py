@@ -13,6 +13,7 @@ from utils import errors
 from utils.tiempo import Posicion
 
 from diario.consts import *
+from diario.models.dia import Dia
 from diario.models.saldo import Saldo
 
 if TYPE_CHECKING:
@@ -148,8 +149,8 @@ class MovimientoCleaner:
 
 
 class Movimiento(MiModel):
-    fecha = MiDateField(default=date.today)
-    orden_dia = OrderedCollectionField(collection='fecha')
+    dia = models.ForeignKey('diario.Dia', on_delete=models.CASCADE)
+    orden_dia = OrderedCollectionField(collection='dia')
     concepto = models.CharField(max_length=120)
     detalle = models.TextField(blank=True, null=True)
     _importe = models.FloatField()
@@ -176,7 +177,7 @@ class Movimiento(MiModel):
     viejo: 'Movimiento' = None
 
     class Meta:
-        ordering = ('fecha', 'orden_dia')
+        ordering = ('dia', 'orden_dia')
 
     @property
     def importe(self) -> float:
@@ -185,6 +186,17 @@ class Movimiento(MiModel):
     @importe.setter
     def importe(self, valor: float | int):
         self._importe = round(float(valor), 2)
+
+    @property
+    def fecha(self) -> date:
+        return self.dia.fecha
+
+    @fecha.setter
+    def fecha(self, valor: date):
+        try:
+            self.dia = Dia.tomar(fecha=valor)
+        except Dia.DoesNotExist:
+            self.dia = Dia.crear(fecha=valor)
 
     @property
     def emisor(self) -> Optional[Titular]:

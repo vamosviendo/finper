@@ -1,10 +1,10 @@
 from diario.models import Movimiento, Moneda
 
 
-def test_guarda_y_recupera_movimientos(fecha, cuenta, cuenta_2):
+def test_guarda_y_recupera_movimientos(fecha, dia, cuenta, cuenta_2):
     cantidad_movimientos = Movimiento.cantidad()
     mov = Movimiento()
-    mov.fecha = fecha
+    mov.dia = dia
     mov.concepto = 'entrada de efectivo'
     mov.importe = 985.5
     mov.cta_entrada = cuenta
@@ -17,7 +17,8 @@ def test_guarda_y_recupera_movimientos(fecha, cuenta, cuenta_2):
 
     mov_guardado = Movimiento.tomar(pk=mov.pk)
 
-    assert mov_guardado.fecha == fecha
+    assert mov_guardado.dia == dia
+    assert mov_guardado.fecha == dia.fecha
     assert mov_guardado.concepto == 'entrada de efectivo'
     assert mov_guardado.importe == 985.5
     assert mov_guardado.cta_entrada == cuenta
@@ -40,25 +41,33 @@ def test_cta_salida_se_relaciona_con_cuenta(cuenta, fecha):
     assert mov in cuenta.salidas.all()
 
 
-def test_movimientos_se_ordenan_por_fecha(entrada, entrada_tardia, entrada_anterior):
+def test_se_relaciona_con_dia(cuenta, fecha, importe, dia):
+    mov = Movimiento(fecha=fecha, concepto='Entrada', importe=importe, cta_entrada=cuenta)
+    mov.dia = dia
+    mov.full_clean()
+    mov.save()
+    assert mov in dia.movimiento_set.all()
+
+
+def test_movimientos_se_ordenan_por_dia(entrada, entrada_tardia, entrada_anterior):
     assert list(Movimiento.todes()) == [entrada_anterior, entrada, entrada_tardia]
 
 
-def test_dentro_de_fecha_movimientos_se_ordenan_por_campo_orden_dia(cuenta, fecha):
+def test_dentro_del_dia_movimientos_se_ordenan_por_campo_orden_dia(cuenta, dia):
     mov1 = Movimiento.crear(
-        fecha=fecha,
+        dia=dia,
         concepto='Mov1',
         importe=100,
         cta_salida=cuenta,
     )
     mov2 = Movimiento.crear(
-        fecha=fecha,
+        dia=dia,
         concepto='Mov2',
         importe=100,
         cta_entrada=cuenta,
     )
     mov3 = Movimiento.crear(
-        fecha=fecha,
+        dia=dia,
         concepto='Mov3',
         importe=243,
         cta_entrada=cuenta,
