@@ -12,6 +12,9 @@ class Dia (MiModel):
     class Meta:
         ordering = ['fecha']
 
+    def __str__(self):
+        return self.fecha.strftime('%Y-%m-%d')
+
     @classmethod
     def hoy(cls) -> Self:
         try:
