@@ -33,3 +33,8 @@ def dia_tardio(fecha_tardia: date) -> Dia:
 @pytest.fixture
 def dia_tardio_plus(fecha_tardia_plus: date) -> Dia:
     return Dia.crear(fecha=fecha_tardia_plus)
+
+
+@pytest.fixture
+def dia_hoy() -> Dia:
+    return Dia.crear(fecha=date.today())
