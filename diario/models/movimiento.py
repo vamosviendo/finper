@@ -149,7 +149,7 @@ class MovimientoCleaner:
 
 
 class Movimiento(MiModel):
-    dia = models.ForeignKey('diario.Dia', on_delete=models.CASCADE)
+    dia = models.ForeignKey('diario.Dia', on_delete=models.CASCADE, default=Dia.hoy)
     orden_dia = OrderedCollectionField(collection='dia')
     concepto = models.CharField(max_length=120)
     detalle = models.TextField(blank=True, null=True)
