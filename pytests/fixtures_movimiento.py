@@ -59,7 +59,7 @@ def traspaso(cuenta: CuentaInteractiva, cuenta_2: CuentaInteractiva, dia: Dia) -
 @pytest.fixture
 def entrada_otra_cuenta(cuenta_2: CuentaInteractiva, dia: Dia) -> Movimiento:
     return Movimiento.crear(
-        concepto='Entrada', importe=486, cta_entrada=cuenta_2, dia=Dia
+        concepto='Entrada', importe=486, cta_entrada=cuenta_2, dia=dia
     )
 
 
@@ -200,7 +200,7 @@ def mov_distintas_monedas(
         cta_entrada=cuenta_con_saldo_en_euros,
         cta_salida=cuenta_con_saldo_en_dolares,
         importe=10,
-        dia=Dia,
+        dia=dia,
         moneda=dolar,
     )
 
