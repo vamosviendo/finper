@@ -42,3 +42,9 @@ def dia_tardio_plus(fecha_tardia_plus: date) -> Dia:
 @pytest.fixture
 def dia_hoy() -> Dia:
     return Dia.crear(fecha=date.today())
+
+
+@pytest.fixture
+def mas_de_7_dias(dia, dia_temprano, dia_tardio, dia_posterior, dia_anterior, dia_tardio_plus, dia_hoy):
+    Dia.crear(fecha=date(2001, 1, 2))
+    return Dia.todes()

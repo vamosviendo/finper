@@ -1,3 +1,4 @@
+from django.core.paginator import Paginator
 from django.db.models.functions import Lower
 from django.shortcuts import render, redirect
 from django.urls import reverse, reverse_lazy
@@ -6,7 +7,7 @@ from django.views.generic import CreateView, DeleteView, TemplateView, \
 
 from diario.forms import FormCuenta, FormMovimiento, FormDividirCuenta, \
     FormCrearSubcuenta, FormTitular
-from diario.models import Cuenta, CuentaInteractiva, CuentaAcumulativa, \
+from diario.models import Cuenta, CuentaInteractiva, CuentaAcumulativa, Dia, \
     Movimiento, Titular, Moneda
 from diario.utils.utils_saldo import saldo_general_historico, verificar_saldos
 
@@ -80,6 +81,7 @@ class HomeView(TemplateView):
                     x.as_view_context(movimiento) for x in Titular.todes()
                 ],
                 'movimientos': [x.as_view_context() for x in Movimiento.todes()],
+                'dias': Paginator(Dia.todes().order_by('-fecha'), 7).get_page(self.request.GET.get('page')),
                 'cuentas': [
                     x.as_view_context(movimiento) for x in
                     Cuenta.filtro(cta_madre=None).order_by(Lower('nombre'))
