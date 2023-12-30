@@ -142,6 +142,7 @@ class FormMovimiento(forms.ModelForm):
 
     importe = forms.FloatField()
     esgratis = forms.BooleanField(required=False, initial=False)
+    fecha = forms.DateField(initial=date.today)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -158,7 +159,7 @@ class FormMovimiento(forms.ModelForm):
 
     class Meta:
         model = Movimiento
-        fields = ('fecha', 'concepto', 'detalle', 'cta_entrada', 'cta_salida', 'moneda')
+        fields = ('concepto', 'detalle', 'cta_entrada', 'cta_salida', 'moneda')
         widgets = {
             'detalle': forms.TextInput,
             'fecha': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
@@ -180,6 +181,7 @@ class FormMovimiento(forms.ModelForm):
 
     def save(self, *args, **kwargs) -> Movimiento:
         self.instance.importe = self.cleaned_data['importe']
+        self.instance.fecha = self.cleaned_data['fecha']
         self.instance.esgratis = self.cleaned_data['esgratis']
         return super().save(*args, **kwargs)
 

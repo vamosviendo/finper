@@ -1,6 +1,7 @@
 from datetime import date
 
 import pytest
+from django.core.exceptions import ValidationError
 
 from diario.models import Dia
 
@@ -17,7 +18,10 @@ def dia_anterior(fecha_anterior: date) -> Dia:
 
 @pytest.fixture
 def dia(fecha: date) -> Dia:
-    return Dia.crear(fecha=fecha)
+    try:
+        return Dia.crear(fecha=fecha)
+    except ValidationError:
+        return Dia.tomar(fecha=fecha)
 
 
 @pytest.fixture

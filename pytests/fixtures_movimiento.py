@@ -217,7 +217,7 @@ def conjunto_movimientos_varios_dias(cuenta, cuenta_2, cuenta_ajena, cuenta_ajen
                 mov = Movimiento(
                     concepto=f'Movimiento {x}',
                     importe=request.getfixturevalue('importe_aleatorio'),
-                    dia=Dia.crear(fecha=date(2022, 5, day=x))
+                    fecha=date(2022, 5, x)
                 )
                 if (y % 2) == 0:
                     mov.cta_entrada = cta

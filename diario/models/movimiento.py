@@ -569,7 +569,7 @@ class Movimiento(MiModel):
         if pos_min.fecha != pos_max.fecha:
             self.orden_dia = 0 \
                 if pos_min.fecha == self.viejo.fecha \
-                else Movimiento.filtro(fecha=pos_min.fecha).count()
+                else Movimiento.filtro(dia=Dia.tomar(fecha=pos_min.fecha)).count()
             super().save()
 
     def _eliminar_saldo_de_cuenta_vieja_si_existe(self, cuenta_vieja: Cuenta, pasa_a_opuesto: callable, saldo: callable):

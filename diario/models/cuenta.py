@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import Optional, Self, List, Sequence, Set, Any
+from typing import Optional, Self, List, Sequence, Set, Any, TYPE_CHECKING
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
@@ -22,6 +22,8 @@ from utils.iterables import remove_duplicates
 from utils.tiempo import Posicion
 from vvmodel.models import PolymorphModel
 
+if TYPE_CHECKING:
+    from diario.models.dia import Dia
 
 alfaminusculas = RegexValidator(
     r'^[0-9a-z_\-]*$', 'Solamente caracteres alfanuméricos y guiones')
@@ -145,11 +147,11 @@ class Cuenta(PolymorphModel):
         """
         return self.entradas.all() | self.salidas.all()
 
-    def movs_directos_en_fecha(self, fecha) -> models.QuerySet[Movimiento]:
+    def movs_directos_en_fecha(self, dia: Dia) -> models.QuerySet[Movimiento]:
         """ Devuelve movimientos directos de la cuenta en una fecha dada"""
-        return self.movs_directos().filter(fecha=fecha)
+        return self.movs_directos().filter(dia=dia)
 
-    def movs(self, order_by: str='fecha') -> models.QuerySet[Movimiento]:
+    def movs(self, order_by: str='dia') -> models.QuerySet[Movimiento]:
         """ Devuelve movimientos propios y de sus subcuentas
             ordenados por fecha.
             Antes de protestar que devuelve lo mismo que movs_directos()
@@ -157,10 +159,10 @@ class Cuenta(PolymorphModel):
             """
         return self.movs_directos().order_by(order_by)
 
-    def movs_en_fecha(self, fecha: date) -> models.QuerySet[Movimiento]:
+    def movs_en_fecha(self, dia: Dia) -> models.QuerySet[Movimiento]:
         """ Devuelve movimientos propios y de sus subcuentas en una fecha dada.
         Ver comentario anterior."""
-        return self.movs().filter(fecha=fecha)
+        return self.movs().filter(dia=dia)
 
     def cantidad_movs(self) -> int:
         return self.entradas.count() + self.salidas.count()
@@ -176,7 +178,7 @@ class Cuenta(PolymorphModel):
 
     def fecha_ultimo_mov_directo(self) -> Optional[date]:
         try:
-            return self.movs_directos().order_by('fecha').last().fecha
+            return self.movs_directos().order_by('dia').last().fecha
         except AttributeError:
             return None
 
@@ -604,7 +606,7 @@ class CuentaAcumulativa(Cuenta):
         self.manejar_cambios()
         super().save(*args, **kwargs)
 
-    def movs(self, order_by: str = 'fecha') -> models.QuerySet[Movimiento]:
+    def movs(self, order_by: str = 'dia') -> models.QuerySet[Movimiento]:
         """ Devuelve movimientos propios y de sus subcuentas
             ordenados por fecha."""
         result = super().movs(order_by=order_by)
