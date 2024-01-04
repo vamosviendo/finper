@@ -9,11 +9,12 @@ from diario.forms import FormCuenta, FormMovimiento, FormDividirCuenta, \
     FormCrearSubcuenta, FormTitular
 from diario.models import Cuenta, CuentaInteractiva, CuentaAcumulativa, Dia, \
     Movimiento, Titular, Moneda
+from diario.settings_app import TEMPLATE_HOME
 from diario.utils.utils_saldo import saldo_general_historico, verificar_saldos
 
 
 class HomeView(TemplateView):
-    template_name = 'diario/home.html'
+    template_name = TEMPLATE_HOME
 
     #
     # def get(self, request, *args, **kwargs):

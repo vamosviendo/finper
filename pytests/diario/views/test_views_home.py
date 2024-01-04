@@ -2,6 +2,7 @@ import pytest
 from django.urls import reverse
 from pytest_django import asserts
 
+from diario.settings_app import TEMPLATE_HOME
 from diario.utils.utils_saldo import saldo_general_historico
 
 
@@ -10,9 +11,9 @@ def response(client):
     return client.get(reverse('home'))
 
 
-def test_usa_template_home(client):
+def test_usa_template_indicada_en_settings_app(client):
     response = client.get('/')
-    asserts.assertTemplateUsed(response, 'diario/home.html')
+    asserts.assertTemplateUsed(response, template_name=TEMPLATE_HOME)
 
 
 def test_pasa_titulares_a_template(titular, otro_titular, response):
