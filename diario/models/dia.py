@@ -21,9 +21,13 @@ class Dia (MiModel):
     @classmethod
     def hoy(cls) -> Self:
         try:
-            return cls.tomar(fecha=date.today().strftime('%Y%m%d')).pk
+            return cls.tomar(fecha=date.today().strftime('%Y%m%d'))
         except Dia.DoesNotExist:
-            return cls.crear(fecha=date.today()).pk
+            return cls.crear(fecha=date.today())
+
+    @classmethod
+    def hoy_id(cls) -> int:
+        return cls.hoy().pk
 
     @property
     def movimientos(self) -> models.QuerySet['Movimiento']:
