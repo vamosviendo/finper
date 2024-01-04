@@ -180,69 +180,77 @@
         <th id="id_th_cta_salida">Sale de</th>
         <th>Menu</th>
       </tr></thead>
-      {% for mov in movimientos reversed %}
-      <tr id="id_row_mov_{{ mov.identidad }}" class="class_row_mov{% if mov.pk == pk %} mov_selected{% endif %}">
-        <td class="class_td_fecha">
-          <div class="cell_fecha scrollable">
-            {{ mov.fecha|date:'Y-m-d' }}
-          </div>
-        </td>
-
-        <td class="class_td_concepto" title="{{ mov.detalle }}">
-          <div class="cell_concepto scrollable">
-            <a href="
-                {% if titname %}
-                  {% url 'titular_movimiento' titname mov.pk %}
-                {% elif ctaname %}
-                  {% url 'cuenta_movimiento' ctaname mov.pk %}
-                {% else %}
-                  {% url 'movimiento' mov.pk %}
-                {% endif %}"
-               id="id_link_mov_{{ mov.identidad }}"
-               class="class_link_movimiento">
-              {{ mov.concepto }}
-            </a>
-          </div>
-        </td>
-
-        <td class="class_td_detalle">
-          <div class="cell_detalle scrollable">
-            {{ mov.detalle|default_if_none:""|truncatechars:50 }}
-          </div>
-        </td>
-
-        <td class="numero class_td_importe" title="{{ mov.str_cuentas }}">
-          {{ mov.importe|floatformat:2 }}
-        </td>
-
-        <td class="class_td_cta_entrada">
-          <div class="cell_cuentas scrollable">
-            {{ mov.cta_entrada }}
-          </div>
-        </td>
-
-        <td class="class_td_cta_salida">
-          <div class="cell_cuentas scrollable">
-            {{ mov.cta_salida }}
-          </div>
-        </td>
-
-
-        <td class="class_td_menu">
-          {% if not mov.es_automatico %}
-          <a href="{% url 'mov_elim' mov.pk %}"
-             class="class_link_elim_mov">
-            B
-          </a>
-          <a href="{% url 'mov_mod' mov.pk %}"
-             class="class_link_mod_mov">
-            E
-          </a>
-          {% endif %}
-        </td>
-      </tr>
-      {% endfor %}
     </table>
+    {% for dia in dias %}
+    <div class="class_div_dia">
+      <div class="class_div_fecha_dia">{{ dia.fecha|date:'Y-m-d' }}</div>
+      <div class="class_div_saldo_dia">{{ dia.saldo|floatformat:2 }}</div>
+      <table id="id_table_movimientos_dia">
+        {% for mov in dia.movimientos reversed %}
+        <tr id="id_row_mov_{{ mov.identidad }}" class="class_row_mov{% if mov.pk == pk %} mov_selected{% endif %}">
+          <td class="class_td_fecha">
+            <div class="cell_fecha scrollable">
+              {{ mov.fecha|date:'Y-m-d' }}
+            </div>
+          </td>
+
+          <td class="class_td_concepto" title="{{ mov.detalle }}">
+            <div class="cell_concepto scrollable">
+              <a href="
+                  {% if titname %}
+                    {% url 'titular_movimiento' titname mov.pk %}
+                  {% elif ctaname %}
+                    {% url 'cuenta_movimiento' ctaname mov.pk %}
+                  {% else %}
+                    {% url 'movimiento' mov.pk %}
+                  {% endif %}"
+                 id="id_link_mov_{{ mov.identidad }}"
+                 class="class_link_movimiento">
+                {{ mov.concepto }}
+              </a>
+            </div>
+          </td>
+
+          <td class="class_td_detalle">
+            <div class="cell_detalle scrollable">
+              {{ mov.detalle|default_if_none:""|truncatechars:50 }}
+            </div>
+          </td>
+
+          <td class="numero class_td_importe" title="{{ mov.str_cuentas }}">
+            {{ mov.importe|floatformat:2 }}
+          </td>
+
+          <td class="class_td_cta_entrada">
+            <div class="cell_cuentas scrollable">
+              {{ mov.cta_entrada }}
+            </div>
+          </td>
+
+          <td class="class_td_cta_salida">
+            <div class="cell_cuentas scrollable">
+              {{ mov.cta_salida }}
+            </div>
+          </td>
+
+
+          <td class="class_td_menu">
+            {% if not mov.es_automatico %}
+            <a href="{% url 'mov_elim' mov.pk %}"
+               class="class_link_elim_mov">
+              B
+            </a>
+            <a href="{% url 'mov_mod' mov.pk %}"
+               class="class_link_mod_mov">
+              E
+            </a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+    {% endfor %}
   </div>
 </section>
 
