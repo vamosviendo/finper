@@ -18,12 +18,12 @@ def test_movimientos_agrupados_por_dia(browser, conjunto_movimientos_varios_dias
     browser.ir_a_pag()
     dias = browser.esperar_elementos("class_div_dia")
     assert len(dias) == 7
-    assert dias[0].esperar_elemento("class_div_fecha_dia", By.CLASS_NAME).text == fecha_ultimo_mov.strftime('%Y-%m-%d')
+    assert dias[0].esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text == fecha_ultimo_mov.strftime('%Y-%m-%d')
 
     # Los movimientos aparecen agrupados por día
     for dia in dias:
         movs_dia = dia.esperar_elementos("class_row_mov")
-        str_fecha = dia.esperar_elemento("class_div_fecha_dia", By.CLASS_NAME).text
+        str_fecha = dia.esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text
         fecha = datetime.strptime(str_fecha, "%Y-%m-%d")
         obj_dia = Dia.tomar(fecha=fecha)
         ult_mov = movs.filter(dia=obj_dia).last()
@@ -31,7 +31,7 @@ def test_movimientos_agrupados_por_dia(browser, conjunto_movimientos_varios_dias
         assert len(movs_dia) > 0
 
         # y cada día incluye el saldo histórico a esa fecha
-        saldo_dia = dia.esperar_elemento("class_div_saldo_dia", By.CLASS_NAME).text
+        saldo_dia = dia.esperar_elemento("class_span_saldo_dia", By.CLASS_NAME).text
         assert saldo_dia == float_format(saldo_ult_mov)
 
     # Si un día no tiene movimientos, no aparece

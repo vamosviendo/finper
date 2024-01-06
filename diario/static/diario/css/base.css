@@ -10,6 +10,10 @@ body {
   font-size: 9.5pt;
 }
 
+div.divisor {
+  height: 20px;
+}
+
 ul.menu {
   list-style-type: none;
   padding-left: 0px;
