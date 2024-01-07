@@ -3,6 +3,7 @@ from datetime import date
 import pytest
 from django.core.exceptions import NON_FIELD_ERRORS
 from django.forms import fields
+from django.forms.widgets import DateInput
 
 from diario.forms import FormMovimiento
 from diario.models import CuentaInteractiva, Moneda
@@ -59,6 +60,10 @@ def test_si_da_error_mov_sin_cuentas_no_da_error_cuentas_iguales(formmov):
 def test_toma_fecha_del_dia_por_defecto(formmov):
     formmov.data.pop('fecha')
     assert formmov.fields['fecha'].initial() == date.today()
+
+
+def test_fecha_usa_widget_DateInput(formmov):
+    assert type(formmov.fields['fecha'].widget) is DateInput
 
 
 def test_muestra_campo_esgratis():

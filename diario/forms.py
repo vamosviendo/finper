@@ -140,9 +140,14 @@ class FormDividirCuenta(forms.Form):
 
 class FormMovimiento(forms.ModelForm):
 
-    importe = forms.FloatField()
+    importe = forms.FloatField(
+        widget=forms.NumberInput(attrs={'step': 0.01})
+    )
     esgratis = forms.BooleanField(required=False, initial=False)
-    fecha = forms.DateField(initial=date.today)
+    fecha = forms.DateField(
+        initial=date.today,
+        widget=forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -159,11 +164,12 @@ class FormMovimiento(forms.ModelForm):
 
     class Meta:
         model = Movimiento
-        fields = ('concepto', 'detalle', 'cta_entrada', 'cta_salida', 'moneda')
+        fields = (
+            'fecha', 'concepto', 'detalle', 'importe',
+            'cta_entrada', 'cta_salida', 'moneda'
+        )
         widgets = {
             'detalle': forms.TextInput,
-            'fecha': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
-            'importe': forms.NumberInput(attrs={'step': 0.01}),
         }
 
     def clean(self) -> dict:
