@@ -103,11 +103,13 @@ def test_cuenta_credito_no_puede_ser_cta_salida_contra_cta_entrada_normal(
 
 
 def test_cuenta_credito_solo_puede_moverse_contra_su_contracuenta(
-        cuenta_credito_acreedor, cuenta_ajena, titular_gordo):
+        cuenta_credito_acreedor, cuenta_ajena, titular_gordo, dia):
     cuenta_gorda = Cuenta.crear(
-        nombre='Cuenta titular gordo', slug='ctg', titular=titular_gordo)
+        nombre='Cuenta titular gordo', slug='ctg',
+        titular=titular_gordo, fecha_creacion=dia.fecha
+    )
     mov = Movimiento.crear(
-        'Otro préstamo', 70, cuenta_ajena, cuenta_gorda)
+        'Otro préstamo', 70, cuenta_ajena, cuenta_gorda, dia=dia)
     ca_gordo_otro, _ = mov.recuperar_cuentas_credito()
     mov_no = Movimiento(
         concepto='Movimiento entre cuentas incompatibles',

@@ -13,6 +13,11 @@ def mock_generar(mocker):
     return mocker.patch('diario.models.movimiento.Saldo.generar')
 
 
+@pytest.fixture(autouse=True)
+def dia(dia):
+    return dia
+
+
 def test_no_admite_cuentas_acumulativas(cuenta_acumulativa):
     with pytest.raises(
             errors.ErrorCuentaEsAcumulativa,
@@ -21,13 +26,13 @@ def test_no_admite_cuentas_acumulativas(cuenta_acumulativa):
             'movimiento sobre acum', 100, cta_entrada=cuenta_acumulativa)
 
 
-def test_guarda_fecha_de_hoy_por_defecto(cuenta):
+def test_guarda_fecha_de_ultimo_dia_por_defecto(cuenta, dia_posterior):
     mov = Movimiento.crear(
         concepto='Cobranza en efectivo',
         importe=100,
         cta_entrada=cuenta
     )
-    assert mov.fecha == date.today()
+    assert mov.fecha == dia_posterior.fecha
 
 
 def test_mov_entrada_con_importe_negativo_se_crea_como_mov_salida(cuenta):

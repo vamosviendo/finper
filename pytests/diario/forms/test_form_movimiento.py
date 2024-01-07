@@ -6,14 +6,14 @@ from django.forms import fields
 from django.forms.widgets import DateInput
 
 from diario.forms import FormMovimiento
-from diario.models import CuentaInteractiva, Moneda
+from diario.models import CuentaInteractiva, Moneda, Dia
 from utils import errors
 
 
 @pytest.fixture
-def formmov(cuenta: CuentaInteractiva, fecha: date) -> FormMovimiento:
+def formmov(cuenta: CuentaInteractiva, dia: Dia) -> FormMovimiento:
     return FormMovimiento(data={
-        'fecha': fecha,
+        'fecha': dia.fecha,
         'concepto': 'movimiento bien formado',
         'importe': 150,
         'cta_entrada': cuenta,
@@ -57,9 +57,9 @@ def test_si_da_error_mov_sin_cuentas_no_da_error_cuentas_iguales(formmov):
     assert errors.CUENTAS_IGUALES not in formmov.errors[NON_FIELD_ERRORS]
 
 
-def test_toma_fecha_del_dia_por_defecto(formmov):
+def test_toma_fecha_del_ultimo_dia_por_defecto(formmov, dia, dia_posterior):
     formmov.data.pop('fecha')
-    assert formmov.fields['fecha'].initial() == date.today()
+    assert formmov.fields['fecha'].initial() == dia_posterior.fecha
 
 
 def test_fecha_usa_widget_DateInput(formmov):

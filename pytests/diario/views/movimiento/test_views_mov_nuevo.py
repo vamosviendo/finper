@@ -12,11 +12,11 @@ def response(client) -> HttpResponse:
 
 
 @pytest.fixture
-def response_post(client, fecha, importe, cuenta) -> HttpResponse:
+def response_post(client, dia, importe, cuenta) -> HttpResponse:
     return client.post(
         reverse('mov_nuevo'),
         data={
-            'fecha': fecha,
+            'fecha': dia.fecha,
             'concepto': 'mov nuevo',
             'importe': importe,
             'cta_entrada': cuenta.pk,
@@ -54,12 +54,12 @@ def test_post_redirige_a_home(response_post):
     asserts.assertRedirects(response_post, reverse('home'))
 
 
-def test_post_guarda_movimiento_nuevo(cuenta, fecha, importe, request):
+def test_post_guarda_movimiento_nuevo(cuenta, dia, importe, request):
     cantidad = Movimiento.cantidad()
     request.getfixturevalue('response_post')
     assert Movimiento.cantidad() == cantidad + 1
     mov_nuevo = Movimiento.ultime()
-    assert mov_nuevo.fecha == fecha
+    assert mov_nuevo.fecha == dia.fecha
     assert mov_nuevo.concepto == 'mov nuevo'
     assert mov_nuevo.importe == importe
     assert mov_nuevo.cta_entrada.id == cuenta.id
@@ -79,7 +79,7 @@ def test_no_guarda_movimientos_no_validos(client, fecha, importe):
 
 
 def test_movimiento_entre_titulares_llama_a_metodo_registrar_credito(
-        client, titular, otro_titular, cuenta, cuenta_ajena, fecha, importe, mocker):
+        client, titular, otro_titular, cuenta, cuenta_ajena, dia, importe, mocker):
     mock_gestionar_transferencia = mocker.patch(
         'diario.views.Movimiento._gestionar_transferencia',
         autospec=True,
@@ -87,10 +87,10 @@ def test_movimiento_entre_titulares_llama_a_metodo_registrar_credito(
     client.post(
         reverse('mov_nuevo'),
         data={
-            'fecha': fecha,
+            'fecha': dia.fecha,
             'concepto': 'movimiento entre titulares',
             'importe': importe,
-            'cta_entrada': cuenta.id,
+            'cta_entrada': cuenta.pk,
             'cta_salida': cuenta_ajena.pk,
             'moneda': cuenta.moneda.pk,
         }

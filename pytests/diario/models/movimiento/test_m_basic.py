@@ -51,14 +51,9 @@ def test_se_relaciona_con_dia(cuenta, importe, dia):
     assert mov in dia.movimiento_set.all()
 
 
-def test_toma_dia_de_hoy_como_dia_por_defecto(cuenta, importe, dia_hoy):
+def test_toma_ultimo_dia_como_dia_por_defecto(cuenta, importe, dia, dia_posterior, dia_tardio):
     mov = Movimiento(concepto='Entrada', importe=importe, cta_entrada=cuenta)
-    assert mov.dia == dia_hoy
-
-
-def test_si_no_existe_dia_de_hoy_lo_crea_para_usarlo_como_valor_por_defecto(cuenta, importe):
-    mov = Movimiento(concepto='Entrada', importe=importe, cta_entrada=cuenta)
-    assert mov.dia == Dia.tomar(fecha=date.today().strftime('%Y%m%d'))
+    assert mov.dia == dia_tardio
 
 
 def test_movimientos_se_ordenan_por_dia(entrada, entrada_tardia, entrada_anterior):

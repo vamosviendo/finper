@@ -11,6 +11,11 @@ def mock_gestionar_transferencia(mocker):
     )
 
 
+@pytest.fixture(autouse=True)
+def dia(dia):
+    return dia
+
+
 def test_movimiento_entre_titulares_gestiona_trasferencia(mock_gestionar_transferencia, cuenta, cuenta_ajena):
     mov = Movimiento(
         concepto='Préstamo',

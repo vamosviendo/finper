@@ -45,7 +45,7 @@ class TestSaveGeneral:
 
 
 class TestSaveMovimientoEntreCuentasDeDistintosTitulares:
-    def test_con_dos_cuentas_de_titulares_distintos_crea_dos_cuentas_credito(self, credito_no_guardado):
+    def test_con_dos_cuentas_de_titulares_distintos_crea_dos_cuentas_credito(self, dia, credito_no_guardado):
         credito_no_guardado.save()
         assert Cuenta.cantidad() == 4
 
@@ -55,7 +55,7 @@ class TestSaveMovimientoEntreCuentasDeDistintosTitulares:
         assert cc2.slug == '_titular-otro'
 
     def test_con_dos_cuentas_de_titulares_distintos_guarda_cuentas_credito_como_contracuentas(
-            self, credito_no_guardado):
+            self, dia, credito_no_guardado):
         credito_no_guardado.save()
         cta_acreedora, cta_deudora = list(Cuenta.todes())[-2:]
         assert cta_acreedora.contracuenta == cta_deudora

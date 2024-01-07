@@ -33,6 +33,10 @@ class Dia (MiModel):
     def ultima_fecha(cls) -> date:
         return cls.ultime().fecha
 
+    @classmethod
+    def ultima_id(cls):
+        return cls.ultime().pk
+
     @property
     def movimientos(self) -> models.QuerySet['Movimiento']:
         return self.movimiento_set.all()

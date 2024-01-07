@@ -5,7 +5,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
-from diario.models import CuentaAcumulativa, CuentaInteractiva, Movimiento, Titular, Moneda
+from diario.models import CuentaAcumulativa, CuentaInteractiva, Movimiento, Titular, Moneda, Dia
 from diario.settings_app import TITULAR_PRINCIPAL, MONEDA_BASE
 
 from utils.iterables import hay_mas_de_un_none_en
@@ -145,7 +145,7 @@ class FormMovimiento(forms.ModelForm):
     )
     esgratis = forms.BooleanField(required=False, initial=False)
     fecha = forms.DateField(
-        initial=date.today,
+        initial=Dia.ultima_fecha,
         widget=forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
     )
 

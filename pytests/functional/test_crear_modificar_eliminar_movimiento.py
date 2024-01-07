@@ -15,7 +15,7 @@ def textos_hijos(elemento: MiWebElement, tag_subelem: str) -> List[str]:
     return [x.text for x in elemento.find_elements_by_tag_name(tag_subelem)]
 
 
-def test_crear_movimiento(browser, cuenta):
+def test_crear_movimiento(browser, cuenta, dia, dia_posterior):
     """ Cuando vamos a la página de cuenta nueva y completamos el formulario,
         aparece un movimiento nuevo al tope de la lista de movimientos. """
     valores = {
@@ -30,11 +30,11 @@ def test_crear_movimiento(browser, cuenta):
     # Al entrar a la página veo un formulario de movimiento
     form_mov = browser.esperar_elemento("id_form_movimiento")
 
-    # El campo "fecha" del formulario tiene la fecha de hoy como valor por
+    # El campo "fecha" del formulario tiene la fecha del último día como valor por
     # defecto
     assert \
         form_mov.find_element_by_id("id_fecha").get_attribute("value") == \
-        hoy()
+        dia_posterior.fecha.strftime('%Y-%m-%d')
 
     # Cargamos los valores necesarios para generar un movimiento nuevo
     browser.completar_form(**valores)
