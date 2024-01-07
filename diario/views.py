@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.core.paginator import Paginator
 from django.db.models.functions import Lower
 from django.shortcuts import render, redirect
@@ -180,7 +182,11 @@ class MovNuevoView(CreateView):
     def get(self, request, *args, **kwargs):
         if Cuenta.cantidad() == 0:
             return redirect('cta_nueva')
-        return super().get(request, *args, **kwargs)
+        try:
+            return super().get(request, *args, **kwargs)
+        except AttributeError:
+            Dia.crear(fecha=date.today())
+            return super().get(request, *args, **kwargs)
 
     def get_form(self, *args, **kwargs):
         form = super().get_form(*args, **kwargs)
