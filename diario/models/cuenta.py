@@ -15,7 +15,7 @@ from diario.models.titular import Titular
 from diario.models.moneda import Moneda
 from diario.models.movimiento import Movimiento
 from diario.models.saldo import Saldo
-from diario.settings_app import TITULAR_PRINCIPAL
+from diario.settings_app import MONEDA_BASE, TITULAR_PRINCIPAL
 from diario.utils.utils_moneda import id_moneda_base
 from utils import errors
 from utils.iterables import remove_duplicates
@@ -126,8 +126,15 @@ class Cuenta(PolymorphModel):
 
     def clean_fields(self, exclude: Sequence[str] = None):
         self._pasar_slug_a_minuscula()
+
         if self.moneda is None:
-            self.moneda = Moneda.tomar(pk=id_moneda_base())
+            try:
+                self.moneda = Moneda.tomar(pk=id_moneda_base())
+            except errors.ErrorMonedaBaseInexistente:
+                self.moneda = Moneda.crear(
+                    monname=MONEDA_BASE, nombre=MONEDA_BASE, cotizacion=1
+                )
+
         super().clean_fields(exclude=exclude)
 
     def clean(self):

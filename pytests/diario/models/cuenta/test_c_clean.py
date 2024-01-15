@@ -3,10 +3,11 @@ import datetime
 import pytest
 from django.core.exceptions import ValidationError
 
+from diario import settings_app
 from diario.utils.utils_moneda import moneda_base
 from vvmodel.errors import ErrorCambioEnCampoFijo
 
-from diario.models import Cuenta
+from diario.models import Cuenta, Moneda
 from utils import errors
 
 
@@ -47,6 +48,16 @@ def test_si_moneda_es_none_completa_con_moneda_base():
     cuenta = Cuenta(nombre='cuenta sin moneda', slug='csm')
     cuenta.clean_fields()
     assert cuenta.moneda == moneda_base()
+
+
+def test_si_no_existe_moneda_base_la_crea_con_datos_de_settings_app():
+    Moneda.todes().delete()
+    cuenta = Cuenta(nombre='cuenta sin moneda', slug='csm')
+    cuenta.clean_fields()
+    assert Moneda.cantidad() == 1
+    assert Moneda.primere().monname == settings_app.MONEDA_BASE
+    assert Moneda.primere().cotizacion == 1
+    assert cuenta.moneda == Moneda.tomar(monname=settings_app.MONEDA_BASE)
 
 
 def test_cuenta_no_puede_cambiar_de_moneda(cuenta, dolar):
