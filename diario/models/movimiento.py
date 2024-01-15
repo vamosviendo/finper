@@ -302,11 +302,15 @@ class Movimiento(MiModel):
 
         cleaning = MovimientoCleaner(self, self.tomar_de_bd())
 
-        if self.moneda is None:
-            self.moneda = Moneda.tomar(pk=id_moneda_base())
-
         cleaning.no_se_permiten_movimentos_con_importe_cero()
         cleaning.debe_haber_al_menos_una_cuenta_y_deben_ser_distintas()
+
+        if self.moneda is None:
+            try:
+                self.moneda = self.cta_entrada.moneda
+            except AttributeError:
+                self.moneda = self.cta_salida.moneda
+
         cleaning.no_se_permite_moneda_distinta_de_las_de_cuentas()
         cleaning.dia_none_se_reemplaza_por_ultimo_dia()
         cleaning.no_se_permite_fecha_anterior_a_creacion_de_cuenta()
