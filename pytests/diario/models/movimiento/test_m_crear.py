@@ -1,9 +1,8 @@
-from datetime import date
 from unittest.mock import call
 
 import pytest
 
-from diario.models import Movimiento, Saldo, Cuenta, CuentaInteractiva, Moneda
+from diario.models import Movimiento, Saldo, Cuenta, CuentaInteractiva, Moneda, Dia
 from utils import errors
 from utils.helpers_tests import cambiar_fecha_creacion
 

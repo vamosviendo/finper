@@ -1,9 +1,9 @@
-from datetime import timedelta
+from datetime import timedelta, date
 
 import pytest
 from django.core.exceptions import ValidationError
 
-from diario.models import Movimiento, Cuenta
+from diario.models import Movimiento, Cuenta, Dia
 from utils import errors
 from utils.helpers_tests import dividir_en_dos_subcuentas
 
@@ -194,6 +194,47 @@ def test_no_puede_agregarse_cuenta_acumulativa(sentido, cuenta_acumulativa, requ
             errors.ErrorCuentaEsAcumulativa,
             match=errors.CUENTA_ACUMULATIVA_AGREGADA):
         mov.full_clean()
+
+
+def test_si_dia_es_none_completa_con_ultimo_dia(cuenta, dia, dia_posterior):
+    entrada = Movimiento(concepto='Entrada', importe=10, cta_entrada=cuenta, dia=None)
+    entrada.clean()
+    assert entrada.dia == dia_posterior
+
+
+def test_si_dia_es_none_y_no_hay_dias_genera_dia_con_fecha_de_hoy_y_lo_usa(cuenta):
+    Dia.todes().delete()
+    entrada = Movimiento(concepto='Entrada', importe=10, cta_entrada=cuenta, dia=None)
+    entrada.clean()
+    assert Dia.cantidad() == 1
+    assert Dia.primere().fecha == date.today()
+
+
+def test_si_dia_es_none_y_la_base_de_datos_de_dias_no_esta_vacia_no_crea_dia_con_fecha_de_hoy(cuenta, dia):
+    dias = Dia.cantidad()
+    entrada = Movimiento(
+        concepto='Movimiento actual',
+        importe=100,
+        cta_entrada=cuenta,
+        dia=None
+    )
+    entrada.clean()
+    assert Dia.cantidad() == dias
+    for dia in Dia.todes():
+        assert dia.fecha != date.today()
+
+
+def test_si_dia_no_es_none_no_crea_dia_con_fecha_de_hoy_aunque_la_base_de_datos_de_dias_este_vacia(cuenta, fecha):
+    Dia.todes().delete()
+    entrada = Movimiento(
+        concepto='Movimiento actual',
+        importe=100,
+        cta_entrada=cuenta,
+        fecha=fecha,
+    )
+    entrada.clean()
+    assert Dia.cantidad() == 1
+    assert Dia.primere().fecha != date.today()
 
 
 def test_no_permite_fecha_anterior_a_creacion_de_cuenta(fecha, fecha_anterior, titular):

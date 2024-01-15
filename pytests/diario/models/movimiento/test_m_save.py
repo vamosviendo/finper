@@ -1,10 +1,10 @@
-from datetime import timedelta, date
+from datetime import timedelta
 from typing import Tuple
 
 import pytest
 from pytest import approx
 
-from diario.models import Movimiento, Cuenta, CuentaInteractiva, Saldo
+from diario.models import Movimiento, Cuenta, CuentaInteractiva, Saldo, Dia
 from utils.helpers_tests import \
     cambiar_fecha, cambiar_fecha_creacion, dividir_en_dos_subcuentas, signo
 
@@ -15,12 +15,13 @@ def inferir_fixtures(sentido: str, request) -> Tuple[Movimiento, int, CuentaInte
 
 
 @pytest.fixture
-def credito_no_guardado(cuenta: CuentaInteractiva, cuenta_ajena: CuentaInteractiva) -> Movimiento:
+def credito_no_guardado(cuenta: CuentaInteractiva, cuenta_ajena: CuentaInteractiva, dia: Dia) -> Movimiento:
     return Movimiento(
         concepto='Crédito',
         importe=30,
         cta_entrada=cuenta,
-        cta_salida=cuenta_ajena
+        cta_salida=cuenta_ajena,
+        dia=dia,
     )
 
 
@@ -46,6 +47,7 @@ class TestSaveGeneral:
 
 class TestSaveMovimientoEntreCuentasDeDistintosTitulares:
     def test_con_dos_cuentas_de_titulares_distintos_crea_dos_cuentas_credito(self, dia, credito_no_guardado):
+        credito_no_guardado.full_clean()
         credito_no_guardado.save()
         assert Cuenta.cantidad() == 4
 
@@ -54,8 +56,19 @@ class TestSaveMovimientoEntreCuentasDeDistintosTitulares:
         assert cc1.slug == '_otro-titular'
         assert cc2.slug == '_titular-otro'
 
+    def test_si_no_se_pasa_dia_ni_fecha_crea_cuentas_credito_con_fecha_ultimo_dia(self, dia, dia_posterior, credito_no_guardado):
+        credito_no_guardado.dia = None
+        credito_no_guardado.full_clean()
+        credito_no_guardado.save()
+
+        cc1 = list(Cuenta.todes())[-1]
+        cc2 = list(Cuenta.todes())[-2]
+
+        assert cc1.fecha_creacion == cc2.fecha_creacion == dia_posterior.fecha
+
     def test_con_dos_cuentas_de_titulares_distintos_guarda_cuentas_credito_como_contracuentas(
             self, dia, credito_no_guardado):
+        credito_no_guardado.full_clean()
         credito_no_guardado.save()
         cta_acreedora, cta_deudora = list(Cuenta.todes())[-2:]
         assert cta_acreedora.contracuenta == cta_deudora

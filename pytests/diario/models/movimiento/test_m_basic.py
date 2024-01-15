@@ -1,6 +1,4 @@
-from datetime import date
-
-from diario.models import Movimiento, Moneda, Dia
+from diario.models import Movimiento, Moneda
 
 
 def test_guarda_y_recupera_movimientos(fecha, dia, cuenta, cuenta_2):
@@ -49,11 +47,6 @@ def test_se_relaciona_con_dia(cuenta, importe, dia):
     mov.full_clean()
     mov.save()
     assert mov in dia.movimiento_set.all()
-
-
-def test_toma_ultimo_dia_como_dia_por_defecto(cuenta, importe, dia, dia_posterior, dia_tardio):
-    mov = Movimiento(concepto='Entrada', importe=importe, cta_entrada=cuenta)
-    assert mov.dia == dia_tardio
 
 
 def test_movimientos_se_ordenan_por_dia(entrada, entrada_tardia, entrada_anterior):
