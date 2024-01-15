@@ -1,4 +1,4 @@
-from diario.models import CuentaInteractiva, Movimiento
+from diario.models import Movimiento
 from utils.helpers_tests import dividir_en_dos_subcuentas
 
 
