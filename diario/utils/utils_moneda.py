@@ -7,8 +7,7 @@ def moneda_base() -> Moneda:
     try:
         return Moneda.tomar(monname=MONEDA_BASE)
     except Moneda.DoesNotExist:
-        return Moneda.crear(monname=MONEDA_BASE, nombre=MONEDA_BASE, cotizacion=1)
-        # raise errors.ErrorMonedaBaseInexistente
+        raise errors.ErrorMonedaBaseInexistente
 
 
 def id_moneda_base() -> int:
