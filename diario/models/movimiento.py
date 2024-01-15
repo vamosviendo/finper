@@ -15,6 +15,7 @@ from utils.tiempo import Posicion
 from diario.consts import *
 from diario.models.dia import Dia
 from diario.models.saldo import Saldo
+from diario.models.moneda import Moneda
 
 if TYPE_CHECKING:
     from diario.models import Titular, CuentaInteractiva, Cuenta
@@ -162,7 +163,7 @@ class Movimiento(MiModel):
     detalle = models.TextField(blank=True, null=True)
     _importe = models.FloatField()
     moneda = models.ForeignKey(     # Determina en qué moneda está expresado el importe del movimiento
-        'diario.Moneda', related_name='movimientos', default=id_moneda_base,
+        'diario.Moneda', related_name='movimientos', null=True, blank=True,
         on_delete=models.CASCADE
     )
     cta_entrada = models.ForeignKey(
@@ -300,6 +301,9 @@ class Movimiento(MiModel):
         super().clean()
 
         cleaning = MovimientoCleaner(self, self.tomar_de_bd())
+
+        if self.moneda is None:
+            self.moneda = Moneda.tomar(pk=id_moneda_base())
 
         cleaning.no_se_permiten_movimentos_con_importe_cero()
         cleaning.debe_haber_al_menos_una_cuenta_y_deben_ser_distintas()

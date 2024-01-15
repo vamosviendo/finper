@@ -30,6 +30,7 @@ def test_guarda_y_recupera_movimientos(fecha, dia, cuenta, cuenta_2):
 def test_cta_entrada_se_relaciona_con_cuenta(cuenta, fecha):
     mov = Movimiento(fecha=fecha, concepto='Cobranza en efectivo', importe=100)
     mov.cta_entrada = cuenta
+    mov.full_clean()
     mov.save()
     assert mov in cuenta.entradas.all()
 
@@ -37,6 +38,7 @@ def test_cta_entrada_se_relaciona_con_cuenta(cuenta, fecha):
 def test_cta_salida_se_relaciona_con_cuenta(cuenta, fecha):
     mov = Movimiento(fecha=fecha, concepto='Pago en efectivo', importe=100)
     mov.cta_salida = cuenta
+    mov.full_clean()
     mov.save()
     assert mov in cuenta.salidas.all()
 

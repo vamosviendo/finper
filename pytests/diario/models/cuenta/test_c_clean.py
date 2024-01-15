@@ -3,6 +3,7 @@ import datetime
 import pytest
 from django.core.exceptions import ValidationError
 
+from diario.utils.utils_moneda import moneda_base
 from vvmodel.errors import ErrorCambioEnCampoFijo
 
 from diario.models import Cuenta
@@ -40,6 +41,12 @@ def test_subcuenta_no_puede_tener_fecha_de_creacion_anterior_a_la_fecha_de_conve
     sc1.fecha_creacion = cuenta_acumulativa.fecha_conversion - datetime.timedelta(days=1)
     with pytest.raises(errors.ErrorFechaAnteriorACuentaMadre):
         sc1.clean()
+
+
+def test_si_moneda_es_none_completa_con_moneda_base():
+    cuenta = Cuenta(nombre='cuenta sin moneda', slug='csm')
+    cuenta.clean_fields()
+    assert cuenta.moneda == moneda_base()
 
 
 def test_cuenta_no_puede_cambiar_de_moneda(cuenta, dolar):

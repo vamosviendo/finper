@@ -148,6 +148,7 @@ class FormMovimiento(forms.ModelForm):
         initial=Dia.ultima_fecha,
         widget=forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
     )
+    moneda = forms.ModelChoiceField(queryset=Moneda.todes(), empty_label=None)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

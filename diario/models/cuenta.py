@@ -44,7 +44,7 @@ class Cuenta(PolymorphModel):
         on_delete=models.CASCADE,
     )
     fecha_creacion = models.DateField(default=date.today)
-    moneda = models.ForeignKey(Moneda, on_delete=models.CASCADE, default=id_moneda_base)
+    moneda = models.ForeignKey(Moneda, on_delete=models.CASCADE, null=True, blank=True)
 
     class Meta:
         ordering = ('nombre', )
@@ -126,6 +126,8 @@ class Cuenta(PolymorphModel):
 
     def clean_fields(self, exclude: Sequence[str] = None):
         self._pasar_slug_a_minuscula()
+        if self.moneda is None:
+            self.moneda = Moneda.tomar(pk=id_moneda_base())
         super().clean_fields(exclude=exclude)
 
     def clean(self):
