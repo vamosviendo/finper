@@ -1,3 +1,5 @@
+import re
+
 import pytest
 
 from diario.models import CuentaInteractiva
@@ -46,5 +48,11 @@ def test_cuenta_no_puede_tener_fecha_de_creacion_anterior_a_la_fecha_de_alta_de_
         titular=titular,
         fecha_creacion=fecha_anterior
     )
-    with pytest.raises(errors.ErrorFechaAnteriorAAltaTitular):
+    with pytest.raises(
+            errors.ErrorFechaAnteriorAAltaTitular,
+            match=re.escape(
+                f"Fecha de creación de cuenta \"{cuenta.nombre}\" ({cuenta.fecha_creacion}) "
+                f"anterior a fecha de alta de titular \"{titular.nombre}\" ({titular.fecha_alta})"
+            )
+    ):
         cuenta.clean()

@@ -563,7 +563,11 @@ class CuentaInteractiva(Cuenta):
 
     def _verificar_fecha_creacion_interactiva(self):
         if self.fecha_creacion < self.titular.fecha_alta:
-            raise errors.ErrorFechaAnteriorAAltaTitular
+            raise errors.ErrorFechaAnteriorAAltaTitular(
+                message=f'Fecha de creación de cuenta "{self.nombre}" ({self.fecha_creacion}) '
+                        f'anterior a fecha de alta de titular "{self.titular.nombre}" '
+                        f'({self.titular.fecha_alta})'
+            )
 
 
 class CuentaAcumulativa(Cuenta):
