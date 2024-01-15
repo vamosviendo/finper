@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Self, TYPE_CHECKING
+from typing import Optional, Self, TYPE_CHECKING
 
 from django.db import models
 
@@ -30,11 +30,14 @@ class Dia (MiModel):
         return cls.hoy().pk
 
     @classmethod
-    def ultima_fecha(cls) -> date:
-        return cls.ultime().fecha
+    def ultima_fecha(cls) -> Optional[date]:
+        try:
+            return cls.ultime().fecha
+        except AttributeError:  # No hay días
+            return None
 
     @classmethod
-    def ultima_id(cls):
+    def ultima_id(cls) -> int:
         return cls.ultime().pk
 
     @property
