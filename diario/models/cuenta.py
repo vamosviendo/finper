@@ -363,6 +363,10 @@ class CuentaInteractiva(Cuenta):
             fecha: date = None
     ) -> List[Self]:
         fecha = fecha or date.today()
+
+        if fecha < self.fecha_creacion:
+            raise errors.ErrorFechaCreacionPosteriorAConversion
+
         try:
             if fecha < self.fecha_ultimo_mov_directo():
                 raise errors.ErrorMovimientoPosteriorAConversion

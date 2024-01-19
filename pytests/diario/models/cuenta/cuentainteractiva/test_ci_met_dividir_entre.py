@@ -5,7 +5,8 @@ import pytest
 from django.core.exceptions import ValidationError
 
 from diario.models import Cuenta
-from utils.errors import ErrorMovimientoPosteriorAConversion, ErrorDeSuma
+from utils.errors import ErrorFechaCreacionPosteriorAConversion, \
+    ErrorMovimientoPosteriorAConversion, ErrorDeSuma
 
 
 @pytest.fixture
@@ -195,9 +196,20 @@ def test_movimientos_de_traspaso_de_saldo_tienen_fecha_igual_a_la_de_conversion(
     assert list(cuenta.movs_directos())[-1].fecha == fecha_posterior
 
 
+def test_no_acepta_fecha_de_conversion_anterior_a_fecha_de_creacion_de_la_cuenta(
+        cuenta, titular, dicts_subcuentas_sin_saldo):
+    titular.fecha_alta -= timedelta(2)
+    titular.save()
+
+    with pytest.raises(ErrorFechaCreacionPosteriorAConversion):
+        cuenta.dividir_entre(
+            *dicts_subcuentas_sin_saldo,
+            fecha=cuenta.fecha_creacion - timedelta(1)
+        )
+
+
 def test_no_acepta_fecha_de_conversion_anterior_a_la_de_cualquier_movimiento_de_la_cuenta(
         cuenta, dicts_subcuentas, salida_posterior, entrada_tardia):
-
     with pytest.raises(ErrorMovimientoPosteriorAConversion):
         cuenta.dividir_entre(
             *dicts_subcuentas,
