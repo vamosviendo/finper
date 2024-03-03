@@ -1,6 +1,6 @@
 import pytest
 
-from diario.models import Movimiento, Cuenta
+from diario.models import Movimiento, Cuenta, CuentaInteractiva
 
 
 @pytest.fixture
@@ -77,6 +77,17 @@ def test_integrativo_genera_cuenta_credito_y_subcuentas_y_movimiento(cuenta, cue
     assert mov_credito.cta_salida == cuenta_deudora
     assert mov_credito.cta_entrada.titular == movimiento.cta_salida.titular
     assert mov_credito.cta_salida.titular == movimiento.cta_entrada.titular
+
+
+def test_cuentas_credito_se_tienen_una_a_la_otra_como_contracuenta(cuenta, cuenta_ajena):
+    Movimiento.crear(
+        'Prestamo', 10, cta_entrada=cuenta, cta_salida=cuenta_ajena)
+
+    cuenta_acreedora = CuentaInteractiva.tomar(slug='_otro-titular')
+    cuenta_deudora = CuentaInteractiva.tomar(slug='_titular-otro')
+
+    assert cuenta_acreedora.contracuenta == cuenta_deudora
+    assert cuenta_deudora.contracuenta == cuenta_acreedora
 
 
 def test_integrativo_no_genera_nada_si_esgratis(cuenta, cuenta_ajena):

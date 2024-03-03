@@ -209,6 +209,7 @@ def mov_distintas_monedas(
 def conjunto_movimientos_varios_dias(cuenta, cuenta_2, cuenta_ajena, cuenta_ajena_2, request) -> QuerySet[Movimiento]:
     cuentas = list(CuentaInteractiva.todes())
     for x in range(1,18):
+        dia = Dia.crear(fecha=date(2022, 5, x))
         y = randint(0, len(cuentas)-1)
         movs_del_dia = randint(1, 4)
         for z in range(1, movs_del_dia):
@@ -217,7 +218,7 @@ def conjunto_movimientos_varios_dias(cuenta, cuenta_2, cuenta_ajena, cuenta_ajen
                 mov = Movimiento(
                     concepto=f'Movimiento {x}',
                     importe=request.getfixturevalue('importe_aleatorio'),
-                    fecha=date(2022, 5, x)
+                    dia=dia
                 )
                 if (y % 2) == 0:
                     mov.cta_entrada = cta
@@ -225,7 +226,6 @@ def conjunto_movimientos_varios_dias(cuenta, cuenta_2, cuenta_ajena, cuenta_ajen
                     mov.cta_salida = cta
                 mov.full_clean()
                 mov.save()
-    Dia.hoy().delete()
     return Movimiento.todes()
 
 
