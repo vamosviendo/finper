@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pytest
@@ -23,3 +24,27 @@ def test_archivo_generado_es_json_valido():
     call_command('serializar_db')
     with open('db_full.json', 'r') as db_full:
         assert es_json_valido(db_full)
+
+
+def test_serializa_todos_los_titulares(titular, otro_titular, titular_gordo):
+    call_command('serializar_db')
+    with open('db_full.json', 'r') as db_full:
+        db_serializada = json.load(db_full)
+    titulares = [x for x in db_serializada if x['model'] == 'diario.titular']
+    assert len(titulares) == 3
+    for tit in [titular, otro_titular, titular_gordo]:
+        assert tit.titname in [
+            t['fields']['titname'] for t in titulares
+        ]
+
+
+def test_serializa_todas_las_monedas_en_json(peso, dolar, euro):
+    call_command('serializar_db')
+    with open('db_full.json', 'r') as db_full:
+        db_serializada = json.load(db_full)
+    monedas = [x for x in db_serializada if x['model'] == 'diario.moneda']
+    assert len(monedas) == 3
+    for mon in [peso, dolar, euro]:
+        assert mon.monname in [
+            m['fields']['monname'] for m in monedas
+        ]
