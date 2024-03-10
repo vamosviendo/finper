@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 
 import pytest
@@ -39,7 +38,7 @@ def test_serializa_todos_los_titulares(titular, otro_titular, titular_gordo, db_
     assert len(titulares) == 3
     for tit in [titular, otro_titular, titular_gordo]:
         assert tit.titname in [
-            t['fields']['titname'] for t in titulares
+            t.fields['titname'] for t in titulares
         ]
 
 
@@ -48,5 +47,5 @@ def test_serializa_todas_las_monedas_en_json(peso, dolar, euro, db_serializada):
     assert len(monedas) == 3
     for mon in [peso, dolar, euro]:
         assert mon.monname in [
-            m['fields']['monname'] for m in monedas
+            m.fields['monname'] for m in monedas
         ]
