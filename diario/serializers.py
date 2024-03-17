@@ -1,6 +1,13 @@
 from vvmodel.serializers import SerializedObject
 
 
+class DiaSerializado(SerializedObject):
+
+    @property
+    def identidad(self) -> str:
+        return self.fields["fecha"].replace("-", "")
+
+
 class MovimientoSerializado(SerializedObject):
 
     @property
