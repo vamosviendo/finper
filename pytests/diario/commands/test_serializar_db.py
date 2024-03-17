@@ -5,7 +5,7 @@ import pytest
 from django.apps import apps
 from django.core.management import call_command
 
-from diario.serializers import MovimientoSerializado
+from diario.serializers import MovimientoSerializado, DiaSerializado
 from utils.archivos import es_json_valido
 
 
@@ -68,7 +68,6 @@ def test_archivo_generado_es_json_valido():
     ("titular", "varios_titulares", "titname", None),
     ("moneda", "varias_monedas", "monname", None),
     ("cuenta", "varias_cuentas", "slug", None),
-    ("dia", "varios_dias", "identidad", "fecha"),
 ])
 def test_serializa_todos_los_titulares_monedas_cuentas_y_dias_de_la_base_de_datos_en_json(modelo, elementos, identificador, key, request):
     key = key or identificador
@@ -101,9 +100,19 @@ def test_serializa_todos_los_movimientos(varios_movimientos, db_serializada):
     Movimiento = apps.get_model("diario", "movimiento")
     assert len(movimientos_ser) == Movimiento.cantidad()
 
-    identidades = [d.identidad for d in movimientos_ser]
+    identidades = [m.identidad for m in movimientos_ser]
     for mov in Movimiento.todes():
         assert mov.identidad in identidades
+
+
+def test_serializa_todos_los_dias(varios_dias, db_serializada):
+    dias_ser = [DiaSerializado(x) for x in db_serializada.filter_by_model("diario", "dia")]
+    Dia = apps.get_model("diario", "dia")
+    assert len(dias_ser) == Dia.cantidad()
+
+    identidades = [d.identidad for d in dias_ser]
+    for dia in Dia.todes():
+        assert dia.identidad in identidades
 
 @pytest.mark.xfail
 def test_serializa_todos_los_saldos(varios_saldos, db_serializada):
