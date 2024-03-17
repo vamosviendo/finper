@@ -18,6 +18,10 @@ class Dia (MiModel):
     def __str__(self):
         return self.fecha.strftime('%Y-%m-%d')
 
+    @property
+    def identidad(self) -> str:
+        return self.fecha.strftime('%Y%m%d')
+
     @classmethod
     def hoy(cls) -> Self:
         try:
