@@ -13,3 +13,7 @@ class MovimientoSerializado(SerializedObject):
             (x.fields['fecha'] for x in dias if x.pk == self.fields['dia']),
             None
         )
+
+    @property
+    def identidad(self):
+        return f"{self.fecha.replace('-', '')}{self.fields['orden_dia']:02d}"
