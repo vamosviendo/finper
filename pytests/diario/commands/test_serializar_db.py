@@ -5,7 +5,7 @@ import pytest
 from django.apps import apps
 from django.core.management import call_command
 
-from diario.serializers import MovimientoSerializado, DiaSerializado
+from diario.serializers import MovimientoSerializado, DiaSerializado, SaldoSerializado
 from utils.archivos import es_json_valido
 
 
@@ -69,7 +69,8 @@ def test_archivo_generado_es_json_valido():
     ("moneda", "varias_monedas", "monname", None),
     ("cuenta", "varias_cuentas", "slug", None),
 ])
-def test_serializa_todos_los_titulares_monedas_cuentas_y_dias_de_la_base_de_datos_en_json(modelo, elementos, identificador, key, request):
+def test_serializa_todos_los_titulares_monedas_y_cuentas_de_la_base_de_datos_en_json(
+        modelo, elementos, identificador, key, request):
     key = key or identificador
     elementos = request.getfixturevalue(elementos)
     db_serializada = request.getfixturevalue("db_serializada")
@@ -93,27 +94,20 @@ def test_serializa_todas_las_cuentas_interactivas_y_acumulativas(modelo, varias_
         assert ci.slug in [cis.fields['slug'] for cis in cuentas_subc_ser]
 
 
-def test_serializa_todos_los_movimientos(varios_movimientos, db_serializada):
-    movimientos_ser = [
-        MovimientoSerializado(x) for x in db_serializada.filter_by_model("diario", "movimiento")
-    ]
-    Movimiento = apps.get_model("diario", "movimiento")
-    assert len(movimientos_ser) == Movimiento.cantidad()
+@pytest.mark.parametrize(
+    "elementos, modelo, tipo", [
+        ("varios_movimientos", "movimiento", MovimientoSerializado),
+        ("varios_dias", "dia", DiaSerializado),
+        ("varios_movimientos", "saldo", SaldoSerializado),
+    ])
+def test_serializa_todos_los_movimientos_dias_y_saldos_de_la_base_de_datos(
+        elementos, modelo, tipo, request):
+    request.getfixturevalue(elementos)
+    db_serializada = request.getfixturevalue("db_serializada")
+    elementos_ser = [tipo(x) for x in db_serializada.filter_by_model("diario", modelo)]
+    Modelo = apps.get_model("diario", modelo)
+    assert len(elementos_ser) == Modelo.cantidad()
 
-    identidades = [m.identidad for m in movimientos_ser]
-    for mov in Movimiento.todes():
-        assert mov.identidad in identidades
-
-
-def test_serializa_todos_los_dias(varios_dias, db_serializada):
-    dias_ser = [DiaSerializado(x) for x in db_serializada.filter_by_model("diario", "dia")]
-    Dia = apps.get_model("diario", "dia")
-    assert len(dias_ser) == Dia.cantidad()
-
-    identidades = [d.identidad for d in dias_ser]
-    for dia in Dia.todes():
-        assert dia.identidad in identidades
-
-@pytest.mark.xfail
-def test_serializa_todos_los_saldos(varios_saldos, db_serializada):
-    pytest.fail('escribir')
+    identidades = [x.identidad for x in elementos_ser]
+    for elemento in Modelo.todes():
+        assert elemento.identidad in identidades
