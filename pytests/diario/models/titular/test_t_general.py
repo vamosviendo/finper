@@ -47,3 +47,7 @@ def test_se_relaciona_con_cuentas(titular):
 
 def test_str_devuelve_nombre_titular(titular):
     assert str(titular) == titular.nombre
+
+
+def test_natural_key_devuelve_id_basada_en_titname(titular):
+    assert titular.natural_key() == titular.titname

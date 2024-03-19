@@ -16,6 +16,9 @@ class Moneda(MiModel):
     def __str__(self):
         return self.nombre
 
+    def natural_key(self) -> str:
+        return self.monname
+
     @property
     def plural(self) -> str:
         if self._plural:

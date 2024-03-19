@@ -20,6 +20,9 @@ class Titular(MiModel):
     fecha_alta = models.DateField(default=timezone.now)
     deudores = models.ManyToManyField('Titular', related_name='acreedores')
 
+    def natural_key(self) -> str:
+        return self.titname
+
     @property
     def capital(self) -> float:
         return sum([c.saldo for c in self.cuentas_interactivas()])

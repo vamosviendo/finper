@@ -29,3 +29,7 @@ def test_no_se_permiten_monnames_repetidos(peso):
     mon2 = Moneda(nombre='Moneda 2', monname=peso.monname, cotizacion=2)
     with pytest.raises(ValidationError):
         mon2.full_clean()
+
+
+def test_natural_key_devuelve_id_basada_en_monname(peso):
+    assert peso.natural_key() == peso.monname
