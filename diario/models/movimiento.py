@@ -7,7 +7,6 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django_ordered_field import OrderedCollectionField
 
-from diario.utils.utils_moneda import id_moneda_base
 from vvmodel.models import MiModel
 from utils import errors
 from utils.tiempo import Posicion
@@ -15,7 +14,6 @@ from utils.tiempo import Posicion
 from diario.consts import *
 from diario.models.dia import Dia
 from diario.models.saldo import Saldo
-from diario.models.moneda import Moneda
 
 if TYPE_CHECKING:
     from diario.models import Titular, CuentaInteractiva, Cuenta
