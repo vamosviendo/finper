@@ -185,6 +185,20 @@ class Movimiento(MiModel):
     class Meta:
         ordering = ('dia', 'orden_dia')
 
+    def __str__(self):
+
+        string = f'{self.fecha.strftime("%Y-%m-%d")} {self.concepto}: ' \
+            f'{self.importe:.2f}'
+
+        if self.cta_entrada:
+            string += f' +{self.cta_entrada}'
+        if self.cta_salida:
+            string += f' -{self.cta_salida}'
+        return string
+
+    def natural_key(self):
+        return f"{self.dia.natural_key().replace('-','')}{self.orden_dia:02d}"
+
     @property
     def importe(self) -> float:
         return self._importe
@@ -245,17 +259,6 @@ class Movimiento(MiModel):
     @property
     def cotizacion(self) -> float:
         return self.moneda.cotizacion
-
-    def __str__(self):
-
-        string = f'{self.fecha.strftime("%Y-%m-%d")} {self.concepto}: ' \
-            f'{self.importe:.2f}'
-
-        if self.cta_entrada:
-            string += f' +{self.cta_entrada}'
-        if self.cta_salida:
-            string += f' -{self.cta_salida}'
-        return string
 
     @classmethod
     def crear(cls,

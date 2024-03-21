@@ -67,6 +67,9 @@ class Cuenta(PolymorphModel):
     def __str__(self):
         return self.nombre
 
+    def natural_key(self):
+        return self.slug
+
     @property
     def es_interactiva(self) -> bool:
         return str(self.content_type) == 'diario | cuenta interactiva'

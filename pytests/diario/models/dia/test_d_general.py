@@ -32,3 +32,7 @@ def test_no_permite_dias_sin_fecha():
     dia = Dia()
     with pytest.raises(ValidationError):
         dia.full_clean()
+
+
+def test_natural_key_devuelve_fecha(dia):
+    assert dia.natural_key() == dia.fecha.strftime("%Y-%m-%d")

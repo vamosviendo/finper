@@ -18,6 +18,9 @@ class Dia (MiModel):
     def __str__(self):
         return self.fecha.strftime('%Y-%m-%d')
 
+    def natural_key(self):
+        return self.__str__()
+
     @property
     def identidad(self) -> str:
         return self.fecha.strftime('%Y%m%d')

@@ -89,3 +89,7 @@ def test_toma_moneda_base_como_moneda_por_defecto(peso):
     cuenta.save()
     cuenta_recuperada = Cuenta.tomar(slug='c')
     assert cuenta_recuperada.moneda == peso
+
+
+def test_natural_key_devuelve_id_basada_en_slug(cuenta):
+    assert cuenta.natural_key() == cuenta.slug
