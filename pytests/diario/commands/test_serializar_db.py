@@ -74,7 +74,7 @@ def test_serializa_todos_los_titulares_monedas_y_cuentas_de_la_base_de_datos_en_
     key = key or identificador
     elementos = request.getfixturevalue(elementos)
     db_serializada = request.getfixturevalue("db_serializada")
-    elementos_ser = db_serializada.filter_by_model("diario", modelo)
+    elementos_ser = db_serializada.filter_by_model(f"diario.{modelo}")
     assert len(elementos_ser) == apps.get_model("diario", modelo).cantidad()
     for elem in elementos:
         assert getattr(elem, identificador) in [
@@ -84,8 +84,8 @@ def test_serializa_todos_los_titulares_monedas_y_cuentas_de_la_base_de_datos_en_
 
 @pytest.mark.parametrize("modelo", ["cuentainteractiva", "cuentaacumulativa"])
 def test_serializa_todas_las_cuentas_interactivas_y_acumulativas(modelo, varias_cuentas, db_serializada):
-    cuentas_ser = db_serializada.filter_by_model("diario", "cuenta")
-    cuentas_subc_ser = db_serializada.filter_by_model("diario", modelo)
+    cuentas_ser = db_serializada.filter_by_model("diario.cuenta")
+    cuentas_subc_ser = db_serializada.filter_by_model(f"diario.{modelo}")
     for cuenta_int in cuentas_subc_ser:
         cuenta_int.fields.update(next(x.fields for x in cuentas_ser if x.pk == cuenta_int.pk))
     clase_modelo = apps.get_model("diario", modelo)
@@ -104,7 +104,7 @@ def test_serializa_todos_los_movimientos_dias_y_saldos_de_la_base_de_datos(
         elementos, modelo, tipo, request):
     request.getfixturevalue(elementos)
     db_serializada = request.getfixturevalue("db_serializada")
-    elementos_ser = [tipo(x) for x in db_serializada.filter_by_model("diario", modelo)]
+    elementos_ser = [tipo(x) for x in db_serializada.filter_by_model(f"diario.{modelo}")]
     Modelo = apps.get_model("diario", modelo)
     assert len(elementos_ser) == Modelo.cantidad()
 
@@ -114,30 +114,30 @@ def test_serializa_todos_los_movimientos_dias_y_saldos_de_la_base_de_datos(
 
 
 def test_serializa_cuentas_y_movimientos_con_natural_key_moneda(entrada, db_serializada):
-    cta = next(x for x in db_serializada.filter_by_model("diario", "cuenta"))
-    mov = next(x for x in db_serializada.filter_by_model("diario", "movimiento"))
+    cta = next(x for x in db_serializada.filter_by_model("diario.cuenta"))
+    mov = next(x for x in db_serializada.filter_by_model("diario.movimiento"))
     assert cta.fields['moneda'] == entrada.cta_entrada.moneda.monname
     assert mov.fields['moneda'] == entrada.moneda.monname
 
 
 def test_serializa_cuentas_interactivas_con_natural_key_titular(cuenta, db_serializada):
-    cta = next(x for x in db_serializada.filter_by_model("diario", "cuentainteractiva"))
+    cta = next(x for x in db_serializada.filter_by_model("diario.cuentainteractiva"))
     assert cta.fields['titular'] == cuenta.titular.titname
 
 
 def test_serializa_cuentas_acumulativas_con_natural_key_titular_original(cuenta_acumulativa, db_serializada):
-    cta = next(x for x in db_serializada.filter_by_model("diario", "cuentaacumulativa"))
+    cta = next(x for x in db_serializada.filter_by_model("diario.cuentaacumulativa"))
     assert cta.fields['titular_original'] == cuenta_acumulativa.titular_original.titname
 
 
 def test_serializa_cuentas_con_natural_key_cta_madre(cuenta_acumulativa, db_serializada):
-    cta = next(x for x in db_serializada.filter_by_model("diario", "cuenta") if x.fields["slug"] == "scs1")
+    cta = next(x for x in db_serializada.filter_by_model("diario.cuenta") if x.fields["slug"] == "scs1")
     assert cta.fields["cta_madre"] == cuenta_acumulativa.slug
 
 
 def test_serializa_movimientos_con_natural_keys_cta_entrada_cta_salida(traspaso, db_serializada):
     mov = next(
-        x for x in db_serializada.filter_by_model("diario", "movimiento")
+        x for x in db_serializada.filter_by_model("diario.movimiento")
         if x.fields["concepto"] == "Traspaso"
     )
     assert mov.fields["cta_entrada"] == traspaso.cta_entrada.slug
@@ -146,21 +146,21 @@ def test_serializa_movimientos_con_natural_keys_cta_entrada_cta_salida(traspaso,
 
 def test_serializa_movimientos_con_natural_key_dia(entrada, db_serializada):
     mov = next(
-        x for x in db_serializada.filter_by_model("diario", "movimiento")
+        x for x in db_serializada.filter_by_model("diario.movimiento")
         if x.fields["concepto"] == "Entrada"
     )
     assert mov.fields["dia"] == entrada.dia.fecha.strftime("%Y-%m-%d")
 
 def test_serializa_saldos_con_natural_key_cuenta(saldo, db_serializada):
     sdo = next(
-        x for x in db_serializada.filter_by_model("diario", "saldo")
+        x for x in db_serializada.filter_by_model("diario.saldo")
         if x.fields["movimiento"] == saldo.movimiento.natural_key()
     )
     assert sdo.fields["cuenta"] == saldo.cuenta.slug
 
 def test_serializa_saldos_con_natural_key_movimiento(saldo, db_serializada):
     sdo = next(
-        x for x in db_serializada.filter_by_model("diario", "saldo")
+        x for x in db_serializada.filter_by_model("diario.saldo")
         if x.fields["cuenta"] == saldo.cuenta.slug
     )
     assert \
