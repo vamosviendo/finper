@@ -114,55 +114,43 @@ def test_serializa_todos_los_movimientos_dias_y_saldos_de_la_base_de_datos(
 
 
 def test_serializa_cuentas_y_movimientos_con_natural_key_moneda(entrada, db_serializada):
-    cta = next(x for x in db_serializada.filter_by_model("diario.cuenta"))
-    mov = next(x for x in db_serializada.filter_by_model("diario.movimiento"))
+    cta = db_serializada.primere("diario.cuenta")
+    mov = db_serializada.primere("diario.movimiento")
     assert cta.fields['moneda'] == entrada.cta_entrada.moneda.monname
     assert mov.fields['moneda'] == entrada.moneda.monname
 
 
 def test_serializa_cuentas_interactivas_con_natural_key_titular(cuenta, db_serializada):
-    cta = next(x for x in db_serializada.filter_by_model("diario.cuentainteractiva"))
+    cta = db_serializada.primere("diario.cuentainteractiva")
     assert cta.fields['titular'] == cuenta.titular.titname
 
 
 def test_serializa_cuentas_acumulativas_con_natural_key_titular_original(cuenta_acumulativa, db_serializada):
-    cta = next(x for x in db_serializada.filter_by_model("diario.cuentaacumulativa"))
+    cta = db_serializada.primere("diario.cuentaacumulativa")
     assert cta.fields['titular_original'] == cuenta_acumulativa.titular_original.titname
 
 
 def test_serializa_cuentas_con_natural_key_cta_madre(cuenta_acumulativa, db_serializada):
-    cta = next(x for x in db_serializada.filter_by_model("diario.cuenta") if x.fields["slug"] == "scs1")
+    cta = db_serializada.primere("diario.cuenta", slug="scs1")
     assert cta.fields["cta_madre"] == cuenta_acumulativa.slug
 
 
 def test_serializa_movimientos_con_natural_keys_cta_entrada_cta_salida(traspaso, db_serializada):
-    mov = next(
-        x for x in db_serializada.filter_by_model("diario.movimiento")
-        if x.fields["concepto"] == "Traspaso"
-    )
+    mov = db_serializada.primere("diario.movimiento", concepto="Traspaso")
     assert mov.fields["cta_entrada"] == traspaso.cta_entrada.slug
     assert mov.fields["cta_salida"] == traspaso.cta_salida.slug
 
 
 def test_serializa_movimientos_con_natural_key_dia(entrada, db_serializada):
-    mov = next(
-        x for x in db_serializada.filter_by_model("diario.movimiento")
-        if x.fields["concepto"] == "Entrada"
-    )
+    mov = db_serializada.primere("diario.movimiento", concepto="Entrada")
     assert mov.fields["dia"] == entrada.dia.fecha.strftime("%Y-%m-%d")
 
 def test_serializa_saldos_con_natural_key_cuenta(saldo, db_serializada):
-    sdo = next(
-        x for x in db_serializada.filter_by_model("diario.saldo")
-        if x.fields["movimiento"] == saldo.movimiento.natural_key()
-    )
+    sdo = db_serializada.primere("diario.saldo", movimiento=saldo.movimiento.natural_key())
     assert sdo.fields["cuenta"] == saldo.cuenta.slug
 
 def test_serializa_saldos_con_natural_key_movimiento(saldo, db_serializada):
-    sdo = next(
-        x for x in db_serializada.filter_by_model("diario.saldo")
-        if x.fields["cuenta"] == saldo.cuenta.slug
-    )
+    sdo = db_serializada.primere("diario.saldo", cuenta=saldo.cuenta.slug)
     assert \
         sdo.fields["movimiento"] == \
         f"{saldo.movimiento.dia.__str__().replace('-', '')}{saldo.movimiento.orden_dia:02d}"

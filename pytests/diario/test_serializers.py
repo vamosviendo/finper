@@ -8,15 +8,15 @@ from diario.serializers import DiaSerializado, MovimientoSerializado, SaldoSeria
 
 @pytest.fixture
 def mov_serializado(entrada: Movimiento, db_serializada: SerializedDb) -> MovimientoSerializado:
-    return MovimientoSerializado(next(x for x in db_serializada if x.model == "diario.movimiento"))
+    return MovimientoSerializado.primere(db_serializada)
 
 @pytest.fixture
 def dia_serializado(dia: Dia, db_serializada: SerializedDb) -> DiaSerializado:
-    return DiaSerializado(next(x for x in db_serializada if x.model == "diario.dia"))
+    return DiaSerializado.primere(db_serializada)
 
 @pytest.fixture
 def saldo_serializado(saldo: Saldo, db_serializada: SerializedDb) -> SaldoSerializado:
-    return SaldoSerializado(next(x for x in db_serializada if x.model == "diario.saldo"))
+    return SaldoSerializado.primere(db_serializada)
 
 
 class TestMovimientoSerializado:
