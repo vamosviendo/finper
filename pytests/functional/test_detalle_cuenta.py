@@ -8,12 +8,6 @@ from utils.numeros import float_format
 
 
 @pytest.fixture
-def credito_entre_subcuentas(cuenta_de_dos_titulares: CuentaAcumulativa) -> Movimiento:
-    scot, sctg = cuenta_de_dos_titulares.subcuentas.all()
-    return Movimiento.crear('Crédito entre subcuentas', 50, scot, sctg)
-
-
-@pytest.fixture
 def subcuenta_otro_titular(cuenta_de_dos_titulares: CuentaAcumulativa) -> CuentaInteractiva:
     return cuenta_de_dos_titulares.subcuentas.first()
 

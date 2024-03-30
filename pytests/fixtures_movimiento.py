@@ -4,7 +4,7 @@ from random import randint
 import pytest
 from django.db.models import QuerySet
 
-from diario.models import CuentaInteractiva, Dia, Movimiento, Moneda
+from diario.models import CuentaInteractiva, Dia, Movimiento, Moneda, CuentaAcumulativa
 from utils.helpers_tests import cambiar_fecha_creacion, dividir_en_dos_subcuentas
 
 
@@ -158,6 +158,17 @@ def donacion(cuenta: CuentaInteractiva, cuenta_ajena: CuentaInteractiva, fecha: 
         cta_salida=cuenta_ajena,
         fecha=fecha,
         esgratis=True,
+    )
+
+
+@pytest.fixture
+def credito_entre_subcuentas(cuenta_de_dos_titulares: CuentaAcumulativa, fecha: date) -> Movimiento:
+    scot, sctg = cuenta_de_dos_titulares.subcuentas.all()
+    return Movimiento.crear(
+        concepto='Crédito entre subcuentas',
+        importe=50,
+        cta_entrada=scot,
+        cta_salida=sctg,
     )
 
 
