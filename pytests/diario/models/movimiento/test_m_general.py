@@ -92,4 +92,4 @@ def test_moneda_base_es_moneda_por_defecto(cuenta, fecha, mock_moneda_base):
 
 
 def test_natural_key_devuelve_fecha_y_orden_dia(entrada):
-    assert entrada.natural_key() == f"{entrada.dia.natural_key().replace('-', '')}{entrada.orden_dia:02d}"
+    assert entrada.natural_key() == (entrada.dia.fecha, entrada.orden_dia, )

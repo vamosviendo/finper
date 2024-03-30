@@ -32,4 +32,4 @@ def test_no_se_permiten_monnames_repetidos(peso):
 
 
 def test_natural_key_devuelve_id_basada_en_monname(peso):
-    assert peso.natural_key() == peso.monname
+    assert peso.natural_key() == (peso.monname, )

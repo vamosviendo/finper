@@ -14,14 +14,20 @@ if TYPE_CHECKING:
     from diario.models import CuentaInteractiva, Movimiento
 
 
+class TitularManager(models.Manager):
+    def get_by_natural_key(self, titname):
+        return self.get(titname=titname)
+
 class Titular(MiModel):
     titname = models.CharField(max_length=100, unique=True)
     nombre = models.CharField(max_length=100, blank=True)
     fecha_alta = models.DateField(default=timezone.now)
     deudores = models.ManyToManyField('Titular', related_name='acreedores')
 
-    def natural_key(self) -> str:
-        return self.titname
+    objects = TitularManager()
+
+    def natural_key(self) -> tuple[str]:
+        return (self.titname, )
 
     @property
     def capital(self) -> float:

@@ -20,6 +20,7 @@ from diario.utils.utils_moneda import id_moneda_base
 from utils import errors
 from utils.iterables import remove_duplicates
 from utils.tiempo import Posicion
+from vvmodel.managers import PolymorphManager
 from vvmodel.models import PolymorphModel
 
 if TYPE_CHECKING:
@@ -31,6 +32,11 @@ alfaminusculas = RegexValidator(
 
 def signo(condicion):
     return 1 if condicion else -1
+
+
+class CuentaManager(PolymorphManager):
+    def get_by_natural_key(self, slug):
+        return self.get(slug=slug)
 
 
 class Cuenta(PolymorphModel):
@@ -45,6 +51,8 @@ class Cuenta(PolymorphModel):
     )
     fecha_creacion = models.DateField(default=date.today)
     moneda = models.ForeignKey(Moneda, on_delete=models.CASCADE, null=True, blank=True)
+
+    objects = CuentaManager()
 
     class Meta:
         ordering = ('nombre', )
@@ -68,7 +76,7 @@ class Cuenta(PolymorphModel):
         return self.nombre
 
     def natural_key(self):
-        return self.slug
+        return (self.slug, )
 
     @property
     def es_interactiva(self) -> bool:

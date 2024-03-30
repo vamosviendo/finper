@@ -41,6 +41,11 @@ class MiDateField(models.DateField):
             return value
 
 
+class MovimientoManager(models.Manager):
+    def get_by_natural_key(self, dia, orden_dia):
+        return self.get(dia=dia, orden_dia=orden_dia)
+
+
 class MovimientoCleaner:
 
     def __init__(self, mov: Movimiento, viejo: Movimiento):
@@ -179,6 +184,8 @@ class Movimiento(MiModel):
     )
     es_automatico = models.BooleanField(default=False)
 
+    objects = MovimientoManager()
+
     cleaner: MovimientoCleaner = None
     viejo: 'Movimiento' = None
 
@@ -197,7 +204,7 @@ class Movimiento(MiModel):
         return string
 
     def natural_key(self):
-        return f"{self.dia.natural_key().replace('-','')}{self.orden_dia:02d}"
+        return self.dia.natural_key() + (self.orden_dia, )
 
     @property
     def importe(self) -> float:

@@ -50,4 +50,4 @@ def test_str_devuelve_nombre_titular(titular):
 
 
 def test_natural_key_devuelve_id_basada_en_titname(titular):
-    assert titular.natural_key() == titular.titname
+    assert titular.natural_key() == (titular.titname, )

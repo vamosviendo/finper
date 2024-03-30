@@ -21,7 +21,7 @@ def saldo_serializado(saldo: Saldo, db_serializada: SerializedDb) -> SaldoSerial
 
 class TestMovimientoSerializado:
     def test_prop_fecha_devuelve_fecha_del_dia_del_movimiento(self, mov_serializado):
-        assert mov_serializado.fecha == mov_serializado.fields["dia"]
+        assert mov_serializado.fecha == mov_serializado.fields["dia"][0]
 
     def test_prop_identidad_devuelve_cadena_con_fecha_y_orden_dia(self, mov_serializado):
         assert mov_serializado.identidad == f"{mov_serializado.fecha.replace('-', '')}{mov_serializado.fields['orden_dia']:02d}"
@@ -34,6 +34,4 @@ class TestDiaSerializado:
 
 class TestSaldoSerializado:
     def test_prop_identidad_devuelve_identidad_basada_en_identidad_de_movimiento_y_slug_de_cuenta(self, saldo_serializado):
-        assert saldo_serializado.identidad == \
-               f"{saldo_serializado.fields['movimiento']}" \
-               f"{saldo_serializado.fields['cuenta']}"
+        assert saldo_serializado.identidad == "2010111200c"

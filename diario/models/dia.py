@@ -9,17 +9,24 @@ if TYPE_CHECKING:
     from diario.models import Movimiento
 
 
+class DiaManager(models.Manager):
+    def get_by_natural_key(self, fecha):
+        return self.get(fecha=fecha)
+
+
 class Dia (MiModel):
     fecha = models.DateField(unique=True)
+
+    objects = DiaManager()
 
     class Meta:
         ordering = ['fecha']
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.fecha.strftime('%Y-%m-%d')
 
-    def natural_key(self):
-        return self.__str__()
+    def natural_key(self) -> tuple[str]:
+        return (self.fecha, )
 
     @property
     def identidad(self) -> str:

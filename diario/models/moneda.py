@@ -7,17 +7,24 @@ from django.db import models
 from vvmodel.models import MiModel
 
 
+class MonedaManager(models.Manager):
+    def get_by_natural_key(self, monname):
+        return self.get(monname=monname)
+
+
 class Moneda(MiModel):
     monname = models.CharField(max_length=100, unique=True)
     nombre = models.CharField(max_length=100, unique=True)
     _plural = models.CharField(max_length=100, null=True, blank=True)
     cotizacion = models.FloatField()
 
+    objects = MonedaManager()
+
     def __str__(self):
         return self.nombre
 
-    def natural_key(self) -> str:
-        return self.monname
+    def natural_key(self) -> tuple[str]:
+        return (self.monname, )
 
     @property
     def plural(self) -> str:

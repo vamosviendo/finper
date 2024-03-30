@@ -35,4 +35,4 @@ def test_no_permite_dias_sin_fecha():
 
 
 def test_natural_key_devuelve_fecha(dia):
-    assert dia.natural_key() == dia.fecha.strftime("%Y-%m-%d")
+    assert dia.natural_key() == (dia.fecha, )

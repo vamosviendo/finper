@@ -20,7 +20,7 @@ class MovimientoSerializado(SerializedObject):
 
     @property
     def fecha(self) -> str:
-        return self.fields["dia"]
+        return self.fields["dia"][0]
 
     @property
     def identidad(self) -> str:
@@ -34,4 +34,6 @@ class SaldoSerializado(SerializedObject):
 
     @property
     def identidad(self) -> str:
-        return f"{self.fields['movimiento']}{self.fields['cuenta']}"
+        return f"{self.fields['movimiento'][0].replace('-', '')}" \
+               f"{self.fields['movimiento'][1]:02d}" \
+               f"{self.fields['cuenta'][0]}"
