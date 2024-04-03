@@ -7,8 +7,8 @@ from diario.models import Titular
 
 
 @pytest.fixture
-def titular(fecha: date) -> Titular:
-    return Titular.crear(titname='titular', nombre='Titular', fecha_alta=fecha)
+def titular(fecha_temprana: date) -> Titular:
+    return Titular.crear(titname='titular', nombre='Titular', fecha_alta=fecha_temprana)
 
 
 @pytest.fixture

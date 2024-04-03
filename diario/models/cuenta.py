@@ -648,7 +648,7 @@ class CuentaAcumulativa(Cuenta):
     def movs_no_conversion(self) -> models.QuerySet[Movimiento]:
         return self.movs().filter(convierte_cuenta=None)
 
-    def agregar_subcuenta(self, nombre: str, slug: str, titular: Titular, fecha: date = None) -> Cuenta:
+    def agregar_subcuenta(self, nombre: str, slug: str, titular: Titular, fecha: date = None) -> CuentaInteractiva:
         return Cuenta.crear(
             nombre=nombre,
             slug=slug,

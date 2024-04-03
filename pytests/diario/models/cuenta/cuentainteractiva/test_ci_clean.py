@@ -1,3 +1,4 @@
+import datetime
 import re
 
 import pytest
@@ -40,13 +41,12 @@ def test_cuenta_no_puede_cambiar_de_titular(cuenta, titular, otro_titular):
         cuenta.clean()
 
 
-def test_cuenta_no_puede_tener_fecha_de_creacion_anterior_a_la_fecha_de_alta_de_su_titular(
-        titular, fecha_anterior):
+def test_cuenta_no_puede_tener_fecha_de_creacion_anterior_a_la_fecha_de_alta_de_su_titular(titular):
     cuenta = CuentaInteractiva(
         nombre='cuenta',
         slug='c',
         titular=titular,
-        fecha_creacion=fecha_anterior
+        fecha_creacion=titular.fecha_alta-datetime.timedelta(1)
     )
     with pytest.raises(
             errors.ErrorFechaAnteriorAAltaTitular,
