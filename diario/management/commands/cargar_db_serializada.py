@@ -55,7 +55,7 @@ class Command(BaseCommand):
 
             if cuenta.pk in [x.pk for x in cuentas_acumulativas]:
                 subcuentas_cuenta = [
-                    [x.fields["nombre"], x.fields["slug"], 0]
+                    x
                     for x in cuentas
                     if x.fields["cta_madre"] == [cuenta.fields["slug"]]
                 ]
@@ -63,14 +63,31 @@ class Command(BaseCommand):
                     "diario.cuentaacumulativa",
                     pk=cuenta.pk
                 ).fields["fecha_conversion"]
+                subcuentas_fecha_conversion = [
+                    [x.fields["nombre"], x.fields["slug"], 0]
+                    for x in subcuentas_cuenta
+                    if x.fields["fecha_creacion"] == fecha_conversion
+                ]
+                subcuentas_posteriores = [[
+                    x.fields["nombre"],
+                    x.fields["slug"],
+                    db_full.primere(
+                        "diario.cuentainteractiva", pk=x.pk
+                    ).fields["titular"][0],
+                    x.fields["fecha_creacion"]
+                ]
+                    for x in subcuentas_cuenta
+                    if x.fields["fecha_creacion"] != fecha_conversion
+                ]
 
-                cuenta_ok.dividir_entre(
-                    *subcuentas_cuenta,
+                cuenta_ok = cuenta_ok.dividir_y_actualizar(
+                    *subcuentas_fecha_conversion,
                     fecha=datetime.date(*[int(x) for x in fecha_conversion.split("-")])
                 )
+                for subcuenta in subcuentas_posteriores:
+                    subcuenta[2] = Titular.tomar(titname=subcuenta[2])
+                    fecha_creacion = subcuenta.pop()
 
-        #
-        # try:
-        #     call_command("loaddata", "db_full.json")
-        # except ValueError:
-        #     pass
+                    cuenta_ok.agregar_subcuenta(
+                        *subcuenta, fecha=fecha_creacion
+                   )

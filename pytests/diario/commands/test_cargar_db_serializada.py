@@ -326,6 +326,17 @@ def test_carga_cuentas_con_fecha_de_creacion_correcta(cargar_base_de_datos, db_s
             f"Error en fecha de creación de cuenta \"{cuenta.fields['nombre']}\""
 
 
+def test_carga_cuentas_acumulativas_con_fecha_de_conversion_correcta(cargar_base_de_datos, db_serializada, vaciar_db):
+    cuentas = db_serializada.filter_by_model("diario.cuentaacumulativa")
+    call_command("cargar_db_serializada")
+    for cuenta in cuentas:
+        assert \
+            CuentaAcumulativa.tomar(
+                slug=db_serializada.primere("diario.cuenta", pk=cuenta.pk).fields["slug"]
+            ).fecha_conversion.strftime("%Y-%m-%d") == \
+            cuenta.fields["fecha_conversion"]
+
+
 @pytest.mark.xfail
 def test_carga_cuentas_con_titular_correcto():
     pytest.fail("escribir")
