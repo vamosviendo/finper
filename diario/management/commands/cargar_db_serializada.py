@@ -21,28 +21,24 @@ class Command(BaseCommand):
 
         titulares = db_full.filter_by_model("diario.titular")
         for titular in titulares:
-            Titular.crear(
-                nombre=titular.fields["nombre"],
-                titname=titular.fields["titname"],
-                fecha_alta=titular.fields["fecha_alta"],
-            )
+            fields = titular.fields.copy()
+            fields.pop("deudores")  # Se retira campo ManyToMany automático
+            Titular.crear(**fields)
 
         monedas = db_full.filter_by_model("diario.moneda")
         for moneda in monedas:
             Moneda.crear(**moneda.fields)
 
         cuentas = db_full.filter_by_model("diario.cuenta")
-        cuentas_independientes = SerializedDb([x for x in cuentas if x.fields["cta_madre"] is None])
+        cuentas_independientes = cuentas.filtrar(cta_madre=None)
         cuentas_acumulativas = db_full.filter_by_model("diario.cuentaacumulativa")
+        cuentas_interactivas = db_full.filter_by_model("diario.cuentainteractiva")
+
         for cuenta in cuentas_independientes:
             try:
-                titname = db_full.primere(
-                    "diario.cuentainteractiva", pk=cuenta.pk
-                ).fields["titular"][0]
-            except AttributeError:
-                titname = db_full.primere(
-                    "diario.cuentaacumulativa", pk=cuenta.pk
-                ).fields["titular_original"][0]
+                titname = cuentas_interactivas.tomar(pk=cuenta.pk).fields["titular"][0]
+            except StopIteration:
+                titname = cuentas_acumulativas.tomar(pk=cuenta.pk).fields["titular_original"][0]
 
             cuenta_ok = Cuenta.crear(
                 nombre=cuenta.fields["nombre"],
@@ -54,26 +50,16 @@ class Command(BaseCommand):
             )
 
             if cuenta.pk in [x.pk for x in cuentas_acumulativas]:
-                subcuentas_cuenta = [
-                    x
-                    for x in cuentas
-                    if x.fields["cta_madre"] == [cuenta.fields["slug"]]
-                ]
-                fecha_conversion = cuentas_acumulativas.primere(
-                    "diario.cuentaacumulativa",
-                    pk=cuenta.pk
-                ).fields["fecha_conversion"]
+                subcuentas_cuenta = cuentas.filtrar(cta_madre=[cuenta.fields["slug"]])
+                fecha_conversion = cuentas_acumulativas.tomar(pk=cuenta.pk).fields["fecha_conversion"]
                 subcuentas_fecha_conversion = [
                     [x.fields["nombre"], x.fields["slug"], 0]
-                    for x in subcuentas_cuenta
-                    if x.fields["fecha_creacion"] == fecha_conversion
+                    for x in subcuentas_cuenta.filtrar(fecha_creacion=fecha_conversion)
                 ]
                 subcuentas_posteriores = [[
                     x.fields["nombre"],
                     x.fields["slug"],
-                    db_full.primere(
-                        "diario.cuentainteractiva", pk=x.pk
-                    ).fields["titular"][0],
+                    cuentas_interactivas.tomar(pk=x.pk).fields["titular"][0],
                     x.fields["fecha_creacion"]
                 ]
                     for x in subcuentas_cuenta
