@@ -53,7 +53,12 @@ def _cargar_cuentas(de_serie: SerializedDb) -> None:
             # para dividir y convertir la cuenta.
             fecha_conversion = cuentas_acumulativas.tomar(pk=cuenta.pk).fields["fecha_conversion"]
             subcuentas_fecha_conversion = [
-                [x.fields["nombre"], x.fields["slug"], 0]
+                {
+                    "nombre": x.fields["nombre"],
+                    "slug": x.fields["slug"],
+                    "titular": Titular.tomar(titname=cuentas_interactivas.tomar(pk=x.pk).fields["titular"][0]),
+                    "saldo": 0
+                }
                 for x in subcuentas_cuenta.filtrar(fecha_creacion=fecha_conversion)
             ]
             cuenta_ok = cuenta_ok.dividir_y_actualizar(
@@ -66,19 +71,14 @@ def _cargar_cuentas(de_serie: SerializedDb) -> None:
             subcuentas_posteriores = [[
                     x.fields["nombre"],
                     x.fields["slug"],
-                    cuentas_interactivas.tomar(pk=x.pk).fields["titular"][0],
+                    Titular.tomar(titname=cuentas_interactivas.tomar(pk=x.pk).fields["titular"][0]),
                     x.fields["fecha_creacion"]
                 ]
                 for x in subcuentas_cuenta
                 if x.fields["fecha_creacion"] != fecha_conversion
             ]
             for subcuenta in subcuentas_posteriores:
-                subcuenta[2] = Titular.tomar(titname=subcuenta[2])
-                fecha_creacion = subcuenta.pop()
-
-                cuenta_ok.agregar_subcuenta(
-                    *subcuenta, fecha=fecha_creacion
-               )
+                cuenta_ok.agregar_subcuenta(*subcuenta)
 
 
 class Command(BaseCommand):
