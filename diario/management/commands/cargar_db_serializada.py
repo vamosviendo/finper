@@ -1,12 +1,84 @@
+from __future__ import annotations
+
 import datetime
 import json
 from pathlib import Path
 
+from django.apps import apps
 from django.core.management import BaseCommand, call_command
 
-from diario.models import Titular, Moneda, Cuenta, CuentaAcumulativa
+from diario.models import Titular, Moneda, Cuenta
 from finper import settings
+from vvmodel.models import MiModel
 from vvmodel.serializers import SerializedDb, SerializedObject
+
+
+def _cargar_modelo(modelo: str, de_serie: SerializedDb, excluir_campos: list[str] = None) -> None:
+    excluir_campos = excluir_campos or []
+    serie_modelo = de_serie.filter_by_model(modelo)
+    Modelo: type | MiModel = apps.get_model(*modelo.split("."))
+
+    for elemento in serie_modelo:
+        fields = {k: v for k, v in elemento.fields.items() if k not in excluir_campos}
+        Modelo.crear(**fields)
+
+
+def _cargar_cuentas(de_serie: SerializedDb) -> None:
+    cuentas = de_serie.filter_by_model("diario.cuenta")
+    cuentas_independientes = cuentas.filtrar(cta_madre=None)
+    cuentas_acumulativas = de_serie.filter_by_model("diario.cuentaacumulativa")
+    cuentas_interactivas = de_serie.filter_by_model("diario.cuentainteractiva")
+
+    for cuenta in cuentas_independientes:
+        try:
+            titname = cuentas_interactivas.tomar(pk=cuenta.pk).fields["titular"]
+        except StopIteration:
+            titname = cuentas_acumulativas.tomar(pk=cuenta.pk).fields["titular_original"]
+
+        cuenta_ok = Cuenta.crear(
+            nombre=cuenta.fields["nombre"],
+            slug=cuenta.fields["slug"],
+            cta_madre=None,
+            fecha_creacion=cuenta.fields["fecha_creacion"],
+            titular=Titular.tomar(titname=titname[0]),
+            moneda=Moneda.tomar(monname=cuenta.fields["moneda"][0]),
+        )
+
+        # Si la cuenta recién creada es (en la db serializada) una cuenta acumulativa:
+        if cuenta.pk in [x.pk for x in cuentas_acumulativas]:
+            # Buscar las subcuentas en las que está dividida
+            subcuentas_cuenta = cuentas.filtrar(cta_madre=[cuenta.fields["slug"]])
+            # De las subcuentas encontradas, usar aquellas cuya fecha de creación
+            # coincide con la fecha de conversión de la cuenta en acumulativa
+            # para dividir y convertir la cuenta.
+            fecha_conversion = cuentas_acumulativas.tomar(pk=cuenta.pk).fields["fecha_conversion"]
+            subcuentas_fecha_conversion = [
+                [x.fields["nombre"], x.fields["slug"], 0]
+                for x in subcuentas_cuenta.filtrar(fecha_creacion=fecha_conversion)
+            ]
+            cuenta_ok = cuenta_ok.dividir_y_actualizar(
+                *subcuentas_fecha_conversion,
+                fecha=datetime.date(*[int(x) for x in fecha_conversion.split("-")])
+            )
+
+            # Se agregan las subcuentas cuya fecha de creación es posterior
+            # a la fecha de conversión de la cuenta en acumulativa
+            subcuentas_posteriores = [[
+                    x.fields["nombre"],
+                    x.fields["slug"],
+                    cuentas_interactivas.tomar(pk=x.pk).fields["titular"][0],
+                    x.fields["fecha_creacion"]
+                ]
+                for x in subcuentas_cuenta
+                if x.fields["fecha_creacion"] != fecha_conversion
+            ]
+            for subcuenta in subcuentas_posteriores:
+                subcuenta[2] = Titular.tomar(titname=subcuenta[2])
+                fecha_creacion = subcuenta.pop()
+
+                cuenta_ok.agregar_subcuenta(
+                    *subcuenta, fecha=fecha_creacion
+               )
 
 
 class Command(BaseCommand):
@@ -19,61 +91,6 @@ class Command(BaseCommand):
                 SerializedObject(x) for x in json.load(db_full_json)
             ])
 
-        titulares = db_full.filter_by_model("diario.titular")
-        for titular in titulares:
-            fields = titular.fields.copy()
-            fields.pop("deudores")  # Se retira campo ManyToMany automático
-            Titular.crear(**fields)
-
-        monedas = db_full.filter_by_model("diario.moneda")
-        for moneda in monedas:
-            Moneda.crear(**moneda.fields)
-
-        cuentas = db_full.filter_by_model("diario.cuenta")
-        cuentas_independientes = cuentas.filtrar(cta_madre=None)
-        cuentas_acumulativas = db_full.filter_by_model("diario.cuentaacumulativa")
-        cuentas_interactivas = db_full.filter_by_model("diario.cuentainteractiva")
-
-        for cuenta in cuentas_independientes:
-            try:
-                titname = cuentas_interactivas.tomar(pk=cuenta.pk).fields["titular"][0]
-            except StopIteration:
-                titname = cuentas_acumulativas.tomar(pk=cuenta.pk).fields["titular_original"][0]
-
-            cuenta_ok = Cuenta.crear(
-                nombre=cuenta.fields["nombre"],
-                slug=cuenta.fields["slug"],
-                cta_madre=None,
-                fecha_creacion=cuenta.fields["fecha_creacion"],
-                titular=Titular.tomar(titname=titname),
-                moneda=Moneda.tomar(monname=cuenta.fields["moneda"][0]),
-            )
-
-            if cuenta.pk in [x.pk for x in cuentas_acumulativas]:
-                subcuentas_cuenta = cuentas.filtrar(cta_madre=[cuenta.fields["slug"]])
-                fecha_conversion = cuentas_acumulativas.tomar(pk=cuenta.pk).fields["fecha_conversion"]
-                subcuentas_fecha_conversion = [
-                    [x.fields["nombre"], x.fields["slug"], 0]
-                    for x in subcuentas_cuenta.filtrar(fecha_creacion=fecha_conversion)
-                ]
-                subcuentas_posteriores = [[
-                    x.fields["nombre"],
-                    x.fields["slug"],
-                    cuentas_interactivas.tomar(pk=x.pk).fields["titular"][0],
-                    x.fields["fecha_creacion"]
-                ]
-                    for x in subcuentas_cuenta
-                    if x.fields["fecha_creacion"] != fecha_conversion
-                ]
-
-                cuenta_ok = cuenta_ok.dividir_y_actualizar(
-                    *subcuentas_fecha_conversion,
-                    fecha=datetime.date(*[int(x) for x in fecha_conversion.split("-")])
-                )
-                for subcuenta in subcuentas_posteriores:
-                    subcuenta[2] = Titular.tomar(titname=subcuenta[2])
-                    fecha_creacion = subcuenta.pop()
-
-                    cuenta_ok.agregar_subcuenta(
-                        *subcuenta, fecha=fecha_creacion
-                   )
+        _cargar_modelo("diario.titular", db_full, ["deudores"])
+        _cargar_modelo("diario.moneda", db_full)
+        _cargar_cuentas(db_full)
