@@ -8,6 +8,7 @@ from django.apps import apps
 from django.core.management import BaseCommand, call_command
 
 from diario.models import Titular, Moneda, Cuenta
+from diario.serializers import CuentaSerializada
 from finper import settings
 from vvmodel.models import MiModel
 from vvmodel.serializers import SerializedDb, SerializedObject
@@ -24,23 +25,18 @@ def _cargar_modelo(modelo: str, de_serie: SerializedDb, excluir_campos: list[str
 
 
 def _cargar_cuentas(de_serie: SerializedDb) -> None:
-    cuentas = de_serie.filter_by_model("diario.cuenta")
+    cuentas = CuentaSerializada.todes(container=de_serie)
     cuentas_independientes = cuentas.filtrar(cta_madre=None)
-    cuentas_acumulativas = de_serie.filter_by_model("diario.cuentaacumulativa")
-    cuentas_interactivas = de_serie.filter_by_model("diario.cuentainteractiva")
+    cuentas_acumulativas = cuentas.filter_by_model("diario.cuentaacumulativa")
 
     for cuenta in cuentas_independientes:
-        try:
-            titname = cuentas_interactivas.tomar(pk=cuenta.pk).fields["titular"]
-        except StopIteration:
-            titname = cuentas_acumulativas.tomar(pk=cuenta.pk).fields["titular_original"]
 
         cuenta_ok = Cuenta.crear(
             nombre=cuenta.fields["nombre"],
             slug=cuenta.fields["slug"],
             cta_madre=None,
             fecha_creacion=cuenta.fields["fecha_creacion"],
-            titular=Titular.tomar(titname=titname[0]),
+            titular=Titular.tomar(titname=cuenta.titname()),
             moneda=Moneda.tomar(monname=cuenta.fields["moneda"][0]),
         )
 
@@ -51,12 +47,12 @@ def _cargar_cuentas(de_serie: SerializedDb) -> None:
             # De las subcuentas encontradas, usar aquellas cuya fecha de creación
             # coincide con la fecha de conversión de la cuenta en acumulativa
             # para dividir y convertir la cuenta.
-            fecha_conversion = cuentas_acumulativas.tomar(pk=cuenta.pk).fields["fecha_conversion"]
+            fecha_conversion = cuenta.campos_polimorficos()["fecha_conversion"]
             subcuentas_fecha_conversion = [
                 {
                     "nombre": x.fields["nombre"],
                     "slug": x.fields["slug"],
-                    "titular": Titular.tomar(titname=cuentas_interactivas.tomar(pk=x.pk).fields["titular"][0]),
+                    "titular": Titular.tomar(titname=x.titname()),
                     "saldo": 0
                 }
                 for x in subcuentas_cuenta.filtrar(fecha_creacion=fecha_conversion)
@@ -71,7 +67,7 @@ def _cargar_cuentas(de_serie: SerializedDb) -> None:
             subcuentas_posteriores = [[
                     x.fields["nombre"],
                     x.fields["slug"],
-                    Titular.tomar(titname=cuentas_interactivas.tomar(pk=x.pk).fields["titular"][0]),
+                    Titular.tomar(titname=x.titname()),
                     x.fields["fecha_creacion"]
                 ]
                 for x in subcuentas_cuenta

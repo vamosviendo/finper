@@ -4,6 +4,7 @@ import pytest
 from django.core.management import call_command
 
 from diario.models import Titular, Moneda, Cuenta, Dia, Movimiento, CuentaAcumulativa, CuentaInteractiva, Saldo
+from diario.serializers import CuentaSerializada
 from finper import settings
 
 
@@ -337,6 +338,20 @@ def test_carga_cuentas_acumulativas_con_fecha_de_conversion_correcta(cargar_base
             cuenta.fields["fecha_conversion"]
 
 
+def test_carga_cuentas_con_titular_correcto(cargar_base_de_datos, db_serializada, vaciar_db):
+    cuentas = CuentaSerializada.todes(container=db_serializada).filter_by_model("diario.cuenta")
+
+    call_command("cargar_db_serializada")
+
+    for cuenta in cuentas:
+        cuenta_guardada = Cuenta.tomar(slug=cuenta.fields["slug"])
+        try:
+            titular = cuenta_guardada.titular.titname
+        except AttributeError:
+            titular = cuenta_guardada.titular_original.titname
+        assert titular == cuenta.titname()
+
+
 @pytest.mark.xfail
-def test_carga_cuentas_con_titular_correcto():
+def test_carga_cuentas_con_moneda_correcta():
     pytest.fail("escribir")
