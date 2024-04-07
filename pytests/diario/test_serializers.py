@@ -1,9 +1,18 @@
 import pytest
 
-from diario.models import Movimiento, Dia, Saldo
+from diario.models import CuentaAcumulativa, CuentaInteractiva, Movimiento, Dia, Saldo
 from vvmodel.serializers import SerializedDb
 
-from diario.serializers import DiaSerializado, MovimientoSerializado, SaldoSerializado
+from diario.serializers import CuentaSerializada, DiaSerializado, MovimientoSerializado, SaldoSerializado
+
+
+@pytest.fixture
+def cuenta_int_serializada(cuenta: CuentaInteractiva, db_serializada: SerializedDb) -> CuentaSerializada:
+    return CuentaSerializada.primere(db_serializada)
+
+@pytest.fixture
+def cuenta_acum_serializada(cuenta_acumulativa: CuentaAcumulativa, db_serializada: SerializedDb) -> CuentaSerializada:
+    return CuentaSerializada.primere(db_serializada)
 
 
 @pytest.fixture
@@ -17,6 +26,36 @@ def dia_serializado(dia: Dia, db_serializada: SerializedDb) -> DiaSerializado:
 @pytest.fixture
 def saldo_serializado(saldo: Saldo, db_serializada: SerializedDb) -> SaldoSerializado:
     return SaldoSerializado.primere(db_serializada)
+
+
+class TestCuentaSerializada:
+    def test_campos_polimorficos_devuelve_campos_de_cuenta_interactiva_correspondiente_a_cuenta(
+            self, cuenta_int_serializada, ):
+        assert \
+            cuenta_int_serializada.campos_polimorficos() == \
+            cuenta_int_serializada.container.tomar(
+                model="diario.cuentainteractiva",
+                pk=cuenta_int_serializada.pk
+            ).fields
+
+    def test_campos_polimorficos_devuelve_campos_de_cuenta_acumulativa_correspondiente_a_cuenta(
+            self, cuenta_acum_serializada):
+        assert \
+            cuenta_acum_serializada.campos_polimorficos() == \
+            cuenta_acum_serializada.container.tomar(
+                model="diario.cuentaacumulativa",
+                pk=cuenta_acum_serializada.pk
+            ).fields
+
+    def test_titname_devuelve_titname_de_titular_de_cuenta_interactiva(self, cuenta_int_serializada):
+        assert \
+            cuenta_int_serializada.titname() == \
+            cuenta_int_serializada.campos_polimorficos()["titular"][0]
+
+    def test_titname_devuelve_titname_de_titular_de_cuenta_acumulactiva(self, cuenta_acum_serializada):
+        assert \
+            cuenta_acum_serializada.titname() == \
+            cuenta_acum_serializada.campos_polimorficos()["titular_original"][0]
 
 
 class TestMovimientoSerializado:

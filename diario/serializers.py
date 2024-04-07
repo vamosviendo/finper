@@ -1,6 +1,25 @@
-from typing import Self
+from vvmodel.serializers import SerializedObject
 
-from vvmodel.serializers import SerializedObject, SerializedDb
+
+class CuentaSerializada(SerializedObject):
+    @classmethod
+    def model_string(cls) -> str:
+        return "diario.cuenta"
+
+    def campos_polimorficos(self) -> dict:
+        try:
+            elemento = self.container.tomar(model="diario.cuentainteractiva", pk=self.pk)
+        except StopIteration:
+            elemento = self.container.tomar(model="diario.cuentaacumulativa", pk=self.pk)
+        return elemento.fields
+
+    def titname(self) -> str:
+        campos = self.campos_polimorficos()
+        try:
+            titular = campos["titular"]
+        except KeyError:
+            titular = campos["titular_original"]
+        return titular[0]
 
 
 class DiaSerializado(SerializedObject):
