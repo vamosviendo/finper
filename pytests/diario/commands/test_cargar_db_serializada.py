@@ -4,8 +4,35 @@ import pytest
 from django.core.management import call_command
 
 from diario.models import Titular, Moneda, Cuenta, Dia, Movimiento, CuentaAcumulativa, CuentaInteractiva, Saldo
-from diario.serializers import CuentaSerializada
+from diario.serializers import CuentaSerializada, MovimientoSerializado
 from finper import settings
+from vvmodel.serializers import SerializedDb
+
+
+def _tomar_movimiento(movimiento: MovimientoSerializado) -> Movimiento:
+    return Movimiento.tomar(
+        dia=Dia.tomar(fecha=movimiento.fields["dia"][0]),
+        concepto=movimiento.fields["concepto"],
+        detalle=movimiento.fields["detalle"],
+        _importe=movimiento.fields["_importe"],
+        cta_entrada=Cuenta.tomar(
+            slug=movimiento.fields["cta_entrada"][0]
+        ) if movimiento.fields["cta_entrada"] else None,
+        cta_salida=Cuenta.tomar(
+            slug=movimiento.fields["cta_salida"][0]
+        ) if movimiento.fields["cta_salida"] else None,
+    )
+
+
+def _testear_movimiento(movimiento: MovimientoSerializado):
+    try:
+        _tomar_movimiento(movimiento)
+    except Movimiento.DoesNotExist:
+        raise AssertionError(
+            f"Movimiento {movimiento.fields['orden_dia']} del {movimiento.fields['dia'][0]} "
+            f"({movimiento.fields['concepto']} - {movimiento.fields['cta_salida']} "
+            f"-> {movimiento.fields['cta_entrada']} {movimiento.fields['_importe']}) no cargado"
+        )
 
 
 @pytest.fixture
@@ -154,7 +181,7 @@ def saldo_subcuenta_agregada_3(
         dia: Dia) -> Saldo:
     subcuenta_salida = cuenta_2_acumulativa.subcuentas.all()[1]
     return Movimiento.crear(
-        "Traspaso de saldo", 11,
+        "Traspaso de saldo a subcuenta agregada", 11,
         cta_entrada=subcuenta_agregada_3, cta_salida=subcuenta_salida,
         dia=dia, esgratis=True,
     ).saldo_ce()
@@ -167,7 +194,7 @@ def saldo_subcuenta_agregada_4(
         dia: Dia, ) -> Saldo:
     subcuenta_salida = cuenta_2_acumulativa.subcuentas.all()[1]
     return Movimiento.crear(
-        "Traspaso de saldo", 11,
+        "Traspaso de saldo a subcuenta agregada", 11,
         cta_entrada=subcuenta_agregada_4, cta_salida=subcuenta_salida,
         dia=dia, esgratis=True,
     ).saldo_ce()
@@ -285,6 +312,12 @@ def cargar_base_de_datos(
     pass
 
 
+@pytest.fixture
+def db_serializada_y_vacia(cargar_base_de_datos, db_serializada: SerializedDb, vaciar_db) -> SerializedDb:
+    """ Genera una base de datos, la serializa y borra el contenido de la base de datos"""
+    return db_serializada
+
+
 def test_vacia_la_base_de_datos_antes_de_cargar_datos_nuevos(mocker, vaciar_db):
     mock_unlink = mocker.patch("pathlib.Path.unlink", autospec=True)
     call_command("cargar_db_serializada")
@@ -305,10 +338,8 @@ def test_carga_todas_las_monedas_en_la_base_de_datos(peso, dolar, euro, db_seria
         Moneda.tomar(monname=moneda.fields["monname"])
 
 
-def test_carga_todas_las_cuentas_en_la_base_de_datos(cargar_base_de_datos, db_serializada, vaciar_db):
-    cuentas = db_serializada.filter_by_model("diario.cuenta")
-    import shutil
-    shutil.copyfile("db_full.json", "db_test.json")
+def test_carga_todas_las_cuentas_en_la_base_de_datos(db_serializada_y_vacia):
+    cuentas = db_serializada_y_vacia.filter_by_model("diario.cuenta")
     call_command("cargar_db_serializada")
     for cuenta in cuentas:
         try:
@@ -317,8 +348,8 @@ def test_carga_todas_las_cuentas_en_la_base_de_datos(cargar_base_de_datos, db_se
             raise AssertionError(f"No se creó cuenta con slug {cuenta.fields['slug']}")
 
 
-def test_carga_cuentas_con_fecha_de_creacion_correcta(cargar_base_de_datos, db_serializada, vaciar_db):
-    cuentas = db_serializada.filter_by_model("diario.cuenta")
+def test_carga_cuentas_con_fecha_de_creacion_correcta(db_serializada_y_vacia):
+    cuentas = db_serializada_y_vacia.filter_by_model("diario.cuenta")
     call_command("cargar_db_serializada")
     for cuenta in cuentas:
         assert \
@@ -327,19 +358,35 @@ def test_carga_cuentas_con_fecha_de_creacion_correcta(cargar_base_de_datos, db_s
             f"Error en fecha de creación de cuenta \"{cuenta.fields['nombre']}\""
 
 
-def test_carga_cuentas_acumulativas_con_fecha_de_conversion_correcta(cargar_base_de_datos, db_serializada, vaciar_db):
-    cuentas = db_serializada.filter_by_model("diario.cuentaacumulativa")
+def test_carga_cuentas_acumulativas_con_fecha_de_conversion_correcta(db_serializada_y_vacia):
+    cuentas = db_serializada_y_vacia.filter_by_model("diario.cuentaacumulativa")
     call_command("cargar_db_serializada")
     for cuenta in cuentas:
         assert \
             CuentaAcumulativa.tomar(
-                slug=db_serializada.primere("diario.cuenta", pk=cuenta.pk).fields["slug"]
+                slug=db_serializada_y_vacia.primere("diario.cuenta", pk=cuenta.pk).fields["slug"]
             ).fecha_conversion.strftime("%Y-%m-%d") == \
             cuenta.fields["fecha_conversion"]
 
 
-def test_carga_cuentas_con_titular_correcto(cargar_base_de_datos, db_serializada, vaciar_db):
-    cuentas = CuentaSerializada.todes(container=db_serializada).filter_by_model("diario.cuenta")
+def test_al_cargar_cuenta_acumulativa_carga_movimientos_anteriores_en_los_que_haya_participado(db_serializada_y_vacia):
+    cuentas = [
+        x for x in db_serializada_y_vacia.filter_by_model("diario.cuenta")
+        if x.pk in [x.pk for x in db_serializada_y_vacia.filter_by_model("diario.cuentaacumulativa")]
+    ]
+    call_command("cargar_db_serializada")
+    for cuenta in cuentas:
+        movs_cuenta = [
+            x for x in MovimientoSerializado.todes(container=db_serializada_y_vacia)
+            if x.fields["cta_entrada"] == [cuenta.fields["slug"]] or
+               x.fields["cta_salida"] == [cuenta.fields["slug"]]
+        ]
+        for mov in movs_cuenta:
+            _testear_movimiento(mov)
+
+
+def test_carga_cuentas_con_titular_correcto(db_serializada_y_vacia):
+    cuentas = CuentaSerializada.todes(container=db_serializada_y_vacia).filter_by_model("diario.cuenta")
 
     call_command("cargar_db_serializada")
 
@@ -352,6 +399,60 @@ def test_carga_cuentas_con_titular_correcto(cargar_base_de_datos, db_serializada
         assert titular == cuenta.titname()
 
 
+def test_carga_cuentas_con_moneda_correcta(db_serializada_y_vacia):
+    cuentas = CuentaSerializada.todes(container=db_serializada_y_vacia).filter_by_model("diario.cuenta")
+
+    call_command("cargar_db_serializada")
+
+    for cuenta in cuentas:
+        cuenta_guardada = Cuenta.tomar(slug=cuenta.fields["slug"])
+        assert cuenta_guardada.moneda.monname == cuenta.fields["moneda"][0]
+
+
+def test_carga_subcuentas_con_cta_madre_correcta(db_serializada_y_vacia):
+    cuentas = CuentaSerializada.todes(container=db_serializada_y_vacia).filter_by_model("diario.cuenta")
+
+    call_command("cargar_db_serializada")
+
+    for cuenta in cuentas:
+        cuenta_guardada = Cuenta.tomar(slug=cuenta.fields["slug"])
+        if cuenta_guardada.cta_madre is not None:
+            assert cuenta_guardada.cta_madre.slug == cuenta.fields["cta_madre"][0]
+
+
+def test_carga_todos_los_movimientos_en_la_base_de_datos(db_serializada_y_vacia):
+    movimientos = db_serializada_y_vacia.filter_by_model("diario.movimiento")
+    call_command("cargar_db_serializada")
+    assert Movimiento.cantidad() > 0
+    assert Movimiento.cantidad() == len(movimientos)
+    for mov in movimientos:
+        _testear_movimiento(mov)
+
+
 @pytest.mark.xfail
-def test_carga_cuentas_con_moneda_correcta():
-    pytest.fail("escribir")
+def test_carga_movimientos_con_orden_dia_correcto(db_serializada_y_vacia):
+    movimientos = db_serializada_y_vacia.filter_by_model("diario.movimiento")
+    call_command("cargar_db_serializada")
+    for movimiento in movimientos:
+        mov_creado = Movimiento.tomar(
+            dia=Dia.tomar(fecha=movimiento.fields["dia"][0]),
+            orden_dia=movimiento.fields["orden_dia"]
+        )
+        slug_cta_entrada = mov_creado.cta_entrada.slug if mov_creado.cta_entrada else None
+        slug_cta_salida = mov_creado.cta_salida.slug if mov_creado.cta_salida else None
+        assert (
+            mov_creado.concepto,
+            mov_creado.importe,
+            slug_cta_entrada,
+            slug_cta_salida,
+        ) == (
+            movimiento.fields["concepto"],
+            movimiento.fields["_importe"],
+            movimiento.fields["cta_entrada"][0] if movimiento.fields["cta_entrada"] else None,
+            movimiento.fields["cta_salida"][0] if movimiento.fields["cta_salida"] else None,
+        )
+
+
+@pytest.mark.xfail
+def test_divide_correctamente_cuentas_con_saldo_negativo():
+    pytest.fail("escribir, y reescribir el nombre del test, y ubicar correctamente.")
