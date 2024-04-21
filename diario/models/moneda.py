@@ -4,6 +4,7 @@ from typing import Self
 
 from django.db import models
 
+from diario.settings_app import MONEDA_BASE
 from vvmodel.models import MiModel
 
 
@@ -35,6 +36,10 @@ class Moneda(MiModel):
     @plural.setter
     def plural(self, value: str):
         self._plural = value.lower()
+
+    @classmethod
+    def base(cls):
+        return cls.tomar(monname=MONEDA_BASE)
 
     def cotizacion_en(self, otra_moneda: Self) -> float:
         return self.cotizacion / otra_moneda.cotizacion
