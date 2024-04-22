@@ -103,7 +103,7 @@ class MovimientoCleaner:
         for cuenta in self.mov.cta_entrada, self.mov.cta_salida:
             if cuenta is not None and self.mov.fecha < cuenta.fecha_creacion:
                 raise errors.ErrorMovimientoAnteriorAFechaCreacion(
-                    f'Movimiento anterior a la fecha de creación de '
+                    f'Movimiento "{self.mov.concepto}" anterior a la fecha de creación de '
                     f'la cuenta "{cuenta.nombre}"\n'
                     f'({self.mov.fecha} < {cuenta.fecha_creacion})')
 
