@@ -91,14 +91,14 @@ def _cargar_cuentas_y_movimientos(de_serie: SerializedDb) -> None:
             # De todos modos, si damos por sentado esto es porque la cuenta está marcada como acumulativa. Hay que
             # ver si hacemos bien (el último ejemplo es el que más me preocupa)
             traspasos_de_saldo = SerializedDb()
-            doesnotexist = False
+            ambas_cuentas_existen = True
             for movimiento in movimientos_cuenta:
                 try:
                     ce = CuentaInteractiva.tomar(
                         slug=movimiento.fields['cta_entrada'][0]
                     ) if movimiento.fields['cta_entrada'] is not None else None
                 except CuentaInteractiva.DoesNotExist:
-                    doesnotexist = True
+                    ambas_cuentas_existen = False
                     movimiento.pos_cta_receptora = "cta_entrada"
                     traspasos_de_saldo.append(movimiento)
 
@@ -107,7 +107,7 @@ def _cargar_cuentas_y_movimientos(de_serie: SerializedDb) -> None:
                         slug=movimiento.fields['cta_salida'][0]
                     ) if movimiento.fields['cta_salida'] is not None else None
                 except CuentaInteractiva.DoesNotExist:
-                    doesnotexist = True
+                    ambas_cuentas_existen = False
                     movimiento.pos_cta_receptora = "cta_salida"
                     traspasos_de_saldo.append(movimiento)
 
@@ -115,7 +115,7 @@ def _cargar_cuentas_y_movimientos(de_serie: SerializedDb) -> None:
                 # intervinientes en el movimiento, se supone que el movimiento se produjo antes que la cuenta
                 # se convirtiera en acumulativa y se lo genera a partir de los datos del objeto serializado
                 # correspondiente.
-                if not doesnotexist:
+                if ambas_cuentas_existen:
                     Movimiento.crear(
                         fecha=movimiento.fields['dia'][0],
                         orden_dia=movimiento.fields['orden_dia'],

@@ -455,7 +455,6 @@ def test_carga_todos_los_movimientos_en_la_base_de_datos(db_serializada_y_vacia)
         _testear_movimiento(mov)
 
 
-@pytest.mark.xfail
 def test_carga_movimientos_con_orden_dia_correcto(db_serializada_y_vacia):
     movimientos = db_serializada_y_vacia.filter_by_model("diario.movimiento")
     call_command("cargar_db_serializada")
