@@ -181,7 +181,7 @@ def saldo_subcuenta_agregada_3(
         dia: Dia) -> Saldo:
     subcuenta_salida = cuenta_2_acumulativa.subcuentas.all()[1]
     return Movimiento.crear(
-        "Traspaso de saldo a subcuenta agregada", 11,
+        "Traspaso de saldo a subcuenta agregada 3", 11,
         cta_entrada=subcuenta_agregada_3, cta_salida=subcuenta_salida,
         dia=dia, esgratis=True,
     ).saldo_ce()
@@ -194,7 +194,7 @@ def saldo_subcuenta_agregada_4(
         dia: Dia, ) -> Saldo:
     subcuenta_salida = cuenta_2_acumulativa.subcuentas.all()[1]
     return Movimiento.crear(
-        "Traspaso de saldo a subcuenta agregada", 11,
+        "Traspaso de saldo a subcuenta agregada 4", 11,
         cta_entrada=subcuenta_agregada_4, cta_salida=subcuenta_salida,
         dia=dia, esgratis=True,
     ).saldo_ce()
@@ -355,7 +355,7 @@ def test_carga_cuentas_con_fecha_de_creacion_correcta(db_serializada_y_vacia):
         assert \
             Cuenta.tomar(slug=cuenta.fields["slug"]).fecha_creacion.strftime("%Y-%m-%d") == \
             cuenta.fields["fecha_creacion"], \
-            f"Error en fecha de creación de cuenta \"{cuenta.fields['nombre']}\""
+            f"Error en fecha de creación de cuenta \"{cuenta.fields['nombre']} ({cuenta.fields['slug']})\""
 
 
 def test_carga_cuentas_acumulativas_con_fecha_de_conversion_correcta(db_serializada_y_vacia):
@@ -418,6 +418,32 @@ def test_carga_subcuentas_con_cta_madre_correcta(db_serializada_y_vacia):
         cuenta_guardada = Cuenta.tomar(slug=cuenta.fields["slug"])
         if cuenta_guardada.cta_madre is not None:
             assert cuenta_guardada.cta_madre.slug == cuenta.fields["cta_madre"][0]
+
+
+def test_crea_contramovimiento_al_crear_movimiento_de_credito(credito, db_serializada, vaciar_db):
+    call_command("cargar_db_serializada")
+    try:
+        Movimiento.tomar(
+            concepto="Constitución de crédito",
+            _importe=credito.importe,
+            dia=Dia.tomar(fecha=credito.fecha)
+        )
+    except Movimiento.DoesNotExist:
+        pytest.fail("No se generó contramovimiento en movimiento de crédito")
+
+
+
+def test_no_crea_contramovimiento_al_crear_movimiento_de_donacion(donacion, db_serializada, vaciar_db):
+    call_command("cargar_db_serializada")
+    try:
+        Movimiento.tomar(
+            concepto="Constitución de crédito",
+            _importe=donacion.importe,
+            dia=Dia.tomar(fecha=donacion.fecha)
+        )
+        pytest.fail("Se generó contramovimiento en movimiento de donación")
+    except Movimiento.DoesNotExist:
+        pass
 
 
 def test_carga_todos_los_movimientos_en_la_base_de_datos(db_serializada_y_vacia):

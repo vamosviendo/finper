@@ -14,6 +14,9 @@ from vvmodel.serializers import load_serialized_filename, SerializedDb
 def db_serializada() -> SerializedDb:
     call_command('serializar_db')
     yield load_serialized_filename("db_full.json")
+    # Descomentar para guardar una copia de la base de datos serializada:
+    # import shutil
+    # shutil.copyfile("db_full.json", "db_test.json")
     Path('db_full.json').unlink()
 
 

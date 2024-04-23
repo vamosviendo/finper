@@ -28,7 +28,9 @@ def _cargar_modelo_simple(modelo: str, de_serie: SerializedDb, excluir_campos: l
 
 def _cargar_cuentas_y_movimientos(de_serie: SerializedDb) -> None:
     cuentas = CuentaSerializada.todes(container=de_serie)
-    cuentas_independientes = cuentas.filtrar(cta_madre=None)
+    cuentas_independientes = SerializedDb([
+        x for x in cuentas.filtrar(cta_madre=None) if not x.es_cuenta_credito()
+    ])
     cuentas_acumulativas = cuentas.filter_by_model("diario.cuentaacumulativa")
     movimientos = MovimientoSerializado.todes(container=de_serie)
 
@@ -57,6 +59,11 @@ def _cargar_cuentas_y_movimientos(de_serie: SerializedDb) -> None:
                 if x.fields['cta_entrada'] == [cuenta.fields['slug']]
                 or x.fields['cta_salida'] == [cuenta.fields['slug']]
             ])
+
+            # Retirar de serie movimientos los movimientos de la cuenta acumulativa
+            # TODO: Por claridad, si es inocuo, estaría bien que esto sucediera al final del procesamiento
+            #       de la cuenta.
+            movimientos = SerializedDb([x for x in movimientos if x not in movimientos_cuenta])
 
             # En este complicado movimiento que tendré que tratar de simplificar luego hago lo siguiente:
             #
@@ -121,6 +128,7 @@ def _cargar_cuentas_y_movimientos(de_serie: SerializedDb) -> None:
                         ),
                         id_contramov=movimiento.fields['id_contramov'],
                         es_automatico=movimiento.fields['es_automatico'],
+                        esgratis=movimiento.fields['id_contramov'] is None,
                     )
 
             # Una vez terminados de recorrer los movimientos de la cuenta y ya
@@ -176,6 +184,29 @@ def _cargar_cuentas_y_movimientos(de_serie: SerializedDb) -> None:
             ]
             for subcuenta in subcuentas_posteriores:
                 cuenta_ok.agregar_subcuenta(*subcuenta)
+
+    for movimiento in movimientos.filtrar(es_automatico=False):
+        ce = CuentaInteractiva.tomar(
+            slug=movimiento.fields['cta_entrada'][0]
+        ) if movimiento.fields['cta_entrada'] is not None else None
+        cs = CuentaInteractiva.tomar(
+            slug=movimiento.fields['cta_salida'][0]
+        ) if movimiento.fields['cta_salida'] is not None else None
+
+        Movimiento.crear(
+            fecha=movimiento.fields['dia'][0],
+            orden_dia=movimiento.fields['orden_dia'],
+            concepto=movimiento.fields['concepto'],
+            importe=movimiento.fields['_importe'],
+            cta_entrada=ce,
+            cta_salida=cs,
+            moneda=Moneda.tomar(
+                monname=movimiento.fields['moneda'][0]
+            ),
+            id_contramov=movimiento.fields['id_contramov'],
+            es_automatico=movimiento.fields['es_automatico'],
+            esgratis=movimiento.fields['id_contramov'] is None,
+        )
 
 
 class Command(BaseCommand):
