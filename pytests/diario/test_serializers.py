@@ -57,6 +57,21 @@ class TestCuentaSerializada:
             cuenta_acum_serializada.titname() == \
             cuenta_acum_serializada.campos_polimorficos()["titular_original"][0]
 
+    def test_es_cuenta_credito_devuelve_True_si_la_cuenta_es_cuenta_credito(self, credito, db_serializada):
+        cuentas = CuentaSerializada.todes(db_serializada)
+        for cta in cuentas:
+            print(cta)
+        cuenta_credito = CuentaSerializada(cuentas.tomar(slug="_otro-titular"))
+        cuenta_credito_2 = CuentaSerializada(cuentas.tomar(slug="_titular-otro"))
+        assert cuenta_credito.es_cuenta_credito() is True
+        assert cuenta_credito_2.es_cuenta_credito() is True
+
+    def test_es_cuenta_credito_devuelve_False_si_la_cuenta_no_es_cuenta_credito(self, credito, db_serializada):
+        cuentas = CuentaSerializada.todes(db_serializada)
+        cuenta_credito = CuentaSerializada(cuentas.tomar(slug="caj"))
+        assert cuenta_credito.es_cuenta_credito() is False
+
+
 
 class TestMovimientoSerializado:
     def test_prop_fecha_devuelve_fecha_del_dia_del_movimiento(self, mov_serializado):

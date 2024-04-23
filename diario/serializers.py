@@ -21,6 +21,16 @@ class CuentaSerializada(SerializedObject):
             titular = campos["titular_original"]
         return titular[0]
 
+    def es_cuenta_credito(self) -> bool:
+        cuentas_interactivas = self.container.filter_by_model("diario.cuentainteractiva")
+        contracuentas = [
+            x.fields["_contracuenta"][0] if x.fields["_contracuenta"] else None
+            for x in cuentas_interactivas
+        ]
+        return self.fields["slug"] in contracuentas or (
+            self.campos_polimorficos().get("_contracuenta") is not None
+        )
+
 
 class DiaSerializado(SerializedObject):
     @classmethod
