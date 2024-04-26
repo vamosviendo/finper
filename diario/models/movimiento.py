@@ -104,7 +104,7 @@ class MovimientoCleaner:
             if cuenta is not None and self.mov.fecha < cuenta.fecha_creacion:
                 raise errors.ErrorMovimientoAnteriorAFechaCreacion(
                     f'Movimiento "{self.mov.concepto}" anterior a la fecha de creación de '
-                    f'la cuenta "{cuenta.nombre}"\n'
+                    f'la cuenta "{cuenta.nombre}" '
                     f'({self.mov.fecha} < {cuenta.fecha_creacion})')
 
     def restricciones_con_cuenta_acumulativa(self):

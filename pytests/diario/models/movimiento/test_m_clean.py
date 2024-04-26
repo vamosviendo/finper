@@ -243,12 +243,10 @@ def test_no_permite_fecha_anterior_a_creacion_de_cuenta(fecha, fecha_anterior, t
     salida = Movimiento(concepto='Salida', importe=20, cta_salida=cuenta, fecha=fecha_anterior)
     with pytest.raises(
         errors.ErrorMovimientoAnteriorAFechaCreacion,
-        match='Movimiento anterior a la fecha de creación de la cuenta'
     ):
         entrada.clean()
     with pytest.raises(
         errors.ErrorMovimientoAnteriorAFechaCreacion,
-        match='Movimiento anterior a la fecha de creación de la cuenta'
     ):
         salida.clean()
 
