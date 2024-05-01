@@ -17,3 +17,4 @@ diario/settings_app.py
 .mypy_cache
 .pytest_cache
 vfinper-old
+vfinper3.11
