@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -8,6 +9,7 @@ from django.core.management import call_command
 from diario.models import Titular, Moneda, Cuenta, Dia, Movimiento, CuentaAcumulativa, CuentaInteractiva, Saldo
 from diario.serializers import CuentaSerializada, MovimientoSerializado
 from finper import settings
+from utils.errors import ElementoSerializadoInexistente
 from vvmodel.serializers import SerializedDb
 
 
@@ -163,9 +165,10 @@ def test_carga_cuentas_acumulativas_con_fecha_de_conversion_correcta(
             cuenta.fields["fecha_conversion"]
 
 
-@pytest.mark.xfail
 def test_al_cargar_cuenta_acumulativa_carga_movimientos_anteriores_en_los_que_haya_participado(
-        movimiento_1, movimiento_2, cuenta_2_acumulativa, db_serializada, vaciar_db):
+        cuenta_temprana_1,
+        movimiento_1, movimiento_2,
+        cuenta_2_acumulativa, db_serializada, vaciar_db):
     cuentas = [
         x for x in db_serializada.filter_by_model("diario.cuenta")
         if x.pk in [x.pk for x in db_serializada.filter_by_model("diario.cuentaacumulativa")]
@@ -181,6 +184,31 @@ def test_al_cargar_cuenta_acumulativa_carga_movimientos_anteriores_en_los_que_ha
         assert len(movs_cuenta) > 0     # Puede fallar. Tal vez hay que puntualizar más o retirar
         for mov in movs_cuenta:
             _testear_movimiento(mov)
+
+
+def test_si_al_cargar_movimientos_anteriores_de_cuenta_acumulativa_se_intenta_usar_una_cuenta_que_no_existe_da_error(
+        movimiento_1, movimiento_2, cuenta_2_acumulativa, db_serializada, vaciar_db):
+    db_sin_cta_1 = [x.data for x in db_serializada if x.fields.get("slug") != "ct1"]
+    with open("db_full.json", "w") as f:
+        json.dump(db_sin_cta_1, f)
+
+    with pytest.raises(
+            ElementoSerializadoInexistente,
+            match="Elemento serializado 'ct1' de modelo 'diario.cuenta' inexistente"):
+        call_command("cargar_db_serializada")
+
+
+def test_si_al_cargar_movimientos_anteriores_de_cuenta_acumulativa_se_intenta_usar_una_cuenta_independiente_que_todavia_no_se_creo_se_la_crea_antes_de_generar_el_movimiento(
+        movimiento_1, movimiento_2,
+        cuenta_temprana_1,
+        cuenta_2_acumulativa, db_serializada, vaciar_db):
+    call_command("cargar_db_serializada")
+    try:
+        Cuenta.tomar(slug="ct1")
+    except Cuenta.DoesNotExist:
+        raise AssertionError(
+            f"No se creó cuenta con slug ct1, ubicada después del movimiento en la serialización"
+        )
 
 
 def test_carga_cuentas_con_titular_correcto(cuenta, cuenta_ajena, cuenta_gorda, db_serializada, vaciar_db):

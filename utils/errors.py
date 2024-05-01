@@ -221,3 +221,10 @@ class ErrorMonedaNoPermitida(ValidationError):
                     'de alguna de las cuentas intervinientes'
     ):
         super().__init__(message)
+
+
+class ElementoSerializadoInexistente(ValueError):
+    def __init__(self, modelo="no identificado", identificador="no identificado"):
+        super().__init__(
+            f"Elemento serializado '{identificador}' de modelo '{modelo}' inexistente"
+        )

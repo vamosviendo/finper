@@ -11,6 +11,7 @@ from django.core.management import BaseCommand, call_command
 from diario.models import Titular, Moneda, Cuenta, Movimiento, CuentaInteractiva
 from diario.serializers import CuentaSerializada, MovimientoSerializado
 from finper import settings
+from utils.errors import ElementoSerializadoInexistente
 from vvmodel.models import MiModel
 from vvmodel.serializers import SerializedDb, SerializedObject
 
@@ -70,46 +71,76 @@ def _cargar_cuentas_y_movimientos(de_serie: SerializedDb) -> None:
             # Recorro los movimientos en los que interviene la cuenta, verificando que la cuenta de entrada
             # y la cuenta de salida, en caso de tenerlas, existan. Si es el caso, las guardaremos en
             # sendas variables.
-            # En caso de que alguna de las dos cuentas no exista, damos por sentado (veremos luego si con razón o no)
-            # que la cuenta que todavía no se recreó era una subcuenta de la cuenta que ocupa el lugar opuesto.
-            # Damos por sentado también que el movimiento es un movimiento de traspaso, es decir que la cuenta
-            # opuesta no es None, y que es una cuenta existente.
-            # Damos por sentado, finalmente, que el movimiento que es un movimiento de traspaso es el movimiento
-            # de traspaso de saldo que corresponde a la creación de la subcuenta al momento de la división de una
-            # cuenta con saldo. (1)
-            # Dando todas estas cosas por sentadas, señalamos la posición de la cuenta receptora de saldo como
-            # cuenta de entrada o de salida en el movimiento, y guardamos el movimiento en una lista de traspasos
-            # de saldo, que usaremos luego para la división de la cuenta.
-            # (1) Habría que ver si todas estas cosas que se dan por sentadas no deberían ser chequeadas y lanzar
-            # una excepción en el caso de que alguna de ellas no se cumpla (es decir, en el caso de que la otra
-            # cuenta del movimiento sea None, en el caso de que no sea None pero no exista en la base de datos,
-            # en el caso de que no esté indicada en la base de datos serializada como cuenta madre de la cuenta
-            # inexistente o en el caso (si es que es posible testear esto) de que el movimiento no constituya un
-            # traspaso de saldo entre una cuenta que se convierte en acumulativa y una de sus subcuentas (que sea,
-            # por ejemplo, un movimiento entre una cuenta interactiva cualquiera y una subcuenta que todavía no
-            # existe pero que pertenece a otra cuenta)
-            # De todos modos, si damos por sentado esto es porque la cuenta está marcada como acumulativa. Hay que
-            # ver si hacemos bien (el último ejemplo es el que más me preocupa)
+            # En caso de que alguna de las dos cuentas no exista en la base de datos, las posibilidades son:
+            #   - TODO: Que la cuenta no exista tampoco en la serialización, en cuyo caso debe lanzarse una excepción
+            #   - Que la cuenta aparezca en la base de datos posteriormente y por lo tanto todavía no se la haya
+            #     (re)creado en la base de datos, pero se la va a crear luego. Este segundo caso a su vez se
+            #     divide en dos opciones:
+            #     - Que la cuenta madre de esta cuenta sea la cuenta que está siendo procesada, en cuyo caso
+            #       señalamos la posición de la cuenta receptora de saldo como cuenta de entrada o de salida
+            #       en el movimiento, y guardamos el movimiento en una lista de traspasos de saldo, que usaremos
+            #       luego para la división de la cuenta.
+            #     - TODO: Que sea una cuenta independiente, en cuyo caso deberíamos crearla antes de generar el
+            #             movimiento
             traspasos_de_saldo = SerializedDb()
             ambas_cuentas_existen = True
             for movimiento in movimientos_cuenta:
+                # Si la cuenta de entrada del movimiento no existe como objeto serializado, lanzar excepción
+                slug_ce = movimiento.fields["cta_entrada"][0] if movimiento.fields["cta_entrada"] else None
+                if slug_ce and slug_ce not in [x.fields["slug"] for x in cuentas.filter_by_model("diario.cuenta")]:
+                    raise ElementoSerializadoInexistente(modelo="diario.cuenta", identificador=slug_ce)
+                cta_entrada = CuentaSerializada(
+                    cuentas.tomar(model="diario.cuenta", slug=slug_ce)
+                ) if slug_ce else None
                 try:
-                    ce = CuentaInteractiva.tomar(
-                        slug=movimiento.fields['cta_entrada'][0]
-                    ) if movimiento.fields['cta_entrada'] is not None else None
+                    # Si el movimiento serializado tiene cuenta de entrada, buscar la cuenta en la base de datos
+                    ce = CuentaInteractiva.tomar(slug=slug_ce) if slug_ce is not None else None
                 except CuentaInteractiva.DoesNotExist:
-                    ambas_cuentas_existen = False
-                    movimiento.pos_cta_receptora = "cta_entrada"
-                    traspasos_de_saldo.append(movimiento)
+                    # Si no se encuentra la cuenta en la base de datos (damos por sentado que sí existe
+                    # en la serialización porque lo chequeamos hace un rato, cosa que tal vez debería hacerse
+                    # acá) guardamos el movimiento en una SerializedDb para usarlo luego en la division de
+                    # la cuenta.
+                    # Antes de eso, deberíamos chequear que la cuenta que estamos procesando sea cuenta madre
+                    # de la cuenta faltante. Si es así, hacer esto. De lo contrario generar la subcuenta.
+                    if cta_entrada.fields["cta_madre"] == [cuenta.fields["slug"]]:
+                        ambas_cuentas_existen = False
+                        movimiento.pos_cta_receptora = "cta_entrada"
+                        traspasos_de_saldo.append(movimiento)
+                    else:
+                        ce = Cuenta.crear(
+                            nombre=cta_entrada.fields["nombre"],
+                            slug= cta_entrada.fields["slug"],
+                            cta_madre=cta_entrada.fields["cta_madre"],
+                            fecha_creacion=cta_entrada.fields["fecha_creacion"],
+                            titular=Titular.tomar(titname=cta_entrada.titname()),
+                            moneda=Moneda.tomar(monname=cta_entrada.fields["moneda"][0]),
+                        )
 
+                # Se repite el mismo proceso para cuenta de salida
+                slug_cs = movimiento.fields["cta_salida"][0] if movimiento.fields["cta_salida"] else None
+                if slug_cs and slug_cs not in [x.fields["slug"] for x in cuentas.filter_by_model("diario.cuenta")]:
+                    raise ElementoSerializadoInexistente(modelo="diario.cuenta", identificador=slug_cs)
+                cta_salida = CuentaSerializada(
+                    cuentas.tomar(model="diario.cuenta", slug=slug_cs)
+                ) if slug_cs else None
                 try:
                     cs = CuentaInteractiva.tomar(
                         slug=movimiento.fields['cta_salida'][0]
                     ) if movimiento.fields['cta_salida'] is not None else None
                 except CuentaInteractiva.DoesNotExist:
-                    ambas_cuentas_existen = False
-                    movimiento.pos_cta_receptora = "cta_salida"
-                    traspasos_de_saldo.append(movimiento)
+                    if cta_salida.fields["cta_madre"] == [cuenta.fields["slug"]]:
+                        ambas_cuentas_existen = False
+                        movimiento.pos_cta_receptora = "cta_salida"
+                        traspasos_de_saldo.append(movimiento)
+                    else:
+                        cs = Cuenta.crear(
+                            nombre=cta_salida.fields["nombre"],
+                            slug= cta_salida.fields["slug"],
+                            cta_madre=cta_salida.fields["cta_madre"],
+                            fecha_creacion=cta_salida.fields["fecha_creacion"],
+                            titular=Titular.tomar(titname=cta_salida.titname()),
+                            moneda=Moneda.tomar(monname=cta_salida.fields["moneda"][0]),
+                        )
 
                 # En caso de que no haya una cuenta aún no existente en la base de datos entre las cuentas
                 # intervinientes en el movimiento, se supone que el movimiento se produjo antes que la cuenta
@@ -147,12 +178,15 @@ def _cargar_cuentas_y_movimientos(de_serie: SerializedDb) -> None:
             # para dividir y convertir la cuenta.
             fecha_conversion = cuenta.campos_polimorficos()["fecha_conversion"]
 
+            # TODO NOW: a descular qué hice acá.
             subcuentas_fecha_conversion = []
             for subc in subcuentas_cuenta.filtrar(fecha_creacion=fecha_conversion):
                 slug_subc = subc.fields["slug"]
+                # Si la subcuenta tiene saldo
                 if slug_subc in slugs_subcuentas_con_saldo:
                     mov = traspasos_de_saldo[slugs_subcuentas_con_saldo.index(slug_subc)]
                     saldo = traspasos_de_saldo.tomar(**{mov.pos_cta_receptora: [slug_subc]}).fields["_importe"]
+                    # TODO: ¿Esto no debería ser responsabilidad de dividir_entre?:
                     if mov.pos_cta_receptora == "cta_salida":
                         saldo = -saldo
                 else:
@@ -164,7 +198,6 @@ def _cargar_cuentas_y_movimientos(de_serie: SerializedDb) -> None:
                     "titular": Titular.tomar(titname=subc.titname()),
                     "saldo": saldo
                 })
-
             cuenta_ok = cuenta_ok.dividir_y_actualizar(
                 *subcuentas_fecha_conversion,
                 fecha=datetime.date(*[int(x) for x in fecha_conversion.split("-")])
