@@ -219,12 +219,14 @@ def _cargar_cuentas_y_movimientos(de_serie: SerializedDb) -> None:
                 cuenta_ok.agregar_subcuenta(*subcuenta)
 
     for movimiento in movimientos.filtrar(es_automatico=False):
-        ce = CuentaInteractiva.tomar(
-            slug=movimiento.fields['cta_entrada'][0]
-        ) if movimiento.fields['cta_entrada'] is not None else None
-        cs = CuentaInteractiva.tomar(
-            slug=movimiento.fields['cta_salida'][0]
-        ) if movimiento.fields['cta_salida'] is not None else None
+        slug_ce = movimiento.fields["cta_entrada"][0] if movimiento.fields["cta_entrada"] else None
+        if slug_ce and slug_ce not in [x.fields["slug"] for x in cuentas.filter_by_model("diario.cuenta")]:
+            raise ElementoSerializadoInexistente(modelo="diario.cuenta", identificador=slug_ce)
+        ce = CuentaInteractiva.tomar(slug=slug_ce) if slug_ce else None
+        slug_cs = movimiento.fields["cta_salida"][0] if movimiento.fields["cta_salida"] else None
+        if slug_cs and slug_cs not in [x.fields["slug"] for x in cuentas.filter_by_model("diario.cuenta")]:
+            raise ElementoSerializadoInexistente(modelo="diario.cuenta", identificador=slug_cs)
+        cs = CuentaInteractiva.tomar(slug=slug_cs) if slug_cs else None
 
         Movimiento.crear(
             fecha=movimiento.fields['dia'][0],

@@ -166,9 +166,7 @@ def test_carga_cuentas_acumulativas_con_fecha_de_conversion_correcta(
 
 
 def test_al_cargar_cuenta_acumulativa_carga_movimientos_anteriores_en_los_que_haya_participado(
-        cuenta_temprana_1,
-        movimiento_1, movimiento_2,
-        cuenta_2_acumulativa, db_serializada, vaciar_db):
+        movimiento_1, movimiento_2, cuenta_2_acumulativa, db_serializada, vaciar_db):
     cuentas = [
         x for x in db_serializada.filter_by_model("diario.cuenta")
         if x.pk in [x.pk for x in db_serializada.filter_by_model("diario.cuentaacumulativa")]
@@ -334,6 +332,18 @@ def test_carga_orden_dia_correcto_en_fechas_en_las_que_se_generaron_movimientos_
             movimiento.fields["cta_entrada"][0] if movimiento.fields["cta_entrada"] else None,
             movimiento.fields["cta_salida"][0] if movimiento.fields["cta_salida"] else None,
         )
+
+
+def test_si_al_cargar_movimientos_generales_se_intenta_usar_una_cuenta_que_no_existe_da_error(
+        movimiento_1, db_serializada, vaciar_db):
+    db_sin_cta_2 = [x.data for x in db_serializada if x.fields.get("slug") != "ct2"]
+    with open("db_full.json", "w") as f:
+        json.dump(db_sin_cta_2, f)
+
+    with pytest.raises(
+            ElementoSerializadoInexistente,
+            match="Elemento serializado 'ct2' de modelo 'diario.cuenta' inexistente"):
+        call_command("cargar_db_serializada")
 
 @pytest.mark.xfail
 def test_divide_correctamente_cuentas_con_saldo_negativo():
