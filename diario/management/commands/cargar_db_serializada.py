@@ -16,8 +16,33 @@ from vvmodel.models import MiModel
 from vvmodel.serializers import SerializedDb, SerializedObject
 
 
+def info(value: any, msj: str) -> any:
+    print(str)
+    return value
+
+
+def _crear_o_tomar(cuenta: CuentaSerializada) -> Cuenta:
+    try:
+        print(f"Creando cuenta <{cuenta.fields['nombre']}>", end=" ")
+        return info(
+            Cuenta.crear(
+                nombre=cuenta.fields["nombre"],
+                slug=cuenta.fields["slug"],
+                cta_madre=None,
+                fecha_creacion=cuenta.fields["fecha_creacion"],
+                titular=Titular.tomar(titname=cuenta.titname()),
+                moneda=Moneda.tomar(monname=cuenta.fields["moneda"][0]),
+            ),
+            msj="- OK"
+        )
+    except ValidationError:
+        print(f"Tomando cuenta existente <{cuenta.fields['nombre']}>", end=" ")
+        return info(Cuenta.tomar(slug=cuenta.fields["slug"]), msj="- OK")
+
+
 def _cargar_modelo_simple(modelo: str, de_serie: SerializedDb, excluir_campos: list[str] = None) -> None:
     """ Carga modelos que no incluyan foreignfields, polimorfismo u otras complicaciones"""
+    print(f"Cargando elementos del modelo {modelo}", end=" ")
     excluir_campos = excluir_campos or []
     serie_modelo = de_serie.filter_by_model(modelo)
     Modelo: type | MiModel = apps.get_model(*modelo.split("."))
@@ -25,9 +50,11 @@ def _cargar_modelo_simple(modelo: str, de_serie: SerializedDb, excluir_campos: l
     for elemento in serie_modelo:
         fields = {k: v for k, v in elemento.fields.items() if k not in excluir_campos}
         Modelo.crear(**fields)
+    print("- OK")
 
 
 def _cargar_cuentas_y_movimientos(de_serie: SerializedDb) -> None:
+    print("Cargando cuentas y movimientos")
     cuentas = CuentaSerializada.todes(container=de_serie)
     cuentas_independientes = SerializedDb([
         x for x in cuentas.filtrar(cta_madre=None) if not x.es_cuenta_credito()
@@ -39,17 +66,7 @@ def _cargar_cuentas_y_movimientos(de_serie: SerializedDb) -> None:
 
         # Intentar crear la cuenta. Si la cuenta ya fue creada
         # (como contracuenta de un crédito, por ejemplo?), tomarla.
-        try:
-            cuenta_ok = Cuenta.crear(
-                nombre=cuenta.fields["nombre"],
-                slug=cuenta.fields["slug"],
-                cta_madre=None,
-                fecha_creacion=cuenta.fields["fecha_creacion"],
-                titular=Titular.tomar(titname=cuenta.titname()),
-                moneda=Moneda.tomar(monname=cuenta.fields["moneda"][0]),
-            )
-        except ValidationError:
-            cuenta_ok = Cuenta.tomar(slug=cuenta.fields["slug"])
+        cuenta_ok = _crear_o_tomar(cuenta)
 
         # Si la cuenta recién creada es (en la db serializada) una cuenta acumulativa:
         if cuenta.pk in [x.pk for x in cuentas_acumulativas]:
@@ -61,13 +78,7 @@ def _cargar_cuentas_y_movimientos(de_serie: SerializedDb) -> None:
                 or x.fields['cta_salida'] == [cuenta.fields['slug']]
             ])
 
-            # Retirar de serie movimientos los movimientos de la cuenta acumulativa
-            # TODO: Por claridad, si es inocuo, estaría bien que esto sucediera al final del procesamiento
-            #       de la cuenta.
-            movimientos = SerializedDb([x for x in movimientos if x not in movimientos_cuenta])
-
-            # En este complicado movimiento que tendré que tratar de simplificar luego hago lo siguiente:
-            #
+            # En este intrincado movimiento que tendré que tratar de simplificar luego hago lo siguiente:
             # Recorro los movimientos en los que interviene la cuenta, verificando que la cuenta de entrada
             # y la cuenta de salida, en caso de tenerlas, existan. Si es el caso, las guardaremos en
             # sendas variables.
@@ -218,6 +229,9 @@ def _cargar_cuentas_y_movimientos(de_serie: SerializedDb) -> None:
             for subcuenta in subcuentas_posteriores:
                 cuenta_ok.agregar_subcuenta(*subcuenta)
 
+            # Retirar de serie movimientos los movimientos de la cuenta acumulativa procesada
+            movimientos = SerializedDb([x for x in movimientos if x not in movimientos_cuenta])
+
     for movimiento in movimientos.filtrar(es_automatico=False):
         slug_ce = movimiento.fields["cta_entrada"][0] if movimiento.fields["cta_entrada"] else None
         if slug_ce and slug_ce not in [x.fields["slug"] for x in cuentas.filter_by_model("diario.cuenta")]:
@@ -242,6 +256,7 @@ def _cargar_cuentas_y_movimientos(de_serie: SerializedDb) -> None:
             es_automatico=movimiento.fields['es_automatico'],
             esgratis=movimiento.fields['id_contramov'] is None,
         )
+    print("Se cargaron cuentas y movimientos")
 
 
 class Command(BaseCommand):
@@ -257,8 +272,3 @@ class Command(BaseCommand):
         _cargar_modelo_simple("diario.titular", db_full, ["deudores"])
         _cargar_modelo_simple("diario.moneda", db_full)
         _cargar_cuentas_y_movimientos(db_full)
-        # _cargar_movimientos(db_full)
-        #
-        # for x in [x for x in db_full if x.model == "diario.movimiento"]:
-        #     x.fields.update({"importe": x.fields.pop("_importe")})
-        # _cargar_modelo("diario.movimiento", db_full)
