@@ -40,6 +40,18 @@ def _crear_o_tomar(cuenta: CuentaSerializada) -> Cuenta:
         return info(Cuenta.tomar(slug=cuenta.fields["slug"]), msj="- OK")
 
 
+def _slug_cuenta_mov(movimiento: MovimientoSerializado, posicion: str) -> str:
+    """ Toma un movimiento y devuelve el slug de la cuenta interviniente
+        en la posición indicada. """
+    if posicion not in ["entrada", "salida"]:
+        raise ValueError('Los valores aceptados para posicion son "entrada" y "salida"')
+    cta = movimiento.fields[f"cta_{posicion}"]
+    slug = cta[0] if cta else None
+    if slug and slug not in [x.fields["slug"] for x in cuentas.filter_by_model("diario.cuenta")]:
+        raise ElementoSerializadoInexistente(modelo="diario.cuenta", identificador=slug)
+    return slug
+
+
 def _cargar_modelo_simple(modelo: str, de_serie: SerializedDb, excluir_campos: list[str] = None) -> None:
     """ Carga modelos que no incluyan foreignfields, polimorfismo u otras complicaciones"""
     print(f"Cargando elementos del modelo {modelo}", end=" ")
@@ -55,11 +67,11 @@ def _cargar_modelo_simple(modelo: str, de_serie: SerializedDb, excluir_campos: l
 
 def _cargar_cuentas_y_movimientos(de_serie: SerializedDb) -> None:
     print("Cargando cuentas y movimientos")
+    global cuentas
     cuentas = CuentaSerializada.todes(container=de_serie)
     cuentas_independientes = SerializedDb([
         x for x in cuentas.filtrar(cta_madre=None) if not x.es_cuenta_credito()
     ])
-    cuentas_acumulativas = cuentas.filter_by_model("diario.cuentaacumulativa")
     movimientos = MovimientoSerializado.todes(container=de_serie)
 
     for cuenta in cuentas_independientes:
@@ -69,7 +81,7 @@ def _cargar_cuentas_y_movimientos(de_serie: SerializedDb) -> None:
         cuenta_ok = _crear_o_tomar(cuenta)
 
         # Si la cuenta recién creada es (en la db serializada) una cuenta acumulativa:
-        if cuenta.pk in [x.pk for x in cuentas_acumulativas]:
+        if cuenta.pk in [x.pk for x in cuentas.filter_by_model("diario.cuentaacumulativa")]:
             # Buscar posibles movimientos en los que haya intervenido la cuenta
             # antes de convertirse en acumulativa
             movimientos_cuenta = SerializedDb([
@@ -83,7 +95,7 @@ def _cargar_cuentas_y_movimientos(de_serie: SerializedDb) -> None:
             # y la cuenta de salida, en caso de tenerlas, existan. Si es el caso, las guardaremos en
             # sendas variables.
             # En caso de que alguna de las dos cuentas no exista en la base de datos, las posibilidades son:
-            #   - TODO: Que la cuenta no exista tampoco en la serialización, en cuyo caso debe lanzarse una excepción
+            #   - Que la cuenta no exista tampoco en la serialización, en cuyo caso debe lanzarse una excepción
             #   - Que la cuenta aparezca en la base de datos posteriormente y por lo tanto todavía no se la haya
             #     (re)creado en la base de datos, pero se la va a crear luego. Este segundo caso a su vez se
             #     divide en dos opciones:
@@ -91,16 +103,14 @@ def _cargar_cuentas_y_movimientos(de_serie: SerializedDb) -> None:
             #       señalamos la posición de la cuenta receptora de saldo como cuenta de entrada o de salida
             #       en el movimiento, y guardamos el movimiento en una lista de traspasos de saldo, que usaremos
             #       luego para la división de la cuenta.
-            #     - TODO: Que sea una cuenta independiente, en cuyo caso deberíamos crearla antes de generar el
+            #     - Que sea una cuenta independiente, en cuyo caso deberíamos crearla antes de generar el
             #             movimiento
             traspasos_de_saldo = SerializedDb()
-            ambas_cuentas_existen = True
             for movimiento in movimientos_cuenta:
+                mov_es_anterior_a_conversion = True
                 # Si la cuenta de entrada del movimiento no existe como objeto serializado, lanzar excepción
-                slug_ce = movimiento.fields["cta_entrada"][0] if movimiento.fields["cta_entrada"] else None
-                if slug_ce and slug_ce not in [x.fields["slug"] for x in cuentas.filter_by_model("diario.cuenta")]:
-                    raise ElementoSerializadoInexistente(modelo="diario.cuenta", identificador=slug_ce)
-                cta_entrada = CuentaSerializada(
+                slug_ce = _slug_cuenta_mov(movimiento, "entrada")
+                ce_serializada = CuentaSerializada(
                     cuentas.tomar(model="diario.cuenta", slug=slug_ce)
                 ) if slug_ce else None
                 try:
@@ -113,25 +123,23 @@ def _cargar_cuentas_y_movimientos(de_serie: SerializedDb) -> None:
                     # la cuenta.
                     # Antes de eso, deberíamos chequear que la cuenta que estamos procesando sea cuenta madre
                     # de la cuenta faltante. Si es así, hacer esto. De lo contrario generar la subcuenta.
-                    if cta_entrada.fields["cta_madre"] == [cuenta.fields["slug"]]:
-                        ambas_cuentas_existen = False
+                    if ce_serializada.fields["cta_madre"] == [cuenta.fields["slug"]]:
+                        mov_es_anterior_a_conversion = False
                         movimiento.pos_cta_receptora = "cta_entrada"
                         traspasos_de_saldo.append(movimiento)
                     else:
                         ce = Cuenta.crear(
-                            nombre=cta_entrada.fields["nombre"],
-                            slug= cta_entrada.fields["slug"],
-                            cta_madre=cta_entrada.fields["cta_madre"],
-                            fecha_creacion=cta_entrada.fields["fecha_creacion"],
-                            titular=Titular.tomar(titname=cta_entrada.titname()),
-                            moneda=Moneda.tomar(monname=cta_entrada.fields["moneda"][0]),
+                            nombre=ce_serializada.fields["nombre"],
+                            slug= ce_serializada.fields["slug"],
+                            cta_madre=ce_serializada.fields["cta_madre"],
+                            fecha_creacion=ce_serializada.fields["fecha_creacion"],
+                            titular=Titular.tomar(titname=ce_serializada.titname()),
+                            moneda=Moneda.tomar(monname=ce_serializada.fields["moneda"][0]),
                         )
 
                 # Se repite el mismo proceso para cuenta de salida
-                slug_cs = movimiento.fields["cta_salida"][0] if movimiento.fields["cta_salida"] else None
-                if slug_cs and slug_cs not in [x.fields["slug"] for x in cuentas.filter_by_model("diario.cuenta")]:
-                    raise ElementoSerializadoInexistente(modelo="diario.cuenta", identificador=slug_cs)
-                cta_salida = CuentaSerializada(
+                slug_cs = _slug_cuenta_mov(movimiento, "salida")
+                cs_serializada = CuentaSerializada(
                     cuentas.tomar(model="diario.cuenta", slug=slug_cs)
                 ) if slug_cs else None
                 try:
@@ -139,25 +147,25 @@ def _cargar_cuentas_y_movimientos(de_serie: SerializedDb) -> None:
                         slug=movimiento.fields['cta_salida'][0]
                     ) if movimiento.fields['cta_salida'] is not None else None
                 except CuentaInteractiva.DoesNotExist:
-                    if cta_salida.fields["cta_madre"] == [cuenta.fields["slug"]]:
-                        ambas_cuentas_existen = False
+                    if cs_serializada.fields["cta_madre"] == [cuenta.fields["slug"]]:
+                        mov_es_anterior_a_conversion = False
                         movimiento.pos_cta_receptora = "cta_salida"
                         traspasos_de_saldo.append(movimiento)
                     else:
                         cs = Cuenta.crear(
-                            nombre=cta_salida.fields["nombre"],
-                            slug= cta_salida.fields["slug"],
-                            cta_madre=cta_salida.fields["cta_madre"],
-                            fecha_creacion=cta_salida.fields["fecha_creacion"],
-                            titular=Titular.tomar(titname=cta_salida.titname()),
-                            moneda=Moneda.tomar(monname=cta_salida.fields["moneda"][0]),
+                            nombre=cs_serializada.fields["nombre"],
+                            slug= cs_serializada.fields["slug"],
+                            cta_madre=cs_serializada.fields["cta_madre"],
+                            fecha_creacion=cs_serializada.fields["fecha_creacion"],
+                            titular=Titular.tomar(titname=cs_serializada.titname()),
+                            moneda=Moneda.tomar(monname=cs_serializada.fields["moneda"][0]),
                         )
 
                 # En caso de que no haya una cuenta aún no existente en la base de datos entre las cuentas
                 # intervinientes en el movimiento, se supone que el movimiento se produjo antes que la cuenta
                 # se convirtiera en acumulativa y se lo genera a partir de los datos del objeto serializado
                 # correspondiente.
-                if ambas_cuentas_existen:
+                if mov_es_anterior_a_conversion:
                     Movimiento.crear(
                         fecha=movimiento.fields['dia'][0],
                         orden_dia=movimiento.fields['orden_dia'],
@@ -232,11 +240,15 @@ def _cargar_cuentas_y_movimientos(de_serie: SerializedDb) -> None:
             # Retirar de serie movimientos los movimientos de la cuenta acumulativa procesada
             movimientos = SerializedDb([x for x in movimientos if x not in movimientos_cuenta])
 
+    # Una vez cargadas las cuentas y los movimientos relacionados con cuentas acumulativas,
+    # cargamos los movimientos normales relacionados con cuentas normales (excluyendo los
+    # no generados manualmente).
     for movimiento in movimientos.filtrar(es_automatico=False):
         slug_ce = movimiento.fields["cta_entrada"][0] if movimiento.fields["cta_entrada"] else None
         if slug_ce and slug_ce not in [x.fields["slug"] for x in cuentas.filter_by_model("diario.cuenta")]:
             raise ElementoSerializadoInexistente(modelo="diario.cuenta", identificador=slug_ce)
         ce = CuentaInteractiva.tomar(slug=slug_ce) if slug_ce else None
+
         slug_cs = movimiento.fields["cta_salida"][0] if movimiento.fields["cta_salida"] else None
         if slug_cs and slug_cs not in [x.fields["slug"] for x in cuentas.filter_by_model("diario.cuenta")]:
             raise ElementoSerializadoInexistente(modelo="diario.cuenta", identificador=slug_cs)
