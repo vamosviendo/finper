@@ -38,6 +38,8 @@ class CuentaSerializada(SerializedObject):
             self in self.container.filtrar(cta_madre=None) \
             and not self.es_cuenta_credito()
 
+    def es_acumulativa(self) -> bool:
+        return self.pk in [x.pk for x in self.container.filter_by_model("diario.cuentaacumulativa")]
 
 class DiaSerializado(SerializedObject):
     @classmethod

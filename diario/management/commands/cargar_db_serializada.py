@@ -88,8 +88,7 @@ def _cargar_cuentas_y_movimientos(de_serie: SerializedDb) -> None:
     for cuenta in cuentas_independientes:
         cuenta_db = _crear_o_tomar(cuenta)
 
-        # Si la cuenta recién creada es (en la db serializada) una cuenta acumulativa:
-        if cuenta.pk in [x.pk for x in cuentas.filter_by_model("diario.cuentaacumulativa")]:
+        if cuenta.es_acumulativa():
             # Buscar posibles movimientos en los que haya intervenido la cuenta
             # antes de convertirse en acumulativa
             movimientos_cuenta = SerializedDb([
