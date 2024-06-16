@@ -92,9 +92,7 @@ def _cargar_cuentas_y_movimientos(de_serie: SerializedDb) -> None:
             # Buscar posibles movimientos en los que haya intervenido la cuenta
             # antes de convertirse en acumulativa
             movimientos_cuenta = SerializedDb([
-                x for x in movimientos
-                if x.fields['cta_entrada'] == [cuenta.fields['slug']]
-                or x.fields['cta_salida'] == [cuenta.fields['slug']]
+                x for x in movimientos if x.involucra_cuenta(cuenta)
             ])
 
             # En este intrincado movimiento, que tendré que tratar de simplificar luego, hago lo siguiente:

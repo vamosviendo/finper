@@ -64,6 +64,9 @@ class MovimientoSerializado(SerializedObject):
     def identidad(self) -> str:
         return f"{self.fecha.replace('-', '')}{self.fields['orden_dia']:02d}"
 
+    def involucra_cuenta(self, cuenta: CuentaSerializada) -> bool:
+        return [cuenta.fields["slug"]] in (self.fields["cta_entrada"], self.fields["cta_salida"])
+
 
 class SaldoSerializado(SerializedObject):
     @classmethod
