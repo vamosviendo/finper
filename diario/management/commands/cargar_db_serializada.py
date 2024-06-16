@@ -47,9 +47,9 @@ def _crear_o_tomar(cuenta: CuentaSerializada) -> Cuenta:
 def _slug_cuenta_mov(movimiento: MovimientoSerializado, posicion: str) -> str:
     """ Toma un movimiento y devuelve el slug de la cuenta interviniente
         en la posición indicada. """
-    if posicion not in ["entrada", "salida"]:
-        raise ValueError('Los valores aceptados para posicion son "entrada" y "salida"')
-    cta = movimiento.fields[f"cta_{posicion}"]
+    if posicion not in ["entrada", "salida", "cta_entrada", "cta_salida"]:
+        raise ValueError('Los valores aceptados para posicion son "entrada", "salida", "cta_entrada" o "cta_salida"')
+    cta = movimiento.fields[posicion] if posicion.startswith("cta_") else f"cta_{posicion}"
     slug = cta[0] if cta else None
     # Si la cuenta del movimiento no existe como objeto serializado, lanzar excepción
     if slug and slug not in [x.fields["slug"] for x in cuentas.filter_by_model("diario.cuenta")]:
@@ -99,8 +99,10 @@ def _cargar_cuentas_y_movimientos(de_serie: SerializedDb) -> None:
             # Recorro los movimientos en los que interviene la cuenta, verificando que la cuenta de entrada
             # y la cuenta de salida, en caso de tenerlas, existan. Si es el caso, las guardaremos en
             # sendas variables.
-            # En caso de que alguna de las dos cuentas no exista en la base de datos, las posibilidades son:
+            # En caso de que el movimiento sea de traspaso y la otra cuenta no exista en la base de datos,
+            # las posibilidades son:
             #   - Que la cuenta no exista tampoco en la serialización, en cuyo caso debe lanzarse una excepción
+            #     (hay un movimiento hecho sobre una cuenta inexistente)
             #   - Que la cuenta aparezca en la base de datos posteriormente y por lo tanto todavía no se la haya
             #     (re)creado en la base de datos, pero se la va a crear luego. Este segundo caso a su vez se
             #     divide en dos opciones:
@@ -108,85 +110,70 @@ def _cargar_cuentas_y_movimientos(de_serie: SerializedDb) -> None:
             #       señalamos la posición de la cuenta receptora de saldo como cuenta de entrada o de salida
             #       en el movimiento, y guardamos el movimiento en una lista de traspasos de saldo, que usaremos
             #       luego para la división de la cuenta.
-            #     - Que sea una cuenta independiente, en cuyo caso deberíamos crearla antes de generar el
-            #             movimiento
+            #     - Que sea una cuenta independiente que aún no aparece en la serialización, en cuyo caso
+            #       deberíamos crearla antes de generar el movimiento
             traspasos_de_saldo = SerializedDb()
 
             for movimiento in movimientos_cuenta:
-                mov_es_anterior_a_conversion = True
-                slug_ce = _slug_cuenta_mov(movimiento, "entrada")
-                ce_serializada = _tomar_cuenta_ser(slug_ce, container=cuentas)
+                pos_cuenta = "cta_entrada" if movimiento.fields["cta_entrada"] == [cuenta.fields["slug"]] \
+                    else "cta_salida"
+                pos_contracuenta = "cta_salida" if pos_cuenta == "cta_entrada" else "cta_entrada"
 
-                def _todo_el_try_except_que_sigue_de_alguna_manera_y_para_ambas_cuentas(slug):
-                    pass
-
-                try:
-                    # Si el movimiento serializado tiene cuenta de entrada, buscar la cuenta en la base de datos
-                    ce = CuentaInteractiva.tomar(slug=slug_ce) if slug_ce is not None else None
-                except CuentaInteractiva.DoesNotExist:
-                    # Si no se encuentra la cuenta en la base de datos (damos por sentado que sí existe
-                    # en la serialización porque lo chequeamos hace un rato, cosa que tal vez debería hacerse
-                    # acá) guardamos el movimiento en una SerializedDb para usarlo luego en la division de
-                    # la cuenta.
-                    # Antes de eso, deberíamos chequear que la cuenta que estamos procesando sea cuenta madre
-                    # de la cuenta faltante. Si es así, hacer esto. De lo contrario generar la subcuenta.
-                    if ce_serializada.fields["cta_madre"] != [cuenta.fields["slug"]]:
-                        ce = Cuenta.crear(
-                            nombre=ce_serializada.fields["nombre"],
-                            slug=ce_serializada.fields["slug"],
-                            cta_madre=ce_serializada.fields["cta_madre"],
-                            fecha_creacion=ce_serializada.fields["fecha_creacion"],
-                            titular=Titular.tomar(titname=ce_serializada.titname()),
-                            moneda=Moneda.tomar(monname=ce_serializada.fields["moneda"][0]),
-                        )
-                    else:
-                        mov_es_anterior_a_conversion = False
-                        movimiento.pos_cta_receptora = "cta_entrada"
-                        traspasos_de_saldo.append(movimiento)
-                        ce = None
-
-                # Se repite el mismo proceso para cuenta de salida
-                slug_cs = _slug_cuenta_mov(movimiento, "salida")
-                cs_serializada = _tomar_cuenta_ser(slug_cs, container=cuentas)
-                try:
-                    cs = CuentaInteractiva.tomar(
-                        slug=movimiento.fields['cta_salida'][0]
-                    ) if movimiento.fields['cta_salida'] is not None else None
-                except CuentaInteractiva.DoesNotExist:
-                    if cs_serializada.fields["cta_madre"] != [cuenta.fields["slug"]]:
-                        cs = Cuenta.crear(
-                            nombre=cs_serializada.fields["nombre"],
-                            slug= cs_serializada.fields["slug"],
-                            cta_madre=cs_serializada.fields["cta_madre"],
-                            fecha_creacion=cs_serializada.fields["fecha_creacion"],
-                            titular=Titular.tomar(titname=cs_serializada.titname()),
-                            moneda=Moneda.tomar(monname=cs_serializada.fields["moneda"][0]),
-                        )
-                    else:
-                        mov_es_anterior_a_conversion = False
-                        movimiento.pos_cta_receptora = "cta_salida"
-                        traspasos_de_saldo.append(movimiento)
-                        cs = None
-
-                # En caso de que *no* haya una cuenta aún no existente en la base de datos entre las cuentas
-                # intervinientes en el movimiento, se supone que el movimiento se produjo antes que la cuenta
-                # se convirtiera en acumulativa y se lo genera a partir de los datos del objeto serializado
-                # correspondiente.
-                if mov_es_anterior_a_conversion:
+                # Suponemos que cualquier movimiento de la cuenta que no sea de traspaso es anterior a su
+                # conversión en acumulativa, así que lo creamos.
+                if movimiento.fields[pos_contracuenta] is None:
+                    cuentas_del_mov = {pos_cuenta: cuenta_db}
                     Movimiento.crear(
                         fecha=movimiento.fields['dia'][0],
                         orden_dia=movimiento.fields['orden_dia'],
                         concepto=movimiento.fields['concepto'],
                         importe=movimiento.fields['_importe'],
-                        cta_entrada=ce,
-                        cta_salida=cs,
                         moneda=Moneda.tomar(
                             monname=movimiento.fields['moneda'][0]
                         ),
                         id_contramov=movimiento.fields['id_contramov'],
                         es_automatico=movimiento.fields['es_automatico'],
                         esgratis=movimiento.fields['id_contramov'] is None,
+                        **cuentas_del_mov
                     )
+                else:
+                    slug_contracuenta = _slug_cuenta_mov(movimiento, pos_contracuenta)
+                    contracuenta_ser = _tomar_cuenta_ser(slug_contracuenta, container=cuentas)
+
+                    try:
+                        contracuenta_db = CuentaInteractiva.tomar(slug=slug_contracuenta)
+                    except CuentaInteractiva.DoesNotExist:
+                        if contracuenta_ser.fields["cta_madre"] != [cuenta.fields["slug"]]:
+                            contracuenta_db = Cuenta.crear(
+                                nombre=contracuenta_ser.fields["nombre"],
+                                slug=contracuenta_ser.fields["slug"],
+                                cta_madre=contracuenta_ser.fields["cta_madre"],
+                                fecha_creacion=contracuenta_ser.fields["fecha_creacion"],
+                                titular=Titular.tomar(titname=contracuenta_ser.titname()),
+                                moneda=Moneda.tomar(monname=contracuenta_ser.fields["moneda"][0]),
+                            )
+                            es_traspaso_a_subcuenta = False
+                        else:
+                            es_traspaso_a_subcuenta = True
+                            movimiento.pos_cta_receptora = pos_contracuenta
+                            traspasos_de_saldo.append(movimiento)
+                            contracuenta_db = None
+
+                    if not es_traspaso_a_subcuenta:
+                        cuentas_del_mov = {pos_cuenta: cuenta_db, pos_contracuenta: contracuenta_db}
+                        Movimiento.crear(
+                            fecha=movimiento.fields['dia'][0],
+                            orden_dia=movimiento.fields['orden_dia'],
+                            concepto=movimiento.fields['concepto'],
+                            importe=movimiento.fields['_importe'],
+                            moneda=Moneda.tomar(
+                                monname=movimiento.fields['moneda'][0]
+                            ),
+                            id_contramov=movimiento.fields['id_contramov'],
+                            es_automatico=movimiento.fields['es_automatico'],
+                            esgratis=movimiento.fields['id_contramov'] is None,
+                            **cuentas_del_mov
+                        )
 
             # Una vez terminados de recorrer los movimientos de la cuenta y ya
             # generados los movimientos anteriores a su conversión, se procede
