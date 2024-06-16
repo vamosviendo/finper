@@ -22,6 +22,10 @@ def info(value: any, msj: str) -> any:
 
 
 def _crear_o_tomar(cuenta: CuentaSerializada) -> Cuenta:
+    """ Intenta crear una cuenta en la base de datos a partir de una
+        cuenta serializada. Si la cuenta ya existe (¿como contracuenta de
+        un crédito, por ejemplo?), la toma.
+        Devuelve la cuenta creada o tomada de la base de datos"""
     try:
         print(f"Creando cuenta <{cuenta.fields['nombre']}>", end=" ")
         return info(
@@ -70,6 +74,7 @@ def _cargar_cuentas_y_movimientos(de_serie: SerializedDb) -> None:
     def _tomar_cuenta_ser(
             slug: str | None,
             container: SerializedDb | None) -> CuentaSerializada | None:
+        """ Toma y devuelve una cuenta serializada de un contenedor a partir del slug """
         if slug is None or container is None:
             return None
         return CuentaSerializada(container.tomar(model="diario.cuenta", slug=slug))
@@ -77,15 +82,10 @@ def _cargar_cuentas_y_movimientos(de_serie: SerializedDb) -> None:
     print("Cargando cuentas y movimientos")
     global cuentas
     cuentas = CuentaSerializada.todes(container=de_serie)
-    cuentas_independientes = SerializedDb([
-        x for x in cuentas.filtrar(cta_madre=None) if not x.es_cuenta_credito()
-    ])
     movimientos = MovimientoSerializado.todes(container=de_serie)
 
+    cuentas_independientes = SerializedDb([x for x in cuentas if x.es_cuenta_independiente()])
     for cuenta in cuentas_independientes:
-
-        # Intentar crear la cuenta. Si la cuenta ya fue creada
-        # (como contracuenta de un crédito, por ejemplo?), tomarla.
         cuenta_db = _crear_o_tomar(cuenta)
 
         # Si la cuenta recién creada es (en la db serializada) una cuenta acumulativa:
@@ -207,7 +207,8 @@ def _cargar_cuentas_y_movimientos(de_serie: SerializedDb) -> None:
             # para dividir y convertir la cuenta.
             fecha_conversion = cuenta.campos_polimorficos()["fecha_conversion"]
 
-            # TODO NOW: a descular qué hice acá.
+            # Se arma la lista de subcuentas que se usará para la conversión
+            # de la cuenta en acumulativa.
             subcuentas_fecha_conversion = []
             for subc in subcuentas_cuenta.filtrar(fecha_creacion=fecha_conversion):
                 slug_subc = subc.fields["slug"]

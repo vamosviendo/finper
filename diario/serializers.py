@@ -31,6 +31,13 @@ class CuentaSerializada(SerializedObject):
             self.campos_polimorficos().get("_contracuenta") is not None
         )
 
+    def es_cuenta_independiente(self) -> bool:
+        """ Devuelve True si la cuenta no depende de una cuenta madre ni es
+            una cuenta crédito"""
+        return \
+            self in self.container.filtrar(cta_madre=None) \
+            and not self.es_cuenta_credito()
+
 
 class DiaSerializado(SerializedObject):
     @classmethod
