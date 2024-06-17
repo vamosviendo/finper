@@ -105,20 +105,8 @@ def _cargar_cuentas_y_movimientos(de_serie: SerializedDb) -> None:
                 # Suponemos que cualquier movimiento de la cuenta que no sea de traspaso es anterior a su
                 # conversión en acumulativa, así que lo creamos.
                 if movimiento.fields[pos_contracuenta] is None:  # Es movimiento de entrada o salida
-                    cuentas_del_mov = {pos_cuenta: cuenta_db}
-                    Movimiento.crear(
-                        fecha=movimiento.fields['dia'][0],
-                        orden_dia=movimiento.fields['orden_dia'],
-                        concepto=movimiento.fields['concepto'],
-                        importe=movimiento.fields['_importe'],
-                        moneda=Moneda.tomar(
-                            monname=movimiento.fields['moneda'][0]
-                        ),
-                        id_contramov=movimiento.fields['id_contramov'],
-                        es_automatico=movimiento.fields['es_automatico'],
-                        esgratis=movimiento.fields['id_contramov'] is None,
-                        **cuentas_del_mov
-                    )
+                    contracuenta_db = None
+                    es_traspaso_a_subcuenta = False
                 else:  # Es movimiento de traspaso entre cuentas
                     slug_contracuenta = _slug_cuenta_mov(movimiento, pos_contracuenta)
                     contracuenta_ser = _tomar_cuenta_ser(slug_contracuenta, container=cuentas)
@@ -144,26 +132,26 @@ def _cargar_cuentas_y_movimientos(de_serie: SerializedDb) -> None:
                             # después agregarle un atributo que indica si la cuenta receptora
                             # es de entrada o de salida..
                             # No se crea la contracuenta (se la creará después, cuando se divida la cuenta).
+                            contracuenta_db = None
                             es_traspaso_a_subcuenta = True
                             movimiento.pos_cta_receptora = pos_contracuenta
                             traspasos_de_saldo.append(movimiento)
-                            contracuenta_db = None
 
-                    if not es_traspaso_a_subcuenta:
-                        cuentas_del_mov = {pos_cuenta: cuenta_db, pos_contracuenta: contracuenta_db}
-                        Movimiento.crear(
-                            fecha=movimiento.fields['dia'][0],
-                            orden_dia=movimiento.fields['orden_dia'],
-                            concepto=movimiento.fields['concepto'],
-                            importe=movimiento.fields['_importe'],
-                            moneda=Moneda.tomar(
-                                monname=movimiento.fields['moneda'][0]
-                            ),
-                            id_contramov=movimiento.fields['id_contramov'],
-                            es_automatico=movimiento.fields['es_automatico'],
-                            esgratis=movimiento.fields['id_contramov'] is None,
-                            **cuentas_del_mov
-                        )
+                if not es_traspaso_a_subcuenta:
+                    cuentas_del_mov = {pos_cuenta: cuenta_db, pos_contracuenta: contracuenta_db}
+                    Movimiento.crear(
+                        fecha=movimiento.fields['dia'][0],
+                        orden_dia=movimiento.fields['orden_dia'],
+                        concepto=movimiento.fields['concepto'],
+                        importe=movimiento.fields['_importe'],
+                        moneda=Moneda.tomar(
+                            monname=movimiento.fields['moneda'][0]
+                        ),
+                        id_contramov=movimiento.fields['id_contramov'],
+                        es_automatico=movimiento.fields['es_automatico'],
+                        esgratis=movimiento.fields['id_contramov'] is None,
+                        **cuentas_del_mov
+                    )
 
             # Una vez terminados de recorrer los movimientos de la cuenta y ya
             # generados los movimientos anteriores a su conversión, se procede
