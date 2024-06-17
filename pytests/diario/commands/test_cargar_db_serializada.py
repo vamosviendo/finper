@@ -260,7 +260,6 @@ def test_crea_contramovimiento_al_crear_movimiento_de_credito(credito, db_serial
         pytest.fail("No se generó contramovimiento en movimiento de crédito")
 
 
-
 def test_no_crea_contramovimiento_al_crear_movimiento_de_donacion(donacion, db_serializada, vaciar_db):
     call_command("cargar_db_serializada")
     try:
@@ -349,6 +348,24 @@ def test_si_al_cargar_movimientos_generales_se_intenta_usar_una_cuenta_que_no_ex
 def test_divide_correctamente_cuentas_con_saldo_negativo():
     pytest.fail("escribir, y reescribir el nombre del test, y ubicar correctamente.")
 
+
+@pytest.mark.xfail
+def test_divide_correctamente_cuentas_sin_saldo():
+    pytest.fail("escribir")
+
+
+@pytest.mark.xfail
+def test_crea_movimientos_de_traspaso_de_saldo_entre_cuentas_independientes_cuando_una_de_las_dos_cuentas_aun_no_ha_sido_creada():
+    # Primero assert que una de las dos cuentas no existe en la bd al momento de crear el movimiento.
+    # Después assert que existe el movimiento
+    pytest.fail("escribir")
+
+
+@pytest.mark.xfail
+def test_crea_movimientos_de_traspaso_de_saldos_entre_dos_cuentas_independientes_ya_existentes():
+    # Primero assert que las dos cuentas existen y el movimiento todavía no.
+    # Después assert que existe el movimiento
+    pytest.fail("escribir")
 
 @pytest.mark.xfail
 def test_crear_movimientos_a_partir_de_objetos_serializados(cuenta, cuenta_2, peso):
