@@ -44,7 +44,11 @@ def _crear_o_tomar(cuenta: CuentaSerializada) -> Cuenta:
         return info(Cuenta.tomar(slug=cuenta.fields["slug"]), msj="- OK")
 
 
-def _slug_cuenta_mov(movimiento: MovimientoSerializado, posicion: str) -> str:
+
+def _slug_cuenta_mov(
+        movimiento: MovimientoSerializado,
+        posicion: str,
+        container_cuentas: SerializedDb[CuentaSerializada]) -> str:
     """ Toma un movimiento y devuelve el slug de la cuenta interviniente
         en la posición indicada. """
     if posicion not in ["entrada", "salida", "cta_entrada", "cta_salida"]:
@@ -52,18 +56,21 @@ def _slug_cuenta_mov(movimiento: MovimientoSerializado, posicion: str) -> str:
     cta = movimiento.fields[posicion] if posicion.startswith("cta_") else f"cta_{posicion}"
     slug = cta[0] if cta else None
     # Si la cuenta del movimiento no existe como objeto serializado, lanzar excepción
-    if slug and slug not in [x.fields["slug"] for x in cuentas.filter_by_model("diario.cuenta")]:
+    if slug and slug not in [x.fields["slug"] for x in container_cuentas.filter_by_model("diario.cuenta")]:
         raise ElementoSerializadoInexistente(modelo="diario.cuenta", identificador=slug)
     return slug
 
 
-def _cuenta_mov(movimiento: MovimientoSerializado, posicion: str) -> CuentaInteractiva | None:
+def _cuenta_mov(
+        movimiento: MovimientoSerializado,
+        posicion: str,
+        container_cuentas: SerializedDb[CuentaSerializada]) -> CuentaInteractiva | None:
     if posicion not in ["entrada", "salida", "cta_entrada", "cta_salida"]:
         raise ValueError('Los valores aceptados para posicion son "entrada", "salida", "cta_entrada" o "cta_salida"')
     cta = movimiento.fields[posicion] if posicion.startswith("cta_") else f"cta_{posicion}"
     slug = movimiento.fields[posicion][0] if movimiento.fields[posicion] else None
     if slug:
-        if slug not in [x.fields["slug"] for x in cuentas.filter_by_model("diario.cuenta")]:
+        if slug not in [x.fields["slug"] for x in container_cuentas.filter_by_model("diario.cuenta")]:
             raise ElementoSerializadoInexistente(modelo="diario.cuenta", identificador=slug)
         return CuentaInteractiva.tomar(slug=slug)
     return None
@@ -82,19 +89,20 @@ def _cargar_modelo_simple(modelo: str, de_serie: SerializedDb, excluir_campos: l
     print("- OK")
 
 
-def _cargar_cuentas_y_movimientos(de_serie: SerializedDb) -> None:
-    def _tomar_cuenta_ser(
-            slug: str | None,
-            container: SerializedDb | None) -> CuentaSerializada | None:
-        """ Toma y devuelve una cuenta serializada de un contenedor a partir del slug """
-        if slug is None or container is None:
-            return None
-        return CuentaSerializada(container.tomar(model="diario.cuenta", slug=slug))
+def _tomar_cuenta_ser(
+        slug: str | None,
+        container: SerializedDb | None) -> CuentaSerializada | None:
+    """ Toma y devuelve una cuenta serializada de un contenedor a partir del slug """
+    if slug is None or container is None:
+        return None
+    return CuentaSerializada(container.tomar(model="diario.cuenta", slug=slug))
+
+
+def _cargar_cuentas_y_movimientos(
+        cuentas: SerializedDb[CuentaSerializada],
+        movimientos: SerializedDb[MovimientoSerializado]) -> None:
 
     print("Cargando cuentas y movimientos")
-    global cuentas
-    cuentas = CuentaSerializada.todes(container=de_serie)
-    movimientos = MovimientoSerializado.todes(container=de_serie)
 
     cuentas_independientes = SerializedDb([x for x in cuentas if x.es_cuenta_independiente()])
     for cuenta in cuentas_independientes:
@@ -120,7 +128,7 @@ def _cargar_cuentas_y_movimientos(de_serie: SerializedDb) -> None:
                     contracuenta_db = None
                     es_traspaso_a_subcuenta = False
                 else:  # Es movimiento de traspaso entre cuentas
-                    slug_contracuenta = _slug_cuenta_mov(movimiento, pos_contracuenta)
+                    slug_contracuenta = _slug_cuenta_mov(movimiento, pos_contracuenta, cuentas)
                     contracuenta_ser = _tomar_cuenta_ser(slug_contracuenta, container=cuentas)
 
                     try:
@@ -236,8 +244,8 @@ def _cargar_cuentas_y_movimientos(de_serie: SerializedDb) -> None:
             orden_dia=movimiento.fields['orden_dia'],
             concepto=movimiento.fields['concepto'],
             importe=movimiento.fields['_importe'],
-            cta_entrada=_cuenta_mov(movimiento, "cta_entrada"),
-            cta_salida=_cuenta_mov(movimiento, "cta_salida"),
+            cta_entrada=_cuenta_mov(movimiento, "cta_entrada", cuentas),
+            cta_salida=_cuenta_mov(movimiento, "cta_salida", cuentas),
             moneda=Moneda.tomar(
                 monname=movimiento.fields['moneda'][0]
             ),
@@ -260,4 +268,7 @@ class Command(BaseCommand):
 
         _cargar_modelo_simple("diario.titular", db_full, ["deudores"])
         _cargar_modelo_simple("diario.moneda", db_full)
-        _cargar_cuentas_y_movimientos(db_full)
+
+        cuentas = CuentaSerializada.todes(container=db_full)
+        movimientos = MovimientoSerializado.todes(container=db_full)
+        _cargar_cuentas_y_movimientos(cuentas, movimientos)
