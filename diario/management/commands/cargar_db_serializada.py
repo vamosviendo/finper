@@ -57,6 +57,18 @@ def _slug_cuenta_mov(movimiento: MovimientoSerializado, posicion: str) -> str:
     return slug
 
 
+def _cuenta_mov(movimiento: MovimientoSerializado, posicion: str) -> CuentaInteractiva | None:
+    if posicion not in ["entrada", "salida", "cta_entrada", "cta_salida"]:
+        raise ValueError('Los valores aceptados para posicion son "entrada", "salida", "cta_entrada" o "cta_salida"')
+    cta = movimiento.fields[posicion] if posicion.startswith("cta_") else f"cta_{posicion}"
+    slug = movimiento.fields[posicion][0] if movimiento.fields[posicion] else None
+    if slug:
+        if slug not in [x.fields["slug"] for x in cuentas.filter_by_model("diario.cuenta")]:
+            raise ElementoSerializadoInexistente(modelo="diario.cuenta", identificador=slug)
+        return CuentaInteractiva.tomar(slug=slug)
+    return None
+
+
 def _cargar_modelo_simple(modelo: str, de_serie: SerializedDb, excluir_campos: list[str] = None) -> None:
     """ Carga modelos que no incluyan foreignfields, polimorfismo u otras complicaciones"""
     print(f"Cargando elementos del modelo {modelo}", end=" ")
@@ -217,24 +229,15 @@ def _cargar_cuentas_y_movimientos(de_serie: SerializedDb) -> None:
     # Una vez cargadas las cuentas y los movimientos relacionados con cuentas acumulativas,
     # cargamos los movimientos normales relacionados con cuentas normales (excluyendo los
     # no generados manualmente).
+
     for movimiento in movimientos.filtrar(es_automatico=False):
-        slug_ce = movimiento.fields["cta_entrada"][0] if movimiento.fields["cta_entrada"] else None
-        if slug_ce and slug_ce not in [x.fields["slug"] for x in cuentas.filter_by_model("diario.cuenta")]:
-            raise ElementoSerializadoInexistente(modelo="diario.cuenta", identificador=slug_ce)
-        ce = CuentaInteractiva.tomar(slug=slug_ce) if slug_ce else None
-
-        slug_cs = movimiento.fields["cta_salida"][0] if movimiento.fields["cta_salida"] else None
-        if slug_cs and slug_cs not in [x.fields["slug"] for x in cuentas.filter_by_model("diario.cuenta")]:
-            raise ElementoSerializadoInexistente(modelo="diario.cuenta", identificador=slug_cs)
-        cs = CuentaInteractiva.tomar(slug=slug_cs) if slug_cs else None
-
         Movimiento.crear(
             fecha=movimiento.fields['dia'][0],
             orden_dia=movimiento.fields['orden_dia'],
             concepto=movimiento.fields['concepto'],
             importe=movimiento.fields['_importe'],
-            cta_entrada=ce,
-            cta_salida=cs,
+            cta_entrada=_cuenta_mov(movimiento, "cta_entrada"),
+            cta_salida=_cuenta_mov(movimiento, "cta_salida"),
             moneda=Moneda.tomar(
                 monname=movimiento.fields['moneda'][0]
             ),
