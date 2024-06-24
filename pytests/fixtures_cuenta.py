@@ -107,6 +107,15 @@ def cuenta_acumulativa_saldo_0(cuenta: CuentaInteractiva) -> CuentaAcumulativa:
 
 
 @pytest.fixture
+def cuenta_acumulativa_saldo_negativo(cuenta_con_saldo_negativo: CuentaInteractiva) -> CuentaAcumulativa:
+    return cuenta_con_saldo_negativo.dividir_y_actualizar(
+        ['subcuenta 1 saldo negativo', 'scsn1', -10],
+        ['subcuenta 2 saldo negativo', 'scsn2'],
+        fecha=cuenta_con_saldo_negativo.fecha_creacion
+    )
+
+
+@pytest.fixture
 def cuenta_de_dos_titulares(
         titular_gordo: Titular,
         cuenta_ajena: CuentaInteractiva,

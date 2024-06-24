@@ -344,28 +344,32 @@ def test_si_al_cargar_movimientos_generales_se_intenta_usar_una_cuenta_que_no_ex
             match="Elemento serializado 'ct2' de modelo 'diario.cuenta' inexistente"):
         call_command("cargar_db_serializada")
 
-@pytest.mark.xfail
-def test_divide_correctamente_cuentas_con_saldo_negativo():
-    pytest.fail("escribir, y reescribir el nombre del test, y ubicar correctamente.")
+
+def test_divide_correctamente_cuentas_con_saldo_negativo(cuenta_acumulativa_saldo_negativo, db_serializada, vaciar_db):
+    call_command("cargar_db_serializada")
+    cuenta_recuperada = Cuenta.tomar(slug=cuenta_acumulativa_saldo_negativo.slug)
+    assert cuenta_recuperada.es_acumulativa
+    assert cuenta_recuperada.saldo == -100
+    subcuentas = cuenta_recuperada.subcuentas.all()
+    assert len(subcuentas) == 2
+    assert subcuentas[0].nombre == "subcuenta 1 saldo negativo"
+    assert subcuentas[0].slug == "scsn1"
+    assert subcuentas[0].saldo == -10
+    assert subcuentas[1].saldo == cuenta_recuperada.saldo + 10
 
 
-@pytest.mark.xfail
-def test_divide_correctamente_cuentas_sin_saldo():
-    pytest.fail("escribir")
+def test_divide_correctamente_cuentas_sin_saldo(cuenta_acumulativa_saldo_0, db_serializada, vaciar_db):
+    call_command("cargar_db_serializada")
+    cuenta_recuperada = Cuenta.tomar(slug=cuenta_acumulativa_saldo_0.slug)
+    assert cuenta_recuperada.es_acumulativa
+    assert cuenta_recuperada.saldo == 0
+    subcuentas = cuenta_recuperada.subcuentas.all()
+    assert len(subcuentas) == 2
+    assert subcuentas[0].nombre == "subcuenta 1 saldo 0"
+    assert subcuentas[0].slug == "sc1"
+    assert subcuentas[0].saldo == 0
+    assert subcuentas[1].saldo == 0
 
-
-@pytest.mark.xfail
-def test_crea_movimientos_de_traspaso_de_saldo_entre_cuentas_independientes_cuando_una_de_las_dos_cuentas_aun_no_ha_sido_creada():
-    # Primero assert que una de las dos cuentas no existe en la bd al momento de crear el movimiento.
-    # Después assert que existe el movimiento
-    pytest.fail("escribir")
-
-
-@pytest.mark.xfail
-def test_crea_movimientos_de_traspaso_de_saldos_entre_dos_cuentas_independientes_ya_existentes():
-    # Primero assert que las dos cuentas existen y el movimiento todavía no.
-    # Después assert que existe el movimiento
-    pytest.fail("escribir")
 
 @pytest.mark.xfail
 def test_crear_movimientos_a_partir_de_objetos_serializados(cuenta, cuenta_2, peso):
