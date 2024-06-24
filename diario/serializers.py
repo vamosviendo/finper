@@ -67,6 +67,9 @@ class MovimientoSerializado(SerializedObject):
     def involucra_cuenta(self, cuenta: CuentaSerializada) -> bool:
         return [cuenta.fields["slug"]] in (self.fields["cta_entrada"], self.fields["cta_salida"])
 
+    def es_entrada_o_salida(self):
+        return self.fields["cta_entrada"] is None or self.fields["cta_salida"] is None
+
 
 class SaldoSerializado(SerializedObject):
     @classmethod

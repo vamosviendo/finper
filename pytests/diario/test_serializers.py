@@ -20,6 +20,14 @@ def mov_serializado(entrada: Movimiento, db_serializada: SerializedDb) -> Movimi
     return MovimientoSerializado.primere(db_serializada)
 
 @pytest.fixture
+def salida_serializada(salida: Movimiento, db_serializada: SerializedDb) -> MovimientoSerializado:
+    return MovimientoSerializado.primere(db_serializada)
+
+@pytest.fixture
+def traspaso_serializado(traspaso: Movimiento, db_serializada: SerializedDb) -> MovimientoSerializado:
+    return MovimientoSerializado.primere(db_serializada)
+
+@pytest.fixture
 def dia_serializado(dia: Dia, db_serializada: SerializedDb) -> DiaSerializado:
     return DiaSerializado.primere(db_serializada)
 
@@ -79,6 +87,14 @@ class TestMovimientoSerializado:
 
     def test_prop_identidad_devuelve_cadena_con_fecha_y_orden_dia(self, mov_serializado):
         assert mov_serializado.identidad == f"{mov_serializado.fecha.replace('-', '')}{mov_serializado.fields['orden_dia']:02d}"
+
+    @pytest.mark.parametrize("mov", ["mov_serializado", "salida_serializada"])
+    def test_met_es_entrada_o_salida_devuelve_true_si_es_entrada_o_salida(self, mov, request):
+        movimiento = request.getfixturevalue(mov)
+        assert movimiento.es_entrada_o_salida() is True
+
+    def test_met_es_entrada_o_salida_devuelve_false_si_es_traspaso(self, traspaso_serializado):
+        assert traspaso_serializado.es_entrada_o_salida() is False
 
 
 class TestDiaSerializado:

@@ -114,7 +114,7 @@ def _cargar_cuenta_acumulativa_y_movimientos_anteriores_a_su_conversion(
 
         # Suponemos que cualquier movimiento de la cuenta que no sea de traspaso es anterior a su
         # conversión en acumulativa, así que lo creamos.
-        if movimiento.fields[pos_contracuenta] is None:  # Es movimiento de entrada o salida
+        if movimiento.es_entrada_o_salida():
             contracuenta_db = None
             es_traspaso_a_subcuenta = False
         else:  # Es movimiento de traspaso entre cuentas
