@@ -98,6 +98,132 @@ def _tomar_cuenta_ser(
     return CuentaSerializada(container.tomar(model="diario.cuenta", slug=slug))
 
 
+def _cargar_cuenta_acumulativa_y_movimientos_anteriores_a_su_conversion(
+        cuentas: SerializedDb[CuentaSerializada],
+        cuenta: CuentaSerializada,
+        cuenta_db: Cuenta,
+        movimientos_cuenta: SerializedDb[MovimientoSerializado]):
+    print(f"Cargando cuenta acumulativa <{cuenta_db.nombre}>", end=" ")
+
+    traspasos_de_saldo = SerializedDb()
+
+    for movimiento in movimientos_cuenta:
+        pos_cuenta = "cta_entrada" if movimiento.fields["cta_entrada"] == [cuenta.fields["slug"]] \
+            else "cta_salida"
+        pos_contracuenta = "cta_salida" if pos_cuenta == "cta_entrada" else "cta_entrada"
+
+        # Suponemos que cualquier movimiento de la cuenta que no sea de traspaso es anterior a su
+        # conversión en acumulativa, así que lo creamos.
+        if movimiento.fields[pos_contracuenta] is None:  # Es movimiento de entrada o salida
+            contracuenta_db = None
+            es_traspaso_a_subcuenta = False
+        else:  # Es movimiento de traspaso entre cuentas
+            slug_contracuenta = _slug_cuenta_mov(movimiento, pos_contracuenta, cuentas)
+            contracuenta_ser = _tomar_cuenta_ser(slug_contracuenta, container=cuentas)
+
+            try:
+                contracuenta_db = CuentaInteractiva.tomar(slug=slug_contracuenta)
+                es_traspaso_a_subcuenta = False
+            except CuentaInteractiva.DoesNotExist:
+                if contracuenta_ser.fields["cta_madre"] != [cuenta.fields["slug"]]:
+                    # La contracuenta no es subcuenta de la cuenta. Se la crea.
+                    contracuenta_db = Cuenta.crear(
+                        nombre=contracuenta_ser.fields["nombre"],
+                        slug=contracuenta_ser.fields["slug"],
+                        cta_madre=contracuenta_ser.fields["cta_madre"],
+                        fecha_creacion=contracuenta_ser.fields["fecha_creacion"],
+                        titular=Titular.tomar(titname=contracuenta_ser.titname()),
+                        moneda=Moneda.tomar(monname=contracuenta_ser.fields["moneda"][0]),
+                    )
+
+                    es_traspaso_a_subcuenta = False
+                else:  # La contracuenta es subcuenta de la cuenta.
+                    # Se incluye el movimiento como traspaso de saldo a subcuenta,
+                    # después agregarle un atributo que indica si la cuenta receptora
+                    # es de entrada o de salida..
+                    # No se crea la contracuenta (se la creará después, cuando se divida la cuenta).
+                    contracuenta_db = None
+                    es_traspaso_a_subcuenta = True
+                    movimiento.pos_cta_receptora = pos_contracuenta
+                    traspasos_de_saldo.append(movimiento)
+
+        if not es_traspaso_a_subcuenta:
+            cuentas_del_mov = {pos_cuenta: cuenta_db, pos_contracuenta: contracuenta_db}
+            Movimiento.crear(
+                fecha=movimiento.fields['dia'][0],
+                orden_dia=movimiento.fields['orden_dia'],
+                concepto=movimiento.fields['concepto'],
+                importe=movimiento.fields['_importe'],
+                moneda=Moneda.tomar(
+                    monname=movimiento.fields['moneda'][0]
+                ),
+                id_contramov=movimiento.fields['id_contramov'],
+                es_automatico=movimiento.fields['es_automatico'],
+                esgratis=movimiento.fields['id_contramov'] is None,
+                **cuentas_del_mov
+            )
+
+    # Una vez terminados de recorrer los movimientos de la cuenta y ya
+    # generados los movimientos anteriores a su conversión, se procede
+    # a la división de la cuenta en subcuentas y su consiguiente conversión
+    # en acumulativa.
+    # Si hay movimientos marcados como traspasos de saldo, los usamos para
+    # tomar el dato del saldo traspasado desde la cuenta acumulativa
+    # a sus subcuentas al momento de la conversión.
+    slugs_subcuentas_con_saldo = [mov.fields[mov.pos_cta_receptora][0] for mov in traspasos_de_saldo]
+
+    # Buscar las subcuentas en las que está dividida la cuenta
+    subcuentas_cuenta = cuentas.filtrar(cta_madre=[cuenta.fields["slug"]])
+
+    # De las subcuentas encontradas, usar aquellas cuya fecha de creación
+    # coincide con la fecha de conversión de la cuenta en acumulativa
+    # para dividir y convertir la cuenta.
+    fecha_conversion = cuenta.campos_polimorficos()["fecha_conversion"]
+    subcuentas_conversion = []
+    for subc in subcuentas_cuenta.filtrar(fecha_creacion=fecha_conversion):
+        slug_subc = subc.fields["slug"]
+        # Si la subcuenta tiene saldo
+        if slug_subc in slugs_subcuentas_con_saldo:
+            mov = traspasos_de_saldo[slugs_subcuentas_con_saldo.index(slug_subc)]
+            saldo = traspasos_de_saldo.tomar(
+                **{mov.pos_cta_receptora: [slug_subc]}
+            ).fields["_importe"]
+            # TODO: ¿Esto que sigue no debería ser responsabilidad de dividir_entre?:
+            if mov.pos_cta_receptora == "cta_salida":
+                saldo = -saldo
+        else:
+            saldo = 0
+
+        subcuentas_conversion.append({
+            "nombre": subc.fields["nombre"],
+            "slug": subc.fields["slug"],
+            "titular": Titular.tomar(titname=subc.titname()),
+            "saldo": saldo
+        })
+
+    cuenta_db = cuenta_db.dividir_y_actualizar(
+        *subcuentas_conversion,
+        fecha=datetime.date(*[int(x) for x in fecha_conversion.split("-")])
+    )
+
+    # Se agregan las subcuentas cuya fecha de creación es posterior
+    # a la fecha de conversión de la cuenta en acumulativa
+    # (creadas mediante el método CuentaAcumulativa.agregar_subcuenta)
+    subcuentas_agregadas = [[
+        x.fields["nombre"],
+        x.fields["slug"],
+        Titular.tomar(titname=x.titname()),
+        x.fields["fecha_creacion"]
+    ]
+        for x in subcuentas_cuenta
+        if x.fields["fecha_creacion"] > fecha_conversion
+    ]
+    for subcuenta in subcuentas_agregadas:
+        cuenta_db.agregar_subcuenta(*subcuenta)
+
+    print("- OK")
+
+
 def _cargar_cuentas_y_movimientos(
         cuentas: SerializedDb[CuentaSerializada],
         movimientos: SerializedDb[MovimientoSerializado]) -> None:
@@ -111,125 +237,10 @@ def _cargar_cuentas_y_movimientos(
         if cuenta.es_acumulativa():
             # Buscar posibles movimientos en los que haya intervenido la cuenta
             # antes de convertirse en acumulativa
-            movimientos_cuenta = SerializedDb([
-                x for x in movimientos if x.involucra_cuenta(cuenta)
-            ])
+            movimientos_cuenta = SerializedDb([x for x in movimientos if x.involucra_cuenta(cuenta)])
 
-            traspasos_de_saldo = SerializedDb()
-
-            for movimiento in movimientos_cuenta:
-                pos_cuenta = "cta_entrada" if movimiento.fields["cta_entrada"] == [cuenta.fields["slug"]] \
-                    else "cta_salida"
-                pos_contracuenta = "cta_salida" if pos_cuenta == "cta_entrada" else "cta_entrada"
-
-                # Suponemos que cualquier movimiento de la cuenta que no sea de traspaso es anterior a su
-                # conversión en acumulativa, así que lo creamos.
-                if movimiento.fields[pos_contracuenta] is None:  # Es movimiento de entrada o salida
-                    contracuenta_db = None
-                    es_traspaso_a_subcuenta = False
-                else:  # Es movimiento de traspaso entre cuentas
-                    slug_contracuenta = _slug_cuenta_mov(movimiento, pos_contracuenta, cuentas)
-                    contracuenta_ser = _tomar_cuenta_ser(slug_contracuenta, container=cuentas)
-
-                    try:
-                        contracuenta_db = CuentaInteractiva.tomar(slug=slug_contracuenta)
-                        es_traspaso_a_subcuenta = False
-                    except CuentaInteractiva.DoesNotExist:
-                        if contracuenta_ser.fields["cta_madre"] != [cuenta.fields["slug"]]:
-                            # La contracuenta no es subcuenta de la cuenta. Se la crea.
-                            contracuenta_db = Cuenta.crear(
-                                nombre=contracuenta_ser.fields["nombre"],
-                                slug=contracuenta_ser.fields["slug"],
-                                cta_madre=contracuenta_ser.fields["cta_madre"],
-                                fecha_creacion=contracuenta_ser.fields["fecha_creacion"],
-                                titular=Titular.tomar(titname=contracuenta_ser.titname()),
-                                moneda=Moneda.tomar(monname=contracuenta_ser.fields["moneda"][0]),
-                            )
-
-                            es_traspaso_a_subcuenta = False
-                        else:  # La contracuenta es subcuenta de la cuenta.
-                            # Se incluye el movimiento como traspaso de saldo a subcuenta,
-                            # después agregarle un atributo que indica si la cuenta receptora
-                            # es de entrada o de salida..
-                            # No se crea la contracuenta (se la creará después, cuando se divida la cuenta).
-                            contracuenta_db = None
-                            es_traspaso_a_subcuenta = True
-                            movimiento.pos_cta_receptora = pos_contracuenta
-                            traspasos_de_saldo.append(movimiento)
-
-                if not es_traspaso_a_subcuenta:
-                    cuentas_del_mov = {pos_cuenta: cuenta_db, pos_contracuenta: contracuenta_db}
-                    Movimiento.crear(
-                        fecha=movimiento.fields['dia'][0],
-                        orden_dia=movimiento.fields['orden_dia'],
-                        concepto=movimiento.fields['concepto'],
-                        importe=movimiento.fields['_importe'],
-                        moneda=Moneda.tomar(
-                            monname=movimiento.fields['moneda'][0]
-                        ),
-                        id_contramov=movimiento.fields['id_contramov'],
-                        es_automatico=movimiento.fields['es_automatico'],
-                        esgratis=movimiento.fields['id_contramov'] is None,
-                        **cuentas_del_mov
-                    )
-
-            # Una vez terminados de recorrer los movimientos de la cuenta y ya
-            # generados los movimientos anteriores a su conversión, se procede
-            # a la división de la cuenta en subcuentas y su consiguiente conversión
-            # en acumulativa.
-            # Si hay movimientos marcados como traspasos de saldo, los usamos para
-            # tomar el dato del saldo traspasado desde la cuenta acumulativa
-            # a sus subcuentas al momento de la conversión.
-            slugs_subcuentas_con_saldo = [mov.fields[mov.pos_cta_receptora][0] for mov in traspasos_de_saldo]
-
-            # Buscar las subcuentas en las que está dividida la cuenta
-            subcuentas_cuenta = cuentas.filtrar(cta_madre=[cuenta.fields["slug"]])
-
-            # De las subcuentas encontradas, usar aquellas cuya fecha de creación
-            # coincide con la fecha de conversión de la cuenta en acumulativa
-            # para dividir y convertir la cuenta.
-            fecha_conversion = cuenta.campos_polimorficos()["fecha_conversion"]
-            subcuentas_conversion = []
-            for subc in subcuentas_cuenta.filtrar(fecha_creacion=fecha_conversion):
-                slug_subc = subc.fields["slug"]
-                # Si la subcuenta tiene saldo
-                if slug_subc in slugs_subcuentas_con_saldo:
-                    mov = traspasos_de_saldo[slugs_subcuentas_con_saldo.index(slug_subc)]
-                    saldo = traspasos_de_saldo.tomar(
-                        **{mov.pos_cta_receptora: [slug_subc]}
-                    ).fields["_importe"]
-                    # TODO: ¿Esto que sigue no debería ser responsabilidad de dividir_entre?:
-                    if mov.pos_cta_receptora == "cta_salida":
-                        saldo = -saldo
-                else:
-                    saldo = 0
-
-                subcuentas_conversion.append({
-                    "nombre": subc.fields["nombre"],
-                    "slug": subc.fields["slug"],
-                    "titular": Titular.tomar(titname=subc.titname()),
-                    "saldo": saldo
-                })
-                
-            cuenta_db = cuenta_db.dividir_y_actualizar(
-                *subcuentas_conversion,
-                fecha=datetime.date(*[int(x) for x in fecha_conversion.split("-")])
-            )
-
-            # Se agregan las subcuentas cuya fecha de creación es posterior
-            # a la fecha de conversión de la cuenta en acumulativa
-            # (creadas mediante el método CuentaAcumulativa.agregar_subcuenta)
-            subcuentas_agregadas = [[
-                    x.fields["nombre"],
-                    x.fields["slug"],
-                    Titular.tomar(titname=x.titname()),
-                    x.fields["fecha_creacion"]
-                ]
-                for x in subcuentas_cuenta
-                if x.fields["fecha_creacion"] > fecha_conversion
-            ]
-            for subcuenta in subcuentas_agregadas:
-                cuenta_db.agregar_subcuenta(*subcuenta)
+            _cargar_cuenta_acumulativa_y_movimientos_anteriores_a_su_conversion(
+                cuentas, cuenta, cuenta_db, movimientos_cuenta)
 
             # Retirar de serie movimientos los movimientos de la cuenta acumulativa procesada
             movimientos = SerializedDb([x for x in movimientos if x not in movimientos_cuenta])
