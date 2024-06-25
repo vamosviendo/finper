@@ -1,3 +1,5 @@
+from typing import Self
+
 from vvmodel.serializers import SerializedObject
 
 
@@ -40,6 +42,9 @@ class CuentaSerializada(SerializedObject):
 
     def es_acumulativa(self) -> bool:
         return self.pk in [x.pk for x in self.container.filter_by_model("diario.cuentaacumulativa")]
+
+    def es_subcuenta_de(self, otra: Self):
+        return self.fields["cta_madre"] == [otra.fields["slug"]]
 
 class DiaSerializado(SerializedObject):
     @classmethod

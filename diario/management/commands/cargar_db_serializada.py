@@ -125,7 +125,7 @@ def _cargar_cuenta_acumulativa_y_movimientos_anteriores_a_su_conversion(
                 contracuenta_db = CuentaInteractiva.tomar(slug=slug_contracuenta)
                 es_traspaso_a_subcuenta = False
             except CuentaInteractiva.DoesNotExist:
-                if contracuenta_ser.fields["cta_madre"] != [cuenta.fields["slug"]]:
+                if not contracuenta_ser.es_subcuenta_de(cuenta):
                     # La contracuenta no es subcuenta de la cuenta. Se la crea.
                     contracuenta_db = Cuenta.crear(
                         nombre=contracuenta_ser.fields["nombre"],

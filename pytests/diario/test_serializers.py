@@ -79,6 +79,19 @@ class TestCuentaSerializada:
         cuenta_credito = CuentaSerializada(cuentas.tomar(slug="caj"))
         assert cuenta_credito.es_cuenta_credito() is False
 
+    def test_es_subcuenta_de_devuelve_True_si_la_cuenta_es_subcuenta_de_otra_cuenta(
+            self, cuenta_acum_serializada, db_serializada):
+        subcuentas = SerializedDb([
+            CuentaSerializada(x) for x in db_serializada.filter_by_model("diario.cuenta")
+            if x.fields["cta_madre"] == [cuenta_acum_serializada.fields["slug"]]
+        ])
+        assert len(subcuentas) > 0
+        for subcuenta in subcuentas:
+            assert subcuenta.es_subcuenta_de(cuenta_acum_serializada) is True
+
+    def test_es_subcuenta_de_devuelve_False_si_la_cuenta_no_es_subcuenta_de_otra_cuenta(
+            self, cuenta_acum_serializada, cuenta_int_serializada):
+        assert cuenta_int_serializada.es_subcuenta_de(cuenta_acum_serializada) is False
 
 
 class TestMovimientoSerializado:
