@@ -16,33 +16,25 @@ from vvmodel.models import MiModel
 from vvmodel.serializers import SerializedDb, SerializedObject
 
 
-def info(value: any, msj: str) -> any:
-    print(str)
-    return value
-
-
-def _crear_o_tomar(cuenta: CuentaSerializada) -> Cuenta:
-    """ Intenta crear una cuenta en la base de datos a partir de una
-        cuenta serializada. Si la cuenta ya existe (¿como contracuenta de
-        un crédito, por ejemplo?), la toma.
-        Devuelve la cuenta creada o tomada de la base de datos"""
-    try:
-        print(f"Creando cuenta <{cuenta.fields['nombre']}>", end=" ")
-        return info(
-            Cuenta.crear(
+def _tomar_o_crear_cuenta(cuenta: CuentaSerializada | None) -> CuentaInteractiva | None:
+    if cuenta:
+        try:
+            print(f"Tomando cuenta existente <{cuenta.fields['nombre']}>", end=" ")
+            return CuentaInteractiva.tomar(slug=cuenta.fields["slug"])
+        except CuentaInteractiva.DoesNotExist:
+            print(f"Creando cuenta <{cuenta.fields['nombre']}>", end=" ")
+            return Cuenta.crear(
                 nombre=cuenta.fields["nombre"],
                 slug=cuenta.fields["slug"],
-                cta_madre=None,
+                cta_madre=cuenta.fields["cta_madre"],
                 fecha_creacion=cuenta.fields["fecha_creacion"],
                 titular=Titular.tomar(titname=cuenta.titname()),
                 moneda=Moneda.tomar(monname=cuenta.fields["moneda"][0]),
-            ),
-            msj="- OK"
-        )
-    except ValidationError:
-        print(f"Tomando cuenta existente <{cuenta.fields['nombre']}>", end=" ")
-        return info(Cuenta.tomar(slug=cuenta.fields["slug"]), msj="- OK")
+            )
+        finally:
+            print("- OK")
 
+    return None
 
 
 def _slug_cuenta_mov(
@@ -119,6 +111,19 @@ def _mov_es_traspaso_a_subcuenta(
     return True
 
 
+def _contracuenta_db(
+        movimiento: MovimientoSerializado,
+        pos_contracuenta: str,
+        cuentas: SerializedDb[CuentaSerializada]
+) -> CuentaInteractiva | None:
+    return _tomar_o_crear_cuenta(
+        _tomar_cuenta_ser(
+            slug=_slug_cuenta_mov(movimiento, pos_contracuenta, cuentas),
+            container=cuentas
+        )
+    )
+
+
 def _cargar_cuenta_acumulativa_y_movimientos_anteriores_a_su_conversion(
         cuentas: SerializedDb[CuentaSerializada],
         cuenta: CuentaSerializada,
@@ -135,25 +140,14 @@ def _cargar_cuenta_acumulativa_y_movimientos_anteriores_a_su_conversion(
 
         # Suponemos que cualquier movimiento de la cuenta que no sea de traspaso es anterior a su
         # conversión en acumulativa, así que lo creamos.
-        if not _mov_es_traspaso_a_subcuenta(movimiento, cuenta, cuentas):
-            slug_contracuenta = _slug_cuenta_mov(movimiento, pos_contracuenta, cuentas)
-            contracuenta_ser = _tomar_cuenta_ser(slug_contracuenta, container=cuentas)
-            if contracuenta_ser:
-                try:
-                    contracuenta_db = CuentaInteractiva.tomar(slug=slug_contracuenta)
-                except CuentaInteractiva.DoesNotExist:
-                    contracuenta_db = Cuenta.crear(
-                        nombre=contracuenta_ser.fields["nombre"],
-                        slug=contracuenta_ser.fields["slug"],
-                        cta_madre=contracuenta_ser.fields["cta_madre"],
-                        fecha_creacion=contracuenta_ser.fields["fecha_creacion"],
-                        titular=Titular.tomar(titname=contracuenta_ser.titname()),
-                        moneda=Moneda.tomar(monname=contracuenta_ser.fields["moneda"][0]),
-                    )
-            else:
-                contracuenta_db = None
-
-            cuentas_del_mov = {pos_cuenta: cuenta_db, pos_contracuenta: contracuenta_db}
+        if _mov_es_traspaso_a_subcuenta(movimiento, cuenta, cuentas):
+            movimiento.pos_cta_receptora = pos_contracuenta
+            traspasos_de_saldo.append(movimiento)
+        else:
+            cuentas_del_mov = {
+                pos_cuenta: cuenta_db,
+                pos_contracuenta: _contracuenta_db(movimiento, pos_contracuenta, cuentas)
+            }
             Movimiento.crear(
                 fecha=movimiento.fields['dia'][0],
                 orden_dia=movimiento.fields['orden_dia'],
@@ -167,10 +161,6 @@ def _cargar_cuenta_acumulativa_y_movimientos_anteriores_a_su_conversion(
                 esgratis=movimiento.fields['id_contramov'] is None,
                 **cuentas_del_mov
             )
-
-        else:
-            movimiento.pos_cta_receptora = pos_contracuenta
-            traspasos_de_saldo.append(movimiento)
 
     # Una vez terminados de recorrer los movimientos de la cuenta y ya
     # generados los movimientos anteriores a su conversión, se procede
@@ -241,7 +231,7 @@ def _cargar_cuentas_y_movimientos(
 
     cuentas_independientes = SerializedDb([x for x in cuentas if x.es_cuenta_independiente()])
     for cuenta in cuentas_independientes:
-        cuenta_db = _crear_o_tomar(cuenta)
+        cuenta_db = _tomar_o_crear_cuenta(cuenta)
 
         if cuenta.es_acumulativa():
             # Buscar posibles movimientos en los que haya intervenido la cuenta
