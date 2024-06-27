@@ -98,6 +98,27 @@ def _tomar_cuenta_ser(
     return CuentaSerializada(container.tomar(model="diario.cuenta", slug=slug))
 
 
+def _mov_es_traspaso_a_subcuenta(
+        movimiento: MovimientoSerializado,
+        cuenta: CuentaSerializada,
+        cuentas: SerializedDb[CuentaSerializada],
+) -> bool:
+    if movimiento.es_entrada_o_salida():
+        return False
+
+    pos_cuenta = "cta_entrada" if movimiento.fields["cta_entrada"] == [cuenta.fields["slug"]] else "cta_salida"
+    pos_contracuenta = "cta_salida" if pos_cuenta == "cta_entrada" else "cta_entrada"
+    slug_contracuenta = _slug_cuenta_mov(movimiento, pos_contracuenta, cuentas)
+    if CuentaInteractiva.filtro(slug=slug_contracuenta).exists():
+        return False
+
+    contracuenta_ser = _tomar_cuenta_ser(slug_contracuenta, container=cuentas)
+    if not contracuenta_ser.es_subcuenta_de(cuenta):
+        return False
+
+    return True
+
+
 def _cargar_cuenta_acumulativa_y_movimientos_anteriores_a_su_conversion(
         cuentas: SerializedDb[CuentaSerializada],
         cuenta: CuentaSerializada,
@@ -114,19 +135,13 @@ def _cargar_cuenta_acumulativa_y_movimientos_anteriores_a_su_conversion(
 
         # Suponemos que cualquier movimiento de la cuenta que no sea de traspaso es anterior a su
         # conversión en acumulativa, así que lo creamos.
-        if movimiento.es_entrada_o_salida():
-            contracuenta_db = None
-            es_traspaso_a_subcuenta = False
-        else:  # Es movimiento de traspaso entre cuentas
+        if not _mov_es_traspaso_a_subcuenta(movimiento, cuenta, cuentas):
             slug_contracuenta = _slug_cuenta_mov(movimiento, pos_contracuenta, cuentas)
             contracuenta_ser = _tomar_cuenta_ser(slug_contracuenta, container=cuentas)
-
-            try:
-                contracuenta_db = CuentaInteractiva.tomar(slug=slug_contracuenta)
-                es_traspaso_a_subcuenta = False
-            except CuentaInteractiva.DoesNotExist:
-                if not contracuenta_ser.es_subcuenta_de(cuenta):
-                    # La contracuenta no es subcuenta de la cuenta. Se la crea.
+            if contracuenta_ser:
+                try:
+                    contracuenta_db = CuentaInteractiva.tomar(slug=slug_contracuenta)
+                except CuentaInteractiva.DoesNotExist:
                     contracuenta_db = Cuenta.crear(
                         nombre=contracuenta_ser.fields["nombre"],
                         slug=contracuenta_ser.fields["slug"],
@@ -135,19 +150,9 @@ def _cargar_cuenta_acumulativa_y_movimientos_anteriores_a_su_conversion(
                         titular=Titular.tomar(titname=contracuenta_ser.titname()),
                         moneda=Moneda.tomar(monname=contracuenta_ser.fields["moneda"][0]),
                     )
+            else:
+                contracuenta_db = None
 
-                    es_traspaso_a_subcuenta = False
-                else:  # La contracuenta es subcuenta de la cuenta.
-                    # Se incluye el movimiento como traspaso de saldo a subcuenta,
-                    # después agregarle un atributo que indica si la cuenta receptora
-                    # es de entrada o de salida..
-                    # No se crea la contracuenta (se la creará después, cuando se divida la cuenta).
-                    contracuenta_db = None
-                    es_traspaso_a_subcuenta = True
-                    movimiento.pos_cta_receptora = pos_contracuenta
-                    traspasos_de_saldo.append(movimiento)
-
-        if not es_traspaso_a_subcuenta:
             cuentas_del_mov = {pos_cuenta: cuenta_db, pos_contracuenta: contracuenta_db}
             Movimiento.crear(
                 fecha=movimiento.fields['dia'][0],
@@ -162,6 +167,10 @@ def _cargar_cuenta_acumulativa_y_movimientos_anteriores_a_su_conversion(
                 esgratis=movimiento.fields['id_contramov'] is None,
                 **cuentas_del_mov
             )
+
+        else:
+            movimiento.pos_cta_receptora = pos_contracuenta
+            traspasos_de_saldo.append(movimiento)
 
     # Una vez terminados de recorrer los movimientos de la cuenta y ya
     # generados los movimientos anteriores a su conversión, se procede
