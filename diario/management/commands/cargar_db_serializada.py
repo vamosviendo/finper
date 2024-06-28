@@ -155,6 +155,21 @@ def _subcuentas_originales(
     return result
 
 
+def _subcuentas_agregadas(
+        subcuentas_cuenta: SerializedDb[CuentaSerializada],
+        fecha_conversion: datetime.date
+) -> list[list[str | datetime.date | Titular]]:
+    return [[
+        x.fields["nombre"],
+        x.fields["slug"],
+        Titular.tomar(titname=x.titname()),
+        x.fields["fecha_creacion"]
+    ]
+        for x in subcuentas_cuenta
+        if x.fields["fecha_creacion"] > fecha_conversion
+    ]
+
+
 def _cargar_cuenta_acumulativa_y_movimientos_anteriores_a_su_conversion(
         cuentas: SerializedDb[CuentaSerializada],
         cuenta: CuentaSerializada,
@@ -213,7 +228,6 @@ def _cargar_cuenta_acumulativa_y_movimientos_anteriores_a_su_conversion(
     subcuentas_conversion = _subcuentas_originales(
         subcuentas_cuenta, fecha_conversion, traspasos_de_saldo, slugs_subcuentas_con_saldo
     )
-
     cuenta_db = cuenta_db.dividir_y_actualizar(
         *subcuentas_conversion,
         fecha=datetime.date(*[int(x) for x in fecha_conversion.split("-")])
@@ -222,15 +236,7 @@ def _cargar_cuenta_acumulativa_y_movimientos_anteriores_a_su_conversion(
     # Se agregan las subcuentas cuya fecha de creación es posterior
     # a la fecha de conversión de la cuenta en acumulativa
     # (creadas mediante el método CuentaAcumulativa.agregar_subcuenta)
-    subcuentas_agregadas = [[
-        x.fields["nombre"],
-        x.fields["slug"],
-        Titular.tomar(titname=x.titname()),
-        x.fields["fecha_creacion"]
-    ]
-        for x in subcuentas_cuenta
-        if x.fields["fecha_creacion"] > fecha_conversion
-    ]
+    subcuentas_agregadas = _subcuentas_agregadas(subcuentas_cuenta, fecha_conversion)
     for subcuenta in subcuentas_agregadas:
         cuenta_db.agregar_subcuenta(*subcuenta)
 
