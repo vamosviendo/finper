@@ -124,6 +124,37 @@ def _contracuenta_db(
     )
 
 
+def _subcuentas_originales(
+        subcuentas_cuenta: SerializedDb[CuentaSerializada],
+        fecha_conversion: datetime.date,
+        traspasos_de_saldo: SerializedDb[MovimientoSerializado],
+        slugs_subcuentas_con_saldo: list[str],
+) -> list[dict[str, str | float | Titular]]:
+    result = []
+    for subc in subcuentas_cuenta.filtrar(fecha_creacion=fecha_conversion):
+        slug_subc = subc.fields["slug"]
+        # Si la subcuenta tiene saldo
+        try:
+            mov = traspasos_de_saldo[slugs_subcuentas_con_saldo.index(slug_subc)]
+            saldo = traspasos_de_saldo.tomar(
+                **{mov.pos_cta_receptora: [slug_subc]}
+            ).fields["_importe"]
+            # TODO: ¿Esto que sigue no debería ser responsabilidad de dividir_entre?:
+            if mov.pos_cta_receptora == "cta_salida":
+                saldo = -saldo
+        except ValueError:  # slug_subc no está en slugs_subcuentas_con_saldo
+            saldo = 0
+
+        result.append({
+            "nombre": subc.fields["nombre"],
+            "slug": subc.fields["slug"],
+            "titular": Titular.tomar(titname=subc.titname()),
+            "saldo": saldo
+        })
+
+    return result
+
+
 def _cargar_cuenta_acumulativa_y_movimientos_anteriores_a_su_conversion(
         cuentas: SerializedDb[CuentaSerializada],
         cuenta: CuentaSerializada,
@@ -178,27 +209,10 @@ def _cargar_cuenta_acumulativa_y_movimientos_anteriores_a_su_conversion(
     # coincide con la fecha de conversión de la cuenta en acumulativa
     # para dividir y convertir la cuenta.
     fecha_conversion = cuenta.campos_polimorficos()["fecha_conversion"]
-    subcuentas_conversion = []
-    for subc in subcuentas_cuenta.filtrar(fecha_creacion=fecha_conversion):
-        slug_subc = subc.fields["slug"]
-        # Si la subcuenta tiene saldo
-        if slug_subc in slugs_subcuentas_con_saldo:
-            mov = traspasos_de_saldo[slugs_subcuentas_con_saldo.index(slug_subc)]
-            saldo = traspasos_de_saldo.tomar(
-                **{mov.pos_cta_receptora: [slug_subc]}
-            ).fields["_importe"]
-            # TODO: ¿Esto que sigue no debería ser responsabilidad de dividir_entre?:
-            if mov.pos_cta_receptora == "cta_salida":
-                saldo = -saldo
-        else:
-            saldo = 0
 
-        subcuentas_conversion.append({
-            "nombre": subc.fields["nombre"],
-            "slug": subc.fields["slug"],
-            "titular": Titular.tomar(titname=subc.titname()),
-            "saldo": saldo
-        })
+    subcuentas_conversion = _subcuentas_originales(
+        subcuentas_cuenta, fecha_conversion, traspasos_de_saldo, slugs_subcuentas_con_saldo
+    )
 
     cuenta_db = cuenta_db.dividir_y_actualizar(
         *subcuentas_conversion,
