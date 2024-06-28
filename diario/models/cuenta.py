@@ -401,7 +401,7 @@ class CuentaInteractiva(Cuenta):
         )
         return cuentas_creadas
 
-    def dividir_y_actualizar(self, *subcuentas: Sequence[dict | Sequence], fecha: date = None) -> Cuenta | CuentaAcumulativa:
+    def dividir_y_actualizar(self, *subcuentas: Sequence[dict | Sequence | int], fecha: date = None) -> Cuenta | CuentaAcumulativa:
         self.dividir_entre(*subcuentas, fecha=fecha)
         return self.tomar_del_slug()
 

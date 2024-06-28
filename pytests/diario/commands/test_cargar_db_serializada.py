@@ -56,7 +56,7 @@ def cuenta_temprana_2(titular: Titular, dia_temprano: Dia, peso: Moneda) -> Cuen
 
 
 @pytest.fixture
-def cuenta_temprana_acumulativa(titular: Titular, dia_temprano: Dia, peso: Moneda) -> CuentaAcumulativa:
+def cuenta_temprana_acumulativa(titular: Titular, dia_temprano: Dia, peso: Moneda) -> Cuenta | CuentaAcumulativa:
     cuenta = Cuenta.crear(
         "cuenta temprana acum", "cta",
         fecha_creacion=dia_temprano.fecha, titular=titular, moneda=peso
@@ -69,7 +69,7 @@ def cuenta_temprana_acumulativa(titular: Titular, dia_temprano: Dia, peso: Moned
 
 
 @pytest.fixture
-def cuenta_2_acumulativa(cuenta_temprana_2: CuentaInteractiva, dia: Dia) -> CuentaAcumulativa:
+def cuenta_2_acumulativa(cuenta_temprana_2: CuentaInteractiva, dia: Dia) -> Cuenta | CuentaAcumulativa:
     return cuenta_temprana_2.dividir_y_actualizar(
         ['subcuenta 1 cuenta 2 acum', 'sc1c2a', 23],
         ['subcuenta 2 cuenta 2 acum', 'sc2c2a'],
@@ -216,7 +216,7 @@ def test_carga_cuentas_con_titular_correcto(cuenta, cuenta_ajena, cuenta_gorda, 
 
     assert len(cuentas) > 0
     for cuenta in cuentas:
-        cuenta_guardada: Cuenta | CuentaAcumulativa = Cuenta.tomar(slug=cuenta.fields["slug"])
+        cuenta_guardada = Cuenta.tomar(slug=cuenta.fields["slug"])
         try:
             titular = cuenta_guardada.titular.titname
         except AttributeError:
