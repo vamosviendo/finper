@@ -18,3 +18,13 @@ def test_funciona_correctamente_con_decimales(cuenta):
     Movimiento.crear(
         'Movimiento con decimales', cta_salida=cuenta, importe=50.32)
     assert cuenta.total_movs() == round(110 - 50.32, 2)
+
+
+def test_computa_correctamente_movimientos_en_moneda_distinta_a_la_de_la_cuenta(cuenta, cuenta_en_dolares, dolar, peso):
+    Movimiento.crear(
+        "Compra de dólares expresada en pesos",
+        cta_entrada=cuenta_en_dolares,
+        cta_salida=cuenta,
+        importe=850, moneda=peso,
+    )
+    assert cuenta_en_dolares.total_movs(), 2 == round(850 * peso.cotizacion_en(dolar), 2)
