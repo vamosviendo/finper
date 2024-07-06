@@ -12,3 +12,4 @@ class Cotizacion(MiModel):
 
     class Meta:
         ordering = ("fecha", )
+        unique_together = ("fecha", "moneda", )
