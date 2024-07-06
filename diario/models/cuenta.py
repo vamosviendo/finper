@@ -460,10 +460,11 @@ class CuentaInteractiva(Cuenta):
             subcuentas_limpias.append(dic_subcuenta)
 
         # En este punto suma saldos subcuentas debe ser igual a self.saldo
-        if sum([x['saldo'] for x in subcuentas_limpias]) != self.saldo:
+        suma_saldos_subcuentas = sum([x['saldo'] for x in subcuentas_limpias])
+        if suma_saldos_subcuentas != self.saldo:
             raise errors.ErrorDeSuma(
                 f"Suma errónea. Saldos de subcuentas "
-                f"deben sumar {self.saldo:.2f}"
+                f"deben sumar {self.saldo:.2f} (suman {suma_saldos_subcuentas})"
             )
 
         return subcuentas_limpias
