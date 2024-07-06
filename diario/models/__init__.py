@@ -1,3 +1,4 @@
+from diario.models.cotizacion import Cotizacion
 from diario.models.cuenta import Cuenta, CuentaAcumulativa, CuentaInteractiva
 from diario.models.dia import Dia
 from diario.models.moneda import Moneda
