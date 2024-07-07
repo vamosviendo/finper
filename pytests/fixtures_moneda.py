@@ -1,9 +1,10 @@
+from datetime import date
 from typing import Optional
 from unittest.mock import MagicMock
 
 import pytest
 
-from diario.models import Moneda
+from diario.models import Moneda, Cotizacion
 
 
 @pytest.fixture
@@ -11,27 +12,28 @@ def peso() -> Moneda:
     return Moneda.crear(
         nombre='Peso',
         monname='p',
-        cotizacion=1.0,
     )
 
 
 @pytest.fixture
-def dolar() -> Moneda:
-    return Moneda.crear(
+def dolar(fecha: date) -> Moneda:
+    mon = Moneda.crear(
         nombre='Dolar',
         plural='dólares',
         monname='uss',
-        cotizacion=805.0,
     )
+    Cotizacion.crear(moneda=mon, fecha=fecha, importe=805.0)
+    return mon
 
 
 @pytest.fixture
-def euro() -> Moneda:
-    return Moneda.crear(
+def euro(fecha: date) -> Moneda:
+    mon = Moneda.crear(
         nombre='Euro',
         monname='eu',
-        cotizacion=1100,
     )
+    Cotizacion.crear(moneda=mon, fecha=fecha, importe=110)
+    return mon
 
 
 @pytest.fixture(autouse=True)

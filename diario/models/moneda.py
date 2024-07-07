@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+from datetime import date
 from typing import Self
 
+from django.core.exceptions import ValidationError
 from django.db import models
 
+from diario.models import Cotizacion
 from diario.settings_app import MONEDA_BASE
 from vvmodel.models import MiModel
 
@@ -17,7 +20,6 @@ class Moneda(MiModel):
     monname = models.CharField(max_length=100, unique=True)
     nombre = models.CharField(max_length=100, unique=True)
     _plural = models.CharField(max_length=100, null=True, blank=True)
-    cotizacion = models.FloatField()
 
     objects = MonedaManager()
 
@@ -26,6 +28,22 @@ class Moneda(MiModel):
 
     def natural_key(self) -> tuple[str]:
         return (self.monname, )
+
+    @property
+    def cotizacion(self) -> float:
+        try:
+            return self.cotizaciones.last().importe
+        except AttributeError:
+            return 1
+
+    @cotizacion.setter
+    def cotizacion(self, value: float):
+        try:
+            Cotizacion.crear(moneda=self, fecha=date.today(), importe=value)
+        except ValidationError:     # Ya existe una cotización con esa fecha
+            cot = Cotizacion.tomar(moneda=self, fecha=date.today())
+            cot.importe = value
+            cot.save()
 
     @property
     def plural(self) -> str:
