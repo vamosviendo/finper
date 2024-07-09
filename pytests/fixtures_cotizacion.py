@@ -6,8 +6,8 @@ from diario.models import Moneda, Cotizacion
 
 
 @pytest.fixture
-def cotizacion(dolar: Moneda, fecha: date) -> Cotizacion:
-    return Cotizacion.crear(moneda=dolar, fecha=fecha, importe=335)
+def cotizacion(dolar: Moneda, fecha_anterior: date) -> Cotizacion:
+    return Cotizacion.crear(moneda=dolar, fecha=fecha_anterior, importe=335)
 
 
 @pytest.fixture

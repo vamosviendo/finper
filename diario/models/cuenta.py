@@ -143,7 +143,7 @@ class Cuenta(PolymorphModel):
                 self.moneda = Moneda.tomar(pk=id_moneda_base())
             except errors.ErrorMonedaBaseInexistente:
                 self.moneda = Moneda.crear(
-                    monname=MONEDA_BASE, nombre=MONEDA_BASE, cotizacion=1
+                    monname=MONEDA_BASE, nombre=MONEDA_BASE
                 )
 
         super().clean_fields(exclude=exclude)

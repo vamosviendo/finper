@@ -38,12 +38,9 @@ class Moneda(MiModel):
 
     @cotizacion.setter
     def cotizacion(self, value: float):
-        try:
-            Cotizacion.crear(moneda=self, fecha=date.today(), importe=value)
-        except ValidationError:     # Ya existe una cotización con esa fecha
-            cot = Cotizacion.tomar(moneda=self, fecha=date.today())
-            cot.importe = value
-            cot.save()
+        """ Si no existe una cotización para la fecha, la crea.
+            Si existe, actualiza el importe. """
+        self._cotizacion = Cotizacion(fecha=date.today(), importe=value)
 
     @property
     def plural(self) -> str:
@@ -61,6 +58,19 @@ class Moneda(MiModel):
 
     def cotizacion_en(self, otra_moneda: Self) -> float:
         return self.cotizacion / otra_moneda.cotizacion
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if hasattr(self, "_cotizacion"):
+            _cotizacion = getattr(self, "_cotizacion")
+            moneda = self.tomar_de_bd()
+            try:
+                Cotizacion.crear(moneda=moneda, fecha=_cotizacion.fecha, importe=_cotizacion.importe)
+            except ValidationError:
+                cot = Cotizacion.tomar(moneda=moneda, fecha=_cotizacion.fecha)
+                cot.importe = _cotizacion.importe
+                cot.save()
+
 
     def as_view_context(self) -> dict[str, str | float]:
         return {
