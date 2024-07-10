@@ -1,15 +1,4 @@
-from datetime import date
-
-import pytest
-
 from diario.models import Moneda, Cotizacion
-
-
-@pytest.fixture
-def mock_today(mocker):
-    mock = mocker.patch("diario.models.moneda.date")
-    mock.today.return_value = date(2020, 5, 2)
-    return mock.today
 
 
 def test_si_tiene_atributo__cotizacion_crea_cotizacion(mock_today):

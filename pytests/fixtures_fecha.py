@@ -1,4 +1,5 @@
 from datetime import date
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -31,3 +32,10 @@ def fecha_tardia() -> date:
 @pytest.fixture
 def fecha_tardia_plus() -> date:
     return date(2017, 3, 14)
+
+
+@pytest.fixture
+def mock_today(mocker) -> MagicMock:
+    mock = mocker.patch("diario.models.moneda.date")
+    mock.today.return_value = date(2024, 5, 2)
+    return mock.today
