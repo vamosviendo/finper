@@ -5,7 +5,7 @@ Django==4.2.1
 django-case-insensitive-field==1.0.7
 django-ordered-field==1.0.0
 django-stubs==4.2.6
-urllib3==1.26.4
+urllib3==1.26.16
 
 
 # test
