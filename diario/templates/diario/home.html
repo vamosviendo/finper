@@ -190,7 +190,7 @@
           <th id="id_th_importe">Importe</th>
           <th>Menu</th>
         </tr></thead>
-        {% for mov in dia.movimientos reversed %}
+        {% for mov in dia.movimientos %}
         <tr id="id_row_mov_{{ mov.identidad }}" class="class_row_mov{% if mov.pk == pk %} mov_selected{% endif %}">
 
           <td class="class_td_concepto" title="{{ mov.detalle }}">
