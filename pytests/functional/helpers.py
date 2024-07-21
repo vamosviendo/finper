@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import date
 from typing import List
 from urllib.parse import urlparse
 
@@ -10,6 +11,7 @@ from selenium.webdriver.remote.webelement import WebElement
 
 from diario.models import Titular, Cuenta, CuentaInteractiva, CuentaAcumulativa, Movimiento
 from utils.numeros import float_format
+from utils.tiempo import dia_de_la_semana
 from vvsteps.driver import MiFirefox, MiWebElement
 from vvsteps.helpers import esperar
 
@@ -42,7 +44,7 @@ class FinperFirefox(MiFirefox):
             pass
 
     # TODO: pasar a MiFirefox
-    def completar_form(self, **kwargs: str):
+    def completar_form(self, **kwargs: str | date):
         for key, value in kwargs.items():
             self.completar(f"id_{key}", value)
         self.pulsar()
@@ -54,17 +56,25 @@ class FinperFirefox(MiFirefox):
         self.esperar_elemento(titular.nombre, By.LINK_TEXT).click()
 
     def esperar_movimiento(self, columna: str, contenido: str) -> MiWebElement:
-        movimientos = self.esperar_elementos('class_row_mov', By.CLASS_NAME)
         try:
-            return next(
-                x for x in movimientos
-                if x.find_element_by_class_name(f'class_td_{columna}').text
-                    == contenido
-            )
-        except StopIteration:
+            return self.esperar_movimientos(columna, contenido)[0]
+        except IndexError:
             raise NoSuchElementException(
-                f'Contenido {contenido} no encontrado en columna {columna}'
+                f'Contenido "{contenido}" no encontrado en columna "{columna}"'
             )
+
+    def esperar_movimientos(self, columna: str, contenido: str) -> list[MiWebElement]:
+        return [
+            x for x in self.esperar_elementos("class_row_mov", By.CLASS_NAME, fail=False)
+            if x.find_element_by_class_name(f"class_td_{columna}").text == contenido
+        ]
+
+    def esperar_dia(self, fecha: date) -> MiWebElement:
+        return next(
+            x for x in self.esperar_elementos("class_div_dia")
+            if x.find_element_by_class_name("class_span_fecha_dia").text ==
+            f"{dia_de_la_semana[fecha.weekday()]} {fecha.strftime('%Y-%m-%d')}"
+        )
 
     def esperar_saldo_en_moneda_de_cuenta(self, slug: str) -> MiWebElement:
         return self\
