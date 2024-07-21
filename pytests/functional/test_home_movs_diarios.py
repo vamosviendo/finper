@@ -5,6 +5,7 @@ from selenium.webdriver.common.by import By
 from diario.models import Dia
 from diario.utils.utils_saldo import saldo_general_historico
 from utils.numeros import float_format
+from utils.tiempo import dia_de_la_semana
 
 
 def test_movimientos_agrupados_por_dia(browser, conjunto_movimientos_varios_dias):
@@ -18,13 +19,18 @@ def test_movimientos_agrupados_por_dia(browser, conjunto_movimientos_varios_dias
     browser.ir_a_pag()
     dias = browser.esperar_elementos("class_div_dia")
     assert len(dias) == 7
-    assert dias[0].esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text == fecha_ultimo_mov.strftime('%Y-%m-%d')
+    assert \
+        dias[0].esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text == \
+        f"{dia_de_la_semana[fecha_ultimo_mov.weekday()]} {fecha_ultimo_mov.strftime('%Y-%m-%d')}"
 
     # Los movimientos aparecen agrupados por día
     for dia in dias:
-        movs_dia = dia.esperar_elementos("class_row_mov")
+        try:
+            movs_dia = dia.esperar_elementos("class_row_mov")
+        except AssertionError:
+            raise AssertionError("No se encontraron elemento en día " + dia.esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text)
         str_fecha = dia.esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text
-        fecha = datetime.strptime(str_fecha, "%Y-%m-%d")
+        fecha = datetime.strptime(str_fecha.split()[1], "%Y-%m-%d")
         obj_dia = Dia.tomar(fecha=fecha)
         ult_mov = movs.filter(dia=obj_dia).last()
         saldo_ult_mov = saldo_general_historico(ult_mov)
