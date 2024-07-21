@@ -44,3 +44,6 @@ class Posicion:
 
     def __ge__(self, other) -> bool:
         return self.__gt__(other) or self.__eq__(other)
+
+
+dia_de_la_semana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]

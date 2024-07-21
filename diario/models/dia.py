@@ -25,6 +25,13 @@ class Dia (MiModel):
     def __str__(self) -> str:
         return self.fecha.strftime('%Y-%m-%d')
 
+    def de_la_semana(self):
+        from utils.tiempo import dia_de_la_semana
+        return dia_de_la_semana[self.fecha.weekday()]
+
+    def str_dia_semana(self):
+        return f"{self.de_la_semana()} {self.__str__()}"
+
     def natural_key(self) -> tuple[str]:
         return (self.fecha, )
 
