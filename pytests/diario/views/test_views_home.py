@@ -45,17 +45,22 @@ def test_pasa_monedas_a_template(peso, dolar, euro, response):
         assert moneda.as_view_context() in response.context.get('monedas')
 
 
-def test_pasa_dias_a_template(dia, dia_anterior, dia_posterior, dia_tardio, response):
-    for d in (dia, dia_anterior, dia_posterior, dia_tardio):
+def test_pasa_dias_a_template(dia_con_movs, dia_anterior_con_movs, dia_posterior_con_movs, dia_tardio_con_movs, response):
+    for d in (dia_con_movs, dia_anterior_con_movs, dia_posterior_con_movs, dia_tardio_con_movs):
         assert d in response.context.get('dias')
 
-def test_pasa_dias_ordenados_por_fecha_invertida(dia, dia_anterior, dia_posterior, dia_tardio, response):
-    assert response.context.get('dias')[0] == dia_tardio
+def test_pasa_dias_ordenados_por_fecha_invertida(
+        dia_con_movs, dia_anterior_con_movs, dia_posterior_con_movs, dia_tardio_con_movs, response):
+    assert response.context.get('dias')[0] == dia_tardio_con_movs
 
 
 def test_pasa_solo_7_dias(mas_de_7_dias, response):
     assert len(response.context.get('dias')) == 7
     assert mas_de_7_dias.first() not in response.context.get('dias')
+
+
+def test_no_pasa_dias_sin_movimientos(dia, dia_anterior, dia_posterior, entrada, salida_posterior, response):
+    assert dia_anterior not in response.context.get('dias')
 
 
 def test_puede_pasar_movimientos_posteriores(mas_de_7_dias, client):

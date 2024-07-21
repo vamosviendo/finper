@@ -219,10 +219,10 @@ def mov_distintas_monedas(
 @pytest.fixture
 def conjunto_movimientos_varios_dias(cuenta, cuenta_2, cuenta_ajena, cuenta_ajena_2, request) -> QuerySet[Movimiento]:
     cuentas = list(CuentaInteractiva.todes())
-    for x in range(1,18):
+    for x in range(1, 18):
         dia = Dia.crear(fecha=date(2022, 5, x))
         y = randint(0, len(cuentas)-1)
-        movs_del_dia = randint(1, 4)
+        movs_del_dia = randint(2, 5)
         for z in range(1, movs_del_dia):
             cta = cuentas[y]
             if x not in {5, 13}:

@@ -3,7 +3,7 @@ from datetime import date
 import pytest
 from django.core.exceptions import ValidationError
 
-from diario.models import Dia
+from diario.models import Dia, Movimiento, Cuenta, Titular
 
 
 @pytest.fixture
@@ -17,6 +17,11 @@ def dia_anterior(fecha_anterior: date) -> Dia:
 
 
 @pytest.fixture
+def dia_anterior_con_movs(dia_anterior: Dia, entrada_anterior: Movimiento) -> Dia:
+    return dia_anterior
+
+
+@pytest.fixture
 def dia(fecha: date) -> Dia:
     try:
         return Dia.crear(fecha=fecha)
@@ -25,13 +30,28 @@ def dia(fecha: date) -> Dia:
 
 
 @pytest.fixture
+def dia_con_movs(dia: Dia, entrada: Movimiento, salida: Movimiento, traspaso: Movimiento) -> Dia:
+    return dia
+
+
+@pytest.fixture
 def dia_posterior(fecha_posterior: date) -> Dia:
     return Dia.crear(fecha=fecha_posterior)
 
 
 @pytest.fixture
+def dia_posterior_con_movs(dia_posterior: Dia, salida_posterior: Movimiento) -> Dia:
+    return dia_posterior
+
+
+@pytest.fixture
 def dia_tardio(fecha_tardia: date) -> Dia:
     return Dia.crear(fecha=fecha_tardia)
+
+
+@pytest.fixture
+def dia_tardio_con_movs(dia_tardio: Dia, entrada_tardia: Movimiento) -> Dia:
+    return dia_tardio
 
 
 @pytest.fixture
@@ -45,6 +65,19 @@ def dia_hoy() -> Dia:
 
 
 @pytest.fixture
-def mas_de_7_dias(dia, dia_temprano, dia_tardio, dia_posterior, dia_anterior, dia_tardio_plus, dia_hoy):
-    Dia.crear(fecha=date(2001, 1, 2))
+def mas_de_7_dias(
+        dia_con_movs,
+        dia_temprano,
+        dia_tardio_con_movs,
+        dia_posterior_con_movs,
+        dia_anterior_con_movs,
+        dia_tardio_plus,
+        dia_hoy):
+    titular = Titular.crear(nombre="titular_creado", titname="titc", fecha_alta=date(2001, 1, 2))
+    cuenta = Cuenta.crear("cuenta_creada", "ccr", titular=titular, fecha_creacion=date(2001, 1, 2))
+    Movimiento.crear(fecha=dia_temprano.fecha, concepto="mov", cta_entrada=cuenta, importe=100)
+    Movimiento.crear(fecha=dia_tardio_plus.fecha, concepto="mov", cta_entrada=cuenta, importe=100)
+    Movimiento.crear(fecha=dia_hoy.fecha, concepto="mov", cta_entrada=cuenta, importe=100)
+    Movimiento.crear(
+        fecha=date(2001, 1, 2), concepto="mov", cta_entrada=cuenta, importe=100)
     return Dia.todes()

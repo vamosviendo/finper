@@ -1,34 +1,34 @@
-from datetime import date, datetime
+from datetime import datetime
 
 from selenium.webdriver.common.by import By
 
 from diario.models import Dia
 from diario.utils.utils_saldo import saldo_general_historico
 from utils.numeros import float_format
-from utils.tiempo import dia_de_la_semana
 
 
 def test_movimientos_agrupados_por_dia(browser, conjunto_movimientos_varios_dias):
     # Dada una cantidad de movimientos distribuidos en 18 días, con algunos días
     # sin movimientos y otros con más de un movimiento
     movs = conjunto_movimientos_varios_dias
-    fecha_ultimo_mov = Dia.ultime().fecha
 
     # En la sección de movimientos de la página principal aparecen los movimientos
-    # de los últimos 7 días, ordenados por fecha descendente
+    # de los últimos 7 días, ordenados por fecha descendente.
+    # Si no hay movimientos en un día determinado, éste no aparece.
     browser.ir_a_pag()
     dias = browser.esperar_elementos("class_div_dia")
+    fechas = [x.esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text for x in dias]
+    dias_con_movimientos = [x for x in Dia.todes() if x.movimientos.count() > 0]
     assert len(dias) == 7
-    assert \
-        dias[0].esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text == \
-        f"{dia_de_la_semana[fecha_ultimo_mov.weekday()]} {fecha_ultimo_mov.strftime('%Y-%m-%d')}"
+    assert "13" not in [x.split("-")[-1] for x in fechas]
+    for i, dia_bd in enumerate(reversed(dias_con_movimientos[-7:])):
+        assert \
+            dias[i].esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text == \
+            dia_bd.str_dia_semana()
 
     # Los movimientos aparecen agrupados por día
     for dia in dias:
-        try:
-            movs_dia = dia.esperar_elementos("class_row_mov")
-        except AssertionError:
-            raise AssertionError("No se encontraron elemento en día " + dia.esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text)
+        movs_dia = dia.esperar_elementos("class_row_mov")
         str_fecha = dia.esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text
         fecha = datetime.strptime(str_fecha.split()[1], "%Y-%m-%d")
         obj_dia = Dia.tomar(fecha=fecha)
