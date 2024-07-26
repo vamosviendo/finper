@@ -1,11 +1,13 @@
-import pytest
-
 from diario.models import Movimiento, Cuenta, CuentaInteractiva
 
 
 def test_devuelve_todos_los_movimientos_de_una_cuenta(cuenta, entrada, traspaso_posterior, entrada_tardia):
     for mov in (entrada, traspaso_posterior, entrada_tardia):
         assert mov in cuenta.movs()
+
+
+def test_no_incluye_movimientos_que_no_sean_de_la_cuenta(cuenta, entrada, entrada_otra_cuenta, entrada_tardia):
+    assert entrada_otra_cuenta not in cuenta.movs()
 
 
 def test_incluye_movimientos_de_subcuentas(cuenta: CuentaInteractiva):
