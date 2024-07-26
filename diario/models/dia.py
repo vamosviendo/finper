@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import date
 from typing import Optional, Self, TYPE_CHECKING
 
@@ -7,7 +9,7 @@ from django.db.models import Q
 from vvmodel.models import MiModel
 
 if TYPE_CHECKING:
-    from diario.models import CuentaInteractiva, Movimiento
+    from diario.models import Cuenta, CuentaInteractiva, Movimiento
 
 
 class DiaManager(models.Manager):
@@ -39,6 +41,12 @@ class Dia (MiModel):
     @property
     def identidad(self) -> str:
         return self.fecha.strftime('%Y%m%d')
+
+    def as_view_context(self, cuenta: 'Cuenta' = None) -> dict[str, date | list['Movimiento']]:
+        return {
+            "fecha": self.fecha,
+            "movimientos": list(self.movimientos_filtrados(cuenta=cuenta))
+        }
 
     @classmethod
     def hoy(cls) -> Self:
