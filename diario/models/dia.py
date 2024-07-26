@@ -42,10 +42,12 @@ class Dia (MiModel):
     def identidad(self) -> str:
         return self.fecha.strftime('%Y%m%d')
 
-    def as_view_context(self, cuenta: 'Cuenta' = None) -> dict[str, date | list['Movimiento']]:
+    def as_view_context(self, cuenta: 'Cuenta' = None) -> dict[str, date | str | float | list['Movimiento']]:
         return {
             "fecha": self.fecha,
-            "movimientos": list(self.movimientos_filtrados(cuenta=cuenta))
+            "str_dia_semana": self.str_dia_semana(),
+            "saldo": self.saldo(),
+            "movimientos": list(self.movimientos_filtrados(cuenta=cuenta)),
         }
 
     @classmethod
