@@ -2,11 +2,12 @@ from datetime import date
 from typing import Optional, Self, TYPE_CHECKING
 
 from django.db import models
+from django.db.models import Q
 
 from vvmodel.models import MiModel
 
 if TYPE_CHECKING:
-    from diario.models import Movimiento
+    from diario.models import CuentaInteractiva, Movimiento
 
 
 class DiaManager(models.Manager):
@@ -64,6 +65,11 @@ class Dia (MiModel):
     @property
     def movimientos(self) -> models.QuerySet['Movimiento']:
         return self.movimiento_set.all()
+
+    def movimientos_filtrados(self, cuenta: 'CuentaInteractiva' = None) -> models.QuerySet['Movimiento']:
+        if cuenta:
+            return self.movimientos.filter(Q(cta_entrada=cuenta) | Q(cta_salida=cuenta))
+        return self.movimientos
 
     def saldo(self) -> float:
         from diario.utils.utils_saldo import saldo_general_historico
