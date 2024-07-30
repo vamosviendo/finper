@@ -5,6 +5,7 @@ from selenium.webdriver.common.by import By
 from diario.models import CuentaAcumulativa, CuentaInteractiva, Movimiento
 from pytests.functional.helpers import texto_en_hijos_respectivos
 from utils.numeros import float_format
+from utils.tiempo import str2date
 
 
 @pytest.fixture
@@ -26,10 +27,34 @@ def entrada_subcuenta(subcuenta_otro_titular: CuentaInteractiva) -> Movimiento:
     )
 
 
+def serializar_dias_pagina(browser):
+    divs_dia = browser.esperar_elementos("class_div_dia")
+    result = list()
+    for dia in divs_dia:
+        # print("FECHA:", dia.esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text, end="-")
+        # print("MOVIMIENTOS:", len(dia.esperar_elementos("class_row_mov")))
+        # for mov in dia.esperar_elementos("class_row_mov"):
+        #     print(mov.get_attribute("innerHTML"))
+        result.append({
+        'fecha': dia.esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text,
+        'movimientos': [{
+            'webelement': mov,
+            'concepto': mov.esperar_elemento("class_td_concepto", By.CLASS_NAME).text,
+            'importe': mov.esperar_elemento("class_td_importe", By.CLASS_NAME).text,
+            'cta_entrada': mov.esperar_elemento("class_td_cta_entrada", By.CLASS_NAME).text,
+            'cta_salida': mov.esperar_elemento("class_td_cta_salida", By.CLASS_NAME).text,
+        } for mov in dia.esperar_elementos("class_row_mov")]
+    })
+    return result
+
+
 def test_detalle_de_cuenta_interactiva(
         browser,
         titular, otro_titular, titular_gordo,
-        cuenta, entrada, salida, salida_posterior, entrada_otra_cuenta):
+        cuenta, entrada, salida, salida_posterior, entrada_otra_cuenta, salida_tardia_tercera_cuenta):
+    fecha = entrada.dia.str_dia_semana()
+    fecha_posterior = salida_posterior.dia.str_dia_semana()
+
     # Vamos a la página de inicio
     browser.ir_a_pag()
 
@@ -49,9 +74,25 @@ def test_detalle_de_cuenta_interactiva(
     # Y vemos que no aparecen cuentas en la sección de cuentas
     assert browser.esperar_elementos('class_link_cuenta', fail=False) == []
 
+    # Y vemos que sólo los días en los que hay movimientos en los que interviene
+    # la cuenta aparecen en la sección de movimientos
+    dias_pag = browser.esperar_elementos("class_div_dia")
+    fechas_pag = [
+        x.esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text
+        for x in dias_pag
+    ]
+    assert fechas_pag == [fecha_posterior, fecha]
+
     # Y vemos que solo los movimientos en los que interviene la cuenta aparecen
-    # en la sección de movimientos
-    browser.comparar_movimientos_de(cuenta)
+    # dentro de cada día
+    for dia_pag in dias_pag:
+        fecha_pag = dia_pag.esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text
+        browser.comparar_movimientos_de_fecha_de(
+            cuenta,
+            fecha=str2date(fecha_pag.split()[1]),
+            container=dia_pag
+        )
+
     assert set(cuenta.movs()) != set(Movimiento.todes())
 
     # Cuando cliqueamos en el ícono de agregar cuenta, accedemos a la página
@@ -59,22 +100,30 @@ def test_detalle_de_cuenta_interactiva(
     browser.esperar_elemento("id_link_cuenta_nueva").click()
     browser.assert_url(reverse('cta_div', args=[cuenta.slug]))
 
-    # Cuando cliqueamos en un movimiento, solo se muestran los movimientos
-    # relacionados con la cuenta, con el movimiento cliqueado resaltado
+    # Cuando cliqueamos en un movimiento, sólo se muestran los días con
+    # movimientos relacionados con la cuenta, y en esos días se muestran
+    # sólo los movimientos relacionados con la cuenta, con el movimiento
+    # cliqueado resaltado.
     browser.ir_a_pag(reverse('cuenta', args=[cuenta.slug]))
-    links_movimiento = browser.esperar_elementos("class_link_movimiento")
-    links_movimiento[1].click()
-    browser.comparar_movimientos_de(cuenta)
-    assert set(cuenta.movs()) != set(Movimiento.todes())
-    movs_pagina = browser.esperar_elementos("class_row_mov")
-    assert "mov_selected" in movs_pagina[1].get_attribute("class")
+    dias_pag = serializar_dias_pagina(browser)
+
+    dias_pag[1]["movimientos"][0]["webelement"].esperar_elemento("class_link_movimiento", By.CLASS_NAME).click()
+
+    dias_pag_nueva = serializar_dias_pagina(browser)
+    for i, dia in enumerate(dias_pag_nueva):
+        assert dia["fecha"] == dias_pag[i]["fecha"]
+        for j, mov in enumerate(dia["movimientos"]):
+            keys_a_comparar = [key for key in mov.keys() if key != "webelement"]
+            for key in keys_a_comparar:
+                assert mov[key] == dias_pag[i]["movimientos"][j][key]
+    assert "mov_selected" in dias_pag_nueva[1]["movimientos"][0]["webelement"].get_attribute("class")
 
     # Y vemos que en el saldo de la página aparece el saldo histórico
     # de la cuenta al momento del movimiento
     nombre_cuenta = browser.esperar_elemento(
         'id_titulo_saldo_gral'
     ).text.strip()
-    movimiento = cuenta.movs()[1]
+    movimiento = cuenta.movs()[0]
 
     assert nombre_cuenta == (f"{cuenta.nombre} (fecha alta: {cuenta.fecha_creacion}) "
                               f"en movimiento {movimiento.orden_dia} "

@@ -47,3 +47,7 @@ class Posicion:
 
 
 dia_de_la_semana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+
+
+def str2date(string: str) -> date:
+    return date(*[int(x) for x in string.split("-")])

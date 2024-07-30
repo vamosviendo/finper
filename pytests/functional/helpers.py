@@ -81,15 +81,38 @@ class FinperFirefox(MiFirefox):
             .esperar_elemento(f'id_row_cta_{slug}')\
             .esperar_elemento(f'.class_saldo_cuenta.mon_cuenta', By.CSS_SELECTOR)
 
-    def comparar_movimientos_de(self, ente: Cuenta | Titular):
-        """ Dada una cuenta, comparar sus movimientos con los que aparecen en
+    def comparar_dias_de(self, cuenta: Cuenta):
+        """ Dada una cuenta, comparar sus días con los que
+            aparecen en la página
+        """
+        fechas_pag = [x.text for x in self.esperar_elementos("class_span_fecha_dia")]
+        fechas_bd = [x.str_dia_semana() for x in cuenta.dias()]
+        assert fechas_pag == fechas_bd
+
+    def comparar_movimientos_de(self, ente: Cuenta | Titular, container: WebElement = None):
+        """ Dado una ente que puede ser una cuenta o un titular,
+            comparar sus movimientos con los que aparecen en
             la página. """
+        container = container or self
         conceptos_mov = [
-            x.text for x in self.esperar_elementos(
+            x.text for x in container.esperar_elementos(
                 '.class_row_mov td.class_td_concepto', By.CSS_SELECTOR
         )]
         assert conceptos_mov == [
-            x['concepto'] for x in reversed(ente.as_view_context()['movimientos'])
+            x['concepto'] for x in ente.as_view_context()['movimientos']
+        ]
+
+    def comparar_movimientos_de_fecha_de(self, ente: Cuenta | Titular, fecha: date, container: WebElement = None):
+        """ Dado una ente que puede ser una cuenta o un titular,
+            comparar sus movimientos con los que aparecen en
+            la página en el día de la fecha dada. """
+        container = container or self
+        conceptos_mov = [
+            x.text for x in container.esperar_elementos(
+                '.class_row_mov td.class_td_concepto', By.CSS_SELECTOR
+        )]
+        assert conceptos_mov == [
+            x['concepto'] for x in ente.as_view_context()['movimientos'] if x["fecha"] == fecha
         ]
 
     def comparar_titular(self, titular: Titular):
