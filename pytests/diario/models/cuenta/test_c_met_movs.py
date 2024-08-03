@@ -31,5 +31,9 @@ def test_incluye_movimientos_de_subcuentas(cuenta: CuentaInteractiva):
     assert mov_subsubc in cuenta.movs()
 
 
-def test_devuelve_movimientos_ordenados_por_fecha(cuenta, traspaso_posterior, entrada, entrada_tardia):
-    assert list(cuenta.movs()) == [entrada, traspaso_posterior, entrada_tardia]
+def test_devuelve_movimientos_ordenados_por_fecha_y_orden_dia(cuenta, traspaso_posterior, entrada, salida, entrada_tardia):
+    entrada.orden_dia = 1
+    entrada.save()
+    salida.refresh_from_db()
+
+    assert list(cuenta.movs()) == [salida, entrada, traspaso_posterior, entrada_tardia]

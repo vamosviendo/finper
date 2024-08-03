@@ -172,13 +172,15 @@ class Cuenta(PolymorphModel):
         """ Devuelve movimientos directos de la cuenta en una fecha dada"""
         return self.movs_directos().filter(dia=dia)
 
-    def movs(self, order_by: str = 'dia') -> models.QuerySet[Movimiento]:
+    def movs(self, order_by: list[str] = None) -> models.QuerySet[Movimiento]:
         """ Devuelve movimientos propios y de sus subcuentas
-            ordenados por fecha.
+            ordenados por fecha y orden_dia.
             Antes de protestar que devuelve lo mismo que movs_directos()
             tener en cuenta que está sobrescrita en CuentaAcumulativa
             """
-        return self.movs_directos().order_by(order_by)
+        if order_by is None:
+            order_by = ['dia', 'orden_dia']
+        return self.movs_directos().order_by(*order_by)
 
     def dias(self) -> models.QuerySet[Dia]:
         """ Devuelve días en los que haya movimientos propios y de sus subcuentas
@@ -642,13 +644,15 @@ class CuentaAcumulativa(Cuenta):
         self.manejar_cambios()
         super().save(*args, **kwargs)
 
-    def movs(self, order_by: str = 'dia') -> models.QuerySet[Movimiento]:
+    def movs(self, order_by: list[str] = None) -> models.QuerySet[Movimiento]:
         """ Devuelve movimientos propios y de sus subcuentas
-            ordenados por fecha."""
+            ordenados por fecha y orden_dia."""
+        if order_by is None:
+            order_by = ['dia', 'orden_dia']
         result = super().movs(order_by=order_by)
         for sc in self.subcuentas.all():
             result = result | sc.movs(order_by=order_by)
-        return result.order_by(order_by)
+        return result.order_by(*order_by)
 
     def movs_conversion(self) -> models.QuerySet[Movimiento]:
         return self.movs().filter(convierte_cuenta__in=campos_cuenta)
