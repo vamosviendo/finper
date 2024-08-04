@@ -78,7 +78,7 @@ class Dia (MiModel):
 
     def movimientos_filtrados(self, cuenta: 'CuentaInteractiva' = None) -> models.QuerySet['Movimiento']:
         if cuenta:
-            return self.movimientos.filter(Q(cta_entrada=cuenta) | Q(cta_salida=cuenta))
+            return cuenta.movs().filter(dia=self)
         return self.movimientos
 
     def saldo(self) -> float:
