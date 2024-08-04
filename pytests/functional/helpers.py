@@ -11,7 +11,7 @@ from selenium.webdriver.remote.webelement import WebElement
 
 from diario.models import Titular, Cuenta, CuentaInteractiva, CuentaAcumulativa, Movimiento
 from utils.numeros import float_format
-from utils.tiempo import dia_de_la_semana
+from utils.tiempo import dia_de_la_semana, str2date
 from vvsteps.driver import MiFirefox, MiWebElement
 from vvsteps.helpers import esperar
 
@@ -83,11 +83,19 @@ class FinperFirefox(MiFirefox):
 
     def comparar_dias_de(self, cuenta: Cuenta):
         """ Dada una cuenta, comparar sus días con los que
-            aparecen en la página
+            aparecen en la página.
         """
-        fechas_pag = [x.text for x in self.esperar_elementos("class_span_fecha_dia")]
-        fechas_bd = [x.str_dia_semana() for x in cuenta.dias()]
-        assert fechas_pag == fechas_bd
+        dias_cuenta = cuenta.dias().reverse()
+        dias_pag = self.esperar_elementos("class_div_dia")
+        for index, dia in enumerate(dias_pag):
+            fecha_pag = dia.esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text
+            fecha_bd = dias_cuenta[index].str_dia_semana()
+            assert fecha_pag == fecha_bd
+            self.comparar_movimientos_de_fecha_de(
+                cuenta,
+                fecha=str2date(fecha_pag.split()[1]),
+                container=dia
+            )
 
     def comparar_movimientos_de(self, ente: Cuenta | Titular, container: WebElement = None):
         """ Dado una ente que puede ser una cuenta o un titular,

@@ -119,6 +119,7 @@ def cuenta_acumulativa_saldo_negativo(cuenta_con_saldo_negativo: CuentaInteracti
 def cuenta_de_dos_titulares(
         titular_gordo: Titular,
         cuenta_ajena: CuentaInteractiva,
+        fecha: date,
 ) -> CuentaAcumulativa:
     return cuenta_ajena.dividir_y_actualizar(
         {
@@ -131,7 +132,8 @@ def cuenta_de_dos_titulares(
             'slug': 'sctg',
             'saldo': 10,
             'titular': titular_gordo
-        }
+        },
+        fecha=fecha,
     )
 
 

@@ -1,3 +1,5 @@
+from datetime import date
+
 import pytest
 from django.urls import reverse
 from selenium.webdriver.common.by import By
@@ -19,11 +21,22 @@ def subcuenta_titular_gordo(cuenta_de_dos_titulares: CuentaAcumulativa) -> Cuent
 
 
 @pytest.fixture
-def entrada_subcuenta(subcuenta_otro_titular: CuentaInteractiva) -> Movimiento:
+def entrada_subcuenta(subcuenta_otro_titular: CuentaInteractiva, fecha: date) -> Movimiento:
     return Movimiento.crear(
         concepto="Entrada en subcuenta otro titular",
         importe=33,
-        cta_entrada=subcuenta_otro_titular
+        cta_entrada=subcuenta_otro_titular,
+        fecha=fecha,
+    )
+
+
+@pytest.fixture
+def entrada_posterior_subcuenta(subcuenta_otro_titular: CuentaInteractiva, fecha_posterior: date) -> Movimiento:
+    return Movimiento.crear(
+        concepto="Entrada posterior en subcuenta otro titular",
+        importe=78,
+        cta_entrada=subcuenta_otro_titular,
+        fecha=fecha_posterior,
     )
 
 
@@ -142,8 +155,7 @@ def test_detalle_de_cuenta_interactiva(
 
 def test_detalle_de_cuenta_acumulativa(
         browser, entrada_otra_cuenta, cuenta_de_dos_titulares,
-        credito_entre_subcuentas, entrada_subcuenta):
-
+        credito_entre_subcuentas, entrada_subcuenta, entrada_posterior_subcuenta):
     # Vamos a la página principal y cliqueamos en el nombre de una cuenta
     # acumulativa
     browser.ir_a_pag()
@@ -159,7 +171,7 @@ def test_detalle_de_cuenta_acumulativa(
     # subcuentas y los movimientos relacionados con ella o sus subcuentas
     browser.comparar_subcuentas_de(cuenta_de_dos_titulares)
     browser.comparar_titulares_de(cuenta_de_dos_titulares)
-    browser.comparar_movimientos_de(cuenta_de_dos_titulares)
+    browser.comparar_dias_de(cuenta_de_dos_titulares)
 
     # Cuando cliqueamos en el ícono de agregar cuenta, accedemos a la página
     # de agregar subcuenta
@@ -207,7 +219,7 @@ def test_detalle_de_cuenta_acumulativa(
     # interviene
 
     browser.comparar_titulares_de(primera_subcuenta)
-    browser.comparar_movimientos_de(primera_subcuenta)
+    browser.comparar_dias_de(primera_subcuenta)
 
     # Volvemos a la página de la cuenta acumulativa y cliqueamos en el nombre
     # de la segunda subcuenta
@@ -220,7 +232,7 @@ def test_detalle_de_cuenta_acumulativa(
     # Vemos el titular de la segunda subcuenta y los movimientos en los que
     # interviene
     browser.comparar_titulares_de(segunda_subcuenta)
-    browser.comparar_movimientos_de(segunda_subcuenta)
+    browser.comparar_dias_de(segunda_subcuenta)
 
     # Volvemos a la página de la cuenta acumulativa y cliqueamos en un
     # movimiento
@@ -232,14 +244,14 @@ def test_detalle_de_cuenta_acumulativa(
 
     # Vemos que en la sección de movimientos aparecen los movimientos de la
     # cuenta o sus subcuentas, con el movimiento cliqueado resaltado
-    browser.comparar_movimientos_de(cuenta_de_dos_titulares)
+    browser.comparar_dias_de(cuenta_de_dos_titulares)
     movimientos = browser.esperar_elementos("class_row_mov")
     assert "mov_selected" in movimientos[1].get_attribute("class")
 
     # Y vemos que en el saldo general de la página aparece el saldo histórico
     # de la cuenta acumulativa al momento del movimiento
     movimiento = cuenta_de_dos_titulares.movs().order_by(
-        '-fecha', '-orden_dia')[1]
+        '-dia', 'orden_dia')[1]
     assert movimiento.concepto == movimientos[1].find_element_by_class_name(
         "class_td_concepto").text
     assert \
@@ -375,7 +387,7 @@ def test_detalle_de_subcuenta(browser, titular, cuenta_de_dos_titulares):
 
     # Y vemos que en el saldo general de la página aparece el saldo histórico
     # de la cuenta acumulativa al momento del movimiento
-    movimiento = ssc1.movs().order_by('-fecha', '-orden_dia')[2]
+    movimiento = ssc1.movs().order_by('-dia', 'orden_dia')[2]
     assert movimiento.concepto == movimientos[2].find_element_by_class_name(
         "class_td_concepto").text
     assert \
