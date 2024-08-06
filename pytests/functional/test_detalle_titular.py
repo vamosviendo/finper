@@ -3,52 +3,55 @@ from django.urls import reverse
 
 from utils.numeros import float_format
 from .helpers import texto_en_hijos_respectivos
-from diario.models import CuentaInteractiva, Movimiento, Titular
+from diario.models import CuentaInteractiva, Dia, Movimiento, Titular
 
 
 @pytest.fixture
-def cuenta_titular(cuenta: CuentaInteractiva) -> CuentaInteractiva:
-    Movimiento.crear('Saldo al inicio', 500, cuenta)
+def cuenta_titular(cuenta: CuentaInteractiva, dia: Dia) -> CuentaInteractiva:
+    Movimiento.crear('Saldo al inicio', 500, cuenta, dia=dia)
     return cuenta.tomar_de_bd()
 
 
 @pytest.fixture
-def cuenta_otro_titular(cuenta_ajena: CuentaInteractiva) -> CuentaInteractiva:
-    Movimiento.crear('Saldo al inicio', 200, cuenta_ajena)
+def cuenta_otro_titular(cuenta_ajena: CuentaInteractiva, dia: Dia) -> CuentaInteractiva:
+    Movimiento.crear('Saldo al inicio', 200, cuenta_ajena, dia=dia)
     return cuenta_ajena.tomar_de_bd()
 
 
 @pytest.fixture
-def cuenta_2_titular(cuenta_2: CuentaInteractiva) -> CuentaInteractiva:
-    Movimiento.crear('Saldo al inicio', 150, cuenta_2)
+def cuenta_2_titular(cuenta_2: CuentaInteractiva, dia: Dia) -> CuentaInteractiva:
+    Movimiento.crear('Saldo al inicio', 150, cuenta_2, dia=dia)
     return cuenta_2.tomar_de_bd()
 
 
 @pytest.fixture
-def entrada_titular(cuenta_titular: CuentaInteractiva) -> Movimiento:
-    return Movimiento.crear('Entrada en cuenta titular', 50, cuenta_titular)
+def entrada_titular(cuenta_titular: CuentaInteractiva, dia_posterior: Dia) -> Movimiento:
+    return Movimiento.crear('Entrada en cuenta titular', 50, cuenta_titular, dia=dia_posterior)
 
 
 @pytest.fixture
 def credito_entre_titulares(
         cuenta_titular: CuentaInteractiva,
-        cuenta_otro_titular: CuentaInteractiva
+        cuenta_otro_titular: CuentaInteractiva,
+        dia_posterior: Dia
 ) -> Movimiento:
     return Movimiento.crear(
         'Credito entre titulares',
         25,
         cuenta_titular,
         cuenta_otro_titular,
+        dia=dia_posterior
     )
 
 
 @pytest.fixture
-def salida_otro_titular(cuenta_otro_titular: CuentaInteractiva) -> Movimiento:
+def salida_otro_titular(cuenta_otro_titular: CuentaInteractiva, dia_tardio: Dia) -> Movimiento:
     return Movimiento.crear(
         'Salida de cuenta otro titular',
         20,
         None,
         cuenta_otro_titular,
+        dia=dia_tardio
     )
 
 
@@ -56,7 +59,7 @@ def test_detalle_titular(
         browser,
         titular,
         cuenta_titular, cuenta_2_titular,
-        credito_entre_titulares,
+        entrada_titular, credito_entre_titulares, salida_otro_titular,
 ):
     # Dados dos titulares
     # Vamos a la página de inicio y cliqueamos en el primer titular
@@ -95,16 +98,17 @@ def test_detalle_titular(
     # Y vemos que sólo las cuentas del titular aparecen en la sección de cuentas
     browser.comparar_cuentas_de(titular)
 
-    # Y vemos que sólo los movimientos del titular aparecen en la sección
-    # de movimientos
-    browser.comparar_movimientos_de(titular)
+    # Y vemos que sólo los días con movimientos del titular aparecen en la
+    # sección de movimientos, mostrando sólo los movimientos de cuentas del
+    # titular dentro de ellos.
+    browser.comparar_dias_de(titular)
 
     # Si cliqueamos en un movimiento, solo aparecen los movimientos del
     # titular en la sección de movimientos, con el movimiento cliqueado
     # resaltado
     links_movimiento = browser.esperar_elementos("class_link_movimiento")
     links_movimiento[1].click()
-    browser.comparar_movimientos_de(titular)
+    browser.comparar_dias_de(titular)
     movs_pagina = browser.esperar_elementos("class_row_mov")
     assert "mov_selected" in movs_pagina[1].get_attribute("class")
 
@@ -113,7 +117,7 @@ def test_detalle_titular(
     nombre_titular = browser.esperar_elemento(
         'id_titulo_saldo_gral'
     ).text.strip()
-    movimiento = titular.movs()[2]
+    movimiento = titular.dias()[1].movimientos[1]
 
     assert nombre_titular == (f"Capital de {titular.nombre} "
                               f"en movimiento {movimiento.orden_dia} "

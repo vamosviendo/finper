@@ -81,18 +81,18 @@ class FinperFirefox(MiFirefox):
             .esperar_elemento(f'id_row_cta_{slug}')\
             .esperar_elemento(f'.class_saldo_cuenta.mon_cuenta', By.CSS_SELECTOR)
 
-    def comparar_dias_de(self, cuenta: Cuenta):
+    def comparar_dias_de(self, ente: Cuenta | Titular):
         """ Dada una cuenta, comparar sus días con los que
             aparecen en la página.
         """
-        dias_cuenta = cuenta.dias().reverse()
+        dias_cuenta = ente.dias().reverse()
         dias_pag = self.esperar_elementos("class_div_dia")
         for index, dia in enumerate(dias_pag):
             fecha_pag = dia.esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text
             fecha_bd = dias_cuenta[index].str_dia_semana()
             assert fecha_pag == fecha_bd
             self.comparar_movimientos_de_fecha_de(
-                cuenta,
+                ente,
                 fecha=str2date(fecha_pag.split()[1]),
                 container=dia
             )
