@@ -29,3 +29,15 @@ def test_si_recibe_cuenta_incluye_solo_movimientos_de_la_cuenta(
         dia, cuenta, entrada, salida, entrada_otra_cuenta, salida_posterior):
     context = dia.as_view_context(cuenta=cuenta)
     assert context["movimientos"] == [entrada, salida]
+
+
+def test_si_recibe_titular_incluye_solo_movimientos_del_titular(
+        dia, titular, entrada, salida, entrada_otra_cuenta, entrada_cuenta_ajena):
+    context = dia.as_view_context(titular=titular)
+    assert context["movimientos"] == [entrada, salida, entrada_otra_cuenta]
+
+
+def test_si_recibe_cuenta_y_titular_solo_toma_en_cuenta_la_cuenta_valga_la_redundancia(
+        dia, cuenta_ajena, titular, entrada, salida, entrada_cuenta_ajena):
+    context = dia.as_view_context(cuenta=cuenta_ajena, titular=titular)
+    assert context["movimientos"] == [entrada_cuenta_ajena]
