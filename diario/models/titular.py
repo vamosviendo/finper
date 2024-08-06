@@ -10,6 +10,8 @@ from django.utils import timezone
 from vvmodel.models import MiModel
 from vvutils.text import mi_slugify
 
+from diario.models.dia import Dia
+
 if TYPE_CHECKING:
     from diario.models import CuentaInteractiva, Movimiento
 
@@ -39,6 +41,10 @@ class Titular(MiModel):
     def cuentas_interactivas(self) -> models.QuerySet['CuentaInteractiva']:
         ids = [c.id for c in self.cuentas.all() if c.es_interactiva]
         return self.cuentas.filter(id__in=ids)
+
+    def dias(self) -> models.QuerySet['Dia']:
+        fechas = [mov.dia.fecha for mov in self.movs()]
+        return Dia.filtro(fecha__in=fechas)
 
     def movs(self) -> QuerySet['Movimiento']:
         Movim: 'Movimiento' = self.get_related_class('cuentas').get_related_class('entradas')
