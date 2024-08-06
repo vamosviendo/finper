@@ -37,7 +37,12 @@ def test_incluye_dias_con_movimientos_de_cuentas_del_titular_en_formato_dict(
         dia, dia_posterior, dia_tardio,
         entrada, salida, entrada_posterior_cuenta_ajena, salida_tardia_tercera_cuenta,
         context):
-    assert context['dias'] == [x.as_view_context() for x in [dia, dia_tardio]]
+    assert context['dias'] == [x.as_view_context() for x in [dia_tardio, dia]]
+
+
+def test_incluye_solo_movimientos_de_cuentas_de_titular_en_los_dias_incluidos(
+        dia, entrada, salida, entrada_cuenta_ajena, context):
+    assert context['dias'][0]['movimientos'] == [entrada, salida]
 
 
 def test_si_recibe_movimiento_incluye_solo_movimientos_de_cuentas_del_titular_como_dict(
