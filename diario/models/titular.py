@@ -97,13 +97,14 @@ class Titular(MiModel):
             self,
             movimiento: 'Movimiento' = None,
             es_elemento_principal: bool = False
-    ) -> dict[str, str | float, list[dict[str, Any]]]:
+    ) -> dict[str, str | float | list[dict[str, dict]]]:
 
         context = {
             'titname': self.titname,
             'nombre': self.nombre,
             'capital': self.capital_historico(movimiento) if movimiento
                 else self.capital,
+            'dias': [x.as_view_context() for x in self.dias()],
             'movimientos': [x.as_view_context() for x in self.movs()],
         }
         if es_elemento_principal:
