@@ -24,8 +24,6 @@ from utils.tiempo import Posicion
 from vvmodel.managers import PolymorphManager
 from vvmodel.models import PolymorphModel
 
-if TYPE_CHECKING:
-    from diario.models.dia import Dia
 
 alfaminusculas = RegexValidator(
     r'^[0-9a-z_\-]*$', 'Solamente caracteres alfanuméricos y guiones')

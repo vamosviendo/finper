@@ -143,7 +143,7 @@ def test_si_recibe_slug_de_cuenta_pasa_titulo_de_saldo_gral_con_cuenta(cuenta, c
     assert response.context['titulo_saldo_gral'] == f"{cuenta.nombre} (fecha alta: {cuenta.fecha_creacion})"
 
 
-def test_si_recibe_slug_de_cuenta_pasa_solo_dias_con_movimientos_de_la_cuenta(
+def test_si_recibe_slug_de_cuenta_pasa_dias_con_movimientos_de_la_cuenta(
         cuenta, dia, dia_posterior, dia_tardio,
         entrada, salida, entrada_posterior_otra_cuenta, entrada_tardia,
         client):
