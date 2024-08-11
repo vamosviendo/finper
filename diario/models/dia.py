@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import date
 from typing import Optional, Self, TYPE_CHECKING
 
@@ -6,7 +8,7 @@ from django.db import models
 from vvmodel.models import MiModel
 
 if TYPE_CHECKING:
-    from diario.models import Movimiento
+    from diario.models import Cuenta, CuentaInteractiva, Movimiento, Titular
 
 
 class DiaManager(models.Manager):
@@ -25,12 +27,30 @@ class Dia (MiModel):
     def __str__(self) -> str:
         return self.fecha.strftime('%Y-%m-%d')
 
+    def de_la_semana(self):
+        from utils.tiempo import dia_de_la_semana
+        return dia_de_la_semana[self.fecha.weekday()]
+
+    def str_dia_semana(self):
+        return f"{self.de_la_semana()} {self.__str__()}"
+
     def natural_key(self) -> tuple[str]:
         return (self.fecha, )
 
     @property
     def identidad(self) -> str:
         return self.fecha.strftime('%Y%m%d')
+
+    def as_view_context(
+            self,
+            cuenta: 'Cuenta' = None,
+            titular: 'Titular' = None) -> dict[str, date | str | float | list['Movimiento']]:
+        return {
+            "fecha": self.fecha,
+            "str_dia_semana": self.str_dia_semana(),
+            "saldo": self.saldo(),
+            "movimientos": list(self.movimientos_filtrados(cuenta=cuenta, titular=titular)),
+        }
 
     @classmethod
     def hoy(cls) -> Self:
@@ -57,6 +77,15 @@ class Dia (MiModel):
     @property
     def movimientos(self) -> models.QuerySet['Movimiento']:
         return self.movimiento_set.all()
+
+    def movimientos_filtrados(
+            self,
+            cuenta: 'CuentaInteractiva' = None,
+            titular: 'Titular' = None) -> models.QuerySet['Movimiento']:
+        ente = cuenta or titular or None
+        if ente:
+            return ente.movs().filter(dia=self)
+        return self.movimientos
 
     def saldo(self) -> float:
         from diario.utils.utils_saldo import saldo_general_historico

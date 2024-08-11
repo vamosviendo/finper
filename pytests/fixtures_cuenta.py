@@ -119,6 +119,7 @@ def cuenta_acumulativa_saldo_negativo(cuenta_con_saldo_negativo: CuentaInteracti
 def cuenta_de_dos_titulares(
         titular_gordo: Titular,
         cuenta_ajena: CuentaInteractiva,
+        fecha: date,
 ) -> CuentaAcumulativa:
     return cuenta_ajena.dividir_y_actualizar(
         {
@@ -131,7 +132,8 @@ def cuenta_de_dos_titulares(
             'slug': 'sctg',
             'saldo': 10,
             'titular': titular_gordo
-        }
+        },
+        fecha=fecha,
     )
 
 
@@ -144,11 +146,11 @@ def cuenta_acumulativa_ajena(cuenta_ajena: CuentaInteractiva) -> CuentaAcumulati
 
 
 @pytest.fixture
-def subsubcuenta(cuenta_acumulativa: CuentaAcumulativa) -> CuentaInteractiva:
+def subsubcuenta(cuenta_acumulativa: CuentaAcumulativa, fecha: date) -> CuentaInteractiva:
     sc1, sc2 = cuenta_acumulativa.subcuentas.all()
     ssc11, ssc12 = sc1.dividir_entre(
         {
-            'nombre': 'subsubuenta 1',
+            'nombre': 'subsubcuenta 1',
             'slug': 'ssc1',
             'saldo': 10,
             'titular': sc1.titular
@@ -157,9 +159,14 @@ def subsubcuenta(cuenta_acumulativa: CuentaAcumulativa) -> CuentaInteractiva:
             'nombre': 'subsubcuenta 2',
             'slug': 'ssc2',
             'titular': sc1.titular
-        }
+        },
+        fecha=fecha,
     )
     return ssc11
+
+@pytest.fixture
+def subsubcuenta_2(subsubcuenta: CuentaInteractiva) -> CuentaInteractiva:
+    return subsubcuenta.hermanas()[0]
 
 
 @pytest.fixture

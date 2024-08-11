@@ -102,6 +102,19 @@ def test_incluye_movimientos_de_la_cuenta_como_dict(cuenta, entrada, salida, ent
     assert context['movimientos'] == [x.as_view_context() for x in[entrada, salida]]
 
 
+def test_incluye_dias_en_los_que_hay_movimientos_de_la_cuenta_como_dict(
+        cuenta, dia, dia_posterior, dia_tardio,
+        entrada, entrada_posterior_otra_cuenta, entrada_tardia):
+    context = cuenta.as_view_context()
+    assert context['dias'] == [dia.as_view_context() for dia in [dia_tardio, dia]]
+
+
+def test_dias_incluidos_muestran_solo_los_movimientos_de_la_cuenta(cuenta, dia, entrada, salida, entrada_otra_cuenta):
+    context = cuenta.as_view_context()
+    dict_dia = context["dias"][0]
+    assert dict_dia["movimientos"] == [entrada, salida]
+
+
 def test_si_cuenta_es_acumulativa_incluye_subcuentas_como_cuentas_en_formato_dict(cuenta_acumulativa):
     context = cuenta_acumulativa.as_view_context(es_elemento_principal=True)
     assert context['cuentas'] == [

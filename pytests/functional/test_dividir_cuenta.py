@@ -46,19 +46,15 @@ def test_dividir_cuenta_con_saldo_y_fecha(
     })
 
     # Al ser dirigidos a la página de detalle de cuenta, vemos que esta incluye
-    # los movimientos de traspaso correspondientes, y que la fecha de esos
-    # movimientos corresponde a la fecha ingresada en el formulario.
+    # las subcuentas recién creadas y los movimientos de traspaso
+    # correspondientes en el día de la fecha ingresada en el formulario
     subcuentas = [
         sc.text for sc in browser.esperar_elementos('class_link_cuenta')
     ]
     assert subcuentas == ['primera subcuenta', 'segunda subcuenta']
-    fechas_movimiento = [
-        m.esperar_elemento('class_td_fecha', By.CLASS_NAME).text.strip()
-        for m in browser.esperar_elementos('class_row_mov')
-        if m.esperar_elemento(
-            'class_td_concepto', By.CLASS_NAME
-        ).text.strip() == 'Traspaso de saldo'
-    ]
-    assert len(fechas_movimiento) == 2
-    for fm in fechas_movimiento:
-        assert fm ==  fecha_posterior.strftime('%Y-%m-%d')
+
+    div_dia = browser.esperar_dia(fecha_posterior)
+    movs_traspaso = [
+        m for m in div_dia.esperar_elementos("class_row_mov")
+        if m.esperar_elemento("class_td_concepto", By.CLASS_NAME).text.strip() == "Traspaso de saldo"]
+    assert len(movs_traspaso) == 2

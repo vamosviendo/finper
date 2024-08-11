@@ -11,10 +11,11 @@ from django.urls import reverse
 
 from diario.consts import *
 from diario.fields import CaseInsensitiveCharField
-from diario.models.titular import Titular
+from diario.models.dia import Dia
 from diario.models.moneda import Moneda
 from diario.models.movimiento import Movimiento
 from diario.models.saldo import Saldo
+from diario.models.titular import Titular
 from diario.settings_app import MONEDA_BASE, TITULAR_PRINCIPAL
 from diario.utils.utils_moneda import id_moneda_base
 from utils import errors
@@ -23,8 +24,6 @@ from utils.tiempo import Posicion
 from vvmodel.managers import PolymorphManager
 from vvmodel.models import PolymorphModel
 
-if TYPE_CHECKING:
-    from diario.models.dia import Dia
 
 alfaminusculas = RegexValidator(
     r'^[0-9a-z_\-]*$', 'Solamente caracteres alfanuméricos y guiones')
@@ -171,13 +170,22 @@ class Cuenta(PolymorphModel):
         """ Devuelve movimientos directos de la cuenta en una fecha dada"""
         return self.movs_directos().filter(dia=dia)
 
-    def movs(self, order_by: str='dia') -> models.QuerySet[Movimiento]:
+    def movs(self, order_by: list[str] = None) -> models.QuerySet[Movimiento]:
         """ Devuelve movimientos propios y de sus subcuentas
-            ordenados por fecha.
+            ordenados por fecha y orden_dia.
             Antes de protestar que devuelve lo mismo que movs_directos()
             tener en cuenta que está sobrescrita en CuentaAcumulativa
             """
-        return self.movs_directos().order_by(order_by)
+        if order_by is None:
+            order_by = ['dia', 'orden_dia']
+        return self.movs_directos().order_by(*order_by)
+
+    def dias(self) -> models.QuerySet[Dia]:
+        """ Devuelve días en los que haya movimientos propios y de sus subcuentas
+            ordenados por fecha.
+        """
+        fechas = [mov.dia.fecha for mov in self.movs()]
+        return Dia.filtro(fecha__in=fechas)
 
     def movs_en_fecha(self, dia: Dia) -> models.QuerySet[Movimiento]:
         """ Devuelve movimientos propios y de sus subcuentas en una fecha dada.
@@ -230,6 +238,7 @@ class Cuenta(PolymorphModel):
             'nombre': self.nombre,
             'ctaname': self.slug,
             'movimientos': [x.as_view_context() for x in self.movs()],
+            'dias': [dia.as_view_context(cuenta=self) for dia in self.dias().reverse()],
             'saldo': self.saldo_en_mov(movimiento) if movimiento else self.saldo,
             'saldos': {
                 m.monname:
@@ -633,13 +642,15 @@ class CuentaAcumulativa(Cuenta):
         self.manejar_cambios()
         super().save(*args, **kwargs)
 
-    def movs(self, order_by: str = 'dia') -> models.QuerySet[Movimiento]:
+    def movs(self, order_by: list[str] = None) -> models.QuerySet[Movimiento]:
         """ Devuelve movimientos propios y de sus subcuentas
-            ordenados por fecha."""
+            ordenados por fecha y orden_dia."""
+        if order_by is None:
+            order_by = ['dia', 'orden_dia']
         result = super().movs(order_by=order_by)
         for sc in self.subcuentas.all():
             result = result | sc.movs(order_by=order_by)
-        return result.order_by(order_by)
+        return result.order_by(*order_by)
 
     def movs_conversion(self) -> models.QuerySet[Movimiento]:
         return self.movs().filter(convierte_cuenta__in=campos_cuenta)

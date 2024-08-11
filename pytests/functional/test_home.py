@@ -3,7 +3,7 @@ from __future__ import annotations
 from django.urls import reverse
 from selenium.webdriver.common.by import By
 
-from diario.models import Movimiento
+from diario.models import Movimiento, Dia
 from .helpers import texto_en_hijos_respectivos
 from utils.numeros import float_format
 
@@ -37,7 +37,7 @@ def test_home(
     assert capitales[1] == float_format(otro_titular.capital)
 
     # Vemos seis cuentas en el menú de cuentas (4 cuentas y 2 subcuentas)
-    cuentas = browser.find_elements_by_class_name("class_div_cuenta")
+    cuentas = browser.esperar_elementos("class_div_cuenta")
     assert len(cuentas) == 6
     nombres_cuenta = texto_en_hijos_respectivos("class_nombre_cuenta", cuentas)
     assert nombres_cuenta[0] == cuenta.nombre
@@ -49,7 +49,7 @@ def test_home(
 
     # Vemos que la cuenta acumulativa es presentada en un color más oscuro,
     # y las subcuentas en un color más claro
-    tds_cuenta = browser.find_elements_by_class_name("class_td_cuenta")
+    tds_cuenta = browser.esperar_elementos("class_td_cuenta")
     assert "acumulativa" in tds_cuenta[3].get_attribute("class")
     assert "class_td_subcuenta" in tds_cuenta[4].get_attribute("class")
     assert "class_td_subcuenta" in tds_cuenta[5].get_attribute("class")
@@ -62,34 +62,38 @@ def test_home(
         entrada_posterior_otra_cuenta.importe - traspaso.importe)
     assert saldos[2] == '0,00'
 
-    # Vemos seis movimientos en la sección de movimientos, con conceptos
-    # correspondientes al concepto de cada uno de los movimientos existentes.
-    webelements_mov = browser.find_elements_by_class_name("class_row_mov")
-    webelements_mov.reverse()
-    objects_mov = Movimiento.todes()
-    assert len(webelements_mov) == 6
-    fechas = texto_en_hijos_respectivos("class_td_fecha", webelements_mov)
-    conceptos = texto_en_hijos_respectivos("class_td_concepto", webelements_mov)
-    detalles = texto_en_hijos_respectivos('class_td_detalle', webelements_mov)
-    importes = texto_en_hijos_respectivos("class_td_importe", webelements_mov)
-    ctas_entrada = texto_en_hijos_respectivos("class_td_cta_entrada", webelements_mov)
-    ctas_salida = texto_en_hijos_respectivos("class_td_cta_salida", webelements_mov)
+    # En la sección de movimientos vemos dos divisiones de día.
+    # Cada una de ellas tiene un título con la fecha y el saldo del día
+    # Debajo del título hay una tabla con todos los movimientos del día.
+    divs_dia = browser.esperar_elementos("class_div_dia")
+    assert len(divs_dia) == 2
+    fechas_dia = texto_en_hijos_respectivos("class_span_fecha_dia", divs_dia)
+    saldos_dia = texto_en_hijos_respectivos("class_span_saldo_dia", divs_dia)
 
-    for i, mov in enumerate(objects_mov):
-        assert fechas[i] == mov.fecha.strftime('%Y-%m-%d')
-        assert conceptos[i] == mov.concepto
-        assert detalles[i] == ("" if mov.detalle is None else f"{mov.detalle[:49]}…")
-        assert importes[i] == float_format(mov.importe)
-
-        try:
-            assert ctas_entrada[i] == mov.cta_entrada.nombre
-        except AttributeError:
-            assert ctas_entrada[i] == ""
-
-        try:
-            assert ctas_salida[i] == mov.cta_salida.nombre
-        except AttributeError:
-            assert ctas_salida[i] == ""
+    dias = Dia.todes()
+    for i, dia in enumerate(dias.reverse()):
+        dia_web = divs_dia[i]
+        assert fechas_dia[i] == dia.str_dia_semana()
+        assert saldos_dia[i] == float_format(dia.saldo())
+        movs_dia = dia.movimientos
+        movs_dia_web = dia_web.esperar_elementos("class_row_mov")
+        conceptos = texto_en_hijos_respectivos("class_td_concepto", movs_dia_web)
+        detalles = texto_en_hijos_respectivos("class_td_detalle", movs_dia_web)
+        importes = texto_en_hijos_respectivos("class_td_importe", movs_dia_web)
+        ctas_entrada = texto_en_hijos_respectivos("class_td_cta_entrada", movs_dia_web)
+        ctas_salida = texto_en_hijos_respectivos("class_td_cta_salida", movs_dia_web)
+        for i, mov in enumerate(movs_dia):
+            assert conceptos[i] == mov.concepto
+            assert detalles[i] == ("" if mov.detalle is None else f"{mov.detalle[:49]}…")
+            assert importes[i] == float_format(mov.importe)
+            try:
+                assert ctas_entrada[i] == mov.cta_entrada.nombre
+            except AttributeError:
+                assert ctas_entrada[i] == ""
+            try:
+                assert ctas_salida[i] == mov.cta_salida.nombre
+            except AttributeError:
+                assert ctas_salida[i] == ""
 
 
 def test_home_monedas(
@@ -172,10 +176,10 @@ class TestHomeLinks:
         browser.verificar_link('mov_nuevo', 'mov_nuevo')
 
         # cuando cliqueamos en el link de editar movimiento, accedemos a la página de edición de ese movimiento
-        browser.verificar_link('mod_mov', 'mov_mod', [salida.pk], By.CLASS_NAME)
+        browser.verificar_link('mod_mov', 'mov_mod', [entrada.pk], By.CLASS_NAME)
 
         # cuando cliqueamos en el link de borrar movimiento, accedemos a la página de confirmación
-        browser.verificar_link('elim_mov', 'mov_elim', [salida.pk], By.CLASS_NAME)
+        browser.verificar_link('elim_mov', 'mov_elim', [entrada.pk], By.CLASS_NAME)
 
     def test_seccion_monedas(self, browser, peso):
 

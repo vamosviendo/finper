@@ -40,6 +40,11 @@ class HomeView(TemplateView):
             f" en movimiento {movimiento.orden_dia} " \
             f"del {movimiento.fecha} ({movimiento.concepto})" \
             if movimiento else ""
+        dias_con_movimientos = [
+            dia.as_view_context()
+            for dia in Dia.todes().order_by("-fecha")
+            if dia.movimientos.count() > 0
+        ]
 
         context.update({
             'movimiento': movimiento.as_view_context() if movimiento else None,
@@ -84,7 +89,7 @@ class HomeView(TemplateView):
                     x.as_view_context(movimiento) for x in Titular.todes()
                 ],
                 'movimientos': [x.as_view_context() for x in Movimiento.todes()],
-                'dias': Paginator(Dia.todes().order_by('-fecha'), 7).get_page(self.request.GET.get('page')),
+                'dias': Paginator(dias_con_movimientos, 7).get_page(self.request.GET.get('page')),
                 'cuentas': [
                     x.as_view_context(movimiento) for x in
                     Cuenta.filtro(cta_madre=None).order_by(Lower('nombre'))

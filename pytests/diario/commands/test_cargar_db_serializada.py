@@ -86,6 +86,56 @@ def cuenta_posterior(otro_titular: Titular, dolar: Moneda, dia_posterior: Dia) -
 
 
 @pytest.fixture
+def subcuenta_agregada_en_fecha_conversion_1(cuenta_acumulativa: CuentaAcumulativa) -> CuentaInteractiva:
+    return cuenta_acumulativa.agregar_subcuenta(
+        nombre="subcuenta agregada 1",
+        slug="sca1",
+        titular=cuenta_acumulativa.titular_original,
+        fecha=cuenta_acumulativa.fecha_conversion
+    )
+
+
+@pytest.fixture
+def subcuenta_agregada_en_fecha_conversion_2(cuenta_acumulativa: CuentaAcumulativa) -> CuentaInteractiva:
+    return cuenta_acumulativa.agregar_subcuenta(
+        nombre="subcuenta agregada 2",
+        slug="sca2",
+        titular=cuenta_acumulativa.titular_original,
+        fecha=cuenta_acumulativa.fecha_conversion
+    )
+
+
+@pytest.fixture
+def traspaso_a_subcuenta_agregada_1(
+        cuenta_acumulativa: CuentaAcumulativa,
+        subcuenta_agregada_en_fecha_conversion_1
+) -> Movimiento:
+    sco1 = cuenta_acumulativa.subcuentas.all()[0]
+    return Movimiento.crear(
+        "Traspaso de saldo a subcuenta agregada 1",
+        cta_entrada=subcuenta_agregada_en_fecha_conversion_1,
+        cta_salida=sco1,
+        importe=20,
+        fecha=cuenta_acumulativa.fecha_conversion
+    )
+
+
+@pytest.fixture
+def traspaso_a_subcuenta_agregada_2(
+        cuenta_acumulativa: CuentaAcumulativa,
+        subcuenta_agregada_en_fecha_conversion_2
+) -> Movimiento:
+    sco1 = cuenta_acumulativa.subcuentas.all()[0]
+    return Movimiento.crear(
+        "Traspaso de saldo a subcuenta agregada 2",
+        cta_entrada=subcuenta_agregada_en_fecha_conversion_2,
+        cta_salida=sco1,
+        importe=15,
+        fecha=cuenta_acumulativa.fecha_conversion
+    )
+
+
+@pytest.fixture
 def movimiento_1(
         cuenta_temprana_2: CuentaInteractiva,
         dia: Dia, ) -> Movimiento:
@@ -369,6 +419,34 @@ def test_divide_correctamente_cuentas_sin_saldo(cuenta_acumulativa_saldo_0, db_s
     assert subcuentas[0].slug == "sc1"
     assert subcuentas[0].saldo == 0
     assert subcuentas[1].saldo == 0
+
+
+def test_recupera_correctamente_subcuentas_de_origen_y_subcuentas_agregadas_en_la_misma_fecha_de_la_division(
+        cuenta_acumulativa,
+        subcuenta_agregada_en_fecha_conversion_1,
+        subcuenta_agregada_en_fecha_conversion_2,
+        traspaso_a_subcuenta_agregada_1,
+        traspaso_a_subcuenta_agregada_2,
+        db_serializada, vaciar_db,
+):
+    call_command("cargar_db_serializada")
+    ca = cuenta_acumulativa.tomar_del_slug()
+    sco1, sco2, sca1, sca2 = ca.subcuentas.all()
+    assert sco1.saldo == 60-20-15
+    assert sco2.saldo == 40
+    assert sca1.saldo == 20
+    assert sca2.saldo == 15
+
+    traspaso_1 = Movimiento.tomar(concepto="Traspaso de saldo a subcuenta agregada 1")
+    traspaso_2 = Movimiento.tomar(concepto="Traspaso de saldo a subcuenta agregada 2")
+    assert traspaso_1.importe == 20
+    assert traspaso_1.cta_entrada == sca1
+    assert traspaso_1.cta_salida == sco1
+    assert traspaso_1.fecha == ca.fecha_conversion
+    assert traspaso_2.importe == 15
+    assert traspaso_2.cta_entrada == sca2
+    assert traspaso_2.cta_salida == sco1
+    assert traspaso_2.fecha == ca.fecha_conversion
 
 
 @pytest.mark.xfail

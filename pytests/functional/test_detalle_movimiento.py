@@ -19,10 +19,10 @@ def test_detalle_movimiento(browser, entrada, salida, traspaso, cuenta_acumulati
     # Cuando cliqueamos en un movimiento, el movimiento aparece como
     # seleccionado
     movimientos = browser.esperar_elementos("class_row_mov")
-    assert "mov_selected" not in movimientos[4].get_attribute("class")
-    links_movimiento[4].click()
+    assert "mov_selected" not in movimientos[1].get_attribute("class")
+    links_movimiento[1].click()
     movimientos = browser.esperar_elementos("class_row_mov")
-    assert "mov_selected" in movimientos[4].get_attribute("class")
+    assert "mov_selected" in movimientos[1].get_attribute("class")
 
     # Y en el saldo de la página aparece el saldo histórico al momento del
     # movimiento seleccionado
@@ -52,6 +52,7 @@ def test_detalle_movimiento_en_cuenta_acumulativa(
     browser.completar_form(
         nombre="cuenta",
         slug="c",
+        fecha_creacion=fecha,
     )
     cuenta = Cuenta.tomar(slug='c')
 

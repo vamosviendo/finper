@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import date
 from typing import List
 from urllib.parse import urlparse
 
@@ -8,8 +9,9 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 
-from diario.models import Titular, Cuenta, CuentaInteractiva, CuentaAcumulativa, Movimiento
+from diario.models import Cuenta, CuentaInteractiva, CuentaAcumulativa, Dia, Movimiento, Titular
 from utils.numeros import float_format
+from utils.tiempo import dia_de_la_semana, str2date
 from vvsteps.driver import MiFirefox, MiWebElement
 from vvsteps.helpers import esperar
 
@@ -42,7 +44,7 @@ class FinperFirefox(MiFirefox):
             pass
 
     # TODO: pasar a MiFirefox
-    def completar_form(self, **kwargs: str):
+    def completar_form(self, **kwargs: str | date):
         for key, value in kwargs.items():
             self.completar(f"id_{key}", value)
         self.pulsar()
@@ -54,32 +56,90 @@ class FinperFirefox(MiFirefox):
         self.esperar_elemento(titular.nombre, By.LINK_TEXT).click()
 
     def esperar_movimiento(self, columna: str, contenido: str) -> MiWebElement:
-        movimientos = self.esperar_elementos('class_row_mov', By.CLASS_NAME)
         try:
-            return next(
-                x for x in movimientos
-                if x.find_element_by_class_name(f'class_td_{columna}').text
-                    == contenido
-            )
-        except StopIteration:
+            return self.esperar_movimientos(columna, contenido)[0]
+        except IndexError:
             raise NoSuchElementException(
-                f'Contenido {contenido} no encontrado en columna {columna}'
+                f'Contenido "{contenido}" no encontrado en columna "{columna}"'
             )
+
+    def esperar_movimientos(self, columna: str, contenido: str) -> list[MiWebElement]:
+        return [
+            x for x in self.esperar_elementos("class_row_mov", By.CLASS_NAME, fail=False)
+            if x.esperar_elemento(f"class_td_{columna}", By.CLASS_NAME).text == contenido
+        ]
+
+    def esperar_dia(self, fecha: date) -> MiWebElement:
+        return next(
+            x for x in self.esperar_elementos("class_div_dia")
+            if x.esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text ==
+            f"{dia_de_la_semana[fecha.weekday()]} {fecha.strftime('%Y-%m-%d')}"
+        )
 
     def esperar_saldo_en_moneda_de_cuenta(self, slug: str) -> MiWebElement:
         return self\
             .esperar_elemento(f'id_row_cta_{slug}')\
             .esperar_elemento(f'.class_saldo_cuenta.mon_cuenta', By.CSS_SELECTOR)
 
-    def comparar_movimientos_de(self, ente: Cuenta | Titular):
-        """ Dada una cuenta, comparar sus movimientos con los que aparecen en
-            la página. """
+    def serializar_dias_pagina(self) -> list[dict[str, str | list[dict[str, MiWebElement | str]]]]:
+        """ Devuelve una lista de diccionarios con datos de los días de la página.
+            Cada diccionario de día incluye fecha y una lista de movimientos del día.
+        """
+        divs_dia = self.esperar_elementos("class_div_dia")
+        result = list()
+        for dia in divs_dia:
+            result.append({
+                'fecha': dia.esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text,
+                'movimientos': [{
+                    'webelement': mov,
+                    'concepto': mov.esperar_elemento("class_td_concepto", By.CLASS_NAME).text,
+                    'importe': mov.esperar_elemento("class_td_importe", By.CLASS_NAME).text,
+                    'cta_entrada': mov.esperar_elemento("class_td_cta_entrada", By.CLASS_NAME).text,
+                    'cta_salida': mov.esperar_elemento("class_td_cta_salida", By.CLASS_NAME).text,
+                } for mov in dia.esperar_elementos("class_row_mov")]
+            })
+        return result
+
+    def comparar_dias_de(self, ente: Cuenta | Titular) -> list[dict[str, str | list[dict[str, MiWebElement | str]]]]:
+        """ Dada una cuenta, comparar sus días con los que
+            aparecen en la página.
+            Si las comparaciones son correctas, devuelve lista de días de la página serializados.
+        """
+        dias_db = ente.dias().reverse()
+        dias_pag = self.serializar_dias_pagina()
+        for index, dia in enumerate(dias_pag):
+            assert dia["fecha"] == dias_db[index].str_dia_semana()
+            self.comparar_movimientos_de_dia_de(ente, dia, dias_db[index])
+        return dias_pag
+
+    def comparar_movimientos_de_dia_de(
+            self,
+            ente: Cuenta | Titular,
+            dia_pag: dict[str, str | list[dict[str, MiWebElement | str]]],
+            dia_db: Dia):
+        if isinstance(ente, Cuenta):
+            movs_db = dia_db.movimientos_filtrados(cuenta=ente)
+        elif isinstance(ente, Titular):
+            movs_db = dia_db.movimientos_filtrados(titular=ente)
+        else:
+            movs_db = dia_db.movimientos_filtrados()
+        for index, mov in enumerate(dia_pag["movimientos"]):
+            assert mov["concepto"] == movs_db[index].concepto
+            assert mov["importe"] == float_format(movs_db[index].importe)
+            assert mov["cta_entrada"] == (movs_db[index].cta_entrada.nombre if movs_db[index].cta_entrada else "")
+            assert mov["cta_salida"] == (movs_db[index].cta_salida.nombre if movs_db[index].cta_salida else "")
+
+    def comparar_movimientos_de_fecha_de(self, ente: Cuenta | Titular, fecha: date, container: WebElement = None):
+        """ Dado una ente que puede ser una cuenta o un titular,
+            comparar sus movimientos con los que aparecen en
+            la página en el día de la fecha dada. """
+        container = container or self
         conceptos_mov = [
-            x.text for x in self.esperar_elementos(
+            x.text for x in container.esperar_elementos(
                 '.class_row_mov td.class_td_concepto', By.CSS_SELECTOR
         )]
         assert conceptos_mov == [
-            x['concepto'] for x in reversed(ente.as_view_context()['movimientos'])
+            x['concepto'] for x in ente.as_view_context()['movimientos'] if x["fecha"] == fecha
         ]
 
     def comparar_titular(self, titular: Titular):
@@ -186,7 +246,7 @@ def texto_en_hijos_respectivos(
         lista_elementos: List[MiWebElement | WebElement]
 ) -> List[str]:
     return [
-        x.find_element_by_class_name(classname).text
+        x.esperar_elemento(classname, By.CLASS_NAME).text
         for x in lista_elementos
     ]
 

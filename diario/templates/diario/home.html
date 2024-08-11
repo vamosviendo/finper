@@ -171,12 +171,13 @@
       Movimiento nuevo
     </a>
   </div>
+
   <div>
     {% for dia in dias %}
     <div class="class_div_dia">
       <div class="class_titulo_dia">
         <strong>
-          <span class="class_span_fecha_dia">{{ dia.fecha|date:'l Y-m-d' }}</span> - Saldo:
+          <span class="class_span_fecha_dia">{{ dia.str_dia_semana }}</span> - Saldo:
           <span class="class_span_saldo_dia">{{ dia.saldo|floatformat:2 }}</span>
         </strong>
       </div>
@@ -189,7 +190,7 @@
           <th id="id_th_importe">Importe</th>
           <th>Menu</th>
         </tr></thead>
-        {% for mov in dia.movimientos reversed %}
+        {% for mov in dia.movimientos %}
         <tr id="id_row_mov_{{ mov.identidad }}" class="class_row_mov{% if mov.pk == pk %} mov_selected{% endif %}">
 
           <td class="class_td_concepto" title="{{ mov.detalle }}">

@@ -45,12 +45,13 @@ def test_pasa_monedas_a_template(peso, dolar, euro, response):
         assert moneda.as_view_context() in response.context.get('monedas')
 
 
-def test_pasa_dias_a_template(dia, dia_anterior, dia_posterior, dia_tardio, response):
-    for d in (dia, dia_anterior, dia_posterior, dia_tardio):
-        assert d in response.context.get('dias')
+def test_pasa_dias_a_template_como_dict(dia_con_movs, dia_anterior_con_movs, dia_posterior_con_movs, dia_tardio_con_movs, response):
+    for d in (dia_con_movs, dia_anterior_con_movs, dia_posterior_con_movs, dia_tardio_con_movs):
+        assert d.as_view_context() in response.context.get('dias')
 
-def test_pasa_dias_ordenados_por_fecha_invertida(dia, dia_anterior, dia_posterior, dia_tardio, response):
-    assert response.context.get('dias')[0] == dia_tardio
+def test_pasa_dias_ordenados_por_fecha_invertida(
+        dia_con_movs, dia_anterior_con_movs, dia_posterior_con_movs, dia_tardio_con_movs, response):
+    assert response.context.get('dias')[0] == dia_tardio_con_movs.as_view_context()
 
 
 def test_pasa_solo_7_dias(mas_de_7_dias, response):
@@ -58,10 +59,14 @@ def test_pasa_solo_7_dias(mas_de_7_dias, response):
     assert mas_de_7_dias.first() not in response.context.get('dias')
 
 
+def test_no_pasa_dias_sin_movimientos(dia, dia_anterior, dia_posterior, entrada, salida_posterior, response):
+    assert dia_anterior not in response.context.get('dias')
+
+
 def test_puede_pasar_movimientos_posteriores(mas_de_7_dias, client):
     response = client.get('/?page=2')
-    assert mas_de_7_dias.first() in response.context.get('dias')
-    assert mas_de_7_dias.last() not in response.context.get('dias')
+    assert mas_de_7_dias.first().as_view_context() in response.context.get('dias')
+    assert mas_de_7_dias.last().as_view_context() not in response.context.get('dias')
 
 def test_pasa_movimientos_a_template(entrada, salida, traspaso, response):
     for mov in (entrada, salida, traspaso):
@@ -136,6 +141,14 @@ def test_si_recibe_slug_de_cuenta_pasa_saldo_de_cuenta_como_saldo_general(
 def test_si_recibe_slug_de_cuenta_pasa_titulo_de_saldo_gral_con_cuenta(cuenta, client):
     response = client.get(reverse('cuenta', args=[cuenta.slug]))
     assert response.context['titulo_saldo_gral'] == f"{cuenta.nombre} (fecha alta: {cuenta.fecha_creacion})"
+
+
+def test_si_recibe_slug_de_cuenta_pasa_dias_con_movimientos_de_la_cuenta(
+        cuenta, dia, dia_posterior, dia_tardio,
+        entrada, salida, entrada_posterior_otra_cuenta, entrada_tardia,
+        client):
+    response = client.get(reverse('cuenta', args=[cuenta.slug]))
+    assert response.context["dias"] == [dia.as_view_context() for dia in [dia_tardio, dia]]
 
 
 def test_si_recibe_slug_de_cuenta_e_id_de_movimiento_actualiza_context_con_datos_historicos_de_cuenta_al_momento_del_movimiento(
