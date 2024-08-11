@@ -66,13 +66,13 @@ class FinperFirefox(MiFirefox):
     def esperar_movimientos(self, columna: str, contenido: str) -> list[MiWebElement]:
         return [
             x for x in self.esperar_elementos("class_row_mov", By.CLASS_NAME, fail=False)
-            if x.find_element_by_class_name(f"class_td_{columna}").text == contenido
+            if x.esperar_elemento(f"class_td_{columna}", By.CLASS_NAME).text == contenido
         ]
 
     def esperar_dia(self, fecha: date) -> MiWebElement:
         return next(
             x for x in self.esperar_elementos("class_div_dia")
-            if x.find_element_by_class_name("class_span_fecha_dia").text ==
+            if x.esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text ==
             f"{dia_de_la_semana[fecha.weekday()]} {fecha.strftime('%Y-%m-%d')}"
         )
 
@@ -246,7 +246,7 @@ def texto_en_hijos_respectivos(
         lista_elementos: List[MiWebElement | WebElement]
 ) -> List[str]:
     return [
-        x.find_element_by_class_name(classname).text
+        x.esperar_elemento(classname, By.CLASS_NAME).text
         for x in lista_elementos
     ]
 

@@ -15,4 +15,4 @@ mypy==1.6.1
 pytest-django==4.5.2
 pytest-mock==3.8.2
 pytest-mypy==0.10.3
-selenium==3.141.0
+selenium==4.23.1

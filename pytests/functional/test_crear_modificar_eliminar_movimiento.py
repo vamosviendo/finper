@@ -11,7 +11,7 @@ from vvsteps.driver import MiWebElement
 
 
 def textos_hijos(elemento: MiWebElement, tag_subelem: str) -> List[str]:
-    return [x.text for x in elemento.find_elements_by_tag_name(tag_subelem)]
+    return [x.text for x in elemento.esperar_elementos(tag_subelem, By.TAG_NAME)]
 
 
 def test_crear_movimiento(browser, cuenta, dia, dia_posterior):
@@ -32,7 +32,7 @@ def test_crear_movimiento(browser, cuenta, dia, dia_posterior):
     # El campo "fecha" del formulario tiene la fecha del último día como valor por
     # defecto
     assert \
-        form_mov.find_element_by_id("id_fecha").get_attribute("value") == \
+        form_mov.esperar_elemento("id_fecha").get_attribute("value") == \
         dia_posterior.fecha.strftime('%Y-%m-%d')
 
     # Cargamos los valores necesarios para generar un movimiento nuevo
@@ -47,10 +47,10 @@ def test_crear_movimiento(browser, cuenta, dia, dia_posterior):
     # el formulario de carga
     mov = movs_dia[0]
     importe_localizado = float_format(valores["importe"])
-    cuenta_mov = mov.find_element_by_class_name("class_td_cta_entrada").text
+    cuenta_mov = mov.esperar_elemento("class_td_cta_entrada", By.CLASS_NAME).text
 
-    assert mov.find_element_by_class_name("class_td_concepto").text == valores["concepto"]
-    assert mov.find_element_by_class_name(f"class_td_importe").text == \
+    assert mov.esperar_elemento("class_td_concepto", By.CLASS_NAME).text == valores["concepto"]
+    assert mov.esperar_elemento(f"class_td_importe", By.CLASS_NAME).text == \
         importe_localizado
     assert cuenta_mov == cuenta.nombre
 
@@ -119,12 +119,12 @@ def test_crear_creditos_o_devoluciones(
 
     # - a diferencia del movimiento creado manualmente, no muestra botones
     #   de editar o borrar.
-    assert mov.find_element_by_class_name("class_link_elim_mov").text == "B"
-    assert mov.find_element_by_class_name("class_link_mod_mov").text == "E"
+    assert mov.esperar_elemento("class_link_elim_mov", By.CLASS_NAME).text == "B"
+    assert mov.esperar_elemento("class_link_mod_mov", By.CLASS_NAME).text == "E"
     with pytest.raises(NoSuchElementException):
-        contramov.find_element_by_class_name("class_link_elim_mov")
+        contramov.esperar_elemento("class_link_elim_mov", By.CLASS_NAME)
     with pytest.raises(NoSuchElementException):
-        contramov.find_element_by_class_name("class_link_mod_mov")
+        contramov.esperar_elemento("class_link_mod_mov", By.CLASS_NAME)
 
     # Si vamos a la página de detalles del titular de la cuenta de salida,
     # vemos entre sus cuentas la cuenta generada automáticamente que lo

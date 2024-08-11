@@ -33,3 +33,6 @@ parcial-tests:
 
 update-vvmodel:
 	git -c protocol.file.allow=always submodule update --remote --merge vvmodel
+
+update-vvsteps:
+	git -c protocol.file.allow=always submodule update --remote --merge vvsteps

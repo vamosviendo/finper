@@ -225,8 +225,10 @@ def test_detalle_de_cuenta_acumulativa(
     # de la cuenta acumulativa al momento del movimiento
     movimiento = cuenta_de_dos_titulares.movs().order_by(
         '-dia', 'orden_dia')[1]
-    assert movimiento.concepto == movimientos[1].find_element_by_class_name(
-        "class_td_concepto").text
+    assert movimiento.concepto == movimientos[1].esperar_elemento(
+        "class_td_concepto",
+        By.CLASS_NAME
+    ).text
     assert \
         cuenta_de_dos_titulares.saldo != \
         cuenta_de_dos_titulares.saldo_en_mov(movimiento)

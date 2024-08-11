@@ -37,7 +37,7 @@ def test_home(
     assert capitales[1] == float_format(otro_titular.capital)
 
     # Vemos seis cuentas en el menú de cuentas (4 cuentas y 2 subcuentas)
-    cuentas = browser.find_elements_by_class_name("class_div_cuenta")
+    cuentas = browser.esperar_elementos("class_div_cuenta")
     assert len(cuentas) == 6
     nombres_cuenta = texto_en_hijos_respectivos("class_nombre_cuenta", cuentas)
     assert nombres_cuenta[0] == cuenta.nombre
@@ -49,7 +49,7 @@ def test_home(
 
     # Vemos que la cuenta acumulativa es presentada en un color más oscuro,
     # y las subcuentas en un color más claro
-    tds_cuenta = browser.find_elements_by_class_name("class_td_cuenta")
+    tds_cuenta = browser.esperar_elementos("class_td_cuenta")
     assert "acumulativa" in tds_cuenta[3].get_attribute("class")
     assert "class_td_subcuenta" in tds_cuenta[4].get_attribute("class")
     assert "class_td_subcuenta" in tds_cuenta[5].get_attribute("class")
@@ -65,7 +65,7 @@ def test_home(
     # En la sección de movimientos vemos dos divisiones de día.
     # Cada una de ellas tiene un título con la fecha y el saldo del día
     # Debajo del título hay una tabla con todos los movimientos del día.
-    divs_dia = browser.find_elements_by_class_name("class_div_dia")
+    divs_dia = browser.esperar_elementos("class_div_dia")
     assert len(divs_dia) == 2
     fechas_dia = texto_en_hijos_respectivos("class_span_fecha_dia", divs_dia)
     saldos_dia = texto_en_hijos_respectivos("class_span_saldo_dia", divs_dia)
@@ -76,7 +76,7 @@ def test_home(
         assert fechas_dia[i] == dia.str_dia_semana()
         assert saldos_dia[i] == float_format(dia.saldo())
         movs_dia = dia.movimientos
-        movs_dia_web = dia_web.find_elements_by_class_name("class_row_mov")
+        movs_dia_web = dia_web.esperar_elementos("class_row_mov")
         conceptos = texto_en_hijos_respectivos("class_td_concepto", movs_dia_web)
         detalles = texto_en_hijos_respectivos("class_td_detalle", movs_dia_web)
         importes = texto_en_hijos_respectivos("class_td_importe", movs_dia_web)

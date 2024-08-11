@@ -1,5 +1,6 @@
 import pytest
 from django.urls import reverse
+from selenium.webdriver.common.by import By
 
 from utils.numeros import float_format
 from .helpers import texto_en_hijos_respectivos
@@ -90,8 +91,8 @@ def test_detalle_titular(
     ]
     assert len(tds_titular_selected) == 1
     div_titular_selected = \
-        tds_titular_selected[0].find_element_by_class_name(
-            "class_div_nombre_titular"
+        tds_titular_selected[0].esperar_elemento(
+            "class_div_nombre_titular", By.CLASS_NAME
         )
     assert div_titular_selected.text == titular.nombre
 
