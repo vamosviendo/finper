@@ -56,8 +56,14 @@ class Moneda(MiModel):
     def base(cls):
         return cls.tomar(monname=MONEDA_BASE)
 
+    def cotizacion_al(self, fecha: date) -> float:
+        return Cotizacion.tomar(moneda=self, fecha=fecha).importe
+
     def cotizacion_en(self, otra_moneda: Self) -> float:
         return self.cotizacion / otra_moneda.cotizacion
+
+    def cotizacion_en_al(self, otra_moneda: Self, fecha: date) -> float:
+        return self.cotizacion_al(fecha) / otra_moneda.cotizacion_al(fecha)
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
