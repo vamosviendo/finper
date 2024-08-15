@@ -32,7 +32,7 @@ def euro(fecha: date) -> Moneda:
         nombre='Euro',
         monname='eu',
     )
-    Cotizacion.crear(moneda=mon, fecha=fecha, importe=110)
+    Cotizacion.crear(moneda=mon, fecha=fecha, importe=1100)
     return mon
 
 

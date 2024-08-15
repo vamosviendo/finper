@@ -10,6 +10,7 @@ from django_ordered_field import OrderedCollectionField
 from vvmodel.models import MiModel
 from utils import errors
 from utils.tiempo import Posicion
+from utils.varios import el_que_no_es
 
 from diario.consts import *
 from diario.models.dia import Dia
@@ -169,6 +170,7 @@ class Movimiento(MiModel):
         'diario.Moneda', related_name='movimientos', null=True, blank=True,
         on_delete=models.CASCADE
     )
+    _cotizacion = models.FloatField(default=0.0)
     cta_entrada = models.ForeignKey(
         'diario.Cuenta', related_name='entradas', null=True, blank=True,
         on_delete=models.CASCADE
@@ -265,7 +267,11 @@ class Movimiento(MiModel):
 
     @property
     def cotizacion(self) -> float:
-        return self.moneda.cotizacion
+        return self._cotizacion
+
+    @cotizacion.setter
+    def cotizacion(self, valor: float):
+        self._cotizacion = valor
 
     @classmethod
     def crear(cls,
@@ -377,6 +383,17 @@ class Movimiento(MiModel):
 
             if self.es_prestamo_o_devolucion():
                 self._gestionar_transferencia()
+
+            # TODO REFACTOR: extraer self._calcular_cotizacion()
+            if self.cta_entrada is not None and self.cta_salida is not None:
+                if self.cta_entrada.moneda != self.cta_salida.moneda:
+                    if self.cotizacion == 0.0:
+                        otra_moneda = el_que_no_es(self.moneda, self.cta_entrada.moneda, self.cta_salida.moneda)
+                        self.cotizacion = otra_moneda.cotizacion_en_al(self.moneda, fecha=self.fecha)
+                else:
+                    self.cotizacion = 1.0
+            else:
+                self.cotizacion = 1.0
 
             super().save(*args, **kwargs)
             if self.cta_entrada:

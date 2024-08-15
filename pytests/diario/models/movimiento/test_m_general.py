@@ -1,4 +1,6 @@
-from diario.models import Movimiento, Moneda
+import pytest
+
+from diario.models import Movimiento, Moneda, Cotizacion
 
 
 def test_guarda_y_recupera_movimientos(fecha, dia, cuenta, cuenta_2):
@@ -11,6 +13,7 @@ def test_guarda_y_recupera_movimientos(fecha, dia, cuenta, cuenta_2):
     mov.cta_salida = cuenta_2
     mov.detalle = "Detalle del movimiento"
     mov.moneda = cuenta.moneda
+    mov.cotizacion = 1.0
     mov.save()
 
     assert Movimiento.cantidad() == cantidad_movimientos + 1
@@ -25,6 +28,7 @@ def test_guarda_y_recupera_movimientos(fecha, dia, cuenta, cuenta_2):
     assert mov_guardado.cta_salida == cuenta_2
     assert mov_guardado.detalle == "Detalle del movimiento"
     assert mov_guardado.moneda == cuenta.moneda
+    assert mov_guardado.cotizacion == 1.0
 
 
 def test_cta_entrada_se_relaciona_con_cuenta(cuenta, fecha):
@@ -90,6 +94,67 @@ def test_moneda_base_es_moneda_por_defecto(cuenta, fecha, mock_moneda_base):
     mov.save()
     assert mov.moneda == Moneda.tomar(monname=mock_moneda_base)
 
+
+def test_cotizacion_por_defecto_es_1_para_cuentas_con_la_misma_moneda(cuenta, cuenta_2, fecha):
+    mov = Movimiento(
+        fecha=fecha, concepto="Movimiento entre cuentas en la misma moneda", importe=100,
+        cta_entrada=cuenta, cta_salida=cuenta_2
+    )
+    mov.full_clean()
+    mov.save()
+    assert mov.cotizacion == 1
+
+
+@pytest.mark.parametrize("sentido", ["cta_entrada", "cta_salida"])
+def test_en_movimientos_de_entrada_o_salida_cotizacion_es_siempre_uno(cuenta, fecha, sentido):
+    kwargs = {
+        'fecha': fecha,
+        'concepto': 'Entrada o salida',
+        'importe': 100,
+        sentido: cuenta,
+        'cotizacion': 50
+    }
+    mov = Movimiento(**kwargs)
+    mov.full_clean()
+    mov.save()
+    assert mov.cotizacion == 1
+
+
+def test_en_movimientos_entre_cuentas_en_la_misma_moneda_cotizacion_es_siempre_uno(cuenta, cuenta_2, fecha):
+    mov = Movimiento(
+        fecha=fecha, concepto="Movimiento entre cuentas en la misma moneda", importe=100,
+        cta_entrada=cuenta, cta_salida=cuenta_2, cotizacion=55
+    )
+    mov.full_clean()
+    mov.save()
+    assert mov.cotizacion == 1
+
+
+def test_entre_cuentas_en_distinta_moneda_se_calcula_cotizacion_a_partir_de_la_cotizacion_de_ambas_monedas_a_la_fecha_del_movimiento(
+        cuenta_con_saldo_en_dolares, cuenta_con_saldo_en_euros, dolar, euro,
+        cotizacion, cotizacion_posterior, cotizacion_euro, cotizacion_posterior_euro, fecha):
+    mov = Movimiento(
+        fecha=fecha, concepto="Compra de dólares con euros", importe=100,
+        cta_entrada=cuenta_con_saldo_en_dolares, cta_salida=cuenta_con_saldo_en_euros,
+        moneda=euro
+    )
+    mov.full_clean()
+    mov.save()
+    assert mov.cotizacion == dolar.cotizacion_en_al(euro, fecha)
+
+
+def test_entre_cuentas_en_distinta_moneda_permite_cotizacion_arbitraria(
+        cuenta_con_saldo_en_dolares, cuenta_con_saldo_en_euros, dolar, euro,
+        cotizacion, cotizacion_posterior, cotizacion_euro, cotizacion_posterior_euro, fecha):
+    mov = Movimiento(
+        fecha=fecha, concepto="Compra de dólares con euros", importe=100,
+        cta_entrada=cuenta_con_saldo_en_dolares, cta_salida=cuenta_con_saldo_en_euros,
+        moneda=euro
+    )
+    mov.cotizacion = 555
+    mov.full_clean()
+    mov.save()
+    assert mov.cotizacion == 555
 
 def test_natural_key_devuelve_fecha_y_orden_dia(entrada):
     assert entrada.natural_key() == (entrada.dia.fecha, entrada.orden_dia, )
