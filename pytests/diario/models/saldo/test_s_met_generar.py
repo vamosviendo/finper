@@ -80,7 +80,7 @@ def test_importe_de_saldo_creado_es_igual_a_suma_del_importe_del_movimiento_y_el
     )
 
 
-def test_si_moneda_del_movimiento_es_distinta_de_la_de_la_cuenta_suma_importe_del_movimiento_ajustado_segun_ambas_cotizaciones(
+def test_si_moneda_del_movimiento_es_distinta_de_la_de_la_cuenta_suma_importe_del_movimiento_ajustado_segun_cotizacion_del_mismo(
         mov_distintas_monedas, cuenta_con_saldo_en_euros, mock_crear):
     Saldo.objects.get(cuenta=cuenta_con_saldo_en_euros, movimiento=mov_distintas_monedas).delete()
     saldo_anterior = Saldo.objects.filter(cuenta=cuenta_con_saldo_en_euros).last().importe
@@ -89,7 +89,7 @@ def test_si_moneda_del_movimiento_es_distinta_de_la_de_la_cuenta_suma_importe_de
     mock_crear.assert_called_once_with(
         cuenta=cuenta_con_saldo_en_euros,
         movimiento=mov_distintas_monedas,
-        importe=saldo_anterior + mov_distintas_monedas.importe * mov_distintas_monedas.cotizacion / cuenta_con_saldo_en_euros.cotizacion,
+        importe=saldo_anterior + mov_distintas_monedas.importe * mov_distintas_monedas.cotizacion
     )
 
 

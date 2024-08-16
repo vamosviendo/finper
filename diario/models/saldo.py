@@ -118,9 +118,11 @@ class Saldo(MiModel):
         except AttributeError:
             importe_saldo_anterior = 0
 
+        cotizacion = 1.0 if cuenta.moneda == mov.moneda else mov.cotizacion
+
         saldo: 'Saldo' = cls.crear(
             cuenta=cuenta,
-            importe=importe_saldo_anterior + importe * mov.cotizacion / cuenta.cotizacion,
+            importe=importe_saldo_anterior + importe * cotizacion,
             movimiento=mov
         )
         saldo._actualizar_posteriores(importe)

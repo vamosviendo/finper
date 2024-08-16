@@ -5,6 +5,7 @@ import pytest
 from diario.models import Movimiento, Saldo, Cuenta, CuentaInteractiva, Moneda, Dia
 from utils import errors
 from utils.helpers_tests import cambiar_fecha_creacion
+from utils.varios import el_que_no_es
 
 
 @pytest.fixture
@@ -137,32 +138,36 @@ def test_integrativo_crear_movimiento_en_fecha_antigua_modifica_saldos_de_fechas
     assert Saldo.tomar(cuenta=cuenta, movimiento=entrada).importe == importe_saldo + mov_anterior.importe
 
 
-@pytest.mark.parametrize('cta_entrada, cta_salida, moneda', [
-    ('cuenta_con_saldo_en_euros', 'cuenta_con_saldo_en_dolares', 'dolar'),
-    ('cuenta_con_saldo_en_euros', 'cuenta_con_saldo_en_dolares', 'euro'),
-    ('cuenta_con_saldo_en_dolares', 'cuenta_con_saldo_en_euros', 'dolar'),
-    ('cuenta_con_saldo_en_dolares', 'cuenta_con_saldo_en_euros', 'euro'),
+@pytest.mark.parametrize('cta_entrada, cta_salida, moneda, cot', [
+    ('cuenta_con_saldo_en_euros', 'cuenta_con_saldo_en_dolares', 'dolar', 1.2),
+    ('cuenta_con_saldo_en_euros', 'cuenta_con_saldo_en_dolares', 'euro', 0.8),
+    ('cuenta_con_saldo_en_dolares', 'cuenta_con_saldo_en_euros', 'dolar', 1.2),
+    ('cuenta_con_saldo_en_dolares', 'cuenta_con_saldo_en_euros', 'euro', 0.8),
 ])
-def test_impacta_en_saldo_de_cada_cuenta_segun_la_cotizacion_de_su_moneda(
-        cta_entrada, cta_salida, moneda, fecha, request):
+def test_impacta_en_saldo_de_cada_cuenta_segun_la_cotizacion_y_moneda_del_movimiento(
+        cta_entrada, cta_salida, moneda, cot, fecha, request):
     ce: CuentaInteractiva = request.getfixturevalue(cta_entrada)
     cs: CuentaInteractiva = request.getfixturevalue(cta_salida)
     mon_mov: Moneda = request.getfixturevalue(moneda)
-    saldo_ce = ce.saldo
-    saldo_cs = cs.saldo
+    cta_en_mon_mov = ce if ce.moneda == mon_mov else cs
+    saldo_ce: float = ce.saldo
+    saldo_cs: float = cs.saldo
 
-    Movimiento.crear(
+    mov = Movimiento.crear(
         concepto='Movimiento entre cuentas con distinta moneda',
         cta_entrada=ce,
         cta_salida=cs,
         importe=10,
         fecha=fecha,
         moneda=mon_mov,
+        cotizacion=cot,
     )
+
     ce.refresh_from_db()
     cs.refresh_from_db()
-    assert ce.saldo == round(saldo_ce + (10 * mon_mov.cotizacion / ce.cotizacion), 2)
-    assert cs.saldo == round(saldo_cs - (10 * mon_mov.cotizacion / cs.cotizacion), 2)
+
+    assert ce.saldo == round(saldo_ce + (10 * (1 if ce == cta_en_mon_mov else mov.cotizacion)))
+    assert cs.saldo == round(saldo_cs - (10 * (1 if cs == cta_en_mon_mov else mov.cotizacion)))
 
 
 class TestMovimientoEntreCuentasDeDistintosTitulares:
