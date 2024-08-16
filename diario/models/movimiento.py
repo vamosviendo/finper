@@ -377,23 +377,15 @@ class Movimiento(MiModel):
         - Si cambió alguno de estos campos, actualizar saldos:
         """
         if self._state.adding:   # Movimiento nuevo
+
+            self._calcular_cotizacion()
+
             # TODO extract Movimiento.__setup__()
             if not hasattr(self, 'esgratis'):
                 self.esgratis = esgratis
 
             if self.es_prestamo_o_devolucion():
                 self._gestionar_transferencia()
-
-            # TODO REFACTOR: extraer self._calcular_cotizacion()
-            if self.cta_entrada is not None and self.cta_salida is not None:
-                if self.cta_entrada.moneda != self.cta_salida.moneda:
-                    if self.cotizacion == 0.0:
-                        otra_moneda = el_que_no_es(self.moneda, self.cta_entrada.moneda, self.cta_salida.moneda)
-                        self.cotizacion = otra_moneda.cotizacion_en_al(self.moneda, fecha=self.fecha)
-                else:
-                    self.cotizacion = 1.0
-            else:
-                self.cotizacion = 1.0
 
             super().save(*args, **kwargs)
             if self.cta_entrada:
@@ -618,6 +610,17 @@ class Movimiento(MiModel):
                 if pos_min.fecha == self.viejo.fecha \
                 else Movimiento.filtro(dia=Dia.tomar(fecha=pos_min.fecha)).count()
             super().save()
+
+    def _calcular_cotizacion(self):
+        if self.cta_entrada is not None and self.cta_salida is not None:
+            if self.cta_entrada.moneda != self.cta_salida.moneda:
+                if self.cotizacion == 0.0:
+                    otra_moneda = el_que_no_es(self.moneda, self.cta_entrada.moneda, self.cta_salida.moneda)
+                    self.cotizacion = otra_moneda.cotizacion_en_al(self.moneda, fecha=self.fecha)
+            else:
+                self.cotizacion = 1.0
+        else:
+            self.cotizacion = 1.0
 
     def _eliminar_saldo_de_cuenta_vieja_si_existe(self, cuenta_vieja: Cuenta, pasa_a_opuesto: callable, saldo: callable):
         if cuenta_vieja is not None and not pasa_a_opuesto():
