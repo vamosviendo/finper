@@ -1,4 +1,5 @@
 import pytest
+from django.core.exceptions import EmptyResultSet
 
 from diario.models import Cotizacion
 
@@ -11,6 +12,11 @@ def test_devuelve_cotizacion_de_una_moneda_en_una_fecha(
 def test_si_no_encuentra_cotizacion_de_moneda_en_fecha_devuelve_ultima_cotizacion_anterior(
         cotizacion, cotizacion_posterior, dolar, fecha_tardia):
     assert Cotizacion.tomar(moneda=dolar, fecha=fecha_tardia) == cotizacion_posterior
+
+
+def test_si_no_encuentra_ninguna_cotizacion_de_moneda_da_error(peso, fecha):
+    with pytest.raises(EmptyResultSet):
+        Cotizacion.tomar(moneda=peso, fecha=fecha)
 
 
 def test_toma_fecha_de_hoy_por_defecto(cotizacion, dolar, mock_today):

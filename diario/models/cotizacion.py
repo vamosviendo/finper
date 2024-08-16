@@ -1,5 +1,6 @@
 from datetime import date
 
+from django.core.exceptions import EmptyResultSet
 from django.db import models
 
 from vvmodel.models import MiModel
@@ -27,4 +28,9 @@ class Cotizacion(MiModel):
         try:
             return super().tomar(**kwargs)
         except cls.DoesNotExist:
-            return cls.filtro(moneda=kwargs["moneda"], fecha__lt=kwargs["fecha"]).last()
+            cotizaciones_anteriores = cls.filtro(moneda=kwargs["moneda"], fecha__lt=kwargs["fecha"])
+            if cotizaciones_anteriores.count() == 0:
+                raise EmptyResultSet(
+                    f"No hay cotizaciones de {kwargs['moneda']} anteriores al {kwargs['fecha']}"
+                )
+            return cotizaciones_anteriores.last()
