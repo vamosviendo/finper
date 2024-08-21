@@ -114,7 +114,7 @@ class MovimientoCleaner:
             cuenta_vieja = getattr(self.viejo, campo_cuenta)
             if cuenta_vieja and cuenta_vieja.es_acumulativa:
                 # No se permite cambiar importe de un movimiento con cuenta acumulativa
-                if self.mov.cambia_campo('importe'):
+                if self.mov.cambia_campo('_importe'):
                     raise errors.ErrorCuentaEsAcumulativa(
                         errors.CAMBIO_IMPORTE_CON_CUENTA_ACUMULATIVA
                     )
@@ -402,7 +402,7 @@ class Movimiento(MiModel):
                     # El movimiento ya era una transacción no gratuita entre
                     # titulares
                     if self.cambia_campo(
-                            'fecha', 'importe', CTA_ENTRADA, CTA_SALIDA):
+                            'dia', '_importe', CTA_ENTRADA, CTA_SALIDA):
                         self._regenerar_contramovimiento()
                 else:
                     # El movimiento no era una transacción no gratuita entre
@@ -424,7 +424,7 @@ class Movimiento(MiModel):
             super().save(*args, **kwargs)
 
             if self.cambia_campo(
-                    'importe', CTA_ENTRADA, CTA_SALIDA, 'fecha', 'orden_dia',
+                    '_importe', CTA_ENTRADA, CTA_SALIDA, 'dia', 'orden_dia',
                     contraparte=self.viejo
             ):
                 for campo_cuenta in campos_cuenta:
@@ -484,6 +484,8 @@ class Movimiento(MiModel):
     def cambia_campo(self, *args, contraparte: Movimiento = None) -> bool:
         mov_guardado = contraparte or self.tomar_de_bd()
         for campo in args:
+            if campo not in [x.name for x in self._meta.fields]:
+                raise ValueError(f"Campo inexistente: {campo}")
             if getattr(self, campo) != getattr(mov_guardado, campo):
                 return True
         return False
@@ -570,13 +572,13 @@ class Movimiento(MiModel):
                     Saldo.generar(self, salida=(campo_cuenta == CTA_SALIDA))
                 self._eliminar_saldo_de_cuenta_vieja_si_existe(cuenta_vieja, pasa_a_opuesto, saldo)
 
-            elif cambia_campo('importe'):
+            elif cambia_campo('_importe'):
                 cuenta.recalcular_saldos_entre(self.posicion)
 
             elif getattr(self.viejo, campo_cuenta) is None:
                 Saldo.generar(self, salida=(campo_cuenta == CTA_SALIDA))
 
-            if cambia_campo('fecha', 'orden_dia'):
+            if cambia_campo('dia', 'orden_dia'):
                 if not mantiene_orden_dia:
                     self._asignar_orden_dia()
 
@@ -590,7 +592,7 @@ class Movimiento(MiModel):
                 cuenta_vieja, pasa_a_opuesto, saldo)
 
     def _actualizar_fechas_conversion(self):
-        if self.cambia_campo('fecha', contraparte=self.viejo) and self.convierte_cuenta:
+        if self.cambia_campo('dia', contraparte=self.viejo) and self.convierte_cuenta:
             cuenta = self.cta_entrada \
                 if self.convierte_cuenta == CTA_SALIDA \
                 else self.cta_salida
