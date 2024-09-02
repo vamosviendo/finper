@@ -217,6 +217,32 @@ class Movimiento(MiModel):
         self._importe = round(float(valor), 2)
 
     @property
+    def importe_cta_entrada(self) -> float | None:
+        try:
+            return round(
+                self.importe / (
+                    1 if self.cta_entrada.moneda == self.moneda
+                    else self.cotizacion
+                ),
+                ndigits=2
+            )
+        except AttributeError:
+            return None
+
+    @property
+    def importe_cta_salida(self) -> float | None:
+        try:
+            return round(
+                self.importe / (
+                    1 if self.cta_salida.moneda == self.moneda
+                    else self.cotizacion
+                ),
+                ndigits=2
+            )
+        except AttributeError:
+            return None
+
+    @property
     def fecha(self) -> Optional[date]:
         try:
             return self.dia.fecha
