@@ -444,17 +444,24 @@ class Movimiento(MiModel):
 
             self._actualizar_cuenta_convertida_en_acumulativa()
 
+            cambia_moneda = False
             if self.cambia_campo('moneda', contraparte=self.viejo):
-                self.importe = self.viejo.importe_en(self.moneda)
+                if not self.cambia_campo('_cotizacion', contraparte=self.viejo):
+                    self.cotizacion = 1 / self.viejo.cotizacion
+                    cambia_moneda = True
+                self.importe = round(self.viejo.importe * self.cotizacion, 2)
 
             super().save(*args, **kwargs)
 
             if self.cambia_campo(
-                    '_importe', CTA_ENTRADA, CTA_SALIDA, 'dia', 'orden_dia',
+                    '_importe', '_cotizacion', CTA_ENTRADA, CTA_SALIDA, 'dia', 'orden_dia',
                     contraparte=self.viejo
             ):
-                for campo_cuenta in campos_cuenta:
-                    self._actualizar_saldos_cuenta(campo_cuenta, mantiene_orden_dia)
+                if cambia_moneda:
+                    pass
+                else:
+                    for campo_cuenta in campos_cuenta:
+                        self._actualizar_saldos_cuenta(campo_cuenta, mantiene_orden_dia)
                 self._actualizar_fechas_conversion()
 
     def refresh_from_db(self, using: str = None, fields: List[str] = None):
@@ -598,7 +605,7 @@ class Movimiento(MiModel):
                     Saldo.generar(self, salida=(campo_cuenta == CTA_SALIDA))
                 self._eliminar_saldo_de_cuenta_vieja_si_existe(cuenta_vieja, pasa_a_opuesto, saldo)
 
-            elif cambia_campo('_importe'):
+            elif cambia_campo('_importe', '_cotizacion'):
                 cuenta.recalcular_saldos_entre(self.posicion)
 
             elif getattr(self.viejo, campo_cuenta) is None:

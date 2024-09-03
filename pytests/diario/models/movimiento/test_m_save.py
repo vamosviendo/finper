@@ -1100,8 +1100,48 @@ class TestSaveCambiaMoneda:
         mov_distintas_monedas.moneda = euro
         mov_distintas_monedas.full_clean()
         mov_distintas_monedas.save()
+
         ceu.refresh_from_db()
         cdl.refresh_from_db()
 
         assert ceu.saldo == saldo_ceu
         assert cdl.saldo == saldo_cdl
+
+    def test_si_cambia_moneda_pero_no_cotizacion_en_traspaso_entre_cuentas_en_distinta_moneda_invierte_cotizacion(
+            self, mov_distintas_monedas, euro, dolar):
+        assert mov_distintas_monedas.cotizacion == euro.cotizacion_en_al(dolar, mov_distintas_monedas.fecha)
+        print(mov_distintas_monedas.importe_cta_entrada, mov_distintas_monedas.importe_cta_salida)
+        print(mov_distintas_monedas.cta_entrada.saldo, mov_distintas_monedas.cta_salida.saldo)
+        mov_distintas_monedas.moneda = euro
+        mov_distintas_monedas.full_clean()
+        mov_distintas_monedas.save()
+
+    def test_si_cambia_moneda_y_cotizacion_en_traspaso_entre_cuentas_en_distinta_moneda_toma_cotizacion_pasada_manualmente(
+            self, mov_distintas_monedas, euro):
+        mov_distintas_monedas.moneda = euro
+        mov_distintas_monedas.cotizacion = 1.1
+        mov_distintas_monedas.full_clean()
+        mov_distintas_monedas.save()
+        assert mov_distintas_monedas.cotizacion == 1.1
+
+    def test_si_cambia_cotizacion_en_traspaso_entre_cuentas_en_distinta_moneda_impacta_en_saldo_de_cuenta_en_moneda_distinta_de_la_del_movimiento(
+            self, mov_distintas_monedas, cuenta_con_saldo_en_euros):
+        saldo = cuenta_con_saldo_en_euros.saldo
+        importe_en_euros = mov_distintas_monedas.importe / mov_distintas_monedas.cotizacion
+
+        mov_distintas_monedas.cotizacion = 1.5
+        mov_distintas_monedas.full_clean()
+        mov_distintas_monedas.save()
+
+        nuevo_importe_en_euros = mov_distintas_monedas.importe / mov_distintas_monedas.cotizacion
+        assert nuevo_importe_en_euros != importe_en_euros
+        assert cuenta_con_saldo_en_euros.saldo == round(saldo - importe_en_euros + nuevo_importe_en_euros, 2)
+
+    def test_si_cambia_moneda_y_cuenta_que_pasa(self):
+        pass
+
+    def test_si_cambia_moneda_e_importe_que_pasa(self):
+        pass
+
+    def test_si_cambia_moneda_y_fecha_que_pasa(self):
+        pass

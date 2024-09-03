@@ -166,8 +166,8 @@ def test_impacta_en_saldo_de_cada_cuenta_segun_la_cotizacion_y_moneda_del_movimi
     ce.refresh_from_db()
     cs.refresh_from_db()
 
-    assert ce.saldo == round(saldo_ce + (10 * (1 if ce == cta_en_mon_mov else mov.cotizacion)))
-    assert cs.saldo == round(saldo_cs - (10 * (1 if cs == cta_en_mon_mov else mov.cotizacion)))
+    assert ce.saldo == round(saldo_ce + (10 / (1 if ce == cta_en_mon_mov else mov.cotizacion)), 2)
+    assert cs.saldo == round(saldo_cs - (10 / (1 if cs == cta_en_mon_mov else mov.cotizacion)), 2)
 
 
 class TestMovimientoEntreCuentasDeDistintosTitulares:
