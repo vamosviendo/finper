@@ -124,7 +124,7 @@ class Cuenta(PolymorphModel):
             try:
                 saldo.importe = saldo.anterior().importe + (
                     saldo.movimiento.importe_cta_entrada if saldo.viene_de_entrada
-                    else -saldo.movimiento.importe_cta_salida
+                    else saldo.movimiento.importe_cta_salida
                 )
             except AttributeError:
                 saldo.importe = \

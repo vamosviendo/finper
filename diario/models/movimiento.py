@@ -232,7 +232,7 @@ class Movimiento(MiModel):
     @property
     def importe_cta_salida(self) -> float | None:
         try:
-            return round(
+            return -round(
                 self.importe / (
                     1 if self.cta_salida.moneda == self.moneda
                     else self.cotizacion
