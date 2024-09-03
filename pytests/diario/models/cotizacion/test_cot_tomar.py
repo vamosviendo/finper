@@ -15,6 +15,7 @@ def test_si_no_encuentra_cotizacion_de_moneda_en_fecha_devuelve_ultima_cotizacio
 
 
 def test_si_no_encuentra_ninguna_cotizacion_de_moneda_da_error(peso, fecha):
+    Cotizacion.tomar(moneda=peso, fecha=fecha).delete()
     with pytest.raises(EmptyResultSet):
         Cotizacion.tomar(moneda=peso, fecha=fecha)
 

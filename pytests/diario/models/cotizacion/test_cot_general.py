@@ -14,10 +14,12 @@ def test_se_relaciona_con_una_moneda(dolar, fecha_posterior):
     assert cotizacion_dolar == cotizacion
 
 
-def test_se_ordena_por_fecha(dolar, fecha, cotizacion_tardia, cotizacion, cotizacion_posterior):
+def test_se_ordena_por_fecha(dolar, peso, fecha, cotizacion_tardia, cotizacion, cotizacion_posterior):
     cotizacion_en_fecha = dolar.cotizaciones.get(fecha=fecha)
+    cotizacion_peso = Cotizacion.tomar(moneda=peso, fecha=fecha)
     assert list(Cotizacion.todes()) == [
         cotizacion,
+        cotizacion_peso,
         cotizacion_en_fecha,
         cotizacion_posterior,
         cotizacion_tardia
@@ -36,3 +38,7 @@ def test_permite_cotizaciones_de_igual_fecha_para_monedas_distintas(dolar, euro,
         cotizacion_2.full_clean()   # No debe dar ValidationError
     except ValidationError:
         pytest.fail("No permite cotizaciones de monedas distintas en la misma fecha")
+
+
+def test_str_devuelve_moneda_fecha_e_importe_de_cotizacion(cotizacion):
+    assert str(cotizacion) == f"Cotización {cotizacion.moneda} al {cotizacion.fecha}: {cotizacion.importe}"

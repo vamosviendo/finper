@@ -15,6 +15,9 @@ class Cotizacion(MiModel):
         ordering = ("fecha", )
         unique_together = ("fecha", "moneda", )
 
+    def __str__(self):
+        return f"Cotización {self.moneda} al {self.fecha}: {self.importe}"
+
     @classmethod
     def tomar(cls, **kwargs):
         kwargs["fecha"] = kwargs.get("fecha") or date.today()
