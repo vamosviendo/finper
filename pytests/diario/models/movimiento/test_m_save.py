@@ -465,7 +465,7 @@ class TestSaveCambiaCuentas:
         assert cuenta_gorda.titular.titname in getattr(contramov, f'cta_{contrasentido}').slug
 
     @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
-    def test_cambiar_cuentaa_por_cuenta_de_otro_titular_en_movimiento_de_traspaso_sin_contramovimiento_genera_contramovimiento(
+    def test_cambiar_cuenta_por_cuenta_de_otro_titular_en_movimiento_de_traspaso_sin_contramovimiento_genera_contramovimiento(
             self, sentido, traspaso, cuenta_ajena, mocker):
         mock_crear_movimiento_credito = mocker.patch(
             'diario.models.Movimiento._crear_movimiento_credito',
@@ -1137,10 +1137,50 @@ class TestSaveCambiaMoneda:
         assert nuevo_importe_en_euros != importe_en_euros
         assert cuenta_con_saldo_en_euros.saldo == round(saldo - importe_en_euros + nuevo_importe_en_euros, 2)
 
-    def test_si_cambia_moneda_y_cuenta_que_pasa(self):
-        pass
+    @pytest.mark.parametrize('sentido, cuenta_a_cambiar', [
+        ('entrada', 'cuenta_con_saldo_en_euros'),
+        ('salida', 'cuenta_con_saldo_en_dolares')
+    ])
+    def test_si_cambia_moneda_y_cuenta_desaparece_saldo_en_movimiento_de_cuenta_anterior_y_aparece_el_de_la_nueva_con_el_mismo_importe(
+            self, sentido, mov_distintas_monedas, cuenta_a_cambiar, titular, fecha, euro, request):
+        """ Si en un movimiento entre cuentas en distinta moneda cambia la moneda
+            y a la vez se reemplaza una de las cuentas por otra en la misma moneda,
+            desaparece el saldo asociado a la cuenta reemplazada y el movimiento
+            y aparece un nuevo saldo en la cuenta reemplazante calculado sobre el mismo importe.
+        """
+        cuenta_cambiada = request.getfixturevalue(cuenta_a_cambiar)
+        cuenta_en_la_misma_moneda = Cuenta.crear(
+            nombre='cuenta en la misma moneda',
+            slug='cmm',
+            titular=titular,
+            fecha_creacion=fecha,
+            moneda=cuenta_cambiada.moneda,
+        )
+        cantidad_de_saldos_de_cuenta_en_la_misma_moneda = cuenta_en_la_misma_moneda.saldo_set.count()
+        saldo_cuenta_en_la_misma_moneda = cuenta_en_la_misma_moneda.saldo_en_mov(mov_distintas_monedas)
+        importe = getattr(mov_distintas_monedas, f"importe_cta_{sentido}")
+
+        mov_distintas_monedas.moneda = euro
+        assert getattr(mov_distintas_monedas, f"cta_{sentido}") == cuenta_cambiada
+        setattr(mov_distintas_monedas, f"cta_{sentido}", cuenta_en_la_misma_moneda)
+        assert getattr(mov_distintas_monedas, f"cta_{sentido}") == cuenta_en_la_misma_moneda
+        mov_distintas_monedas.save()
+
+        with pytest.raises(Saldo.DoesNotExist):
+            Saldo.objects.get(cuenta=cuenta_cambiada, movimiento=mov_distintas_monedas)
+        assert cuenta_en_la_misma_moneda.saldo_set.count() == cantidad_de_saldos_de_cuenta_en_la_misma_moneda + 1
+        assert \
+            cuenta_en_la_misma_moneda.saldo_en_mov(mov_distintas_monedas) == saldo_cuenta_en_la_misma_moneda + importe
 
     def test_si_cambia_moneda_e_importe_que_pasa(self):
+        pass
+
+    def test_si_cambia_cuenta_a_una_con_distinta_moneda_que_pasa(self):
+        """ Cambia cuenta por cuenta en una tercera moneda
+            Cambia cuenta por cuenta en la misma moneda que la contracuenta
+            En movimiento entre cuentas en la misma moneda cambia cuenta por cuenta en otra moneda
+        """
+
         pass
 
     def test_si_cambia_moneda_y_fecha_que_pasa(self):

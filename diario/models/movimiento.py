@@ -399,7 +399,7 @@ class Movimiento(MiModel):
 
         Si el movimiento existía (está siendo modificado)
         - Chequear si cambió alguno de los "campos sensibles" (fecha, importe,
-          cta_entrada, cta_salida, moneda).
+          cta_entrada, cta_salida, moneda, cotización).
         - Si cambió alguno de estos campos, actualizar saldos:
         """
         if self._state.adding:   # Movimiento nuevo
@@ -444,11 +444,9 @@ class Movimiento(MiModel):
 
             self._actualizar_cuenta_convertida_en_acumulativa()
 
-            cambia_moneda = False
             if self.cambia_campo('moneda', contraparte=self.viejo):
                 if not self.cambia_campo('_cotizacion', contraparte=self.viejo):
                     self.cotizacion = 1 / self.viejo.cotizacion
-                    cambia_moneda = True
                 self.importe = round(self.viejo.importe * self.cotizacion, 2)
 
             super().save(*args, **kwargs)
@@ -457,11 +455,8 @@ class Movimiento(MiModel):
                     '_importe', '_cotizacion', CTA_ENTRADA, CTA_SALIDA, 'dia', 'orden_dia',
                     contraparte=self.viejo
             ):
-                if cambia_moneda:
-                    pass
-                else:
-                    for campo_cuenta in campos_cuenta:
-                        self._actualizar_saldos_cuenta(campo_cuenta, mantiene_orden_dia)
+                for campo_cuenta in campos_cuenta:
+                    self._actualizar_saldos_cuenta(campo_cuenta, mantiene_orden_dia)
                 self._actualizar_fechas_conversion()
 
     def refresh_from_db(self, using: str = None, fields: List[str] = None):
