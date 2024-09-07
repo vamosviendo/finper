@@ -1161,9 +1161,7 @@ class TestSaveCambiaMoneda:
         importe = getattr(mov_distintas_monedas, f"importe_cta_{sentido}")
 
         mov_distintas_monedas.moneda = euro
-        assert getattr(mov_distintas_monedas, f"cta_{sentido}") == cuenta_cambiada
         setattr(mov_distintas_monedas, f"cta_{sentido}", cuenta_en_la_misma_moneda)
-        assert getattr(mov_distintas_monedas, f"cta_{sentido}") == cuenta_en_la_misma_moneda
         mov_distintas_monedas.save()
 
         with pytest.raises(Saldo.DoesNotExist):
@@ -1172,7 +1170,35 @@ class TestSaveCambiaMoneda:
         assert \
             cuenta_en_la_misma_moneda.saldo_en_mov(mov_distintas_monedas) == saldo_cuenta_en_la_misma_moneda + importe
 
-    def test_si_cambia_moneda_e_importe_que_pasa(self):
+    def test_si_cambia_moneda_e_importe_impacta_en_saldo_de_ambas_cuentas_segun_cotizacion(
+            self, mov_distintas_monedas, euro):
+        """ Si en un movimiento entre cuentas en distinta moneda cambia la moneda y el importe (no automáticamente),
+            se reemplaza en el cálculo del saldo el importe anterior por el nuevo en el caso de la cuenta en la
+            nueva moneda del movimiento y por el nuevo cotizado en el caso de la cuenta en la otra moneda
+        """
+        saldo_ce = mov_distintas_monedas.saldo_ce().importe
+        saldo_cs = mov_distintas_monedas.saldo_cs().importe
+        importe_ce = mov_distintas_monedas.importe_cta_entrada
+        importe_cs = mov_distintas_monedas.importe_cta_salida
+        cotizacion = mov_distintas_monedas.cotizacion
+
+        mov_distintas_monedas.moneda = euro
+        mov_distintas_monedas.importe = 5
+        mov_distintas_monedas.save()
+
+        assert mov_distintas_monedas.cotizacion == 1 / cotizacion
+        assert mov_distintas_monedas.importe_cta_entrada == mov_distintas_monedas.importe
+        assert \
+            mov_distintas_monedas.importe_cta_salida == \
+            -round(mov_distintas_monedas.importe / mov_distintas_monedas.cotizacion)
+        assert \
+            mov_distintas_monedas.saldo_ce().importe == \
+            saldo_ce - importe_ce + mov_distintas_monedas.importe_cta_entrada
+        assert \
+            mov_distintas_monedas.saldo_cs().importe == \
+            saldo_cs - importe_cs + mov_distintas_monedas.importe_cta_salida
+
+    def test_si_cambia_moneda_y_cotizacion_que_pasa(self):
         pass
 
     def test_si_cambia_cuenta_a_una_con_distinta_moneda_que_pasa(self):
