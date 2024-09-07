@@ -497,6 +497,71 @@ class TestSaveCambiaCuentas:
         mock_eliminar_contramovimiento.assert_called_once_with(credito)
         mock_crear_movimiento_credito.assert_not_called()
 
+    def test_si_cambia_cuenta_en_moneda_no_del_movimiento_por_cuenta_en_una_tercera_moneda_cambia_cotizacion_del_movimiento(
+            self, mov_distintas_monedas, cuenta_con_saldo_en_reales, real):
+        mov_distintas_monedas.cta_entrada = cuenta_con_saldo_en_reales
+        mov_distintas_monedas.full_clean()
+        mov_distintas_monedas.save()
+
+        assert \
+            mov_distintas_monedas.cotizacion == \
+            real.cotizacion_en_al(mov_distintas_monedas.moneda, fecha=mov_distintas_monedas.fecha)
+
+    def test_si_cambia_cuenta_en_moneda_del_movimiento_por_cuenta_en_una_tercera_moneda_cambia_cotizacion_del_movimiento(
+            self, mov_distintas_monedas, cuenta_con_saldo_en_reales, real):
+        moneda_otra_cuenta = mov_distintas_monedas.cta_entrada.moneda
+
+        mov_distintas_monedas.cta_salida = cuenta_con_saldo_en_reales
+        mov_distintas_monedas.moneda = real
+        mov_distintas_monedas.full_clean()
+        mov_distintas_monedas.save()
+
+        assert \
+            mov_distintas_monedas.cotizacion == \
+            moneda_otra_cuenta.cotizacion_en_al(real, fecha=mov_distintas_monedas.fecha)
+
+    def test_si_cambia_cuenta_en_moneda_no_del_movimiento_por_cuenta_en_una_tercera_moneda_y_cotizacion_se_toma_cotizacion_ingresada(
+            self, mov_distintas_monedas, cuenta_con_saldo_en_reales):
+        mov_distintas_monedas.cta_entrada = cuenta_con_saldo_en_reales
+        mov_distintas_monedas.cotizacion = 0.5
+        mov_distintas_monedas.full_clean()
+        mov_distintas_monedas.save()
+
+        assert mov_distintas_monedas.cotizacion == 0.5
+
+    def test_si_cambia_cuenta_en_moneda_del_movimiento_por_cuenta_en_una_tercera_moneda_y_cotizacion_se_toma_cotizacion_ingresada(
+            self, mov_distintas_monedas, cuenta_con_saldo_en_reales, real):
+        mov_distintas_monedas.cta_salida = cuenta_con_saldo_en_reales
+        mov_distintas_monedas.moneda = real
+        mov_distintas_monedas.cotizacion = 2
+        mov_distintas_monedas.full_clean()
+        mov_distintas_monedas.save()
+
+        assert mov_distintas_monedas.cotizacion == 2
+
+
+    def test_ver_si_ya_esta_si_cambia_cotizacion_manualmente_se_recalcula_importe_del_movimiento_y_si_es_eso_lo_que_tiene_que_pasar(self):
+        pass
+    
+    def test_si_cambia_cuenta_a_una_con_distinta_moneda_que_pasa(self):
+        """ Cambia cuenta en moneda del movimiento por cuenta en una tercera moneda_
+            - Es necesario cambiar moneda del movimiento por moneda de tercera cuenta
+            - Cambia cotización del movimiento por cotización de otra moneda en tercera moneda
+            - Cambia importe del movimiento por importe en tercera moneda
+            - Cambia importe de cuenta en moneda del movimiento
+
+            Cambia cuenta por cuenta en la misma moneda que la contracuenta
+            Cambia cuenta en otra moneda por cuenta en moneda del movimiento
+            Cambia cuenta en moneda del movimiento por cuenta en otra moneda
+            En movimiento entre cuentas en la misma moneda cambia cuenta por cuenta en otra moneda
+            En movimiento entre cuentas en distinta moneda cambia cuenta en moneda del movimiento por cuenta en
+            otra moneda
+            En movimiento entre cuentas en distinta moneda cambia cuenta en otra moneda por cuenta en tercera moneda
+        """
+
+        pass
+
+
     @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
     def test_puede_agregarse_cuenta_interactiva_a_movimiento_con_cta_acumulativa(
             self, sentido, cuenta_2, request):
@@ -1198,16 +1263,12 @@ class TestSaveCambiaMoneda:
             mov_distintas_monedas.saldo_cs().importe == \
             saldo_cs - importe_cs + mov_distintas_monedas.importe_cta_salida
 
-    def test_si_cambia_moneda_y_cotizacion_que_pasa(self):
-        pass
+    def test_si_cambia_moneda_y_cotizacion_importe_del_movimiento_se_ajusta_a_nueva_cotizacion(
+            self, mov_distintas_monedas, euro):
+        importe = mov_distintas_monedas.importe
 
-    def test_si_cambia_cuenta_a_una_con_distinta_moneda_que_pasa(self):
-        """ Cambia cuenta por cuenta en una tercera moneda
-            Cambia cuenta por cuenta en la misma moneda que la contracuenta
-            En movimiento entre cuentas en la misma moneda cambia cuenta por cuenta en otra moneda
-        """
+        mov_distintas_monedas.moneda = euro
+        mov_distintas_monedas.cotizacion = 8
+        mov_distintas_monedas.save()
 
-        pass
-
-    def test_si_cambia_moneda_y_fecha_que_pasa(self):
-        pass
+        assert mov_distintas_monedas.importe == importe * mov_distintas_monedas.cotizacion

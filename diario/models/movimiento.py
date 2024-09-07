@@ -443,10 +443,11 @@ class Movimiento(MiModel):
                     self._eliminar_contramovimiento()
 
             self._actualizar_cuenta_convertida_en_acumulativa()
-
-            if self.cambia_campo('moneda', contraparte=self.viejo):
-                if not self.cambia_campo('_cotizacion', contraparte=self.viejo):
-                    self.cotizacion = 1 / self.viejo.cotizacion
+            if self.cambia_campo('_cotizacion', contraparte=self.viejo):
+                cambia_cotizacion = True
+            else:
+                cambia_cotizacion = self._verificar_cambios_de_cotizacion()
+            if cambia_cotizacion:
                 self.importe = round(self.viejo.importe * self.cotizacion, 2)
 
             super().save(*args, **kwargs)
@@ -458,6 +459,28 @@ class Movimiento(MiModel):
                 for campo_cuenta in campos_cuenta:
                     self._actualizar_saldos_cuenta(campo_cuenta, mantiene_orden_dia)
                 self._actualizar_fechas_conversion()
+
+    def _verificar_cambios_de_cotizacion(self) -> bool:
+        """ Si cambia la moneda del movimiento, se recalcula la cotización
+            del movimiento en base a las nuevas monedas.
+            Si una cuenta cambia por una cuenta en otra moneda, ídem.
+            Devuelve True si se recalculó la cotización
+        """
+        calcular = False
+        if self.moneda != self.viejo.moneda:
+            calcular = True
+        for campo_cuenta in campos_cuenta:
+            if self.cambia_campo(campo_cuenta):
+                cuenta = getattr(self, campo_cuenta)
+                cuenta_vieja = getattr(self.viejo, campo_cuenta)
+                try:
+                    if cuenta_vieja.moneda != cuenta.moneda:
+                        calcular = True
+                except AttributeError:
+                    pass
+        if calcular:
+            self._calcular_cotizacion(cambia_moneda=True)
+        return calcular
 
     def refresh_from_db(self, using: str = None, fields: List[str] = None):
         super().refresh_from_db()
@@ -641,10 +664,10 @@ class Movimiento(MiModel):
                 else Movimiento.filtro(dia=Dia.tomar(fecha=pos_min.fecha)).count()
             super().save()
 
-    def _calcular_cotizacion(self):
+    def _calcular_cotizacion(self, cambia_moneda: bool = False):
         if self.cta_entrada is not None and self.cta_salida is not None:
             if self.cta_entrada.moneda != self.cta_salida.moneda:
-                if self.cotizacion == 0.0:
+                if self.cotizacion == 0.0 or cambia_moneda:
                     otra_moneda = el_que_no_es(self.moneda, self.cta_entrada.moneda, self.cta_salida.moneda)
                     self.cotizacion = otra_moneda.cotizacion_en_al(self.moneda, fecha=self.fecha)
             else:
