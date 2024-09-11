@@ -443,7 +443,7 @@ class Movimiento(MiModel):
                     self._eliminar_contramovimiento()
 
             self._actualizar_cuenta_convertida_en_acumulativa()
-            if self.cambia_campo('_cotizacion', contraparte=self.viejo):
+            if self.cambian_campos('moneda', '_cotizacion', contraparte=self.viejo):
                 cambia_cotizacion = True
             else:
                 cambia_cotizacion = self._verificar_cambios_de_cotizacion()
@@ -474,7 +474,8 @@ class Movimiento(MiModel):
                 cuenta = getattr(self, campo_cuenta)
                 cuenta_vieja = getattr(self.viejo, campo_cuenta)
                 try:
-                    if cuenta_vieja.moneda != cuenta.moneda:
+                    if cuenta_vieja.moneda != cuenta.moneda and \
+                            not self.cambia_campo('_cotizacion', contraparte=self.viejo):
                         calcular = True
                 except AttributeError:
                     pass
@@ -545,7 +546,6 @@ class Movimiento(MiModel):
         mov_guardado = contraparte or self.tomar_de_bd()
         result = True
         for campo in args:
-            print(campo)
             if campo not in [x.name for x in self._meta.fields]:
                 raise ValueError(f"Campo inexistente: {campo}")
             if getattr(self, campo) == getattr(mov_guardado, campo):
