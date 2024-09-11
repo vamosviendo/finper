@@ -541,6 +541,17 @@ class Movimiento(MiModel):
                 return True
         return False
 
+    def cambian_campos(self, *args, contraparte: Movimiento = None):
+        mov_guardado = contraparte or self.tomar_de_bd()
+        result = True
+        for campo in args:
+            print(campo)
+            if campo not in [x.name for x in self._meta.fields]:
+                raise ValueError(f"Campo inexistente: {campo}")
+            if getattr(self, campo) == getattr(mov_guardado, campo):
+                result = False
+        return result
+
     def recuperar_cuentas_credito(self) -> Tuple:
         cls = self.get_related_class(CTA_ENTRADA)
         try:
