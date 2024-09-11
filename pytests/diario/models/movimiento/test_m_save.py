@@ -497,6 +497,155 @@ class TestSaveCambiaCuentas:
         mock_eliminar_contramovimiento.assert_called_once_with(credito)
         mock_crear_movimiento_credito.assert_not_called()
 
+    # Cambia cuenta en moneda del movimiento no cambia cotización no cambia importe
+    # Venta de x reales en euros, a y reales el euro
+    # - Es necesario cambiar la moneda del movimiento a reales
+    # - Se calcula cotización y (euro.cotizacion_en(real))
+    # - Se calcula importe x (imp_viejo / cot_vieja * cotización)
+    # - No cambia importe_ce
+    # - Cambia importe_cs (importe x)
+
+    # Cambia cuenta en moneda del movimiento cambia cotización no cambia importe
+    # Venta de x reales en euros, a 8 reales el euro
+    # - Es necesario cambiar la moneda del movimiento a reales
+    # - Se calcula importe x (imp_viejo / cot_vieja * 8)
+    # - No cambia importe_ce
+    # - Cambia importe_cs (importe x)
+
+    # Cambia cuenta en moneda del movimiento cambia cotización cambia importe
+    # Venta de 5 reales en euros, a 8 reales el euro
+    # - Es necesario cambiar la moneda del movimiento a reales
+    # - Cambia importe_ce (5 / 8)
+    # - Cambia importe_cs (5)
+
+    # Cambia cuenta en moneda del movimiento no cambia cotización cambia importe
+    # Venta de 5 reales en euros, a x reales el euro
+    # - Es necesario cambiar la moneda del movimiento a reales
+    # - Se calcula cotización x (euro.cotizacion_en(real))
+    # - Cambia importe_ce (5 / cotización x)
+    # - Cambia importe_cs (5)
+
+    # Cambia cuenta en otra moneda no cambia cotización no cambia importe
+    # Venta de 10 dólares en reales, a y dólares el real
+    # - Se calcula cotización y (real.cotizacion_en(dolar))
+    # - Cambia importe_ce (10 / cotizacion y)
+    # - No cambia importe_cs
+
+    # Cambia cuenta en otra moneda cambia cotización no cambia importe
+    # Venta de 10 dólares en reales, a 0,2 dólares el real
+    # - Se guarda cotización ingresada
+    # - Cambia importe_ce (10 / 0,2)
+    # - No cambia importe_cs
+    def test_si_cambia_cuenta_en_moneda_no_del_movimiento_por_cuenta_en_una_tercera_moneda_y_cotizacion_se_toma_cotizacion_ingresada(
+            self, mov_distintas_monedas, cuenta_con_saldo_en_reales):
+        importe = mov_distintas_monedas.importe
+        importe_cs = mov_distintas_monedas.importe_cta_salida
+
+        mov_distintas_monedas.cta_entrada = cuenta_con_saldo_en_reales
+        mov_distintas_monedas.cotizacion = 0.2
+        mov_distintas_monedas.full_clean()
+        mov_distintas_monedas.save()
+
+        assert mov_distintas_monedas.cotizacion == 0.2
+        assert mov_distintas_monedas.importe == importe
+        assert mov_distintas_monedas.importe_cta_entrada == importe / 0.2
+        assert mov_distintas_monedas.importe_cta_salida == importe_cs
+
+
+    # Cambia cuenta en otra moneda cambia cotización cambia importe
+    # Venta de 5 dólares en reales, a 0,2 dólares el real
+    # - Cambia importe_ce (5 / 0,2)
+    # - Cambia importe_cs (5)
+
+    # Cambia cuenta en otra moneda no cambia cotización cambia importe
+    # Venta de 5 dólares en reales, a x dólares el real
+    # - Se calcula cotización x (real.cotizacion_en(dolar))
+    # - Cambia importe_ce (5 / cotizacion x)
+    # - Cambia importe_cs (5)
+
+    # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
+    # no cambia moneda, no cambia cotización, no cambia importe
+    # 10 Dolares->CA dolares pasa a 10 Dolares-> x Euros a y dólares el euro
+    # - Se calcula cotización (euro.cotizacion_en(dolar))
+    # - Cambia importe_ce (10 / cotización)
+    # - No cambia importe_cs
+
+    # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
+    # no cambia moneda, cambia cotización, no cambia importe
+    # 10 Dolares->CA dolares pasa a 10 Dolares-> x Euros a 2 dólares el euro
+    # - Cambia importe_ce (10 / 2)
+    # - No cambia importe_cs
+
+    # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
+    # cambia moneda, no cambia cotización, no cambia importe
+    # 10 Dólares->CA dólares pasa a 10 Dólares -> x Euros a y euros el dólar
+    # - Se calcula cotización y (dolar.cotizacion_en(euro))
+    # - Se calcula importe (10 / cotización y)
+    # - Cambia importe_ce (importe)
+    # - No cambia importe_cs
+
+    # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
+    # no cambia moneda, no cambia cotización, cambia importe
+    # 10 Dólares->CA dólares pasa a 6 Dólares -> x Euros a y dólares el euro
+    # - Se calcula cotización (euro.cotizacion_en(dolar)
+    # - Cambia importe_ce (6 / cotizacion)
+    # - Cambia importe_cs (6)
+
+    # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
+    # cambia moneda, cambia cotización, no cambia importe
+    # 10 Dólares->CA dólares pasa a 10 Dólares -> x Euros a 2 euros el dólar
+    # - Se calcula importe (10 / 2)
+    # - Cambia importe_ce (10/2)
+    # - No cambia importe_cs
+
+    # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
+    # cambia moneda, no cambia cotización, cambia importe
+    # 10 Dólares->CA dólares pasa a 10 Dólares -> 6 Euros a x euros el dólar
+    # - Se calcula cotización (dolar.cotizacion_en(euro))
+    # - Cambia importe_ce (5)
+    # - Cambia importe_cs (6 / cotizacion)
+
+    # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
+    # no cambia moneda, cambia cotización, cambia importe
+    # 10 Dólares->CA dólares pasa a 6 Dólares -> x Euros a x dólares el euro
+    # - Se calcula cotización (euro.cotizacion_en(dolar))
+    # - Cambia importe_ce (6 / cotización)
+    # - Cambia importe_cs (6)
+
+    # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
+    # cambia moneda, cambia cotización, cambia importe
+    # 10 Dólares->CA dólares pasa a x Dólares -> 6 Euros a 0.6 euros el dólar
+    # - Cambia importe_ce (6)
+    # - Cambia importe_cs (6 / cotización)
+
+    # Entre cuentas en distinta moneda, cambia cuenta en otra moneda por cuenta en moneda del movimiento,
+    # no cambia importe
+    # 10 dolares -> x euros a 1.5 dólares el euro  pasa a  10 dólares -> CA dólares
+    # - Cambia cotización (1)
+    # - Cambia importe_ce (importe)
+    # - No cambia importe_cs
+
+    # Entre cuentas en distinta moneda, cambia cuenta en otra moneda por cuenta en moneda del movimiento,
+    # cambia importe
+    # 10 dolares -> x euros a 1.5 dólares el euro  pasa a  6 dólares -> CA dólares
+    # - Cambia cotización (1)
+    # - Cambia importe_ce (6)
+    # - Cambia importe_cs (6)
+
+    # Entre cuentas en distinta moneda, cambia cuenta en moneda del movimiento por cuenta en otra moneda,
+    # no cambia importe
+    # 10 dolares -> x euros a 1.5 dólares el euro  pasa a  CA euros -> x euros
+    # - Cambia cotización (1)
+    # - Cambia importe_ce(10 / 1.5)
+    # - Cambia importe_cs(10 / 1.5)
+
+    # Entre cuentas en distinta moneda, cambia cuenta en moneda del movimiento por cuenta en otra moneda,
+    # no cambia importe
+    # 10 dolares -> x euros a 1.5 dólares el euro  pasa a  CA euros -> 6 euros
+    # - Cambia cotización (1)
+    # - Cambia importe_ce(6)
+    # - Cambia importe_cs(6)
+
     def test_si_cambia_cuenta_en_moneda_no_del_movimiento_por_cuenta_en_una_tercera_moneda_cambia_cotizacion_del_movimiento(
             self, mov_distintas_monedas, cuenta_con_saldo_en_reales, real):
         mov_distintas_monedas.cta_entrada = cuenta_con_saldo_en_reales
@@ -520,15 +669,6 @@ class TestSaveCambiaCuentas:
             mov_distintas_monedas.cotizacion == \
             moneda_otra_cuenta.cotizacion_en_al(real, fecha=mov_distintas_monedas.fecha)
 
-    def test_si_cambia_cuenta_en_moneda_no_del_movimiento_por_cuenta_en_una_tercera_moneda_y_cotizacion_se_toma_cotizacion_ingresada(
-            self, mov_distintas_monedas, cuenta_con_saldo_en_reales):
-        mov_distintas_monedas.cta_entrada = cuenta_con_saldo_en_reales
-        mov_distintas_monedas.cotizacion = 0.5
-        mov_distintas_monedas.full_clean()
-        mov_distintas_monedas.save()
-
-        assert mov_distintas_monedas.cotizacion == 0.5
-
     def test_si_cambia_cuenta_en_moneda_del_movimiento_por_cuenta_en_una_tercera_moneda_y_cotizacion_se_toma_cotizacion_ingresada(
             self, mov_distintas_monedas, cuenta_con_saldo_en_reales, real):
         mov_distintas_monedas.cta_salida = cuenta_con_saldo_en_reales
@@ -542,7 +682,7 @@ class TestSaveCambiaCuentas:
 
     def test_ver_si_ya_esta_si_cambia_cotizacion_manualmente_se_recalcula_importe_del_movimiento_y_si_es_eso_lo_que_tiene_que_pasar(self):
         pass
-    
+
     def test_si_cambia_cuenta_a_una_con_distinta_moneda_que_pasa(self):
         """ Cambia cuenta en moneda del movimiento por cuenta en una tercera moneda_
             - Es necesario cambiar moneda del movimiento por moneda de tercera cuenta
@@ -560,7 +700,6 @@ class TestSaveCambiaCuentas:
         """
 
         pass
-
 
     @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
     def test_puede_agregarse_cuenta_interactiva_a_movimiento_con_cta_acumulativa(
@@ -1201,6 +1340,61 @@ class TestSaveCambiaMoneda:
         nuevo_importe_en_euros = mov_distintas_monedas.importe / mov_distintas_monedas.cotizacion
         assert nuevo_importe_en_euros != importe_en_euros
         assert cuenta_con_saldo_en_euros.saldo == round(saldo - importe_en_euros + nuevo_importe_en_euros, 2)
+
+    # Ver en qué casos cambia el importe y en qué casos no, cuando cambia la moneda, la cotización o ambas.
+    # Hacer una tabla de casos
+    # Original: Venta de 10 dólares en euros, a 1,366 dólares el euro
+    # - importe_ce: 10 / 1,366
+    # - importe_cs: 10
+
+    # Cambia moneda no cambia cotización no cambia importe
+    # Compra de x euros en dólares, a y euros el dólar
+    # - Se calcula cotización y (1 / cot_vieja)
+    # - Se calcula importe x (imp_viejo * cotización)
+    # - No cambian importe_ce ni importe_cs
+
+    # Cambia moneda cambia cotización no cambia importe
+    # Compra de x euros en dólares, a 0,8 euros el dólar
+    # - Se calcula importe x (imp_viejo * cotización)
+    # - Cambia importe_ce (importe x)
+
+    # Cambia moneda cambia cotización cambia importe
+    # Compra de 5 euros, a 0,8 euros el dólar
+    # - Cambia importe_ce (5)
+    # - Cambia importe_cs (5 / 0,8)
+
+    # Cambia moneda no cambia cotización cambia importe
+    # Compra de 5 euros, a x euros el dólar
+    # - Se calcula cotización x (1 / cot_vieja)
+    # - Cambia importe_ce (5)
+    # - Cambia importe_cs (5 / cotización x)
+
+    # No cambia moneda cambia cotización no cambia importe
+    # Venta de 10 dólares en euros, a 2 dólares el euro
+    # - cambia importe_ce (10 / 2)
+    # - no cambia importe_cs
+    def test_si_cambia_cotizacion_en_traspaso_entre_cuentas_en_distinta_moneda_no_cambia_importe_del_movimiento(
+            self, mov_distintas_monedas):
+        importe_cta_salida = mov_distintas_monedas.importe_cta_salida
+        importe = mov_distintas_monedas.importe
+
+        mov_distintas_monedas.cotizacion = 2
+        mov_distintas_monedas.full_clean()
+        mov_distintas_monedas.save()
+
+        assert mov_distintas_monedas.importe == importe
+        assert mov_distintas_monedas.importe_cta_entrada == mov_distintas_monedas.importe / 2
+        assert mov_distintas_monedas.importe_cta_salida == importe_cta_salida
+
+    # No cambia moneda cambia cotización cambia importe
+    # Venta de 5 dólares en euros, a 2 dólares el euro
+    # - Cambia importe_ce (5 / 2)
+    # - Cambia importe_cs (5)
+
+    # No cambia moneda no cambia cotización cambia importe
+    # Venta de 5 dólares en euros, a 1,366 dólares el euro
+    # - Cambia importe_ce (5 / 1,366)
+    # - Cambia importe_cs (5)
 
     @pytest.mark.parametrize('sentido, cuenta_a_cambiar', [
         ('entrada', 'cuenta_con_saldo_en_euros'),
