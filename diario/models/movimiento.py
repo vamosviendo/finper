@@ -467,18 +467,16 @@ class Movimiento(MiModel):
             Si una cuenta cambia por una cuenta en otra moneda, ídem.
             Devuelve True si se recalculó la cotización
         """
-        # TODO: Refactorear
         # Si se cambia manualmente la cotización, no se la recalcula
         if self.cambia_campo('_cotizacion', contraparte=self.viejo):
             return False
 
-        calcular = False
         # Si cambia moneda, se recalcula cotización
         if self.moneda != self.viejo.moneda:
-            calcular = True
+            return True
 
-        # Si cambia cuenta por cuenta en otra moneda y no se cambia manualmente
-        # la cotización, se la recalcula.
+        # Si cambia cuenta por cuenta en otra moneda y no se cambia manualmente la cotización,
+        # se la recalcula.
         for campo_cuenta in campos_cuenta:
             if self.cambia_campo(campo_cuenta):
                 cuenta = getattr(self, campo_cuenta)
@@ -486,24 +484,25 @@ class Movimiento(MiModel):
                 try:
                     if cuenta_vieja.moneda != cuenta.moneda and \
                             not self.cambia_campo('_cotizacion', contraparte=self.viejo):
-                        calcular = True
+                        return True
                 except AttributeError:
-                    pass
+                    return False
 
-        return calcular
+        return False
 
     def _verificar_cambios_de_importe(self) -> bool:
-        calcular = False
         for campo_cuenta in campos_cuenta:
             if self.cambia_campo(campo_cuenta):
                 cuenta_vieja = getattr(self.viejo, campo_cuenta)
                 try:
+                    # Si en un movimiento entre cuentas en distinta moneda cambió la cuenta cuya moneda
+                    # era la del movimiento, recalcular
                     if cuenta_vieja.moneda == self.viejo.moneda:
-                        calcular = True
+                        return True
                 except AttributeError:
-                    calcular = False
+                    return False
 
-        return calcular
+        return False
 
     def refresh_from_db(self, using: str = None, fields: List[str] = None):
         super().refresh_from_db()
