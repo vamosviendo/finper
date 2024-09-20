@@ -493,12 +493,14 @@ class Movimiento(MiModel):
     def _verificar_cambios_de_importe(self) -> bool:
         for campo_cuenta in campos_cuenta:
             if self.cambia_campo(campo_cuenta):
+                cuenta = getattr(self, campo_cuenta)
                 cuenta_vieja = getattr(self.viejo, campo_cuenta)
                 try:
                     # Si en un movimiento entre cuentas en distinta moneda cambió la cuenta cuya moneda
                     # era la del movimiento, recalcular
-                    if cuenta_vieja.moneda == self.viejo.moneda:
-                        return True
+                    if cuenta.moneda != cuenta_vieja.moneda:
+                        if cuenta_vieja.moneda == self.viejo.moneda:
+                            return True
                 except AttributeError:
                     return False
 
