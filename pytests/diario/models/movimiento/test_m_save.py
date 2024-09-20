@@ -504,6 +504,24 @@ class TestSaveCambiaCuentas:
     # - Se calcula importe x (imp_viejo / cot_vieja * cotización)
     # - No cambia importe_ce
     # - Cambia importe_cs (importe x)
+    def test_si_cambia_cuenta_en_moneda_del_movimiento_por_cuenta_en_una_tercera_moneda_cambia_cotizacion_del_movimiento(
+            self, mov_distintas_monedas, cuenta_con_saldo_en_reales, real):
+        moneda_otra_cuenta = mov_distintas_monedas.cta_entrada.moneda
+        cotizacion = mov_distintas_monedas.cotizacion
+        importe = mov_distintas_monedas.importe
+        importe_ce = mov_distintas_monedas.importe_cta_entrada
+
+        mov_distintas_monedas.cta_salida = cuenta_con_saldo_en_reales
+        mov_distintas_monedas.moneda = real
+        mov_distintas_monedas.full_clean()
+        mov_distintas_monedas.save()
+
+        assert \
+            mov_distintas_monedas.cotizacion == \
+            moneda_otra_cuenta.cotizacion_en_al(real, fecha=mov_distintas_monedas.fecha)
+        assert mov_distintas_monedas.importe == round(importe / cotizacion * mov_distintas_monedas.cotizacion, 2)
+        assert mov_distintas_monedas.importe_cta_entrada == importe_ce
+        assert mov_distintas_monedas.importe_cta_salida == mov_distintas_monedas.importe
 
     # Cambia cuenta en moneda del movimiento cambia cotización no cambia importe
     # Venta de x reales en euros, a 8 reales el euro
@@ -530,6 +548,21 @@ class TestSaveCambiaCuentas:
     # - Se calcula cotización y (real.cotizacion_en(dolar))
     # - Cambia importe_ce (10 / cotizacion y)
     # - No cambia importe_cs
+    def test_si_cambia_cuenta_en_moneda_no_del_movimiento_por_cuenta_en_una_tercera_moneda_cambia_cotizacion_del_movimiento(
+            self, mov_distintas_monedas, cuenta_con_saldo_en_reales, real):
+        importe = mov_distintas_monedas.importe
+        importe_cta_entrada = mov_distintas_monedas.importe_cta_entrada
+
+        mov_distintas_monedas.cta_entrada = cuenta_con_saldo_en_reales
+        mov_distintas_monedas.full_clean()
+        mov_distintas_monedas.save()
+
+        assert \
+            mov_distintas_monedas.cotizacion == \
+            real.cotizacion_en_al(mov_distintas_monedas.moneda, fecha=mov_distintas_monedas.fecha)
+        assert mov_distintas_monedas.importe == importe
+        assert mov_distintas_monedas.importe_cta_entrada == round(importe / mov_distintas_monedas.cotizacion, 2)
+        assert mov_distintas_monedas.importe_cta_entrada == importe_cta_entrada
 
     # Cambia cuenta en otra moneda cambia cotización no cambia importe
     # Venta de 10 dólares en reales, a 0,2 dólares el real
@@ -562,6 +595,11 @@ class TestSaveCambiaCuentas:
     # - Se calcula cotización x (real.cotizacion_en(dolar))
     # - Cambia importe_ce (5 / cotizacion x)
     # - Cambia importe_cs (5)
+
+    # Cambia cuenta en moneda del movimiento cambia cuenta en otra moneda no cambia cotización no cambia importe
+    # Cambia cuenta en moneda del movimiento cambia cuenta en otra moneda no cambia cotización cambia importe
+    # Cambia cuenta en moneda del movimiento cambia cuenta en otra moneda cambia cotización no cambia importe
+    # Cambia cuenta en moneda del movimiento cambia cuenta en otra moneda cambia cotización cambia importe
 
     # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
     # no cambia moneda, no cambia cotización, no cambia importe
@@ -646,28 +684,10 @@ class TestSaveCambiaCuentas:
     # - Cambia importe_ce(6)
     # - Cambia importe_cs(6)
 
-    def test_si_cambia_cuenta_en_moneda_no_del_movimiento_por_cuenta_en_una_tercera_moneda_cambia_cotizacion_del_movimiento(
-            self, mov_distintas_monedas, cuenta_con_saldo_en_reales, real):
-        mov_distintas_monedas.cta_entrada = cuenta_con_saldo_en_reales
-        mov_distintas_monedas.full_clean()
-        mov_distintas_monedas.save()
-
-        assert \
-            mov_distintas_monedas.cotizacion == \
-            real.cotizacion_en_al(mov_distintas_monedas.moneda, fecha=mov_distintas_monedas.fecha)
-
-    def test_si_cambia_cuenta_en_moneda_del_movimiento_por_cuenta_en_una_tercera_moneda_cambia_cotizacion_del_movimiento(
-            self, mov_distintas_monedas, cuenta_con_saldo_en_reales, real):
-        moneda_otra_cuenta = mov_distintas_monedas.cta_entrada.moneda
-
-        mov_distintas_monedas.cta_salida = cuenta_con_saldo_en_reales
-        mov_distintas_monedas.moneda = real
-        mov_distintas_monedas.full_clean()
-        mov_distintas_monedas.save()
-
-        assert \
-            mov_distintas_monedas.cotizacion == \
-            moneda_otra_cuenta.cotizacion_en_al(real, fecha=mov_distintas_monedas.fecha)
+    # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda, no cambia cotización, no cambia importe.
+    # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda, cambia cotización, no cambia importe.
+    # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda, no cambia cotización, cambia importe.
+    # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda, cambia cotización, cambia importe.
 
     def test_si_cambia_cuenta_en_moneda_del_movimiento_por_cuenta_en_una_tercera_moneda_y_cotizacion_se_toma_cotizacion_ingresada(
             self, mov_distintas_monedas, cuenta_con_saldo_en_reales, real):

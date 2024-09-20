@@ -443,11 +443,12 @@ class Movimiento(MiModel):
                     self._eliminar_contramovimiento()
 
             self._actualizar_cuenta_convertida_en_acumulativa()
-            if self.cambian_campos('moneda', '_cotizacion', contraparte=self.viejo):
-                cambia_cotizacion = True
-            else:
-                cambia_cotizacion = self._verificar_cambios_de_cotizacion()
-            if cambia_cotizacion:
+
+            hay_que_recalcular_cotizacion = self._verificar_cambios_de_cotizacion()
+            hay_que_recalcular_importe = self._verificar_cambios_de_importe()
+            if hay_que_recalcular_cotizacion:
+                self._calcular_cotizacion(cambia_moneda=True)
+            if hay_que_recalcular_importe:
                 self.importe = round(self.viejo.importe * self.cotizacion, 2)
 
             super().save(*args, **kwargs)
@@ -466,9 +467,18 @@ class Movimiento(MiModel):
             Si una cuenta cambia por una cuenta en otra moneda, ídem.
             Devuelve True si se recalculó la cotización
         """
+        # TODO: Refactorear
+        # Si se cambia manualmente la cotización, no se la recalcula
+        if self.cambia_campo('_cotizacion', contraparte=self.viejo):
+            return False
+
         calcular = False
+        # Si cambia moneda, se recalcula cotización
         if self.moneda != self.viejo.moneda:
             calcular = True
+
+        # Si cambia cuenta por cuenta en otra moneda y no se cambia manualmente
+        # la cotización, se la recalcula.
         for campo_cuenta in campos_cuenta:
             if self.cambia_campo(campo_cuenta):
                 cuenta = getattr(self, campo_cuenta)
@@ -479,8 +489,20 @@ class Movimiento(MiModel):
                         calcular = True
                 except AttributeError:
                     pass
-        if calcular:
-            self._calcular_cotizacion(cambia_moneda=True)
+
+        return calcular
+
+    def _verificar_cambios_de_importe(self) -> bool:
+        calcular = False
+        for campo_cuenta in campos_cuenta:
+            if self.cambia_campo(campo_cuenta):
+                cuenta_vieja = getattr(self.viejo, campo_cuenta)
+                try:
+                    if cuenta_vieja.moneda == self.moneda:
+                        calcular = True
+                except AttributeError:
+                    calcular = False
+
         return calcular
 
     def refresh_from_db(self, using: str = None, fields: List[str] = None):
