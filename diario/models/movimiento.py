@@ -449,7 +449,7 @@ class Movimiento(MiModel):
             if hay_que_recalcular_cotizacion:
                 self._calcular_cotizacion(cambia_moneda=True)
             if hay_que_recalcular_importe:
-                self.importe = round(self.viejo.importe * self.cotizacion, 2)
+                self.importe = round(self.viejo.importe / self.viejo.cotizacion * self.cotizacion, 2)
 
             super().save(*args, **kwargs)
 
@@ -498,7 +498,7 @@ class Movimiento(MiModel):
             if self.cambia_campo(campo_cuenta):
                 cuenta_vieja = getattr(self.viejo, campo_cuenta)
                 try:
-                    if cuenta_vieja.moneda == self.moneda:
+                    if cuenta_vieja.moneda == self.viejo.moneda:
                         calcular = True
                 except AttributeError:
                     calcular = False
