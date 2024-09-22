@@ -444,17 +444,10 @@ class Movimiento(MiModel):
 
             self._actualizar_cuenta_convertida_en_acumulativa()
 
-            hay_que_recalcular_cotizacion = self._verificar_cambios_de_cotizacion()
-            hay_que_recalcular_importe = self._verificar_cambios_de_importe()
-            if hay_que_recalcular_cotizacion:
-                self._calcular_cotizacion(cambia_moneda=True)
-            if hay_que_recalcular_importe:
-                if self.cambia_campo(
-                    "moneda", contraparte=self.viejo
-                ) and not self.cambia_cuenta_por_cuenta_en_otra_moneda():
-                    self.importe = round(self.viejo.importe * self.cotizacion, 2)
-                else:
-                    self.importe = round(self.viejo.importe / self.viejo.cotizacion * self.cotizacion, 2)
+            if self._hay_que_recalcular_cotizacion():
+                self._recalcular_cotizacion()
+            if self._hay_que_recalcular_importe():
+                self._recalcular_importe()
 
             super().save(*args, **kwargs)
 
@@ -466,7 +459,7 @@ class Movimiento(MiModel):
                     self._actualizar_saldos_cuenta(campo_cuenta, mantiene_orden_dia)
                 self._actualizar_fechas_conversion()
 
-    def _verificar_cambios_de_cotizacion(self) -> bool:
+    def _hay_que_recalcular_cotizacion(self) -> bool:
         """ Si cambia la moneda del movimiento, se recalcula la cotización
             del movimiento en base a las nuevas monedas.
             Si una cuenta cambia por una cuenta en otra moneda, ídem.
@@ -488,11 +481,33 @@ class Movimiento(MiModel):
 
         return False
 
-    def _verificar_cambios_de_importe(self) -> bool:
+    def _hay_que_recalcular_importe(self) -> bool:
         if self.cambia_campo('moneda', contraparte=self.viejo):
             return True
 
         return self.cambia_cuenta_por_cuenta_en_otra_moneda()
+
+    def _calcular_cotizacion(self, cambia_moneda: bool = False):
+        if self.cta_entrada is not None and self.cta_salida is not None:
+            if self.cta_entrada.moneda != self.cta_salida.moneda:
+                if self.cotizacion == 0.0 or cambia_moneda:
+                    otra_moneda = el_que_no_es(self.moneda, self.cta_entrada.moneda, self.cta_salida.moneda)
+                    self.cotizacion = otra_moneda.cotizacion_en_al(self.moneda, fecha=self.fecha)
+            else:
+                self.cotizacion = 1.0
+        else:
+            self.cotizacion = 1.0
+
+    def _recalcular_cotizacion(self):
+        self._calcular_cotizacion(cambia_moneda=True)
+
+    def _recalcular_importe(self):
+        if self.cambia_campo(
+                "moneda", contraparte=self.viejo
+        ) and not self.cambia_cuenta_por_cuenta_en_otra_moneda():
+            self.importe = round(self.viejo.importe * self.cotizacion, 2)
+        else:
+            self.importe = round(self.viejo.importe / self.viejo.cotizacion * self.cotizacion, 2)
 
     def cambia_cuenta_por_cuenta_en_otra_moneda(self, moneda_del_movimiento: bool = True) -> bool:
         for campo_cuenta in campos_cuenta:
@@ -700,17 +715,6 @@ class Movimiento(MiModel):
                 if pos_min.fecha == self.viejo.fecha \
                 else Movimiento.filtro(dia=Dia.tomar(fecha=pos_min.fecha)).count()
             super().save()
-
-    def _calcular_cotizacion(self, cambia_moneda: bool = False):
-        if self.cta_entrada is not None and self.cta_salida is not None:
-            if self.cta_entrada.moneda != self.cta_salida.moneda:
-                if self.cotizacion == 0.0 or cambia_moneda:
-                    otra_moneda = el_que_no_es(self.moneda, self.cta_entrada.moneda, self.cta_salida.moneda)
-                    self.cotizacion = otra_moneda.cotizacion_en_al(self.moneda, fecha=self.fecha)
-            else:
-                self.cotizacion = 1.0
-        else:
-            self.cotizacion = 1.0
 
     def _eliminar_saldo_de_cuenta_vieja_si_existe(self, cuenta_vieja: Cuenta, pasa_a_opuesto: callable, saldo: callable):
         if cuenta_vieja is not None and not pasa_a_opuesto():
