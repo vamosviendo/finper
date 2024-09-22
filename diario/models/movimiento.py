@@ -717,6 +717,10 @@ class Movimiento(MiModel):
         return False
 
     def _hay_que_recalcular_importe(self) -> bool:
+        # Si se cambia manualmente el importe, no se lo recalcula
+        if self.cambia_campo('_importe', contraparte=self.viejo):
+            return False
+
         if self.cambia_campo('moneda', contraparte=self.viejo):
             return True
 
