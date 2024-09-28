@@ -529,18 +529,18 @@ class Movimiento(MiModel):
         return result
 
     def cambia_cuenta_por_cuenta_en_otra_moneda(self, moneda_del_movimiento: bool = True) -> bool:
+        viejo = self.tomar_de_bd() or self.viejo
         for campo_cuenta in campos_cuenta:
-            if self.cambia_campo(campo_cuenta, contraparte=self.viejo):
+            if self.cambia_campo(campo_cuenta, contraparte=viejo):
                 cuenta = getattr(self, campo_cuenta)
-                cuenta_vieja = getattr(self.viejo, campo_cuenta)
-                try:
-                    if cuenta.moneda != cuenta_vieja.moneda:
-                        if not moneda_del_movimiento:
-                            return True
-                        if moneda_del_movimiento and cuenta_vieja.moneda == self.viejo.moneda:
-                            return True
-                except AttributeError:
-                    return False
+                cuenta_vieja = getattr(viejo, campo_cuenta)
+                contracuenta_vieja = getattr(viejo, CTA_ENTRADA if campo_cuenta == CTA_SALIDA else CTA_SALIDA)
+                if cuenta.moneda != cuenta_vieja.moneda:
+                    if not moneda_del_movimiento and contracuenta_vieja.moneda == viejo.moneda:
+                        return True
+                    if moneda_del_movimiento and cuenta_vieja.moneda == viejo.moneda:
+                        return True
+
         return False
 
     def recuperar_cuentas_credito(self) -> Tuple:
