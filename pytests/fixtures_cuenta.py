@@ -241,6 +241,18 @@ def cuenta_con_saldo_en_reales(titular: Titular, fecha: date, real: Moneda) -> C
 
 
 @pytest.fixture
+def cuenta_con_saldo_en_yenes(titular: Titular, fecha: date, yen: Moneda) -> CuentaInteractiva:
+    return Cuenta.crear(
+        nombre='cuenta con saldo en yenes',
+        slug='ccsy',
+        saldo=100,
+        titular=titular,
+        fecha_creacion=fecha,
+        moneda=yen,
+    )
+
+
+@pytest.fixture
 def cuenta_acumulativa_en_dolares(cuenta_con_saldo_en_dolares: CuentaInteractiva, fecha: date) -> CuentaAcumulativa:
     return cuenta_con_saldo_en_dolares.dividir_y_actualizar(
         ['subcuenta 1 con saldo en dólares', 'scsd1', 60],

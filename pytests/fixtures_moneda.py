@@ -49,6 +49,17 @@ def real(fecha: date) -> Moneda:
     return mon
 
 
+@pytest.fixture
+def yen(fecha: date) -> Moneda:
+    mon = Moneda.crear(
+        nombre='Yen',
+        plural='Yenes',
+        monname='y',
+    )
+    Cotizacion.crear(moneda=mon, fecha=fecha, importe=3200)
+    return mon
+
+
 @pytest.fixture(autouse=True)
 def mock_moneda_base(mocker, request) -> Optional[MagicMock]:
     if 'nomonbase' in request.keywords:

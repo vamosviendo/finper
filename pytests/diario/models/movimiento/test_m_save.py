@@ -537,12 +537,12 @@ class TestSaveCambiaCuentas:
 
         mov_distintas_monedas.cta_salida = cuenta_con_saldo_en_reales
         mov_distintas_monedas.moneda = real
-        mov_distintas_monedas.cotizacion = 2
+        mov_distintas_monedas.cotizacion = 8
         mov_distintas_monedas.full_clean()
         mov_distintas_monedas.save()
 
-        assert mov_distintas_monedas.cotizacion == 2
-        assert mov_distintas_monedas.importe == round(importe / cotizacion * 2, 2)
+        assert mov_distintas_monedas.cotizacion == 8
+        assert mov_distintas_monedas.importe == round(importe / cotizacion * 8, 2)
         assert mov_distintas_monedas.importe_cta_entrada == importe_ce
         assert mov_distintas_monedas.importe_cta_salida == -mov_distintas_monedas.importe
 
@@ -595,6 +595,8 @@ class TestSaveCambiaCuentas:
         importe_cta_salida = mov_distintas_monedas.importe_cta_salida
 
         mov_distintas_monedas.cta_entrada = cuenta_con_saldo_en_reales
+        assert mov_distintas_monedas.cambia_cuenta_por_cuenta_en_otra_moneda() is False
+        assert mov_distintas_monedas.cambia_cuenta_por_cuenta_en_otra_moneda(moneda_del_movimiento=False) is True
         mov_distintas_monedas.full_clean()
         mov_distintas_monedas.save()
 
@@ -660,9 +662,65 @@ class TestSaveCambiaCuentas:
         assert mov_distintas_monedas.importe_cta_salida == -5
 
     # Cambia cuenta en moneda del movimiento cambia cuenta en otra moneda no cambia cotización no cambia importe
+    # Cambia moneda por moneda de cuenta que reemplaza a cuenta en moneda del movimiento
+    # Venta de x reales en yenes, a x reales el yen
+    # - Se calcula cotización x (yen.cotizacion_en(real))
+    # - Cambia importe_cs (importe / cotización x)
+    def test_si_cambian_ambas_cuentas_y_moneda_por_moneda_de_cuenta_que_reemplaza_a_cuenta_en_moneda_del_movimiento_se_recalcula_cotizacion(
+            self, mov_distintas_monedas, cuenta_con_saldo_en_reales, cuenta_con_saldo_en_yenes, real, yen):
+        importe = mov_distintas_monedas.importe
+        cotizacion = mov_distintas_monedas.cotizacion
+
+        mov_distintas_monedas.cta_entrada = cuenta_con_saldo_en_reales
+        mov_distintas_monedas.cta_salida = cuenta_con_saldo_en_yenes
+        mov_distintas_monedas.moneda = real
+        mov_distintas_monedas.full_clean()
+        mov_distintas_monedas.save()
+
+        assert mov_distintas_monedas.cotizacion == yen.cotizacion_en(real)
+        assert mov_distintas_monedas.importe == importe
+        assert mov_distintas_monedas.importe_cta_entrada == mov_distintas_monedas.importe
+        assert \
+            mov_distintas_monedas.importe_cta_salida == \
+            -round(mov_distintas_monedas.importe / mov_distintas_monedas.cotizacion, 2)
+
+    # Cambia cuenta en moneda del movimiento cambia cuenta en otra moneda no cambia cotización no cambia importe
+    # Cambia moneda por moneda que reemplaza a cuenta en otra moneda
+    def test_si_cambian_ambas_cuentas_y_moneda_por_moneda_de_cuenta_que_reemplaza_a_cuenta_en_otra_moneda_se_recalcula_cotizacion(
+            self, mov_distintas_monedas, cuenta_con_saldo_en_reales, cuenta_con_saldo_en_yenes, real, yen):
+        importe = mov_distintas_monedas.importe
+        cotizacion = mov_distintas_monedas.cotizacion
+
+        mov_distintas_monedas.cta_entrada = cuenta_con_saldo_en_reales
+        mov_distintas_monedas.cta_salida = cuenta_con_saldo_en_yenes
+        mov_distintas_monedas.moneda = yen
+        mov_distintas_monedas.full_clean()
+        mov_distintas_monedas.save()
+
+        assert mov_distintas_monedas.cotizacion == real.cotizacion_en(yen)
+        assert mov_distintas_monedas.importe == importe
+        assert \
+            mov_distintas_monedas.importe_cta_entrada == \
+            round(mov_distintas_monedas.importe / mov_distintas_monedas.cotizacion, 2)
+        assert mov_distintas_monedas.importe_cta_salida == -mov_distintas_monedas.importe
+
     # Cambia cuenta en moneda del movimiento cambia cuenta en otra moneda no cambia cotización cambia importe
+    # Cambia moneda por moneda que reemplaza a cuenta en moneda del movimiento
+
+    # Cambia cuenta en moneda del movimiento cambia cuenta en otra moneda no cambia cotización cambia importe
+    # Cambia moneda por moneda que reemplaza a cuenta en otra moneda
+
     # Cambia cuenta en moneda del movimiento cambia cuenta en otra moneda cambia cotización no cambia importe
+    # Cambia moneda por moneda que reemplaza a cuenta en moneda del movimiento
+
+    # Cambia cuenta en moneda del movimiento cambia cuenta en otra moneda cambia cotización no cambia importe
+    # Cambia moneda por moneda que reemplaza a cuenta en otra moneda
+
     # Cambia cuenta en moneda del movimiento cambia cuenta en otra moneda cambia cotización cambia importe
+    # Cambia moneda por moneda que reemplaza a cuenta en moneda del movimiento
+
+    # Cambia cuenta en moneda del movimiento cambia cuenta en otra moneda cambia cotización cambia importe
+    # Cambia moneda por moneda que reemplaza a cuenta en otra moneda
 
     # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
     # no cambia moneda, no cambia cotización, no cambia importe

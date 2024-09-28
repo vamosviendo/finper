@@ -535,11 +535,14 @@ class Movimiento(MiModel):
                 cuenta = getattr(self, campo_cuenta)
                 cuenta_vieja = getattr(viejo, campo_cuenta)
                 contracuenta_vieja = getattr(viejo, CTA_ENTRADA if campo_cuenta == CTA_SALIDA else CTA_SALIDA)
-                if cuenta.moneda != cuenta_vieja.moneda:
-                    if not moneda_del_movimiento and contracuenta_vieja.moneda == viejo.moneda:
-                        return True
-                    if moneda_del_movimiento and cuenta_vieja.moneda == viejo.moneda:
-                        return True
+                try:
+                    if cuenta.moneda != cuenta_vieja.moneda:
+                        if not moneda_del_movimiento and contracuenta_vieja.moneda == viejo.moneda:
+                            return True
+                        if moneda_del_movimiento and cuenta_vieja.moneda == viejo.moneda:
+                            return True
+                except AttributeError:
+                    return False
 
         return False
 
@@ -722,9 +725,18 @@ class Movimiento(MiModel):
             return False
 
         if self.cambia_campo('moneda', contraparte=self.viejo):
+            if not (
+                    self.cambia_cuenta_por_cuenta_en_otra_moneda(moneda_del_movimiento=True) and
+                    self.cambia_cuenta_por_cuenta_en_otra_moneda(moneda_del_movimiento=False)
+            ):
+                return True
+
+        if self.cambia_cuenta_por_cuenta_en_otra_moneda(moneda_del_movimiento=True):
+            if self.cambia_cuenta_por_cuenta_en_otra_moneda(moneda_del_movimiento=False):
+                return False
             return True
 
-        return self.cambia_cuenta_por_cuenta_en_otra_moneda()
+        return False
 
     def _calcular_cotizacion(self, cambia_moneda: bool = False):
         if self.cta_entrada is not None and self.cta_salida is not None:
