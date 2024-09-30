@@ -725,11 +725,12 @@ class Movimiento(MiModel):
             return False
 
         if self.cambia_campo('moneda', contraparte=self.viejo):
-            if not (
-                    self.cambia_cuenta_por_cuenta_en_otra_moneda(moneda_del_movimiento=True) and
-                    self.cambia_cuenta_por_cuenta_en_otra_moneda(moneda_del_movimiento=False)
-            ):
-                return True
+            # TODO: Este condicional habría que revisarlo y reformularlo en algún momento con una lógica más clara
+            if self.cambia_cuenta_por_cuenta_en_otra_moneda(moneda_del_movimiento=True) and \
+                    self.cambia_cuenta_por_cuenta_en_otra_moneda(moneda_del_movimiento=False) and \
+                    self.viejo.cta_entrada.moneda != self.viejo.cta_salida.moneda:
+                return False
+            return True
 
         if self.cambia_cuenta_por_cuenta_en_otra_moneda(moneda_del_movimiento=True):
             if self.cambia_cuenta_por_cuenta_en_otra_moneda(moneda_del_movimiento=False):
