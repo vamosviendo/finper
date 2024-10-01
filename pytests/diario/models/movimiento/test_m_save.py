@@ -912,8 +912,7 @@ class TestSaveCambiaCuentas:
         assert traspaso_en_dolares.cotizacion == dolar.cotizacion_en(euro)
         assert traspaso_en_dolares.importe == round(importe * traspaso_en_dolares.cotizacion, 2)
         assert abs(getattr(traspaso_en_dolares, f"importe_{campo_cuenta}")) == traspaso_en_dolares.importe
-        assert \
-            abs(getattr(traspaso_en_dolares, f"importe_{campo_otra_cuenta}")) == importe
+        assert abs(getattr(traspaso_en_dolares, f"importe_{campo_otra_cuenta}")) == importe
 
     # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
     # no cambia moneda, no cambia cotización, cambia importe
@@ -921,33 +920,115 @@ class TestSaveCambiaCuentas:
     # - Se calcula cotización (euro.cotizacion_en(dolar)
     # - Cambia importe_ce (6 / cotizacion)
     # - Cambia importe_cs (6)
+    @pytest.mark.parametrize("campo_cuenta", ["cta_entrada", "cta_salida"])
+    def test_si_en_traspaso_entre_cuentas_en_la_misma_moneda_cambia_cuenta_por_cuenta_en_otra_moneda_e_importe_se_calcula_cotizacion_y_se_guarda_importe(
+            self, campo_cuenta, traspaso_en_dolares, cuenta_con_saldo_en_euros, euro, dolar):
+        campo_otra_cuenta = el_que_no_es(campo_cuenta, "cta_entrada", "cta_salida")
+
+        setattr(traspaso_en_dolares, campo_cuenta, cuenta_con_saldo_en_euros)
+        traspaso_en_dolares.importe = 6
+        traspaso_en_dolares.full_clean()
+        traspaso_en_dolares.save()
+
+        assert traspaso_en_dolares.cotizacion == euro.cotizacion_en(dolar)
+        assert traspaso_en_dolares.importe == 6
+        assert \
+            abs(getattr(traspaso_en_dolares, f"importe_{campo_cuenta}")) == \
+            round(6 / traspaso_en_dolares.cotizacion, 2)
+        assert abs(getattr(traspaso_en_dolares, f"importe_{campo_otra_cuenta}")) == 6
 
     # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
     # cambia moneda, cambia cotización, no cambia importe
     # 10 Dólares->CA dólares pasa a 10 Dólares -> x Euros a 2 euros el dólar
-    # - Se calcula importe (10 / 2)
+    # - Se calcula importe (10 * 2)
     # - Cambia importe_ce (10/2)
     # - No cambia importe_cs
+    @pytest.mark.parametrize("campo_cuenta", ["cta_entrada", "cta_salida"])
+    def test_si_en_traspaso_entre_cuentas_en_la_misma_moneda_cambia_cuenta_por_cuenta_en_otra_moneda_moneda_y_cotizacion_se_guarda_cotizacion_y_se_calcula_importe(
+            self, campo_cuenta, traspaso_en_dolares, cuenta_con_saldo_en_euros, euro, dolar):
+        campo_otra_cuenta = el_que_no_es(campo_cuenta, "cta_entrada", "cta_salida")
+        importe = traspaso_en_dolares.importe
+
+        setattr(traspaso_en_dolares, campo_cuenta, cuenta_con_saldo_en_euros)
+        traspaso_en_dolares.cotizacion = 2
+        traspaso_en_dolares.moneda = euro
+        traspaso_en_dolares.full_clean()
+        traspaso_en_dolares.save()
+
+        assert traspaso_en_dolares.cotizacion == 2
+        assert traspaso_en_dolares.importe == importe * 2
+        assert \
+            abs(getattr(traspaso_en_dolares, f"importe_{campo_cuenta}")) == traspaso_en_dolares.importe
+        assert abs(getattr(traspaso_en_dolares, f"importe_{campo_otra_cuenta}")) == importe
 
     # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
     # cambia moneda, no cambia cotización, cambia importe
     # 10 Dólares->CA dólares pasa a 10 Dólares -> 6 Euros a x euros el dólar
     # - Se calcula cotización (dolar.cotizacion_en(euro))
-    # - Cambia importe_ce (5)
+    # - Cambia importe_ce (6)
     # - Cambia importe_cs (6 / cotizacion)
+    @pytest.mark.parametrize("campo_cuenta", ["cta_entrada", "cta_salida"])
+    def test_si_en_traspaso_entre_cuentas_en_la_misma_moneda_cambia_cuenta_por_cuenta_en_otra_moneda_moneda_e_importe_se_calcula_cotizacion_y_se_guarda_importe(
+            self, campo_cuenta, traspaso_en_dolares, cuenta_con_saldo_en_euros, euro, dolar):
+        campo_otra_cuenta = el_que_no_es(campo_cuenta, "cta_entrada", "cta_salida")
+
+        setattr(traspaso_en_dolares, campo_cuenta, cuenta_con_saldo_en_euros)
+        traspaso_en_dolares.importe = 6
+        traspaso_en_dolares.moneda = euro
+        traspaso_en_dolares.full_clean()
+        traspaso_en_dolares.save()
+
+        assert traspaso_en_dolares.cotizacion == dolar.cotizacion_en(euro)
+        assert traspaso_en_dolares.importe == 6
+        assert \
+            abs(getattr(traspaso_en_dolares, f"importe_{campo_cuenta}")) == 6
+        assert abs(getattr(traspaso_en_dolares, f"importe_{campo_otra_cuenta}")) == round(6 / traspaso_en_dolares.cotizacion, 2)
 
     # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
     # no cambia moneda, cambia cotización, cambia importe
-    # 10 Dólares->CA dólares pasa a 6 Dólares -> x Euros a x dólares el euro
+    # 10 Dólares->CA dólares pasa a 6 Dólares -> x Euros a 0.6 dólares el euro
     # - Se calcula cotización (euro.cotizacion_en(dolar))
     # - Cambia importe_ce (6 / cotización)
     # - Cambia importe_cs (6)
+    @pytest.mark.parametrize("campo_cuenta", ["cta_entrada", "cta_salida"])
+    def test_si_en_traspaso_entre_cuentas_en_la_misma_moneda_cambia_cuenta_por_cuenta_en_otra_moneda_cotizacion_e_importe_se_guardan_cotizacion_e_importe(
+            self, campo_cuenta, traspaso_en_dolares, cuenta_con_saldo_en_euros, euro, dolar):
+        campo_otra_cuenta = el_que_no_es(campo_cuenta, "cta_entrada", "cta_salida")
+
+        setattr(traspaso_en_dolares, campo_cuenta, cuenta_con_saldo_en_euros)
+        traspaso_en_dolares.importe = 6
+        traspaso_en_dolares.cotizacion = 0.6
+        traspaso_en_dolares.full_clean()
+        traspaso_en_dolares.save()
+
+        assert traspaso_en_dolares.cotizacion == 0.6
+        assert traspaso_en_dolares.importe == 6
+        assert \
+            abs(getattr(traspaso_en_dolares, f"importe_{campo_cuenta}")) == round(6 / 0.6, 2)
+        assert abs(getattr(traspaso_en_dolares, f"importe_{campo_otra_cuenta}")) == 6
 
     # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
     # cambia moneda, cambia cotización, cambia importe
     # 10 Dólares->CA dólares pasa a x Dólares -> 6 Euros a 0.6 euros el dólar
     # - Cambia importe_ce (6)
     # - Cambia importe_cs (6 / cotización)
+    @pytest.mark.parametrize("campo_cuenta", ["cta_entrada", "cta_salida"])
+    def test_si_en_traspaso_entre_cuentas_en_la_misma_moneda_cambia_cuenta_por_cuenta_en_otra_moneda_moneda_cotizacion_e_importe_se_guardan_cotizacion_e_importe(
+            self, campo_cuenta, traspaso_en_dolares, cuenta_con_saldo_en_euros, euro, dolar):
+        campo_otra_cuenta = el_que_no_es(campo_cuenta, "cta_entrada", "cta_salida")
+
+        setattr(traspaso_en_dolares, campo_cuenta, cuenta_con_saldo_en_euros)
+        traspaso_en_dolares.importe = 6
+        traspaso_en_dolares.cotizacion = 0.6
+        traspaso_en_dolares.moneda = euro
+        traspaso_en_dolares.full_clean()
+        traspaso_en_dolares.save()
+
+        assert traspaso_en_dolares.cotizacion == 0.6
+        assert traspaso_en_dolares.importe == 6
+        assert \
+            abs(getattr(traspaso_en_dolares, f"importe_{campo_cuenta}")) == 6
+        assert abs(getattr(traspaso_en_dolares, f"importe_{campo_otra_cuenta}")) == round(6 / 0.6, 2)
 
     # Entre cuentas en distinta moneda, cambia cuenta en otra moneda por cuenta en moneda del movimiento,
     # no cambia importe
@@ -955,6 +1036,18 @@ class TestSaveCambiaCuentas:
     # - Cambia cotización (1)
     # - Cambia importe_ce (importe)
     # - No cambia importe_cs
+    def test_si_cambia_cuenta_en_moneda_no_del_movimiento_por_cuenta_en_moneda_del_movimiento_cotizacion_pasa_a_1(
+            self, mov_distintas_monedas, cuenta_en_dolares):
+        importe = mov_distintas_monedas.importe
+
+        mov_distintas_monedas.cta_entrada = cuenta_en_dolares
+        mov_distintas_monedas.full_clean()
+        mov_distintas_monedas.save()
+
+        assert mov_distintas_monedas.cotizacion == 1
+        assert mov_distintas_monedas.importe == importe
+        assert mov_distintas_monedas.importe_cta_entrada == mov_distintas_monedas.importe
+        assert mov_distintas_monedas.importe_cta_salida == -mov_distintas_monedas.importe
 
     # Entre cuentas en distinta moneda, cambia cuenta en otra moneda por cuenta en moneda del movimiento,
     # cambia importe
@@ -962,6 +1055,17 @@ class TestSaveCambiaCuentas:
     # - Cambia cotización (1)
     # - Cambia importe_ce (6)
     # - Cambia importe_cs (6)
+    def test_si_cambia_cuenta_en_moneda_no_del_movimiento_por_cuenta_en_moneda_del_movimiento_e_importe_se_guarda_importe_y_cotizacion_pasa_a_1(
+            self, mov_distintas_monedas, cuenta_en_dolares):
+        mov_distintas_monedas.cta_entrada = cuenta_en_dolares
+        mov_distintas_monedas.importe = 6
+        mov_distintas_monedas.full_clean()
+        mov_distintas_monedas.save()
+
+        assert mov_distintas_monedas.cotizacion == 1
+        assert mov_distintas_monedas.importe == 6
+        assert mov_distintas_monedas.importe_cta_entrada == 6
+        assert mov_distintas_monedas.importe_cta_salida == -6
 
     # Entre cuentas en distinta moneda, cambia cuenta en moneda del movimiento por cuenta en otra moneda,
     # no cambia importe
@@ -969,18 +1073,84 @@ class TestSaveCambiaCuentas:
     # - Cambia cotización (1)
     # - Cambia importe_ce(10 / 1.5)
     # - Cambia importe_cs(10 / 1.5)
+    def test_si_cambia_cuenta_en_moneda_del_movimiento_por_cuenta_en_moneda_no_del_movimiento_se_calcula_importe_y_cotizacion_pasa_a_1(
+            self, mov_distintas_monedas, cuenta_en_euros, euro):
+        cotizacion = mov_distintas_monedas.cotizacion
+        importe = mov_distintas_monedas.importe
+
+        mov_distintas_monedas.cta_salida = cuenta_en_euros
+        mov_distintas_monedas.moneda = euro
+        mov_distintas_monedas.full_clean()
+        mov_distintas_monedas.save()
+
+        assert mov_distintas_monedas.cotizacion == 1
+        assert mov_distintas_monedas.importe == round(importe / cotizacion, 2)
+        assert mov_distintas_monedas.importe_cta_entrada == mov_distintas_monedas.importe
+        assert mov_distintas_monedas.importe_cta_salida == -mov_distintas_monedas.importe
 
     # Entre cuentas en distinta moneda, cambia cuenta en moneda del movimiento por cuenta en otra moneda,
-    # no cambia importe
+    # cambia importe
     # 10 dolares -> x euros a 1.5 dólares el euro  pasa a  CA euros -> 6 euros
     # - Cambia cotización (1)
     # - Cambia importe_ce(6)
     # - Cambia importe_cs(6)
+    def test_si_cambia_cuenta_en_moneda_del_movimiento_por_cuenta_en_moneda_no_del_movimiento_e_importe_se_guarda_importe_y_cotizacion_pasa_a_1(
+            self, mov_distintas_monedas, cuenta_en_euros, euro):
+        cotizacion = mov_distintas_monedas.cotizacion
+        importe = mov_distintas_monedas.importe
 
-    # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda, no cambia cotización, no cambia importe.
-    # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda, cambia cotización, no cambia importe.
-    # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda, no cambia cotización, cambia importe.
-    # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda, cambia cotización, cambia importe.
+        mov_distintas_monedas.cta_salida = cuenta_en_euros
+        mov_distintas_monedas.moneda = euro
+        mov_distintas_monedas.importe = 6
+        mov_distintas_monedas.full_clean()
+        mov_distintas_monedas.save()
+
+        assert mov_distintas_monedas.cotizacion == 1
+        assert mov_distintas_monedas.importe == 6
+        assert mov_distintas_monedas.importe_cta_entrada == 6
+        assert mov_distintas_monedas.importe_cta_salida == -6
+
+    # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda,
+    # no cambia moneda, no cambia cotización, no cambia importe.
+    # Entran / salen 10 dólares -> Venta / compra de 10 dólares de euros
+    # - No cambia importe
+    # - Cambia cotización (euro.cotizacion_en(dolar))
+    # - No cambia importe_ce
+    # - Cambia importe_cs (importe / nueva cotización)
+    @pytest.mark.parametrize("fixture_mov, campo_cuenta", [
+        ("entrada_en_dolares", "cta_entrada"),
+        ("salida_en_dolares", "cta_salida")
+    ])
+    def test_si_en_movimiento_de_entrada_o_salida_se_agrega_contracuenta_en_otra_moneda_se_calcula_cotizacion(
+            self, fixture_mov, campo_cuenta, cuenta_en_euros, dolar, euro, request):
+        movimiento = request.getfixturevalue(fixture_mov)
+        campo_contracuenta = el_que_no_es(campo_cuenta, "cta_entrada", "cta_salida")
+
+        importe = movimiento.importe
+
+        setattr(movimiento, campo_contracuenta, cuenta_en_euros)
+        movimiento.full_clean()
+        movimiento.save()
+
+        assert movimiento.cotizacion == euro.cotizacion_en(dolar)
+        assert movimiento.importe == importe
+        assert abs(getattr(movimiento, f"importe_{campo_cuenta}")) == importe
+        assert abs(getattr(movimiento, f"importe_{campo_contracuenta}")) == round(importe / movimiento.cotizacion, 2)
+
+    # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda,
+    # no cambia moneda, cambia cotización, no cambia importe.
+    # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda,
+    # no cambia moneda, no cambia cotización, cambia importe.
+    # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda,
+    # no cambia moneda, cambia cotización, cambia importe.
+    # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda,
+    # cambia moneda, no cambia cotización, no cambia importe.
+    # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda,
+    # cambia moneda, cambia cotización, no cambia importe.
+    # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda,
+    # cambia moneda, no cambia cotización, cambia importe.
+    # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda,
+    # cambia moneda, cambia cotización, cambia importe.
 
     @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
     def test_puede_agregarse_cuenta_interactiva_a_movimiento_con_cta_acumulativa(

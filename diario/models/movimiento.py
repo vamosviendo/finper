@@ -711,6 +711,20 @@ class Movimiento(MiModel):
         if self.moneda != self.viejo.moneda:
             return True
 
+        for campo_cuenta in campos_cuenta:
+            cuenta = getattr(self, campo_cuenta)
+            campo_contracuenta = el_que_no_es(campo_cuenta, "cta_entrada", "cta_salida")
+            contracuenta_vieja = getattr(self.viejo, campo_contracuenta)
+            contracuenta = getattr(self, campo_contracuenta)
+
+            # Si el movimiento no es un traspaso, no se recalcula cotización
+            if cuenta is None or contracuenta is None:
+                return False
+
+            # Si a un movimiento de e/s se le agrega una contracuenta en otra moneda, se recalcula cotización
+            if contracuenta_vieja is None and contracuenta is not None and contracuenta.moneda != cuenta.moneda:
+                return True
+
         # Si cambia cuenta por cuenta en otra moneda y no se cambia manualmente la cotización,
         # se la recalcula.
         if self.cambia_cuenta_por_cuenta_en_otra_moneda(moneda_del_movimiento=False) \

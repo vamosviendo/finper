@@ -188,9 +188,20 @@ def contramov_credito(credito: Movimiento) -> Movimiento:
 @pytest.fixture
 def entrada_en_dolares(cuenta_en_dolares: CuentaInteractiva, dia: Dia, dolar: Moneda) -> Movimiento:
     return Movimiento.crear(
-        concepto='Entrada en euros',
+        concepto='Entrada en dólares',
         importe=230,
         cta_entrada=cuenta_en_dolares,
+        dia=dia,
+        moneda=dolar,
+    )
+
+
+@pytest.fixture
+def salida_en_dolares(cuenta_en_dolares: CuentaInteractiva, dia: Dia, dolar: Moneda) -> Movimiento:
+    return Movimiento.crear(
+        concepto='Salida en dólares',
+        importe=1800,
+        cta_salida=cuenta_en_dolares,
         dia=dia,
         moneda=dolar,
     )
