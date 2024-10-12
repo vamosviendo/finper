@@ -21,8 +21,26 @@ def formmov(cuenta: CuentaInteractiva, dia: Dia) -> FormMovimiento:
     })
 
 
-def test_acepta_movimientos_bien_formados(formmov):
-    assert formmov.is_valid()
+@pytest.fixture
+def formmov_distintas_monedas(
+        cuenta_en_dolares: CuentaInteractiva,
+        cuenta_en_euros: CuentaInteractiva,
+        dolar: Moneda,
+        dia: Dia) -> FormMovimiento:
+    return FormMovimiento(data={
+        'fecha': dia.fecha,
+        'concepto': 'movimiento entre distintas monedas',
+        'cotizacion': 1.2,
+        'importe': 150,
+        'cta_entrada': cuenta_en_euros,
+        'cta_salida': cuenta_en_dolares,
+        'moneda': dolar,
+    })
+
+
+def test_acepta_movimientos_bien_formados(formmov, formmov_distintas_monedas):
+    assert formmov.is_valid(), f"Form no válido: {formmov.errors.as_data()}"
+    assert formmov_distintas_monedas.is_valid(), f"Form no válido: {formmov.errors.as_data()}"
 
 
 def test_no_acepta_movimientos_sin_cuentas(formmov):
@@ -112,3 +130,9 @@ def test_campo_moneda_muestra_monedas_existentes(peso, dolar, euro):
 def test_campo_moneda_muestra_moneda_base_como_valor_por_defecto(mock_moneda_base):
     formmov = FormMovimiento()
     assert formmov.fields['moneda'].initial == Moneda.tomar(monname=mock_moneda_base)
+
+
+def test_muestra_campo_cotizacion():
+    formmov = FormMovimiento()
+    assert 'cotizacion' in formmov.fields.keys()
+    assert isinstance(formmov.fields['cotizacion'], fields.FloatField)

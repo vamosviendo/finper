@@ -140,6 +140,7 @@ class FormDividirCuenta(forms.Form):
 
 class FormMovimiento(forms.ModelForm):
 
+    cotizacion = forms.FloatField(required=False)
     importe = forms.FloatField(
         widget=forms.NumberInput(attrs={'step': 0.01})
     )
@@ -166,7 +167,7 @@ class FormMovimiento(forms.ModelForm):
     class Meta:
         model = Movimiento
         fields = (
-            'fecha', 'concepto', 'detalle', 'importe',
+            'fecha', 'concepto', 'detalle', 'cotizacion', 'importe',
             'cta_entrada', 'cta_salida', 'moneda'
         )
         widgets = {
