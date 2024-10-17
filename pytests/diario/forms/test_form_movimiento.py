@@ -1,5 +1,3 @@
-from datetime import date
-
 import pytest
 from django.core.exceptions import NON_FIELD_ERRORS
 from django.forms import fields
@@ -136,3 +134,16 @@ def test_muestra_campo_cotizacion():
     formmov = FormMovimiento()
     assert 'cotizacion' in formmov.fields.keys()
     assert isinstance(formmov.fields['cotizacion'], fields.FloatField)
+
+
+def test_guarda_cotizacion(formmov_distintas_monedas):
+    formmov_distintas_monedas.is_valid()
+    formmov_distintas_monedas.save()
+    assert formmov_distintas_monedas.instance.cotizacion == formmov_distintas_monedas.cleaned_data["cotizacion"]
+
+
+def test_si_no_se_ingresa_cotizacion_calcula_cotizacion_desde_monedas(formmov_distintas_monedas, dolar, euro):
+    formmov_distintas_monedas.data["cotizacion"] = 0.0
+    formmov_distintas_monedas.is_valid()
+    formmov_distintas_monedas.save()
+    assert formmov_distintas_monedas.instance.cotizacion == euro.cotizacion_en(dolar)

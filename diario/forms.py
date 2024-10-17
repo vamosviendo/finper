@@ -191,6 +191,7 @@ class FormMovimiento(forms.ModelForm):
         self.instance.importe = self.cleaned_data['importe']
         self.instance.fecha = self.cleaned_data['fecha']
         self.instance.esgratis = self.cleaned_data['esgratis']
+        self.instance.cotizacion = self.cleaned_data['cotizacion']
         return super().save(*args, **kwargs)
 
 
