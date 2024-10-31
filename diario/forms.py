@@ -140,7 +140,7 @@ class FormDividirCuenta(forms.Form):
 
 class FormMovimiento(forms.ModelForm):
 
-    cotizacion = forms.FloatField(required=False)
+    cotizacion = forms.FloatField(required=False, initial=0.0)
     importe = forms.FloatField(
         widget=forms.NumberInput(attrs={'step': 0.01})
     )
@@ -188,10 +188,11 @@ class FormMovimiento(forms.ModelForm):
         return cleaned_data
 
     def save(self, *args, **kwargs) -> Movimiento:
+
         self.instance.importe = self.cleaned_data['importe']
         self.instance.fecha = self.cleaned_data['fecha']
         self.instance.esgratis = self.cleaned_data['esgratis']
-        self.instance.cotizacion = self.cleaned_data['cotizacion']
+        self.instance.cotizacion = self.cleaned_data['cotizacion'] or 0.0
         return super().save(*args, **kwargs)
 
 

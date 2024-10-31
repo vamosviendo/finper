@@ -7,6 +7,7 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 
 from utils.numeros import float_format, format_float
+from utils.varios import el_que_no_es
 from vvsteps.driver import MiWebElement
 
 
@@ -342,12 +343,73 @@ def test_crear_movimiento_con_cuenta_en_moneda_no_base(
         assert saldo_base.text == float_format(saldo_base_original_cs - importe)
 
 
-@pytest.mark.parametrize('moneda', ['euro', 'dolar'])
+@pytest.mark.parametrize('moneda, otra_moneda, cuenta_con_saldo_en_moneda, cotizacion_mov', [
+    ('euro', 'dolar', 'cuenta_con_saldo_en_euros', '1.1'),
+    ('dolar', 'euro', 'cuenta_con_saldo_en_dolares', '0.9')
+])
 def test_crear_traspaso_entre_cuentas_en_distinta_moneda(
-        browser, cuenta_con_saldo_en_euros, cuenta_con_saldo_en_dolares, moneda, peso, fecha, request):
+        browser, moneda, otra_moneda, cuenta_con_saldo_en_moneda, cotizacion_mov, peso, fecha, request):
     moneda_mov = request.getfixturevalue(moneda)
+    otra_moneda = request.getfixturevalue(otra_moneda)
+    cuenta_con_saldo_en_moneda_mov = request.getfixturevalue(cuenta_con_saldo_en_moneda)
+    cuenta_con_saldo_en_otra_moneda = request.getfixturevalue(
+        el_que_no_es(
+            cuenta_con_saldo_en_moneda,
+            "cuenta_con_saldo_en_euros",
+            "cuenta_con_saldo_en_dolares"
+        )
+    )
     browser.ir_a_pag()
-    importe = 20
+
+    # Dadas dos cuentas en monedas distintas
+    saldo_base_original_csmm = format_float(
+        browser.esperar_saldo_en_moneda_de_cuenta(
+            cuenta_con_saldo_en_moneda_mov.slug
+        ).text
+    )
+    saldo_base_original_csom = format_float(
+        browser.esperar_saldo_en_moneda_de_cuenta(
+            cuenta_con_saldo_en_otra_moneda.slug
+        ).text
+    )
+
+    # Cuando generamos un movimiento de traspaso entre ambas cuentas
+    browser.crear_movimiento(
+        concepto=f"Compra de {moneda_mov.plural} con {otra_moneda.plural}",
+        importe="20",
+        fecha=fecha,
+        cta_entrada=cuenta_con_saldo_en_moneda_mov.nombre,
+        cta_salida=cuenta_con_saldo_en_otra_moneda.nombre,
+        moneda=peso.nombre,
+        cotizacion=cotizacion_mov
+    )
+
+    # Si seleccionamos para el importe una moneda distinta de la moneda de
+    # la cuenta, recibimos un mensaje de error
+    lista_errores = browser.esperar_elemento("ul.errorlist", By.CSS_SELECTOR)
+    assert f"El movimiento debe ser expresado en {moneda_mov.plural} o {otra_moneda.plural}" in lista_errores.text
+
+    # Si seleccionamos para el importe la moneda de alguna de las cuentas, se nos permite
+    # completar el movimiento
+    browser.completar("id_moneda", moneda_mov.nombre)
+    browser.pulsar()
+
+    # Somos dirigidos a la página principal donde podemos ver que el saldo
+    # principal de la o las cuentas cambió en el importe registrado en el movimiento,
+    browser.assert_url(reverse('home'))
+    importe_en_moneda_mov = 20
+    importe_en_otra_moneda = round(20 / float(cotizacion_mov), 2)
+    saldo_base = browser.esperar_saldo_en_moneda_de_cuenta(cuenta_con_saldo_en_moneda_mov.slug)
+    assert saldo_base.text == float_format(saldo_base_original_csmm + importe_en_moneda_mov)
+    saldo_base = browser.esperar_saldo_en_moneda_de_cuenta(cuenta_con_saldo_en_otra_moneda.slug)
+    assert saldo_base.text == float_format(saldo_base_original_csom - importe_en_otra_moneda)
+
+
+def test_crear_traspaso_entre_cuentas_en_distinta_moneda_con_una_cotizacion_anterior_a_la_actual(
+        browser, cuenta_con_saldo_en_euros, cuenta_con_saldo_en_dolares, dolar, euro,
+        fecha, cotizacion, cotizacion_posterior, cotizacion_posterior_euro
+):
+    browser.ir_a_pag()
 
     # Dadas dos cuentas en monedas distintas
     saldo_base_original_ce = format_float(
@@ -362,30 +424,22 @@ def test_crear_traspaso_entre_cuentas_en_distinta_moneda(
     )
 
     # Cuando generamos un movimiento de traspaso entre ambas cuentas
+    # y la fecha de ese movimiento es anterior a la de la última cotización
+    # de las cuentas
     browser.crear_movimiento(
-        concepto='Compra de euros con dólares',
-        importe=str(importe),
+        concepto='Compra de euros con dólares ólares',
+        importe="20",
         fecha=fecha,
         cta_entrada=cuenta_con_saldo_en_euros.nombre,
         cta_salida=cuenta_con_saldo_en_dolares.nombre,
-        moneda=peso.nombre,
+        moneda=dolar.nombre,
     )
-
-    # Si seleccionamos para el importe una moneda distinta de la moneda de
-    # la cuenta, recibimos un mensaje de error
-    lista_errores = browser.esperar_elemento("ul.errorlist", By.CSS_SELECTOR)
-    assert f"El movimiento debe ser expresado en euros o dólares" in lista_errores.text
-
-    # Si seleccionamos para el importe la moneda de alguna de las cuentas, se nos permite
-    # completar el movimiento
-    browser.completar("id_moneda", moneda_mov.nombre)
-    browser.pulsar()
 
     # Somos dirigidos a la página principal donde podemos ver que el saldo
     # principal de la o las cuentas cambió en el importe registrado en el movimiento,
     browser.assert_url(reverse('home'))
-    importe_en_euros = importe / cuenta_con_saldo_en_euros.cotizacion * moneda_mov.cotizacion
-    importe_en_dolares = importe / cuenta_con_saldo_en_dolares.cotizacion * moneda_mov.cotizacion
+    importe_en_euros = round(20 / euro.cotizacion_en_al(dolar, fecha), 2)
+    importe_en_dolares = 20
     saldo_base = browser.esperar_saldo_en_moneda_de_cuenta(cuenta_con_saldo_en_euros.slug)
     assert saldo_base.text == float_format(saldo_base_original_ce + importe_en_euros)
     saldo_base = browser.esperar_saldo_en_moneda_de_cuenta(cuenta_con_saldo_en_dolares.slug)
