@@ -204,3 +204,19 @@ class FormTitular(forms.ModelForm):
         widgets = {
             'fecha_alta': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
         }
+
+
+class FormMoneda(forms.ModelForm):
+
+    plural = forms.CharField(max_length=100)
+    cotizacion = forms.FloatField()
+
+    class Meta:
+        model = Moneda
+        fields = ('nombre', 'monname', 'plural', 'cotizacion')
+
+    def save(self, *args, **kwargs) -> Moneda:
+        self.instance.plural = self.cleaned_data['plural']
+        self.instance.cotizacion = self.cleaned_data['cotizacion']
+
+        return super().save(*args, **kwargs)
