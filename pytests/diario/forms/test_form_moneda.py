@@ -11,13 +11,18 @@ def formmon() -> FormMoneda:
 
 
 @pytest.fixture
-def formmon_full() -> FormMoneda:
-    return FormMoneda(data={
+def formmon_data() -> dict:
+    return {
         'nombre': 'nombre',
         'monname': 'monname',
         'plural': 'monnames',
         'cotizacion': 5.0
-    })
+    }
+
+
+@pytest.fixture
+def formmon_full(formmon_data) -> FormMoneda:
+    return FormMoneda(data=formmon_data)
 
 
 def test_muestra_campo_nombre(formmon):
@@ -52,3 +57,19 @@ def test_guarda_cotizacion(formmon_full):
     form.save()
     moneda = Moneda.tomar(monname='monname')
     assert moneda.cotizacion == 5.0
+
+
+def test_permite_campo_plural_vacio(formmon_data):
+    formmon_data.pop('plural')
+    form = FormMoneda(data=formmon_data)
+    assert form.is_valid(), f"Form no válido: {form.errors.as_data()}"
+
+
+def test_guarda_cotizacion_1_por_defecto(formmon_data):
+    formmon_data.pop('cotizacion')
+    form = FormMoneda(data=formmon_data)
+    form.is_valid()
+    form.clean()
+    form.save()
+    moneda = Moneda.tomar(monname='monname')
+    assert moneda.cotizacion == 1.0

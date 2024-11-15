@@ -77,7 +77,6 @@ class Moneda(MiModel):
                 cot.importe = _cotizacion.importe
                 cot.save()
 
-
     def as_view_context(self) -> dict[str, str | float]:
         return {
             'monname': self.monname,
