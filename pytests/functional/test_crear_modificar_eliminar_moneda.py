@@ -61,6 +61,5 @@ def test_eliminar_moneda(browser, dolar, euro):
     assert nombre_moneda not in nombres_moneda
 
 
-
 def test_cambiar_cotizacion_moneda(browser):
     pass

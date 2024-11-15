@@ -8,7 +8,7 @@ from django.views.generic import CreateView, DeleteView, TemplateView, \
     UpdateView
 
 from diario.forms import FormCuenta, FormMovimiento, FormDividirCuenta, \
-    FormCrearSubcuenta, FormTitular
+    FormCrearSubcuenta, FormTitular, FormMoneda
 from diario.models import Cuenta, CuentaInteractiva, CuentaAcumulativa, Dia, \
     Movimiento, Titular, Moneda
 from diario.settings_app import TEMPLATE_HOME
@@ -255,8 +255,8 @@ class TitModView(UpdateView):
 
 class MonNuevaView(CreateView):
     model = Moneda
+    form_class = FormMoneda
     template_name = 'diario/moneda_form.html'
-    fields = '__all__'
     success_url = reverse_lazy('home')
 
 
