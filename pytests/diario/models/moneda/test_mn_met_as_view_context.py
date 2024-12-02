@@ -16,6 +16,6 @@ def test_incluye_nombre(context, peso):
     assert context['nombre'] == peso.nombre
 
 
-def test_incluye_cotizacion(context, peso):
+def test_incluye_cotizacion_venta_como_cotizacion(context, peso):
     assert context.get('cotizacion') is not None
-    assert context['cotizacion'] == peso.cotizacion
+    assert context['cotizacion'] == peso.cotizacion_venta

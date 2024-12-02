@@ -7,7 +7,8 @@ from vvmodel.models import MiModel
 
 
 class Cotizacion(MiModel):
-    importe = models.FloatField()
+    importe_compra = models.FloatField()
+    importe_venta = models.FloatField()
     fecha = models.DateField()
     moneda = models.ForeignKey("diario.Moneda", related_name="cotizaciones", on_delete=models.CASCADE)
 

@@ -40,5 +40,8 @@ def test_permite_cotizaciones_de_igual_fecha_para_monedas_distintas(dolar, euro,
         pytest.fail("No permite cotizaciones de monedas distintas en la misma fecha")
 
 
+def test_guarda_importes_de_cotizacion_para_la_compra_y_para_la_venta(dolar, cotizacion):
+    pytest.fail("escribir!")
+
 def test_str_devuelve_moneda_fecha_e_importe_de_cotizacion(cotizacion):
     assert str(cotizacion) == f"Cotización {cotizacion.moneda} al {cotizacion.fecha}: {cotizacion.importe}"

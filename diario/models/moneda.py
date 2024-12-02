@@ -30,17 +30,30 @@ class Moneda(MiModel):
         return (self.monname, )
 
     @property
-    def cotizacion(self) -> float:
+    def cotizacion_compra(self) -> float:
         try:
-            return self.cotizaciones.last().importe
+            return self.cotizaciones.last().importe_compra
         except AttributeError:
             return 1
 
-    @cotizacion.setter
-    def cotizacion(self, value: float):
+    @cotizacion_compra.setter
+    def cotizacion_compra(self, value: float):
         """ Si no existe una cotización para la fecha, la crea.
             Si existe, actualiza el importe. """
-        self._cotizacion = Cotizacion(fecha=date.today(), importe=value)
+        self._cotizacion_compra = Cotizacion(fecha=date.today(), importe_compra=value)
+
+    @property
+    def cotizacion_venta(self) -> float:
+        try:
+            return self.cotizaciones.last().importe_venta
+        except AttributeError:
+            return 1
+
+    @cotizacion_venta.setter
+    def cotizacion_venta(self, value: float):
+        """ Si no existe una cotización para la fecha, la crea.
+            Si existe, actualiza el importe. """
+        self._cotizacion_venta = Cotizacion(fecha=date.today(), importe_venta=value)
 
     @property
     def plural(self) -> str:
@@ -56,14 +69,23 @@ class Moneda(MiModel):
     def base(cls):
         return cls.tomar(monname=MONEDA_BASE)
 
-    def cotizacion_al(self, fecha: date) -> float:
-        return Cotizacion.tomar(moneda=self, fecha=fecha).importe
+    def cotizacion_compra_al(self, fecha: date) -> float:
+        return Cotizacion.tomar(moneda=self, fecha=fecha).importe_compra
 
-    def cotizacion_en(self, otra_moneda: Self) -> float:
-        return self.cotizacion / otra_moneda.cotizacion
+    def cotizacion_venta_al(self, fecha: date) -> float:
+        return Cotizacion.tomar(moneda=self, fecha=fecha).importe_venta
 
-    def cotizacion_en_al(self, otra_moneda: Self, fecha: date) -> float:
-        return self.cotizacion_al(fecha) / otra_moneda.cotizacion_al(fecha)
+    def cotizacion_compra_en(self, otra_moneda: Self) -> float:
+        return self.cotizacion_compra / otra_moneda.cotizacion_compra
+
+    def cotizacion_venta_en(self, otra_moneda: Self) -> float:
+        return self.cotizacion_venta / otra_moneda.cotizacion_venta
+
+    def cotizacion_compra_en_al(self, otra_moneda: Self, fecha: date) -> float:
+        return self.cotizacion_compra_al(fecha) / otra_moneda.cotizacion_compra_al(fecha)
+
+    def cotizacion_venta_en_al(self, otra_moneda: Self, fecha: date) -> float:
+        return self.cotizacion_venta_al(fecha) / otra_moneda.cotizacion_venta_al(fecha)
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -71,15 +93,21 @@ class Moneda(MiModel):
             _cotizacion = getattr(self, "_cotizacion")
             moneda = self.tomar_de_bd()
             try:
-                Cotizacion.crear(moneda=moneda, fecha=_cotizacion.fecha, importe=_cotizacion.importe)
+                Cotizacion.crear(
+                    moneda=moneda,
+                    fecha=_cotizacion.fecha,
+                    importe_compra=_cotizacion.importe_compra,
+                    importe_venta=_cotizacion.importe_venta,
+                )
             except ValidationError:
                 cot = Cotizacion.tomar(moneda=moneda, fecha=_cotizacion.fecha)
-                cot.importe = _cotizacion.importe
+                cot.importe_compra = _cotizacion.importe_compra
+                cot.importe_venta = _cotizacion.importe_venta
                 cot.save()
 
     def as_view_context(self) -> dict[str, str | float]:
         return {
             'monname': self.monname,
             'nombre': self.nombre,
-            'cotizacion': self.cotizacion,
+            'cotizacion': self.cotizacion_venta,
         }

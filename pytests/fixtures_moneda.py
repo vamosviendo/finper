@@ -13,7 +13,7 @@ def peso(fecha: date) -> Moneda:
         nombre='Peso',
         monname='p',
     )
-    Cotizacion.crear(moneda=mon, fecha=fecha, importe=1)
+    Cotizacion.crear(moneda=mon, fecha=fecha, importe_compra=1, importe_venta=1)
     return mon
 
 
@@ -24,7 +24,7 @@ def dolar(fecha: date) -> Moneda:
         plural='dólares',
         monname='uss',
     )
-    Cotizacion.crear(moneda=mon, fecha=fecha, importe=805.0)
+    Cotizacion.crear(moneda=mon, fecha=fecha, importe_compra=805.0, importe_venta=816.0)
     return mon
 
 
@@ -34,7 +34,7 @@ def euro(fecha: date) -> Moneda:
         nombre='Euro',
         monname='eu',
     )
-    Cotizacion.crear(moneda=mon, fecha=fecha, importe=1100)
+    Cotizacion.crear(moneda=mon, fecha=fecha, importe_compra=1100, importe_venta=1300)
     return mon
 
 
@@ -45,7 +45,7 @@ def real(fecha: date) -> Moneda:
         plural='Reales',
         monname='r',
     )
-    Cotizacion.crear(moneda=mon, fecha=fecha, importe=300)
+    Cotizacion.crear(moneda=mon, fecha=fecha, importe_compra=300, importe_venta=312)
     return mon
 
 
@@ -56,7 +56,7 @@ def yen(fecha: date) -> Moneda:
         plural='Yenes',
         monname='y',
     )
-    Cotizacion.crear(moneda=mon, fecha=fecha, importe=3200)
+    Cotizacion.crear(moneda=mon, fecha=fecha, importe_compra=3200, importe_venta=3500)
     return mon
 
 
