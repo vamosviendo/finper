@@ -73,23 +73,35 @@ class Moneda(MiModel):
     def base(cls):
         return cls.tomar(monname=MONEDA_BASE)
 
+    def cotizacion_al(self, fecha: date, compra: bool):
+        cotizacion = Cotizacion.tomar(moneda=self, fecha=fecha)
+        return cotizacion.importe_compra if compra else cotizacion.importe_venta
+
     def cotizacion_compra_al(self, fecha: date) -> float:
-        return Cotizacion.tomar(moneda=self, fecha=fecha).importe_compra
+        return self.cotizacion_al(fecha, compra=True)
 
     def cotizacion_venta_al(self, fecha: date) -> float:
-        return Cotizacion.tomar(moneda=self, fecha=fecha).importe_venta
+        return self.cotizacion_al(fecha, compra=False)
+
+    def cotizacion_en(self, otra_moneda: Self, compra: bool) -> float:
+        return \
+            (self.cotizacion_compra / otra_moneda.cotizacion_compra) if compra else \
+            (self.cotizacion_venta / otra_moneda.cotizacion_venta)
 
     def cotizacion_compra_en(self, otra_moneda: Self) -> float:
-        return self.cotizacion_compra / otra_moneda.cotizacion_compra
+        return self.cotizacion_en(otra_moneda, compra=True)
 
     def cotizacion_venta_en(self, otra_moneda: Self) -> float:
-        return self.cotizacion_venta / otra_moneda.cotizacion_venta
+        return self.cotizacion_en(otra_moneda, compra=False)
+
+    def cotizacion_en_al(self, otra_moneda: Self, fecha: date, compra: bool) -> float:
+        return self.cotizacion_al(fecha, compra=compra) / otra_moneda.cotizacion_al(fecha, compra=compra)
 
     def cotizacion_compra_en_al(self, otra_moneda: Self, fecha: date) -> float:
-        return self.cotizacion_compra_al(fecha) / otra_moneda.cotizacion_compra_al(fecha)
+        return self.cotizacion_en_al(otra_moneda, fecha, compra=True)
 
     def cotizacion_venta_en_al(self, otra_moneda: Self, fecha: date) -> float:
-        return self.cotizacion_venta_al(fecha) / otra_moneda.cotizacion_venta_al(fecha)
+        return self.cotizacion_en_al(otra_moneda, fecha, compra=False)
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
