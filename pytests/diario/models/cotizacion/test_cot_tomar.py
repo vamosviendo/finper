@@ -22,7 +22,7 @@ def test_si_no_encuentra_ninguna_cotizacion_de_moneda_da_error(peso, fecha):
 
 def test_toma_fecha_de_hoy_por_defecto(cotizacion, dolar, mock_today):
     hoy = mock_today.return_value
-    cotizacion_actual = Cotizacion.crear(moneda=dolar, fecha=hoy, importe=255)
+    cotizacion_actual = Cotizacion.crear(moneda=dolar, fecha=hoy, importe_compra=255, importe_venta=275)
     assert Cotizacion.tomar(moneda=dolar) == cotizacion_actual
 
 
@@ -33,4 +33,4 @@ def test_si_no_recibe_moneda_da_error(cotizacion, fecha):
 
 def test_si_recibe_argumento_distinto_a_fecha_o_moneda_da_error(cotizacion, cotizacion_posterior, dolar, fecha):
     with pytest.raises(TypeError):
-        Cotizacion.tomar(moneda=dolar, importe=cotizacion.importe)
+        Cotizacion.tomar(moneda=dolar, importe_compra=cotizacion.importe_compra)

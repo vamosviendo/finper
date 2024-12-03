@@ -17,7 +17,7 @@ class Cotizacion(MiModel):
         unique_together = ("fecha", "moneda", )
 
     def __str__(self):
-        return f"Cotización {self.moneda} al {self.fecha}: {self.importe}"
+        return f"Cotización {self.moneda} al {self.fecha}: {self.importe_compra} / {self.importe_venta}"
 
     @classmethod
     def tomar(cls, **kwargs):
