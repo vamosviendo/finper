@@ -56,6 +56,10 @@ class Moneda(MiModel):
         self._cotizacion_venta = Cotizacion(fecha=date.today(), importe_venta=value)
 
     @property
+    def cotizacion(self) -> float:
+        return self.cotizacion_venta
+
+    @property
     def plural(self) -> str:
         if self._plural:
             return self._plural

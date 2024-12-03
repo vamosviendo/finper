@@ -25,3 +25,12 @@ def test_setters_generan_atributos__cotizacion(sentido, dolar):
 def test_atributos__cotizacion_creados_por_setters_tienen_fecha_actual(sentido, dolar, mock_today):
     setattr(dolar, f"cotizacion_{sentido}", 5)
     assert getattr(dolar, f"_cotizacion_{sentido}").fecha == mock_today.return_value
+
+
+def test_prop_cotizacion_devuelve_cotizacion_venta(dolar, mocker):
+    mocker.patch(
+        "diario.models.Moneda.cotizacion_venta",
+        return_value = 2.5,
+        new_callable=mocker.PropertyMock,
+    )
+    assert dolar.cotizacion == 2.5
