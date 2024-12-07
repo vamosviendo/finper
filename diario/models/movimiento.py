@@ -17,7 +17,7 @@ from diario.models.dia import Dia
 from diario.models.saldo import Saldo
 
 if TYPE_CHECKING:
-    from diario.models import Titular, CuentaInteractiva, Cuenta
+    from diario.models import Titular, CuentaInteractiva, Cuenta, Moneda
 
 
 def es_campo_cuenta_o_none(value: str):
@@ -480,8 +480,8 @@ class Movimiento(MiModel):
             raise AttributeError(
                 f'Movimiento "{self.concepto}" no tiene cuenta de salida')
 
-    def importe_en(self, otra_moneda):
-        return round(self.importe * self.moneda.cotizacion_en(otra_moneda), 2)
+    def importe_en(self, otra_moneda: Moneda, compra: bool = False) -> float:
+        return round(self.importe * self.moneda.cotizacion_en(otra_moneda, compra), 2)
 
     def tiene_cuenta_acumulativa(self) -> bool:
         if self.tiene_cta_entrada_acumulativa():
