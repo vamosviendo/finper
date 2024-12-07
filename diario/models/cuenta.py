@@ -122,13 +122,11 @@ class Cuenta(PolymorphModel):
                  Saldo.anteriores_a(self, pos_hasta, inclusive_od=True)
         for saldo in saldos:
             try:
-                saldo.importe = saldo.anterior().importe + (
-                    saldo.movimiento.importe_cta_entrada if saldo.viene_de_entrada
-                    else saldo.movimiento.importe_cta_salida
-                )
-            except AttributeError:
-                saldo.importe = \
-                    signo(saldo.viene_de_entrada)*saldo.movimiento.importe_en(self.moneda)
+                saldo.importe = saldo.anterior().importe
+            except AttributeError:  # saldo.anterior() is None
+                saldo.importe = 0
+            saldo.importe += saldo.movimiento.importe_cta_entrada if saldo.viene_de_entrada \
+                else saldo.movimiento.importe_cta_salida
             saldo.save()
 
     @property
