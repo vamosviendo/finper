@@ -1,23 +1,15 @@
 import pytest
 
+from utils.varios import el_que_no_es
 
+
+@pytest.mark.parametrize("fixt_moneda, fixt_otra_moneda", [("dolar", "euro"), ("euro", "dolar")])
 @pytest.mark.parametrize("sentido, compra", [("compra", True), ("venta", False)])
-def test_devuelve_cotizacion_de_una_moneda_en_otra_moneda_dada(sentido, compra, dolar, euro):
+def test_devuelve_cotizacion_de_una_moneda_para_la_compra_en_otra_moneda_para_la_venta_o_viceversa(
+        fixt_moneda, fixt_otra_moneda, sentido, compra, request):
+    moneda = request.getfixturevalue(fixt_moneda)
+    otra_moneda = request.getfixturevalue(fixt_otra_moneda)
+    sentido_otra_moneda = el_que_no_es(sentido, "compra", "venta")
     assert \
-        dolar.cotizacion_en(euro, compra=compra) == \
-        getattr(dolar, f"cotizacion_{sentido}") / getattr(euro, f"cotizacion_{sentido}")
-    assert \
-        euro.cotizacion_en(dolar, compra=compra) == \
-        getattr(euro, f"cotizacion_{sentido}") / getattr(dolar, f"cotizacion_{sentido}")
-
-
-@pytest.mark.parametrize("sentido", ["compra", "venta"])
-def test_cotizacion_compra_venta_devuelve_cotizacion_de_una_moneda_en_otra_moneda_dada(sentido, dolar, euro):
-    met_cotizacion_dolar = getattr(dolar, f"cotizacion_{sentido}_en")
-    cotizacion_dolar_en = met_cotizacion_dolar(euro)
-
-    met_cotizacion_euro = getattr(euro, f"cotizacion_{sentido}_en")
-    cotizacion_euro_en = met_cotizacion_euro(dolar)
-
-    assert cotizacion_dolar_en == getattr(dolar, f"cotizacion_{sentido}") / getattr(euro, f"cotizacion_{sentido}")
-    assert cotizacion_euro_en == getattr(euro, f"cotizacion_{sentido}") / getattr(dolar, f"cotizacion_{sentido}")
+        moneda.cotizacion_en(otra_moneda, compra=compra) == \
+        getattr(moneda, f"cotizacion_{sentido}") / getattr(otra_moneda, f"cotizacion_{sentido_otra_moneda}")
