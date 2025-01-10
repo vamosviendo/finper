@@ -758,7 +758,11 @@ class Movimiento(MiModel):
             if self.cta_entrada.moneda != self.cta_salida.moneda:
                 if self.cotizacion == 0.0 or cambia_moneda:
                     otra_moneda = el_que_no_es(self.moneda, self.cta_entrada.moneda, self.cta_salida.moneda)
-                    self.cotizacion = otra_moneda.cotizacion_en_al(self.moneda, fecha=self.fecha)
+                    self.cotizacion = otra_moneda.cotizacion_en_al(
+                        self.moneda,
+                        fecha=self.fecha,
+                        compra=self.cta_entrada.moneda == self.moneda
+                    )
             else:
                 self.cotizacion = 1.0
         else:

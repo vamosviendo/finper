@@ -236,7 +236,7 @@ def traspaso_en_dolares(
 
 
 @pytest.fixture
-def mov_distintas_monedas(
+def mov_distintas_monedas_en_moneda_cta_salida(
         cuenta_con_saldo_en_dolares: CuentaInteractiva,
         cuenta_con_saldo_en_euros: CuentaInteractiva,
         dia: Dia,
@@ -250,6 +250,24 @@ def mov_distintas_monedas(
         dia=dia,
         moneda=dolar,
     )
+
+
+@pytest.fixture
+def mov_distintas_monedas_en_moneda_cta_entrada(
+        cuenta_con_saldo_en_dolares: CuentaInteractiva,
+        cuenta_con_saldo_en_euros: CuentaInteractiva,
+        dia: Dia,
+        dolar: Moneda,
+) -> Movimiento:
+    mov =  Movimiento.crear(
+        concepto='Movimiento en distintas monedas en moneda cta entrada',
+        cta_entrada=cuenta_con_saldo_en_dolares,
+        cta_salida=cuenta_con_saldo_en_euros,
+        importe=10,
+        dia=dia,
+        moneda=dolar,
+    )
+    return mov
 
 
 @pytest.fixture
