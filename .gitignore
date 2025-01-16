@@ -6,10 +6,12 @@ vfinper
 vfinperprod
 __pycache__
 *.pyc
+*.json
 .idea
 .swp
 .tags
 diario/settings_app.py
+notas
 
 .project
 .pydevproject
@@ -17,4 +19,4 @@ diario/settings_app.py
 .mypy_cache
 .pytest_cache
 vfinper-old
-vfinper3.11
+vfinper3.12
