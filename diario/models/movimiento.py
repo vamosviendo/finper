@@ -514,7 +514,10 @@ class Movimiento(MiModel):
         for campo in args:
             if campo not in [x.name for x in self._meta.fields]:
                 raise ValueError(f"Campo inexistente: {campo}")
-            if getattr(self, campo) != getattr(mov_guardado, campo):
+            try:
+                if getattr(self, campo) != getattr(mov_guardado, campo):
+                    return True
+            except AttributeError:  # mov_guardado == None => El movimiento es nuevo.
                 return True
         return False
 
@@ -529,20 +532,25 @@ class Movimiento(MiModel):
         return result
 
     def cambia_cuenta_por_cuenta_en_otra_moneda(self, moneda_del_movimiento: bool = True) -> bool:
+        """ Devuelve true si alguna de las cuentas cambia por una cuenta en otra moneda.
+            Si moneda_del_movimiento es True, verifica la cuenta en moneda del movimiento.
+            Si moneda_del_movimiento es False, verifica la cuenta en moneda distinta a la del movimiento.
+        """
         viejo = self.tomar_de_bd() or self.viejo
         for campo_cuenta in campos_cuenta:
             if self.cambia_campo(campo_cuenta, contraparte=viejo):
                 cuenta = getattr(self, campo_cuenta)
-                cuenta_vieja = getattr(viejo, campo_cuenta)
-                contracuenta_vieja = getattr(viejo, CTA_ENTRADA if campo_cuenta == CTA_SALIDA else CTA_SALIDA)
                 try:
-                    if cuenta.moneda != cuenta_vieja.moneda:
-                        if not moneda_del_movimiento and contracuenta_vieja.moneda == viejo.moneda:
-                            return True
-                        if moneda_del_movimiento and cuenta_vieja.moneda == viejo.moneda:
-                            return True
-                except AttributeError:
-                    return False
+                    cuenta_vieja = getattr(viejo, campo_cuenta)
+                    contracuenta_vieja = getattr(viejo, CTA_ENTRADA if campo_cuenta == CTA_SALIDA else CTA_SALIDA)
+                except AttributeError:  # viejo == None => El movimiento es nuevo.
+                    return True
+
+                if cuenta.moneda != cuenta_vieja.moneda:
+                    if not moneda_del_movimiento and contracuenta_vieja.moneda == viejo.moneda:
+                        return True
+                    if moneda_del_movimiento and cuenta_vieja.moneda == viejo.moneda:
+                        return True
 
         return False
 
@@ -758,11 +766,14 @@ class Movimiento(MiModel):
             if self.cta_entrada.moneda != self.cta_salida.moneda:
                 if self.cotizacion == 0.0 or cambia_moneda:
                     otra_moneda = el_que_no_es(self.moneda, self.cta_entrada.moneda, self.cta_salida.moneda)
-                    self.cotizacion = otra_moneda.cotizacion_en_al(
-                        self.moneda,
-                        fecha=self.fecha,
-                        compra=self.cta_entrada.moneda == self.moneda
-                    )
+                    if self.cambia_cuenta_por_cuenta_en_otra_moneda(True) or self.cambia_cuenta_por_cuenta_en_otra_moneda(False):
+                        self.cotizacion = otra_moneda.cotizacion_en_al(
+                            self.moneda,
+                            fecha=self.fecha,
+                            compra=self.cta_entrada.moneda == self.moneda
+                        )
+                    else:
+                        self.cotizacion = 1 / self.cotizacion
             else:
                 self.cotizacion = 1.0
         else:
