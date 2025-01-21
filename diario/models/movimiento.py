@@ -546,7 +546,13 @@ class Movimiento(MiModel):
                 except AttributeError:  # viejo == None => El movimiento es nuevo.
                     return True
 
-                if cuenta.moneda != cuenta_vieja.moneda:
+                try:
+                    moneda = cuenta.moneda
+                    moneda_vieja = cuenta_vieja.moneda
+                # cuenta == None o cuenta_vieja == None => El movimiento viejo o el nuevo son de entrada o salida
+                except AttributeError:
+                    return True
+                if moneda != moneda_vieja:
                     if not moneda_del_movimiento and contracuenta_vieja.moneda == viejo.moneda:
                         return True
                     if moneda_del_movimiento and cuenta_vieja.moneda == viejo.moneda:
@@ -748,9 +754,15 @@ class Movimiento(MiModel):
 
         if self.cambia_campo('moneda', contraparte=self.viejo):
             # TODO: Este condicional habría que revisarlo y reformularlo en algún momento con una lógica más clara
+            try:
+                moneda_cta_entrada = self.viejo.cta_entrada.moneda
+                moneda_cta_salida = self.viejo.cta_salida.moneda
+            # cta_entrada o cta_salida del movimiento viejo es None (es una entrada o una salida)
+            except AttributeError:
+                return True
             if self.cambia_cuenta_por_cuenta_en_otra_moneda(moneda_del_movimiento=True) and \
                     self.cambia_cuenta_por_cuenta_en_otra_moneda(moneda_del_movimiento=False) and \
-                    self.viejo.cta_entrada.moneda != self.viejo.cta_salida.moneda:
+                    moneda_cta_entrada != moneda_cta_salida:
                 return False
             return True
 
