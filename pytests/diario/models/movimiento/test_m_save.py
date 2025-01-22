@@ -498,967 +498,916 @@ class TestSaveCambiaCuentas:
         mock_eliminar_contramovimiento.assert_called_once_with(credito)
         mock_crear_movimiento_credito.assert_not_called()
 
-    # Cambia cuenta en moneda del movimiento no cambia cotización no cambia importe
-    # Venta de x reales en euros, a y reales el euro
-    # - Es necesario cambiar la moneda del movimiento a reales
-    # - Se calcula cotización y (euro.cotizacion_en(real))
-    # - Se calcula importe x (imp_viejo / cot_vieja * cotización)
-    # - No cambia importe_ce
-    # - Cambia importe_cs (importe x)
     @pytest.mark.parametrize("sentido", ["salida", "entrada"])
-    def test_si_cambia_cuenta_en_moneda_del_movimiento_por_cuenta_en_una_tercera_moneda_se_recalculan_cotizacion_e_importe(
-            self, sentido, cuenta_con_saldo_en_reales, real, request):
-        movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
-        sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-        compra = sentido == "entrada"
-        moneda_otra_cuenta = getattr(movimiento, f"cta_{sentido_otra_cuenta}").moneda
-
-        cotizacion = movimiento.cotizacion
-        importe = movimiento.importe
-        importes_ctas = {
-            "importe_cta_entrada": movimiento.importe_cta_entrada,
-            "importe_cta_salida": movimiento.importe_cta_salida,
-        }
-
-        setattr(movimiento, f"cta_{sentido}", cuenta_con_saldo_en_reales)
-        movimiento.moneda = real
-        movimiento.full_clean()
-        movimiento.save()
-        print('cotización mov:', movimiento.cotizacion, movimiento.importe_cta_entrada, movimiento.importe_cta_salida)
-
-        assert \
-            movimiento.cotizacion == \
-            moneda_otra_cuenta.cotizacion_en_al(real, fecha=movimiento.fecha, compra=compra)
-        assert movimiento.importe == round(importe / cotizacion * movimiento.cotizacion, 2)
-        assert getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}") == pytest.approx(importes_ctas[f"importe_cta_{sentido_otra_cuenta}"], 0.001)
-        assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == abs(movimiento.importe)
-
-    # Cambia cuenta en moneda del movimiento cambia cotización no cambia importe
-    # Venta de x reales en euros, a 8 reales el euro
-    # - Es necesario cambiar la moneda del movimiento a reales
-    # - Se calcula importe x (imp_viejo / cot_vieja * 8)
-    # - No cambia importe_ce
-    # - Cambia importe_cs (importe x)
-    @pytest.mark.parametrize("sentido", ["salida", "entrada"])
-    def test_si_cambia_cuenta_en_moneda_del_movimiento_por_cuenta_en_una_tercera_moneda_y_cotizacion_se_guarda_cotizacion_ingresada_y_se_recalcula_importe(
-            self, sentido, cuenta_con_saldo_en_reales, real, request):
-        movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
-        sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-
-        cotizacion = movimiento.cotizacion
-        importe = movimiento.importe
-        importe_c = getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")
-
-        setattr(movimiento, f"cta_{sentido}", cuenta_con_saldo_en_reales)
-        movimiento.moneda = real
-        movimiento.cotizacion = 8
-        movimiento.full_clean()
-        movimiento.save()
-
-        assert movimiento.cotizacion == 8
-        assert movimiento.importe == round(importe / cotizacion * 8, 2)
-        assert getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}") == importe_c
-        assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == abs(movimiento.importe)
-
-    # Cambia cuenta en moneda del movimiento cambia cotización cambia importe
-    # Venta de 5 reales en euros, a 8 reales el euro
-    # - Es necesario cambiar la moneda del movimiento a reales
-    # - Cambia importe_ce (5 / 8)
-    # - Cambia importe_cs (-5)
-    @pytest.mark.parametrize("sentido", ["salida", "entrada"])
-    def test_si_cambia_cuenta_en_moneda_del_movimiento_por_cuenta_en_tercera_moneda_cotizacion_e_importe_se_guardan_valores_ingresados(
-            self, sentido, cuenta_con_saldo_en_reales, real, request):
-        movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
-        sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-
-        setattr(movimiento, f"cta_{sentido}", cuenta_con_saldo_en_reales)
-        movimiento.moneda = real
-        movimiento.cotizacion = 8
-        movimiento.importe = 5
-        movimiento.full_clean()
-        movimiento.save()
-
-        assert movimiento.cotizacion == 8
-        assert movimiento.importe == 5
-        assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == round(5/8, 2)
-        assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == 5
-
-    # Cambia cuenta en moneda del movimiento no cambia cotización cambia importe
-    # Venta de 5 reales en euros, a x reales el euro
-    # - Es necesario cambiar la moneda del movimiento a reales
-    # - Se calcula cotización x (euro.cotizacion_en(real))
-    # - Cambia importe_ce (5 / cotización x)
-    # - Cambia importe_cs (5)
-    @pytest.mark.parametrize("sentido", ["salida", "entrada"])
-    def test_si_cambia_cuenta_en_moneda_del_movimiento_por_cuenta_en_tercera_moneda_e_importe_se_recalcula_cotizacion_y_se_guarda_importe_ingresado(
-            self, sentido, cuenta_con_saldo_en_reales, real, euro, request):
-        movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
-        sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-        compra = sentido == "entrada"
-
-        setattr(movimiento, f"cta_{sentido}", cuenta_con_saldo_en_reales)
-        movimiento.moneda = real
-        movimiento.importe = 5
-        movimiento.full_clean()
-        movimiento.save()
-
-
-        assert movimiento.cotizacion == euro.cotizacion_en_al(real, fecha=movimiento.fecha, compra=compra)
-        assert movimiento.importe == 5
-        assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == round(5/movimiento.cotizacion, 2)
-        assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == 5
-
-    # Cambia cuenta en otra moneda no cambia cotización no cambia importe
-    # Venta de 10 dólares en reales, a y dólares el real
-    # - Se calcula cotización y (real.cotizacion_en(dolar))
-    # - Cambia importe_ce (10 / cotizacion y)
-    # - No cambia importe_cs
-    @pytest.mark.parametrize("sentido", ["salida", "entrada"])
-    def test_si_cambia_cuenta_en_moneda_no_del_movimiento_por_cuenta_en_una_tercera_moneda_se_recalculan_cotizacion_e_importe(
-            self, sentido, cuenta_con_saldo_en_reales, real, request):
-        movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
-        sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-        compra = sentido == "entrada"
-
-        importe = movimiento.importe
-        importe_cta_en_moneda_mov = getattr(movimiento, f"importe_cta_{sentido}")
-
-        setattr(movimiento, f"cta_{sentido_otra_cuenta}", cuenta_con_saldo_en_reales)
-        assert movimiento.cambia_cuenta_por_cuenta_en_otra_moneda() is False
-        assert movimiento.cambia_cuenta_por_cuenta_en_otra_moneda(moneda_del_movimiento=False) is True
-        movimiento.full_clean()
-        movimiento.save()
-
-        assert \
-            movimiento.cotizacion == \
-            real.cotizacion_en_al(movimiento.moneda, fecha=movimiento.fecha, compra=compra)
-        assert movimiento.importe == importe
-        assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == round(importe / movimiento.cotizacion, 2)
-        assert getattr(movimiento, f"importe_cta_{sentido}") == importe_cta_en_moneda_mov
-
-    # Cambia cuenta en otra moneda cambia cotización no cambia importe
-    # Venta de 10 dólares en reales, a 0,2 dólares el real
-    # - Se guarda cotización ingresada
-    # - Cambia importe_ce (10 / 0,2)
-    # - No cambia importe_cs
-    @pytest.mark.parametrize("sentido", ["salida", "entrada"])
-    def test_si_cambia_cuenta_en_moneda_no_del_movimiento_por_cuenta_en_una_tercera_moneda_y_cotizacion_se_guarda_cotizacion_ingresada_y_se_recalcula_importe(
-            self, sentido, cuenta_con_saldo_en_reales, request):
-        movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
-        sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-
-        importe = movimiento.importe
-        importe_cuenta_en_mon_mov = getattr(movimiento, f"importe_cta_{sentido}")
-
-        setattr(movimiento, f"cta_{sentido_otra_cuenta}", cuenta_con_saldo_en_reales)
-        movimiento.cotizacion = 0.2
-        movimiento.full_clean()
-        movimiento.save()
-
-        assert movimiento.cotizacion == 0.2
-        assert movimiento.importe == importe
-        assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == importe / 0.2
-        assert getattr(movimiento, f"importe_cta_{sentido}") == importe_cuenta_en_mon_mov
-
-    # Cambia cuenta en otra moneda cambia cotización cambia importe
-    # Venta de 5 dólares en reales, a 0,2 dólares el real
-    # - Cambia importe_ce (5 / 0,2)
-    # - Cambia importe_cs (5)
-    @pytest.mark.parametrize("sentido", ["salida", "entrada"])
-    def test_si_cambia_cuenta_en_moneda_no_del_movimiento_por_cuenta_en_una_tercera_moneda_cotizacion_e_importe_se_guardan_los_valores_ingresados(
-            self, sentido, cuenta_con_saldo_en_reales, request):
-        movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
-        sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-
-        setattr(movimiento, f"cta_{sentido_otra_cuenta}", cuenta_con_saldo_en_reales)
-        movimiento.cotizacion = 0.2
-        movimiento.importe = 5
-        movimiento.full_clean()
-        movimiento.save()
-
-        assert movimiento.cotizacion == 0.2
-        assert movimiento.importe == 5
-        assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == round(5/0.2, 2)
-        assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == 5
-
-    # Cambia cuenta en otra moneda no cambia cotización cambia importe
-    # Venta de 5 dólares en reales, a x dólares el real
-    # - Se calcula cotización x (real.cotizacion_en(dolar))
-    # - Cambia importe_ce (5 / cotizacion x)
-    # - Cambia importe_cs (5)
-    @pytest.mark.parametrize("sentido", ["salida", "entrada"])
-    def test_si_cambia_cuenta_en_moneda_no_del_movimiento_por_cuenta_en_una_tercera_moneda_e_importe_se_recalcula_cotizacion_y_se_guarda_importe_ingresado(
-            self, sentido, cuenta_con_saldo_en_reales, real, dolar, request):
-        movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
-        sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-        compra = sentido == "entrada"
-
-        setattr(movimiento, f"cta_{sentido_otra_cuenta}", cuenta_con_saldo_en_reales)
-        movimiento.importe = 5
-        movimiento.full_clean()
-        movimiento.save()
-
-        assert movimiento.cotizacion == real.cotizacion_en_al(dolar, fecha=movimiento.fecha, compra=compra)
-        assert movimiento.importe == 5
-        assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == round(5 / movimiento.cotizacion, 2)
-        assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == 5
-
-    # Cambia cuenta en moneda del movimiento cambia cuenta en otra moneda no cambia cotización no cambia importe
-    # Cambia moneda por moneda de cuenta que reemplaza a cuenta en moneda del movimiento
-    # Venta de x reales en yenes, a x reales el yen
-    # - Se calcula cotización x (yen.cotizacion_en(real))
-    # - Cambia importe_cs (importe / cotización x)
-    @pytest.mark.parametrize("sentido", ["salida", "entrada"])
-    def test_si_cambian_ambas_cuentas_y_moneda_por_moneda_de_cuenta_que_reemplaza_a_cuenta_en_moneda_del_movimiento_se_recalcula_cotizacion(
-            self, sentido, cuenta_con_saldo_en_reales, cuenta_con_saldo_en_yenes, real, yen, request):
-        movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
-        sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-        compra = sentido == "entrada"
-
-        importe = movimiento.importe
-
-        setattr(movimiento, f"cta_{sentido_otra_cuenta}", cuenta_con_saldo_en_reales)
-        setattr(movimiento, f"cta_{sentido}", cuenta_con_saldo_en_yenes)
-        movimiento.moneda = yen
-        movimiento.full_clean()
-        movimiento.save()
-
-        assert movimiento.cotizacion == real.cotizacion_en_al(yen, fecha=movimiento.fecha, compra=compra)
-        assert movimiento.importe == importe
-        assert \
-            abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == \
-            round(movimiento.importe / movimiento.cotizacion, 2)
-        assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == movimiento.importe
-
-    # Cambia cuenta en moneda del movimiento cambia cuenta en otra moneda no cambia cotización no cambia importe
-    # Cambia moneda por moneda de cuenta que reemplaza a cuenta en otra moneda
-    # Venta de x reales en yenes, a x yenes el real
-    # - Se calcula cotización x (real.cotizacion_en(yen))
-    # - Cambia importe_ce (importe / cotizacion x)
-    @pytest.mark.parametrize("sentido", ["salida", "entrada"])
-    def test_si_cambian_ambas_cuentas_y_moneda_por_moneda_de_cuenta_que_reemplaza_a_cuenta_en_otra_moneda_se_recalcula_cotizacion(
-            self, sentido, cuenta_con_saldo_en_reales, cuenta_con_saldo_en_yenes, real, yen, request):
-        movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
-        sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-        compra = sentido_otra_cuenta == "entrada"
-
-        importe = movimiento.importe
-
-        setattr(movimiento, f"cta_{sentido_otra_cuenta}", cuenta_con_saldo_en_reales)
-        setattr(movimiento, f"cta_{sentido}", cuenta_con_saldo_en_yenes)
-        movimiento.moneda = real
-        movimiento.full_clean()
-        movimiento.save()
-
-        assert movimiento.cotizacion == yen.cotizacion_en_al(real, fecha=movimiento.fecha, compra=compra)
-        assert movimiento.importe == importe
-        assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == movimiento.importe
-        assert \
-            abs(getattr(movimiento, f"importe_cta_{sentido}")) == \
-            round(movimiento.importe / movimiento.cotizacion, 2)
-
-    # Cambia cuenta en moneda del movimiento cambia cuenta en otra moneda no cambia cotización cambia importe
-    # Cambia moneda por moneda de cuenta que reemplaza a cuenta en moneda del movimiento
-    # Venta de 8 reales en yenes, a x yenes el real
-    @pytest.mark.parametrize("sentido", ["salida", "entrada"])
-    def test_si_cambian_ambas_cuentas_importe_y_moneda_por_moneda_de_cuenta_que_reemplaza_a_cuenta_en_moneda_del_movimiento_se_recalcula_cotizacion(
-            self, sentido, cuenta_con_saldo_en_reales, cuenta_con_saldo_en_yenes, real, yen, request):
-        movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
-        sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-        compra = sentido == "entrada"
-
-        setattr(movimiento, f"cta_{sentido_otra_cuenta}", cuenta_con_saldo_en_reales)
-        setattr(movimiento, f"cta_{sentido}", cuenta_con_saldo_en_yenes)
-        movimiento.moneda = yen
-        movimiento.importe = 8
-        movimiento.full_clean()
-        movimiento.save()
-
-        assert movimiento.cotizacion == real.cotizacion_en_al(yen, fecha=movimiento.fecha, compra=compra)
-        assert movimiento.importe == 8
-        assert \
-            abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == \
-            round(movimiento.importe / movimiento.cotizacion, 2)
-        assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == 8
-
-    # Cambia cuenta en moneda del movimiento cambia cuenta en otra moneda no cambia cotización cambia importe
-    # Cambia moneda por moneda de cuenta que reemplaza a cuenta en otra moneda
-    # Venta de 8 reales en yenes, a x reales el yen
-    @pytest.mark.parametrize("sentido", ["salida", "entrada"])
-    def test_si_cambian_ambas_cuentas_importe_y_moneda_por_moneda_de_cuenta_que_reemplaza_a_cuenta_en_otra_moneda_se_recalcula_cotizacion(
-            self, sentido, cuenta_con_saldo_en_reales, cuenta_con_saldo_en_yenes, real, yen, request):
-        movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
-        sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-        compra = sentido_otra_cuenta == "entrada"
-
-        setattr(movimiento, f"cta_{sentido_otra_cuenta}", cuenta_con_saldo_en_reales)
-        setattr(movimiento, f"cta_{sentido}", cuenta_con_saldo_en_yenes)
-        movimiento.moneda = real
-        movimiento.importe = 8
-        movimiento.full_clean()
-        movimiento.save()
-
-        assert movimiento.cotizacion == yen.cotizacion_en_al(real, fecha=movimiento.fecha, compra=compra)
-        assert movimiento.importe == 8
-        assert \
-            abs(getattr(movimiento, f"importe_cta_{sentido}")) == \
-            round(movimiento.importe / movimiento.cotizacion, 2)
-        assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == 8
-
-    # Cambia cuenta en moneda del movimiento cambia cuenta en otra moneda cambia cotización no cambia importe
-    # Cambia moneda por moneda de cuenta que reemplaza a cuenta en moneda del movimiento
-    @pytest.mark.parametrize("sentido", ["salida", "entrada"])
-    def test_si_cambian_ambas_cuentas_cotizacion_y_moneda_por_moneda_de_cuenta_que_reemplaza_a_cuenta_en_moneda_del_movimiento_no_se_recalcula_importe(
-            self, sentido, cuenta_con_saldo_en_reales, cuenta_con_saldo_en_yenes, real, yen, request):
-        movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
-        sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-
-        importe = movimiento.importe
-
-        setattr(movimiento, f"cta_{sentido_otra_cuenta}", cuenta_con_saldo_en_reales)
-        setattr(movimiento, f"cta_{sentido}", cuenta_con_saldo_en_yenes)
-        movimiento.moneda = yen
-        movimiento.cotizacion = 3
-        movimiento.full_clean()
-        movimiento.save()
-
-        assert movimiento.cotizacion == 3
-        assert movimiento.importe == importe
-        assert \
-            abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == \
-            round(movimiento.importe / movimiento.cotizacion, 2)
-        assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == movimiento.importe
-
-    # Cambia cuenta en moneda del movimiento cambia cuenta en otra moneda cambia cotización no cambia importe
-    # Cambia moneda por moneda que reemplaza a cuenta en otra moneda
-    @pytest.mark.parametrize("sentido", ["salida", "entrada"])
-    def test_si_cambian_ambas_cuentas_cotizacion_y_moneda_por_moneda_de_cuenta_que_reemplaza_a_cuenta_en_otra_moneda_no_se_recalcula_importe(
-            self, sentido, cuenta_con_saldo_en_reales, cuenta_con_saldo_en_yenes, real, yen, request):
-        movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
-        sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-
-        importe = movimiento.importe
-
-        setattr(movimiento, f"cta_{sentido_otra_cuenta}", cuenta_con_saldo_en_reales)
-        setattr(movimiento, f"cta_{sentido}", cuenta_con_saldo_en_yenes)
-        movimiento.moneda = real
-        movimiento.cotizacion = 3
-        movimiento.full_clean()
-        movimiento.save()
-
-        assert movimiento.cotizacion == 3
-        assert movimiento.importe == importe
-        assert \
-            abs(getattr(movimiento, f"importe_cta_{sentido}")) == \
-            round(movimiento.importe / movimiento.cotizacion, 2)
-        assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == movimiento.importe
-
-    # Cambia cuenta en moneda del movimiento cambia cuenta en otra moneda cambia cotización cambia importe
-    # Cambia moneda por moneda que reemplaza a cuenta en moneda del movimiento
-    @pytest.mark.parametrize("sentido", ["salida", "entrada"])
-    def test_si_cambian_ambas_cuentas_cotizacion_importe_y_moneda_por_moneda_de_cuenta_que_reemplaza_a_cuenta_en_moneda_del_movimiento_se_guardan_valores_ingresados(
-            self, sentido, cuenta_con_saldo_en_reales, cuenta_con_saldo_en_yenes, real, yen, request):
-        movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
-        sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-
-        setattr(movimiento, f"cta_{sentido_otra_cuenta}", cuenta_con_saldo_en_reales)
-        setattr(movimiento, f"cta_{sentido}", cuenta_con_saldo_en_yenes)
-        movimiento.moneda = yen
-        movimiento.cotizacion = 3
-        movimiento.importe = 8
-        movimiento.full_clean()
-        movimiento.save()
-
-        assert movimiento.cotizacion == 3
-        assert movimiento.importe == 8
-        assert \
-            abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == \
-            round(movimiento.importe / movimiento.cotizacion, 2)
-        assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == movimiento.importe
-
-    # Cambia cuenta en moneda del movimiento cambia cuenta en otra moneda cambia cotización cambia importe
-    # Cambia moneda por moneda que reemplaza a cuenta en otra moneda
-    @pytest.mark.parametrize("sentido", ["salida", "entrada"])
-    def test_si_cambian_ambas_cuentas_cotizacion_importe_y_moneda_por_moneda_de_cuenta_que_reemplaza_a_cuenta_en_otra_moneda_se_guardan_valores_ingresados(
-            self, sentido, cuenta_con_saldo_en_reales, cuenta_con_saldo_en_yenes, real, yen, request):
-        movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
-        sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-
-        setattr(movimiento, f"cta_{sentido_otra_cuenta}", cuenta_con_saldo_en_reales)
-        setattr(movimiento, f"cta_{sentido}", cuenta_con_saldo_en_yenes)
-        movimiento.moneda = real
-        movimiento.cotizacion = 3
-        movimiento.importe = 8
-        movimiento.full_clean()
-        movimiento.save()
-
-        assert movimiento.cotizacion == 3
-        assert movimiento.importe == 8
-        assert \
-            abs(getattr(movimiento, f"importe_cta_{sentido}")) == \
-            round(movimiento.importe / movimiento.cotizacion, 2)
-        assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == movimiento.importe
-
-    @pytest.mark.parametrize("sentido", ["salida", "entrada"])
-    def test_si_cambian_ambas_cuentas_cotizacion_e_importe_se_guardan_valores_ingresados(
-            self, sentido, cuenta_con_saldo_en_yenes, cuenta_con_saldo_en_reales, real, request):
-        movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
-        sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-
-        setattr(movimiento, f"cta_{sentido_otra_cuenta}", cuenta_con_saldo_en_yenes)
-        setattr(movimiento, f"cta_{sentido}", cuenta_con_saldo_en_reales)
-        movimiento.moneda = real
-        movimiento.cotizacion = 3
-        movimiento.importe = 8
-        movimiento.full_clean()
-        movimiento.save()
-
-        assert movimiento.cotizacion == 3
-        assert movimiento.importe == 8
-        assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == round(8/3, 2)
-        assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == 8
-
-    # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
-    # no cambia moneda, no cambia cotización, no cambia importe
-    # 10 Dolares->CA dolares pasa a 10 Dolares-> x Euros a y dólares el euro
-    # - Se calcula cotización (euro.cotizacion_en(dolar))
-    # - Cambia importe_ce (10 / cotización)
-    # - No cambia importe_cs
-    @pytest.mark.parametrize("sentido", ["entrada", "salida"])
-    def test_si_en_traspaso_entre_cuentas_en_la_misma_moneda_cambia_cuenta_por_cuenta_en_otra_moneda_se_calcula_cotizacion(
-            self, sentido, traspaso_en_dolares, cuenta_con_saldo_en_euros, euro, dolar):
-        sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-        importe = traspaso_en_dolares.importe
-        compra = sentido_otra_cuenta == "entrada"
-
-        setattr(traspaso_en_dolares, f"cta_{sentido}", cuenta_con_saldo_en_euros)
-        traspaso_en_dolares.full_clean()
-        traspaso_en_dolares.save()
-
-        assert \
-            traspaso_en_dolares.cotizacion == \
-            euro.cotizacion_en_al(dolar, fecha=traspaso_en_dolares.fecha, compra=compra)
-        assert traspaso_en_dolares.importe == importe
-        assert \
-            abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido_otra_cuenta}")) == \
-            traspaso_en_dolares.importe
-        assert \
-            abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido}")) == \
-            round(traspaso_en_dolares.importe / traspaso_en_dolares.cotizacion, 2)
-
-    # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
-    # no cambia moneda, cambia cotización, no cambia importe
-    # 10 Dolares->CA dolares pasa a 10 Dolares-> x Euros a 2 dólares el euro
-    # - Cambia importe_ce (10 / 2)
-    # - No cambia importe_cs
-    @pytest.mark.parametrize("sentido", ["entrada", "salida"])
-    def test_si_en_traspaso_entre_cuentas_en_la_misma_moneda_cambia_cuenta_por_cuenta_en_otra_moneda_y_cotizacion_se_guarda_cotizacion(
-            self, sentido, traspaso_en_dolares, cuenta_con_saldo_en_euros):
-        sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-        importe = traspaso_en_dolares.importe
-
-        setattr(traspaso_en_dolares, f"cta_{sentido}", cuenta_con_saldo_en_euros)
-        traspaso_en_dolares.cotizacion = 2
-        traspaso_en_dolares.full_clean()
-        traspaso_en_dolares.save()
-
-        assert traspaso_en_dolares.cotizacion == 2
-        assert traspaso_en_dolares.importe == importe
-        assert abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido_otra_cuenta}")) == traspaso_en_dolares.importe
-        assert \
-            abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido}")) == \
-            round(traspaso_en_dolares.importe / 2, 2)
-
-    # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
-    # cambia moneda, no cambia cotización, no cambia importe
-    # 10 Dólares->CA dólares pasa a 10 Dólares -> x Euros a y euros el dólar
-    # - Se calcula cotización y (dolar.cotizacion_en(euro))
-    # - Se calcula importe (10 * cotización y)
-    # - Cambia importe_ce (importe)
-    # - No cambia importe_cs
-    @pytest.mark.parametrize("sentido", ["entrada", "salida"])
-    def test_si_en_traspaso_entre_cuentas_en_la_misma_moneda_cambia_cuenta_por_cuenta_en_otra_moneda_y_moneda_se_calcula_cotizacion_e_importe(
-            self, sentido, traspaso_en_dolares, cuenta_con_saldo_en_euros, euro, dolar):
-        sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-        compra = sentido == "entrada"
-        importe = traspaso_en_dolares.importe
-
-        setattr(traspaso_en_dolares, f"cta_{sentido}", cuenta_con_saldo_en_euros)
-        traspaso_en_dolares.moneda = euro
-        traspaso_en_dolares.full_clean()
-        traspaso_en_dolares.save()
-
-        assert \
-            traspaso_en_dolares.cotizacion == \
-            dolar.cotizacion_en_al(euro, fecha=traspaso_en_dolares.fecha, compra=compra)
-        assert traspaso_en_dolares.importe == round(importe * traspaso_en_dolares.cotizacion, 2)
-        assert abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido}")) == traspaso_en_dolares.importe
-        assert abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido_otra_cuenta}")) == importe
-
-    # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
-    # no cambia moneda, no cambia cotización, cambia importe
-    # 10 Dólares->CA dólares pasa a 6 Dólares -> x Euros a y dólares el euro
-    # - Se calcula cotización (euro.cotizacion_en(dolar)
-    # - Cambia importe_ce (6 / cotizacion)
-    # - Cambia importe_cs (6)
-    @pytest.mark.parametrize("sentido", ["entrada", "salida"])
-    def test_si_en_traspaso_entre_cuentas_en_la_misma_moneda_cambia_cuenta_por_cuenta_en_otra_moneda_e_importe_se_calcula_cotizacion_y_se_guarda_importe(
-            self, sentido, traspaso_en_dolares, cuenta_con_saldo_en_euros, euro, dolar):
-        sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-        compra = sentido_otra_cuenta == "entrada"
-
-        setattr(traspaso_en_dolares, f"cta_{sentido}", cuenta_con_saldo_en_euros)
-        traspaso_en_dolares.importe = 6
-        traspaso_en_dolares.full_clean()
-        traspaso_en_dolares.save()
-
-        assert \
-            traspaso_en_dolares.cotizacion == \
-            euro.cotizacion_en_al(dolar, fecha=traspaso_en_dolares.fecha, compra=compra)
-        assert traspaso_en_dolares.importe == 6
-        assert \
-            abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido}")) == \
-            round(6 / traspaso_en_dolares.cotizacion, 2)
-        assert abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido_otra_cuenta}")) == 6
-
-    # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
-    # cambia moneda, cambia cotización, no cambia importe
-    # 10 Dólares->CA dólares pasa a 10 Dólares -> x Euros a 2 euros el dólar
-    # - Se calcula importe (10 * 2)
-    # - Cambia importe_ce (10/2)
-    # - No cambia importe_cs
-    @pytest.mark.parametrize("sentido", ["entrada", "salida"])
-    def test_si_en_traspaso_entre_cuentas_en_la_misma_moneda_cambia_cuenta_por_cuenta_en_otra_moneda_moneda_y_cotizacion_se_guarda_cotizacion_y_se_calcula_importe(
-            self, sentido, traspaso_en_dolares, cuenta_con_saldo_en_euros, euro, dolar):
-        sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-        importe = traspaso_en_dolares.importe
-
-        setattr(traspaso_en_dolares, f"cta_{sentido}", cuenta_con_saldo_en_euros)
-        traspaso_en_dolares.cotizacion = 2
-        traspaso_en_dolares.moneda = euro
-        traspaso_en_dolares.full_clean()
-        traspaso_en_dolares.save()
-
-        assert traspaso_en_dolares.cotizacion == 2
-        assert traspaso_en_dolares.importe == importe * 2
-        assert \
-            abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido}")) == traspaso_en_dolares.importe
-        assert abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido_otra_cuenta}")) == importe
-
-    # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
-    # cambia moneda, no cambia cotización, cambia importe
-    # 10 Dólares->CA dólares pasa a 10 Dólares -> 6 Euros a x euros el dólar
-    # - Se calcula cotización (dolar.cotizacion_en(euro))
-    # - Cambia importe_ce (6)
-    # - Cambia importe_cs (6 / cotizacion)
-    @pytest.mark.parametrize("sentido", ["entrada", "salida"])
-    def test_si_en_traspaso_entre_cuentas_en_la_misma_moneda_cambia_cuenta_por_cuenta_en_otra_moneda_moneda_e_importe_se_calcula_cotizacion_y_se_guarda_importe(
-            self, sentido, traspaso_en_dolares, cuenta_con_saldo_en_euros, euro, dolar):
-        sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-        compra = sentido == "entrada"
-
-        setattr(traspaso_en_dolares, f"cta_{sentido}", cuenta_con_saldo_en_euros)
-        traspaso_en_dolares.importe = 6
-        traspaso_en_dolares.moneda = euro
-        traspaso_en_dolares.full_clean()
-        traspaso_en_dolares.save()
-
-        assert \
-            traspaso_en_dolares.cotizacion == \
-            dolar.cotizacion_en_al(euro, fecha=traspaso_en_dolares.fecha, compra=compra)
-        assert traspaso_en_dolares.importe == 6
-        assert \
-            abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido}")) == 6
-        assert \
-            abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido_otra_cuenta}")) == \
-            round(6 / traspaso_en_dolares.cotizacion, 2)
-
-    # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
-    # no cambia moneda, cambia cotización, cambia importe
-    # 10 Dólares->CA dólares pasa a 6 Dólares -> x Euros a 0.6 dólares el euro
-    # - Se calcula cotización (euro.cotizacion_en(dolar))
-    # - Cambia importe_ce (6 / cotización)
-    # - Cambia importe_cs (6)
-    @pytest.mark.parametrize("sentido", ["entrada", "salida"])
-    def test_si_en_traspaso_entre_cuentas_en_la_misma_moneda_cambia_cuenta_por_cuenta_en_otra_moneda_cotizacion_e_importe_se_guardan_cotizacion_e_importe(
-            self, sentido, traspaso_en_dolares, cuenta_con_saldo_en_euros, euro, dolar):
-        sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-
-        setattr(traspaso_en_dolares, f"cta_{sentido}", cuenta_con_saldo_en_euros)
-        traspaso_en_dolares.importe = 6
-        traspaso_en_dolares.cotizacion = 0.6
-        traspaso_en_dolares.full_clean()
-        traspaso_en_dolares.save()
-
-        assert traspaso_en_dolares.cotizacion == 0.6
-        assert traspaso_en_dolares.importe == 6
-        assert \
-            abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido}")) == round(6 / 0.6, 2)
-        assert abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido_otra_cuenta}")) == 6
-
-    # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
-    # cambia moneda, cambia cotización, cambia importe
-    # 10 Dólares->CA dólares pasa a x Dólares -> 6 Euros a 0.6 euros el dólar
-    # - Cambia importe_ce (6)
-    # - Cambia importe_cs (6 / cotización)
-    @pytest.mark.parametrize("sentido", ["entrada", "salida"])
-    def test_si_en_traspaso_entre_cuentas_en_la_misma_moneda_cambia_cuenta_por_cuenta_en_otra_moneda_moneda_cotizacion_e_importe_se_guardan_cotizacion_e_importe(
-            self, sentido, traspaso_en_dolares, cuenta_con_saldo_en_euros, euro, dolar):
-        sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-
-        setattr(traspaso_en_dolares, f"cta_{sentido}", cuenta_con_saldo_en_euros)
-        traspaso_en_dolares.importe = 6
-        traspaso_en_dolares.cotizacion = 0.6
-        traspaso_en_dolares.moneda = euro
-        traspaso_en_dolares.full_clean()
-        traspaso_en_dolares.save()
-
-        assert traspaso_en_dolares.cotizacion == 0.6
-        assert traspaso_en_dolares.importe == 6
-        assert \
-            abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido}")) == 6
-        assert abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido_otra_cuenta}")) == round(6 / 0.6, 2)
-
-    # Entre cuentas en distinta moneda, cambia cuenta en otra moneda por cuenta en moneda del movimiento,
-    # no cambia importe
-    # 10 dolares -> x euros a 1.5 dólares el euro  pasa a  10 dólares -> CA dólares
-    # - Cambia cotización (1)
-    # - Cambia importe_ce (importe)
-    # - No cambia importe_cs
-    @pytest.mark.parametrize("sentido", ["entrada", "salida"])
-    def test_si_cambia_cuenta_en_moneda_no_del_movimiento_por_cuenta_en_moneda_del_movimiento_cotizacion_pasa_a_1(
-            self, sentido, cuenta_en_dolares, request):
-        mov_distintas_monedas = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
-        sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-        importe = mov_distintas_monedas.importe
-
-        setattr(mov_distintas_monedas, f"cta_{sentido_otra_cuenta}", cuenta_en_dolares)
-        mov_distintas_monedas.full_clean()
-        mov_distintas_monedas.save()
-
-        assert mov_distintas_monedas.cotizacion == 1
-        assert mov_distintas_monedas.importe == importe
-        assert mov_distintas_monedas.importe_cta_entrada == mov_distintas_monedas.importe
-        assert mov_distintas_monedas.importe_cta_salida == -mov_distintas_monedas.importe
-
-    # Entre cuentas en distinta moneda, cambia cuenta en otra moneda por cuenta en moneda del movimiento,
-    # cambia importe
-    # 10 dolares -> x euros a 1.5 dólares el euro  pasa a  6 dólares -> CA dólares
-    # - Cambia cotización (1)
-    # - Cambia importe_ce (6)
-    # - Cambia importe_cs (6)
-    @pytest.mark.parametrize("sentido", ["entrada", "salida"])
-    def test_si_cambia_cuenta_en_moneda_no_del_movimiento_por_cuenta_en_moneda_del_movimiento_e_importe_se_guarda_importe_y_cotizacion_pasa_a_1(
-            self, sentido, cuenta_en_dolares, request):
-        mov_distintas_monedas = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
-        sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-
-        setattr(mov_distintas_monedas, f"cta_{sentido_otra_cuenta}", cuenta_en_dolares)
-        mov_distintas_monedas.importe = 6
-        mov_distintas_monedas.full_clean()
-        mov_distintas_monedas.save()
-
-        assert mov_distintas_monedas.cotizacion == 1
-        assert mov_distintas_monedas.importe == 6
-        assert mov_distintas_monedas.importe_cta_entrada == 6
-        assert mov_distintas_monedas.importe_cta_salida == -6
-
-    # Entre cuentas en distinta moneda, cambia cuenta en moneda del movimiento por cuenta en otra moneda,
-    # no cambia importe
-    # 10 dolares -> x euros a 1.5 dólares el euro  pasa a  CA euros -> x euros
-    # - Cambia cotización (1)
-    # - Cambia importe_ce(10 / 1.5)
-    # - Cambia importe_cs(10 / 1.5)
-    @pytest.mark.parametrize("sentido", ["entrada", "salida"])
-    def test_si_cambia_cuenta_en_moneda_del_movimiento_por_cuenta_en_moneda_no_del_movimiento_se_calcula_importe_y_cotizacion_pasa_a_1(
-            self, sentido, cuenta_en_euros, euro, request):
-        mov_distintas_monedas = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
-        cotizacion = mov_distintas_monedas.cotizacion
-        importe = mov_distintas_monedas.importe
-
-        setattr(mov_distintas_monedas, f"cta_{sentido}", cuenta_en_euros)
-        mov_distintas_monedas.moneda = euro
-        mov_distintas_monedas.full_clean()
-        mov_distintas_monedas.save()
-
-        assert mov_distintas_monedas.cotizacion == 1
-        assert mov_distintas_monedas.importe == round(importe / cotizacion, 2)
-        assert mov_distintas_monedas.importe_cta_entrada == mov_distintas_monedas.importe
-        assert mov_distintas_monedas.importe_cta_salida == -mov_distintas_monedas.importe
-
-    # Entre cuentas en distinta moneda, cambia cuenta en moneda del movimiento por cuenta en otra moneda,
-    # cambia importe
-    # 10 dolares -> x euros a 1.5 dólares el euro  pasa a  CA euros -> 6 euros
-    # - Cambia cotización (1)
-    # - Cambia importe_ce(6)
-    # - Cambia importe_cs(6)
-    @pytest.mark.parametrize("sentido", ["entrada", "salida"])
-    def test_si_cambia_cuenta_en_moneda_del_movimiento_por_cuenta_en_moneda_no_del_movimiento_e_importe_se_guarda_importe_y_cotizacion_pasa_a_1(
-            self, sentido, cuenta_en_euros, euro, request):
-        mov_distintas_monedas = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
-
-        setattr(mov_distintas_monedas, f"cta_{sentido}", cuenta_en_euros)
-        mov_distintas_monedas.moneda = euro
-        mov_distintas_monedas.importe = 6
-        mov_distintas_monedas.full_clean()
-        mov_distintas_monedas.save()
-
-        assert mov_distintas_monedas.cotizacion == 1
-        assert mov_distintas_monedas.importe == 6
-        assert mov_distintas_monedas.importe_cta_entrada == 6
-        assert mov_distintas_monedas.importe_cta_salida == -6
-
-    # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda,
-    # no cambia moneda, no cambia cotización, no cambia importe.
-    # Entran / salen 10 dólares -> Venta / compra de 10 dólares de euros
-    # - No cambia importe
-    # - Cambia cotización (euro.cotizacion_en(dolar))
-    # - No cambia importe_ce/cs
-    # - Cambia importe_cs/ce (importe / nueva cotización)
-    @pytest.mark.parametrize("sentido", ["entrada", "salida"])
-    def test_si_en_movimiento_de_entrada_o_salida_se_agrega_contracuenta_en_otra_moneda_se_calcula_cotizacion(
-            self, sentido, cuenta_en_euros, dolar, euro, request):
-        movimiento = request.getfixturevalue(f"{sentido}_en_dolares")
-        sentido_contracuenta = el_que_no_es(sentido, "entrada", "salida")
-        compra = sentido == "entrada"
-
-        importe = movimiento.importe
-
-        setattr(movimiento, f"cta_{sentido_contracuenta}", cuenta_en_euros)
-        movimiento.full_clean()
-        movimiento.save()
-
-        assert movimiento.cotizacion == euro.cotizacion_en_al(dolar, fecha=movimiento.fecha, compra=compra)
-        assert movimiento.importe == importe
-        assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == importe
-        assert \
-            abs(getattr(movimiento, f"importe_cta_{sentido_contracuenta}")) == \
-            round(importe / movimiento.cotizacion, 2)
-
-    # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda,
-    # no cambia moneda, cambia cotización, no cambia importe.
-    # Entran / salen 10 dólares -> Venta / compra de 10 dólares de euros a 1.5 dólares el euro
-    # - No cambia importe
-    # - Cambia cotización (1.5)
-    # - No cambia importe_ce/cs
-    # - Cambia importe_cs/ce (importe / 1.5)
-    @pytest.mark.parametrize("sentido", ["entrada", "salida"])
-    def test_si_en_movimiento_de_entrada_o_salida_se_agrega_contracuenta_en_otra_moneda_y_cotizacion_se_guarda_cotizacion_ingresada(
-            self, sentido, cuenta_en_euros, dolar, euro, request):
-        movimiento = request.getfixturevalue(f"{sentido}_en_dolares")
-        sentido_contracuenta = el_que_no_es(sentido, "entrada", "salida")
-
-        importe = movimiento.importe
-
-        setattr(movimiento, f"cta_{sentido_contracuenta}", cuenta_en_euros)
-        movimiento.cotizacion = 1.5
-        movimiento.full_clean()
-        movimiento.save()
-
-        assert movimiento.cotizacion == 1.5
-        assert movimiento.importe == importe
-        assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == importe
-        assert abs(getattr(movimiento, f"importe_cta_{sentido_contracuenta}")) == round(importe / 1.5, 2)
-
-    # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda,
-    # no cambia moneda, no cambia cotización, cambia importe.
-    # Entran / salen 10 dólares -> Venta / compra de 20 dólares de euros
-    # - Cambia importe (20)
-    # - Cambia cotización (euro.cotizacion_en(dolar))
-    # - Cambia importe_ce/cs (20)
-    # - Cambia importe_cs/ce (20 / nueva cotizacion)
-    @pytest.mark.parametrize("sentido", ["entrada", "salida"])
-    def test_si_en_movimiento_de_entrada_o_salida_se_agrega_contracuenta_en_otra_moneda_y_se_ingresa_importe_se_calcula_cotizacion_y_se_guarda_importe_ingresado(
-            self, sentido, cuenta_en_euros, dolar, euro, request):
-        movimiento = request.getfixturevalue(f"{sentido}_en_dolares")
-        sentido_contracuenta = el_que_no_es(sentido, "entrada", "salida")
-        compra = sentido == "entrada"
-
-        setattr(movimiento, f"cta_{sentido_contracuenta}", cuenta_en_euros)
-        movimiento.importe = 20
-        movimiento.full_clean()
-        movimiento.save()
-
-        assert movimiento.cotizacion == euro.cotizacion_en_al(dolar, fecha=movimiento.fecha, compra=compra)
-        assert movimiento.importe == 20
-        assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == 20
-        assert abs(getattr(movimiento, f"importe_cta_{sentido_contracuenta}")) == round(20 / movimiento.cotizacion, 2)
-
-    # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda,
-    # no cambia moneda, cambia cotización, cambia importe.
-    # Entran / salen 10 dólares -> Venta / compra de 20 dólares de euros a 1.5 dólares el euro
-    # - Cambia importe (20)
-    # - Cambia cotización (1.5)
-    # - Cambia importe_ce/cs (20)
-    # - Cambia importe_cs/ce (20 / 1.5)
-    # @pytest.mark.parametrize("fixture_mov, campo_cuenta", [
-    #     ("entrada_en_dolares", "cta_entrada"),
-    #     ("salida_en_dolares", "cta_salida")
-    # ])
-    @pytest.mark.parametrize("sentido", ["entrada", "salida"])
-    def test_si_en_movimiento_de_entrada_o_salida_se_agrega_contracuenta_en_otra_moneda_y_se_ingresa_cotizacion_e_importe_se_guardan_valores_ingresados(
-            self, sentido, cuenta_en_euros, dolar, euro, request):
-        movimiento = request.getfixturevalue(f"{sentido}_en_dolares")
-        sentido_contracuenta = el_que_no_es(sentido, "entrada", "salida")
-
-        setattr(movimiento, f"cta_{sentido_contracuenta}", cuenta_en_euros)
-        movimiento.cotizacion = 1.5
-        movimiento.importe = 20
-        movimiento.full_clean()
-        movimiento.save()
-
-        assert movimiento.cotizacion == 1.5
-        assert movimiento.importe == 20
-        assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == 20
-        assert abs(getattr(movimiento, f"importe_cta_{sentido_contracuenta}")) == round(20 / 1.5, 2)
-
-    # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda,
-    # cambia moneda, no cambia cotización, no cambia importe.
-    # Entran / salen 10 dólares -> Venta / compra de x euros de dólares a y euros el dólar
-    # - Cambia cotización (dolar.cotizacion_en(euro))
-    # - Cambia importe (10 * nueva cotizacion)
-    # - No cambia importe_ce/cs
-    # - Cambia importe_cs/ce (nuevo importe)
-    @pytest.mark.xfail
-    @pytest.mark.parametrize("sentido", ["entrada", "salida"])
-    def test_si_en_movimiento_de_entrada_o_salida_se_agrega_contracuenta_en_otra_moneda_y_cambia_moneda_se_calcula_cotizacion_e_importe(
-            self, sentido, cuenta_en_euros, dolar, euro, request):
-        movimiento = request.getfixturevalue(f"{sentido}_en_dolares")
-        sentido_contracuenta = el_que_no_es(sentido, "entrada", "salida")
-        compra = sentido == "entrada"
-
-        importe = movimiento.importe
-
-        setattr(movimiento, f"cta_{sentido_contracuenta}", cuenta_en_euros)
-        movimiento.moneda = euro
-        movimiento.full_clean()
-        movimiento.save()
-
-        assert movimiento.cotizacion == euro.cotizacion_en_al(euro, fecha=movimiento.fecha, compra=compra)
-        assert movimiento.importe == round(importe * movimiento.cotizacion, 2)
-        assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == importe
-        assert abs(getattr(movimiento, f"importe_cta:{sentido_contracuenta}")) == movimiento.importe
-
-    # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda,
-    # cambia moneda, cambia cotización, no cambia importe.
-    # Entran / salen 10 dólares -> Venta / compra de x euros de dólares a 0.8 euros el dólar
-    # - Cambia cotización (0.8)
-    # - Cambia importe (10 * 0.8)
-    # - No cambia importe_ce/cs
-    # - Cambia importe_cs/ce (nuevo importe)
-    @pytest.mark.parametrize("sentido", ["entrada", "salida"])
-    def test_si_en_movimiento_de_entrada_o_salida_se_agrega_contracuenta_en_otra_moneda_y_cambia_moneda_y_cotizacion_se_guarda_cotizacion_y_se_calcula_importe(
-            self, sentido, cuenta_en_euros, dolar, euro, request):
-        movimiento = request.getfixturevalue(f"{sentido}_en_dolares")
-        sentido_contracuenta = el_que_no_es(sentido, "entrada", "salida")
-
-        importe = movimiento.importe
-
-        setattr(movimiento, f"cta_{sentido_contracuenta}", cuenta_en_euros)
-        movimiento.moneda = euro
-        movimiento.cotizacion = 0.8
-        movimiento.full_clean()
-        movimiento.save()
-
-        assert movimiento.cotizacion == 0.8
-        assert movimiento.importe == round(importe * 0.8, 2)
-        assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == importe
-        assert abs(getattr(movimiento, f"importe_cta_{sentido_contracuenta}")) == movimiento.importe
-
-    # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda,
-    # cambia moneda, no cambia cotización, cambia importe.
-    # Entran / salen 10 dólares -> Venta / compra de 20 euros de dólares a x euros el dólar
-    # - Cambia cotización (dolar.cotizacion_en(euro))
-    # - Cambia importe (20)
-    # - Cambia importe_ce/cs (20 / nueva cotización)
-    # - Cambia importe_cs/ce (20)
-    @pytest.mark.parametrize("sentido", ["entrada", "salida"])
-    def test_si_en_movimiento_de_entrada_o_salida_se_agrega_contracuenta_en_otra_moneda_y_cambia_moneda_e_importe_se_calcula_cotizacion_y_se_guarda_importe(
-            self, sentido, cuenta_en_euros, dolar, euro, request):
-        movimiento = request.getfixturevalue(f"{sentido}_en_dolares")
-        sentido_contracuenta = el_que_no_es(sentido, "entrada", "salida")
-        compra = sentido_contracuenta == "entrada"
-
-        setattr(movimiento, f"cta_{sentido_contracuenta}", cuenta_en_euros)
-        movimiento.moneda = euro
-        movimiento.importe = 20
-        movimiento.full_clean()
-        movimiento.save()
-
-        assert movimiento.cotizacion == dolar.cotizacion_en_al(euro, fecha=movimiento.fecha, compra=compra)
-        assert movimiento.importe == 20
-        assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == round(20 / movimiento.cotizacion, 2)
-        assert abs(getattr(movimiento, f"importe_cta_{sentido_contracuenta}")) == 20
-
-    # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda,
-    # cambia moneda, cambia cotización, cambia importe.
-    # Entran / salen 10 dólares -> Venta / compra de 20 euros de dólares a 0.8 euros el dólar
-    # - Cambia cotización (0.8)
-    # - Cambia importe (20)
-    # - Cambia importe_ce/cs (20 / 0.8)
-    # - Cambia importe_cs/ce (20)
-    @pytest.mark.parametrize("sentido", ["entrada", "salida"])
-    def test_si_en_movimiento_de_entrada_o_salida_se_agrega_contracuenta_en_otra_moneda_y_cambia_moneda_cotizacion_e_importe_se_guardan_cotizacion_e_importe(
-            self, sentido, cuenta_en_euros, dolar, euro, request):
-        movimiento = request.getfixturevalue(f"{sentido}_en_dolares")
-        sentido_contracuenta = el_que_no_es(sentido, "entrada", "salida")
-
-        setattr(movimiento, f"cta_{sentido_contracuenta}", cuenta_en_euros)
-        movimiento.moneda = euro
-        movimiento.cotizacion = 0.8
-        movimiento.importe = 20
-        movimiento.full_clean()
-        movimiento.save()
-
-        assert movimiento.cotizacion == 0.8
-        assert movimiento.importe == 20
-        assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == round(20 / 0.8, 2)
-        assert abs(getattr(movimiento, f"importe_cta_{sentido_contracuenta}")) == 20
-
-    @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
-    def test_puede_agregarse_cuenta_interactiva_a_movimiento_con_cta_acumulativa(
-            self, sentido, cuenta_2, request):
-        mov = request.getfixturevalue(f'{sentido}_con_ca')
-        contrasentido = 'entrada' if sentido == 'salida' else 'salida'
-
-        setattr(mov, f'cta_{contrasentido}', cuenta_2)
-        mov.full_clean()
-        mov.save()
-
-        assert getattr(mov, f'cta_{contrasentido}') == cuenta_2
-
-    @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
-    def test_puede_cambiarse_cta_interactiva_en_movimiento_con_cuenta_acumulativa(
-            self, sentido, cuenta_3, request):
-        mov = request.getfixturevalue(f'traspaso_con_cta_{sentido}_a')
-        contrasentido = 'entrada' if sentido == 'salida' else 'salida'
-
-        setattr(mov, f'cta_{contrasentido}', cuenta_3)
-        mov.full_clean()
-        mov.save()
-
-        assert getattr(mov, f'cta_{contrasentido}') == cuenta_3
-
-    @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
-    def test_puede_retirarse_cta_interactiva_en_movimiento_con_cta_entrada_acumulativa(
-            self, sentido, request):
-        mov = request.getfixturevalue(f'traspaso_con_cta_{sentido}_a')
-        contrasentido = 'entrada' if sentido == 'salida' else 'salida'
-
-        setattr(mov, f'cta_{contrasentido}', None)
-        mov.full_clean()
-        mov.save()
-
-        assert getattr(mov, f'cta_{contrasentido}') is None
-
-    def test_guardar_todos_los_tests_en_cuentas_en_distinta_moneda_en_una_subclase(self):
-        pytest.fail("Guardar todos los tests en cuentas en distinta moneda en una subclase")
-
-    def test_aplicar_mark_parametrize_entrada_salida_a_todos_los_tests_de_la_clase(self):
-        pytest.fail(
-            "\"@pytest.mark.parametrize('sentido', ['entrada', 'salida'])\" debería aplicarse "
-            "una sola vez para todos los tests de la clase"
-        )
+    class TestSaveCambiaCuentasOtraMoneda:
+        # Cambia cuenta en moneda del movimiento no cambia cotización no cambia importe
+        # Venta de x reales en euros, a y reales el euro
+        # - Es necesario cambiar la moneda del movimiento a reales
+        # - Se calcula cotización y (euro.cotizacion_en(real))
+        # - Se calcula importe x (imp_viejo / cot_vieja * cotización)
+        # - No cambia importe_ce
+        # - Cambia importe_cs (importe x)
+        def test_si_cambia_cuenta_en_moneda_del_movimiento_por_cuenta_en_una_tercera_moneda_se_recalculan_cotizacion_e_importe(
+                self, sentido, cuenta_con_saldo_en_reales, real, request):
+            movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
+            sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
+            compra = sentido == "entrada"
+            moneda_otra_cuenta = getattr(movimiento, f"cta_{sentido_otra_cuenta}").moneda
+
+            cotizacion = movimiento.cotizacion
+            importe = movimiento.importe
+            importes_ctas = {
+                "importe_cta_entrada": movimiento.importe_cta_entrada,
+                "importe_cta_salida": movimiento.importe_cta_salida,
+            }
+
+            setattr(movimiento, f"cta_{sentido}", cuenta_con_saldo_en_reales)
+            movimiento.moneda = real
+            movimiento.full_clean()
+            movimiento.save()
+            print('cotización mov:', movimiento.cotizacion, movimiento.importe_cta_entrada, movimiento.importe_cta_salida)
+
+            assert \
+                movimiento.cotizacion == \
+                moneda_otra_cuenta.cotizacion_en_al(real, fecha=movimiento.fecha, compra=compra)
+            assert movimiento.importe == round(importe / cotizacion * movimiento.cotizacion, 2)
+            assert getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}") == pytest.approx(importes_ctas[f"importe_cta_{sentido_otra_cuenta}"], 0.001)
+            assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == abs(movimiento.importe)
+
+        # Cambia cuenta en moneda del movimiento cambia cotización no cambia importe
+        # Venta de x reales en euros, a 8 reales el euro
+        # - Es necesario cambiar la moneda del movimiento a reales
+        # - Se calcula importe x (imp_viejo / cot_vieja * 8)
+        # - No cambia importe_ce
+        # - Cambia importe_cs (importe x)
+        def test_si_cambia_cuenta_en_moneda_del_movimiento_por_cuenta_en_una_tercera_moneda_y_cotizacion_se_guarda_cotizacion_ingresada_y_se_recalcula_importe(
+                self, sentido, cuenta_con_saldo_en_reales, real, request):
+            movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
+            sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
+
+            cotizacion = movimiento.cotizacion
+            importe = movimiento.importe
+            importe_c = getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")
+
+            setattr(movimiento, f"cta_{sentido}", cuenta_con_saldo_en_reales)
+            movimiento.moneda = real
+            movimiento.cotizacion = 8
+            movimiento.full_clean()
+            movimiento.save()
+
+            assert movimiento.cotizacion == 8
+            assert movimiento.importe == round(importe / cotizacion * 8, 2)
+            assert getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}") == importe_c
+            assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == abs(movimiento.importe)
+
+        # Cambia cuenta en moneda del movimiento cambia cotización cambia importe
+        # Venta de 5 reales en euros, a 8 reales el euro
+        # - Es necesario cambiar la moneda del movimiento a reales
+        # - Cambia importe_ce (5 / 8)
+        # - Cambia importe_cs (-5)
+        def test_si_cambia_cuenta_en_moneda_del_movimiento_por_cuenta_en_tercera_moneda_cotizacion_e_importe_se_guardan_valores_ingresados(
+                self, sentido, cuenta_con_saldo_en_reales, real, request):
+            movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
+            sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
+
+            setattr(movimiento, f"cta_{sentido}", cuenta_con_saldo_en_reales)
+            movimiento.moneda = real
+            movimiento.cotizacion = 8
+            movimiento.importe = 5
+            movimiento.full_clean()
+            movimiento.save()
+
+            assert movimiento.cotizacion == 8
+            assert movimiento.importe == 5
+            assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == round(5/8, 2)
+            assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == 5
+
+        # Cambia cuenta en moneda del movimiento no cambia cotización cambia importe
+        # Venta de 5 reales en euros, a x reales el euro
+        # - Es necesario cambiar la moneda del movimiento a reales
+        # - Se calcula cotización x (euro.cotizacion_en(real))
+        # - Cambia importe_ce (5 / cotización x)
+        # - Cambia importe_cs (5)
+        def test_si_cambia_cuenta_en_moneda_del_movimiento_por_cuenta_en_tercera_moneda_e_importe_se_recalcula_cotizacion_y_se_guarda_importe_ingresado(
+                self, sentido, cuenta_con_saldo_en_reales, real, euro, request):
+            movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
+            sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
+            compra = sentido == "entrada"
+
+            setattr(movimiento, f"cta_{sentido}", cuenta_con_saldo_en_reales)
+            movimiento.moneda = real
+            movimiento.importe = 5
+            movimiento.full_clean()
+            movimiento.save()
+
+
+            assert movimiento.cotizacion == euro.cotizacion_en_al(real, fecha=movimiento.fecha, compra=compra)
+            assert movimiento.importe == 5
+            assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == round(5/movimiento.cotizacion, 2)
+            assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == 5
+
+        # Cambia cuenta en otra moneda no cambia cotización no cambia importe
+        # Venta de 10 dólares en reales, a y dólares el real
+        # - Se calcula cotización y (real.cotizacion_en(dolar))
+        # - Cambia importe_ce (10 / cotizacion y)
+        # - No cambia importe_cs
+        def test_si_cambia_cuenta_en_moneda_no_del_movimiento_por_cuenta_en_una_tercera_moneda_se_recalculan_cotizacion_e_importe(
+                self, sentido, cuenta_con_saldo_en_reales, real, request):
+            movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
+            sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
+            compra = sentido == "entrada"
+
+            importe = movimiento.importe
+            importe_cta_en_moneda_mov = getattr(movimiento, f"importe_cta_{sentido}")
+
+            setattr(movimiento, f"cta_{sentido_otra_cuenta}", cuenta_con_saldo_en_reales)
+            assert movimiento.cambia_cuenta_por_cuenta_en_otra_moneda() is False
+            assert movimiento.cambia_cuenta_por_cuenta_en_otra_moneda(moneda_del_movimiento=False) is True
+            movimiento.full_clean()
+            movimiento.save()
+
+            assert \
+                movimiento.cotizacion == \
+                real.cotizacion_en_al(movimiento.moneda, fecha=movimiento.fecha, compra=compra)
+            assert movimiento.importe == importe
+            assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == round(importe / movimiento.cotizacion, 2)
+            assert getattr(movimiento, f"importe_cta_{sentido}") == importe_cta_en_moneda_mov
+
+        # Cambia cuenta en otra moneda cambia cotización no cambia importe
+        # Venta de 10 dólares en reales, a 0,2 dólares el real
+        # - Se guarda cotización ingresada
+        # - Cambia importe_ce (10 / 0,2)
+        # - No cambia importe_cs
+        def test_si_cambia_cuenta_en_moneda_no_del_movimiento_por_cuenta_en_una_tercera_moneda_y_cotizacion_se_guarda_cotizacion_ingresada_y_se_recalcula_importe(
+                self, sentido, cuenta_con_saldo_en_reales, request):
+            movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
+            sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
+
+            importe = movimiento.importe
+            importe_cuenta_en_mon_mov = getattr(movimiento, f"importe_cta_{sentido}")
+
+            setattr(movimiento, f"cta_{sentido_otra_cuenta}", cuenta_con_saldo_en_reales)
+            movimiento.cotizacion = 0.2
+            movimiento.full_clean()
+            movimiento.save()
+
+            assert movimiento.cotizacion == 0.2
+            assert movimiento.importe == importe
+            assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == importe / 0.2
+            assert getattr(movimiento, f"importe_cta_{sentido}") == importe_cuenta_en_mon_mov
+
+        # Cambia cuenta en otra moneda cambia cotización cambia importe
+        # Venta de 5 dólares en reales, a 0,2 dólares el real
+        # - Cambia importe_ce (5 / 0,2)
+        # - Cambia importe_cs (5)
+        def test_si_cambia_cuenta_en_moneda_no_del_movimiento_por_cuenta_en_una_tercera_moneda_cotizacion_e_importe_se_guardan_los_valores_ingresados(
+                self, sentido, cuenta_con_saldo_en_reales, request):
+            movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
+            sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
+
+            setattr(movimiento, f"cta_{sentido_otra_cuenta}", cuenta_con_saldo_en_reales)
+            movimiento.cotizacion = 0.2
+            movimiento.importe = 5
+            movimiento.full_clean()
+            movimiento.save()
+
+            assert movimiento.cotizacion == 0.2
+            assert movimiento.importe == 5
+            assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == round(5/0.2, 2)
+            assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == 5
+
+        # Cambia cuenta en otra moneda no cambia cotización cambia importe
+        # Venta de 5 dólares en reales, a x dólares el real
+        # - Se calcula cotización x (real.cotizacion_en(dolar))
+        # - Cambia importe_ce (5 / cotizacion x)
+        # - Cambia importe_cs (5)
+        def test_si_cambia_cuenta_en_moneda_no_del_movimiento_por_cuenta_en_una_tercera_moneda_e_importe_se_recalcula_cotizacion_y_se_guarda_importe_ingresado(
+                self, sentido, cuenta_con_saldo_en_reales, real, dolar, request):
+            movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
+            sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
+            compra = sentido == "entrada"
+
+            setattr(movimiento, f"cta_{sentido_otra_cuenta}", cuenta_con_saldo_en_reales)
+            movimiento.importe = 5
+            movimiento.full_clean()
+            movimiento.save()
+
+            assert movimiento.cotizacion == real.cotizacion_en_al(dolar, fecha=movimiento.fecha, compra=compra)
+            assert movimiento.importe == 5
+            assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == round(5 / movimiento.cotizacion, 2)
+            assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == 5
+
+        # Cambia cuenta en moneda del movimiento cambia cuenta en otra moneda no cambia cotización no cambia importe
+        # Cambia moneda por moneda de cuenta que reemplaza a cuenta en moneda del movimiento
+        # Venta de x reales en yenes, a x reales el yen
+        # - Se calcula cotización x (yen.cotizacion_en(real))
+        # - Cambia importe_cs (importe / cotización x)
+        def test_si_cambian_ambas_cuentas_y_moneda_por_moneda_de_cuenta_que_reemplaza_a_cuenta_en_moneda_del_movimiento_se_recalcula_cotizacion(
+                self, sentido, cuenta_con_saldo_en_reales, cuenta_con_saldo_en_yenes, real, yen, request):
+            movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
+            sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
+            compra = sentido == "entrada"
+
+            importe = movimiento.importe
+
+            setattr(movimiento, f"cta_{sentido_otra_cuenta}", cuenta_con_saldo_en_reales)
+            setattr(movimiento, f"cta_{sentido}", cuenta_con_saldo_en_yenes)
+            movimiento.moneda = yen
+            movimiento.full_clean()
+            movimiento.save()
+
+            assert movimiento.cotizacion == real.cotizacion_en_al(yen, fecha=movimiento.fecha, compra=compra)
+            assert movimiento.importe == importe
+            assert \
+                abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == \
+                round(movimiento.importe / movimiento.cotizacion, 2)
+            assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == movimiento.importe
+
+        # Cambia cuenta en moneda del movimiento cambia cuenta en otra moneda no cambia cotización no cambia importe
+        # Cambia moneda por moneda de cuenta que reemplaza a cuenta en otra moneda
+        # Venta de x reales en yenes, a x yenes el real
+        # - Se calcula cotización x (real.cotizacion_en(yen))
+        # - Cambia importe_ce (importe / cotizacion x)
+        def test_si_cambian_ambas_cuentas_y_moneda_por_moneda_de_cuenta_que_reemplaza_a_cuenta_en_otra_moneda_se_recalcula_cotizacion(
+                self, sentido, cuenta_con_saldo_en_reales, cuenta_con_saldo_en_yenes, real, yen, request):
+            movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
+            sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
+            compra = sentido_otra_cuenta == "entrada"
+
+            importe = movimiento.importe
+
+            setattr(movimiento, f"cta_{sentido_otra_cuenta}", cuenta_con_saldo_en_reales)
+            setattr(movimiento, f"cta_{sentido}", cuenta_con_saldo_en_yenes)
+            movimiento.moneda = real
+            movimiento.full_clean()
+            movimiento.save()
+
+            assert movimiento.cotizacion == yen.cotizacion_en_al(real, fecha=movimiento.fecha, compra=compra)
+            assert movimiento.importe == importe
+            assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == movimiento.importe
+            assert \
+                abs(getattr(movimiento, f"importe_cta_{sentido}")) == \
+                round(movimiento.importe / movimiento.cotizacion, 2)
+
+        # Cambia cuenta en moneda del movimiento cambia cuenta en otra moneda no cambia cotización cambia importe
+        # Cambia moneda por moneda de cuenta que reemplaza a cuenta en moneda del movimiento
+        # Venta de 8 reales en yenes, a x yenes el real
+        def test_si_cambian_ambas_cuentas_importe_y_moneda_por_moneda_de_cuenta_que_reemplaza_a_cuenta_en_moneda_del_movimiento_se_recalcula_cotizacion(
+                self, sentido, cuenta_con_saldo_en_reales, cuenta_con_saldo_en_yenes, real, yen, request):
+            movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
+            sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
+            compra = sentido == "entrada"
+
+            setattr(movimiento, f"cta_{sentido_otra_cuenta}", cuenta_con_saldo_en_reales)
+            setattr(movimiento, f"cta_{sentido}", cuenta_con_saldo_en_yenes)
+            movimiento.moneda = yen
+            movimiento.importe = 8
+            movimiento.full_clean()
+            movimiento.save()
+
+            assert movimiento.cotizacion == real.cotizacion_en_al(yen, fecha=movimiento.fecha, compra=compra)
+            assert movimiento.importe == 8
+            assert \
+                abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == \
+                round(movimiento.importe / movimiento.cotizacion, 2)
+            assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == 8
+
+        # Cambia cuenta en moneda del movimiento cambia cuenta en otra moneda no cambia cotización cambia importe
+        # Cambia moneda por moneda de cuenta que reemplaza a cuenta en otra moneda
+        # Venta de 8 reales en yenes, a x reales el yen
+        def test_si_cambian_ambas_cuentas_importe_y_moneda_por_moneda_de_cuenta_que_reemplaza_a_cuenta_en_otra_moneda_se_recalcula_cotizacion(
+                self, sentido, cuenta_con_saldo_en_reales, cuenta_con_saldo_en_yenes, real, yen, request):
+            movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
+            sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
+            compra = sentido_otra_cuenta == "entrada"
+
+            setattr(movimiento, f"cta_{sentido_otra_cuenta}", cuenta_con_saldo_en_reales)
+            setattr(movimiento, f"cta_{sentido}", cuenta_con_saldo_en_yenes)
+            movimiento.moneda = real
+            movimiento.importe = 8
+            movimiento.full_clean()
+            movimiento.save()
+
+            assert movimiento.cotizacion == yen.cotizacion_en_al(real, fecha=movimiento.fecha, compra=compra)
+            assert movimiento.importe == 8
+            assert \
+                abs(getattr(movimiento, f"importe_cta_{sentido}")) == \
+                round(movimiento.importe / movimiento.cotizacion, 2)
+            assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == 8
+
+        # Cambia cuenta en moneda del movimiento cambia cuenta en otra moneda cambia cotización no cambia importe
+        # Cambia moneda por moneda de cuenta que reemplaza a cuenta en moneda del movimiento
+        def test_si_cambian_ambas_cuentas_cotizacion_y_moneda_por_moneda_de_cuenta_que_reemplaza_a_cuenta_en_moneda_del_movimiento_no_se_recalcula_importe(
+                self, sentido, cuenta_con_saldo_en_reales, cuenta_con_saldo_en_yenes, real, yen, request):
+            movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
+            sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
+
+            importe = movimiento.importe
+
+            setattr(movimiento, f"cta_{sentido_otra_cuenta}", cuenta_con_saldo_en_reales)
+            setattr(movimiento, f"cta_{sentido}", cuenta_con_saldo_en_yenes)
+            movimiento.moneda = yen
+            movimiento.cotizacion = 3
+            movimiento.full_clean()
+            movimiento.save()
+
+            assert movimiento.cotizacion == 3
+            assert movimiento.importe == importe
+            assert \
+                abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == \
+                round(movimiento.importe / movimiento.cotizacion, 2)
+            assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == movimiento.importe
+
+        # Cambia cuenta en moneda del movimiento cambia cuenta en otra moneda cambia cotización no cambia importe
+        # Cambia moneda por moneda que reemplaza a cuenta en otra moneda
+        def test_si_cambian_ambas_cuentas_cotizacion_y_moneda_por_moneda_de_cuenta_que_reemplaza_a_cuenta_en_otra_moneda_no_se_recalcula_importe(
+                self, sentido, cuenta_con_saldo_en_reales, cuenta_con_saldo_en_yenes, real, yen, request):
+            movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
+            sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
+
+            importe = movimiento.importe
+
+            setattr(movimiento, f"cta_{sentido_otra_cuenta}", cuenta_con_saldo_en_reales)
+            setattr(movimiento, f"cta_{sentido}", cuenta_con_saldo_en_yenes)
+            movimiento.moneda = real
+            movimiento.cotizacion = 3
+            movimiento.full_clean()
+            movimiento.save()
+
+            assert movimiento.cotizacion == 3
+            assert movimiento.importe == importe
+            assert \
+                abs(getattr(movimiento, f"importe_cta_{sentido}")) == \
+                round(movimiento.importe / movimiento.cotizacion, 2)
+            assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == movimiento.importe
+
+        # Cambia cuenta en moneda del movimiento cambia cuenta en otra moneda cambia cotización cambia importe
+        # Cambia moneda por moneda que reemplaza a cuenta en moneda del movimiento
+        def test_si_cambian_ambas_cuentas_cotizacion_importe_y_moneda_por_moneda_de_cuenta_que_reemplaza_a_cuenta_en_moneda_del_movimiento_se_guardan_valores_ingresados(
+                self, sentido, cuenta_con_saldo_en_reales, cuenta_con_saldo_en_yenes, real, yen, request):
+            movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
+            sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
+
+            setattr(movimiento, f"cta_{sentido_otra_cuenta}", cuenta_con_saldo_en_reales)
+            setattr(movimiento, f"cta_{sentido}", cuenta_con_saldo_en_yenes)
+            movimiento.moneda = yen
+            movimiento.cotizacion = 3
+            movimiento.importe = 8
+            movimiento.full_clean()
+            movimiento.save()
+
+            assert movimiento.cotizacion == 3
+            assert movimiento.importe == 8
+            assert \
+                abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == \
+                round(movimiento.importe / movimiento.cotizacion, 2)
+            assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == movimiento.importe
+
+        # Cambia cuenta en moneda del movimiento cambia cuenta en otra moneda cambia cotización cambia importe
+        # Cambia moneda por moneda que reemplaza a cuenta en otra moneda
+        def test_si_cambian_ambas_cuentas_cotizacion_importe_y_moneda_por_moneda_de_cuenta_que_reemplaza_a_cuenta_en_otra_moneda_se_guardan_valores_ingresados(
+                self, sentido, cuenta_con_saldo_en_reales, cuenta_con_saldo_en_yenes, real, yen, request):
+            movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
+            sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
+
+            setattr(movimiento, f"cta_{sentido_otra_cuenta}", cuenta_con_saldo_en_reales)
+            setattr(movimiento, f"cta_{sentido}", cuenta_con_saldo_en_yenes)
+            movimiento.moneda = real
+            movimiento.cotizacion = 3
+            movimiento.importe = 8
+            movimiento.full_clean()
+            movimiento.save()
+
+            assert movimiento.cotizacion == 3
+            assert movimiento.importe == 8
+            assert \
+                abs(getattr(movimiento, f"importe_cta_{sentido}")) == \
+                round(movimiento.importe / movimiento.cotizacion, 2)
+            assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == movimiento.importe
+
+        def test_si_cambian_ambas_cuentas_cotizacion_e_importe_se_guardan_valores_ingresados(
+                self, sentido, cuenta_con_saldo_en_yenes, cuenta_con_saldo_en_reales, real, request):
+            movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
+            sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
+
+            setattr(movimiento, f"cta_{sentido_otra_cuenta}", cuenta_con_saldo_en_yenes)
+            setattr(movimiento, f"cta_{sentido}", cuenta_con_saldo_en_reales)
+            movimiento.moneda = real
+            movimiento.cotizacion = 3
+            movimiento.importe = 8
+            movimiento.full_clean()
+            movimiento.save()
+
+            assert movimiento.cotizacion == 3
+            assert movimiento.importe == 8
+            assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == round(8/3, 2)
+            assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == 8
+
+        # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
+        # no cambia moneda, no cambia cotización, no cambia importe
+        # 10 Dolares->CA dolares pasa a 10 Dolares-> x Euros a y dólares el euro
+        # - Se calcula cotización (euro.cotizacion_en(dolar))
+        # - Cambia importe_ce (10 / cotización)
+        # - No cambia importe_cs
+        def test_si_en_traspaso_entre_cuentas_en_la_misma_moneda_cambia_cuenta_por_cuenta_en_otra_moneda_se_calcula_cotizacion(
+                self, sentido, traspaso_en_dolares, cuenta_con_saldo_en_euros, euro, dolar):
+            sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
+            importe = traspaso_en_dolares.importe
+            compra = sentido_otra_cuenta == "entrada"
+
+            setattr(traspaso_en_dolares, f"cta_{sentido}", cuenta_con_saldo_en_euros)
+            traspaso_en_dolares.full_clean()
+            traspaso_en_dolares.save()
+
+            assert \
+                traspaso_en_dolares.cotizacion == \
+                euro.cotizacion_en_al(dolar, fecha=traspaso_en_dolares.fecha, compra=compra)
+            assert traspaso_en_dolares.importe == importe
+            assert \
+                abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido_otra_cuenta}")) == \
+                traspaso_en_dolares.importe
+            assert \
+                abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido}")) == \
+                round(traspaso_en_dolares.importe / traspaso_en_dolares.cotizacion, 2)
+
+        # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
+        # no cambia moneda, cambia cotización, no cambia importe
+        # 10 Dolares->CA dolares pasa a 10 Dolares-> x Euros a 2 dólares el euro
+        # - Cambia importe_ce (10 / 2)
+        # - No cambia importe_cs
+        def test_si_en_traspaso_entre_cuentas_en_la_misma_moneda_cambia_cuenta_por_cuenta_en_otra_moneda_y_cotizacion_se_guarda_cotizacion(
+                self, sentido, traspaso_en_dolares, cuenta_con_saldo_en_euros):
+            sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
+            importe = traspaso_en_dolares.importe
+
+            setattr(traspaso_en_dolares, f"cta_{sentido}", cuenta_con_saldo_en_euros)
+            traspaso_en_dolares.cotizacion = 2
+            traspaso_en_dolares.full_clean()
+            traspaso_en_dolares.save()
+
+            assert traspaso_en_dolares.cotizacion == 2
+            assert traspaso_en_dolares.importe == importe
+            assert abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido_otra_cuenta}")) == traspaso_en_dolares.importe
+            assert \
+                abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido}")) == \
+                round(traspaso_en_dolares.importe / 2, 2)
+
+        # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
+        # cambia moneda, no cambia cotización, no cambia importe
+        # 10 Dólares->CA dólares pasa a 10 Dólares -> x Euros a y euros el dólar
+        # - Se calcula cotización y (dolar.cotizacion_en(euro))
+        # - Se calcula importe (10 * cotización y)
+        # - Cambia importe_ce (importe)
+        # - No cambia importe_cs
+        def test_si_en_traspaso_entre_cuentas_en_la_misma_moneda_cambia_cuenta_por_cuenta_en_otra_moneda_y_moneda_se_calcula_cotizacion_e_importe(
+                self, sentido, traspaso_en_dolares, cuenta_con_saldo_en_euros, euro, dolar):
+            sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
+            compra = sentido == "entrada"
+            importe = traspaso_en_dolares.importe
+
+            setattr(traspaso_en_dolares, f"cta_{sentido}", cuenta_con_saldo_en_euros)
+            traspaso_en_dolares.moneda = euro
+            traspaso_en_dolares.full_clean()
+            traspaso_en_dolares.save()
+
+            assert \
+                traspaso_en_dolares.cotizacion == \
+                dolar.cotizacion_en_al(euro, fecha=traspaso_en_dolares.fecha, compra=compra)
+            assert traspaso_en_dolares.importe == round(importe * traspaso_en_dolares.cotizacion, 2)
+            assert abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido}")) == traspaso_en_dolares.importe
+            assert abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido_otra_cuenta}")) == importe
+
+        # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
+        # no cambia moneda, no cambia cotización, cambia importe
+        # 10 Dólares->CA dólares pasa a 6 Dólares -> x Euros a y dólares el euro
+        # - Se calcula cotización (euro.cotizacion_en(dolar)
+        # - Cambia importe_ce (6 / cotizacion)
+        # - Cambia importe_cs (6)
+        def test_si_en_traspaso_entre_cuentas_en_la_misma_moneda_cambia_cuenta_por_cuenta_en_otra_moneda_e_importe_se_calcula_cotizacion_y_se_guarda_importe(
+                self, sentido, traspaso_en_dolares, cuenta_con_saldo_en_euros, euro, dolar):
+            sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
+            compra = sentido_otra_cuenta == "entrada"
+
+            setattr(traspaso_en_dolares, f"cta_{sentido}", cuenta_con_saldo_en_euros)
+            traspaso_en_dolares.importe = 6
+            traspaso_en_dolares.full_clean()
+            traspaso_en_dolares.save()
+
+            assert \
+                traspaso_en_dolares.cotizacion == \
+                euro.cotizacion_en_al(dolar, fecha=traspaso_en_dolares.fecha, compra=compra)
+            assert traspaso_en_dolares.importe == 6
+            assert \
+                abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido}")) == \
+                round(6 / traspaso_en_dolares.cotizacion, 2)
+            assert abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido_otra_cuenta}")) == 6
+
+        # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
+        # cambia moneda, cambia cotización, no cambia importe
+        # 10 Dólares->CA dólares pasa a 10 Dólares -> x Euros a 2 euros el dólar
+        # - Se calcula importe (10 * 2)
+        # - Cambia importe_ce (10/2)
+        # - No cambia importe_cs
+        def test_si_en_traspaso_entre_cuentas_en_la_misma_moneda_cambia_cuenta_por_cuenta_en_otra_moneda_moneda_y_cotizacion_se_guarda_cotizacion_y_se_calcula_importe(
+                self, sentido, traspaso_en_dolares, cuenta_con_saldo_en_euros, euro, dolar):
+            sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
+            importe = traspaso_en_dolares.importe
+
+            setattr(traspaso_en_dolares, f"cta_{sentido}", cuenta_con_saldo_en_euros)
+            traspaso_en_dolares.cotizacion = 2
+            traspaso_en_dolares.moneda = euro
+            traspaso_en_dolares.full_clean()
+            traspaso_en_dolares.save()
+
+            assert traspaso_en_dolares.cotizacion == 2
+            assert traspaso_en_dolares.importe == importe * 2
+            assert \
+                abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido}")) == traspaso_en_dolares.importe
+            assert abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido_otra_cuenta}")) == importe
+
+        # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
+        # cambia moneda, no cambia cotización, cambia importe
+        # 10 Dólares->CA dólares pasa a 10 Dólares -> 6 Euros a x euros el dólar
+        # - Se calcula cotización (dolar.cotizacion_en(euro))
+        # - Cambia importe_ce (6)
+        # - Cambia importe_cs (6 / cotizacion)
+        def test_si_en_traspaso_entre_cuentas_en_la_misma_moneda_cambia_cuenta_por_cuenta_en_otra_moneda_moneda_e_importe_se_calcula_cotizacion_y_se_guarda_importe(
+                self, sentido, traspaso_en_dolares, cuenta_con_saldo_en_euros, euro, dolar):
+            sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
+            compra = sentido == "entrada"
+
+            setattr(traspaso_en_dolares, f"cta_{sentido}", cuenta_con_saldo_en_euros)
+            traspaso_en_dolares.importe = 6
+            traspaso_en_dolares.moneda = euro
+            traspaso_en_dolares.full_clean()
+            traspaso_en_dolares.save()
+
+            assert \
+                traspaso_en_dolares.cotizacion == \
+                dolar.cotizacion_en_al(euro, fecha=traspaso_en_dolares.fecha, compra=compra)
+            assert traspaso_en_dolares.importe == 6
+            assert \
+                abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido}")) == 6
+            assert \
+                abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido_otra_cuenta}")) == \
+                round(6 / traspaso_en_dolares.cotizacion, 2)
+
+        # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
+        # no cambia moneda, cambia cotización, cambia importe
+        # 10 Dólares->CA dólares pasa a 6 Dólares -> x Euros a 0.6 dólares el euro
+        # - Se calcula cotización (euro.cotizacion_en(dolar))
+        # - Cambia importe_ce (6 / cotización)
+        # - Cambia importe_cs (6)
+        def test_si_en_traspaso_entre_cuentas_en_la_misma_moneda_cambia_cuenta_por_cuenta_en_otra_moneda_cotizacion_e_importe_se_guardan_cotizacion_e_importe(
+                self, sentido, traspaso_en_dolares, cuenta_con_saldo_en_euros, euro, dolar):
+            sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
+
+            setattr(traspaso_en_dolares, f"cta_{sentido}", cuenta_con_saldo_en_euros)
+            traspaso_en_dolares.importe = 6
+            traspaso_en_dolares.cotizacion = 0.6
+            traspaso_en_dolares.full_clean()
+            traspaso_en_dolares.save()
+
+            assert traspaso_en_dolares.cotizacion == 0.6
+            assert traspaso_en_dolares.importe == 6
+            assert \
+                abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido}")) == round(6 / 0.6, 2)
+            assert abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido_otra_cuenta}")) == 6
+
+        # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
+        # cambia moneda, cambia cotización, cambia importe
+        # 10 Dólares->CA dólares pasa a x Dólares -> 6 Euros a 0.6 euros el dólar
+        # - Cambia importe_ce (6)
+        # - Cambia importe_cs (6 / cotización)
+        def test_si_en_traspaso_entre_cuentas_en_la_misma_moneda_cambia_cuenta_por_cuenta_en_otra_moneda_moneda_cotizacion_e_importe_se_guardan_cotizacion_e_importe(
+                self, sentido, traspaso_en_dolares, cuenta_con_saldo_en_euros, euro, dolar):
+            sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
+
+            setattr(traspaso_en_dolares, f"cta_{sentido}", cuenta_con_saldo_en_euros)
+            traspaso_en_dolares.importe = 6
+            traspaso_en_dolares.cotizacion = 0.6
+            traspaso_en_dolares.moneda = euro
+            traspaso_en_dolares.full_clean()
+            traspaso_en_dolares.save()
+
+            assert traspaso_en_dolares.cotizacion == 0.6
+            assert traspaso_en_dolares.importe == 6
+            assert \
+                abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido}")) == 6
+            assert abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido_otra_cuenta}")) == round(6 / 0.6, 2)
+
+        # Entre cuentas en distinta moneda, cambia cuenta en otra moneda por cuenta en moneda del movimiento,
+        # no cambia importe
+        # 10 dolares -> x euros a 1.5 dólares el euro  pasa a  10 dólares -> CA dólares
+        # - Cambia cotización (1)
+        # - Cambia importe_ce (importe)
+        # - No cambia importe_cs
+        def test_si_cambia_cuenta_en_moneda_no_del_movimiento_por_cuenta_en_moneda_del_movimiento_cotizacion_pasa_a_1(
+                self, sentido, cuenta_en_dolares, request):
+            mov_distintas_monedas = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
+            sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
+            importe = mov_distintas_monedas.importe
+
+            setattr(mov_distintas_monedas, f"cta_{sentido_otra_cuenta}", cuenta_en_dolares)
+            mov_distintas_monedas.full_clean()
+            mov_distintas_monedas.save()
+
+            assert mov_distintas_monedas.cotizacion == 1
+            assert mov_distintas_monedas.importe == importe
+            assert mov_distintas_monedas.importe_cta_entrada == mov_distintas_monedas.importe
+            assert mov_distintas_monedas.importe_cta_salida == -mov_distintas_monedas.importe
+
+        # Entre cuentas en distinta moneda, cambia cuenta en otra moneda por cuenta en moneda del movimiento,
+        # cambia importe
+        # 10 dolares -> x euros a 1.5 dólares el euro  pasa a  6 dólares -> CA dólares
+        # - Cambia cotización (1)
+        # - Cambia importe_ce (6)
+        # - Cambia importe_cs (6)
+        def test_si_cambia_cuenta_en_moneda_no_del_movimiento_por_cuenta_en_moneda_del_movimiento_e_importe_se_guarda_importe_y_cotizacion_pasa_a_1(
+                self, sentido, cuenta_en_dolares, request):
+            mov_distintas_monedas = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
+            sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
+
+            setattr(mov_distintas_monedas, f"cta_{sentido_otra_cuenta}", cuenta_en_dolares)
+            mov_distintas_monedas.importe = 6
+            mov_distintas_monedas.full_clean()
+            mov_distintas_monedas.save()
+
+            assert mov_distintas_monedas.cotizacion == 1
+            assert mov_distintas_monedas.importe == 6
+            assert mov_distintas_monedas.importe_cta_entrada == 6
+            assert mov_distintas_monedas.importe_cta_salida == -6
+
+        # Entre cuentas en distinta moneda, cambia cuenta en moneda del movimiento por cuenta en otra moneda,
+        # no cambia importe
+        # 10 dolares -> x euros a 1.5 dólares el euro  pasa a  CA euros -> x euros
+        # - Cambia cotización (1)
+        # - Cambia importe_ce(10 / 1.5)
+        # - Cambia importe_cs(10 / 1.5)
+        def test_si_cambia_cuenta_en_moneda_del_movimiento_por_cuenta_en_moneda_no_del_movimiento_se_calcula_importe_y_cotizacion_pasa_a_1(
+                self, sentido, cuenta_en_euros, euro, request):
+            mov_distintas_monedas = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
+            cotizacion = mov_distintas_monedas.cotizacion
+            importe = mov_distintas_monedas.importe
+
+            setattr(mov_distintas_monedas, f"cta_{sentido}", cuenta_en_euros)
+            mov_distintas_monedas.moneda = euro
+            mov_distintas_monedas.full_clean()
+            mov_distintas_monedas.save()
+
+            assert mov_distintas_monedas.cotizacion == 1
+            assert mov_distintas_monedas.importe == round(importe / cotizacion, 2)
+            assert mov_distintas_monedas.importe_cta_entrada == mov_distintas_monedas.importe
+            assert mov_distintas_monedas.importe_cta_salida == -mov_distintas_monedas.importe
+
+        # Entre cuentas en distinta moneda, cambia cuenta en moneda del movimiento por cuenta en otra moneda,
+        # cambia importe
+        # 10 dolares -> x euros a 1.5 dólares el euro  pasa a  CA euros -> 6 euros
+        # - Cambia cotización (1)
+        # - Cambia importe_ce(6)
+        # - Cambia importe_cs(6)
+        def test_si_cambia_cuenta_en_moneda_del_movimiento_por_cuenta_en_moneda_no_del_movimiento_e_importe_se_guarda_importe_y_cotizacion_pasa_a_1(
+                self, sentido, cuenta_en_euros, euro, request):
+            mov_distintas_monedas = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
+
+            setattr(mov_distintas_monedas, f"cta_{sentido}", cuenta_en_euros)
+            mov_distintas_monedas.moneda = euro
+            mov_distintas_monedas.importe = 6
+            mov_distintas_monedas.full_clean()
+            mov_distintas_monedas.save()
+
+            assert mov_distintas_monedas.cotizacion == 1
+            assert mov_distintas_monedas.importe == 6
+            assert mov_distintas_monedas.importe_cta_entrada == 6
+            assert mov_distintas_monedas.importe_cta_salida == -6
+
+        # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda,
+        # no cambia moneda, no cambia cotización, no cambia importe.
+        # Entran / salen 10 dólares -> Venta / compra de 10 dólares de euros
+        # - No cambia importe
+        # - Cambia cotización (euro.cotizacion_en(dolar))
+        # - No cambia importe_ce/cs
+        # - Cambia importe_cs/ce (importe / nueva cotización)
+        def test_si_en_movimiento_de_entrada_o_salida_se_agrega_contracuenta_en_otra_moneda_se_calcula_cotizacion(
+                self, sentido, cuenta_en_euros, dolar, euro, request):
+            movimiento = request.getfixturevalue(f"{sentido}_en_dolares")
+            sentido_contracuenta = el_que_no_es(sentido, "entrada", "salida")
+            compra = sentido == "entrada"
+
+            importe = movimiento.importe
+
+            setattr(movimiento, f"cta_{sentido_contracuenta}", cuenta_en_euros)
+            movimiento.full_clean()
+            movimiento.save()
+
+            assert movimiento.cotizacion == euro.cotizacion_en_al(dolar, fecha=movimiento.fecha, compra=compra)
+            assert movimiento.importe == importe
+            assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == importe
+            assert \
+                abs(getattr(movimiento, f"importe_cta_{sentido_contracuenta}")) == \
+                round(importe / movimiento.cotizacion, 2)
+
+        # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda,
+        # no cambia moneda, cambia cotización, no cambia importe.
+        # Entran / salen 10 dólares -> Venta / compra de 10 dólares de euros a 1.5 dólares el euro
+        # - No cambia importe
+        # - Cambia cotización (1.5)
+        # - No cambia importe_ce/cs
+        # - Cambia importe_cs/ce (importe / 1.5)
+        def test_si_en_movimiento_de_entrada_o_salida_se_agrega_contracuenta_en_otra_moneda_y_cotizacion_se_guarda_cotizacion_ingresada(
+                self, sentido, cuenta_en_euros, dolar, euro, request):
+            movimiento = request.getfixturevalue(f"{sentido}_en_dolares")
+            sentido_contracuenta = el_que_no_es(sentido, "entrada", "salida")
+
+            importe = movimiento.importe
+
+            setattr(movimiento, f"cta_{sentido_contracuenta}", cuenta_en_euros)
+            movimiento.cotizacion = 1.5
+            movimiento.full_clean()
+            movimiento.save()
+
+            assert movimiento.cotizacion == 1.5
+            assert movimiento.importe == importe
+            assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == importe
+            assert abs(getattr(movimiento, f"importe_cta_{sentido_contracuenta}")) == round(importe / 1.5, 2)
+
+        # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda,
+        # no cambia moneda, no cambia cotización, cambia importe.
+        # Entran / salen 10 dólares -> Venta / compra de 20 dólares de euros
+        # - Cambia importe (20)
+        # - Cambia cotización (euro.cotizacion_en(dolar))
+        # - Cambia importe_ce/cs (20)
+        # - Cambia importe_cs/ce (20 / nueva cotizacion)
+        def test_si_en_movimiento_de_entrada_o_salida_se_agrega_contracuenta_en_otra_moneda_y_se_ingresa_importe_se_calcula_cotizacion_y_se_guarda_importe_ingresado(
+                self, sentido, cuenta_en_euros, dolar, euro, request):
+            movimiento = request.getfixturevalue(f"{sentido}_en_dolares")
+            sentido_contracuenta = el_que_no_es(sentido, "entrada", "salida")
+            compra = sentido == "entrada"
+
+            setattr(movimiento, f"cta_{sentido_contracuenta}", cuenta_en_euros)
+            movimiento.importe = 20
+            movimiento.full_clean()
+            movimiento.save()
+
+            assert movimiento.cotizacion == euro.cotizacion_en_al(dolar, fecha=movimiento.fecha, compra=compra)
+            assert movimiento.importe == 20
+            assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == 20
+            assert abs(getattr(movimiento, f"importe_cta_{sentido_contracuenta}")) == round(20 / movimiento.cotizacion, 2)
+
+        # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda,
+        # no cambia moneda, cambia cotización, cambia importe.
+        # Entran / salen 10 dólares -> Venta / compra de 20 dólares de euros a 1.5 dólares el euro
+        # - Cambia importe (20)
+        # - Cambia cotización (1.5)
+        # - Cambia importe_ce/cs (20)
+        # - Cambia importe_cs/ce (20 / 1.5)
+        def test_si_en_movimiento_de_entrada_o_salida_se_agrega_contracuenta_en_otra_moneda_y_se_ingresa_cotizacion_e_importe_se_guardan_valores_ingresados(
+                self, sentido, cuenta_en_euros, dolar, euro, request):
+            movimiento = request.getfixturevalue(f"{sentido}_en_dolares")
+            sentido_contracuenta = el_que_no_es(sentido, "entrada", "salida")
+
+            setattr(movimiento, f"cta_{sentido_contracuenta}", cuenta_en_euros)
+            movimiento.cotizacion = 1.5
+            movimiento.importe = 20
+            movimiento.full_clean()
+            movimiento.save()
+
+            assert movimiento.cotizacion == 1.5
+            assert movimiento.importe == 20
+            assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == 20
+            assert abs(getattr(movimiento, f"importe_cta_{sentido_contracuenta}")) == round(20 / 1.5, 2)
+
+        # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda,
+        # cambia moneda, no cambia cotización, no cambia importe.
+        # Entran / salen 10 dólares -> Venta / compra de x euros de dólares a y euros el dólar
+        # - Cambia cotización (dolar.cotizacion_en(euro))
+        # - Cambia importe (10 * nueva cotizacion)
+        # - No cambia importe_ce/cs
+        # - Cambia importe_cs/ce (nuevo importe)
+        @pytest.mark.xfail
+        def test_si_en_movimiento_de_entrada_o_salida_se_agrega_contracuenta_en_otra_moneda_y_cambia_moneda_se_calcula_cotizacion_e_importe(
+                self, sentido, cuenta_en_euros, dolar, euro, request):
+            movimiento = request.getfixturevalue(f"{sentido}_en_dolares")
+            sentido_contracuenta = el_que_no_es(sentido, "entrada", "salida")
+            compra = sentido == "entrada"
+
+            importe = movimiento.importe
+
+            setattr(movimiento, f"cta_{sentido_contracuenta}", cuenta_en_euros)
+            movimiento.moneda = euro
+            movimiento.full_clean()
+            movimiento.save()
+
+            assert movimiento.cotizacion == euro.cotizacion_en_al(euro, fecha=movimiento.fecha, compra=compra)
+            assert movimiento.importe == round(importe * movimiento.cotizacion, 2)
+            assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == importe
+            assert abs(getattr(movimiento, f"importe_cta:{sentido_contracuenta}")) == movimiento.importe
+
+        # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda,
+        # cambia moneda, cambia cotización, no cambia importe.
+        # Entran / salen 10 dólares -> Venta / compra de x euros de dólares a 0.8 euros el dólar
+        # - Cambia cotización (0.8)
+        # - Cambia importe (10 * 0.8)
+        # - No cambia importe_ce/cs
+        # - Cambia importe_cs/ce (nuevo importe)
+        def test_si_en_movimiento_de_entrada_o_salida_se_agrega_contracuenta_en_otra_moneda_y_cambia_moneda_y_cotizacion_se_guarda_cotizacion_y_se_calcula_importe(
+                self, sentido, cuenta_en_euros, dolar, euro, request):
+            movimiento = request.getfixturevalue(f"{sentido}_en_dolares")
+            sentido_contracuenta = el_que_no_es(sentido, "entrada", "salida")
+
+            importe = movimiento.importe
+
+            setattr(movimiento, f"cta_{sentido_contracuenta}", cuenta_en_euros)
+            movimiento.moneda = euro
+            movimiento.cotizacion = 0.8
+            movimiento.full_clean()
+            movimiento.save()
+
+            assert movimiento.cotizacion == 0.8
+            assert movimiento.importe == round(importe * 0.8, 2)
+            assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == importe
+            assert abs(getattr(movimiento, f"importe_cta_{sentido_contracuenta}")) == movimiento.importe
+
+        # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda,
+        # cambia moneda, no cambia cotización, cambia importe.
+        # Entran / salen 10 dólares -> Venta / compra de 20 euros de dólares a x euros el dólar
+        # - Cambia cotización (dolar.cotizacion_en(euro))
+        # - Cambia importe (20)
+        # - Cambia importe_ce/cs (20 / nueva cotización)
+        # - Cambia importe_cs/ce (20)
+        def test_si_en_movimiento_de_entrada_o_salida_se_agrega_contracuenta_en_otra_moneda_y_cambia_moneda_e_importe_se_calcula_cotizacion_y_se_guarda_importe(
+                self, sentido, cuenta_en_euros, dolar, euro, request):
+            movimiento = request.getfixturevalue(f"{sentido}_en_dolares")
+            sentido_contracuenta = el_que_no_es(sentido, "entrada", "salida")
+            compra = sentido_contracuenta == "entrada"
+
+            setattr(movimiento, f"cta_{sentido_contracuenta}", cuenta_en_euros)
+            movimiento.moneda = euro
+            movimiento.importe = 20
+            movimiento.full_clean()
+            movimiento.save()
+
+            assert movimiento.cotizacion == dolar.cotizacion_en_al(euro, fecha=movimiento.fecha, compra=compra)
+            assert movimiento.importe == 20
+            assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == round(20 / movimiento.cotizacion, 2)
+            assert abs(getattr(movimiento, f"importe_cta_{sentido_contracuenta}")) == 20
+
+        # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda,
+        # cambia moneda, cambia cotización, cambia importe.
+        # Entran / salen 10 dólares -> Venta / compra de 20 euros de dólares a 0.8 euros el dólar
+        # - Cambia cotización (0.8)
+        # - Cambia importe (20)
+        # - Cambia importe_ce/cs (20 / 0.8)
+        # - Cambia importe_cs/ce (20)
+        def test_si_en_movimiento_de_entrada_o_salida_se_agrega_contracuenta_en_otra_moneda_y_cambia_moneda_cotizacion_e_importe_se_guardan_cotizacion_e_importe(
+                self, sentido, cuenta_en_euros, dolar, euro, request):
+            movimiento = request.getfixturevalue(f"{sentido}_en_dolares")
+            sentido_contracuenta = el_que_no_es(sentido, "entrada", "salida")
+
+            setattr(movimiento, f"cta_{sentido_contracuenta}", cuenta_en_euros)
+            movimiento.moneda = euro
+            movimiento.cotizacion = 0.8
+            movimiento.importe = 20
+            movimiento.full_clean()
+            movimiento.save()
+
+            assert movimiento.cotizacion == 0.8
+            assert movimiento.importe == 20
+            assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == round(20 / 0.8, 2)
+            assert abs(getattr(movimiento, f"importe_cta_{sentido_contracuenta}")) == 20
+
+        def test_puede_agregarse_cuenta_interactiva_a_movimiento_con_cta_acumulativa(
+                self, sentido, cuenta_2, request):
+            mov = request.getfixturevalue(f'{sentido}_con_ca')
+            contrasentido = 'entrada' if sentido == 'salida' else 'salida'
+
+            setattr(mov, f'cta_{contrasentido}', cuenta_2)
+            mov.full_clean()
+            mov.save()
+
+            assert getattr(mov, f'cta_{contrasentido}') == cuenta_2
+
+        def test_puede_cambiarse_cta_interactiva_en_movimiento_con_cuenta_acumulativa(
+                self, sentido, cuenta_3, request):
+            mov = request.getfixturevalue(f'traspaso_con_cta_{sentido}_a')
+            contrasentido = 'entrada' if sentido == 'salida' else 'salida'
+
+            setattr(mov, f'cta_{contrasentido}', cuenta_3)
+            mov.full_clean()
+            mov.save()
+
+            assert getattr(mov, f'cta_{contrasentido}') == cuenta_3
+
+        def test_puede_retirarse_cta_interactiva_en_movimiento_con_cta_entrada_acumulativa(
+                self, sentido, request):
+            mov = request.getfixturevalue(f'traspaso_con_cta_{sentido}_a')
+            contrasentido = 'entrada' if sentido == 'salida' else 'salida'
+
+            setattr(mov, f'cta_{contrasentido}', None)
+            mov.full_clean()
+            mov.save()
+
+            assert getattr(mov, f'cta_{contrasentido}') is None
 
 
 @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
