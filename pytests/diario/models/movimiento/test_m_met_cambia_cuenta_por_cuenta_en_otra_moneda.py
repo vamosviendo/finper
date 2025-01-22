@@ -3,14 +3,6 @@ import pytest
 from diario.models import Movimiento, Moneda
 from utils.varios import el_que_no_es
 
-
-@pytest.fixture
-def mov_distintas_monedas_en_euros(mov_distintas_monedas: Movimiento, euro: Moneda) -> Movimiento:
-    mov_distintas_monedas.moneda = euro
-    mov_distintas_monedas.full_clean()
-    mov_distintas_monedas.save()
-    return mov_distintas_monedas
-
 @pytest.mark.parametrize("sentido", ["entrada", "salida"])
 def test_si_cuenta_cambia_por_cuenta_en_tercera_moneda_devuelve_true(
         sentido, cuenta_con_saldo_en_reales, request):

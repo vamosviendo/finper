@@ -1284,12 +1284,11 @@ class TestSaveCambiaCuentas:
         # - Cambia importe (10 * nueva cotizacion)
         # - No cambia importe_ce/cs
         # - Cambia importe_cs/ce (nuevo importe)
-        @pytest.mark.xfail
         def test_si_en_movimiento_de_entrada_o_salida_se_agrega_contracuenta_en_otra_moneda_y_cambia_moneda_se_calcula_cotizacion_e_importe(
                 self, sentido, cuenta_en_euros, dolar, euro, request):
             movimiento = request.getfixturevalue(f"{sentido}_en_dolares")
             sentido_contracuenta = el_que_no_es(sentido, "entrada", "salida")
-            compra = sentido == "entrada"
+            compra = sentido_contracuenta == "entrada"
 
             importe = movimiento.importe
 
@@ -1298,10 +1297,10 @@ class TestSaveCambiaCuentas:
             movimiento.full_clean()
             movimiento.save()
 
-            assert movimiento.cotizacion == euro.cotizacion_en_al(euro, fecha=movimiento.fecha, compra=compra)
+            assert movimiento.cotizacion == dolar.cotizacion_en_al(euro, fecha=movimiento.fecha, compra=compra)
             assert movimiento.importe == round(importe * movimiento.cotizacion, 2)
             assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == importe
-            assert abs(getattr(movimiento, f"importe_cta:{sentido_contracuenta}")) == movimiento.importe
+            assert abs(getattr(movimiento, f"importe_cta_{sentido_contracuenta}")) == movimiento.importe
 
         # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda,
         # cambia moneda, cambia cotización, no cambia importe.
