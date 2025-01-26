@@ -40,7 +40,10 @@ class Moneda(MiModel):
     def cotizacion_compra(self, value: float):
         """ Si no existe una cotización para la fecha, la crea.
             Si existe, actualiza el importe. """
-        self._cotizacion_compra = Cotizacion(fecha=date.today(), importe_compra=value)
+        try:
+            self._cotizacion.importe_compra = value
+        except AttributeError:
+            self._cotizacion = Cotizacion(fecha=date.today(), importe_compra=value)
 
     @property
     def cotizacion_venta(self) -> float:
@@ -53,7 +56,10 @@ class Moneda(MiModel):
     def cotizacion_venta(self, value: float):
         """ Si no existe una cotización para la fecha, la crea.
             Si existe, actualiza el importe. """
-        self._cotizacion_venta = Cotizacion(fecha=date.today(), importe_venta=value)
+        try:
+            self._cotizacion.importe_venta = value
+        except AttributeError:
+            self._cotizacion = Cotizacion(fecha=date.today(), importe_venta=value)
 
     @property
     def cotizacion(self) -> float:
