@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date
 from typing import Self
 
-from django.core.exceptions import ValidationError
+from django.core.exceptions import EmptyResultSet
 from django.db import models
 
 from diario.models import Cotizacion
@@ -109,17 +109,17 @@ class Moneda(MiModel):
             _cotizacion = getattr(self, "_cotizacion")
             moneda = self.tomar_de_bd()
             try:
-                Cotizacion.crear(
-                    moneda=moneda,
-                    fecha=_cotizacion.fecha,
-                    importe_compra=_cotizacion.importe_compra,
-                    importe_venta=_cotizacion.importe_venta,
-                )
-            except ValidationError:
                 cot = Cotizacion.tomar(moneda=moneda, fecha=_cotizacion.fecha)
                 cot.importe_compra = _cotizacion.importe_compra
                 cot.importe_venta = _cotizacion.importe_venta
                 cot.save()
+            except EmptyResultSet:
+                Cotizacion.crear(
+                    moneda=moneda,
+                    fecha=_cotizacion.fecha,
+                    importe_compra=_cotizacion.importe_compra,
+                    importe_venta=_cotizacion.importe_compra,
+                )
 
     def as_view_context(self) -> dict[str, str | float]:
         return {
