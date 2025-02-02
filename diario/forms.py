@@ -208,14 +208,16 @@ class FormTitular(forms.ModelForm):
 
 class FormMoneda(forms.ModelForm):
     plural = forms.CharField(max_length=100, required=False)
-    cotizacion = forms.FloatField(required=False)
+    cotizacion_compra = forms.FloatField(required=False)
+    cotizacion_venta = forms.FloatField(required=False)
 
     class Meta:
         model = Moneda
-        fields = ('nombre', 'monname', 'plural', 'cotizacion')
+        fields = ('nombre', 'monname', 'plural', 'cotizacion_compra', 'cotizacion_venta')
 
     def save(self, *args, **kwargs) -> Moneda:
         self.instance.plural = self.cleaned_data['plural']
-        self.instance.cotizacion = self.cleaned_data['cotizacion'] or 1.0
+        self.instance.cotizacion_compra = self.cleaned_data['cotizacion_compra'] or 1.0
+        self.instance.cotizacion_venta = self.cleaned_data['cotizacion_venta'] or 1.0
 
         return super().save(*args, **kwargs)
