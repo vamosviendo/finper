@@ -124,7 +124,7 @@ class Moneda(MiModel):
                     moneda=moneda,
                     fecha=_cotizacion.fecha,
                     importe_compra=_cotizacion.importe_compra,
-                    importe_venta=_cotizacion.importe_compra,
+                    importe_venta=_cotizacion.importe_venta,
                 )
 
     def as_view_context(self) -> dict[str, str | float]:
