@@ -100,8 +100,8 @@ class Cuenta(PolymorphModel):
     def cotizacion(self) -> float:
         return self.moneda.cotizacion
 
-    def saldo_en(self, otra_moneda: Moneda) -> float:
-        return round(self.saldo * self.moneda.cotizacion_en(otra_moneda), 2)
+    def saldo_en(self, otra_moneda: Moneda, compra: bool) -> float:
+        return round(self.saldo * self.moneda.cotizacion_en(otra_moneda, compra=compra), 2)
     
     def saldo_en_mov(self, movimiento: Movimiento) -> float:
         try:
@@ -109,8 +109,12 @@ class Cuenta(PolymorphModel):
         except Saldo.DoesNotExist:
             return 0
 
-    def saldo_en_mov_en(self, movimiento: Movimiento, otra_moneda: Moneda) -> float:
-        return round(self.saldo_en_mov(movimiento) * self.moneda.cotizacion_en(otra_moneda), 2)
+    def saldo_en_mov_en(self, movimiento: Movimiento, otra_moneda: Moneda, compra: bool) -> float:
+        return round(
+            self.saldo_en_mov(movimiento) *
+            self.moneda.cotizacion_en_al(otra_moneda, fecha=movimiento.fecha, compra=compra),
+            2
+        )
 
     def recalcular_saldos_entre(self,
                                 pos_desde: Posicion = Posicion(orden_dia=0),
