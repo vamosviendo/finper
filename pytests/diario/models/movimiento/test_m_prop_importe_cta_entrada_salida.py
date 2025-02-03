@@ -1,12 +1,23 @@
-def test_si_moneda_de_cuenta_es_igual_a_la_del_movimiento_devuelve_importe_del_movimiento(mov_distintas_monedas):
-    assert abs(mov_distintas_monedas.importe_cta_salida) == abs(mov_distintas_monedas.importe)
+import pytest
+
+from utils.varios import el_que_no_es
 
 
+@pytest.mark.parametrize("sentido", ["entrada", "salida"])
+def test_si_moneda_de_cuenta_es_igual_a_la_del_movimiento_devuelve_importe_del_movimiento(sentido, request):
+    movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
+    assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == abs(movimiento.importe)
+
+
+@pytest.mark.parametrize("sentido", ["entrada", "salida"])
 def test_si_moneda_de_cuenta_es_distinta_de_la_del_movimiento_devuelve_importe_del_movimiento_cotizado(
-        mov_distintas_monedas):
+        sentido, request):
+    movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
+    sentido_opuesto = el_que_no_es(sentido, "entrada", "salida")
+
     assert \
-        mov_distintas_monedas.importe_cta_entrada == \
-        round(mov_distintas_monedas.importe / mov_distintas_monedas.cotizacion, 2)
+        abs(getattr(movimiento, f"importe_cta_{sentido_opuesto}")) == \
+        round(movimiento.importe / movimiento.cotizacion, 2)
 
 
 def test_si_no_hay_cuenta_de_entrada_importe_cta_entrada_devuelve_None(salida):
