@@ -200,8 +200,8 @@ class Cuenta(PolymorphModel):
 
     def total_movs(self) -> float:
         """ Devuelve suma de los importes de los movimientos de la cuenta"""
-        total_entradas = sum([x.importe_en(self.moneda) for x in self.entradas.all()])
-        total_salidas = sum([x.importe_en(self.moneda) for x in self.salidas.all()])
+        total_entradas = sum([x.importe_en(self.moneda, compra=False) for x in self.entradas.all()])
+        total_salidas = sum([x.importe_en(self.moneda, compra=True) for x in self.salidas.all()])
 
         return round(total_entradas - total_salidas, 2)
 
