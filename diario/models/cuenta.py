@@ -245,8 +245,8 @@ class Cuenta(PolymorphModel):
             'saldo': self.saldo_en_mov(movimiento) if movimiento else self.saldo,
             'saldos': {
                 m.monname:
-                    self.saldo_en_mov_en(movimiento, m) if movimiento
-                    else self.saldo_en(m)
+                    self.saldo_en_mov_en(movimiento, m, compra=False) if movimiento
+                    else self.saldo_en(m, compra=False)
                 for m in Moneda.todes()},
             'es_acumulativa': self.es_acumulativa,
             'fecha_alta': self.fecha_creacion,
