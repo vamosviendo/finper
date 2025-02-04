@@ -80,12 +80,16 @@ def test_importe_de_saldo_creado_es_igual_a_suma_del_importe_del_movimiento_y_el
     )
 
 
+@pytest.mark.parametrize("sentido", ["entrada", "salida"])
 def test_si_moneda_del_movimiento_es_distinta_de_la_de_la_cuenta_suma_importe_del_movimiento_ajustado_segun_cotizacion_del_mismo(
-        mov_distintas_monedas, cuenta_con_saldo_en_euros, mock_crear):
+        sentido, cuenta_con_saldo_en_euros, mocker, request):
+    mov_distintas_monedas = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
+    mock_crear = mocker.patch('diario.models.Saldo.crear')
+
     Saldo.objects.get(cuenta=cuenta_con_saldo_en_euros, movimiento=mov_distintas_monedas).delete()
     saldo_anterior = Saldo.objects.filter(cuenta=cuenta_con_saldo_en_euros).last().importe
     Saldo.generar(mov_distintas_monedas, cuenta_con_saldo_en_euros)
-    print('saldo anterior:', saldo_anterior)
+
     mock_crear.assert_called_once_with(
         cuenta=cuenta_con_saldo_en_euros,
         movimiento=mov_distintas_monedas,
