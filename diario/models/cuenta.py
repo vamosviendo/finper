@@ -396,8 +396,8 @@ class CuentaInteractiva(Cuenta):
 
         if not self.saldo_ok():
             raise ValidationError(
-                f'Saldo de cuenta "{self.nombre}" no coincide '
-                f'con sus movimientos. Verificar'
+                f'Saldo de cuenta "{self.nombre}" no coincide con sus movimientos. '
+                f'Saldo: {self.saldo} - Total movimientos: {self.total_movs()}'
             )
 
         cuentas_limpias = self._ajustar_subcuentas(subcuentas)

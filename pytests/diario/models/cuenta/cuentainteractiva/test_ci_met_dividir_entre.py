@@ -1,3 +1,4 @@
+import re
 from datetime import date, timedelta
 from unittest.mock import MagicMock
 
@@ -23,9 +24,11 @@ def test_da_error_si_saldo_no_ok(mock_saldo_ok, cuenta, dicts_subcuentas):
     mock_saldo_ok.return_value = False
     with pytest.raises(
             ValidationError,
-            match=f'Saldo de cuenta "{cuenta.nombre}" no coincide '
-            'con sus movimientos. Verificar'
-
+            match=re.escape(
+                f'Saldo de cuenta "{cuenta.nombre}" no coincide '
+                f'con sus movimientos. Saldo: {cuenta.saldo} - '
+                f'Total movimientos: {cuenta.total_movs()}'
+            )
     ):
         cuenta.dividir_entre(*dicts_subcuentas)
 
