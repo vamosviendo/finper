@@ -103,7 +103,9 @@ class Moneda(MiModel):
         return self.cotizacion_en(otra_moneda, compra=False)
 
     def cotizacion_en_al(self, otra_moneda: Self, fecha: date, compra: bool) -> float:
-        return self.cotizacion_al(fecha, compra=compra) / otra_moneda.cotizacion_al(fecha, compra=compra)
+        if otra_moneda == self:
+            return 1
+        return self.cotizacion_al(fecha, compra=compra) / otra_moneda.cotizacion_al(fecha, compra=not compra)
 
     def cotizacion_compra_en_al(self, otra_moneda: Self, fecha: date) -> float:
         return self.cotizacion_en_al(otra_moneda, fecha, compra=True)
