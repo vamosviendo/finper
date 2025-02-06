@@ -525,11 +525,10 @@ class TestSaveCambiaCuentas:
             movimiento.moneda = real
             movimiento.full_clean()
             movimiento.save()
-            print('cotización mov:', movimiento.cotizacion, movimiento.importe_cta_entrada, movimiento.importe_cta_salida)
 
             assert \
                 movimiento.cotizacion == \
-                moneda_otra_cuenta.cotizacion_en_al(real, fecha=movimiento.fecha, compra=compra)
+                round(moneda_otra_cuenta.cotizacion_en_al(real, fecha=movimiento.fecha, compra=compra), 2)
             assert movimiento.importe == round(importe / cotizacion * movimiento.cotizacion, 2)
             assert getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}") == pytest.approx(importes_ctas[f"importe_cta_{sentido_otra_cuenta}"], 0.001)
             assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == abs(movimiento.importe)
@@ -600,8 +599,9 @@ class TestSaveCambiaCuentas:
             movimiento.full_clean()
             movimiento.save()
 
-
-            assert movimiento.cotizacion == euro.cotizacion_en_al(real, fecha=movimiento.fecha, compra=compra)
+            assert \
+                movimiento.cotizacion == \
+                round(euro.cotizacion_en_al(real, fecha=movimiento.fecha, compra=compra), 2)
             assert movimiento.importe == 5
             assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == round(5/movimiento.cotizacion, 2)
             assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == 5
@@ -628,7 +628,7 @@ class TestSaveCambiaCuentas:
 
             assert \
                 movimiento.cotizacion == \
-                real.cotizacion_en_al(movimiento.moneda, fecha=movimiento.fecha, compra=compra)
+                round(real.cotizacion_en_al(movimiento.moneda, fecha=movimiento.fecha, compra=compra), 2)
             assert movimiento.importe == importe
             assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == round(importe / movimiento.cotizacion, 2)
             assert getattr(movimiento, f"importe_cta_{sentido}") == importe_cta_en_moneda_mov
@@ -692,7 +692,9 @@ class TestSaveCambiaCuentas:
             movimiento.full_clean()
             movimiento.save()
 
-            assert movimiento.cotizacion == real.cotizacion_en_al(dolar, fecha=movimiento.fecha, compra=compra)
+            assert \
+                movimiento.cotizacion == \
+                round(real.cotizacion_en_al(dolar, fecha=movimiento.fecha, compra=compra), 2)
             assert movimiento.importe == 5
             assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == round(5 / movimiento.cotizacion, 2)
             assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == 5
@@ -716,7 +718,9 @@ class TestSaveCambiaCuentas:
             movimiento.full_clean()
             movimiento.save()
 
-            assert movimiento.cotizacion == real.cotizacion_en_al(yen, fecha=movimiento.fecha, compra=compra)
+            assert \
+                movimiento.cotizacion == \
+                round(real.cotizacion_en_al(yen, fecha=movimiento.fecha, compra=compra), 2)
             assert movimiento.importe == importe
             assert \
                 abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == \
@@ -742,7 +746,7 @@ class TestSaveCambiaCuentas:
             movimiento.full_clean()
             movimiento.save()
 
-            assert movimiento.cotizacion == yen.cotizacion_en_al(real, fecha=movimiento.fecha, compra=compra)
+            assert movimiento.cotizacion == round(yen.cotizacion_en_al(real, fecha=movimiento.fecha, compra=compra), 2)
             assert movimiento.importe == importe
             assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == movimiento.importe
             assert \
@@ -765,7 +769,7 @@ class TestSaveCambiaCuentas:
             movimiento.full_clean()
             movimiento.save()
 
-            assert movimiento.cotizacion == real.cotizacion_en_al(yen, fecha=movimiento.fecha, compra=compra)
+            assert movimiento.cotizacion == round(real.cotizacion_en_al(yen, fecha=movimiento.fecha, compra=compra), 2)
             assert movimiento.importe == 8
             assert \
                 abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == \
@@ -788,7 +792,7 @@ class TestSaveCambiaCuentas:
             movimiento.full_clean()
             movimiento.save()
 
-            assert movimiento.cotizacion == yen.cotizacion_en_al(real, fecha=movimiento.fecha, compra=compra)
+            assert movimiento.cotizacion == round(yen.cotizacion_en_al(real, fecha=movimiento.fecha, compra=compra), 2)
             assert movimiento.importe == 8
             assert \
                 abs(getattr(movimiento, f"importe_cta_{sentido}")) == \
@@ -921,7 +925,7 @@ class TestSaveCambiaCuentas:
 
             assert \
                 traspaso_en_dolares.cotizacion == \
-                euro.cotizacion_en_al(dolar, fecha=traspaso_en_dolares.fecha, compra=compra)
+                round(euro.cotizacion_en_al(dolar, fecha=traspaso_en_dolares.fecha, compra=compra), 2)
             assert traspaso_en_dolares.importe == importe
             assert \
                 abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido_otra_cuenta}")) == \
@@ -972,7 +976,7 @@ class TestSaveCambiaCuentas:
 
             assert \
                 traspaso_en_dolares.cotizacion == \
-                dolar.cotizacion_en_al(euro, fecha=traspaso_en_dolares.fecha, compra=compra)
+                round(dolar.cotizacion_en_al(euro, fecha=traspaso_en_dolares.fecha, compra=compra), 2)
             assert traspaso_en_dolares.importe == round(importe * traspaso_en_dolares.cotizacion, 2)
             assert abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido}")) == traspaso_en_dolares.importe
             assert abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido_otra_cuenta}")) == importe
@@ -995,7 +999,7 @@ class TestSaveCambiaCuentas:
 
             assert \
                 traspaso_en_dolares.cotizacion == \
-                euro.cotizacion_en_al(dolar, fecha=traspaso_en_dolares.fecha, compra=compra)
+                round(euro.cotizacion_en_al(dolar, fecha=traspaso_en_dolares.fecha, compra=compra), 2)
             assert traspaso_en_dolares.importe == 6
             assert \
                 abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido}")) == \
@@ -1044,7 +1048,7 @@ class TestSaveCambiaCuentas:
 
             assert \
                 traspaso_en_dolares.cotizacion == \
-                dolar.cotizacion_en_al(euro, fecha=traspaso_en_dolares.fecha, compra=compra)
+                round(dolar.cotizacion_en_al(euro, fecha=traspaso_en_dolares.fecha, compra=compra), 2)
             assert traspaso_en_dolares.importe == 6
             assert \
                 abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido}")) == 6
@@ -1200,7 +1204,9 @@ class TestSaveCambiaCuentas:
             movimiento.full_clean()
             movimiento.save()
 
-            assert movimiento.cotizacion == euro.cotizacion_en_al(dolar, fecha=movimiento.fecha, compra=compra)
+            assert \
+                movimiento.cotizacion == \
+                round(euro.cotizacion_en_al(dolar, fecha=movimiento.fecha, compra=compra), 2)
             assert movimiento.importe == importe
             assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == importe
             assert \
@@ -1249,7 +1255,9 @@ class TestSaveCambiaCuentas:
             movimiento.full_clean()
             movimiento.save()
 
-            assert movimiento.cotizacion == euro.cotizacion_en_al(dolar, fecha=movimiento.fecha, compra=compra)
+            assert \
+                movimiento.cotizacion == \
+                round(euro.cotizacion_en_al(dolar, fecha=movimiento.fecha, compra=compra), 2)
             assert movimiento.importe == 20
             assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == 20
             assert abs(getattr(movimiento, f"importe_cta_{sentido_contracuenta}")) == round(20 / movimiento.cotizacion, 2)
@@ -1297,7 +1305,9 @@ class TestSaveCambiaCuentas:
             movimiento.full_clean()
             movimiento.save()
 
-            assert movimiento.cotizacion == dolar.cotizacion_en_al(euro, fecha=movimiento.fecha, compra=compra)
+            assert \
+                movimiento.cotizacion == \
+                round(dolar.cotizacion_en_al(euro, fecha=movimiento.fecha, compra=compra), 2)
             assert movimiento.importe == round(importe * movimiento.cotizacion, 2)
             assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == importe
             assert abs(getattr(movimiento, f"importe_cta_{sentido_contracuenta}")) == movimiento.importe
@@ -1346,7 +1356,9 @@ class TestSaveCambiaCuentas:
             movimiento.full_clean()
             movimiento.save()
 
-            assert movimiento.cotizacion == dolar.cotizacion_en_al(euro, fecha=movimiento.fecha, compra=compra)
+            assert \
+                movimiento.cotizacion == \
+                round(dolar.cotizacion_en_al(euro, fecha=movimiento.fecha, compra=compra), 2)
             assert movimiento.importe == 20
             assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == round(20 / movimiento.cotizacion, 2)
             assert abs(getattr(movimiento, f"importe_cta_{sentido_contracuenta}")) == 20
@@ -1982,7 +1994,6 @@ class TestSaveCambiaMoneda:
         mov_distintas_monedas = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
         sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
         saldo = getattr(mov_distintas_monedas, f"cta_{sentido_otra_cuenta}").saldo
-        print(saldo)
         importe = getattr(mov_distintas_monedas, f"importe_cta_{sentido_otra_cuenta}")
 
         mov_distintas_monedas.cotizacion = 4

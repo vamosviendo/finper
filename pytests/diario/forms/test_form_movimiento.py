@@ -121,7 +121,6 @@ def test_muestra_campo_moneda():
 
 def test_campo_moneda_muestra_monedas_existentes(peso, dolar, euro):
     formmov = FormMovimiento()
-    print([c[1] for c in formmov.fields['moneda'].choices])
     assert [c[1] for c in formmov.fields['moneda'].choices] == [m.nombre for m in (peso, dolar, euro)]
 
 
@@ -148,4 +147,4 @@ def test_si_no_se_ingresa_cotizacion_calcula_cotizacion_desde_monedas(formmov_di
     formmov_distintas_monedas.save()
 
     instance = formmov_distintas_monedas.instance
-    assert instance.cotizacion == euro.cotizacion_en_al(dolar, fecha=instance.fecha, compra=False)
+    assert instance.cotizacion == round(euro.cotizacion_en_al(dolar, fecha=instance.fecha, compra=False), 2)
