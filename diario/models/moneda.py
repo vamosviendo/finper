@@ -32,9 +32,12 @@ class Moneda(MiModel):
     @property
     def cotizacion_compra(self) -> float:
         try:
-            return self.cotizaciones.last().importe_compra
+            return self._cotizacion.importe_compra
         except AttributeError:
-            return 1
+            try:
+                return self.cotizaciones.last().importe_compra
+            except (ValueError, AttributeError):
+                return 1
 
     @cotizacion_compra.setter
     def cotizacion_compra(self, value: float):
@@ -48,9 +51,12 @@ class Moneda(MiModel):
     @property
     def cotizacion_venta(self) -> float:
         try:
-            return self.cotizaciones.last().importe_venta
+            return self._cotizacion.importe_venta
         except AttributeError:
-            return 1
+            try:
+                return self.cotizaciones.last().importe_venta
+            except (ValueError, AttributeError):
+                return 1
 
     @cotizacion_venta.setter
     def cotizacion_venta(self, value: float):
