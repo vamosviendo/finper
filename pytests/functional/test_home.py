@@ -3,7 +3,7 @@ from __future__ import annotations
 from django.urls import reverse
 from selenium.webdriver.common.by import By
 
-from diario.models import Movimiento, Dia
+from diario.models import Dia
 from .helpers import texto_en_hijos_respectivos
 from utils.numeros import float_format
 
@@ -106,7 +106,7 @@ def test_home_monedas(
     for cuenta in (cuenta_con_saldo, cuenta_con_saldo_en_dolares, cuenta_con_saldo_en_euros):
         for moneda in (peso, dolar, euro):
             saldo_mon = browser.esperar_elemento(f"id_saldo_cta_{cuenta.slug}_{moneda.monname}")
-            assert saldo_mon.text == float_format(cuenta.saldo_en(moneda))
+            assert saldo_mon.text == float_format(cuenta.saldo_en(moneda, compra=False))
             classname = saldo_mon.get_attribute("class")
             if moneda == cuenta.moneda:
                 assert "mon_cuenta" in classname
@@ -121,7 +121,7 @@ def test_home_monedas(
     for cuenta in subcuentas:
         for moneda in (peso, dolar, euro):
             saldo_mon = browser.esperar_elemento(f"id_saldo_cta_{cuenta.slug}_{moneda.monname}")
-            assert saldo_mon.text == float_format(cuenta.saldo_en(moneda))
+            assert saldo_mon.text == float_format(cuenta.saldo_en(moneda, compra=False))
             classname = saldo_mon.get_attribute("class")
             if moneda == cuenta.moneda:
                 assert "mon_cuenta" in classname

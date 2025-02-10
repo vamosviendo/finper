@@ -11,7 +11,8 @@ def test_crear_moneda(browser, cuenta_con_saldo, cuenta_con_saldo_negativo, cuen
     browser.completar_form(
         nombre="moneda nueva",
         monname="mn",
-        cotizacion="15",
+        cotizacion_compra="15",
+        cotizacion_venta="18"
     )
     browser.assert_url(reverse('home'))
 
@@ -21,7 +22,7 @@ def test_crear_moneda(browser, cuenta_con_saldo, cuenta_con_saldo_negativo, cuen
     nombres_moneda = [x.text.strip() for x in links_moneda]
     assert "moneda nueva" in nombres_moneda
     cot_moneda = browser.esperar_elemento("id_cotizacion_mn")
-    assert cot_moneda.text == float_format(15)
+    assert cot_moneda.text == float_format(18)
 
 
 def test_modificar_moneda(browser, dolar):
