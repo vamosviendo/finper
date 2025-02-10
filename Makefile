@@ -36,3 +36,7 @@ update-vvmodel:
 
 update-vvsteps:
 	git -c protocol.file.allow=always submodule update --remote --merge vvsteps
+
+push:
+	~/bin/git_push_en_arch
+
