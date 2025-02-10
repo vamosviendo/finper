@@ -148,7 +148,7 @@ def test_entre_cuentas_en_distinta_moneda_se_calcula_cotizacion_a_partir_de_la_c
     mov.full_clean()
     mov.save()
 
-    assert mov.cotizacion == round(dolar.cotizacion_en_al(euro, fecha, compra=compra), 2)
+    assert mov.cotizacion == dolar.cotizacion_en_al(euro, fecha, compra=compra)
 
 
 def test_entre_cuentas_en_distinta_moneda_permite_cotizacion_arbitraria(

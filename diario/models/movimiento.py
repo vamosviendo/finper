@@ -779,11 +779,11 @@ class Movimiento(MiModel):
                 if self.cotizacion == 0.0 or cambia_moneda:
                     otra_moneda = el_que_no_es(self.moneda, self.cta_entrada.moneda, self.cta_salida.moneda)
                     if self.cambia_cuenta_por_cuenta_en_otra_moneda(True) or self.cambia_cuenta_por_cuenta_en_otra_moneda(False):
-                        self.cotizacion = round(otra_moneda.cotizacion_en_al(
+                        self.cotizacion = otra_moneda.cotizacion_en_al(
                             self.moneda,
                             fecha=self.fecha,
                             compra=self.cta_entrada.moneda == self.moneda
-                        ), 2)
+                        )
                     else:
                         self.cotizacion = 1 / self.cotizacion
             else:
