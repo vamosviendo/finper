@@ -68,10 +68,6 @@ def test_puede_pasar_movimientos_posteriores(mas_de_7_dias, client):
     assert mas_de_7_dias.first().as_view_context() in response.context.get('dias')
     assert mas_de_7_dias.last().as_view_context() not in response.context.get('dias')
 
-def test_pasa_movimientos_a_template(entrada, salida, traspaso, response):
-    for mov in (entrada, salida, traspaso):
-        assert mov.as_view_context() in response.context.get('movimientos')
-
 
 def test_pasa_solo_cuentas_independientes_a_template(cuenta, cuenta_acumulativa, response):
     cuentas = response.context['cuentas']
@@ -268,14 +264,6 @@ def test_si_recibe_titname_e_id_de_movimiento_pasa_titulo_de_saldo_gral_con_titu
         response.context['titulo_saldo_gral'] == \
         f"Capital de {titular.nombre} en movimiento {entrada.orden_dia} " \
         f"del {entrada.fecha} ({entrada.concepto})"
-
-
-def test_si_recibe_id_de_movimiento_pasa_todos_los_movimientos_en_formato_dict_a_template(
-        entrada, salida, traspaso, client):
-    response = client.get(reverse('movimiento', args=[entrada.pk]))
-    assert \
-        response.context['movimientos'] == \
-        [x.as_view_context() for x in [entrada, salida, traspaso]]
 
 
 def test_si_recibe_id_de_movimiento_pasa_movimiento_en_formato_dict_a_template(entrada, client):

@@ -88,7 +88,6 @@ class HomeView(TemplateView):
                 'titulares': [
                     x.as_view_context(movimiento) for x in Titular.todes()
                 ],
-                'movimientos': [x.as_view_context() for x in Movimiento.todes()],
                 'dias': Paginator(dias_con_movimientos, 7).get_page(self.request.GET.get('page')),
                 'cuentas': [
                     x.as_view_context(movimiento) for x in
