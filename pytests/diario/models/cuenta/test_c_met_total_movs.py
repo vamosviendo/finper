@@ -21,21 +21,15 @@ def test_funciona_correctamente_con_decimales(cuenta):
 
 
 @pytest.mark.parametrize("tipo", ["compra", "venta"])
-def test_computa_correctamente_movimientos_en_moneda_distinta_a_la_de_la_cuenta(
-        tipo, cuenta, cuenta_en_dolares, dolar, peso, fecha):
+def test_computa_correctamente_movimientos_en_moneda_distinta_a_la_de_la_cuenta(cuenta_en_dolares, tipo, request):
+    mov = request.getfixturevalue(f"{tipo}_dolares")
     compra = tipo == "compra"
-    tipo_opuesto = el_que_no_es(tipo, "compra", "venta")
-    sentido = "entrada" if tipo == "venta" else "salida"
-    sentido_opuesto = el_que_no_es(sentido, "entrada", "salida")
+    assert \
+        abs(cuenta_en_dolares.total_movs()) == \
+        round(mov.importe * mov.moneda.cotizacion_en(cuenta_en_dolares.moneda, compra=compra), 2)
 
-    Movimiento.crear(**{
-        "concepto": f"{tipo_opuesto} de dólares expresada en pesos",
-        "fecha": fecha,
-        f"cta_{sentido}": cuenta_en_dolares,
-        f"cta_{sentido_opuesto}": cuenta,
-        "importe": 850,
-        "moneda": peso,
-        "cotizacion": 1.0 / dolar.cotizacion_al(fecha, compra=compra)
-    })
 
-    assert abs(cuenta_en_dolares.total_movs()) == round(850 * peso.cotizacion_en(dolar, compra=compra), 2)
+def test_coincide_con_saldo_en_movimientos_en_distintas_monedas(
+        cuenta, cuenta_en_dolares, entrada_en_dolares, venta_dolares):
+    assert cuenta.total_movs() == cuenta.saldo
+    assert cuenta_en_dolares.total_movs() == cuenta_en_dolares.saldo

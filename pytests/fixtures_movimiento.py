@@ -236,6 +236,38 @@ def traspaso_en_dolares(
 
 
 @pytest.fixture
+def venta_dolares(
+        peso: Moneda, dolar: Moneda,
+        fecha: date,
+        cuenta: CuentaInteractiva, cuenta_en_dolares: CuentaInteractiva
+) -> Movimiento:
+    return Movimiento.crear(
+        "Venta u$s",
+        fecha=fecha,
+        cta_entrada=cuenta,
+        cta_salida=cuenta_en_dolares,
+        importe=36400,
+        moneda=peso,
+    )
+
+
+@pytest.fixture
+def compra_dolares(
+        peso: Moneda, dolar: Moneda,
+        fecha: date,
+        cuenta: CuentaInteractiva, cuenta_en_dolares: CuentaInteractiva
+) -> Movimiento:
+    return Movimiento.crear(
+        "Venta u$s",
+        fecha=fecha,
+        cta_entrada=cuenta_en_dolares,
+        cta_salida=cuenta,
+        importe=55300,
+        moneda=peso,
+    )
+
+
+@pytest.fixture
 def mov_distintas_monedas_en_moneda_cta_salida(
         cuenta_con_saldo_en_dolares: CuentaInteractiva,
         cuenta_con_saldo_en_euros: CuentaInteractiva,
