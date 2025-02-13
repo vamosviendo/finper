@@ -5,6 +5,7 @@ import pytest
 from django.apps import apps
 from django.core.management import call_command
 
+from diario.models import Cotizacion
 from diario.serializers import MovimientoSerializado, DiaSerializado, SaldoSerializado
 from utils.archivos import es_json_valido
 
@@ -80,6 +81,16 @@ def test_serializa_todos_los_titulares_monedas_y_cuentas_de_la_base_de_datos_en_
         assert getattr(elem, identificador) in [
             es.fields[key] for es in elementos_ser
         ]
+
+
+def test_serializa_todas_las_cotizaciones_de_la_base_de_datos_en_json(
+        varias_monedas, cotizacion_posterior, cotizacion_tardia, db_serializada):
+    cotizaciones = db_serializada.filter_by_model("diario.cotizacion")
+    assert len(cotizaciones) == Cotizacion.cantidad()
+    for cotizacion in Cotizacion.todes():
+        assert \
+            ([cotizacion.moneda.monname], str(cotizacion.fecha)) in \
+            [(cot.fields['moneda'], cot.fields['fecha']) for cot in cotizaciones]
 
 
 @pytest.mark.parametrize("modelo", ["cuentainteractiva", "cuentaacumulativa"])

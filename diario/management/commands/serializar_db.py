@@ -10,6 +10,7 @@ class Command(BaseCommand):
         call_command(
             'dumpdata',
             'diario.moneda',
+            'diario.cotizacion',
             'diario.titular',
             'diario.cuenta',
             'diario.cuentaacumulativa',
