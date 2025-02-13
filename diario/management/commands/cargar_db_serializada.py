@@ -5,10 +5,9 @@ import json
 from pathlib import Path
 
 from django.apps import apps
-from django.core.exceptions import ValidationError
 from django.core.management import BaseCommand, call_command
 
-from diario.models import Titular, Moneda, Cuenta, Movimiento, CuentaInteractiva
+from diario.models import Titular, Moneda, Cotizacion, Cuenta, Movimiento, CuentaInteractiva
 from diario.serializers import CuentaSerializada, MovimientoSerializado
 from finper import settings
 from utils.errors import ElementoSerializadoInexistente
@@ -78,6 +77,16 @@ def _cargar_modelo_simple(modelo: str, de_serie: SerializedDb, excluir_campos: l
     for elemento in serie_modelo:
         fields = {k: v for k, v in elemento.fields.items() if k not in excluir_campos}
         Modelo.crear(**fields)
+    print("- OK")
+
+
+def _cargar_cotizaciones(de_serie: SerializedDb):
+    cotizaciones = de_serie.filter_by_model("diario.cotizacion")
+    print("Cargando elementos del modelo cotizaciones", end=" ")
+    for elemento in cotizaciones:
+        fields = {k: v for k, v in elemento.fields.items()}
+        fields["moneda"] = Moneda.tomar(monname=fields["moneda"][0])
+        Cotizacion.crear(**fields)
     print("- OK")
 
 
@@ -298,6 +307,7 @@ class Command(BaseCommand):
 
         _cargar_modelo_simple("diario.titular", db_full, ["deudores"])
         _cargar_modelo_simple("diario.moneda", db_full)
+        _cargar_cotizaciones(db_full)
 
         cuentas = CuentaSerializada.todes(container=db_full)
         movimientos = MovimientoSerializado.todes(container=db_full)

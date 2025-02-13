@@ -6,7 +6,16 @@ from pathlib import Path
 import pytest
 from django.core.management import call_command
 
-from diario.models import Titular, Moneda, Cuenta, Dia, Movimiento, CuentaAcumulativa, CuentaInteractiva, Saldo
+from diario.models import (
+    Titular,
+    Moneda,
+    Cotizacion,
+    Cuenta,
+    CuentaAcumulativa,
+    CuentaInteractiva,
+    Dia,
+    Movimiento
+)
 from diario.serializers import CuentaSerializada, MovimientoSerializado
 from finper import settings
 from utils.errors import ElementoSerializadoInexistente
@@ -176,6 +185,23 @@ def test_carga_todas_las_monedas_en_la_base_de_datos(peso, dolar, euro, db_seria
     call_command("cargar_db_serializada")
     for moneda in monedas:
         Moneda.tomar(monname=moneda.fields["monname"])
+
+
+def test_carga_todas_las_cotizaciones_en_la_base_de_datos(
+        peso, dolar, euro, yen, cotizacion_posterior, cotizacion_tardia, db_serializada, vaciar_db):
+    cotizaciones = db_serializada.filter_by_model("diario.cotizacion")
+    call_command("cargar_db_serializada")
+    assert Cotizacion.cantidad() == len(cotizaciones)
+    for cotizacion in cotizaciones:
+        try:
+            Cotizacion.tomar(
+                moneda=Moneda.tomar(monname=cotizacion.fields["moneda"][0]),
+                fecha=cotizacion.fields["fecha"]
+            )
+        except Cotizacion.DoesNotExist:
+            raise AssertionError(
+                f"No se creó cotización de moneda {cotizacion.fields['monname']} "
+                f"al {cotizacion.fields['fecha']}")
 
 
 def test_carga_todas_las_cuentas_en_la_base_de_datos(
