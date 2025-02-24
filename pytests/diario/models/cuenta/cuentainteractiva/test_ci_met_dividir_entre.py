@@ -4,8 +4,9 @@ from unittest.mock import MagicMock
 
 import pytest
 from django.core.exceptions import ValidationError
+from mypy.typeops import false_only
 
-from diario.models import Cuenta
+from diario.models import Cuenta, Movimiento
 from utils.errors import ErrorFechaCreacionPosteriorAConversion, \
     ErrorMovimientoPosteriorAConversion, ErrorDeSuma
 
@@ -284,3 +285,19 @@ def test_subcuentas_toman_moneda_de_cuenta_madre(cuenta_en_dolares, dicts_subcue
     sc1, sc2 = cuenta_en_dolares.dividir_entre(*dicts_subcuentas)
     assert sc1.moneda == dolar
     assert sc2.moneda == dolar
+
+
+def test_si_traspasa_saldo_a_cuenta_de_otro_titular_genera_contramovimiento_de_credito(
+        cuenta, dicts_subcuentas_otro_titular):
+    _, scot = cuenta.dividir_entre(*dicts_subcuentas_otro_titular)
+    traspaso = scot.movs().first()
+    assert traspaso.id_contramov is not None
+    contramov = Movimiento.tomar(pk=traspaso.id_contramov)
+    assert contramov.importe == traspaso.importe
+
+
+def test_si_traspasa_saldo_a_cuenta_de_otro_titular_con_esgratis_True_no_genera_contramovimiento_de_credito(
+        cuenta, dicts_division_gratuita):
+    _, scot = cuenta.dividir_entre(*dicts_division_gratuita)
+    traspaso = scot.movs().first()
+    assert traspaso.id_contramov is None
