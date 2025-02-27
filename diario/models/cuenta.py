@@ -241,7 +241,7 @@ class Cuenta(PolymorphModel):
             'nombre': self.nombre,
             'ctaname': self.slug,
             'movimientos': [x.as_view_context() for x in self.movs()],
-            'dias': [dia.as_view_context(cuenta=self) for dia in self.dias().reverse()],
+            # 'dias': [dia.as_view_context(cuenta=self) for dia in self.dias().reverse()],
             'saldo': self.saldo_en_mov(movimiento) if movimiento else self.saldo,
             'saldos': {
                 m.monname:
