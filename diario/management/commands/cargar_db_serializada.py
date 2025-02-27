@@ -203,6 +203,11 @@ def _cargar_cuenta_acumulativa_y_movimientos_anteriores_a_su_conversion(
                 pos_cuenta: cuenta_db,
                 pos_contracuenta: _contracuenta_db(movimiento, pos_contracuenta, cuentas)
             }
+            print(
+                f"Creando movimiento {movimiento.fields['orden_dia']} "
+                f"del {movimiento.fields['dia'][0]}: {movimiento.fields['concepto']}",
+                end=" "
+            )
             Movimiento.crear(
                 fecha=movimiento.fields['dia'][0],
                 orden_dia=movimiento.fields['orden_dia'],
@@ -217,6 +222,7 @@ def _cargar_cuenta_acumulativa_y_movimientos_anteriores_a_su_conversion(
                 esgratis=movimiento.fields['id_contramov'] is None,
                 **cuentas_del_mov
             )
+            print("- OK")
 
     # Una vez terminados de recorrer los movimientos de la cuenta y ya
     # generados los movimientos anteriores a su conversión, se procede
@@ -279,6 +285,11 @@ def _cargar_cuentas_y_movimientos(
     # no generados manualmente).
 
     for movimiento in movimientos.filtrar(es_automatico=False):
+        print(
+            f"Creando movimiento {movimiento.fields['orden_dia']} "
+            f"del {movimiento.fields['dia'][0]}: {movimiento.fields['concepto']}",
+            end=" "
+        )
         Movimiento.crear(
             fecha=movimiento.fields['dia'][0],
             orden_dia=movimiento.fields['orden_dia'],
@@ -294,6 +305,7 @@ def _cargar_cuentas_y_movimientos(
             es_automatico=movimiento.fields['es_automatico'],
             esgratis=movimiento.fields['id_contramov'] is None,
         )
+        print("- OK")
     print("Se cargaron cuentas y movimientos")
 
 
