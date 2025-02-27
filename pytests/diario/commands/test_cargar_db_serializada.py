@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import date
 import json
 from pathlib import Path
 
@@ -383,6 +384,43 @@ def test_carga_movimientos_con_orden_dia_correcto(entrada, salida, traspaso, db_
             movimiento.fields["cta_entrada"][0] if movimiento.fields["cta_entrada"] else None,
             movimiento.fields["cta_salida"][0] if movimiento.fields["cta_salida"] else None,
         )
+
+
+def test_carga_movimientos_con_cotizacion_correcta(venta_dolares, request):
+    venta_dolares.cotizacion = 666.66
+    venta_dolares.full_clean()
+    venta_dolares.save()
+    request.getfixturevalue("db_serializada")
+    request.getfixturevalue("vaciar_db")
+    call_command("cargar_db_serializada")
+    mov_creado = Movimiento.tomar(
+        dia=Dia.tomar(fecha=venta_dolares.fecha),
+        orden_dia=venta_dolares.orden_dia
+    )
+    assert mov_creado.cotizacion == 666.66
+
+
+def test_carga_cotizacion_correcta_en_movimientos_anteriores_de_cuentas_acumulativas(
+        cuenta_en_dolares, venta_dolares, fecha, request):
+    venta_dolares.cotizacion = 666.66
+    venta_dolares.full_clean()
+    venta_dolares.save()
+    cuenta_en_dolares.dividir_y_actualizar(
+        ['subcuenta 1 con saldo en dólares', 'scsd1', 0],
+        ['subcuenta 2 con saldo en dólares', 'scsd2'],
+        fecha=fecha
+    )
+    request.getfixturevalue("db_serializada")
+    request.getfixturevalue("vaciar_db")
+
+    call_command("cargar_db_serializada")
+
+    mov_creado = Movimiento.tomar(
+        dia=Dia.tomar(fecha=venta_dolares.fecha),
+        orden_dia=venta_dolares.orden_dia
+    )
+
+    assert mov_creado.cotizacion == 666.66
 
 
 def test_carga_orden_dia_correcto_en_fechas_en_las_que_se_generaron_movimientos_automaticos(

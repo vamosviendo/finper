@@ -211,6 +211,7 @@ def _cargar_cuenta_acumulativa_y_movimientos_anteriores_a_su_conversion(
                 moneda=Moneda.tomar(
                     monname=movimiento.fields['moneda'][0]
                 ),
+                cotizacion=movimiento.fields['_cotizacion'],
                 id_contramov=movimiento.fields['id_contramov'],
                 es_automatico=movimiento.fields['es_automatico'],
                 esgratis=movimiento.fields['id_contramov'] is None,
@@ -288,6 +289,7 @@ def _cargar_cuentas_y_movimientos(
             moneda=Moneda.tomar(
                 monname=movimiento.fields['moneda'][0]
             ),
+            cotizacion=movimiento.fields['_cotizacion'],
             id_contramov=movimiento.fields['id_contramov'],
             es_automatico=movimiento.fields['es_automatico'],
             esgratis=movimiento.fields['id_contramov'] is None,
