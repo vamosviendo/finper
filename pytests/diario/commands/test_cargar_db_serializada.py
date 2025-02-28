@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from datetime import date
 import json
 from pathlib import Path
 
@@ -166,7 +165,7 @@ def movimiento_2(
     )
 
 
-def test_vacia_la_base_de_datos_antes_de_cargar_datos_nuevos(mocker, vaciar_db):
+def test_vacia_la_base_de_datos_antes_de_cargar_datos_nuevos(mocker, db_serializada_con_datos, vaciar_db):
     mock_unlink = mocker.patch("pathlib.Path.unlink", autospec=True)
     mock_call_command = mocker.patch("diario.management.commands.cargar_db_serializada.call_command")
     call_command("cargar_db_serializada")

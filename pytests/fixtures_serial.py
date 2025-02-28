@@ -28,7 +28,7 @@ def db_serializada_con_datos(
 
 
 @pytest.fixture
-def vaciar_db(db_serializada_con_datos: SerializedDb):
+def vaciar_db():
     for model in apps.all_models['diario']:
         for obj in apps.get_model("diario", model).objects.all():
             obj.delete()
