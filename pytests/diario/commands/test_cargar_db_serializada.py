@@ -338,6 +338,7 @@ def test_crea_contramovimiento_al_crear_movimiento_de_credito(credito, db_serial
 
 def test_no_crea_contramovimiento_al_crear_movimiento_de_donacion(donacion, db_serializada, vaciar_db):
     call_command("cargar_db_serializada")
+    mov = Movimiento.tomar(dia=Dia.tomar(fecha=donacion.fecha), orden_dia=donacion.orden_dia)
     try:
         Movimiento.tomar(
             concepto="Constitución de crédito",
@@ -347,6 +348,7 @@ def test_no_crea_contramovimiento_al_crear_movimiento_de_donacion(donacion, db_s
         pytest.fail("Se generó contramovimiento en movimiento de donación")
     except Movimiento.DoesNotExist:
         pass
+    assert mov.id_contramov is None
 
 
 def test_carga_todos_los_movimientos_en_la_base_de_datos(
@@ -510,6 +512,24 @@ def test_recupera_correctamente_subcuentas_de_origen_y_subcuentas_agregadas_en_l
     assert traspaso_2.cta_entrada == sca2
     assert traspaso_2.cta_salida == sco1
     assert traspaso_2.fecha == ca.fecha_conversion
+
+
+def test_crea_contramovimiento_de_movimiento_de_traspaso_de_saldo_no_gratuito_al_dividir_cuenta_en_subcuentas_de_distinto_titular(
+        cuenta_de_dos_titulares, db_serializada, vaciar_db):
+    call_command("cargar_db_serializada")
+    cuenta_otro_titular = Cuenta.tomar(slug="sctg")
+    traspaso = cuenta_otro_titular.movs().first()
+    assert traspaso.id_contramov is not None
+    contramov = Movimiento.tomar(pk=traspaso.id_contramov)
+    assert contramov.importe == traspaso.importe
+
+
+def test_no_crea_contramovimiento_de_movimiento_de_traspaso_de_saldo_gratuito_al_dividir_cuenta_en_subcuentas_de_distinto_titular(
+        division_gratuita, db_serializada, vaciar_db):
+    call_command("cargar_db_serializada")
+    cuenta_otro_titular = Cuenta.tomar(slug="sctg")
+    traspaso = cuenta_otro_titular.movs().first()
+    assert traspaso.id_contramov is None
 
 
 @pytest.mark.xfail

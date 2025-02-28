@@ -145,6 +145,7 @@ def _subcuentas_originales(
         # Si la subcuenta tiene saldo
         try:
             mov = traspasos_de_saldo[slugs_subcuentas_con_saldo.index(slug_subc)]
+            esgratis = mov.fields["id_contramov"] is None
             saldo = traspasos_de_saldo.tomar(
                 **{mov.pos_cta_receptora: [slug_subc]}
             ).fields["_importe"]
@@ -153,12 +154,14 @@ def _subcuentas_originales(
                 saldo = -saldo
         except ValueError:  # slug_subc no está en slugs_subcuentas_con_saldo
             saldo = 0
+            esgratis = False
 
         result.append({
             "nombre": subc.fields["nombre"],
             "slug": subc.fields["slug"],
             "titular": Titular.tomar(titname=subc.titname()),
-            "saldo": saldo
+            "saldo": saldo,
+            "esgratis": esgratis,
         })
 
     return result
