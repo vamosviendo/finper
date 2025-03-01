@@ -1,4 +1,5 @@
 db.sqlite*
+*.sqlite3
 pruebadb.sqlite3
 geckodriver.log
 venv
