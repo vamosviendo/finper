@@ -41,14 +41,13 @@ class HomeView(TemplateView):
             f"del {movimiento.fecha} ({movimiento.concepto})" \
             if movimiento else ""
         dias_con_movimientos = [
-            dia.as_view_context()
-            for dia in Dia.todes().order_by("-fecha")
+            dia for dia in Dia.todes().order_by("-fecha")
             if dia.movimientos.count() > 0
         ]
 
         context.update({
-            'movimiento': movimiento.as_view_context() if movimiento else None,
-            'monedas': [m.as_view_context() for m in Moneda.todes()]
+            'movimiento': movimiento or None,
+            'monedas': Moneda.todes()
         })
 
         if cuenta:
@@ -85,9 +84,7 @@ class HomeView(TemplateView):
                     saldo_general_historico(movimiento) if movimiento
                     else sum(c.saldo for c in Cuenta.filtro(cta_madre=None)),
                 'titulo_saldo_gral': f'Saldo general{movimiento_en_titulo}',
-                'titulares': [
-                    x.as_view_context(movimiento) for x in Titular.todes()
-                ],
+                'titulares': Titular.todes(),
                 'dias': Paginator(dias_con_movimientos, 7).get_page(self.request.GET.get('page')),
                 'cuentas': [
                     x.as_view_context(movimiento) for x in
