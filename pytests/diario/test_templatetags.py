@@ -2,22 +2,19 @@ import pytest
 
 from diario.templatetags.dict_key import dict_key
 from diario.templatetags.historicos import cap_historico, historico, historico_general
+from utils.numeros import float_format
 
 pytestmark = pytest.mark.django_db
 
 
 class TestHistorico:
-
     def test_devuelve_string_con_saldo_historico_de_cuenta_al_momento_del_movimiento(
-            self, mocker, cuenta, entrada, importe_aleatorio):
-        mock_saldo_historico = mocker.patch('diario.models.Cuenta.saldo_en_mov', autospec=True)
-        mock_saldo_historico.return_value = importe_aleatorio
+            self, cuenta, entrada, salida_posterior):
+        assert historico(cuenta, entrada) == float_format(cuenta.saldo_en_mov(entrada))
 
-        result = historico(cuenta, entrada)
-
-        mock_saldo_historico.assert_called_once_with(cuenta, entrada)
-        assert result == f'{importe_aleatorio:.2f}'.replace('.', ',')
-
+    def test_si_movimiento_es_None_devuelve_saldo_actual_de_cuenta(self, cuenta, entrada, salida_posterior):
+        assert historico(cuenta, None) != float_format(cuenta.saldo_en_mov(entrada))
+        assert historico(cuenta, None) == float_format(cuenta.saldo)
 
 class TestHistoricoGeneral:
     def test_llama_a_saldo_historico_general_para_obtener_saldo_historico(
@@ -43,16 +40,13 @@ class TestHistoricoGeneral:
 
 
 class TestCapHistorico:
-
     def test_devuelve_string_con_capital_historico_de_titular_al_momento_del_movimiento(
-            self, mocker, titular, cuenta, entrada, importe_aleatorio):
-        mock_capital_historico = mocker.patch('diario.models.Titular.capital_historico', autospec=True)
-        mock_capital_historico.return_value = importe_aleatorio
+            self, titular, cuenta, entrada, salida_posterior):
+        assert cap_historico(titular, entrada) == float_format(titular.capital_historico(entrada))
 
-        result = cap_historico(titular, entrada)
-
-        mock_capital_historico.assert_called_once_with(titular, entrada)
-        assert result == f'{importe_aleatorio:.2f}'.replace('.', ',')
+    def test_si_movimiento_es_None_devuelve_capital_actual_de_titular(
+            self, titular, cuenta, entrada, salida_posterior):
+        assert cap_historico(titular, None) == float_format(titular.capital)
 
 
 class TestDictKey:

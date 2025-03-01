@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django import template
 
 from diario.models import Movimiento, Cuenta, Titular
@@ -13,10 +15,14 @@ def historico_general(movimiento: Movimiento) -> str:
 
 
 @register.simple_tag
-def historico(cuenta: Cuenta, mov: Movimiento) -> str:
+def historico(cuenta: Cuenta, mov: Movimiento | None) -> str:
+    if mov is None:
+        return float_format(cuenta.saldo)
     return float_format(cuenta.saldo_en_mov(mov))
 
 
 @register.simple_tag
-def cap_historico(titular: Titular, mov: Movimiento) -> str:
+def cap_historico(titular: Titular, mov: Movimiento | None) -> str:
+    if mov is None:
+        return float_format(titular.capital)
     return float_format(titular.capital_historico(mov))
