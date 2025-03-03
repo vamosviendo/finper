@@ -47,7 +47,10 @@ class HomeView(TemplateView):
 
         context.update({
             'movimiento': movimiento or None,
-            'monedas': Moneda.todes()
+            'monedas': Moneda.todes(),
+            'cuenta': cuenta,
+            'titular': titular,
+            'filtro': cuenta or titular or None,
         })
 
         if cuenta:
@@ -62,17 +65,14 @@ class HomeView(TemplateView):
             })
 
         elif titular:
-            context.update(titular.as_view_context(
-                movimiento, es_elemento_principal=True
-            ))
+            context.update({'titular': titular})
             context.update({
-                'saldo_gral': context['capital'],
+                'saldo_gral': titular.capital_historico(movimiento) if movimiento else titular.capital,
                 'titulo_saldo_gral':
-                    f"Capital de {context['nombre']}{movimiento_en_titulo}",
-                'titulares': [
-                    x.as_view_context(movimiento)
-                    for x in Titular.todes()
-                ],
+                    f"Capital de {titular.nombre}{movimiento_en_titulo}",
+                'titulares': Titular.todes(),
+                'cuentas': [x.as_view_context(movimiento) for x in titular.cuentas.all()],
+                'dias': titular.dias().reverse(),
             })
 
         else:

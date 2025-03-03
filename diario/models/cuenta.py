@@ -241,7 +241,7 @@ class Cuenta(PolymorphModel):
             'nombre': self.nombre,
             'ctaname': self.slug,
             'movimientos': [x.as_view_context() for x in self.movs()],
-            # 'dias': [dia.as_view_context(cuenta=self) for dia in self.dias().reverse()],
+            'dias': self.dias().reverse(),
             'saldo': self.saldo_en_mov(movimiento) if movimiento else self.saldo,
             'saldos': {
                 m.monname:
@@ -422,7 +422,7 @@ class CuentaInteractiva(Cuenta):
     ) -> dict[str, str | float | bool | date | list[Optional[dict[str, Any]]]]:
         context = super().as_view_context(movimiento, es_elemento_principal)
         context.update({
-            'titulares': [self.titular.as_view_context(movimiento)],
+            'titulares': [self.titular],
             'cuentas': list(),
         })
         return context
@@ -678,7 +678,7 @@ class CuentaAcumulativa(Cuenta):
     ) -> dict[str, str | float | bool | date | list[dict[str, Any]]]:
         context = super().as_view_context(movimiento, es_elemento_principal)
         context.update({
-            'titulares': [x.as_view_context(movimiento) for x in self.titulares],
+            'titulares': self.titulares,
             'cuentas': [x.as_view_context(movimiento) for x in self.subcuentas.all()],
         })
         return context

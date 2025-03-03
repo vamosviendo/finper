@@ -3,6 +3,7 @@ from django.template.response import TemplateResponse
 from django.urls import reverse
 from pytest_django import asserts
 
+from utils.iterables import dict_en_lista, listas_de_dicts_iguales
 from diario.settings_app import TEMPLATE_HOME
 from diario.utils.utils_saldo import saldo_general_historico
 
@@ -23,8 +24,12 @@ def test_pasa_titulares_a_template(titular, otro_titular, response):
 
 
 def test_pasa_cuentas_a_template(cuenta, cuenta_ajena, response):
-    assert cuenta.as_view_context() in response.context.get('cuentas')
-    assert cuenta_ajena.as_view_context() in response.context.get('cuentas')
+    for c in response.context.get('cuentas'):
+        for key in c.keys():
+            print(f"{key}: {c[key]} - {cuenta.as_view_context()[key]}")
+        print()
+    assert dict_en_lista(cuenta.as_view_context(), response.context.get('cuentas'))
+    assert dict_en_lista(cuenta_ajena.as_view_context(), response.context.get('cuentas'))
 
 
 def test_pasa_cuentas_ordenadas_por_nombre(client, cuenta, cuenta_2, cuenta_ajena):
@@ -35,10 +40,10 @@ def test_pasa_cuentas_ordenadas_por_nombre(client, cuenta, cuenta_2, cuenta_ajen
         c.full_clean()
         c.save()
     response = client.get(reverse('home'))
-
-    assert \
-        list(response.context.get('cuentas')) == \
+    assert listas_de_dicts_iguales(
+        list(response.context.get('cuentas')),
         [x.as_view_context() for x in [cuenta_ajena, cuenta, cuenta_2]]
+    )
 
 
 def test_pasa_monedas_a_template(peso, dolar, euro, response):
@@ -74,10 +79,10 @@ def test_pasa_solo_cuentas_independientes_a_template(cuenta, cuenta_acumulativa,
     cuentas = response.context['cuentas']
     sc1, sc2 = cuenta_acumulativa.arbol_de_subcuentas()
 
-    assert cuenta.as_view_context() in cuentas
-    assert cuenta_acumulativa.as_view_context() in cuentas
-    assert sc1.as_view_context() not in cuentas
-    assert sc2.as_view_context() not in cuentas
+    assert dict_en_lista(cuenta.as_view_context(), cuentas)
+    assert dict_en_lista(cuenta_acumulativa.as_view_context(), cuentas)
+    assert not dict_en_lista(sc1.as_view_context(), cuentas)
+    assert not dict_en_lista(sc2.as_view_context(), cuentas)
 
 
 def test_pasa_saldo_general_a_template(
@@ -90,6 +95,12 @@ def test_pasa_titulo_de_saldo_general_a_template(response):
     assert response.context['titulo_saldo_gral'] == "Saldo general"
 
 
+def test_si_recibe_slug_de_cuenta_pasa_cuenta_como_filtro(
+        cuenta, client):
+    response = client.get(reverse('cuenta', args=[cuenta.slug]))
+    assert response.context['filtro'] == cuenta
+
+
 def test_si_recibe_slug_de_cuenta_actualiza_context_con_datos_de_cuenta(
         cuenta, cuenta_acumulativa, mocker, client):
     mock_avci = mocker.patch('diario.models.CuentaInteractiva.as_view_context', autospec=True)
@@ -98,7 +109,7 @@ def test_si_recibe_slug_de_cuenta_actualiza_context_con_datos_de_cuenta(
         'nombre': cuenta.nombre,
         'saldo': cuenta.saldo,
         'saldos': {'p': cuenta.saldo},
-        'titulares': [cuenta.titular.as_view_context()],
+        'titulares': [cuenta.titular],
         'cuentas': [],
         'movimientos': [m.as_view_context() for m in cuenta.movs()],
         'ctaname': cuenta.slug,
@@ -107,7 +118,7 @@ def test_si_recibe_slug_de_cuenta_actualiza_context_con_datos_de_cuenta(
     mock_avca.return_value = {
         'nombre': cuenta_acumulativa.nombre,
         'saldo': cuenta_acumulativa.saldo,
-        'titulares': [t.as_view_context() for t in cuenta_acumulativa.titulares],
+        'titulares': cuenta_acumulativa.titulares,
         'cuentas': [c.as_view_context() for c in cuenta_acumulativa.subcuentas.all()],
         'movimientos': [m.as_view_context() for m in cuenta.movs()],
         'ctaname': cuenta.slug,
@@ -179,22 +190,15 @@ def test_si_recibe_slug_de_cuenta_e_id_de_movimiento_pasa_titulo_de_saldo_histor
         f'del {entrada.fecha} ({entrada.concepto})')
 
 
-def test_si_recibe_titname_actualiza_context_con_datos_de_titular(
-        titular, cuenta, cuenta_2, entrada, salida, mocker, client):
-    mock_avc = mocker.patch('diario.models.Titular.as_view_context', autospec=True)
-    mock_avc.return_value = {
-            'nombre': titular.nombre,
-            'titname': titular.titname,
-            'capital': titular.capital,
-            'titulo_saldo_gral':
-                f'Capital de {titular.nombre}',
-            'cuentas': [x.as_view_context() for x in (cuenta, cuenta_2)],
-            'movimientos': [entrada, salida],
-        }
+def test_si_recibe_titname_actualiza_context_con_titular(
+        titular, cuenta, cuenta_2, entrada, salida, client):
     response = client.get(reverse('titular', args=[titular.titname]))
-    mock_avc.assert_any_call(titular, None, True)
-    for key, value in mock_avc.return_value.items():
-        assert response.context[key] == value
+    assert response.context['titular'] == titular
+
+
+def test_si_recibe_titname_pasa_titular_como_filtro(titular, client):
+    response = client.get(reverse('titular', args=[titular.titname]))
+    assert response.context['filtro'] == titular
 
 
 def test_si_recibe_pk_de_movimiento_actualiza_context_con_datos_de_movimiento(
@@ -216,41 +220,10 @@ def test_si_recibe_pk_de_movimiento_actualiza_context_con_datos_de_movimiento(
         assert response.context[key] == value
 
 
-def test_si_recibe_titname_y_pk_de_movimiento_actualiza_context_con_datos_de_titular_al_momento_del_movimiento(
-        titular, cuenta, cuenta_2, entrada, salida, mocker, client):
-    mock_atc = mocker.patch('diario.models.Titular.as_view_context', autospec=True)
-    mock_atc.return_value = {
-            'nombre': titular.nombre,
-            'titname': titular.titname,
-            'capital': titular.capital,
-            'cuentas': [x.as_view_context() for x in (cuenta, cuenta_2)],
-            'movimientos': [entrada, salida],
-            'movimiento': entrada,
-        }
-    response = client.get(
-        reverse(
-            'titular_movimiento',
-            args=[titular.titname, entrada.pk]
-        )
-    )
-    mock_atc.assert_any_call(titular, entrada, True)
-    for key, value in mock_atc.return_value.items():
-        assert response.context[key] == value
-
-
 def test_si_recibe_titname_pasa_titulares_a_template(titular, otro_titular, client):
     response = client.get(reverse('titular', args=[titular.titname]))
     assert \
-        list(response.context['titulares']) == \
-        [x.as_view_context() for x in (titular, otro_titular)]
-
-
-def test_si_recibe_titname_e_id_de_movimiento_pasa_saldo_historico_de_titulares_al_momento_del_movimiento(
-        titular, otro_titular, entrada, salida, entrada_cuenta_ajena, client):
-    response = client.get(reverse('titular_movimiento', args=[titular.titname, entrada.pk]))
-    assert \
-        [x['capital'] for x in response.context['titulares']] == \
-        [x.capital_historico(entrada) for x in (titular, otro_titular)]
+        list(response.context['titulares']) == [titular, otro_titular]
 
 
 def test_si_recibe_titname_e_id_de_movimiento_pasa_titulo_de_saldo_gral_con_titular_y_movimiento(
@@ -285,11 +258,10 @@ def test_si_recibe_id_de_movimiento_pasa_cuentas_independientes_en_formato_dict(
     otra_cuenta = entrada_otra_cuenta.cta_entrada
     response = client.get(reverse('movimiento', args=[salida.pk]))
     assert response.context.get('cuentas') is not None
-    assert \
-        list(response.context['cuentas']) == [
-            x.as_view_context(salida)
-            for x in (cuenta, otra_cuenta, cuenta_acumulativa)
-        ]
+    assert listas_de_dicts_iguales(
+        list(response.context['cuentas']),
+        [x.as_view_context(salida) for x in (cuenta, otra_cuenta, cuenta_acumulativa)]
+    )
 
 
 def test_si_recibe_id_de_movimiento_pasa_titulares_en_formato_dict(
