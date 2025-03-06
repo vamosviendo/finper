@@ -78,6 +78,10 @@ class Cuenta(PolymorphModel):
         return (self.slug, )
 
     @property
+    def ctaname(self):
+        return self.slug
+
+    @property
     def es_interactiva(self) -> bool:
         return str(self.content_type) == 'diario | cuenta interactiva'
 
