@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import date
 
 from django.core.paginator import Paginator
@@ -32,7 +34,7 @@ class HomeView(TemplateView):
         context = super().get_context_data(**kwargs)
         movimiento = Movimiento.tomar(pk=kwargs['pk']) \
             if kwargs.get('pk') else None
-        cuenta = Cuenta.tomar(slug=kwargs['ctaname']) \
+        cuenta: Cuenta | CuentaInteractiva | CuentaAcumulativa = Cuenta.tomar(slug=kwargs['ctaname']) \
             if kwargs.get('ctaname') else None
         titular = Titular.tomar(titname=kwargs['titname']) \
             if kwargs.get('titname') else None
@@ -54,24 +56,25 @@ class HomeView(TemplateView):
         })
 
         if cuenta:
-            context.update(cuenta.as_view_context(
-                movimiento, es_elemento_principal=True
-            ))
             context.update({
-                'saldo_gral': context['saldo'],
+                'saldo': cuenta.saldo_en_mov(movimiento) if movimiento else cuenta.saldo,
                 'titulo_saldo_gral':
-                    f"{context['nombre']} (fecha alta: {context['fecha_alta']})"
+                    f"{cuenta.nombre} (fecha alta: {cuenta.fecha_creacion})"
                     f"{movimiento_en_titulo}",
+                'ancestros': reversed(cuenta.ancestros()),
+                'hermanas': cuenta.hermanas(),
+                'titulares': cuenta.titulares if cuenta.es_acumulativa else [cuenta.titular],
+                'cuentas': cuenta.subcuentas.all() if cuenta.es_acumulativa else Cuenta.objects.none(),
+                'dias': cuenta.dias().reverse(),
             })
-
+            context['saldo_gral'] = context['saldo']
         elif titular:
-            context.update({'titular': titular})
             context.update({
                 'saldo_gral': titular.capital_historico(movimiento) if movimiento else titular.capital,
                 'titulo_saldo_gral':
                     f"Capital de {titular.nombre}{movimiento_en_titulo}",
                 'titulares': Titular.todes(),
-                'cuentas': [x.as_view_context(movimiento) for x in titular.cuentas.all()],
+                'cuentas': titular.cuentas.all(),
                 'dias': titular.dias().reverse(),
             })
 
@@ -86,10 +89,7 @@ class HomeView(TemplateView):
                 'titulo_saldo_gral': f'Saldo general{movimiento_en_titulo}',
                 'titulares': Titular.todes(),
                 'dias': Paginator(dias_con_movimientos, 7).get_page(self.request.GET.get('page')),
-                'cuentas': [
-                    x.as_view_context(movimiento) for x in
-                    Cuenta.filtro(cta_madre=None).order_by(Lower('nombre'))
-                ],
+                'cuentas': Cuenta.todes().order_by(Lower('nombre')),
             })
 
         return context

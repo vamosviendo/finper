@@ -24,12 +24,8 @@ def test_pasa_titulares_a_template(titular, otro_titular, response):
 
 
 def test_pasa_cuentas_a_template(cuenta, cuenta_ajena, response):
-    for c in response.context.get('cuentas'):
-        for key in c.keys():
-            print(f"{key}: {c[key]} - {cuenta.as_view_context()[key]}")
-        print()
-    assert dict_en_lista(cuenta.as_view_context(), response.context.get('cuentas'))
-    assert dict_en_lista(cuenta_ajena.as_view_context(), response.context.get('cuentas'))
+    assert cuenta in response.context.get("cuentas")
+    assert cuenta_ajena in response.context.get("cuentas")
 
 
 def test_pasa_cuentas_ordenadas_por_nombre(client, cuenta, cuenta_2, cuenta_ajena):
@@ -40,10 +36,7 @@ def test_pasa_cuentas_ordenadas_por_nombre(client, cuenta, cuenta_2, cuenta_ajen
         c.full_clean()
         c.save()
     response = client.get(reverse('home'))
-    assert listas_de_dicts_iguales(
-        list(response.context.get('cuentas')),
-        [x.as_view_context() for x in [cuenta_ajena, cuenta, cuenta_2]]
-    )
+    assert list(response.context.get("cuentas")) == [cuenta_ajena, cuenta, cuenta_2]
 
 
 def test_pasa_monedas_a_template(peso, dolar, euro, response):
@@ -75,14 +68,11 @@ def test_puede_pasar_movimientos_posteriores(mas_de_7_dias, client):
     assert mas_de_7_dias.last() not in response.context.get('dias')
 
 
-def test_pasa_solo_cuentas_independientes_a_template(cuenta, cuenta_acumulativa, response):
+def test_pasa_todas_las_cuentas_a_template(cuenta, cuenta_acumulativa, response):
     cuentas = response.context['cuentas']
     sc1, sc2 = cuenta_acumulativa.arbol_de_subcuentas()
-
-    assert dict_en_lista(cuenta.as_view_context(), cuentas)
-    assert dict_en_lista(cuenta_acumulativa.as_view_context(), cuentas)
-    assert not dict_en_lista(sc1.as_view_context(), cuentas)
-    assert not dict_en_lista(sc2.as_view_context(), cuentas)
+    for c in [cuenta, cuenta_acumulativa, sc1, sc2]:
+        assert c in cuentas
 
 
 def test_pasa_saldo_general_a_template(
@@ -101,43 +91,34 @@ def test_si_recibe_slug_de_cuenta_pasa_cuenta_como_filtro(
     assert response.context['filtro'] == cuenta
 
 
-def test_si_recibe_slug_de_cuenta_actualiza_context_con_datos_de_cuenta(
-        cuenta, cuenta_acumulativa, mocker, client):
-    mock_avci = mocker.patch('diario.models.CuentaInteractiva.as_view_context', autospec=True)
-    mock_avca = mocker.patch('diario.models.CuentaAcumulativa.as_view_context', autospec=True)
-    mock_avci.return_value = {
-        'nombre': cuenta.nombre,
-        'saldo': cuenta.saldo,
-        'saldos': {'p': cuenta.saldo},
-        'titulares': [cuenta.titular],
-        'cuentas': [],
-        'movimientos': [m.as_view_context() for m in cuenta.movs()],
-        'ctaname': cuenta.slug,
-        'fecha_alta': cuenta.fecha_creacion,
-    }
-    mock_avca.return_value = {
-        'nombre': cuenta_acumulativa.nombre,
-        'saldo': cuenta_acumulativa.saldo,
-        'titulares': cuenta_acumulativa.titulares,
-        'cuentas': [c.as_view_context() for c in cuenta_acumulativa.subcuentas.all()],
-        'movimientos': [m.as_view_context() for m in cuenta.movs()],
-        'ctaname': cuenta.slug,
-        'fecha_alta': cuenta.fecha_creacion
-    }
-    mock_avca.reset_mock()
-    mock_avci.reset_mock()
+def test_si_recibe_slug_de_cuenta_actualiza_context_con_cuenta(
+        cuenta, client):
     response = client.get(reverse('cuenta', args=[cuenta.slug]))
+    assert response.context['cuenta'] == cuenta
 
-    mock_avci.assert_called_once_with(cuenta, None, True)
-    for key, value in cuenta.as_view_context().items():
-        assert response.context.get(key) is not None
-        assert response.context[key] == value
 
-    response = client.get(reverse('cuenta', args=[cuenta_acumulativa.slug]))
-    mock_avca.assert_called_once_with(cuenta_acumulativa, None, True)
-    for key, value in cuenta_acumulativa.as_view_context().items():
-        assert response.context.get(key) is not None
-        assert response.context[key] == value
+def test_si_recibe_slug_de_cuenta_actualiza_context_con_saldo(
+        cuenta, client):
+    response = client.get(reverse('cuenta', args=[cuenta.slug]))
+    assert response.context['saldo'] == cuenta.saldo
+
+
+def test_si_recibe_slug_de_cuenta_acumulativa_actualiza_context_con_lista_de_titulares_de_subcuentas(
+        cuenta_de_dos_titulares, client):
+    response = client.get(reverse('cuenta', args=[cuenta_de_dos_titulares.slug]))
+    assert response.context['titulares'] == cuenta_de_dos_titulares.titulares
+
+
+def test_si_recibe_slug_de_cuenta_interactiva_actualiza_context_con_lista_con_nombre_de_titular(
+        cuenta, client):
+    response = client.get(reverse('cuenta', args=[cuenta.slug]))
+    assert response.context['titulares'] == [cuenta.titular]
+
+
+def test_si_recibe_slug_de_cuenta_actualiza_context_con_dias_con_movimientos_de_la_cuenta(
+        cuenta, entrada, entrada_anterior, entrada_posterior_otra_cuenta, client):
+    response = client.get(reverse('cuenta', args=[cuenta.slug]))
+    assert list(response.context['dias']) == [entrada.dia, entrada_anterior.dia]
 
 
 def test_si_recibe_slug_de_cuenta_pasa_saldo_de_cuenta_como_saldo_general(
@@ -160,24 +141,10 @@ def test_si_recibe_slug_de_cuenta_pasa_dias_con_movimientos_de_la_cuenta(
     assert response.context["dias"] == [dia.as_view_context() for dia in [dia_tardio, dia]]
 
 
-def test_si_recibe_slug_de_cuenta_e_id_de_movimiento_actualiza_context_con_datos_historicos_de_cuenta_al_momento_del_movimiento(
-        cuenta, entrada, mocker, client):
-    mock_avc = mocker.patch('diario.models.CuentaInteractiva.as_view_context', autospec=True)
-    mock_avc.return_value = {
-        'nombre': cuenta.nombre,
-        'saldo': cuenta.saldo_en_mov(entrada),
-        'titulares': [cuenta.titular],
-        'cuentas': [],
-        'movimientos': cuenta.movs(),
-        'movimiento': entrada,
-        'slug': cuenta.slug,
-        'fecha_alta': cuenta.fecha_creacion,
-    }
+def test_si_recibe_slug_de_cuenta_e_id_de_movimiento_actualiza_context_con_saldo_de_cuenta_al_momento_de_movimiento(
+        cuenta, entrada, salida_posterior, client):
     response = client.get(reverse('cuenta_movimiento', args=[cuenta.slug, entrada.pk]))
-    mock_avc.assert_called_once_with(cuenta, entrada, True)
-    for key, value in cuenta.as_view_context().items():
-        assert response.context.get(key) is not None
-        assert response.context[key] == value, f"key: {key}"
+    assert response.context['saldo'] == cuenta.saldo_en_mov(entrada)
 
 
 def test_si_recibe_slug_de_cuenta_e_id_de_movimiento_pasa_titulo_de_saldo_historico_con_cuenta_y_movimiento(
@@ -252,16 +219,15 @@ def test_si_recibe_id_de_movimiento_pasa_saldo_general_historico_al_momento_del_
     assert response.context['saldo_gral'] == saldo_general_historico(salida)
 
 
-def test_si_recibe_id_de_movimiento_pasa_cuentas_independientes_en_formato_dict(
+def test_si_recibe_id_de_movimiento_pasa_cuentas_independientes(
         entrada, salida, entrada_otra_cuenta, cuenta_acumulativa, client):
     cuenta = entrada.cta_entrada
     otra_cuenta = entrada_otra_cuenta.cta_entrada
     response = client.get(reverse('movimiento', args=[salida.pk]))
     assert response.context.get('cuentas') is not None
-    assert listas_de_dicts_iguales(
-        list(response.context['cuentas']),
-        [x.as_view_context(salida) for x in (cuenta, otra_cuenta, cuenta_acumulativa)]
-    )
+    assert \
+        list(response.context["cuentas"]) == \
+        [cuenta, otra_cuenta, cuenta_acumulativa] + list(cuenta_acumulativa.subcuentas.all())
 
 
 def test_si_recibe_id_de_movimiento_pasa_titulares_en_formato_dict(
