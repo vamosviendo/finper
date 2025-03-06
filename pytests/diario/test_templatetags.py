@@ -1,6 +1,6 @@
 import pytest
 from diario.templatetags.dict_key import dict_key
-from diario.templatetags.historicos import cap_historico, historico, historico_general
+from diario.templatetags.historicos import cap_historico, historico, historico_general, saldo_historico_en_moneda
 from diario.templatetags.movimientos import movs_seleccionados
 from utils.numeros import float_format
 
@@ -48,6 +48,19 @@ class TestCapHistorico:
             self, titular, cuenta, entrada, salida_posterior):
         assert cap_historico(titular, None) == float_format(titular.capital)
 
+
+class TestSaldoHistoricoEnMoneda:
+    def test_devuelve_string_con_saldo_de_cuenta_en_movimiento_en_moneda_dada(
+            self, cuenta, entrada, salida, dolar):
+        assert \
+            saldo_historico_en_moneda(cuenta, dolar, entrada) == \
+            float_format(cuenta.saldo_en_mov_en(entrada, dolar, compra=False))
+
+    def test_si_recibe_movimiento_None_devuelve_saldo_actual_en_moneda_dada(
+            self, cuenta_con_saldo, dolar):
+        assert \
+            saldo_historico_en_moneda(cuenta_con_saldo, dolar, None) == \
+            float_format(cuenta_con_saldo.saldo_en(dolar, compra=False))
 
 class TestDictKey:
     def test_devuelve_el_valor_de_una_clave_de_diccionario(self):
