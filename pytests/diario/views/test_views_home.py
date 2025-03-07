@@ -106,13 +106,13 @@ def test_si_recibe_slug_de_cuenta_actualiza_context_con_saldo(
 def test_si_recibe_slug_de_cuenta_acumulativa_actualiza_context_con_lista_de_titulares_de_subcuentas(
         cuenta_de_dos_titulares, client):
     response = client.get(reverse('cuenta', args=[cuenta_de_dos_titulares.slug]))
-    assert response.context['titulares'] == cuenta_de_dos_titulares.titulares
+    assert list(response.context['titulares']) == cuenta_de_dos_titulares.titulares
 
 
 def test_si_recibe_slug_de_cuenta_interactiva_actualiza_context_con_lista_con_nombre_de_titular(
         cuenta, client):
     response = client.get(reverse('cuenta', args=[cuenta.slug]))
-    assert response.context['titulares'] == [cuenta.titular]
+    assert list(response.context['titulares']) == [cuenta.titular]
 
 
 def test_si_recibe_slug_de_cuenta_actualiza_context_con_dias_con_movimientos_de_la_cuenta(

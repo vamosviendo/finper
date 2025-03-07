@@ -63,7 +63,11 @@ class HomeView(TemplateView):
                     f"{movimiento_en_titulo}",
                 'ancestros': reversed(cuenta.ancestros()),
                 'hermanas': cuenta.hermanas(),
-                'titulares': cuenta.titulares if cuenta.es_acumulativa else [cuenta.titular],
+                'titulares': Titular.filtro(
+                    titname__in=[x.titname for x in cuenta.titulares]
+                ) if cuenta.es_acumulativa else Titular.filtro(
+                    titname=cuenta.titular.titname
+                ),
                 'cuentas': cuenta.subcuentas.all() if cuenta.es_acumulativa else Cuenta.objects.none(),
                 'dias': cuenta.dias().reverse(),
             })

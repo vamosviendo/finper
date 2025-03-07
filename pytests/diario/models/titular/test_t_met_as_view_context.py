@@ -58,8 +58,11 @@ def test_si_recibe_movimiento_incluye_saldo_historico_de_cuentas_del_titular(
         cuenta, cuenta_2, entrada, salida):
     titular = cuenta.titular
     context = titular.as_view_context(entrada, es_elemento_principal=True)
+    print(f"CONTEXT CUENTAS: {context['cuentas']}")
+    print(x.as_view_context(entrada) for x in (cuenta, cuenta_2))
+
     assert \
-        [x['saldo'] for x in context['cuentas']] == \
+        [x.saldo_en_mov(entrada) for x in context['cuentas']] == \
         [x.as_view_context(entrada)['saldo'] for x in (cuenta, cuenta_2)]
 
 
