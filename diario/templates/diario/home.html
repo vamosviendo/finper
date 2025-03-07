@@ -94,17 +94,17 @@
       </colgroup>
       <tbody>
         {% for cta in cuentas %}
-          {% include "diario/snippets/cuenta.html" with cta=cta monedas=monedas subc=False %}
+          {% include "diario/snippets/cuenta.html" with cta=cta monedas=monedas movimiento=movimiento subc=False %}
         {% endfor %}
         <tr class="menu-row">
           <td class="menu-item class_td_cuenta">
             <div id="id_div_cuenta_nueva">
               <a
-                {% if ctaname %}
-                  {% if es_acumulativa %}
-                    href={% url 'cta_agregar_subc' ctaname %}
+                {% if cuenta %}
+                  {% if cuenta.es_acumulativa %}
+                    href={% url 'cta_agregar_subc' cuenta.ctaname %}
                   {% else %}
-                    href="{% url 'cta_div' ctaname %}"
+                    href="{% url 'cta_div' cuenta.ctaname %}"
                   {% endif %}
                 {% else %}
                   href="{% url 'cta_nueva' %}"

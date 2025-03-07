@@ -1,7 +1,9 @@
+{% load historicos %}
 <td
     id="id_saldo_cta_{{ cta.ctaname }}_{{ mon.monname }}"
     class="numero chico class_saldo_cuenta div-detalles-subcuenta
-          {% if mon.monname == cta.moneda.monname%} mon_cuenta{% endif %}"
+          {% if mon.monname == cta.moneda.monname %} mon_cuenta{% endif %}"
 >
-  {{ cta.saldos|dict_key:mon.monname|floatformat:2 }}
+  {% saldo_historico_en_moneda cta mon movimiento %}
+<!--  {{ cta.saldos|dict_key:mon.monname|floatformat:2 }}-->
 </td>

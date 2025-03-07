@@ -1,7 +1,7 @@
 <tr id=id_row_cta_{{ cta.ctaname }} class="menu-row class_div_cuenta">
   <td class="menu-item class_td_cuenta
             {% if cta.es_acumulativa %} acumulativa{% endif %}
-            {% if subc %} class_td_subcuenta{% endif %}"
+            {% if cta.cta_madre is not None %} class_td_subcuenta{% endif %}"
   >
     <div class="menu-item-content class_nombre_cuenta">
       <a id="id_link_cta_{{ cta.ctaname }}" class="class_link_cuenta"
@@ -19,7 +19,7 @@
     </div>
   </td>
   {% for mon in monedas %}
-    {% include "diario/snippets/saldo_en_moneda.html" with cta=cta mon=mon %}
+    {% include "diario/snippets/saldo_en_moneda.html" with cta=cta mon=mon movimiento=movimiento %}
   {% endfor %}
 </tr>
 {% for subcuenta in cta.cuentas %}
