@@ -5,5 +5,4 @@
           {% if mon.monname == cta.moneda.monname %} mon_cuenta{% endif %}"
 >
   {% saldo_historico_en_moneda cta mon movimiento %}
-<!--  {{ cta.saldos|dict_key:mon.monname|floatformat:2 }}-->
 </td>

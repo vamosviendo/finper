@@ -10,18 +10,6 @@ register = template.Library()
 
 
 @register.simple_tag
-def historico_general(movimiento: Movimiento) -> str:
-    return float_format(saldo_general_historico(movimiento))
-
-
-@register.simple_tag
-def historico(cuenta: Cuenta, mov: Movimiento | None) -> str:
-    if mov is None:
-        return float_format(cuenta.saldo)
-    return float_format(cuenta.saldo_en_mov(mov))
-
-
-@register.simple_tag
 def cap_historico(titular: Titular, mov: Movimiento | None) -> str:
     if mov is None:
         return float_format(titular.capital)
