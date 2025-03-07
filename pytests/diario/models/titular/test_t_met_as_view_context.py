@@ -25,7 +25,7 @@ def test_cuentas_del_titular_se_ordenan_por_nombre(titular, cuenta_2, cuenta):
     context = titular.as_view_context(es_elemento_principal=True)
     assert \
         list(context['cuentas']) == \
-        [x.as_view_context() for x in (cuenta, cuenta_2)]
+        [x for x in (cuenta, cuenta_2)]
 
 
 def test_incluye_movimientos_del_titular_en_formato_dict(
@@ -33,16 +33,11 @@ def test_incluye_movimientos_del_titular_en_formato_dict(
     assert context['movimientos'] == [x.as_view_context() for x in [entrada, salida, traspaso]]
 
 
-def test_incluye_dias_con_movimientos_de_cuentas_del_titular_en_formato_dict(
+def test_incluye_dias_con_movimientos_de_cuentas_del_titular(
         dia, dia_posterior, dia_tardio,
         entrada, salida, entrada_posterior_cuenta_ajena, salida_tardia_tercera_cuenta,
         context):
-    assert context['dias'] == [x.as_view_context() for x in [dia_tardio, dia]]
-
-
-def test_incluye_solo_movimientos_de_cuentas_de_titular_en_los_dias_incluidos(
-        dia, entrada, salida, entrada_cuenta_ajena, context):
-    assert context['dias'][0]['movimientos'] == [entrada, salida]
+    assert list(context['dias']) == [dia_tardio, dia]
 
 
 def test_si_recibe_movimiento_incluye_solo_movimientos_de_cuentas_del_titular_como_dict(
@@ -71,9 +66,7 @@ def test_si_recibe_movimiento_incluye_saldo_historico_de_cuentas_del_titular(
 def test_si_es_elemento_principal_incluye_cuentas_del_titular(
         titular, cuenta, cuenta_2, cuenta_ajena):
     context = titular.as_view_context(es_elemento_principal=True)
-    assert \
-        context['cuentas'] == \
-        [cuenta.as_view_context(), cuenta_2.as_view_context()]
+    assert list(context['cuentas']) == [cuenta, cuenta_2]
 
 
 def test_si_no_es_elemento_principal_no_incluye_saldo_gral(titular):

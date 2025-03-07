@@ -104,13 +104,12 @@ class Titular(MiModel):
             'nombre': self.nombre,
             'capital': self.capital_historico(movimiento) if movimiento
                 else self.capital,
-            # 'dias': [x.as_view_context(titular=self) for x in self.dias().reverse()],
+            'dias': self.dias().reverse(),
             'movimientos': [x.as_view_context() for x in self.movs()],
         }
         if es_elemento_principal:
             context.update({
-                'cuentas':
-                    [x.as_view_context(movimiento) for x in self.cuentas.all()],
+                'cuentas': self.cuentas.all(),
             })
 
         return context

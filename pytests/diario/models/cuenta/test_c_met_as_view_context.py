@@ -28,15 +28,9 @@ def test_incluye_moneda_como_dict(context, cuenta):
     assert context['moneda'] == cuenta.moneda.as_view_context()
 
 
-def test_si_cuenta_es_interactiva_incluye_lista_con_titular_de_cuenta_en_formato_dict_como_titulares(
+def test_si_cuenta_es_interactiva_incluye_lista_con_titular_de_cuenta_como_titulares(
         context, cuenta):
-    assert context['titulares'] == [cuenta.titular.as_view_context()]
-
-
-def test_si_cuenta_es_interactiva_y_recibe_movimiento_incluye_capital_historico_como_capital_del_titular(
-        cuenta, entrada, salida):
-    context = cuenta.as_view_context(entrada)
-    assert context['titulares'][0]['capital'] == cuenta.titular.capital_historico(entrada)
+    assert context['titulares'] == [cuenta.titular]
 
 
 def test_incluye_dict_de_saldos_expresados_en_distintas_monedas(cuenta_con_saldo, peso, dolar, euro):
@@ -47,13 +41,10 @@ def test_incluye_dict_de_saldos_expresados_en_distintas_monedas(cuenta_con_saldo
         assert context['saldos'][moneda.monname] == cuenta_con_saldo.saldo_en(moneda, compra=False)
 
 
-def test_si_cuenta_es_acumulativa_incluye_subcuentas_en_formato_dict(cuenta_acumulativa):
+def test_si_cuenta_es_acumulativa_incluye_subcuentas(cuenta_acumulativa):
     context = cuenta_acumulativa.as_view_context(es_elemento_principal=True)
     assert \
-        list(context['cuentas']) == [
-            x.as_view_context()
-            for x in cuenta_acumulativa.subcuentas.all()
-        ]
+        list(context['cuentas']) == list(cuenta_acumulativa.subcuentas.all())
 
 
 def test_si_cuenta_es_acumulativa_clave_es_acumulativa_es_True(cuenta_acumulativa):
@@ -65,36 +56,10 @@ def test_si_cuenta_es_interactiva_clave_es_acumulativa_es_False(context):
     assert context['es_acumulativa'] is False
 
 
-def test_si_cuenta_es_acumulativa_y_recibe_movimiento_toma_saldo_en_mov_de_subcuentas_como_saldo(
-        cuenta_acumulativa):
-    sc1, sc2 = cuenta_acumulativa.subcuentas.all()
-    entrada = Movimiento.crear('entrada', 23, cta_entrada=sc1)
-    Movimiento.crear('salida', 12, cta_salida=sc1)
-
-    context = cuenta_acumulativa.as_view_context(entrada)
-
-    assert sc1.saldo_en_mov(entrada) != sc1.saldo
-    assert context['cuentas'][0]['saldo'] == sc1.saldo_en_mov(entrada)
-
-
-def test_si_cuenta_es_acumulativa_incluye_lista_de_titulares_de_la_cuenta_en_formato_dict(
+def test_si_cuenta_es_acumulativa_incluye_lista_de_titulares_de_la_cuenta(
         cuenta_de_dos_titulares):
     context = cuenta_de_dos_titulares.as_view_context(es_elemento_principal=True)
-    assert context['titulares'] == [
-        x.as_view_context() for x in cuenta_de_dos_titulares.titulares]
-
-
-def test_si_cuenta_es_acumulativa_y_recibe_movimiento_toma_capital_historico_como_capital_de_titulares(
-        cuenta_de_dos_titulares):
-    sc1, sc2 = cuenta_de_dos_titulares.subcuentas.all()
-    entrada = Movimiento.crear('entrada en subcuenta', 80, cta_entrada=sc1)
-    Movimiento.crear('otra entrada en subcuenta', 30, cta_entrada=sc1)
-    Movimiento.crear('entrada en otra subcuenta', 50, cta_entrada=sc2)
-    context = cuenta_de_dos_titulares.as_view_context(entrada)
-    for titular in context['titulares']:
-        assert \
-            titular['capital'] == \
-            Titular.tomar(titname=titular['titname']).capital_historico(entrada)
+    assert context['titulares'] == list(cuenta_de_dos_titulares.titulares)
 
 
 def test_incluye_movimientos_de_la_cuenta_como_dict(cuenta, entrada, salida, entrada_otra_cuenta):
@@ -102,25 +67,16 @@ def test_incluye_movimientos_de_la_cuenta_como_dict(cuenta, entrada, salida, ent
     assert context['movimientos'] == [x.as_view_context() for x in[entrada, salida]]
 
 
-def test_incluye_dias_en_los_que_hay_movimientos_de_la_cuenta_como_dict(
+def test_incluye_dias_en_los_que_hay_movimientos_de_la_cuenta(
         cuenta, dia, dia_posterior, dia_tardio,
         entrada, entrada_posterior_otra_cuenta, entrada_tardia):
     context = cuenta.as_view_context()
-    assert context['dias'] == [dia.as_view_context() for dia in [dia_tardio, dia]]
+    assert list(context['dias']) == [dia_tardio, dia]
 
 
-def test_dias_incluidos_muestran_solo_los_movimientos_de_la_cuenta(cuenta, dia, entrada, salida, entrada_otra_cuenta):
-    context = cuenta.as_view_context()
-    dict_dia = context["dias"][0]
-    assert dict_dia["movimientos"] == [entrada, salida]
-
-
-def test_si_cuenta_es_acumulativa_incluye_subcuentas_como_cuentas_en_formato_dict(cuenta_acumulativa):
+def test_si_cuenta_es_acumulativa_incluye_subcuentas_como_cuentas_en(cuenta_acumulativa):
     context = cuenta_acumulativa.as_view_context(es_elemento_principal=True)
-    assert context['cuentas'] == [
-        x.as_view_context()
-        for x in cuenta_acumulativa.subcuentas.all()
-    ]
+    assert list(context['cuentas']) == list(cuenta_acumulativa.subcuentas.all())
 
 
 def test_si_cuenta_es_interactiva_incluye_lista_vacia_como_cuentas(context, cuenta):

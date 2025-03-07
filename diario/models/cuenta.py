@@ -691,7 +691,7 @@ class CuentaAcumulativa(Cuenta):
         context = super().as_view_context(movimiento, es_elemento_principal)
         context.update({
             'titulares': self.titulares,
-            'cuentas': [x.as_view_context(movimiento) for x in self.subcuentas.all()],
+            'cuentas': self.subcuentas.all(),
         })
         return context
 
