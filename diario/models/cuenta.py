@@ -104,14 +104,6 @@ class Cuenta(PolymorphModel):
     def cotizacion(self) -> float:
         return self.moneda.cotizacion
 
-    def saldos(self, movimiento: Movimiento = None):
-        return {
-            m.monname:
-                self.saldo_en(m, compra=False) if movimiento is None else
-                self.saldo_en_mov_en(movimiento, m, compra=False)
-            for m in Moneda.todes()
-        }
-
     def saldo_en(self, otra_moneda: Moneda, compra: bool) -> float:
         return round(self.saldo * self.moneda.cotizacion_en(otra_moneda, compra=compra), 2)
     
