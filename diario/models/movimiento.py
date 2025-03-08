@@ -573,23 +573,6 @@ class Movimiento(MiModel):
         except cls.DoesNotExist:
             return self._generar_cuentas_credito()
 
-    def as_view_context(self):
-        context = {
-            'pk': self.pk,
-            'identidad': self.identidad,
-            'concepto': self.concepto,
-            'detalle': self.detalle,
-            'fecha': self.fecha,
-            'importe': self.importe,
-            'es_automatico': self.es_automatico,
-        }
-        if self.cta_entrada is not None:
-            context.update({'cta_entrada': self.cta_entrada.nombre})
-        if self.cta_salida is not None:
-            context.update({'cta_salida': self.cta_salida.nombre})
-
-        return context
-
     # Métodos protegidos
 
     def _actualizar_cuenta_convertida_en_acumulativa(self):

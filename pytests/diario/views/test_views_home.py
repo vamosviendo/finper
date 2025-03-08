@@ -138,7 +138,7 @@ def test_si_recibe_slug_de_cuenta_pasa_dias_con_movimientos_de_la_cuenta(
         entrada, salida, entrada_posterior_otra_cuenta, entrada_tardia,
         client):
     response = client.get(reverse('cuenta', args=[cuenta.slug]))
-    assert response.context["dias"] == [dia.as_view_context() for dia in [dia_tardio, dia]]
+    assert response.context["dias"] == [dia_tardio, dia]
 
 
 def test_si_recibe_slug_de_cuenta_e_id_de_movimiento_actualiza_context_con_saldo_de_cuenta_al_momento_de_movimiento(

@@ -236,42 +236,6 @@ class Cuenta(PolymorphModel):
 
         return lista_ancestros
 
-    def as_view_context(
-            self,
-            movimiento: Movimiento = None,
-            es_elemento_principal: bool = False
-    ) -> dict[str, str | float | bool | date | list[dict[str, Any]] | dict[str, float]]:
-        context = {
-            'nombre': self.nombre,
-            'ctaname': self.slug,
-            'movimientos': [x.as_view_context() for x in self.movs()],
-            'dias': self.dias().reverse(),
-            'saldo': self.saldo_en_mov(movimiento) if movimiento else self.saldo,
-            'saldos': {
-                m.monname:
-                    self.saldo_en_mov_en(movimiento, m, compra=False) if movimiento
-                    else self.saldo_en(m, compra=False)
-                for m in Moneda.todes()},
-            'es_acumulativa': self.es_acumulativa,
-            'fecha_alta': self.fecha_creacion,
-            'moneda': self.moneda.as_view_context(),
-        }
-
-        if es_elemento_principal:
-            if self.tiene_madre():
-                context.update({
-                    'ancestros': [
-                        x.as_view_context(movimiento)
-                        for x in reversed(self.ancestros())
-                    ],
-                    'hermanas': [
-                        x.as_view_context(movimiento)
-                        for x in self.hermanas()
-                    ],
-                })
-
-        return context
-
     # Métodos protegidos
 
     def _actualizar_madre(self):
@@ -418,18 +382,6 @@ class CuentaInteractiva(Cuenta):
     def dividir_y_actualizar(self, *subcuentas: Sequence[dict | Sequence | int], fecha: date = None) -> Cuenta | CuentaAcumulativa:
         self.dividir_entre(*subcuentas, fecha=fecha)
         return self.tomar_del_slug()
-
-    def as_view_context(
-            self,
-            movimiento: Movimiento = None,
-            es_elemento_principal: bool = False
-    ) -> dict[str, str | float | bool | date | list[Optional[dict[str, Any]]]]:
-        context = super().as_view_context(movimiento, es_elemento_principal)
-        context.update({
-            'titulares': [self.titular],
-            'cuentas': list(),
-        })
-        return context
 
     # Protected
 
@@ -674,18 +626,6 @@ class CuentaAcumulativa(Cuenta):
             fecha_creacion=fecha or date.today(),
             moneda=self.moneda,
         )
-
-    def as_view_context(
-            self,
-            movimiento: Movimiento = None,
-            es_elemento_principal: bool = False
-    ) -> dict[str, str | float | bool | date | list[dict[str, Any]]]:
-        context = super().as_view_context(movimiento, es_elemento_principal)
-        context.update({
-            'titulares': self.titulares,
-            'cuentas': self.subcuentas.all(),
-        })
-        return context
 
     def _verificar_fechas(self):
         for titular in self.titulares:

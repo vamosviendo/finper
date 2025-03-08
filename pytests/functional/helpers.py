@@ -139,7 +139,7 @@ class FinperFirefox(MiFirefox):
                 '.class_row_mov td.class_td_concepto', By.CSS_SELECTOR
         )]
         assert conceptos_mov == [
-            x['concepto'] for x in ente.as_view_context()['movimientos'] if x["fecha"] == fecha
+            x.concepto for x in ente.movs() if x.fecha == fecha
         ]
 
     def comparar_titular(self, titular: Titular):
