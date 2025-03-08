@@ -97,12 +97,6 @@ def test_si_recibe_slug_de_cuenta_actualiza_context_con_cuenta(
     assert response.context['cuenta'] == cuenta
 
 
-def test_si_recibe_slug_de_cuenta_actualiza_context_con_saldo(
-        cuenta, client):
-    response = client.get(reverse('cuenta', args=[cuenta.slug]))
-    assert response.context['saldo'] == cuenta.saldo
-
-
 def test_si_recibe_slug_de_cuenta_acumulativa_actualiza_context_con_lista_de_titulares_de_subcuentas(
         cuenta_de_dos_titulares, client):
     response = client.get(reverse('cuenta', args=[cuenta_de_dos_titulares.slug]))
@@ -139,12 +133,6 @@ def test_si_recibe_slug_de_cuenta_pasa_dias_con_movimientos_de_la_cuenta(
         client):
     response = client.get(reverse('cuenta', args=[cuenta.slug]))
     assert response.context["dias"] == [dia_tardio, dia]
-
-
-def test_si_recibe_slug_de_cuenta_e_id_de_movimiento_actualiza_context_con_saldo_de_cuenta_al_momento_de_movimiento(
-        cuenta, entrada, salida_posterior, client):
-    response = client.get(reverse('cuenta_movimiento', args=[cuenta.slug, entrada.pk]))
-    assert response.context['saldo'] == cuenta.saldo_en_mov(entrada)
 
 
 def test_si_recibe_slug_de_cuenta_e_id_de_movimiento_pasa_titulo_de_saldo_historico_con_cuenta_y_movimiento(

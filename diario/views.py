@@ -57,7 +57,7 @@ class HomeView(TemplateView):
 
         if cuenta:
             context.update({
-                'saldo': cuenta.saldo_en_mov(movimiento) if movimiento else cuenta.saldo,
+                'saldo_gral': cuenta.saldo_en_mov(movimiento) if movimiento else cuenta.saldo,
                 'titulo_saldo_gral':
                     f"{cuenta.nombre} (fecha alta: {cuenta.fecha_creacion})"
                     f"{movimiento_en_titulo}",
@@ -71,7 +71,6 @@ class HomeView(TemplateView):
                 'cuentas': cuenta.subcuentas.all() if cuenta.es_acumulativa else Cuenta.objects.none(),
                 'dias': cuenta.dias().reverse(),
             })
-            context['saldo_gral'] = context['saldo']
         elif titular:
             context.update({
                 'saldo_gral': titular.capital_historico(movimiento) if movimiento else titular.capital,
