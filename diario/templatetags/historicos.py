@@ -3,7 +3,6 @@ from __future__ import annotations
 from django import template
 
 from diario.models import Movimiento, Cuenta, Titular, Moneda
-from diario.utils.utils_saldo import saldo_general_historico
 from utils.numeros import float_format
 
 register = template.Library()
@@ -11,9 +10,11 @@ register = template.Library()
 
 @register.simple_tag
 def cap_historico(titular: Titular, mov: Movimiento | None) -> str:
-    if mov is None:
-        return float_format(titular.capital)
-    return float_format(titular.capital_historico(mov))
+    try:
+        result = titular.capital_historico(mov)
+    except AttributeError:  # mov is None
+        result = titular.capital
+    return float_format(result)
 
 
 @register.simple_tag
