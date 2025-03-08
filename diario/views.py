@@ -83,8 +83,6 @@ class HomeView(TemplateView):
             })
 
         else:
-            if movimiento:
-                context.update(movimiento.as_view_context())
 
             context.update({
                 'saldo_gral':

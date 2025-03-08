@@ -168,25 +168,6 @@ def test_si_recibe_titname_pasa_titular_como_filtro(titular, client):
     assert response.context['filtro'] == titular
 
 
-def test_si_recibe_pk_de_movimiento_actualiza_context_con_datos_de_movimiento(
-        entrada, salida, mocker, client):
-    mock_avc = mocker.patch('diario.models.Movimiento.as_view_context', autospec=True)
-    mock_avc.return_value = {
-        'pk': entrada.pk,
-        'saldo_gral': saldo_general_historico(entrada),
-        'concepto': entrada.concepto,
-        'detalle': entrada.detalle,
-        'fecha': entrada.fecha,
-        'importe': entrada.importe,
-        'cta_entrada': entrada.cta_entrada,
-        'es_automatico': entrada.es_automatico,
-    }
-    response = client.get(reverse('movimiento', args=[entrada.pk]))
-    mock_avc.assert_any_call(entrada)
-    for key, value in mock_avc.return_value.items():
-        assert response.context[key] == value
-
-
 def test_si_recibe_titname_pasa_titulares_a_template(titular, otro_titular, client):
     response = client.get(reverse('titular', args=[titular.titname]))
     assert \
