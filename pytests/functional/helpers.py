@@ -245,6 +245,10 @@ def texto_en_hijos_respectivos(
         classname: str,
         lista_elementos: List[MiWebElement | WebElement]
 ) -> List[str]:
+    """ A partir de una lista de elementos web, devuelve una lista de str
+        con el contenido del hijo de cada uno de esos elementos de una
+        clase css dada.
+    """
     return [
         x.esperar_elemento(classname, By.CLASS_NAME).text
         for x in lista_elementos

@@ -11,7 +11,8 @@ from utils.numeros import float_format
 def test_home(
         browser, titular, otro_titular,
         cuenta, cuenta_2, cuenta_3, cuenta_acumulativa,
-        entrada, traspaso, entrada_posterior_otra_cuenta):
+        entrada, traspaso, entrada_posterior_otra_cuenta,
+        mas_de_7_dias):
     # Vamos a la página principal
     browser.ir_a_pag()
 
@@ -57,43 +58,47 @@ def test_home(
     # A la derecha de cada una de las cuentas se ve su saldo, el cual
     # corresponde a los movimientos en los que participó
     saldos = texto_en_hijos_respectivos("class_saldo_cuenta", cuentas)
-    assert saldos[0] == float_format(entrada.importe + traspaso.importe)
-    assert saldos[1] == float_format(
-        entrada_posterior_otra_cuenta.importe - traspaso.importe)
-    assert saldos[2] == '0,00'
+    for i, cta in enumerate([cuenta, cuenta_2, cuenta_3]):
+        assert saldos[i] == float_format(sum([
+            x.importe_cta_entrada for x in cta.movs() if x.cta_entrada == cta
+        ] + [
+            x.importe_cta_salida for x in cta.movs() if x.cta_salida == cta
+        ]))
 
-    # En la sección de movimientos vemos dos divisiones de día.
+    # En la sección de movimientos vemos 7 divisiones de día.
     # Cada una de ellas tiene un título con la fecha y el saldo del día
     # Debajo del título hay una tabla con todos los movimientos del día.
     divs_dia = browser.esperar_elementos("class_div_dia")
-    assert len(divs_dia) == 2
+    assert len(divs_dia) == 7
     fechas_dia = texto_en_hijos_respectivos("class_span_fecha_dia", divs_dia)
     saldos_dia = texto_en_hijos_respectivos("class_span_saldo_dia", divs_dia)
 
-    dias = Dia.todes()
-    for i, dia in enumerate(dias.reverse()):
+    dias = Dia.todes().reverse()[:7]
+    assert fechas_dia == [dia.str_dia_semana() for dia in dias]
+    assert saldos_dia == [float_format(dia.saldo()) for dia in dias]
+    for i, dia in enumerate(dias):
         dia_web = divs_dia[i]
-        assert fechas_dia[i] == dia.str_dia_semana()
-        assert saldos_dia[i] == float_format(dia.saldo())
-        movs_dia = dia.movimientos
         movs_dia_web = dia_web.esperar_elementos("class_row_mov")
         conceptos = texto_en_hijos_respectivos("class_td_concepto", movs_dia_web)
         detalles = texto_en_hijos_respectivos("class_td_detalle", movs_dia_web)
         importes = texto_en_hijos_respectivos("class_td_importe", movs_dia_web)
         ctas_entrada = texto_en_hijos_respectivos("class_td_cta_entrada", movs_dia_web)
         ctas_salida = texto_en_hijos_respectivos("class_td_cta_salida", movs_dia_web)
-        for i, mov in enumerate(movs_dia):
-            assert conceptos[i] == mov.concepto
-            assert detalles[i] == ("" if mov.detalle is None else f"{mov.detalle[:49]}…")
-            assert importes[i] == float_format(mov.importe)
-            try:
-                assert ctas_entrada[i] == mov.cta_entrada.nombre
-            except AttributeError:
-                assert ctas_entrada[i] == ""
-            try:
-                assert ctas_salida[i] == mov.cta_salida.nombre
-            except AttributeError:
-                assert ctas_salida[i] == ""
+
+        assert conceptos == [mov.concepto for mov in dia.movimientos]
+        assert detalles == [
+            "" if mov.detalle is None else f"{mov.detalle[:49]}…"
+            for mov in dia.movimientos
+        ]
+        assert importes == [float_format(mov.importe) for mov in dia.movimientos]
+        assert ctas_entrada == [
+            mov.cta_entrada.nombre if mov.cta_entrada else ""
+            for mov in dia.movimientos
+        ]
+        assert ctas_salida == [
+            mov.cta_salida.nombre if mov.cta_salida else ""
+            for mov in dia.movimientos
+        ]
 
 
 def test_home_monedas(

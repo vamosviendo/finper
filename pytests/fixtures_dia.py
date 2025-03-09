@@ -4,7 +4,7 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.db.models import QuerySet
 
-from diario.models import Dia, Movimiento, Cuenta, Titular
+from diario.models import Dia, Movimiento, Titular, CuentaInteractiva
 
 
 @pytest.fixture
@@ -68,14 +68,20 @@ def dia_hoy() -> Dia:
 @pytest.fixture
 def mas_de_7_dias(
         dia_con_movs: Dia,
+        titular: Titular,
+        cuenta: CuentaInteractiva,
         dia_temprano: Dia,
         dia_tardio_con_movs: Dia,
         dia_posterior_con_movs: Dia,
         dia_anterior_con_movs: Dia,
         dia_tardio_plus: Dia,
         dia_hoy: Dia) -> QuerySet[Dia]:
-    titular = Titular.crear(nombre="titular_creado", titname="titc", fecha_alta=date(2001, 1, 2))
-    cuenta = Cuenta.crear("cuenta_creada", "ccr", titular=titular, fecha_creacion=date(2001, 1, 2))
+    titular.fecha_alta = date(2001, 1, 2)
+    titular.full_clean()
+    titular.save()
+    cuenta.fecha_creacion = date(2001, 1, 2)
+    cuenta.full_clean()
+    cuenta.save()
     Movimiento.crear(fecha=dia_temprano.fecha, concepto="mov", cta_entrada=cuenta, importe=100)
     Movimiento.crear(fecha=dia_tardio_plus.fecha, concepto="mov", cta_entrada=cuenta, importe=100)
     Movimiento.crear(fecha=dia_hoy.fecha, concepto="mov", cta_entrada=cuenta, importe=100)
