@@ -43,9 +43,8 @@ def entrada_posterior_subcuenta(subcuenta_otro_titular: CuentaInteractiva, fecha
 def test_detalle_de_cuenta_interactiva(
         browser,
         titular, otro_titular, titular_gordo,
-        cuenta, entrada, salida, salida_posterior, entrada_otra_cuenta, salida_tardia_tercera_cuenta):
-    fecha = entrada.dia.str_dia_semana()
-    fecha_posterior = salida_posterior.dia.str_dia_semana()
+        cuenta, entrada, salida, salida_posterior, entrada_otra_cuenta, salida_tardia_tercera_cuenta,
+        mas_de_7_dias):
 
     # Vamos a la página de inicio
     browser.ir_a_pag()
@@ -68,16 +67,14 @@ def test_detalle_de_cuenta_interactiva(
 
     # Y vemos que sólo los días en los que hay movimientos en los que interviene
     # la cuenta aparecen en la sección de movimientos
-    dias_pag = browser.esperar_elementos("class_div_dia")
-    fechas_pag = [
-        x.esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text
-        for x in dias_pag
-    ]
-    assert fechas_pag == [fecha_posterior, fecha]
+    divs_dia = browser.esperar_elementos("class_div_dia")
+    assert len(divs_dia) == 7
+    fechas_dia = texto_en_hijos_respectivos("class_span_fecha_dia", divs_dia)
+    assert fechas_dia == [x.str_dia_semana() for x in cuenta.dias().reverse()[:7]]
 
     # Y vemos que solo los movimientos en los que interviene la cuenta aparecen
     # dentro de cada día
-    for dia_pag in dias_pag:
+    for dia_pag in divs_dia:
         fecha_pag = dia_pag.esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text
         browser.comparar_movimientos_de_fecha_de(
             cuenta,
@@ -109,7 +106,7 @@ def test_detalle_de_cuenta_interactiva(
     nombre_cuenta = browser.esperar_elemento(
         'id_titulo_saldo_gral'
     ).text.strip()
-    movimiento = cuenta.movs()[0]
+    movimiento = cuenta.movs().get(dia=Dia.tomar(fecha=dias_pag[1]["fecha"][-10:]), orden_dia=0)
 
     assert nombre_cuenta == (f"{cuenta.nombre} (fecha alta: {cuenta.fecha_creacion}) "
                               f"en movimiento {movimiento.orden_dia} "
@@ -129,6 +126,17 @@ def test_detalle_de_cuenta_interactiva(
 def test_detalle_de_cuenta_acumulativa(
         browser, entrada_otra_cuenta, cuenta_de_dos_titulares,
         credito_entre_subcuentas, entrada_subcuenta, entrada_posterior_subcuenta):
+    sc1, sc2 = cuenta_de_dos_titulares.subcuentas.all()
+
+    # Dada una cuenta acumulativa cuyas subcuentas acumulan más de 7 días
+    # con movimientos
+    Movimiento.crear(fecha=date(2021, 2, 3), concepto="mov", cta_entrada=sc1, importe=25)
+    Movimiento.crear(fecha=date(2021, 5, 8), concepto="mov", cta_entrada=sc2, importe=24)
+    Movimiento.crear(fecha=date(2021, 3, 9), concepto="mov", cta_entrada=sc2, importe=23)
+    Movimiento.crear(fecha=date(2021, 6, 2), concepto="mov", cta_entrada=sc1, importe=22)
+    Movimiento.crear(fecha=date(2021, 6, 1), concepto="mov", cta_entrada=sc1, importe=21)
+    Movimiento.crear(fecha=date(2021, 10, 3), concepto="mov", cta_entrada=sc2, importe=20)
+
     # Vamos a la página principal y cliqueamos en el nombre de una cuenta
     # acumulativa
     browser.ir_a_pag()

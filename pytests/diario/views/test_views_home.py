@@ -53,7 +53,7 @@ def test_pasa_dias_ordenados_por_fecha_invertida(
     assert response.context.get('dias')[0] == dia_tardio_con_movs
 
 
-def test_pasa_solo_7_dias(mas_de_7_dias, response):
+def test_pasa_solo_los_ultimos_7_dias(mas_de_7_dias, response):
     assert len(response.context.get('dias')) == 7
     assert mas_de_7_dias.first() not in response.context.get('dias')
 
@@ -113,6 +113,13 @@ def test_si_recibe_slug_de_cuenta_actualiza_context_con_dias_con_movimientos_de_
         cuenta, entrada, entrada_anterior, entrada_posterior_otra_cuenta, client):
     response = client.get(reverse('cuenta', args=[cuenta.slug]))
     assert list(response.context['dias']) == [entrada.dia, entrada_anterior.dia]
+
+
+def test_si_recibe_slug_de_cuenta_pasa_solo_los_ultimos_7_dias_con_movimientos_de_la_cuenta(
+        cuenta, mas_de_7_dias, client):
+    response = client.get(reverse('cuenta', args=[cuenta.slug]))
+    assert len(response.context['dias']) == 7
+    assert mas_de_7_dias.first() not in response.context.get('dias')
 
 
 def test_si_recibe_slug_de_cuenta_pasa_saldo_de_cuenta_como_saldo_general(

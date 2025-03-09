@@ -101,12 +101,13 @@ class FinperFirefox(MiFirefox):
         return result
 
     def comparar_dias_de(self, ente: Cuenta | Titular) -> list[dict[str, str | list[dict[str, MiWebElement | str]]]]:
-        """ Dada una cuenta, comparar sus días con los que
+        """ Dada una cuenta o un titular, comparar sus últimos 7 días con los que
             aparecen en la página.
             Si las comparaciones son correctas, devuelve lista de días de la página serializados.
         """
-        dias_db = ente.dias().reverse()
+        dias_db = ente.dias().reverse()[:7]
         dias_pag = self.serializar_dias_pagina()
+        assert dias_db.count() == len(dias_pag)
         for index, dia in enumerate(dias_pag):
             assert dia["fecha"] == dias_db[index].str_dia_semana()
             self.comparar_movimientos_de_dia_de(ente, dia, dias_db[index])

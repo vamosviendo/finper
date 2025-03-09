@@ -69,7 +69,7 @@ class HomeView(TemplateView):
                     titname=cuenta.titular.titname
                 ),
                 'cuentas': cuenta.subcuentas.all() if cuenta.es_acumulativa else Cuenta.objects.none(),
-                'dias': cuenta.dias().reverse(),
+                'dias': Paginator(cuenta.dias().reverse(), 7).get_page(self.request.GET.get('page')),
             })
         elif titular:
             context.update({
