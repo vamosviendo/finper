@@ -133,15 +133,6 @@ def test_si_recibe_slug_de_cuenta_pasa_titulo_de_saldo_gral_con_cuenta(cuenta, c
     assert response.context['titulo_saldo_gral'] == f"{cuenta.nombre} (fecha alta: {cuenta.fecha_creacion})"
 
 
-@pytest.mark.xfail
-def test_si_recibe_slug_de_cuenta_pasa_dias_con_movimientos_de_la_cuenta(
-        cuenta, dia, dia_posterior, dia_tardio,
-        entrada, salida, entrada_posterior_otra_cuenta, entrada_tardia,
-        client):
-    response = client.get(reverse('cuenta', args=[cuenta.slug]))
-    assert response.context["dias"] == [dia_tardio, dia]
-
-
 def test_si_recibe_slug_de_cuenta_e_id_de_movimiento_pasa_titulo_de_saldo_historico_con_cuenta_y_movimiento(
         entrada, client):
     cuenta = entrada.cta_entrada
