@@ -61,6 +61,7 @@ def test_detalle_titular(
         titular,
         cuenta_titular, cuenta_2_titular,
         entrada_titular, credito_entre_titulares, salida_otro_titular,
+        mas_de_7_dias,
 ):
     # Dados dos titulares
     # Vamos a la página de inicio y cliqueamos en el primer titular
@@ -107,8 +108,11 @@ def test_detalle_titular(
     # Si cliqueamos en un movimiento, solo aparecen los movimientos del
     # titular en la sección de movimientos, con el movimiento cliqueado
     # resaltado
-    links_movimiento = browser.esperar_elementos("class_link_movimiento")
-    links_movimiento[1].click()
+    dias_pag = browser.serializar_dias_pagina()
+    dias_pag[1]["movimientos"][0]["webelement"].esperar_elemento(
+        "class_link_movimiento", By.CLASS_NAME
+    ).click()
+
     browser.comparar_dias_de(titular)
     movs_pagina = browser.esperar_elementos("class_row_mov")
     assert "mov_selected" in movs_pagina[1].get_attribute("class")
@@ -118,7 +122,7 @@ def test_detalle_titular(
     nombre_titular = browser.esperar_elemento(
         'id_titulo_saldo_gral'
     ).text.strip()
-    movimiento = titular.dias()[1].movimientos[1]
+    movimiento = titular.dias().reverse()[1].movimientos[0]
 
     assert nombre_titular == (f"Capital de {titular.nombre} "
                               f"en movimiento {movimiento.orden_dia} "

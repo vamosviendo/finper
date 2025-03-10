@@ -78,7 +78,7 @@ class HomeView(TemplateView):
                     f"Capital de {titular.nombre}{movimiento_en_titulo}",
                 'titulares': Titular.todes(),
                 'cuentas': titular.cuentas.all(),
-                'dias': titular.dias().reverse(),
+                'dias': Paginator(titular.dias().reverse(), 7).get_page(self.request.GET.get('page')),
             })
 
         else:

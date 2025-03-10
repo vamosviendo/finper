@@ -169,6 +169,22 @@ def test_si_recibe_titname_pasa_titulares_a_template(titular, otro_titular, clie
         list(response.context['titulares']) == [titular, otro_titular]
 
 
+def test_si_recibe_titname_actualiza_context_con_dias_con_movimientos_del_titular_en_orden_inverso(
+        titular, entrada, entrada_anterior,
+        entrada_posterior_otra_cuenta, entrada_tardia_cuenta_ajena, client):
+    response = client.get(reverse('titular', args=[titular.titname]))
+    assert \
+        list(response.context['dias']) == \
+        [entrada_posterior_otra_cuenta.dia, entrada.dia, entrada_anterior.dia]
+
+
+def test_si_recibe_titname_pasa_solo_los_ultimos_7_dias_con_movimientos_del_titular(
+        titular, mas_de_7_dias, client):
+    response = client.get(reverse('titular', args=[titular.titname]))
+    assert len(response.context['dias']) == 7
+    assert mas_de_7_dias.first() not in response.context.get('dias')
+
+
 def test_si_recibe_titname_e_id_de_movimiento_pasa_titulo_de_saldo_gral_con_titular_y_movimiento(
         entrada, client):
     titular = entrada.cta_entrada.titular
