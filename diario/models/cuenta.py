@@ -238,18 +238,6 @@ class Cuenta(PolymorphModel):
 
     # Métodos protegidos
 
-    def _actualizar_madre(self):
-
-        try:
-            saldo_guardado = self.tomar_de_bd().saldo
-        except Cuenta.DoesNotExist:
-            saldo_guardado = 0.0
-
-        if self.saldo != saldo_guardado:
-            self.cta_madre.saldo += self.saldo
-            self.cta_madre.saldo -= saldo_guardado
-            self.cta_madre.save()
-
     def _pasar_slug_a_minuscula(self):
         if self.slug:
             self.slug = self.slug.lower()
