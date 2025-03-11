@@ -8,18 +8,16 @@ from diario.models import CuentaInteractiva, CuentaAcumulativa, Movimiento
 
 def cambiar_fecha(mov: Movimiento, fecha: date):
     mov.fecha = fecha
-    mov.full_clean()
-    mov.save()
+    mov.clean_save()
 
 
 def cambiar_fecha_creacion(cuenta: CuentaInteractiva | CuentaAcumulativa, fecha: date):
     cuenta.fecha_creacion = fecha
     try:
-        cuenta.full_clean()
+        cuenta.clean_save()
     except ValidationError:
         cuenta.titular.fecha_alta = fecha
-        cuenta.titular.full_clean()
-    cuenta.save()
+        cuenta.titular.clean_save()
 
 
 def dividir_en_dos_subcuentas(cuenta: CuentaInteractiva, saldo: float = 0, fecha: date = None) -> CuentaAcumulativa:

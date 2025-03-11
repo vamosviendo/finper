@@ -389,8 +389,7 @@ def test_carga_movimientos_con_orden_dia_correcto(entrada, salida, traspaso, db_
 
 def test_carga_movimientos_con_cotizacion_correcta(venta_dolares, request):
     venta_dolares.cotizacion = 666.66
-    venta_dolares.full_clean()
-    venta_dolares.save()
+    venta_dolares.clean_save()
     request.getfixturevalue("db_serializada")
     request.getfixturevalue("vaciar_db")
     call_command("cargar_db_serializada")
@@ -404,8 +403,7 @@ def test_carga_movimientos_con_cotizacion_correcta(venta_dolares, request):
 def test_carga_cotizacion_correcta_en_movimientos_anteriores_de_cuentas_acumulativas(
         cuenta_en_dolares, venta_dolares, fecha, request):
     venta_dolares.cotizacion = 666.66
-    venta_dolares.full_clean()
-    venta_dolares.save()
+    venta_dolares.clean_save()
     cuenta_en_dolares.dividir_y_actualizar(
         ['subcuenta 1 con saldo en dólares', 'scsd1', 0],
         ['subcuenta 2 con saldo en dólares', 'scsd2'],
@@ -582,8 +580,7 @@ def test_crear_movimientos_a_partir_de_objetos_serializados(cuenta, cuenta_2, pe
     assert m3.orden_dia == m2.orden_dia == m.orden_dia      # BUG
 
     m3.pk = 6
-    m3.full_clean()
-    m3.save()
+    m3.clean_save()
     # Acá falla porque evidentemente Django usa la primary key para otras
     # tareas que desconozco. Por eso, es mejor tener una primary key propia,
     # de la cual además no dependa el ordenamiento de los movimientos, como

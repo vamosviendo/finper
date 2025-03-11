@@ -16,14 +16,12 @@ def test_guarda_y_recupera_cuentas():
     primera_cuenta = Cuenta()
     primera_cuenta.nombre = 'Primera cuenta'
     primera_cuenta.slug = 'PC'
-    primera_cuenta.full_clean()
-    primera_cuenta.save()
+    primera_cuenta.clean_save()
 
     segunda_cuenta = Cuenta()
     segunda_cuenta.nombre = 'Segunda cuenta'
     segunda_cuenta.slug = 'SC'
-    segunda_cuenta.full_clean()
-    segunda_cuenta.save()
+    segunda_cuenta.clean_save()
 
     cuentas_guardadas = Cuenta.todes()
     assert cuentas_guardadas.count() == 2
@@ -39,21 +37,19 @@ def test_guarda_y_recupera_cuentas():
 
 def test_guarda_fecha_de_creacion(fecha):
     cuenta = Cuenta(nombre='Cuenta', slug='C', fecha_creacion=fecha)
-    cuenta.full_clean()
-    cuenta.save()
+    cuenta.clean_save()
     assert cuenta.fecha_creacion == fecha
 
 
 def test_guarda_fecha_actual_por_defecto():
     cuenta = Cuenta(nombre='Cuenta', slug='C')
-    cuenta.full_clean()
-    cuenta.save()
+    cuenta.clean_save()
     assert cuenta.fecha_creacion == date.today()
 
 
 def test_cuenta_creada_tiene_saldo_cero_por_defecto():
     cuenta = Cuenta(nombre='Cuenta', slug='C')
-    cuenta.save()
+    cuenta.clean_save()
     assert cuenta.saldo == 0
 
 
@@ -72,21 +68,18 @@ def test_cuentas_se_ordenan_por_nombre(titular_principal):
 
 def test_cuenta_se_relaciona_con_una_moneda(peso, dolar):
     cuenta = Cuenta(nombre='Cuenta en pesos', slug='c', moneda=peso)
-    cuenta.full_clean()
-    cuenta.save()
+    cuenta.clean_save()
     cuenta_recuperada = Cuenta.tomar(slug='c')
     assert cuenta_recuperada.moneda == peso
     cuenta_en_us = Cuenta(nombre='Cuenta en dolares', slug='d', moneda=dolar)
-    cuenta_en_us.full_clean()
-    cuenta_en_us.save()
+    cuenta_en_us.clean_save()
     cuenta_recuperada = Cuenta.tomar(slug='d')
     assert cuenta_recuperada.moneda == dolar
 
 
 def test_toma_moneda_base_como_moneda_por_defecto(peso):
     cuenta = Cuenta(nombre='Cuenta', slug='c')
-    cuenta.full_clean()
-    cuenta.save()
+    cuenta.clean_save()
     cuenta_recuperada = Cuenta.tomar(slug='c')
     assert cuenta_recuperada.moneda == peso
 

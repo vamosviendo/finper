@@ -12,8 +12,7 @@ def test_guarda_y_recupera_monedas(mock_moneda_base):
     moneda.nombre = "Moneda"
     moneda.monname = "mn"
     # moneda.cotizacion = 1.5
-    moneda.full_clean()
-    moneda.save()
+    moneda.clean_save()
 
     assert Moneda.cantidad() == 1
     mon = Moneda.tomar(monname="mn")

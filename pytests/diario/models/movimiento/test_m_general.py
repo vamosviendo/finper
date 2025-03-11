@@ -35,24 +35,21 @@ def test_guarda_y_recupera_movimientos(fecha, dia, cuenta, cuenta_2):
 def test_cta_entrada_se_relaciona_con_cuenta(cuenta, fecha):
     mov = Movimiento(fecha=fecha, concepto='Cobranza en efectivo', importe=100)
     mov.cta_entrada = cuenta
-    mov.full_clean()
-    mov.save()
+    mov.clean_save()
     assert mov in cuenta.entradas.all()
 
 
 def test_cta_salida_se_relaciona_con_cuenta(cuenta, fecha):
     mov = Movimiento(fecha=fecha, concepto='Pago en efectivo', importe=100)
     mov.cta_salida = cuenta
-    mov.full_clean()
-    mov.save()
+    mov.clean_save()
     assert mov in cuenta.salidas.all()
 
 
 def test_se_relaciona_con_dia(cuenta, importe, dia):
     mov = Movimiento(concepto='Entrada', importe=importe, cta_entrada=cuenta)
     mov.dia = dia
-    mov.full_clean()
-    mov.save()
+    mov.clean_save()
     assert mov in dia.movimiento_set.all()
 
 
@@ -81,8 +78,7 @@ def test_dentro_del_dia_movimientos_se_ordenan_por_campo_orden_dia(cuenta, dia):
     )
 
     mov3.orden_dia = 0
-    mov3.full_clean()
-    mov3.save()
+    mov3.clean_save()
     mov1.refresh_from_db()
     mov2.refresh_from_db()
 
@@ -91,8 +87,7 @@ def test_dentro_del_dia_movimientos_se_ordenan_por_campo_orden_dia(cuenta, dia):
 
 def test_moneda_base_es_moneda_por_defecto(cuenta, fecha, mock_moneda_base):
     mov = Movimiento(fecha=fecha, concepto='Pago en efectivo', importe=100, cta_entrada=cuenta)
-    mov.full_clean()
-    mov.save()
+    mov.clean_save()
     assert mov.moneda == Moneda.tomar(monname=mock_moneda_base)
 
 
@@ -101,8 +96,7 @@ def test_cotizacion_por_defecto_es_1_para_cuentas_con_la_misma_moneda(cuenta, cu
         fecha=fecha, concepto="Movimiento entre cuentas en la misma moneda", importe=100,
         cta_entrada=cuenta, cta_salida=cuenta_2
     )
-    mov.full_clean()
-    mov.save()
+    mov.clean_save()
     assert mov.cotizacion == 1
 
 
@@ -116,8 +110,7 @@ def test_en_movimientos_de_entrada_o_salida_cotizacion_es_siempre_uno(cuenta, fe
         'cotizacion': 50
     }
     mov = Movimiento(**kwargs)
-    mov.full_clean()
-    mov.save()
+    mov.clean_save()
     assert mov.cotizacion == 1
 
 
@@ -126,8 +119,7 @@ def test_en_movimientos_entre_cuentas_en_la_misma_moneda_cotizacion_es_siempre_u
         fecha=fecha, concepto="Movimiento entre cuentas en la misma moneda", importe=100,
         cta_entrada=cuenta, cta_salida=cuenta_2, cotizacion=55
     )
-    mov.full_clean()
-    mov.save()
+    mov.clean_save()
     assert mov.cotizacion == 1
 
 
@@ -145,8 +137,7 @@ def test_entre_cuentas_en_distinta_moneda_se_calcula_cotizacion_a_partir_de_la_c
     setattr(mov, f"cta_{sentido}", cuenta_con_saldo_en_dolares)
     setattr(mov, f"cta_{sentido_opuesto}", cuenta_con_saldo_en_euros)
 
-    mov.full_clean()
-    mov.save()
+    mov.clean_save()
 
     assert mov.cotizacion == dolar.cotizacion_en_al(euro, fecha, compra=compra)
 
@@ -160,8 +151,7 @@ def test_entre_cuentas_en_distinta_moneda_permite_cotizacion_arbitraria(
         moneda=euro
     )
     mov.cotizacion = 555
-    mov.full_clean()
-    mov.save()
+    mov.clean_save()
     assert mov.cotizacion == 555
 
 def test_natural_key_devuelve_fecha_y_orden_dia(entrada):

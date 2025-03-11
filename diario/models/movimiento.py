@@ -323,8 +323,7 @@ class Movimiento(MiModel):
             cta_salida=cta_salida,
             **kwargs
         )
-        movimiento.full_clean()
-        movimiento.save(esgratis=esgratis)
+        movimiento.clean_save(esgratis=esgratis)
 
         return movimiento
 
@@ -384,6 +383,16 @@ class Movimiento(MiModel):
 
         if self.id_contramov:
             self._eliminar_contramovimiento()
+
+    def clean_save(
+            self, exclude=None, validate_unique=True, validate_constraints=True,
+            force_insert=False, force_update=False, using=None, update_fields=None,
+            mantiene_orden_dia: bool = False, esgratis: bool = False
+    ):
+        super().full_clean()
+        self.save(
+            force_insert, force_update, using, update_fields,
+            mantiene_orden_dia=mantiene_orden_dia, esgratis=esgratis)
 
     def save(self,
              *args,
@@ -655,8 +664,7 @@ class Movimiento(MiModel):
             # Se omite cuenta.full_clean() para evitar error de fecha de
             # conversión posterior a fecha de creación de subcuentas
             cuenta.save()
-            subcuenta.full_clean()
-            subcuenta.save()
+            subcuenta.clean_save()
 
     def _asignar_orden_dia(self):
         pos_min, pos_max = sorted([self.posicion, self.viejo.posicion])
@@ -843,8 +851,7 @@ class Movimiento(MiModel):
         ce.nombre = f'Préstamo de {self.emisor.nombre} a {self.receptor.nombre}'
         cs.nombre = f'Deuda de {self.receptor.nombre} con {self.emisor.nombre}'
         for c in ce, cs:
-            c.full_clean()
-            c.save()
+            c.clean_save()
 
     def _eliminar_contramovimiento(self):
         contramov = Movimiento.tomar(id=self.id_contramov)

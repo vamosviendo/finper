@@ -331,8 +331,7 @@ def conjunto_movimientos_varios_dias(cuenta, cuenta_2, cuenta_ajena, cuenta_ajen
                     mov.cta_entrada = cta
                 else:
                     mov.cta_salida = cta
-                mov.full_clean()
-                mov.save()
+                mov.clean_save()
     return Movimiento.todes()
 
 

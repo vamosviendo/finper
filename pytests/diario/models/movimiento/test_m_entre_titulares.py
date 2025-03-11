@@ -23,8 +23,7 @@ def test_movimiento_entre_titulares_gestiona_trasferencia(mock_gestionar_transfe
         cta_entrada=cuenta,
         cta_salida=cuenta_ajena,
     )
-    mov.full_clean()
-    mov.save()
+    mov.clean_save()
     mock_gestionar_transferencia.assert_called_once_with(mov)
 
 
@@ -35,8 +34,7 @@ def test_movimiento_no_entre_titulares_no_gestiona_transferencia(mock_gestionar_
         cta_entrada=cuenta,
         cta_salida=cuenta_2,
     )
-    mov.full_clean()
-    mov.save()
+    mov.clean_save()
     mock_gestionar_transferencia.assert_not_called()
 
 
@@ -47,8 +45,7 @@ def test_no_gestiona_transferencia_si_esgratis(mock_gestionar_transferencia, cue
         cta_salida=cuenta_ajena,
     )
     mov.esgratis = True
-    mov.full_clean()
-    mov.save()
+    mov.clean_save()
     mock_gestionar_transferencia.assert_not_called()
 
 

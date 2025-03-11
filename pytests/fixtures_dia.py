@@ -77,11 +77,9 @@ def mas_de_7_dias(
         dia_tardio_plus: Dia,
         dia_hoy: Dia) -> QuerySet[Dia]:
     titular.fecha_alta = date(2001, 1, 2)
-    titular.full_clean()
-    titular.save()
+    titular.clean_save()
     cuenta.fecha_creacion = date(2001, 1, 2)
-    cuenta.full_clean()
-    cuenta.save()
+    cuenta.clean_save()
     Movimiento.crear(fecha=dia_temprano.fecha, concepto="mov", cta_entrada=cuenta, importe=100)
     Movimiento.crear(fecha=dia_tardio_plus.fecha, concepto="mov", cta_entrada=cuenta, importe=100)
     Movimiento.crear(fecha=dia_hoy.fecha, concepto="mov", cta_entrada=cuenta, importe=100)

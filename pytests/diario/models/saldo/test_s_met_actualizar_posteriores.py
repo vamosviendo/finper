@@ -19,8 +19,7 @@ def test_suma_importe_a_saldos_de_cta_entrada_posteriores_a_fecha_del_saldo(
         fecha=saldo.posicion.fecha+timedelta(1)
     )
     setattr(mov, f'cta_{sentido}', cuenta)
-    mov.full_clean()
-    mov.save()
+    mov.clean_save()
     importe_mov = mov.importe
     saldo_posterior.refresh_from_db(fields=['_importe'])
     saldo_tardio.refresh_from_db(fields=['_importe'])

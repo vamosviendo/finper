@@ -33,8 +33,7 @@ def test_pasa_cuentas_ordenadas_por_nombre(client, cuenta, cuenta_2, cuenta_ajen
     cuenta_2.nombre = 'z'
     cuenta_ajena.nombre = 'a'
     for c in cuenta, cuenta_2, cuenta_ajena:
-        c.full_clean()
-        c.save()
+        c.clean_save()
     response = client.get(reverse('home'))
     assert list(response.context.get("cuentas")) == [cuenta_ajena, cuenta, cuenta_2]
 
