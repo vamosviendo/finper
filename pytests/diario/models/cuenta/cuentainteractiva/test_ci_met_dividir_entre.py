@@ -27,7 +27,7 @@ def test_da_error_si_saldo_no_ok(mock_saldo_ok, cuenta, dicts_subcuentas):
             ValidationError,
             match=re.escape(
                 f'Saldo de cuenta "{cuenta.nombre}" no coincide '
-                f'con sus movimientos. Saldo: {cuenta.saldo} - '
+                f'con sus movimientos. Saldo: {cuenta.saldo()} - '
                 f'Total movimientos: {cuenta.total_movs()}'
             )
     ):
@@ -103,7 +103,7 @@ def test_convierte_titular_en_titular_original(cuenta, dicts_subcuentas, otro_ti
 def test_genera_movimientos_de_salida_en_cta_madre_con_saldo_positivo(cuenta_con_saldo, dicts_subcuentas):
     movs_cuenta_antes = cuenta_con_saldo.movs_directos().count()
     importe1 = dicts_subcuentas[0]['saldo']
-    importe2 = cuenta_con_saldo.saldo - importe1
+    importe2 = cuenta_con_saldo.saldo() - importe1
 
     cuenta_con_saldo.dividir_entre(*dicts_subcuentas)
     cuenta = Cuenta.tomar(slug=cuenta_con_saldo.slug, polymorphic=False)
@@ -126,7 +126,7 @@ def test_genera_movimientos_de_entrada_en_cta_madre_con_saldo_negativo(
         cuenta_con_saldo_negativo, dicts_subcuentas):
     movs_cuenta_antes = cuenta_con_saldo_negativo.movs_directos().count()
     importe1 = dicts_subcuentas[0]['saldo'] = -50
-    importe2 = cuenta_con_saldo_negativo.saldo - importe1
+    importe2 = cuenta_con_saldo_negativo.saldo() - importe1
 
     cuenta_con_saldo_negativo.dividir_entre(*dicts_subcuentas)
     cuenta = Cuenta.tomar(slug=cuenta_con_saldo_negativo.slug, polymorphic=False)
@@ -165,7 +165,7 @@ def test_acepta_mas_de_dos_subcuentas(cuenta, dicts_subcuentas):
     cuenta = cuenta.dividir_y_actualizar(*dicts_subcuentas)
 
     assert cuenta.subcuentas.count() == 3
-    assert sum([c.saldo for c in cuenta.subcuentas.all()]) == cuenta.saldo
+    assert sum([c.saldo() for c in cuenta.subcuentas.all()]) == cuenta.saldo()
 
 
 def test_cuenta_se_convierte_en_acumulativa(cuenta, dicts_subcuentas):
@@ -227,7 +227,7 @@ def test_calcula_saldo_de_hasta_una_subcuenta_sin_saldo(cuenta, dicts_subcuentas
 
     sc1, sc2, sc3 = cuenta.dividir_entre(*dicts_subcuentas)
 
-    assert sc3.saldo == -180
+    assert sc3.saldo() == -180
 
 
 def test_no_acepta_mas_de_una_subcuenta_sin_saldo(cuenta, dicts_subcuentas):

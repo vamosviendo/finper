@@ -73,16 +73,16 @@ def test_movimiento_se_guarda_como_no_automatico_por_defecto(cuenta):
 
 
 def test_suma_importe_a_cta_entrada(cuenta, entrada):
-    assert cuenta.saldo == entrada.importe
+    assert cuenta.saldo() == entrada.importe
 
 
 def test_resta_importe_de_cta_salida(cuenta, salida):
-    assert cuenta.saldo == -salida.importe
+    assert cuenta.saldo() == -salida.importe
 
 
 def test_puede_traspasar_saldo_de_una_cuenta_a_otra(cuenta, cuenta_2):
-    saldo_cuenta = cuenta.saldo
-    saldo_cuenta_2 = cuenta_2.saldo
+    saldo_cuenta = cuenta.saldo()
+    saldo_cuenta_2 = cuenta_2.saldo()
 
     mov = Movimiento.crear(
         concepto='Depósito',
@@ -91,8 +91,8 @@ def test_puede_traspasar_saldo_de_una_cuenta_a_otra(cuenta, cuenta_2):
         cta_salida=cuenta
     )
 
-    assert cuenta.saldo == saldo_cuenta - mov.importe
-    assert cuenta_2.saldo == saldo_cuenta_2 + mov.importe
+    assert cuenta.saldo() == saldo_cuenta - mov.importe
+    assert cuenta_2.saldo() == saldo_cuenta_2 + mov.importe
 
 
 def test_mov_entrada_llama_a_generar_saldo_con_salida_False(mock_generar, cuenta):
@@ -112,7 +112,7 @@ def test_mov_traspaso_llama_a_generar_saldo_con_salida_False_para_cta_entrada_y_
 
 
 def test_integrativo_genera_saldo_para_cta_entrada(cuenta):
-    saldo_anterior_cuenta = cuenta.saldo
+    saldo_anterior_cuenta = cuenta.saldo()
     mov = Movimiento.crear('Nuevo mov', 20, cuenta)
 
     saldo = Saldo.objects.get(cuenta=cuenta, movimiento=mov)
@@ -122,7 +122,7 @@ def test_integrativo_genera_saldo_para_cta_entrada(cuenta):
 
 
 def test_integrativo_genera_saldo_para_cta_salida(cuenta):
-    saldo_anterior_cuenta = cuenta.saldo
+    saldo_anterior_cuenta = cuenta.saldo()
     mov = Movimiento.crear('Nuevo mov', 20, None, cuenta)
     saldo = Saldo.objects.get(cuenta=cuenta, movimiento=mov)
     assert saldo.cuenta.pk == cuenta.pk
@@ -150,8 +150,8 @@ def test_impacta_en_saldo_de_cada_cuenta_segun_la_cotizacion_y_moneda_del_movimi
     cs: CuentaInteractiva = request.getfixturevalue(cta_salida)
     mon_mov: Moneda = request.getfixturevalue(moneda)
     cta_en_mon_mov = ce if ce.moneda == mon_mov else cs
-    saldo_ce: float = ce.saldo
-    saldo_cs: float = cs.saldo
+    saldo_ce: float = ce.saldo()
+    saldo_cs: float = cs.saldo()
 
     mov = Movimiento.crear(
         concepto='Movimiento entre cuentas con distinta moneda',
@@ -166,8 +166,8 @@ def test_impacta_en_saldo_de_cada_cuenta_segun_la_cotizacion_y_moneda_del_movimi
     ce.refresh_from_db()
     cs.refresh_from_db()
 
-    assert ce.saldo == round(saldo_ce + (10 / (1 if ce == cta_en_mon_mov else mov.cotizacion)), 2)
-    assert cs.saldo == round(saldo_cs - (10 / (1 if cs == cta_en_mon_mov else mov.cotizacion)), 2)
+    assert ce.saldo() == round(saldo_ce + (10 / (1 if ce == cta_en_mon_mov else mov.cotizacion)), 2)
+    assert cs.saldo() == round(saldo_cs - (10 / (1 if cs == cta_en_mon_mov else mov.cotizacion)), 2)
 
 
 class TestMovimientoEntreCuentasDeDistintosTitulares:
@@ -230,15 +230,15 @@ class TestMovimientoEntreCuentasDeDistintosTitulares:
 
     def test_si_ya_existe_un_credito_de_sentido_inverso_resta_importe_de_saldo_de_cuenta_credito(
             self, credito, cuenta_2, cuenta_ajena_2):
-        importe = Movimiento.tomar(id=credito.id_contramov).cta_entrada.saldo
+        importe = Movimiento.tomar(id=credito.id_contramov).cta_entrada.saldo()
         Movimiento.crear('Devolución', 60, cuenta_ajena_2, cuenta_2)
-        assert Movimiento.tomar(id=credito.id_contramov).cta_entrada.saldo == importe - 60
+        assert Movimiento.tomar(id=credito.id_contramov).cta_entrada.saldo() == importe - 60
 
     def test_si_ya_existe_un_credito_de_sentido_inverso_suma_importe_a_saldo_de_cuenta_deuda(
             self, credito, cuenta_2, cuenta_ajena_2):
-        importe = Movimiento.tomar(id=credito.id_contramov).cta_salida.saldo
+        importe = Movimiento.tomar(id=credito.id_contramov).cta_salida.saldo()
         Movimiento.crear('Devolución', 60, cuenta_ajena_2, cuenta_2)
-        assert Movimiento.tomar(id=credito.id_contramov).cta_salida.saldo == importe + 60
+        assert Movimiento.tomar(id=credito.id_contramov).cta_salida.saldo() == importe + 60
 
     def test_si_receptor_no_es_acreedor_de_emisor_agrega_receptor_como_deudor_de_emisor(
             self, credito):

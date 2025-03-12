@@ -53,7 +53,7 @@ class HomeView(TemplateView):
 
         if cuenta:
             context.update({
-                'saldo_gral': cuenta.saldo_en_mov(movimiento) if movimiento else cuenta.saldo,
+                'saldo_gral': cuenta.saldo_en_mov(movimiento) if movimiento else cuenta.saldo(),
                 'titulo_saldo_gral':
                     f"{cuenta.nombre} (fecha alta: {cuenta.fecha_creacion})"
                     f"{movimiento_en_titulo}",
@@ -85,7 +85,7 @@ class HomeView(TemplateView):
             context.update({
                 'saldo_gral':
                     saldo_general_historico(movimiento) if movimiento
-                    else sum(c.saldo for c in Cuenta.filtro(cta_madre=None)),
+                    else sum(c.saldo() for c in Cuenta.filtro(cta_madre=None)),
                 'titulo_saldo_gral': f'Saldo general{movimiento_en_titulo}',
                 'titulares': Titular.todes(),
                 'cuentas': Cuenta.todes().order_by(Lower('nombre')),
@@ -112,7 +112,7 @@ class CtaElimView(DeleteView):
 
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
-        if self.object.saldo != 0:
+        if self.object.saldo() != 0:
             context = self.get_context_data(
                 object=self.object,
                 error='No se puede eliminar cuenta con saldo',

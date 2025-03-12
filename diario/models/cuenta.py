@@ -93,7 +93,6 @@ class Cuenta(PolymorphModel):
     def es_cuenta_credito(self) -> bool:
         return self.has_not_none_attr('contracuenta')
 
-    @property
     def saldo(self) -> float:
         try:
             return self.ultimo_saldo.importe
@@ -105,7 +104,7 @@ class Cuenta(PolymorphModel):
         return self.moneda.cotizacion
 
     def saldo_en(self, otra_moneda: Moneda, compra: bool) -> float:
-        return round(self.saldo * self.moneda.cotizacion_en(otra_moneda, compra=compra), 2)
+        return round(self.saldo() * self.moneda.cotizacion_en(otra_moneda, compra=compra), 2)
     
     def saldo_en_mov(self, movimiento: Movimiento) -> float:
         try:
@@ -161,7 +160,7 @@ class Cuenta(PolymorphModel):
         self._verificar_fecha_creacion()
 
     def delete(self, *args, **kwargs):
-        if self.saldo != 0:
+        if self.saldo() != 0:
             raise errors.SaldoNoCeroException
         super().delete(*args, **kwargs)
 
@@ -315,7 +314,7 @@ class CuentaInteractiva(Cuenta):
         saldo = self.ultimo_saldo
         importe = saldo.importe
         mov = Movimiento(concepto='Movimiento correctivo')
-        mov.importe = self.saldo - self.total_movs()
+        mov.importe = self.saldo() - self.total_movs()
         if mov.importe < 0:
             mov.importe = -mov.importe
             mov.cta_salida = self
@@ -332,7 +331,7 @@ class CuentaInteractiva(Cuenta):
         return mov
 
     def saldo_ok(self) -> bool:
-        return self.saldo == self.total_movs()
+        return self.saldo() == self.total_movs()
 
     def dividir_entre(
             self,
@@ -353,7 +352,7 @@ class CuentaInteractiva(Cuenta):
         if not self.saldo_ok():
             raise ValidationError(
                 f'Saldo de cuenta "{self.nombre}" no coincide con sus movimientos. '
-                f'Saldo: {self.saldo} - Total movimientos: {self.total_movs()}'
+                f'Saldo: {self.saldo()} - Total movimientos: {self.total_movs()}'
             )
 
         cuentas_limpias = self._ajustar_subcuentas(subcuentas)
@@ -409,18 +408,18 @@ class CuentaInteractiva(Cuenta):
                 except KeyError:  # Más de una subcuenta sin saldo
                     raise errors.ErrorDeSuma
 
-                dic_subcuenta['saldo'] = self.saldo - total_otras_subcuentas
+                dic_subcuenta['saldo'] = self.saldo() - total_otras_subcuentas
 
             # Si saldo no es float, convertir
             dic_subcuenta['saldo'] = float(dic_subcuenta['saldo'])
             subcuentas_limpias.append(dic_subcuenta)
 
-        # En este punto suma saldos subcuentas debe ser igual a self.saldo
+        # En este punto suma saldos subcuentas debe ser igual a self.saldo()
         suma_saldos_subcuentas = sum([x['saldo'] for x in subcuentas_limpias])
-        if suma_saldos_subcuentas != self.saldo:
+        if suma_saldos_subcuentas != self.saldo():
             raise errors.ErrorDeSuma(
                 f"Suma errónea. Saldos de subcuentas "
-                f"deben sumar {self.saldo:.2f} (suman {suma_saldos_subcuentas})"
+                f"deben sumar {self.saldo():.2f} (suman {suma_saldos_subcuentas})"
             )
 
         return subcuentas_limpias
@@ -567,9 +566,8 @@ class CuentaAcumulativa(Cuenta):
                 todas_las_subcuentas.update(cuenta.arbol_de_subcuentas())
         return todas_las_subcuentas
 
-    @property
     def saldo(self) -> float:
-        return sum([subc.saldo for subc in self.subcuentas.all()])
+        return sum([subc.saldo() for subc in self.subcuentas.all()])
 
     def clean(self):
         super().clean()

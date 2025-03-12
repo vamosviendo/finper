@@ -33,7 +33,7 @@ class Titular(MiModel):
 
     @property
     def capital(self) -> float:
-        return sum([c.saldo for c in self.cuentas_interactivas()])
+        return sum([c.saldo() for c in self.cuentas_interactivas()])
 
     def capital_historico(self, movimiento: 'Movimiento') -> float:
         return sum(c.saldo_en_mov(movimiento) for c in self.cuentas_interactivas())
@@ -77,7 +77,7 @@ class Titular(MiModel):
 
     def deuda_con(self, otro: Self) -> float:
         if self in otro.deudores.all():
-            return -self.cuenta_credito_con(otro).saldo
+            return -self.cuenta_credito_con(otro).saldo()
         return 0
 
     def cancelar_deuda_de(self, otro: Self):

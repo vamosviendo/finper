@@ -369,6 +369,7 @@ class Movimiento(MiModel):
             )
 
         self.refresh_from_db()
+
         if self.tiene_cuenta_acumulativa():
             raise errors.ErrorCuentaEsAcumulativa(
                 errors.MOVIMIENTO_CON_CA_ELIMINADO)
@@ -860,7 +861,7 @@ class Movimiento(MiModel):
         tit2 = contramov.cta_salida.titular
         contramov.delete(force=True)
         self.id_contramov = None
-        if cta1.saldo == 0:
+        if cta1.saldo() == 0:
             tit2.acreedores.remove(tit1)
 
     def _regenerar_contramovimiento(self):
@@ -871,11 +872,11 @@ class Movimiento(MiModel):
                                      cuenta_emisora: CuentaInteractiva,
                                      cuenta_receptora: CuentaInteractiva) -> str:
 
-        if cuenta_emisora.saldo > 0:  # (1)
+        if cuenta_emisora.saldo() > 0:  # (1)
             concepto = 'Aumento de crédito'
-        elif cuenta_emisora.saldo < 0:
-            concepto = 'Cancelación de crédito' if self.importe == cuenta_receptora.saldo \
-                else 'Pago en exceso de crédito' if self.importe > cuenta_receptora.saldo \
+        elif cuenta_emisora.saldo() < 0:
+            concepto = 'Cancelación de crédito' if self.importe == cuenta_receptora.saldo() \
+                else 'Pago en exceso de crédito' if self.importe > cuenta_receptora.saldo() \
                 else 'Pago a cuenta de crédito'
         else:
             concepto = 'Constitución de crédito'

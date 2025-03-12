@@ -182,7 +182,7 @@ def test_detalle_de_cuenta_acumulativa(
     assert \
         saldo_cta_madre == \
         f"Saldo de cuenta madre {cuenta_de_dos_titulares.nombre}: " \
-        f"{float_format(cuenta_de_dos_titulares.saldo)}"
+        f"{float_format(cuenta_de_dos_titulares.saldo())}"
 
     # Y vemos que luego del nombre y saldo de la cuenta aprece en tipografía
     # menos destacada el nombre y saldo de sus hermanas de cuenta
@@ -194,7 +194,7 @@ def test_detalle_de_cuenta_acumulativa(
         assert \
             saldos_ctas_hermanas[index] == \
             f"Saldo de cuenta hermana {hermana.nombre}: " \
-            f"{float_format(hermana.saldo)}"
+            f"{float_format(hermana.saldo())}"
 
     # Y vemos el titular de la primera subcuenta y los movimientos en los que
     # interviene
@@ -238,7 +238,7 @@ def test_detalle_de_cuenta_acumulativa(
         By.CLASS_NAME
     ).text
     assert \
-        cuenta_de_dos_titulares.saldo != \
+        cuenta_de_dos_titulares.saldo() != \
         cuenta_de_dos_titulares.saldo_en_mov(movimiento)
     assert \
         browser.esperar_elemento("id_importe_saldo_gral").text == \
@@ -357,9 +357,9 @@ def test_detalle_de_subcuenta(
     assert \
         saldos_ancestro == [
             f"Saldo de cuenta madre {cuenta_acumulativa.nombre}: "
-            f"{float_format(cuenta_acumulativa.saldo)}",
+            f"{float_format(cuenta_acumulativa.saldo())}",
             f"Saldo de cuenta madre {subsubcuenta_1_con_movimientos.cta_madre.nombre}: "
-            f"{float_format(subsubcuenta_1_con_movimientos.cta_madre.saldo)}",
+            f"{float_format(subsubcuenta_1_con_movimientos.cta_madre.saldo())}",
         ]
 
     # Y vemos que luego del nombre y saldo de la cuenta aparece el nombre y saldo de sus cuentas hermanas
@@ -368,8 +368,8 @@ def test_detalle_de_subcuenta(
     ]
     assert \
         saldos_hermana == [
-            f"Saldo de cuenta hermana subsubcuenta 2: {float_format(subsubcuenta_2_con_movimientos.saldo)}",
-            f"Saldo de cuenta hermana subsubcuenta 3: {float_format(subsubcuenta_3_con_movimientos.saldo)}",
+            f"Saldo de cuenta hermana subsubcuenta 2: {float_format(subsubcuenta_2_con_movimientos.saldo())}",
+            f"Saldo de cuenta hermana subsubcuenta 3: {float_format(subsubcuenta_3_con_movimientos.saldo())}",
         ]
 
     # Cliqueamos en un movimiento.

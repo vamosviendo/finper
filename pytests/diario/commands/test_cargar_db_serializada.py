@@ -462,26 +462,26 @@ def test_divide_correctamente_cuentas_con_saldo_negativo(cuenta_acumulativa_sald
     call_command("cargar_db_serializada")
     cuenta_recuperada = Cuenta.tomar(slug=cuenta_acumulativa_saldo_negativo.slug)
     assert cuenta_recuperada.es_acumulativa
-    assert cuenta_recuperada.saldo == -100
+    assert cuenta_recuperada.saldo() == -100
     subcuentas = cuenta_recuperada.subcuentas.all()
     assert len(subcuentas) == 2
     assert subcuentas[0].nombre == "subcuenta 1 saldo negativo"
     assert subcuentas[0].slug == "scsn1"
-    assert subcuentas[0].saldo == -10
-    assert subcuentas[1].saldo == cuenta_recuperada.saldo + 10
+    assert subcuentas[0].saldo() == -10
+    assert subcuentas[1].saldo() == cuenta_recuperada.saldo() + 10
 
 
 def test_divide_correctamente_cuentas_sin_saldo(cuenta_acumulativa_saldo_0, db_serializada, vaciar_db):
     call_command("cargar_db_serializada")
     cuenta_recuperada = Cuenta.tomar(slug=cuenta_acumulativa_saldo_0.slug)
     assert cuenta_recuperada.es_acumulativa
-    assert cuenta_recuperada.saldo == 0
+    assert cuenta_recuperada.saldo() == 0
     subcuentas = cuenta_recuperada.subcuentas.all()
     assert len(subcuentas) == 2
     assert subcuentas[0].nombre == "subcuenta 1 saldo 0"
     assert subcuentas[0].slug == "sc1"
-    assert subcuentas[0].saldo == 0
-    assert subcuentas[1].saldo == 0
+    assert subcuentas[0].saldo() == 0
+    assert subcuentas[1].saldo() == 0
 
 
 def test_recupera_correctamente_subcuentas_de_origen_y_subcuentas_agregadas_en_la_misma_fecha_de_la_division(
@@ -495,10 +495,10 @@ def test_recupera_correctamente_subcuentas_de_origen_y_subcuentas_agregadas_en_l
     call_command("cargar_db_serializada")
     ca = cuenta_acumulativa.tomar_del_slug()
     sco1, sco2, sca1, sca2 = ca.subcuentas.all()
-    assert sco1.saldo == 60-20-15
-    assert sco2.saldo == 40
-    assert sca1.saldo == 20
-    assert sca2.saldo == 15
+    assert sco1.saldo() == 60-20-15
+    assert sco2.saldo() == 40
+    assert sca1.saldo() == 20
+    assert sca2.saldo() == 15
 
     traspaso_1 = Movimiento.tomar(concepto="Traspaso de saldo a subcuenta agregada 1")
     traspaso_2 = Movimiento.tomar(concepto="Traspaso de saldo a subcuenta agregada 2")

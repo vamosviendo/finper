@@ -76,7 +76,7 @@ def test_pasa_todas_las_cuentas_a_template(cuenta, cuenta_acumulativa, response)
 
 def test_pasa_saldo_general_a_template(
         cuenta, cuenta_2, entrada, entrada_otra_cuenta, salida, response):
-    assert response.context.get('saldo_gral') == cuenta.saldo + cuenta_2.saldo
+    assert response.context.get('saldo_gral') == cuenta.saldo() + cuenta_2.saldo()
 
 
 def test_pasa_titulo_de_saldo_general_a_template(response):
@@ -124,7 +124,7 @@ def test_si_recibe_slug_de_cuenta_pasa_solo_los_ultimos_7_dias_con_movimientos_d
 def test_si_recibe_slug_de_cuenta_pasa_saldo_de_cuenta_como_saldo_general(
         cuenta_con_saldo, entrada, client):
     response = client.get(reverse('cuenta', args=[cuenta_con_saldo.slug]))
-    assert response.context['saldo_gral'] == cuenta_con_saldo.saldo
+    assert response.context['saldo_gral'] == cuenta_con_saldo.saldo()
 
 
 def test_si_recibe_slug_de_cuenta_pasa_titulo_de_saldo_gral_con_cuenta(cuenta, client):
@@ -239,7 +239,7 @@ def test_considera_solo_cuentas_independientes_para_calcular_saldo_gral(
     cuenta_2 = cuenta_2.tomar_del_slug()
     response = client.get(reverse('home'))
 
-    assert response.context['saldo_gral'] == cuenta.saldo + cuenta_2.saldo
+    assert response.context['saldo_gral'] == cuenta.saldo() + cuenta_2.saldo()
 
 
 def test_si_no_hay_movimientos_pasa_0_a_saldo_general(response):

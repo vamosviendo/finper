@@ -198,7 +198,7 @@ class FinperFirefox(MiFirefox):
         titulo = self.esperar_elemento('id_div_saldo_gral').text.strip()
         assert titulo == \
                f"{cuenta.nombre} (fecha alta: {cuenta.fecha_creacion}): " \
-               f"{float_format(cuenta.saldo)}"
+               f"{float_format(cuenta.saldo())}"
 
     def comparar_subcuentas_de(self, cuenta: CuentaAcumulativa):
         """ Dada una cuenta acumulativa, comparar sus subcuentas con las que
@@ -213,7 +213,7 @@ class FinperFirefox(MiFirefox):
         """ Dada una cuenta, comparar su saldo con el que aparece en la página.
         """
         saldo = self.esperar_elemento('id_importe_saldo_gral').text.strip()
-        assert saldo == float_format(cuenta.saldo)
+        assert saldo == float_format(cuenta.saldo())
 
     def comparar_saldo_historico_de(self, cuenta: Cuenta, movimiento: Movimiento):
         """ Dada una cuenta, comparar su saldo con el que aparece en la página.

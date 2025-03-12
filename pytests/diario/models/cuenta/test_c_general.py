@@ -50,7 +50,7 @@ def test_guarda_fecha_actual_por_defecto():
 def test_cuenta_creada_tiene_saldo_cero_por_defecto():
     cuenta = Cuenta(nombre='Cuenta', slug='C')
     cuenta.clean_save()
-    assert cuenta.saldo == 0
+    assert cuenta.saldo() == 0
 
 
 def test_slug_no_permite_caracteres_no_alfanumericos():

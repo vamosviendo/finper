@@ -20,7 +20,7 @@ def form(cuenta_con_saldo: CuentaInteractiva, otro_titular: Titular, fecha: date
             'form_0_titular': cuenta_con_saldo.titular,
             'form_1_nombre': 'Subcuenta 2',
             'form_1_slug': 'sc2',
-            'form_1_saldo': cuenta_con_saldo.saldo - 50,
+            'form_1_saldo': cuenta_con_saldo.saldo() - 50,
             'form_1_titular': otro_titular,
             'form_1_esgratis': True,
         },
@@ -40,7 +40,7 @@ def subcuentas(cuenta_con_saldo: CuentaInteractiva, otro_titular: Titular) -> Li
             }, {
                 'nombre': 'Subcuenta 2',
                 'slug': 'sc2',
-                'saldo': cuenta_con_saldo.saldo - 50.0,
+                'saldo': cuenta_con_saldo.saldo() - 50.0,
                 'titular': otro_titular,
                 'esgratis': True,
             },

@@ -42,7 +42,7 @@ def int_response(client, cuenta_con_saldo: CuentaInteractiva) -> HttpResponse:
             'form_0_saldo': 50,
             'form_1_nombre': 'Subcuenta 2',
             'form_1_slug': 'sc2',
-            'form_1_saldo': cuenta_con_saldo.saldo - 50,
+            'form_1_saldo': cuenta_con_saldo.saldo() - 50,
         }
     )
 

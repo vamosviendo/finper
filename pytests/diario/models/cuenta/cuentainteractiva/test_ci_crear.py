@@ -82,7 +82,7 @@ def test_cuenta_creada_con_saldo_negativo_es_cta_salida_del_movimiento_generado(
 
 def test_puede_pasarse_saldo_en_formato_str():
     cuenta = CuentaInteractiva.crear('Cuenta con saldo', 'ccs', saldo='354')
-    assert cuenta.saldo == 354
+    assert cuenta.saldo() == 354
 
 
 def test_no_genera_movimiento_con_saldo_cero_en_formato_str():

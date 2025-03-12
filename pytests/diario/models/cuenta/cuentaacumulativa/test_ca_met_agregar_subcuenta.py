@@ -24,7 +24,7 @@ def test_devuelve_subcuenta_agregada(cuenta_acumulativa, titular):
 
 
 def test_subcuenta_agregadada_tiene_saldo_cero(subcuenta_agregada):
-    assert subcuenta_agregada.saldo == 0
+    assert subcuenta_agregada.saldo() == 0
 
 
 def test_permite_asignar_titular_distinto_del_de_cuenta_madre(cuenta_acumulativa, otro_titular):

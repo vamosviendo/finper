@@ -22,7 +22,7 @@ def test_home(
     assert titulo_saldo == "Saldo general:"
     saldo_gral = browser.esperar_elemento("id_importe_saldo_gral")
     assert saldo_gral.text == float_format(
-        cuenta.saldo + cuenta_2.saldo + cuenta_3.saldo + cuenta_acumulativa.saldo
+        cuenta.saldo() + cuenta_2.saldo() + cuenta_3.saldo() + cuenta_acumulativa.saldo()
     )
 
     # Vemos dos titulares en el menú de titulares

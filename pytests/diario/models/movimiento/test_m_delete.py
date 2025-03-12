@@ -7,15 +7,15 @@ from utils import errors
 
 def test_resta_importe_de_saldo_cta_entrada_y_lo_suma_a_saldo_cta_salida(
         entrada, traspaso, cuenta, cuenta_2):
-    saldo_cuenta = cuenta.saldo
+    saldo_cuenta = cuenta.saldo()
     entrada.delete()
-    assert cuenta.saldo == saldo_cuenta - entrada.importe
+    assert cuenta.saldo() == saldo_cuenta - entrada.importe
 
-    saldo_cuenta = cuenta.saldo
-    saldo_cuenta_2 = cuenta_2.saldo
+    saldo_cuenta = cuenta.saldo()
+    saldo_cuenta_2 = cuenta_2.saldo()
     traspaso.delete()
-    assert cuenta.saldo == saldo_cuenta - traspaso.importe
-    assert cuenta_2.saldo == saldo_cuenta_2 + traspaso.importe
+    assert cuenta.saldo() == saldo_cuenta - traspaso.importe
+    assert cuenta_2.saldo() == saldo_cuenta_2 + traspaso.importe
 
 
 def test_elimina_saldo_cta_entrada_al_momento_del_movimiento(mocker, cuenta, entrada):
@@ -77,8 +77,8 @@ def test_repone_saldo_de_cuentas_credito(credito, contramov_credito):
     cta_acreedora = contramov_credito.cta_entrada
 
     credito.delete()
-    assert cta_deudora.saldo == 0
-    assert cta_acreedora.saldo == 0
+    assert cta_deudora.saldo() == 0
+    assert cta_acreedora.saldo() == 0
 
 
 def test_da_error_si_se_intenta_eliminar_contramovimientos(contramov_credito):

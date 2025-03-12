@@ -216,16 +216,16 @@ class TestSaveModificaImporte:
         contramov = Movimiento.tomar(id=credito.id_contramov)
         cta_deudora = contramov.cta_salida
         cta_acreedora = contramov.cta_entrada
-        saldo_cd = cta_deudora.saldo
-        saldo_ca = cta_acreedora.saldo
+        saldo_cd = cta_deudora.saldo()
+        saldo_ca = cta_acreedora.saldo()
 
         credito.importe = importe_aleatorio
         credito.save()
 
-        assert cta_deudora.saldo == approx(
+        assert cta_deudora.saldo() == approx(
             saldo_cd + importe_mov - importe_aleatorio
         )
-        assert cta_acreedora.saldo == approx(
+        assert cta_acreedora.saldo() == approx(
             saldo_ca - importe_mov + importe_aleatorio
         )
 
@@ -1994,7 +1994,7 @@ class TestSaveCambiaMoneda:
             self, sentido, cuenta_con_saldo_en_euros, request):
         mov_distintas_monedas = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
         sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-        saldo = getattr(mov_distintas_monedas, f"cta_{sentido_otra_cuenta}").saldo
+        saldo = getattr(mov_distintas_monedas, f"cta_{sentido_otra_cuenta}").saldo()
         importe = getattr(mov_distintas_monedas, f"importe_cta_{sentido_otra_cuenta}")
 
         mov_distintas_monedas.cotizacion = 4
@@ -2004,7 +2004,7 @@ class TestSaveCambiaMoneda:
         nuevo_importe = getattr(mov_distintas_monedas, f"importe_cta_{sentido_otra_cuenta}")
         assert nuevo_importe != importe
         assert \
-            getattr(mov_distintas_monedas, f"cta_{sentido_otra_cuenta}").saldo == \
+            getattr(mov_distintas_monedas, f"cta_{sentido_otra_cuenta}").saldo() == \
             round(saldo - importe + nuevo_importe, 2)
 
     @pytest.mark.parametrize("sentido", ["entrada", "salida"])

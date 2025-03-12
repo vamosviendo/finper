@@ -49,4 +49,4 @@ def test_integrativo_agrega_movimiento_para_coincidir_con_saldo(
     client.get(full_url)
 
     assert cuenta_2.cantidad_movs() == cant_movs + 1
-    assert cuenta_2.saldo == saldo.importe
+    assert cuenta_2.saldo() == saldo.importe

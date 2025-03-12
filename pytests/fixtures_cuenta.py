@@ -125,7 +125,7 @@ def cuenta_de_dos_titulares(
         {
             'nombre': 'Subcuenta otro titular',
             'slug': 'scot',
-            'saldo': cuenta_ajena.saldo - 10
+            'saldo': cuenta_ajena.saldo() - 10
         },
         {
             'nombre': 'Subcuenta titular gordo',
@@ -143,7 +143,7 @@ def division_gratuita(
         cuenta_ajena: CuentaInteractiva,
         fecha: date,
 ) -> CuentaAcumulativa:
-    saldo = cuenta_ajena.saldo
+    saldo = cuenta_ajena.saldo()
     return cuenta_ajena.dividir_y_actualizar(
         {
             'nombre': 'Subcuenta otro titular',
