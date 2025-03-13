@@ -120,7 +120,7 @@ def test_detalle_de_cuenta_interactiva(
     nombres = texto_en_hijos_respectivos("class_div_nombre_titular", divs_titular)
     assert nombres[0] == cuenta.titular.nombre
     capitales = texto_en_hijos_respectivos("class_capital_titular", divs_titular)
-    assert capitales[0] == float_format(titular.capital_historico(movimiento))
+    assert capitales[0] == float_format(titular.capital(movimiento))
 
 
 def test_detalle_de_cuenta_acumulativa(
@@ -256,7 +256,7 @@ def test_detalle_de_cuenta_acumulativa(
     capitales_historicos = [
         x.text for x in browser.esperar_elementos("class_capital_titular")]
     for index, titular in enumerate(cuenta_de_dos_titulares.titulares):
-        assert capitales_historicos[index] == float_format(titular.capital_historico(movimiento))
+        assert capitales_historicos[index] == float_format(titular.capital(movimiento))
 
 
 @pytest.fixture

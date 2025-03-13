@@ -42,7 +42,7 @@ def test_detalle_movimiento(browser, entrada, salida, traspaso, cuenta_acumulati
     capitales_historicos = [
         x.text for x in browser.esperar_elementos("class_capital_titular")]
     for index, titular in enumerate(Titular.todes()):
-        assert capitales_historicos[index] == float_format(titular.capital_historico(salida))
+        assert capitales_historicos[index] == float_format(titular.capital(salida))
 
 
 def test_detalle_movimiento_en_cuenta_acumulativa(

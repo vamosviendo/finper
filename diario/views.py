@@ -69,7 +69,7 @@ class HomeView(TemplateView):
             })
         elif titular:
             context.update({
-                'saldo_gral': titular.capital_historico(movimiento) if movimiento else titular.capital,
+                'saldo_gral': titular.capital(movimiento),
                 'titulo_saldo_gral':
                     f"Capital de {titular.nombre}{movimiento_en_titulo}",
                 'titulares': Titular.todes(),

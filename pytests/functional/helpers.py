@@ -176,7 +176,7 @@ class FinperFirefox(MiFirefox):
             titular al momento del movimiento con el que aparece como saldo
             general de la página"""
         cap = self.esperar_elemento('id_importe_saldo_gral').text.strip()
-        assert cap == float_format(titular.capital_historico(movimiento))
+        assert cap == float_format(titular.capital(movimiento))
 
     def comparar_cuentas_de(self, titular: Titular):
         """ Dado un titular, comparar sus cuentas con las que aparecen en

@@ -143,7 +143,7 @@ def test_detalle_titular(
     capitales_historicos = [
         x.text for x in browser.esperar_elementos("class_capital_titular")]
     for index, titular in enumerate(Titular.todes()):
-        assert capitales_historicos[index] == float_format(titular.capital_historico(movimiento))
+        assert capitales_historicos[index] == float_format(titular.capital(movimiento))
 
     # Y vemos una opción "Home" debajo de todos los titulares
     # Y cuando cliqueamos en la opción "Home" somos dirigidos a la página principal

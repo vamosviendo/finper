@@ -10,11 +10,7 @@ register = template.Library()
 
 @register.simple_tag
 def cap_historico(titular: Titular, mov: Movimiento | None) -> str:
-    try:
-        result = titular.capital_historico(mov)
-    except AttributeError:  # mov is None
-        result = titular.capital
-    return float_format(result)
+    return float_format(titular.capital(mov))
 
 
 @register.simple_tag

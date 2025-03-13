@@ -9,7 +9,7 @@ pytestmark = pytest.mark.django_db
 class TestCapHistorico:
     def test_devuelve_string_con_capital_historico_de_titular_al_momento_del_movimiento(
             self, titular, cuenta, entrada, salida_posterior):
-        assert cap_historico(titular, entrada) == float_format(titular.capital_historico(entrada))
+        assert cap_historico(titular, entrada) == float_format(titular.capital(entrada))
 
     def test_si_movimiento_es_None_devuelve_capital_actual_de_titular(
             self, titular, cuenta, entrada, salida_posterior):

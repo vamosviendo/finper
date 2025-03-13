@@ -31,10 +31,7 @@ class Titular(MiModel):
     def natural_key(self) -> tuple[str]:
         return (self.titname, )
 
-    def capital(self) -> float:
-        return sum([c.saldo() for c in self.cuentas_interactivas()])
-
-    def capital_historico(self, movimiento: 'Movimiento') -> float:
+    def capital(self, movimiento: 'Movimiento' = None) -> float:
         return sum(c.saldo(movimiento) for c in self.cuentas_interactivas())
 
     def cuentas_interactivas(self) -> models.QuerySet['CuentaInteractiva']:
