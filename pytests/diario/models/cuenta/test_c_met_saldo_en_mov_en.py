@@ -7,6 +7,6 @@ def test_devuelve_saldo_en_movimiento_dado_en_moneda_dada_a_la_fecha_del_movimie
     mov = request.getfixturevalue(fixture_mov)
     compra = tipo == "compra"
     assert \
-        cuenta.saldo_en_mov_en(mov, dolar, compra=compra) == \
+        cuenta.saldo(mov, dolar, compra=compra) == \
         round(cuenta.saldo(mov) * cuenta.moneda.cotizacion_en_al(dolar, fecha=mov.fecha, compra=compra), 2)
-    assert cuenta.saldo_en_mov_en(mov, peso, compra=compra) == cuenta.saldo(mov)
+    assert cuenta.saldo(mov, peso, compra=compra) == cuenta.saldo(mov)

@@ -20,7 +20,7 @@ def cap_historico(titular: Titular, mov: Movimiento | None) -> str:
 @register.simple_tag
 def saldo_en_moneda(cuenta: Cuenta, moneda: Moneda, mov: Movimiento | None) -> str:
     try:
-        result = cuenta.saldo_en_mov_en(mov, moneda, compra=False)
+        result = cuenta.saldo(mov, moneda, compra=False)
     except AttributeError:  # mov is None
         result = cuenta.saldo_en(moneda, compra=False)
     return float_format(result)
