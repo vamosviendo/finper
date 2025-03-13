@@ -169,7 +169,7 @@ class FinperFirefox(MiFirefox):
         """ Dado un titular, comparar su capital con el que aparece en la
         página. """
         cap = self.esperar_elemento('id_importe_saldo_gral').text.strip()
-        assert cap == float_format(titular.capital)
+        assert cap == float_format(titular.capital())
 
     def comparar_capital_historico_de(self, titular: Titular, movimiento: Movimiento):
         """ Dado un titular y un movimiento, comparar el capital histórico del

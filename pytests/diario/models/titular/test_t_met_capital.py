@@ -6,8 +6,8 @@ def test_devuelve_suma_de_saldos_de_cuentas_de_titular(titular, otro_titular):
     cuenta2 = CuentaInteractiva.crear('cuenta2', 'cta2', saldo=-120, titular=titular)
     CuentaInteractiva.crear('cuenta_ajena', 'ctaj', saldo=300, titular=otro_titular)
 
-    assert titular.capital == cuenta1.saldo() + cuenta2.saldo()
+    assert titular.capital() == cuenta1.saldo() + cuenta2.saldo()
 
 
 def test_devuelve_cero_si_el_titular_no_tiene_cuentas(titular):
-    assert titular.capital == 0
+    assert titular.capital() == 0

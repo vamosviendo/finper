@@ -280,7 +280,7 @@ def test_crear_traspaso_entre_titulares_sin_deuda(browser, cuenta, cuenta_ajena,
 
     # Y vemos que el capital del emisor disminuyó en un importe igual al del
     # movimiento que creamos
-    assert capital_emisor == float_format(cuenta_ajena.titular.capital + 30)
+    assert capital_emisor == float_format(cuenta_ajena.titular.capital() + 30)
 
     # Lo mismo con el titular de la cuenta de entrada.
     browser.ir_a_pag(reverse("titular", args=[cuenta.titular.titname]))
@@ -292,7 +292,7 @@ def test_crear_traspaso_entre_titulares_sin_deuda(browser, cuenta, cuenta_ajena,
     assert \
         cuenta_credito not in cuentas_pag, \
         f"Cuenta {cuenta_credito}, que no debería existir, existe"
-    assert capital_receptor == float_format(cuenta.titular.capital - 30)
+    assert capital_receptor == float_format(cuenta.titular.capital() - 30)
 
 
 @pytest.mark.parametrize('cta_entrada, cta_salida, moneda', [

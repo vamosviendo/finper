@@ -34,8 +34,8 @@ def test_home(
 
     # Vemos que al lado de cada titular aparece su capital
     capitales = texto_en_hijos_respectivos("class_capital_titular", titulares)
-    assert capitales[0] == float_format(titular.capital)
-    assert capitales[1] == float_format(otro_titular.capital)
+    assert capitales[0] == float_format(titular.capital())
+    assert capitales[1] == float_format(otro_titular.capital())
 
     # Vemos seis cuentas en el menú de cuentas (4 cuentas y 2 subcuentas)
     cuentas = browser.esperar_elementos("class_div_cuenta")

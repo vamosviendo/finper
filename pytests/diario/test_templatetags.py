@@ -13,7 +13,7 @@ class TestCapHistorico:
 
     def test_si_movimiento_es_None_devuelve_capital_actual_de_titular(
             self, titular, cuenta, entrada, salida_posterior):
-        assert cap_historico(titular, None) == float_format(titular.capital)
+        assert cap_historico(titular, None) == float_format(titular.capital())
 
 
 class TestSaldoHistoricoEnMoneda:

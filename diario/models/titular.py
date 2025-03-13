@@ -31,7 +31,6 @@ class Titular(MiModel):
     def natural_key(self) -> tuple[str]:
         return (self.titname, )
 
-    @property
     def capital(self) -> float:
         return sum([c.saldo() for c in self.cuentas_interactivas()])
 
