@@ -27,7 +27,7 @@ class TestSaldoHistoricoEnMoneda:
             self, cuenta_con_saldo, dolar):
         assert \
             saldo_en_moneda(cuenta_con_saldo, dolar, None) == \
-            float_format(cuenta_con_saldo.saldo_en(dolar, compra=False))
+            float_format(cuenta_con_saldo.saldo(moneda=dolar, compra=False))
 
 class TestFilterMovsSeleccionados:
     def test_devuelve_movimientos_de_una_cuenta_en_un_dia(

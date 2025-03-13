@@ -111,7 +111,7 @@ def test_home_monedas(
     for cuenta in (cuenta_con_saldo, cuenta_con_saldo_en_dolares, cuenta_con_saldo_en_euros):
         for moneda in (peso, dolar, euro):
             saldo_mon = browser.esperar_elemento(f"id_saldo_cta_{cuenta.slug}_{moneda.monname}")
-            assert saldo_mon.text == float_format(cuenta.saldo_en(moneda, compra=False))
+            assert saldo_mon.text == float_format(cuenta.saldo(moneda=moneda, compra=False))
             classname = saldo_mon.get_attribute("class")
             if moneda == cuenta.moneda:
                 assert "mon_cuenta" in classname
@@ -126,7 +126,7 @@ def test_home_monedas(
     for cuenta in subcuentas:
         for moneda in (peso, dolar, euro):
             saldo_mon = browser.esperar_elemento(f"id_saldo_cta_{cuenta.slug}_{moneda.monname}")
-            assert saldo_mon.text == float_format(cuenta.saldo_en(moneda, compra=False))
+            assert saldo_mon.text == float_format(cuenta.saldo(moneda=moneda, compra=False))
             classname = saldo_mon.get_attribute("class")
             if moneda == cuenta.moneda:
                 assert "mon_cuenta" in classname

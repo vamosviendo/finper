@@ -116,9 +116,6 @@ class Cuenta(PolymorphModel):
     def cotizacion(self) -> float:
         return self.moneda.cotizacion
 
-    def saldo_en(self, otra_moneda: Moneda, compra: bool) -> float:
-        return round(self.saldo() * self.moneda.cotizacion_en(otra_moneda, compra=compra), 2)
-
     def recalcular_saldos_entre(self,
                                 pos_desde: Posicion = Posicion(orden_dia=0),
                                 pos_hasta: Posicion = Posicion(orden_dia=100000000)):

@@ -22,5 +22,5 @@ def saldo_en_moneda(cuenta: Cuenta, moneda: Moneda, mov: Movimiento | None) -> s
     try:
         result = cuenta.saldo(mov, moneda, compra=False)
     except AttributeError:  # mov is None
-        result = cuenta.saldo_en(moneda, compra=False)
+        result = cuenta.saldo(moneda=moneda, compra=False)
     return float_format(result)
