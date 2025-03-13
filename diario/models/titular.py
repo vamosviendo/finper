@@ -36,7 +36,7 @@ class Titular(MiModel):
         return sum([c.saldo() for c in self.cuentas_interactivas()])
 
     def capital_historico(self, movimiento: 'Movimiento') -> float:
-        return sum(c.saldo_en_mov(movimiento) for c in self.cuentas_interactivas())
+        return sum(c.saldo(movimiento) for c in self.cuentas_interactivas())
 
     def cuentas_interactivas(self) -> models.QuerySet['CuentaInteractiva']:
         ids = [c.id for c in self.cuentas.all() if c.es_interactiva]

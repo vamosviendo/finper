@@ -219,7 +219,7 @@ class FinperFirefox(MiFirefox):
         """ Dada una cuenta, comparar su saldo con el que aparece en la página.
         """
         saldo = self.esperar_elemento('id_importe_saldo_gral').text.strip()
-        assert saldo == float_format(cuenta.saldo_en_mov(movimiento))
+        assert saldo == float_format(cuenta.saldo(movimiento))
 
     def verificar_link(
             self,

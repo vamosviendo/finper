@@ -38,12 +38,12 @@ def test_si_cuenta_es_acumulativa_y_movimiento_es_de_fecha_posterior_a_su_conver
     mov = Movimiento.crear('mov2', 20, None, sc2, fecha=fecha_posterior)
     cuenta = cuenta.tomar_del_slug()
 
-    assert Saldo.tomar(cuenta=cuenta, movimiento=mov).importe == sc1.saldo_en_mov(mov) + sc2.saldo_en_mov(mov)
+    assert Saldo.tomar(cuenta=cuenta, movimiento=mov).importe == sc1.saldo(mov) + sc2.saldo(mov)
 
 
 def test_si_cuenta_es_acumulativa_y_movimiento_es_de_fecha_anterior_a_su_conversion_devuelve_saldo_original_en_movimiento(
         cuenta, entrada, fecha_posterior):
-    saldo_en_entrada = cuenta.saldo_en_mov(entrada)
+    saldo_en_entrada = cuenta.saldo(entrada)
     cuenta = cuenta.dividir_y_actualizar(
         ['subcuenta 1', 'sc1', 0],
         ['subcuenta 2', 'sc2'],
@@ -55,7 +55,7 @@ def test_si_cuenta_es_acumulativa_y_movimiento_es_de_fecha_anterior_a_su_convers
 def test_si_cuenta_es_acumulativa_y_movimiento_es_de_la_misma_fecha_que_su_conversion_con_traspaso_de_saldo_devuelve_saldo_original_si_movimiento_es_anterior_a_conversion(
         cuenta, entrada, fecha_posterior):
     mov = Movimiento.crear('mov2', 20, None, cuenta, fecha=fecha_posterior)
-    saldo_en_mov = cuenta.saldo_en_mov(mov)
+    saldo_en_mov = cuenta.saldo(mov)
     cuenta = cuenta.dividir_y_actualizar(
         ['subcuenta 1', 'sc1', 20],
         ['subcuenta 2', 'sc2'],
@@ -73,13 +73,13 @@ def test_si_cuenta_es_acumulativa_y_movimiento_es_de_la_misma_fecha_que_su_conve
     )
     sc1, sc2 = cuenta.subcuentas.all()
     mov = Movimiento.crear('mov2', 20, None, sc1, fecha=fecha_posterior)
-    assert Saldo.tomar(cuenta=cuenta, movimiento=mov).importe == sc1.saldo_en_mov(mov) + sc2.saldo_en_mov(mov)
+    assert Saldo.tomar(cuenta=cuenta, movimiento=mov).importe == sc1.saldo(mov) + sc2.saldo(mov)
 
 
 def test_si_cuenta_es_acumulativa_y_movimiento_es_de_la_misma_fecha_que_su_conversion_sin_traspaso_de_saldo_devuelve_saldo_original_si_movimiento_es_anterior_a_conversion(
         cuenta, entrada, fecha_posterior):
     mov = Movimiento.crear('mov2', 20, None, cuenta, fecha=fecha_posterior)
-    saldo_en_mov = cuenta.saldo_en_mov(mov)
+    saldo_en_mov = cuenta.saldo(mov)
     cuenta = cuenta.dividir_y_actualizar(
         ['subcuenta 1', 'sc1', 0],
         ['subcuenta 2', 'sc2'],
@@ -97,7 +97,7 @@ def test_si_cuenta_es_acumulativa_y_movimiento_es_de_la_misma_fecha_que_su_conve
     )
     sc1, sc2 = cuenta.subcuentas.all()
     mov = Movimiento.crear('mov2', 20, None, sc1, fecha=fecha_posterior)
-    assert Saldo.tomar(cuenta=cuenta, movimiento=mov).importe == sc1.saldo_en_mov(mov) + sc2.saldo_en_mov(mov)
+    assert Saldo.tomar(cuenta=cuenta, movimiento=mov).importe == sc1.saldo(mov) + sc2.saldo(mov)
 
 
 def test_si_cuenta_es_acumulativa_y_no_tiene_movs_directos_y_movimiento_es_de_la_misma_fecha_que_su_conversion_devuelve_suma_de_importes_de_saldos_de_subcuentas_si_movimiento_es_posterior_a_conversion(
@@ -109,4 +109,4 @@ def test_si_cuenta_es_acumulativa_y_no_tiene_movs_directos_y_movimiento_es_de_la
     )
     sc1, sc2 = cuenta.subcuentas.all()
     mov = Movimiento.crear('mov2', 20, None, sc1, fecha=fecha_posterior)
-    assert Saldo.tomar(cuenta=cuenta, movimiento=mov).importe == sc1.saldo_en_mov(mov) + sc2.saldo_en_mov(mov)
+    assert Saldo.tomar(cuenta=cuenta, movimiento=mov).importe == sc1.saldo(mov) + sc2.saldo(mov)

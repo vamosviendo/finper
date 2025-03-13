@@ -239,17 +239,17 @@ def test_detalle_de_cuenta_acumulativa(
     ).text
     assert \
         cuenta_de_dos_titulares.saldo() != \
-        cuenta_de_dos_titulares.saldo_en_mov(movimiento)
+        cuenta_de_dos_titulares.saldo(movimiento)
     assert \
         browser.esperar_elemento("id_importe_saldo_gral").text == \
-        float_format(cuenta_de_dos_titulares.saldo_en_mov(movimiento))
+        float_format(cuenta_de_dos_titulares.saldo(movimiento))
 
     # Y vemos que al lado de cada una de las subcuentas aparece el saldo
     # histórico de la subcuenta al momento del movimiento
     saldos_historicos = [
         x.text for x in browser.esperar_elementos("class_saldo_cuenta")]
     for index, cta in enumerate(cuenta_de_dos_titulares.subcuentas.all()):
-        assert saldos_historicos[index] == float_format(cta.saldo_en_mov(movimiento))
+        assert saldos_historicos[index] == float_format(cta.saldo(movimiento))
 
     # Y vemos que al lado de cada uno de los titulares aparece el capital
     # histórico del titular al momento del movimiento
@@ -386,7 +386,7 @@ def test_detalle_de_subcuenta(
     movimiento = Movimiento.tomar(pk=7)
     assert \
         browser.esperar_elemento("id_importe_saldo_gral").text == \
-        float_format(subsubcuenta_1_con_movimientos.saldo_en_mov(movimiento))
+        float_format(subsubcuenta_1_con_movimientos.saldo(movimiento))
 
     # Y vemos que al lado de cada una de las cuentas ancestro aparece el saldo
     # histórico de la cuenta al momento del movimiento
@@ -395,7 +395,7 @@ def test_detalle_de_subcuenta(
     for index, cta in enumerate(reversed(subsubcuenta_1_con_movimientos.ancestros())):
         assert saldos_historicos[index].replace(
             f'Saldo de cuenta madre {cta.nombre}: ', ''
-        ) == float_format(cta.saldo_en_mov(movimiento))
+        ) == float_format(cta.saldo(movimiento))
 
     # Y vemos que al lado de cada una de las subcuentas hermanas aparece el
     # saldo histórico de la subcuenta al momento del movimiento
@@ -404,4 +404,4 @@ def test_detalle_de_subcuenta(
     for index, cta in enumerate(subsubcuenta_1_con_movimientos.hermanas()):
         assert saldos_historicos[index].replace(
             f'Saldo de cuenta hermana {cta.nombre}: ', ''
-        ) == float_format(cta.saldo_en_mov(movimiento))
+        ) == float_format(cta.saldo(movimiento))

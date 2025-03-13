@@ -136,7 +136,7 @@ def test_detalle_titular(
     saldos_historicos = [
         x.text for x in browser.esperar_elementos("class_saldo_cuenta")]
     for index, cta in enumerate(titular.cuentas.all()):
-        assert saldos_historicos[index] == float_format(cta.saldo_en_mov(movimiento))
+        assert saldos_historicos[index] == float_format(cta.saldo(movimiento))
 
     # Y al lado de cada titular aparece el capital histórico del titular al
     # momento del movimiento seleccionado.

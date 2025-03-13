@@ -17,5 +17,5 @@ def verificar_saldos() -> List['Cuenta']:
 
 def saldo_general_historico(mov: 'Movimiento') -> float:
     return sum([
-        cuenta.saldo_en_mov(mov) for cuenta in Cuenta.filtro(cta_madre=None)
+        cuenta.saldo(mov) for cuenta in Cuenta.filtro(cta_madre=None)
     ])

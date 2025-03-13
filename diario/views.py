@@ -53,7 +53,7 @@ class HomeView(TemplateView):
 
         if cuenta:
             context.update({
-                'saldo_gral': cuenta.saldo_en_mov(movimiento) if movimiento else cuenta.saldo(),
+                'saldo_gral': cuenta.saldo(movimiento),
                 'titulo_saldo_gral':
                     f"{cuenta.nombre} (fecha alta: {cuenta.fecha_creacion})"
                     f"{movimiento_en_titulo}",

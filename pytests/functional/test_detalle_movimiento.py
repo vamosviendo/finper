@@ -35,7 +35,7 @@ def test_detalle_movimiento(browser, entrada, salida, traspaso, cuenta_acumulati
     saldos_historicos = [
         x.text for x in browser.esperar_elementos("class_saldo_cuenta")]
     for index, cta in enumerate([x for x in Cuenta.todes() if x.cta_madre is None]):
-        assert saldos_historicos[index] == float_format(cta.saldo_en_mov(salida))
+        assert saldos_historicos[index] == float_format(cta.saldo(salida))
 
     # Y al lado de cada titular aparece el capital del titular al momento del
     # movimiento seleccionado
