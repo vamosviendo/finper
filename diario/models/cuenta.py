@@ -93,10 +93,15 @@ class Cuenta(PolymorphModel):
     def es_cuenta_credito(self) -> bool:
         return self.has_not_none_attr('contracuenta')
 
-    def saldo(self) -> float:
+    def saldo(self, movimiento: Movimiento = None) -> float:
         try:
-            return self.ultimo_saldo.importe
-        except AttributeError:
+            return Saldo.tomar(cuenta=self, movimiento=movimiento).importe
+        except AttributeError:  # movimiento is None
+            try:
+                return self.ultimo_saldo.importe
+            except AttributeError:  # No hay saldos
+                return 0
+        except Saldo.DoesNotExist:  # Se pasó movimiento pero no hay saldos
             return 0
 
     @property
@@ -566,8 +571,15 @@ class CuentaAcumulativa(Cuenta):
                 todas_las_subcuentas.update(cuenta.arbol_de_subcuentas())
         return todas_las_subcuentas
 
-    def saldo(self) -> float:
-        return sum([subc.saldo() for subc in self.subcuentas.all()])
+    def saldo(self, movimiento: Movimiento = None) -> float:
+        if movimiento:
+            slugs_ctas_mov = [
+                movimiento.cta_entrada.slug if movimiento.cta_entrada else None,
+                movimiento.cta_salida.slug if movimiento.cta_salida else None,
+            ]
+            if self.slug in slugs_ctas_mov: # La cuenta participó del movimiento cuando aún era interactiva
+                return Saldo.tomar(cuenta=self, movimiento=movimiento).importe
+        return sum([subc.saldo(movimiento=movimiento) for subc in self.subcuentas.all()])
 
     def clean(self):
         super().clean()
