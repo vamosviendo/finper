@@ -35,3 +35,24 @@ def test_si_no_encuentra_saldo_de_cuenta_en_movimiento_devuelve_saldo_en_movimie
 
 def test_si_recibe_movimiento_y_cuenta_no_tiene_saldos_devuelve_cero(cuenta, entrada_otra_cuenta):
     assert cuenta.saldo(movimiento=entrada_otra_cuenta) == 0
+
+@pytest.mark.parametrize("tipo", ["compra", "venta"])
+def test_si_recibe_moneda_devuelve_saldo_en_moneda_dada_redondeado_en_2_decimales(
+        tipo, cuenta_con_saldo, peso, dolar):
+    compra = tipo == "compra"
+    assert \
+        cuenta_con_saldo.saldo(moneda=dolar, compra=compra) == \
+        round(cuenta_con_saldo.saldo() * cuenta_con_saldo.moneda.cotizacion_en(dolar, compra=compra), 2)
+    assert cuenta_con_saldo.saldo(moneda=peso, compra=compra) == cuenta_con_saldo.saldo()
+
+@pytest.mark.parametrize("fixture_mov", ["entrada", "salida"])
+@pytest.mark.parametrize("tipo", ["compra", "venta"])
+def test_si_recibe_moneda_y_movimiento_devuelve_saldo_en_movimiento_dado_en_moneda_dada_a_la_fecha_del_movimiento_redondeado_en_2_decimales(
+        fixture_mov, tipo, cuenta, peso, dolar, request):
+    mov = request.getfixturevalue(fixture_mov)
+    request.getfixturevalue("salida_posterior")
+    compra = tipo == "compra"
+    assert \
+        cuenta.saldo(mov, dolar, compra) == \
+        round(cuenta.saldo(movimiento=mov) * cuenta.moneda.cotizacion_en_al(dolar, fecha=mov.fecha, compra=compra), 2)
+    assert cuenta.saldo(mov, peso, compra) == cuenta.saldo(movimiento=mov)

@@ -93,12 +93,20 @@ class Cuenta(PolymorphModel):
     def es_cuenta_credito(self) -> bool:
         return self.has_not_none_attr('contracuenta')
 
-    def saldo(self, movimiento: Movimiento = None) -> float:
+    def saldo(
+            self,
+            movimiento: Movimiento = None,
+            moneda: Moneda = None,
+            compra: bool = False) -> float:
+
+        fecha = movimiento.fecha if movimiento else date.today()
+        cotizacion = self.moneda.cotizacion_en_al(moneda, fecha, compra) if moneda else 1
+
         try:
-            return Saldo.tomar(cuenta=self, movimiento=movimiento).importe
+            return round(Saldo.tomar(cuenta=self, movimiento=movimiento).importe * cotizacion, 2)
         except AttributeError:  # movimiento is None
             try:
-                return self.ultimo_saldo.importe
+                return round(self.ultimo_saldo.importe * cotizacion, 2)
             except AttributeError:  # No hay saldos
                 return 0
         except Saldo.DoesNotExist:  # Se pasó movimiento pero no hay saldos
@@ -110,12 +118,12 @@ class Cuenta(PolymorphModel):
 
     def saldo_en(self, otra_moneda: Moneda, compra: bool) -> float:
         return round(self.saldo() * self.moneda.cotizacion_en(otra_moneda, compra=compra), 2)
-    
-    def saldo_en_mov(self, movimiento: Movimiento) -> float:
-        try:
-            return Saldo.tomar(cuenta=self, movimiento=movimiento).importe
-        except Saldo.DoesNotExist:
-            return 0
+    #
+    # def saldo_en_mov(self, movimiento: Movimiento) -> float:
+    #     try:
+    #         return Saldo.tomar(cuenta=self, movimiento=movimiento).importe
+    #     except Saldo.DoesNotExist:
+    #         return 0
 
     def saldo_en_mov_en(self, movimiento: Movimiento, otra_moneda: Moneda, compra: bool) -> float:
         return round(
@@ -571,15 +579,26 @@ class CuentaAcumulativa(Cuenta):
                 todas_las_subcuentas.update(cuenta.arbol_de_subcuentas())
         return todas_las_subcuentas
 
-    def saldo(self, movimiento: Movimiento = None) -> float:
+    def saldo(
+            self,
+            movimiento: Movimiento = None,
+            moneda: Moneda = None,
+            compra: bool = False,) -> float:
+
+        fecha = movimiento.fecha if movimiento else date.today()
+        cotizacion = self.moneda.cotizacion_en_al(moneda, fecha, compra) if moneda else 1
+
         if movimiento:
             slugs_ctas_mov = [
                 movimiento.cta_entrada.slug if movimiento.cta_entrada else None,
                 movimiento.cta_salida.slug if movimiento.cta_salida else None,
             ]
             if self.slug in slugs_ctas_mov: # La cuenta participó del movimiento cuando aún era interactiva
-                return Saldo.tomar(cuenta=self, movimiento=movimiento).importe
-        return sum([subc.saldo(movimiento=movimiento) for subc in self.subcuentas.all()])
+                return round(Saldo.tomar(cuenta=self, movimiento=movimiento).importe * cotizacion, 2)
+        return round(
+            sum([subc.saldo(movimiento=movimiento) for subc in self.subcuentas.all()]) * cotizacion,
+            2
+        )
 
     def clean(self):
         super().clean()

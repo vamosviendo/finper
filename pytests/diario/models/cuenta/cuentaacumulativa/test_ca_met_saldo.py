@@ -1,3 +1,5 @@
+import pytest
+
 from diario.models import Movimiento
 
 
@@ -56,3 +58,57 @@ def test_saldo_de_cuenta_acumulativa_en_mov_en_el_que_era_interactiva_devuelve_s
     )
     assert cuenta.saldo(movimiento=entrada) != cuenta.saldo(movimiento=salida_posterior)
     assert cuenta.saldo(movimiento=entrada) == saldo_historico
+
+@pytest.mark.parametrize("tipo", ["compra", "venta"])
+def test_si_recibe_moneda_devuelve_saldo_en_moneda_dada_redondeado_en_2_decimales(
+        tipo, cuenta_acumulativa_saldo_0, peso, dolar, fecha):
+    sc1, sc2 = cuenta_acumulativa_saldo_0.subcuentas.all()
+    Movimiento.crear('saldo sc1', 100, sc1, fecha=fecha)
+    Movimiento.crear('saldo sc2', 70, None, sc2, fecha=fecha)
+
+    compra = tipo == "compra"
+
+    assert cuenta_acumulativa_saldo_0.saldo(moneda=dolar, compra=compra) == \
+        round(
+            cuenta_acumulativa_saldo_0.saldo() * cuenta_acumulativa_saldo_0.moneda.cotizacion_en(
+                dolar, compra=compra
+            ), 2
+        )
+    assert \
+        cuenta_acumulativa_saldo_0.saldo(moneda=peso, compra=compra) == \
+        cuenta_acumulativa_saldo_0.saldo()
+
+@pytest.mark.parametrize("tipo", ["compra", "venta"])
+def test_si_recibe_moneda_y_movimiento_devuelve_saldo_en_movimiento_dado_en_moneda_dada_a_la_fecha_del_movimiento_redondeado_en_2_decimales(
+        tipo, cuenta_acumulativa_saldo_0, peso, dolar, fecha, fecha_posterior, cotizacion_posterior):
+    cuenta = cuenta_acumulativa_saldo_0
+    sc1, sc2 = cuenta.subcuentas.all()
+    mov = Movimiento.crear('saldo sc1', 100, sc1, fecha=fecha)
+    Movimiento.crear('saldo sc2', 70, None, sc2, fecha=fecha_posterior)
+
+    compra = tipo == "compra"
+    assert \
+        cuenta.saldo(mov, dolar, compra) == \
+        round(
+            cuenta.saldo(movimiento=mov) * cuenta.moneda.cotizacion_en_al(
+                dolar, fecha=mov.fecha, compra=compra
+            ),
+            2
+        )
+    assert cuenta.saldo(mov, peso, compra) == cuenta.saldo(movimiento=mov)
+
+
+@pytest.mark.parametrize("tipo", ["compra", "venta"])
+def test_saldo_de_cuenta_acumulativa_en_mov_en_el_que_era_interactiva_devuelve_saldo_historico_correcto_en_monedad_dada(
+        tipo, cuenta, entrada, peso, dolar, salida_posterior):
+    compra = tipo == "compra"
+
+    saldo_historico = cuenta.saldo(movimiento=entrada)
+    saldo_historico_cotizado = cuenta.saldo(movimiento=entrada, moneda=dolar, compra=compra)
+
+    cuenta = cuenta.dividir_y_actualizar(
+        ['subcuenta 1 saldo 0', 'sc1', 0],
+        ['subcuenta 2 saldo 0', 'sc2'],
+    )
+    assert cuenta.saldo(movimiento=entrada, moneda=dolar, compra=compra) == saldo_historico_cotizado
+    assert cuenta.saldo(movimiento=entrada, moneda=peso, compra=compra) == saldo_historico
