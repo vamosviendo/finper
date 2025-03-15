@@ -31,7 +31,7 @@ class TestSaveGeneral:
             self, traspaso, mocker):
         mock_saldo_save = mocker.patch('diario.models.movimiento.Saldo.save')
         traspaso.concepto = 'Otro concepto'
-        traspaso.save()
+        traspaso.clean_save()
         mock_saldo_save.assert_not_called()
 
     def test_integrativo_no_modifica_saldo_en_mov_si_no_se_modifica_importe_ni_cuentas_ni_fecha(
@@ -40,7 +40,7 @@ class TestSaveGeneral:
         saldo_cs = traspaso.cta_salida.saldo(traspaso)
 
         traspaso.concepto = 'Depósito en efectivo'
-        traspaso.save()
+        traspaso.clean_save()
 
         assert traspaso.cta_entrada.saldo(traspaso) == saldo_ce
         assert traspaso.cta_salida.saldo(traspaso) == saldo_cs
@@ -48,8 +48,7 @@ class TestSaveGeneral:
 
 class TestSaveMovimientoEntreCuentasDeDistintosTitulares:
     def test_con_dos_cuentas_de_titulares_distintos_crea_dos_cuentas_credito(self, dia, credito_no_guardado):
-        credito_no_guardado.full_clean()
-        credito_no_guardado.save()
+        credito_no_guardado.clean_save()
         assert Cuenta.cantidad() == 4
 
         cc1 = list(Cuenta.todes())[-1]
@@ -59,8 +58,7 @@ class TestSaveMovimientoEntreCuentasDeDistintosTitulares:
 
     def test_si_no_se_pasa_dia_ni_fecha_crea_cuentas_credito_con_fecha_ultimo_dia(self, dia, dia_posterior, credito_no_guardado):
         credito_no_guardado.dia = None
-        credito_no_guardado.full_clean()
-        credito_no_guardado.save()
+        credito_no_guardado.clean_save()
 
         cc1 = list(Cuenta.todes())[-1]
         cc2 = list(Cuenta.todes())[-2]
@@ -69,8 +67,7 @@ class TestSaveMovimientoEntreCuentasDeDistintosTitulares:
 
     def test_con_dos_cuentas_de_titulares_distintos_guarda_cuentas_credito_como_contracuentas(
             self, dia, credito_no_guardado):
-        credito_no_guardado.full_clean()
-        credito_no_guardado.save()
+        credito_no_guardado.clean_save()
         cta_acreedora, cta_deudora = list(Cuenta.todes())[-2:]
         assert cta_acreedora.contracuenta == cta_deudora
         assert cta_deudora.contracuenta == cta_acreedora
@@ -85,7 +82,7 @@ class TestSaveMovimientoEntreCuentasDeDistintosTitulares:
         id_contramovimiento = credito.id_contramov
 
         setattr(credito, campo_cuenta, cuenta)
-        credito.save()
+        credito.clean_save()
 
         with pytest.raises(Movimiento.DoesNotExist):
             Movimiento.tomar(id=id_contramovimiento)
@@ -97,10 +94,10 @@ class TestSaveMovimientoEntreCuentasDeDistintosTitulares:
         ('cta_salida', '_gordo-titular', '_titular-gordo'),
     ])
     def test_cambiar_cuenta_de_movimiento_entre_titulares_por_cuenta_de_otro_titular_cambia_cuentas_en_contramovimiento(
-            self, credito, campo_cuenta, slug_ce, slug_cs, titular_gordo):
-        cuenta_gorda = Cuenta.crear(nombre="Cuenta gorda", slug="cg", titular=titular_gordo)
+            self, credito, campo_cuenta, slug_ce, slug_cs, titular_gordo, fecha):
+        cuenta_gorda = Cuenta.crear(nombre="Cuenta gorda", slug="cg", titular=titular_gordo, fecha_creacion=fecha)
         setattr(credito, campo_cuenta, cuenta_gorda)
-        credito.save()
+        credito.clean_save()
 
         assert Movimiento.tomar(id=credito.id_contramov).cta_entrada.slug == slug_ce
         assert Movimiento.tomar(id=credito.id_contramov).cta_salida.slug == slug_cs
@@ -117,7 +114,7 @@ class TestSaveMovimientoEntreCuentasDeDistintosTitulares:
         cs_contramov = contramov.cta_salida
 
         setattr(credito, campo_cuenta, cuenta)
-        credito.save()
+        credito.clean_save()
 
         contramov = Movimiento.tomar(id=credito.id_contramov)
         assert contramov.cta_entrada == ce_contramov
@@ -132,7 +129,7 @@ class TestSaveMovimientoEntreCuentasDeDistintosTitulares:
         valor = request.getfixturevalue(fixt)
         id_contramov = credito.id_contramov
         setattr(credito, campo, valor)
-        credito.save()
+        credito.clean_save()
         assert credito.id_contramov != id_contramov
 
     @pytest.mark.parametrize('campo, valor', [
@@ -144,7 +141,7 @@ class TestSaveMovimientoEntreCuentasDeDistintosTitulares:
             self, credito, campo, valor, request):
         id_contramov = credito.id_contramov
         setattr(credito, campo, valor)
-        credito.save()
+        credito.clean_save()
         assert credito.id_contramov == id_contramov
 
     @pytest.mark.parametrize('campo,fixt', [
@@ -155,7 +152,7 @@ class TestSaveMovimientoEntreCuentasDeDistintosTitulares:
             self, credito, campo, fixt, request):
         valor = request.getfixturevalue(fixt)
         setattr(credito, campo, valor)
-        credito.save()
+        credito.clean_save()
         contramov = Movimiento.tomar(id=credito.id_contramov)
         assert getattr(contramov, campo) == valor
 
@@ -170,7 +167,7 @@ class TestSaveModificaImporte:
         saldo_cuenta = cuenta.saldo(mov)
 
         mov.importe = importe_aleatorio
-        mov.save()
+        mov.clean_save()
 
         assert \
             cuenta.saldo(mov) == \
@@ -185,7 +182,7 @@ class TestSaveModificaImporte:
         importe_mov = traspaso.importe
 
         traspaso.importe = importe_aleatorio
-        traspaso.save()
+        traspaso.clean_save()
         saldo_ce.refresh_from_db(fields=['_importe'])
         saldo_cs.refresh_from_db(fields=['_importe'])
 
@@ -204,7 +201,7 @@ class TestSaveModificaImporte:
         saldo_posterior_cuenta = cuenta.saldo(salida_posterior)
 
         mov.importe = importe_aleatorio
-        mov.save()
+        mov.clean_save()
 
         assert \
             cuenta.saldo(salida_posterior) == \
@@ -220,7 +217,7 @@ class TestSaveModificaImporte:
         saldo_ca = cta_acreedora.saldo()
 
         credito.importe = importe_aleatorio
-        credito.save()
+        credito.clean_save()
 
         assert cta_deudora.saldo() == approx(
             saldo_cd + importe_mov - importe_aleatorio
@@ -242,7 +239,7 @@ class TestSaveCambiaCuentas:
         mock_eliminar = mocker.patch('diario.models.movimiento.Saldo.eliminar', autospec=True)
 
         setattr(mov, campo_cuenta, cuenta_2)
-        mov.save()
+        mov.clean_save()
 
         mock_generar.assert_called_once_with(mov, salida=sentido == 'salida')
         mock_eliminar.assert_called_once_with(saldo_en_mov_viejo)
@@ -257,7 +254,7 @@ class TestSaveCambiaCuentas:
         saldo_posterior_cuenta_2 = cuenta_2.saldo(salida_posterior)
 
         setattr(mov, campo_cuenta, cuenta_2)
-        mov.save()
+        mov.clean_save()
 
         assert \
             cuenta.saldo(salida_posterior) == \
@@ -272,7 +269,7 @@ class TestSaveCambiaCuentas:
         cuenta = getattr(traspaso, campo_cuenta)
 
         setattr(traspaso, campo_cuenta, cuenta_3)
-        traspaso.save()
+        traspaso.clean_save()
 
         with pytest.raises(Saldo.DoesNotExist):
             Saldo.objects.get(cuenta=cuenta, movimiento=traspaso)
@@ -289,7 +286,7 @@ class TestSaveCambiaCuentas:
 
         traspaso.cta_entrada = cuenta_3
         traspaso.cta_salida = cuenta_4
-        traspaso.save()
+        traspaso.clean_save()
 
         with pytest.raises(Saldo.DoesNotExist):
             Saldo.objects.get(cuenta=cuenta_1, movimiento=traspaso)
@@ -318,7 +315,7 @@ class TestSaveCambiaCuentas:
 
         traspaso.cta_entrada = cuenta_3
         traspaso.cta_salida = cuenta_4
-        traspaso.save()
+        traspaso.clean_save()
 
         assert \
             cuenta_1.saldo(salida_posterior) == \
@@ -341,7 +338,7 @@ class TestSaveCambiaCuentas:
         saldo_c2 = c2.saldo(traspaso)
         traspaso.cta_salida = c1
         traspaso.cta_entrada = c2
-        traspaso.save()
+        traspaso.clean_save()
 
         assert c1.saldo(traspaso) == saldo_c1 - traspaso.importe * 2
         assert c2.saldo(traspaso) == saldo_c2 + traspaso.importe * 2
@@ -354,7 +351,7 @@ class TestSaveCambiaCuentas:
         saldo_posterior_c2 = c2.saldo(salida_posterior)
         traspaso.cta_salida = c1
         traspaso.cta_entrada = c2
-        traspaso.save()
+        traspaso.clean_save()
 
         assert c1.saldo(salida_posterior) == saldo_posterior_c1 - traspaso.importe * 2
         assert c2.saldo(salida_posterior) == saldo_posterior_c2 + traspaso.importe * 2
@@ -371,7 +368,7 @@ class TestSaveCambiaCuentas:
 
         setattr(mov, contracampo, cuenta)
         setattr(mov, campo_cuenta, None)
-        mov.save()
+        mov.clean_save()
 
         assert cuenta.saldo(mov) == saldo_cuenta + diferencia
         assert cuenta.saldo(salida_posterior) == saldo_posterior_cuenta + diferencia
@@ -389,7 +386,7 @@ class TestSaveCambiaCuentas:
 
         setattr(traspaso, campo_cuenta, contracuenta)
         setattr(traspaso, contracampo, cuenta_3)
-        traspaso.save()
+        traspaso.clean_save()
 
         with pytest.raises(Saldo.DoesNotExist):
             Saldo.objects.get(cuenta=cuenta, movimiento=traspaso)
@@ -408,7 +405,7 @@ class TestSaveCambiaCuentas:
         saldo_posterior = cuenta.saldo(salida_posterior)
 
         setattr(traspaso, campo_cuenta, None)
-        traspaso.save()
+        traspaso.clean_save()
 
         with pytest.raises(Saldo.DoesNotExist):
             Saldo.objects.get(cuenta=cuenta, movimiento=traspaso)
@@ -425,7 +422,7 @@ class TestSaveCambiaCuentas:
             Saldo.objects.get(cuenta=cuenta_2, movimiento=mov)
 
         setattr(mov, campo_cuenta_vacio, cuenta_2)
-        mov.save()
+        mov.clean_save()
 
         assert cuenta_2.saldo(mov) == -s * mov.importe
 
@@ -436,7 +433,7 @@ class TestSaveCambiaCuentas:
         campo_cuenta_vacio = 'cta_salida' if sentido == 'entrada' else 'cta_entrada'
         assert not mov.es_prestamo_o_devolucion()
         setattr(mov, campo_cuenta_vacio, cuenta_ajena)
-        mov.save()
+        mov.clean_save()
         assert mov.es_prestamo_o_devolucion()
 
     @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
@@ -447,7 +444,7 @@ class TestSaveCambiaCuentas:
             autospec=True
         )
         setattr(credito, f'cta_{sentido}', cuenta_gorda)
-        credito.save()
+        credito.clean_save()
 
         mock_regenerar_contramovimiento.assert_called_once_with(credito)
 
@@ -459,7 +456,7 @@ class TestSaveCambiaCuentas:
         cuenta_contramov = getattr(contramov, f'cta_{contrasentido}')
 
         setattr(credito, f'cta_{sentido}', cuenta_gorda)
-        credito.save()
+        credito.clean_save()
 
         contramov = Movimiento.tomar(id=credito.id_contramov)
         assert getattr(contramov, f'cta_{contrasentido}').id != cuenta_contramov
@@ -473,7 +470,7 @@ class TestSaveCambiaCuentas:
             autospec=True
         )
         setattr(traspaso, f'cta_{sentido}', cuenta_ajena)
-        traspaso.save()
+        traspaso.clean_save()
 
         mock_crear_movimiento_credito.assert_called_once_with(traspaso)
 
@@ -493,7 +490,7 @@ class TestSaveCambiaCuentas:
         )
 
         setattr(credito, f'cta_{sentido}', otra_cuenta)
-        credito.save()
+        credito.clean_save()
 
         mock_eliminar_contramovimiento.assert_called_once_with(credito)
         mock_crear_movimiento_credito.assert_not_called()
@@ -1223,8 +1220,7 @@ class TestSaveCambiaCuentas:
             contrasentido = 'entrada' if sentido == 'salida' else 'salida'
 
             setattr(mov, f'cta_{contrasentido}', cuenta_2)
-            mov.full_clean()
-            mov.save()
+            mov.clean_save()
 
             assert getattr(mov, f'cta_{contrasentido}') == cuenta_2
 
@@ -1234,8 +1230,7 @@ class TestSaveCambiaCuentas:
             contrasentido = 'entrada' if sentido == 'salida' else 'salida'
 
             setattr(mov, f'cta_{contrasentido}', cuenta_3)
-            mov.full_clean()
-            mov.save()
+            mov.clean_save()
 
             assert getattr(mov, f'cta_{contrasentido}') == cuenta_3
 
@@ -1245,8 +1240,7 @@ class TestSaveCambiaCuentas:
             contrasentido = 'entrada' if sentido == 'salida' else 'salida'
 
             setattr(mov, f'cta_{contrasentido}', None)
-            mov.full_clean()
-            mov.save()
+            mov.clean_save()
 
             assert getattr(mov, f'cta_{contrasentido}') is None
 
@@ -1260,7 +1254,7 @@ class TestSaveCambiaImporteYCuentas:
 
         setattr(mov, f'cta_{sentido}', cuenta_2)
         mov.importe = importe_aleatorio
-        mov.save()
+        mov.clean_save()
 
         with pytest.raises(Saldo.DoesNotExist):
             Saldo.objects.get(cuenta=cuenta_anterior, movimiento=mov)
@@ -1279,7 +1273,7 @@ class TestSaveCambiaImporteYCuentas:
 
         setattr(traspaso, f'cta_{sentido}', cuenta_3)
         traspaso.importe = importe_aleatorio
-        traspaso.save()
+        traspaso.clean_save()
 
         with pytest.raises(Saldo.DoesNotExist):
             Saldo.objects.get(cuenta=cuenta_anterior, movimiento=traspaso)
@@ -1471,8 +1465,7 @@ class TestSaveCambiaFechaConCtaAcumulativa:
 
 def cambiar_orden(mov: Movimiento, orden: int):
     mov.orden_dia = orden
-    mov.full_clean()
-    mov.save()
+    mov.clean_save()
 
 
 @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
@@ -1582,8 +1575,7 @@ class TestSaveCambiaFechaYOrdenDia:
 
         mov.fecha = otro_mov.fecha
         mov.orden_dia = otro_orden
-        mov.full_clean()
-        mov.save(mantiene_orden_dia=True)
+        mov.clean_save(mantiene_orden_dia=True)
 
         otro_mov.refresh_from_db(fields=['orden_dia'])
 
@@ -1612,8 +1604,7 @@ class TestSaveCambiaImporteYFecha:
 
         mov.fecha = otro_mov.fecha - s2 * timedelta(1)
         mov.importe = importe_aleatorio
-        mov.full_clean()
-        mov.save()
+        mov.clean_save()
 
         assert cuenta.saldo(otro_mov) == pytest.approx(saldo_otro_mov + s * s2 * importe, 0.02)
 
@@ -1631,8 +1622,7 @@ class TestSaveCambiaImporteYFecha:
 
         mov.fecha = otro_mov.fecha + s2 * timedelta(1)
         mov.importe = importe_aleatorio
-        mov.full_clean()
-        mov.save()
+        mov.clean_save()
 
         assert cuenta.saldo(mov) == approx(
             cuenta.saldo(mov_anterior) + s * importe_aleatorio
@@ -1650,8 +1640,7 @@ class TestSaveCambiaImporteYOrdenDia:
 
         mov.importe = importe_aleatorio
         mov.orden_dia = traspaso.orden_dia + 1
-        mov.full_clean()
-        mov.save()
+        mov.clean_save()
 
         assert cuenta.saldo(traspaso) == saldo_traspaso - s * importe
 
@@ -1661,8 +1650,7 @@ class TestSaveCambiaImporteYOrdenDia:
 
         mov.importe = importe_aleatorio
         mov.orden_dia = traspaso.orden_dia + 1
-        mov.full_clean()
-        mov.save()
+        mov.clean_save()
 
         assert \
             cuenta.saldo(mov), 2 == \
@@ -1675,8 +1663,7 @@ class TestSaveCambiaImporteYOrdenDia:
 
         mov.importe = importe_aleatorio
         mov.orden_dia = entrada_otra_cuenta.orden_dia - 1
-        mov.full_clean()
-        mov.save()
+        mov.clean_save()
         traspaso.refresh_from_db()
         entrada_otra_cuenta.refresh_from_db()
 
@@ -1690,8 +1677,7 @@ class TestSaveCambiaImporteYOrdenDia:
 
         mov.importe = importe_aleatorio
         mov.orden_dia = entrada_otra_cuenta.orden_dia
-        mov.full_clean()
-        mov.save()
+        mov.clean_save()
 
         assert cuenta.saldo(mov) == approx(
             cuenta.saldo(traspaso) + s * importe_aleatorio
@@ -1707,8 +1693,7 @@ class TestSaveCambiaCuentasYFecha:
 
         setattr(mov, f'cta_{sentido}', cuenta_2)
         mov.fecha = salida_posterior.fecha + timedelta(1)
-        mov.full_clean()
-        mov.save()
+        mov.clean_save()
 
         assert cuenta.saldo(salida_posterior) == saldo_posterior - s * mov.importe
 
@@ -1719,8 +1704,7 @@ class TestSaveCambiaCuentasYFecha:
 
         setattr(mov, f'cta_{sentido}', cuenta_2)
         mov.fecha = salida_posterior.fecha + timedelta(1)
-        mov.full_clean()
-        mov.save()
+        mov.clean_save()
 
         assert cuenta_2.saldo(entrada_tardia) == saldo_tardio + s * mov.importe
 
@@ -1732,8 +1716,7 @@ class TestSaveCambiaCuentasYFecha:
 
         setattr(mov, f'cta_{sentido}', cuenta_2)
         mov.fecha = entrada_anterior.fecha - timedelta(1)
-        mov.full_clean()
-        mov.save()
+        mov.clean_save()
 
         assert cuenta.saldo(entrada_anterior) == saldo_anterior
 
@@ -1746,8 +1729,7 @@ class TestSaveCambiaCuentasYFecha:
 
         setattr(mov, f'cta_{sentido}', cuenta_2)
         mov.fecha = entrada_anterior.fecha - timedelta(1)
-        mov.full_clean()
-        mov.save()
+        mov.clean_save()
 
         assert cuenta_2.saldo(entrada_anterior) == saldo_anterior + s * mov.importe
         assert cuenta_2.saldo(entrada_temprana) == saldo_temprano
@@ -1763,8 +1745,7 @@ class TestSaveCambiaCuentasYFecha:
 
         traspaso.fecha = salida_posterior.fecha + timedelta(1)
         traspaso.cta_entrada, traspaso.cta_salida = cuenta_2, cuenta
-        traspaso.full_clean()
-        traspaso.save()
+        traspaso.clean_save()
 
         assert cuenta.saldo(salida_posterior) == saldo_posterior_cuenta - traspaso.importe
         assert cuenta.saldo(traspaso) == cuenta.saldo(salida_posterior) - traspaso.importe
@@ -1779,16 +1760,14 @@ class TestSaveCambiaEsGratis:
     def test_mov_esgratis_true_elimina_contramovimiento(self, credito):
         id_contramov = credito.id_contramov
         credito.esgratis = True
-        credito.full_clean()
-        credito.save()
+        credito.clean_save()
 
         with pytest.raises(Movimiento.DoesNotExist):
             Movimiento.tomar(id=id_contramov)
 
     def test_mov_esgratis_false_genera_contramovimiento(self, donacion):
         donacion.esgratis = False
-        donacion.full_clean()
-        donacion.save()
+        donacion.clean_save()
 
         assert donacion.id_contramov is not None
         assert Movimiento.tomar(id=donacion.id_contramov).concepto == "Constitución de crédito"
@@ -1809,8 +1788,7 @@ class TestSaveCambiaMoneda:
         saldo_cdl = cdl.saldo
 
         movimiento.moneda = euro
-        movimiento.full_clean()
-        movimiento.save()
+        movimiento.clean_save()
 
         ceu.refresh_from_db()
         cdl.refresh_from_db()
