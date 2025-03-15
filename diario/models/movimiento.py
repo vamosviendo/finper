@@ -220,7 +220,7 @@ class Movimiento(MiModel):
     def importe_cta_entrada(self) -> float | None:
         try:
             return round(
-                self.importe / (
+                self.importe * (
                     1 if self.cta_entrada.moneda == self.moneda
                     else self.cotizacion
                 ),
@@ -233,7 +233,7 @@ class Movimiento(MiModel):
     def importe_cta_salida(self) -> float | None:
         try:
             return -round(
-                self.importe / (
+                self.importe * (
                     1 if self.cta_salida.moneda == self.moneda
                     else self.cotizacion
                 ),
@@ -749,9 +749,9 @@ class Movimiento(MiModel):
             try:
                 moneda_cta_entrada = self.viejo.cta_entrada.moneda
                 moneda_cta_salida = self.viejo.cta_salida.moneda
-            # cta_entrada o cta_salida del movimiento viejo es None (es una entrada o una salida)
-            except AttributeError:
+            except AttributeError:  # cta_entrada o cta_salida del movimiento viejo es None
                 return True
+
             if self.cambia_cuenta_por_cuenta_en_otra_moneda(moneda_del_movimiento=True) and \
                     self.cambia_cuenta_por_cuenta_en_otra_moneda(moneda_del_movimiento=False) and \
                     moneda_cta_entrada != moneda_cta_salida:
@@ -771,8 +771,8 @@ class Movimiento(MiModel):
                 if self.cotizacion == 0.0 or cambia_moneda:
                     otra_moneda = el_que_no_es(self.moneda, self.cta_entrada.moneda, self.cta_salida.moneda)
                     if self.cambia_cuenta_por_cuenta_en_otra_moneda(True) or self.cambia_cuenta_por_cuenta_en_otra_moneda(False):
-                        self.cotizacion = otra_moneda.cotizacion_en_al(
-                            self.moneda,
+                        self.cotizacion = self.moneda.cotizacion_en_al(
+                            otra_moneda,
                             fecha=self.fecha,
                             compra=self.cta_entrada.moneda == self.moneda
                         )
@@ -789,10 +789,10 @@ class Movimiento(MiModel):
     def _recalcular_importe(self):
         if self.cambia_campo(
                 "moneda", contraparte=self.viejo
-        ) and not self.cambia_cuenta_por_cuenta_en_otra_moneda():
-            self.importe = round(self.viejo.importe * self.cotizacion, 2)
+        ) and not self.cambia_cuenta_por_cuenta_en_otra_moneda(moneda_del_movimiento=True):
+            self.importe = round(self.viejo.importe / self.cotizacion, 2)
         else:
-            self.importe = round(self.viejo.importe / self.viejo.cotizacion * self.cotizacion, 2)
+            self.importe = round(self.viejo.importe * self.viejo.cotizacion / self.cotizacion, 2)
 
     def _gestionar_transferencia(self):
         if self.receptor not in self.emisor.acreedores.all():

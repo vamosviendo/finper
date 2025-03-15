@@ -139,10 +139,10 @@ def test_entre_cuentas_en_distinta_moneda_se_calcula_cotizacion_a_partir_de_la_c
 
     mov.clean_save()
 
-    assert mov.cotizacion == dolar.cotizacion_en_al(euro, fecha, compra=compra)
+    assert mov.cotizacion == euro.cotizacion_en_al(dolar, fecha, compra=compra)
 
 
-def test_entre_cuentas_en_distinta_moneda_permite_cotizacion_arbitraria(
+def test_entre_cuentas_en_distinta_moneda_permite_especificar_cotizacion(
         cuenta_con_saldo_en_dolares, cuenta_con_saldo_en_euros, dolar, euro,
         cotizacion, cotizacion_posterior, cotizacion_euro, cotizacion_posterior_euro, fecha):
     mov = Movimiento(

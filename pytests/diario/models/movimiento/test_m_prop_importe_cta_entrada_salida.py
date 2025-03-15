@@ -17,7 +17,7 @@ def test_si_moneda_de_cuenta_es_distinta_de_la_del_movimiento_devuelve_importe_d
 
     assert \
         abs(getattr(movimiento, f"importe_cta_{sentido_opuesto}")) == \
-        round(movimiento.importe / movimiento.cotizacion, 2)
+        round(movimiento.importe * movimiento.cotizacion, 2)
 
 
 def test_si_no_hay_cuenta_de_entrada_importe_cta_entrada_devuelve_None(salida):

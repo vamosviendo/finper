@@ -23,7 +23,7 @@ def test_funciona_correctamente_con_decimales(cuenta):
 @pytest.mark.parametrize("tipo", ["compra", "venta"])
 def test_computa_correctamente_movimientos_en_moneda_distinta_a_la_de_la_cuenta(cuenta_en_dolares, tipo, request):
     mov = request.getfixturevalue(f"{tipo}_dolares")
-    compra = tipo == "compra"
+    compra = tipo == "venta"
     assert \
         abs(cuenta_en_dolares.total_movs()) == \
         round(mov.importe * mov.moneda.cotizacion_en(cuenta_en_dolares.moneda, compra=compra), 2)
