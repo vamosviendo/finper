@@ -241,7 +241,7 @@ class TestSaveCambiaCuentas:
         setattr(mov, campo_cuenta, cuenta_2)
         mov.clean_save()
 
-        mock_generar.assert_called_once_with(mov, salida=sentido == 'salida')
+        mock_generar.assert_called_once_with(mov, campo_cuenta)
         mock_eliminar.assert_called_once_with(saldo_en_mov_viejo)
 
     @pytest.mark.parametrize('sentido', ['entrada', 'salida'])

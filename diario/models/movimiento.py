@@ -425,11 +425,11 @@ class Movimiento(MiModel):
 
             super().save(*args, **kwargs)
             if self.cta_entrada:
-                Saldo.generar(self, salida=False)
+                Saldo.generar(self, "entrada")
             if self.cta_salida:
-                Saldo.generar(self, salida=True)
+                Saldo.generar(self, "salida")
 
-        else:                    # Movimiento existente
+        else:  # Movimiento existente
             self.viejo = self.tomar_de_bd()
 
             if self.es_prestamo_o_devolucion():
@@ -632,14 +632,14 @@ class Movimiento(MiModel):
                 if viene_de_opuesto():
                     cuenta.recalcular_saldos_entre(self.posicion)
                 else:
-                    Saldo.generar(self, salida=(campo_cuenta == CTA_SALIDA))
+                    Saldo.generar(self, campo_cuenta)
                 self._eliminar_saldo_de_cuenta_vieja_si_existe(cuenta_vieja, pasa_a_opuesto, saldo)
 
             elif cambia_campo('_importe', '_cotizacion'):
                 cuenta.recalcular_saldos_entre(self.posicion)
 
             elif getattr(self.viejo, campo_cuenta) is None:
-                Saldo.generar(self, salida=(campo_cuenta == CTA_SALIDA))
+                Saldo.generar(self, campo_cuenta)
 
             if cambia_campo('dia', 'orden_dia'):
                 if not mantiene_orden_dia:

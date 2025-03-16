@@ -95,20 +95,20 @@ def test_puede_traspasar_saldo_de_una_cuenta_a_otra(cuenta, cuenta_2):
     assert cuenta_2.saldo() == saldo_cuenta_2 + mov.importe
 
 
-def test_mov_entrada_llama_a_generar_saldo_con_salida_False(mock_generar, cuenta):
+def test_mov_entrada_llama_a_generar_saldo_con_arg_entrada(mock_generar, cuenta):
     mov = Movimiento.crear('Nuevo mov', 20, cuenta)
-    mock_generar.assert_called_once_with(mov, salida=False)
+    mock_generar.assert_called_once_with(mov, "entrada")
 
 
-def test_mov_salida_llama_a_generar_saldo_con_salida_True(mock_generar, cuenta):
+def test_mov_salida_llama_a_generar_saldo_con_arg_salida(mock_generar, cuenta):
     mov = Movimiento.crear('Nuevo mov', 20, None, cuenta)
-    mock_generar.assert_called_once_with(mov, salida=True)
+    mock_generar.assert_called_once_with(mov, "salida")
 
 
 def test_mov_traspaso_llama_a_generar_saldo_con_salida_False_para_cta_entrada_y_salida_True_para_cta_salida(
         mock_generar, cuenta, cuenta_2):
     mov = Movimiento.crear('Nuevo mov', 20, cuenta, cuenta_2)
-    assert mock_generar.call_args_list == [call(mov, salida=False), call(mov, salida=True)]
+    assert mock_generar.call_args_list == [call(mov, "entrada"), call(mov, "salida")]
 
 
 def test_integrativo_genera_saldo_para_cta_entrada(cuenta):

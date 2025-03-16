@@ -102,14 +102,25 @@ class Saldo(MiModel):
             return result
 
     @classmethod
-    def generar(cls, mov: 'Movimiento', cuenta: 'CuentaInteractiva' = None, salida: bool = False) -> Self:
-        importe = mov.importe if not salida else -mov.importe
-        cuenta = cuenta or (mov.cta_salida if salida else mov.cta_entrada)
-        if cuenta not in (mov.cta_entrada, mov.cta_salida):
-            raise errors.ErrorCuentaNoFiguraEnMovimiento(
-                f'La cuenta "{cuenta.nombre}" no pertenece al movimiento '
-                f'"{mov.concepto}"'
+    def generar(cls, mov: 'Movimiento', sentido: str = None) -> Self:
+        if sentido is None:
+            if mov.cta_entrada is None:
+                sentido = "salida"
+            elif mov.cta_salida is None:
+                sentido = "entrada"
+            else:
+                raise TypeError('En un movimiento de traspaso debe especificarse argumento "sentido"')
+
+        sentido = sentido.lower()
+        if sentido.startswith("cta_"):
+            sentido = sentido[4:]
+        if sentido not in ("entrada", "salida"):
+            raise ValueError(
+                'Los valores aceptados para arg "sentido" son "entrada", "cta_entrada", "salida", "cta_salida"'
             )
+
+        importe = getattr(mov, f"importe_cta_{sentido}")
+        cuenta = getattr(mov, f"cta_{sentido}")
 
         try:
             importe_saldo_anterior = Saldo._anterior_a(
@@ -118,11 +129,9 @@ class Saldo(MiModel):
         except AttributeError:
             importe_saldo_anterior = 0
 
-        cotizacion = 1.0 if cuenta.moneda == mov.moneda else mov.cotizacion
-
-        saldo: 'Saldo' = cls.crear(
+        saldo: Self = cls.crear(
             cuenta=cuenta,
-            importe=importe_saldo_anterior + importe * cotizacion,
+            importe=importe_saldo_anterior + importe,
             movimiento=mov
         )
         saldo._actualizar_posteriores(importe)
