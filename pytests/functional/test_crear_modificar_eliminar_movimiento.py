@@ -450,6 +450,12 @@ def test_modificar_movimiento(browser, entrada, cuenta_2):
     # Las modificaciones hechas mediante el formulario de movimiento se ven
     # reflejadas en el movimiento que se muestra en la página principal
     browser.ir_a_pag(reverse('mov_mod', args=[entrada.pk]))
+
+    # En todos los campos del formulario aparece el valor del campo correspondiente del movimiento:
+    browser.controlar_modelform(instance=entrada)
+    esgratis = browser.esperar_elemento("id_esgratis")
+    assert esgratis.get_attribute("value") == "on" if entrada.id_contramov is None else "off"
+
     browser.completar_form(
         concepto='Movimiento con concepto modificado',
         cta_entrada='cuenta 2',

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, List, Tuple, Optional
+from typing import TYPE_CHECKING, List, Tuple, Optional, Self
 
 from datetime import date
 
@@ -187,9 +187,12 @@ class Movimiento(MiModel):
     es_automatico = models.BooleanField(default=False)
 
     objects = MovimientoManager()
+    form_fields = (
+        "fecha", "concepto", "detalle", "cotizacion", "importe", "cta_entrada", "cta_salida", "moneda"
+    )
 
     cleaner: MovimientoCleaner = None
-    viejo: 'Movimiento' = None
+    viejo: Self = None
 
     class Meta:
         ordering = ('dia', 'orden_dia')

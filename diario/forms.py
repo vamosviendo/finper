@@ -156,6 +156,7 @@ class FormMovimiento(forms.ModelForm):
         instance = kwargs.get('instance')
         if instance:
             self.fields['importe'].initial = instance.importe
+            self.fields['cotizacion'].initial = instance.cotizacion
         self.fields['moneda'].initial = Moneda.tomar(monname=MONEDA_BASE)
 
         try:
@@ -166,10 +167,7 @@ class FormMovimiento(forms.ModelForm):
 
     class Meta:
         model = Movimiento
-        fields = (
-            'fecha', 'concepto', 'detalle', 'cotizacion', 'importe',
-            'cta_entrada', 'cta_salida', 'moneda'
-        )
+        fields = Movimiento.form_fields
         widgets = {
             'detalle': forms.TextInput,
         }
