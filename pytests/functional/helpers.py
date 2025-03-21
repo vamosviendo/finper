@@ -11,7 +11,8 @@ from selenium.webdriver.remote.webelement import WebElement
 
 from diario.models import Cuenta, CuentaInteractiva, CuentaAcumulativa, Dia, Movimiento, Titular
 from utils.numeros import float_format
-from utils.tiempo import dia_de_la_semana, str2date
+from utils.tiempo import dia_de_la_semana
+from vvmodel.models import MiModel
 from vvsteps.driver import MiFirefox, MiWebElement
 from vvsteps.helpers import esperar
 
@@ -48,6 +49,26 @@ class FinperFirefox(MiFirefox):
         for key, value in kwargs.items():
             self.completar(f"id_{key}", value)
         self.pulsar()
+
+    # TODO: pasar a MiFirefox
+    def controlar_form(self, **kwargs: str | date | float | MiModel):
+        for key, value in kwargs.items():
+            print(f"{key}: {value}")
+            if value is None:
+                value = ""
+            if type(value) is date:
+                value = value.strftime('%Y-%m-%d')
+            elif type(value) is float:
+                value = str(value)
+            elif isinstance(value, MiModel):
+                value = str(value.pk)
+            campo = self.esperar_elemento(f"id_{key}")
+            assert campo.get_attribute("value") == value
+
+    def controlar_modelform(self, instance: MiModel):
+        self.controlar_form(**{
+            k: getattr(instance, k) for k in instance.form_fields
+        })
 
     def cliquear_en_cuenta(self, cuenta):
         self.esperar_elemento(cuenta.nombre, By.LINK_TEXT).click()
