@@ -22,7 +22,7 @@ class FormCuenta(forms.ModelForm):
 
     class Meta:
         model = CuentaInteractiva
-        fields = ('nombre', 'slug', 'titular', 'fecha_creacion', 'moneda', )
+        fields = CuentaInteractiva.form_fields
         widgets = {
             'fecha_creacion': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
         }
@@ -198,7 +198,7 @@ class FormTitular(forms.ModelForm):
 
     class Meta:
         model = Titular
-        fields = ('titname', 'nombre', 'fecha_alta')
+        fields = Titular.form_fields
         widgets = {
             'fecha_alta': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
         }
@@ -209,9 +209,17 @@ class FormMoneda(forms.ModelForm):
     cotizacion_compra = forms.FloatField(required=False)
     cotizacion_venta = forms.FloatField(required=False)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        instance: Moneda = kwargs.get('instance')
+        if instance:
+            self.fields['plural'].initial = instance.plural
+            self.fields['cotizacion_compra'].initial = instance.cotizacion_compra
+            self.fields['cotizacion_venta'].initial = instance.cotizacion_venta
+
     class Meta:
         model = Moneda
-        fields = ('nombre', 'monname', 'plural', 'cotizacion_compra', 'cotizacion_venta')
+        fields = Moneda.form_fields
 
     def save(self, *args, **kwargs) -> Moneda:
         self.instance.plural = self.cleaned_data['plural']

@@ -264,6 +264,8 @@ class CuentaInteractiva(Cuenta):
                                 null=True,
                                 blank=True)
 
+    form_fields = ('nombre', 'slug', 'titular', 'fecha_creacion', 'moneda', )
+
     @classmethod
     def crear(cls, nombre: str, slug: str, cta_madre: Cuenta = None, saldo: float = None, **kwargs) -> Self:
 

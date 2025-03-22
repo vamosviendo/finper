@@ -22,6 +22,10 @@ def test_modificar_titular(browser, titular, fecha_anterior):
     """ Cuando vamos a la página de modificar titular y completamos el
         formulario, vemos el titular modificado en la página principal """
     browser.ir_a_pag(reverse('tit_mod', args=[titular.titname]))
+
+    # En todos los campos del formulario aparece el valor del campo correspondiente del titular:
+    browser.controlar_modelform(instance=titular)
+
     browser.completar_form(
         nombre="titular con nombre modificado",
         titname="tcnm",

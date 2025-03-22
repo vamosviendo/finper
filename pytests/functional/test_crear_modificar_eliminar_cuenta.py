@@ -47,10 +47,13 @@ def test_crear_cuenta_con_saldo(browser, titular):
     ...
 
 
-def test_modificar_cuenta(browser, cuenta, fecha_anterior):
+def test_modificar_cuenta(browser, cuenta_ajena, dolar, fecha_anterior):
     """ Cuando vamos a la página de modificar cuenta y completamos el
         formulario, la cuenta se modifica"""
-    browser.ir_a_pag(reverse('cta_mod', args=[cuenta.slug]))
+    browser.ir_a_pag(reverse('cta_mod', args=[cuenta_ajena.slug]))
+    # En todos los campos del formulario aparece el valor del campo correspondiente de la cuenta:
+    browser.controlar_modelform(instance=cuenta_ajena)
+
     browser.completar_form(
         nombre="cuenta con nombre modificado",
         slug="ccnm",

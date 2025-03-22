@@ -53,7 +53,6 @@ class FinperFirefox(MiFirefox):
     # TODO: pasar a MiFirefox
     def controlar_form(self, **kwargs: str | date | float | MiModel):
         for key, value in kwargs.items():
-            print(f"{key}: {value}")
             if value is None:
                 value = ""
             if type(value) is date:

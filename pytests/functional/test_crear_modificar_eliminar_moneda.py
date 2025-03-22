@@ -29,6 +29,10 @@ def test_modificar_moneda(browser, dolar):
     # Vamos a la página de modificación de la moneda donde cambiamos algunos
     # campos
     browser.ir_a_pag(reverse("mon_mod", args=[dolar.monname]))
+
+    # En todos los campos del formulario aparece el valor del campo correspondiente de la moneda:
+    browser.controlar_modelform(instance=dolar)
+
     browser.completar_form(
         nombre="dolar canadiense",
         monname="dc"

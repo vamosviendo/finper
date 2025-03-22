@@ -27,6 +27,7 @@ class Titular(MiModel):
     deudores = models.ManyToManyField('Titular', related_name='acreedores')
 
     objects = TitularManager()
+    form_fields = ('titname', 'nombre', 'fecha_alta', )
 
     def natural_key(self) -> tuple[str]:
         return (self.titname, )

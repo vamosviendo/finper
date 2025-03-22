@@ -22,6 +22,7 @@ class Moneda(MiModel):
     _plural = models.CharField(max_length=100, null=True, blank=True)
 
     objects = MonedaManager()
+    form_fields = ('nombre', 'monname', 'plural', 'cotizacion_compra', 'cotizacion_venta', )
 
     def __str__(self):
         return self.nombre
