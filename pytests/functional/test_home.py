@@ -79,29 +79,16 @@ def test_home(
     for i, dia in enumerate(dias):
         dia_web = divs_dia[i]
         movs_dia_web = dia_web.esperar_elementos("class_row_mov")
-        nros_de_orden = texto_en_hijos_respectivos("class_td_orden_dia", movs_dia_web)
-        conceptos = texto_en_hijos_respectivos("class_td_concepto", movs_dia_web)
-        detalles = texto_en_hijos_respectivos("class_td_detalle", movs_dia_web)
-        importes = texto_en_hijos_respectivos("class_td_importe", movs_dia_web)
-        ctas_entrada = texto_en_hijos_respectivos("class_td_cta_entrada", movs_dia_web)
-        ctas_salida = texto_en_hijos_respectivos("class_td_cta_salida", movs_dia_web)
 
-        assert nros_de_orden == [str(mov.orden_dia) for mov in dia.movimientos]
-
-        assert conceptos == [mov.concepto for mov in dia.movimientos]
-        assert detalles == [
-            "" if mov.detalle is None else f"{mov.detalle[:49]}…"
-            for mov in dia.movimientos
-        ]
-        assert importes == [float_format(mov.importe) for mov in dia.movimientos]
-        assert ctas_entrada == [
-            mov.cta_entrada.nombre if mov.cta_entrada else ""
-            for mov in dia.movimientos
-        ]
-        assert ctas_salida == [
-            mov.cta_salida.nombre if mov.cta_salida else ""
-            for mov in dia.movimientos
-        ]
+        assert len(movs_dia_web) == dia.movimientos.count()
+        for j, mov in enumerate(dia.movimientos):
+            mov_web = movs_dia_web[j]
+            assert mov_web.texto_en_hijo("class_td_orden_dia") == str(mov.orden_dia)
+            assert mov_web.texto_en_hijo("class_td_concepto") == mov.concepto
+            assert mov_web.texto_en_hijo("class_td_detalle") == (f"{mov.detalle[:49]}…" if mov.detalle else "")
+            assert mov_web.texto_en_hijo("class_td_importe") == float_format(mov.importe)
+            assert mov_web.texto_en_hijo("class_td_cta_entrada") == (mov.cta_entrada.nombre if mov.cta_entrada else "")
+            assert mov_web.texto_en_hijo("class_td_cta_salida") == (mov.cta_salida.nombre if mov.cta_salida else "")
 
 
 def test_home_monedas(
