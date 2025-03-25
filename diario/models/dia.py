@@ -4,6 +4,7 @@ from datetime import date
 from typing import Optional, Self, TYPE_CHECKING
 
 from django.db import models
+from django.db.models import Count, QuerySet
 
 from vvmodel.models import MiModel
 
@@ -62,6 +63,11 @@ class Dia (MiModel):
     @classmethod
     def ultima_id(cls) -> int:
         return cls.ultime().pk
+
+    @classmethod
+    def con_movimientos(cls) -> QuerySet[Self]:
+        dias = Dia.objects.annotate(mov_count=Count('movimiento_set'))
+        return dias.filter(mov_count__gt=0).order_by('fecha')
 
     @property
     def movimientos(self) -> models.QuerySet['Movimiento']:
