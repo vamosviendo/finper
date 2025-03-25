@@ -12,7 +12,7 @@ def test_home(
         browser, titular, otro_titular,
         cuenta, cuenta_2, cuenta_3, cuenta_acumulativa,
         entrada, traspaso, entrada_posterior_otra_cuenta,
-        mas_de_7_dias):
+        mas_de_15_dias_con_dias_sin_movimientos):
     # Vamos a la página principal
     browser.ir_a_pag()
 
@@ -73,7 +73,7 @@ def test_home(
     fechas_dia = texto_en_hijos_respectivos("class_span_fecha_dia", divs_dia)
     saldos_dia = texto_en_hijos_respectivos("class_span_saldo_dia", divs_dia)
 
-    dias = Dia.todes().reverse()[:7]
+    dias = [x for x in Dia.todes().reverse() if x.movimientos.count() > 0][:7]
     assert fechas_dia == [dia.str_dia_semana() for dia in dias]
     assert saldos_dia == [float_format(dia.saldo()) for dia in dias]
     for i, dia in enumerate(dias):

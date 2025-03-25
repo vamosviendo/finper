@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 import pytest
 from django.core.exceptions import ValidationError
@@ -85,4 +85,17 @@ def mas_de_7_dias(
     Movimiento.crear(fecha=dia_hoy.fecha, concepto="mov", cta_entrada=cuenta, importe=100)
     Movimiento.crear(
         fecha=date(2001, 1, 2), concepto="mov", cta_entrada=cuenta, importe=100)
+    return Dia.todes()
+
+
+@pytest.fixture
+def mas_de_15_dias_con_dias_sin_movimientos(
+        mas_de_7_dias: QuerySet[Dia],
+        fecha_tardia: date,
+        fecha: date,
+        cuenta: CuentaInteractiva) -> QuerySet[Dia]:
+    Dia.crear(fecha=fecha_tardia - timedelta(1))
+    for x in range(1, 9):
+        fecha_dia = fecha + timedelta(x)
+        Movimiento.crear(fecha=fecha_dia, concepto=f"mov día {fecha_dia}", cta_entrada=cuenta, importe=100)
     return Dia.todes()
