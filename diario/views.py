@@ -78,10 +78,6 @@ class HomeView(TemplateView):
             })
 
         else:
-            dias_con_movimientos = [
-                dia for dia in Dia.todes().reverse()
-                if dia.movimientos.count() > 0
-            ]
             context.update({
                 'saldo_gral':
                     saldo_general_historico(movimiento) if movimiento
@@ -89,7 +85,7 @@ class HomeView(TemplateView):
                 'titulo_saldo_gral': f'Saldo general{movimiento_en_titulo}',
                 'titulares': Titular.todes(),
                 'cuentas': Cuenta.todes().order_by(Lower('nombre')),
-                'dias': Paginator(dias_con_movimientos, 7).get_page(self.request.GET.get('page')),
+                'dias': Paginator(Dia.con_movimientos().reverse(), 7).get_page(self.request.GET.get('page')),
             })
 
         return context

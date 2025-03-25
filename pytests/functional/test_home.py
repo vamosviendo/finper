@@ -70,17 +70,16 @@ def test_home(
     # Debajo del título hay una tabla con todos los movimientos del día.
     divs_dia = browser.esperar_elementos("class_div_dia")
     assert len(divs_dia) == 7
-    fechas_dia = texto_en_hijos_respectivos("class_span_fecha_dia", divs_dia)
-    saldos_dia = texto_en_hijos_respectivos("class_span_saldo_dia", divs_dia)
 
-    dias = [x for x in Dia.todes().reverse() if x.movimientos.count() > 0][:7]
-    assert fechas_dia == [dia.str_dia_semana() for dia in dias]
-    assert saldos_dia == [float_format(dia.saldo()) for dia in dias]
+    dias = Dia.con_movimientos().reverse()[:7]
     for i, dia in enumerate(dias):
         dia_web = divs_dia[i]
-        movs_dia_web = dia_web.esperar_elementos("class_row_mov")
+        assert dia_web.texto_en_hijo("class_span_fecha_dia") == dia.str_dia_semana()
+        assert dia_web.texto_en_hijo("class_span_saldo_dia") == float_format(dia.saldo())
 
+        movs_dia_web = dia_web.esperar_elementos("class_row_mov")
         assert len(movs_dia_web) == dia.movimientos.count()
+
         for j, mov in enumerate(dia.movimientos):
             mov_web = movs_dia_web[j]
             assert mov_web.texto_en_hijo("class_td_orden_dia") == str(mov.orden_dia)
