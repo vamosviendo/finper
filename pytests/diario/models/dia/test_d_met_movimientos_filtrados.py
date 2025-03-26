@@ -14,7 +14,7 @@ def test_si_no_recibe_argumentos_devuelve_queryset_con_todos_los_movimientos_del
 
 def test_si_recibe_cuenta_devuelve_solo_los_movimientos_del_dia_en_los_que_interviene_la_cuenta(
         dia, cuenta, entrada, salida, entrada_otra_cuenta, salida_posterior, entrada_posterior_otra_cuenta):
-    assert list(dia.movimientos_filtrados(cuenta=cuenta)) == [entrada, salida]
+    assert list(dia.movimientos_filtrados(ente=cuenta)) == [entrada, salida]
 
 
 def test_si_recibe_cuenta_acumulativa_devuelve_movimientos_del_dia_en_los_que_interviene_la_cuenta_o_sus_subcuentas(
@@ -36,9 +36,4 @@ def test_si_recibe_cuenta_acumulativa_devuelve_movimientos_del_dia_en_los_que_in
 
 def test_si_recibe_titular_devuelve_solo_los_movimientos_del_dia_en_los_que_intervienen_cuentas_del_titular(
         dia, titular, entrada, salida, entrada_cuenta_ajena):
-    assert list(dia.movimientos_filtrados(titular=titular)) == [entrada, salida]
-
-
-def test_si_recibe_cuenta_y_titular_no_toma_en_cuenta_el_argumento_titular(
-        dia, cuenta_ajena, titular, entrada, salida, entrada_cuenta_ajena):
-    assert list(dia.movimientos_filtrados(cuenta=cuenta_ajena, titular=titular)) == [entrada_cuenta_ajena]
+    assert list(dia.movimientos_filtrados(ente=titular)) == [entrada, salida]

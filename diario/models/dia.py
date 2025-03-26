@@ -74,10 +74,7 @@ class Dia (MiModel):
         return self.movimiento_set.all()
 
     def movimientos_filtrados(
-            self,
-            cuenta: 'CuentaInteractiva' = None,
-            titular: 'Titular' = None) -> models.QuerySet['Movimiento']:
-        ente = cuenta or titular or None
+            self, ente: CuentaInteractiva | Titular = None) -> models.QuerySet['Movimiento']:
         if ente:
             return ente.movs().filter(dia=self)
         return self.movimientos
