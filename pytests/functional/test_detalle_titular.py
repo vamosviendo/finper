@@ -108,8 +108,8 @@ def test_detalle_titular(
     # Si cliqueamos en un movimiento, solo aparecen los movimientos del
     # titular en la sección de movimientos, con el movimiento cliqueado
     # resaltado
-    dias_pag = browser.serializar_dias_pagina()
-    dias_pag[1]["movimientos"][0]["webelement"].esperar_elemento(
+    dias_pag = browser.esperar_elementos("class_div_dia")
+    dias_pag[1].esperar_elementos("class_row_mov")[0].esperar_elemento(
         "class_link_movimiento", By.CLASS_NAME
     ).click()
 

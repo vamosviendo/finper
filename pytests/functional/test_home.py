@@ -73,21 +73,7 @@ def test_home(
 
     dias = Dia.con_movimientos().reverse()[:7]
     for i, dia in enumerate(dias):
-        dia_web = divs_dia[i]
-        assert dia_web.texto_en_hijo("class_span_fecha_dia") == dia.str_dia_semana()
-        assert dia_web.texto_en_hijo("class_span_saldo_dia") == float_format(dia.saldo())
-
-        movs_dia_web = dia_web.esperar_elementos("class_row_mov")
-        assert len(movs_dia_web) == dia.movimientos.count()
-
-        for j, mov in enumerate(dia.movimientos):
-            mov_web = movs_dia_web[j]
-            assert mov_web.texto_en_hijo("class_td_orden_dia") == str(mov.orden_dia)
-            assert mov_web.texto_en_hijo("class_td_concepto") == mov.concepto
-            assert mov_web.texto_en_hijo("class_td_detalle") == (f"{mov.detalle[:49]}…" if mov.detalle else "")
-            assert mov_web.texto_en_hijo("class_td_importe") == float_format(mov.importe)
-            assert mov_web.texto_en_hijo("class_td_cta_entrada") == (mov.cta_entrada.nombre if mov.cta_entrada else "")
-            assert mov_web.texto_en_hijo("class_td_cta_salida") == (mov.cta_salida.nombre if mov.cta_salida else "")
+        browser.comparar_dia(divs_dia[i], dia)
 
 
 def test_home_monedas(
