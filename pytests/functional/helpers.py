@@ -7,7 +7,6 @@ from urllib.parse import urlparse
 from django.urls import reverse
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
-from selenium.webdriver.remote.webelement import WebElement
 
 from diario.models import Cuenta, CuentaInteractiva, CuentaAcumulativa, Dia, Movimiento, Titular
 from utils.numeros import float_format
@@ -84,7 +83,7 @@ class FinperFirefox(MiFirefox):
     def cliquear_en_titular(self, titular):
         self.esperar_elemento(titular.nombre, By.LINK_TEXT).click()
 
-    def esperar_movimiento(self, columna: str, contenido: str) -> MiWebElement:
+    def esperar_movimiento(self, columna: str, contenido: str) -> FinperWebElement:
         try:
             return self.esperar_movimientos(columna, contenido)[0]
         except IndexError:
@@ -92,20 +91,20 @@ class FinperFirefox(MiFirefox):
                 f'Contenido "{contenido}" no encontrado en columna "{columna}"'
             )
 
-    def esperar_movimientos(self, columna: str, contenido: str) -> list[MiWebElement]:
+    def esperar_movimientos(self, columna: str, contenido: str) -> list[FinperWebElement]:
         return [
             x for x in self.esperar_elementos("class_row_mov", By.CLASS_NAME, fail=False)
             if x.esperar_elemento(f"class_td_{columna}", By.CLASS_NAME).text == contenido
         ]
 
-    def esperar_dia(self, fecha: date) -> MiWebElement:
+    def esperar_dia(self, fecha: date) -> FinperWebElement:
         return next(
             x for x in self.esperar_elementos("class_div_dia")
             if x.esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text ==
             f"{dia_de_la_semana[fecha.weekday()]} {fecha.strftime('%Y-%m-%d')}"
         )
 
-    def esperar_saldo_en_moneda_de_cuenta(self, slug: str) -> MiWebElement:
+    def esperar_saldo_en_moneda_de_cuenta(self, slug: str) -> FinperWebElement:
         return self\
             .esperar_elemento(f'id_row_cta_{slug}')\
             .esperar_elemento(f'.class_saldo_cuenta.mon_cuenta', By.CSS_SELECTOR)

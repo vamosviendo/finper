@@ -322,10 +322,6 @@ def subsubcuenta_3_con_movimientos(
 def test_detalle_de_subcuenta(
         browser, cuenta_acumulativa, subsubcuenta_1_con_movimientos, subsubcuenta_2_con_movimientos,
         subsubcuenta_3_con_movimientos):
-    # TODO: Este test a veces falla. Habría que probar qué pasa actualizando Selenium.
-    #       Me parece que es una cuestión de esperas, pero no podría asegurarlo.
-    #       Pasa cuando se lo ejecuta solo. Falla cuando se lo ejecuta junto con los otros tests.
-    #       No quiero perder tiempo ahora averiguando cuál es el problema.
     # Dadas dos subcuentas de una cuenta acumulativa
     # Y una de esas subcuentas a la vez dividida en tres subcuentas
     # Y algunos movimientos de las tres subcuentas
@@ -359,8 +355,9 @@ def test_detalle_de_subcuenta(
             f"Saldo de cuenta hermana subsubcuenta 3: {float_format(subsubcuenta_3_con_movimientos.saldo())}",
         ]
 
-    # Cliqueamos en un movimiento.
-    browser.ir_a_pag(reverse("cuenta_movimiento", args=[subsubcuenta_1_con_movimientos.slug, 7]))
+    # Cliqueamos en un movimiento
+    movimiento = Movimiento.tomar(dia=Dia.tomar(fecha=date(2011, 5, 1)), orden_dia=0)
+    browser.ir_a_pag(reverse("cuenta_movimiento", args=[subsubcuenta_1_con_movimientos.slug, movimiento.pk]))
 
     # Vemos que en la sección de movimientos aparecen los días en los que hay movimientos
     # de la cuenta, con el movimiento cliqueado resaltado
@@ -370,7 +367,6 @@ def test_detalle_de_subcuenta(
 
     # Y vemos que en el saldo general de la página aparece el saldo histórico
     # de la cuenta al momento del movimiento.
-    movimiento = Movimiento.tomar(pk=7)
     assert \
         browser.esperar_elemento("id_importe_saldo_gral").text == \
         float_format(subsubcuenta_1_con_movimientos.saldo(movimiento))

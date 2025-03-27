@@ -42,11 +42,6 @@ def test_crear_cuenta_en_otra_moneda(browser, titular, fecha, dolar):
     assert saldo_cuenta.get_attribute("id") == f"id_saldo_cta_cd_{dolar.monname}"
 
 
-@pytest.mark.xfail
-def test_crear_cuenta_con_saldo(browser, titular):
-    ...
-
-
 def test_modificar_cuenta(browser, cuenta_ajena, dolar, fecha_anterior):
     """ Cuando vamos a la página de modificar cuenta y completamos el
         formulario, la cuenta se modifica"""

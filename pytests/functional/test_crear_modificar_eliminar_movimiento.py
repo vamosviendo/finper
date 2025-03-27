@@ -6,12 +6,12 @@ from django.urls import reverse
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 
+from pytests.functional.helpers import FinperWebElement
 from utils.numeros import float_format, format_float
 from utils.varios import el_que_no_es
-from vvsteps.driver import MiWebElement
 
 
-def textos_hijos(elemento: MiWebElement, tag_subelem: str) -> List[str]:
+def textos_hijos(elemento: FinperWebElement, tag_subelem: str) -> List[str]:
     return [x.text for x in elemento.esperar_elementos(tag_subelem, By.TAG_NAME)]
 
 
