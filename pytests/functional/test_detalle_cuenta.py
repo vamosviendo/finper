@@ -319,7 +319,6 @@ def subsubcuenta_3_con_movimientos(
     return ssc3
 
 
-@pytest.mark.xfail
 def test_detalle_de_subcuenta(
         browser, cuenta_acumulativa, subsubcuenta_1_con_movimientos, subsubcuenta_2_con_movimientos,
         subsubcuenta_3_con_movimientos):
@@ -381,15 +380,11 @@ def test_detalle_de_subcuenta(
     saldos_historicos = [
         x.text for x in browser.esperar_elementos("class_div_saldo_ancestro")]
     for index, cta in enumerate(reversed(subsubcuenta_1_con_movimientos.ancestros())):
-        assert saldos_historicos[index].replace(
-            f'Saldo de cuenta madre {cta.nombre}: ', ''
-        ) == float_format(cta.saldo(movimiento))
+        assert saldos_historicos[index] == f"Saldo de cuenta madre {cta.nombre}: {float_format(cta.saldo(movimiento))}"
 
     # Y vemos que al lado de cada una de las subcuentas hermanas aparece el
     # saldo histórico de la subcuenta al momento del movimiento
     saldos_historicos = [
         x.text for x in browser.esperar_elementos("class_div_saldo_hermana")]
     for index, cta in enumerate(subsubcuenta_1_con_movimientos.hermanas()):
-        assert saldos_historicos[index].replace(
-            f'Saldo de cuenta hermana {cta.nombre}: ', ''
-        ) == float_format(cta.saldo(movimiento))
+        assert saldos_historicos[index] == f"Saldo de cuenta hermana {cta.nombre}: {float_format(cta.saldo(movimiento))}"
