@@ -132,7 +132,7 @@ class FinperFirefox(MiFirefox):
             self,
             dia_web: FinperWebElement,
             dia_db: Dia,
-            ente: CuentaInteractiva | Titular = None):
+            ente: Cuenta | Titular | None = None):
         movs_dia_web = dia_web.esperar_elementos("class_row_mov")
         movs_dia_db = dia_db.movimientos_filtrados(ente)
         assert len(movs_dia_web) == movs_dia_db.count()
@@ -161,7 +161,7 @@ class FinperFirefox(MiFirefox):
             self, cuenta: CuentaInteractiva | CuentaAcumulativa):
         """ Dada una cuenta, comparar su titular o titulares con el o los
             que aparecen en la página. """
-        nombres_titular = [cuenta.titular.nombre] if cuenta.es_interactiva \
+        nombres_titular = [cuenta.titular.nombre] if isinstance(cuenta, CuentaInteractiva) \
             else [x.nombre for x in cuenta.titulares]
         textos_titular = [
             x.text for x in self.esperar_elementos(
@@ -231,7 +231,7 @@ class FinperFirefox(MiFirefox):
             self,
             nombre: str,
             viewname: str,
-            args: list = None,
+            args: list | None = None,
             criterio: str = By.ID,
             url_inicial: str = '',
     ):

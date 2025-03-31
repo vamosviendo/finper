@@ -545,6 +545,8 @@ class CuentaAcumulativa(Cuenta):
                                 related_name='ex_cuentas',
                                 on_delete=models.CASCADE,)
 
+    subcuentas: CuentaManager["Cuenta"]     # related name para Cuenta.cta_madre
+
     @property
     def titulares(self) -> List[Titular]:
         titulares = list()

@@ -1,12 +1,11 @@
 import os
-from collections.abc import Generator
 
 import pytest
 from pytest_django.live_server_helper import LiveServer
 from selenium.webdriver.firefox.options import Options
 
+from finper.typing import FinperFirefoxGenerator
 from pytests.functional.helpers import FinperFirefox
-
 
 @pytest.fixture(autouse=True, scope='session')
 def base_url(live_server: LiveServer) -> str:
@@ -16,9 +15,10 @@ def base_url(live_server: LiveServer) -> str:
 # Pre sesion
 
 @pytest.fixture(scope='session')
-def browser(base_url: str) -> Generator[FinperFirefox]:
+def browser(base_url: str) -> FinperFirefoxGenerator:
     options = Options()
-    options.headless = bool(os.getenv('DOCKERIZED'))  # Usar modo headless si se ejecuta en docker
+    if bool(os.getenv("DOCKERIZED")) is True:
+        options.add_argument("--headless")
     driver = FinperFirefox(base_url, options=options)
     yield driver
     driver.close()
