@@ -24,7 +24,7 @@ from vvmodel.serializers import SerializedDb
 
 def _tomar_movimiento(movimiento: MovimientoSerializado) -> Movimiento:
     return Movimiento.tomar(
-        dia=Dia.tomar(fecha=movimiento.fields["dia"][0]),
+        fecha=movimiento.fields["dia"][0],
         concepto=movimiento.fields["concepto"],
         detalle=movimiento.fields["detalle"],
         _importe=movimiento.fields["_importe"],
@@ -330,7 +330,7 @@ def test_crea_contramovimiento_al_crear_movimiento_de_credito(credito, db_serial
         Movimiento.tomar(
             concepto="Constitución de crédito",
             _importe=credito.importe,
-            dia=Dia.tomar(fecha=credito.fecha)
+            fecha=credito.fecha
         )
     except Movimiento.DoesNotExist:
         pytest.fail("No se generó contramovimiento en movimiento de crédito")
@@ -338,12 +338,12 @@ def test_crea_contramovimiento_al_crear_movimiento_de_credito(credito, db_serial
 
 def test_no_crea_contramovimiento_al_crear_movimiento_de_donacion(donacion, db_serializada, vaciar_db):
     call_command("cargar_db_serializada")
-    mov = Movimiento.tomar(dia=Dia.tomar(fecha=donacion.fecha), orden_dia=donacion.orden_dia)
+    mov = Movimiento.tomar(fecha=donacion.fecha, orden_dia=donacion.orden_dia)
     try:
         Movimiento.tomar(
             concepto="Constitución de crédito",
             _importe=donacion.importe,
-            dia=Dia.tomar(fecha=donacion.fecha)
+            fecha=donacion.fecha
         )
         pytest.fail("Se generó contramovimiento en movimiento de donación")
     except Movimiento.DoesNotExist:
@@ -369,7 +369,7 @@ def test_carga_movimientos_con_orden_dia_correcto(entrada, salida, traspaso, db_
     call_command("cargar_db_serializada")
     for movimiento in movimientos:
         mov_creado = Movimiento.tomar(
-            dia=Dia.tomar(fecha=movimiento.fields["dia"][0]),
+            fecha=movimiento.fields["dia"][0],
             orden_dia=movimiento.fields["orden_dia"]
         )
         slug_cta_entrada = mov_creado.cta_entrada.slug if mov_creado.cta_entrada else None
@@ -394,7 +394,7 @@ def test_carga_movimientos_con_cotizacion_correcta(venta_dolares, request):
     request.getfixturevalue("vaciar_db")
     call_command("cargar_db_serializada")
     mov_creado = Movimiento.tomar(
-        dia=Dia.tomar(fecha=venta_dolares.fecha),
+        fecha=venta_dolares.fecha,
         orden_dia=venta_dolares.orden_dia
     )
     assert mov_creado.cotizacion == 666.66
@@ -415,7 +415,7 @@ def test_carga_cotizacion_correcta_en_movimientos_anteriores_de_cuentas_acumulat
     call_command("cargar_db_serializada")
 
     mov_creado = Movimiento.tomar(
-        dia=Dia.tomar(fecha=venta_dolares.fecha),
+        fecha=venta_dolares.fecha,
         orden_dia=venta_dolares.orden_dia
     )
 
@@ -428,7 +428,7 @@ def test_carga_orden_dia_correcto_en_fechas_en_las_que_se_generaron_movimientos_
     call_command("cargar_db_serializada")
     for movimiento in movimientos:
         mov_creado = Movimiento.tomar(
-            dia=Dia.tomar(fecha=movimiento.fields["dia"][0]),
+            fecha=movimiento.fields["dia"][0],
             orden_dia=movimiento.fields["orden_dia"]
         )
         slug_cta_entrada = mov_creado.cta_entrada.slug if mov_creado.cta_entrada else None

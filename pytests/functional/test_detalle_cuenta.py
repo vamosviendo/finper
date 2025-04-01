@@ -355,7 +355,7 @@ def test_detalle_de_subcuenta(
         ]
 
     # Cliqueamos en un movimiento
-    movimiento = Movimiento.tomar(dia=Dia.tomar(fecha=date(2011, 5, 1)), orden_dia=0)
+    movimiento = Movimiento.tomar(fecha=date(2011, 5, 1), orden_dia=0)
     browser.ir_a_pag(reverse("cuenta_movimiento", args=[subsubcuenta_1_con_movimientos.slug, movimiento.pk]))
 
     # Vemos que en la sección de movimientos aparecen los días en los que hay movimientos
