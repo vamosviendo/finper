@@ -1,4 +1,5 @@
 import pytest
+from django.core.exceptions import FieldError
 
 from diario.models import Movimiento
 
@@ -15,4 +16,10 @@ def test_actualiza_subclase_de_cuentas_intervinientes(sentido, mocker, request):
     assert mock_actualizar_subclase.call_args_list[0].args[0].slug == cuenta.slug
 
 
+def test_permite_tomar_movimiento_por_fecha_y_orden_dia(entrada, salida_posterior, entrada_anterior, request):
+    try:
+        mov = Movimiento.tomar(fecha=entrada.fecha, orden_dia=entrada.orden_dia)
+    except FieldError:
+        raise AssertionError("No permite tomar movimiento por fecha.")
 
+    assert mov.pk == entrada.pk

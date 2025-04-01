@@ -332,7 +332,11 @@ class Movimiento(MiModel):
 
     @classmethod
     def tomar(cls, **kwargs) -> Movimiento:
+        if "fecha" in kwargs.keys():
+            kwargs["dia"] = Dia.tomar(fecha=kwargs.pop("fecha"))
+
         mov = super().tomar(**kwargs)
+
         mov.cta_entrada = mov.cta_entrada.actualizar_subclase() \
             if mov.cta_entrada else None
         mov.cta_salida = mov.cta_salida.actualizar_subclase() \
