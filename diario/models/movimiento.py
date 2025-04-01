@@ -5,6 +5,7 @@ from datetime import date
 
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import QuerySet
 from django_ordered_field import OrderedCollectionField
 
 from vvmodel.models import MiModel
@@ -329,6 +330,13 @@ class Movimiento(MiModel):
         movimiento.clean_save(esgratis=esgratis)
 
         return movimiento
+
+    @classmethod
+    def filtro(cls, *args, **kwargs) -> QuerySet[Self]:
+        if "fecha" in kwargs.keys():
+            kwargs["dia"] = Dia.tomar(fecha=kwargs.pop("fecha"))
+
+        return super().filtro(*args, **kwargs)
 
     @classmethod
     def tomar(cls, **kwargs) -> Movimiento:
