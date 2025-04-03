@@ -173,361 +173,360 @@ def test_vacia_la_base_de_datos_antes_de_cargar_datos_nuevos(mocker, db_serializ
     mock_call_command.assert_called_once_with("migrate")
 
 
-def test_carga_todos_los_titulares_en_la_base_de_datos(titular, otro_titular, db_serializada, vaciar_db):
-    tits = db_serializada.filter_by_model("diario.titular")
-    call_command("cargar_db_serializada")
-    for tit in tits:
-        Titular.tomar(titname=tit.fields["titname"])
+class TestCargaTitulares:
+    def test_carga_todos_los_titulares_en_la_base_de_datos(self, titular, otro_titular, db_serializada, vaciar_db):
+        tits = db_serializada.filter_by_model("diario.titular")
+        call_command("cargar_db_serializada")
+        for tit in tits:
+            Titular.tomar(titname=tit.fields["titname"])
 
-
-def test_carga_todas_las_monedas_en_la_base_de_datos(peso, dolar, euro, db_serializada, vaciar_db):
-    monedas = db_serializada.filter_by_model("diario.moneda")
-    call_command("cargar_db_serializada")
-    for moneda in monedas:
-        Moneda.tomar(monname=moneda.fields["monname"])
-
-
-def test_carga_todas_las_cotizaciones_en_la_base_de_datos(
-        peso, dolar, euro, yen, cotizacion_posterior, cotizacion_tardia, db_serializada, vaciar_db):
-    cotizaciones = db_serializada.filter_by_model("diario.cotizacion")
-    call_command("cargar_db_serializada")
-    assert Cotizacion.cantidad() == len(cotizaciones)
-    for cotizacion in cotizaciones:
+    @pytest.mark.xpass
+    def test_coyuntural_genera_campo_titname_a_partir_de_campo_titname(self, titular, otro_titular, db_serializada_legacy, vaciar_db):
+        tits = db_serializada_legacy.filter_by_model("diario.titular")
         try:
-            Cotizacion.tomar(
-                moneda=Moneda.tomar(monname=cotizacion.fields["moneda"][0]),
-                fecha=cotizacion.fields["fecha"]
-            )
-        except Cotizacion.DoesNotExist:
-            raise AssertionError(
-                f"No se creó cotización de moneda {cotizacion.fields['monname']} "
-                f"al {cotizacion.fields['fecha']}")
+            call_command("cargar_db_serializada")
+        except TypeError:
+            raise AssertionError("comando cargar_db_serializada no convierte campo 'titname' a 'titname'")
+
+        for i, titular in enumerate(Titular.todes()):
+            assert titular.titname == tits[i].fields["titname"]
+
+class TestCargaMonedas:
+    def test_carga_todas_las_monedas_en_la_base_de_datos(self, peso, dolar, euro, db_serializada, vaciar_db):
+        monedas = db_serializada.filter_by_model("diario.moneda")
+        call_command("cargar_db_serializada")
+        for moneda in monedas:
+            Moneda.tomar(monname=moneda.fields["monname"])
 
 
-def test_carga_todas_las_cuentas_en_la_base_de_datos(
-        cuenta, cuenta_2, cuenta_3, cuenta_4, db_serializada, vaciar_db):
-    cuentas = db_serializada.filter_by_model("diario.cuenta")
-    call_command("cargar_db_serializada")
-    assert len(cuentas) > 0
-    for cuenta in cuentas:
-        try:
-            Cuenta.tomar(slug=cuenta.fields["slug"])
-        except Cuenta.DoesNotExist:
-            raise AssertionError(f"No se creó cuenta con slug {cuenta.fields['slug']}")
+class TestCargaCotizaciones:
+    def test_carga_todas_las_cotizaciones_en_la_base_de_datos(
+            self, peso, dolar, euro, yen, cotizacion_posterior, cotizacion_tardia, db_serializada, vaciar_db):
+        cotizaciones = db_serializada.filter_by_model("diario.cotizacion")
+        call_command("cargar_db_serializada")
+        assert Cotizacion.cantidad() == len(cotizaciones)
+        for cotizacion in cotizaciones:
+            try:
+                Cotizacion.tomar(
+                    moneda=Moneda.tomar(monname=cotizacion.fields["moneda"][0]),
+                    fecha=cotizacion.fields["fecha"]
+                )
+            except Cotizacion.DoesNotExist:
+                raise AssertionError(
+                    f"No se creó cotización de moneda {cotizacion.fields['monname']} "
+                    f"al {cotizacion.fields['fecha']}")
 
 
-def test_carga_cuentas_con_fecha_de_creacion_correcta(
-        cuenta_temprana_1, cuenta, cuenta_posterior, db_serializada, vaciar_db):
-    cuentas = db_serializada.filter_by_model("diario.cuenta")
-    call_command("cargar_db_serializada")
-    assert len(cuentas) > 0
-    for cuenta in cuentas:
-        assert \
-            Cuenta.tomar(slug=cuenta.fields["slug"]).fecha_creacion.strftime("%Y-%m-%d") == \
-            cuenta.fields["fecha_creacion"], \
-            f"Error en fecha de creación de cuenta \"{cuenta.fields['nombre']} ({cuenta.fields['slug']})\""
+class TestCargaCuentas:
+    def test_carga_todas_las_cuentas_en_la_base_de_datos(
+            self, cuenta, cuenta_2, cuenta_3, cuenta_4, db_serializada, vaciar_db):
+        cuentas = db_serializada.filter_by_model("diario.cuenta")
+        call_command("cargar_db_serializada")
+        assert len(cuentas) > 0
+        for cuenta in cuentas:
+            try:
+                Cuenta.tomar(slug=cuenta.fields["slug"])
+            except Cuenta.DoesNotExist:
+                raise AssertionError(f"No se creó cuenta con slug {cuenta.fields['slug']}")
 
+    def test_carga_cuentas_con_fecha_de_creacion_correcta(
+            self, cuenta_temprana_1, cuenta, cuenta_posterior, db_serializada, vaciar_db):
+        cuentas = db_serializada.filter_by_model("diario.cuenta")
+        call_command("cargar_db_serializada")
+        assert len(cuentas) > 0
+        for cuenta in cuentas:
+            assert \
+                Cuenta.tomar(slug=cuenta.fields["slug"]).fecha_creacion.strftime("%Y-%m-%d") == \
+                cuenta.fields["fecha_creacion"], \
+                f"Error en fecha de creación de cuenta \"{cuenta.fields['nombre']} ({cuenta.fields['slug']})\""
 
-def test_carga_cuentas_acumulativas_con_fecha_de_conversion_correcta(
-        cuenta_acumulativa, cuenta_temprana_acumulativa, cuenta_2_acumulativa, db_serializada, vaciar_db):
-    cuentas = db_serializada.filter_by_model("diario.cuentaacumulativa")
-    call_command("cargar_db_serializada")
-    assert len(cuentas) > 0
-    for cuenta in cuentas:
-        assert \
-            CuentaAcumulativa.tomar(
-                slug=db_serializada.tomar(model="diario.cuenta", pk=cuenta.pk).fields["slug"]
-            ).fecha_conversion.strftime("%Y-%m-%d") == \
-            cuenta.fields["fecha_conversion"]
+    def test_carga_cuentas_acumulativas_con_fecha_de_conversion_correcta(
+            self, cuenta_acumulativa, cuenta_temprana_acumulativa, cuenta_2_acumulativa, db_serializada, vaciar_db):
+        cuentas = db_serializada.filter_by_model("diario.cuentaacumulativa")
+        call_command("cargar_db_serializada")
+        assert len(cuentas) > 0
+        for cuenta in cuentas:
+            assert \
+                CuentaAcumulativa.tomar(
+                    slug=db_serializada.tomar(model="diario.cuenta", pk=cuenta.pk).fields["slug"]
+                ).fecha_conversion.strftime("%Y-%m-%d") == \
+                cuenta.fields["fecha_conversion"]
 
-
-def test_al_cargar_cuenta_acumulativa_carga_movimientos_anteriores_en_los_que_haya_participado(
-        movimiento_1, movimiento_2, cuenta_2_acumulativa, db_serializada, vaciar_db):
-    cuentas = [
-        x for x in db_serializada.filter_by_model("diario.cuenta")
-        if x.pk in [x.pk for x in db_serializada.filter_by_model("diario.cuentaacumulativa")]
-    ]
-    call_command("cargar_db_serializada")
-    assert len(cuentas) > 0
-    for cuenta in cuentas:
-        movs_cuenta = [
-            x for x in MovimientoSerializado.todes(container=db_serializada)
-            if x.fields["cta_entrada"] == [cuenta.fields["slug"]] or
-               x.fields["cta_salida"] == [cuenta.fields["slug"]]
+    def test_al_cargar_cuenta_acumulativa_carga_movimientos_anteriores_en_los_que_haya_participado(
+            self, movimiento_1, movimiento_2, cuenta_2_acumulativa, db_serializada, vaciar_db):
+        cuentas = [
+            x for x in db_serializada.filter_by_model("diario.cuenta")
+            if x.pk in [x.pk for x in db_serializada.filter_by_model("diario.cuentaacumulativa")]
         ]
-        assert len(movs_cuenta) > 0     # Puede fallar. Tal vez hay que puntualizar más o retirar
-        for mov in movs_cuenta:
+        call_command("cargar_db_serializada")
+        assert len(cuentas) > 0
+        for cuenta in cuentas:
+            movs_cuenta = [
+                x for x in MovimientoSerializado.todes(container=db_serializada)
+                if x.fields["cta_entrada"] == [cuenta.fields["slug"]] or
+                   x.fields["cta_salida"] == [cuenta.fields["slug"]]
+            ]
+            assert len(movs_cuenta) > 0     # Puede fallar. Tal vez hay que puntualizar más o retirar
+            for mov in movs_cuenta:
+                _testear_movimiento(mov)
+
+    def test_si_al_cargar_movimientos_anteriores_de_cuenta_acumulativa_se_intenta_usar_una_cuenta_que_no_existe_da_error(
+            self, movimiento_1, movimiento_2, cuenta_2_acumulativa, db_serializada, vaciar_db):
+        db_sin_cta_1 = [x.data for x in db_serializada if x.fields.get("slug") != "ct1"]
+        with open("db_full.json", "w") as f:
+            json.dump(db_sin_cta_1, f)
+
+        with pytest.raises(
+                ElementoSerializadoInexistente,
+                match="Elemento serializado 'ct1' de modelo 'diario.cuenta' inexistente"):
+            call_command("cargar_db_serializada")
+
+    def test_si_al_cargar_movimientos_anteriores_de_cuenta_acumulativa_se_intenta_usar_una_cuenta_independiente_que_todavia_no_se_creo_se_la_crea_antes_de_generar_el_movimiento(
+            self, movimiento_1, movimiento_2,
+            cuenta_temprana_1,
+            cuenta_2_acumulativa, db_serializada, vaciar_db):
+        call_command("cargar_db_serializada")
+        try:
+            Cuenta.tomar(slug="ct1")
+        except Cuenta.DoesNotExist:
+            raise AssertionError(
+                f"No se creó cuenta con slug ct1, ubicada después del movimiento en la serialización"
+            )
+
+    def test_carga_cuentas_con_titular_correcto(self, cuenta, cuenta_ajena, cuenta_gorda, db_serializada, vaciar_db):
+        cuentas = CuentaSerializada.todes(container=db_serializada).filter_by_model("diario.cuenta")
+
+        call_command("cargar_db_serializada")
+
+        assert len(cuentas) > 0
+        for cuenta in cuentas:
+            cuenta_guardada = Cuenta.tomar(slug=cuenta.fields["slug"])
+            try:
+                titular = cuenta_guardada.titular.titname
+            except AttributeError:
+                titular = cuenta_guardada.titular_original.titname
+            assert titular == cuenta.titname()
+
+    def test_carga_cuentas_con_moneda_correcta(
+            self, cuenta, cuenta_en_euros, cuenta_en_dolares, cuenta_con_saldo_en_dolares,
+            cuenta_acumulativa_en_dolares, cuenta_con_saldo_en_euros, db_serializada, vaciar_db):
+        cuentas = CuentaSerializada.todes(container=db_serializada).filter_by_model("diario.cuenta")
+
+        call_command("cargar_db_serializada")
+
+        assert len(cuentas) > 0
+        for cuenta in cuentas:
+            cuenta_guardada = Cuenta.tomar(slug=cuenta.fields["slug"])
+            assert cuenta_guardada.moneda.monname == cuenta.fields["moneda"][0]
+
+    def test_carga_subcuentas_con_cta_madre_correcta(self, cuenta_acumulativa, db_serializada, vaciar_db):
+        cuentas = CuentaSerializada.todes(container=db_serializada).filter_by_model("diario.cuenta")
+        subcuentas = SerializedDb([x for x in cuentas if x.fields["cta_madre"] is not None])
+        call_command("cargar_db_serializada")
+
+        assert len(subcuentas) > 0
+        for cuenta in subcuentas:
+            cuenta_guardada = Cuenta.tomar(slug=cuenta.fields["slug"])
+            assert cuenta_guardada.cta_madre.slug == cuenta.fields["cta_madre"][0]
+
+
+class TestCargaMovimientos:
+    def test_crea_contramovimiento_al_crear_movimiento_de_credito(self, credito, db_serializada, vaciar_db):
+        call_command("cargar_db_serializada")
+        try:
+            Movimiento.tomar(
+                concepto="Constitución de crédito",
+                _importe=credito.importe,
+                fecha=credito.fecha
+            )
+        except Movimiento.DoesNotExist:
+            pytest.fail("No se generó contramovimiento en movimiento de crédito")
+
+    def test_no_crea_contramovimiento_al_crear_movimiento_de_donacion(self, donacion, db_serializada, vaciar_db):
+        call_command("cargar_db_serializada")
+        mov = Movimiento.tomar(fecha=donacion.fecha, orden_dia=donacion.orden_dia)
+        try:
+            Movimiento.tomar(
+                concepto="Constitución de crédito",
+                _importe=donacion.importe,
+                fecha=donacion.fecha
+            )
+            pytest.fail("Se generó contramovimiento en movimiento de donación")
+        except Movimiento.DoesNotExist:
+            pass
+        assert mov.id_contramov is None
+
+    def test_carga_todos_los_movimientos_en_la_base_de_datos(
+            self, entrada, salida, entrada_anterior, salida_posterior, traspaso_posterior, db_serializada, vaciar_db):
+        movimientos = db_serializada.filter_by_model("diario.movimiento")
+
+        call_command("cargar_db_serializada")
+
+        assert Movimiento.cantidad() > 0
+        assert Movimiento.cantidad() == len(movimientos)
+        assert len(movimientos) > 0
+        for mov in movimientos:
             _testear_movimiento(mov)
 
+    def test_carga_movimientos_con_orden_dia_correcto(self, entrada, salida, traspaso, db_serializada, vaciar_db):
+        movimientos = db_serializada.filter_by_model("diario.movimiento")
+        call_command("cargar_db_serializada")
+        for movimiento in movimientos:
+            mov_creado = Movimiento.tomar(
+                fecha=movimiento.fields["dia"][0],
+                orden_dia=movimiento.fields["orden_dia"]
+            )
+            slug_cta_entrada = mov_creado.cta_entrada.slug if mov_creado.cta_entrada else None
+            slug_cta_salida = mov_creado.cta_salida.slug if mov_creado.cta_salida else None
+            assert (
+                mov_creado.concepto,
+                mov_creado.importe,
+                slug_cta_entrada,
+                slug_cta_salida,
+            ) == (
+                movimiento.fields["concepto"],
+                movimiento.fields["_importe"],
+                movimiento.fields["cta_entrada"][0] if movimiento.fields["cta_entrada"] else None,
+                movimiento.fields["cta_salida"][0] if movimiento.fields["cta_salida"] else None,
+            )
 
-def test_si_al_cargar_movimientos_anteriores_de_cuenta_acumulativa_se_intenta_usar_una_cuenta_que_no_existe_da_error(
-        movimiento_1, movimiento_2, cuenta_2_acumulativa, db_serializada, vaciar_db):
-    db_sin_cta_1 = [x.data for x in db_serializada if x.fields.get("slug") != "ct1"]
-    with open("db_full.json", "w") as f:
-        json.dump(db_sin_cta_1, f)
+    def test_carga_movimientos_con_cotizacion_correcta(self, venta_dolares, request):
+        venta_dolares.cotizacion = 666.66
+        venta_dolares.clean_save()
+        request.getfixturevalue("db_serializada")
+        request.getfixturevalue("vaciar_db")
+        call_command("cargar_db_serializada")
+        mov_creado = Movimiento.tomar(
+            fecha=venta_dolares.fecha,
+            orden_dia=venta_dolares.orden_dia
+        )
+        assert mov_creado.cotizacion == 666.66
 
-    with pytest.raises(
-            ElementoSerializadoInexistente,
-            match="Elemento serializado 'ct1' de modelo 'diario.cuenta' inexistente"):
+    def test_carga_cotizacion_correcta_en_movimientos_anteriores_de_cuentas_acumulativas(
+            self, cuenta_en_dolares, venta_dolares, fecha, request):
+        venta_dolares.cotizacion = 666.66
+        venta_dolares.clean_save()
+        cuenta_en_dolares.dividir_y_actualizar(
+            ['subcuenta 1 con saldo en dólares', 'scsd1', 0],
+            ['subcuenta 2 con saldo en dólares', 'scsd2'],
+            fecha=fecha
+        )
+        request.getfixturevalue("db_serializada")
+        request.getfixturevalue("vaciar_db")
+
         call_command("cargar_db_serializada")
 
-
-def test_si_al_cargar_movimientos_anteriores_de_cuenta_acumulativa_se_intenta_usar_una_cuenta_independiente_que_todavia_no_se_creo_se_la_crea_antes_de_generar_el_movimiento(
-        movimiento_1, movimiento_2,
-        cuenta_temprana_1,
-        cuenta_2_acumulativa, db_serializada, vaciar_db):
-    call_command("cargar_db_serializada")
-    try:
-        Cuenta.tomar(slug="ct1")
-    except Cuenta.DoesNotExist:
-        raise AssertionError(
-            f"No se creó cuenta con slug ct1, ubicada después del movimiento en la serialización"
-        )
-
-
-def test_carga_cuentas_con_titular_correcto(cuenta, cuenta_ajena, cuenta_gorda, db_serializada, vaciar_db):
-    cuentas = CuentaSerializada.todes(container=db_serializada).filter_by_model("diario.cuenta")
-
-    call_command("cargar_db_serializada")
-
-    assert len(cuentas) > 0
-    for cuenta in cuentas:
-        cuenta_guardada = Cuenta.tomar(slug=cuenta.fields["slug"])
-        try:
-            titular = cuenta_guardada.titular.titname
-        except AttributeError:
-            titular = cuenta_guardada.titular_original.titname
-        assert titular == cuenta.titname()
-
-
-def test_carga_cuentas_con_moneda_correcta(
-        cuenta, cuenta_en_euros, cuenta_en_dolares, cuenta_con_saldo_en_dolares,
-        cuenta_acumulativa_en_dolares, cuenta_con_saldo_en_euros, db_serializada, vaciar_db):
-    cuentas = CuentaSerializada.todes(container=db_serializada).filter_by_model("diario.cuenta")
-
-    call_command("cargar_db_serializada")
-
-    assert len(cuentas) > 0
-    for cuenta in cuentas:
-        cuenta_guardada = Cuenta.tomar(slug=cuenta.fields["slug"])
-        assert cuenta_guardada.moneda.monname == cuenta.fields["moneda"][0]
-
-
-def test_carga_subcuentas_con_cta_madre_correcta(cuenta_acumulativa, db_serializada, vaciar_db):
-    cuentas = CuentaSerializada.todes(container=db_serializada).filter_by_model("diario.cuenta")
-    subcuentas = SerializedDb([x for x in cuentas if x.fields["cta_madre"] is not None])
-    call_command("cargar_db_serializada")
-
-    assert len(subcuentas) > 0
-    for cuenta in subcuentas:
-        cuenta_guardada = Cuenta.tomar(slug=cuenta.fields["slug"])
-        assert cuenta_guardada.cta_madre.slug == cuenta.fields["cta_madre"][0]
-
-
-def test_crea_contramovimiento_al_crear_movimiento_de_credito(credito, db_serializada, vaciar_db):
-    call_command("cargar_db_serializada")
-    try:
-        Movimiento.tomar(
-            concepto="Constitución de crédito",
-            _importe=credito.importe,
-            fecha=credito.fecha
-        )
-    except Movimiento.DoesNotExist:
-        pytest.fail("No se generó contramovimiento en movimiento de crédito")
-
-
-def test_no_crea_contramovimiento_al_crear_movimiento_de_donacion(donacion, db_serializada, vaciar_db):
-    call_command("cargar_db_serializada")
-    mov = Movimiento.tomar(fecha=donacion.fecha, orden_dia=donacion.orden_dia)
-    try:
-        Movimiento.tomar(
-            concepto="Constitución de crédito",
-            _importe=donacion.importe,
-            fecha=donacion.fecha
-        )
-        pytest.fail("Se generó contramovimiento en movimiento de donación")
-    except Movimiento.DoesNotExist:
-        pass
-    assert mov.id_contramov is None
-
-
-def test_carga_todos_los_movimientos_en_la_base_de_datos(
-        entrada, salida, entrada_anterior, salida_posterior, traspaso_posterior, db_serializada, vaciar_db):
-    movimientos = db_serializada.filter_by_model("diario.movimiento")
-
-    call_command("cargar_db_serializada")
-
-    assert Movimiento.cantidad() > 0
-    assert Movimiento.cantidad() == len(movimientos)
-    assert len(movimientos) > 0
-    for mov in movimientos:
-        _testear_movimiento(mov)
-
-
-def test_carga_movimientos_con_orden_dia_correcto(entrada, salida, traspaso, db_serializada, vaciar_db):
-    movimientos = db_serializada.filter_by_model("diario.movimiento")
-    call_command("cargar_db_serializada")
-    for movimiento in movimientos:
         mov_creado = Movimiento.tomar(
-            fecha=movimiento.fields["dia"][0],
-            orden_dia=movimiento.fields["orden_dia"]
-        )
-        slug_cta_entrada = mov_creado.cta_entrada.slug if mov_creado.cta_entrada else None
-        slug_cta_salida = mov_creado.cta_salida.slug if mov_creado.cta_salida else None
-        assert (
-            mov_creado.concepto,
-            mov_creado.importe,
-            slug_cta_entrada,
-            slug_cta_salida,
-        ) == (
-            movimiento.fields["concepto"],
-            movimiento.fields["_importe"],
-            movimiento.fields["cta_entrada"][0] if movimiento.fields["cta_entrada"] else None,
-            movimiento.fields["cta_salida"][0] if movimiento.fields["cta_salida"] else None,
+            fecha=venta_dolares.fecha,
+            orden_dia=venta_dolares.orden_dia
         )
 
+        assert mov_creado.cotizacion == 666.66
 
-def test_carga_movimientos_con_cotizacion_correcta(venta_dolares, request):
-    venta_dolares.cotizacion = 666.66
-    venta_dolares.clean_save()
-    request.getfixturevalue("db_serializada")
-    request.getfixturevalue("vaciar_db")
-    call_command("cargar_db_serializada")
-    mov_creado = Movimiento.tomar(
-        fecha=venta_dolares.fecha,
-        orden_dia=venta_dolares.orden_dia
-    )
-    assert mov_creado.cotizacion == 666.66
-
-
-def test_carga_cotizacion_correcta_en_movimientos_anteriores_de_cuentas_acumulativas(
-        cuenta_en_dolares, venta_dolares, fecha, request):
-    venta_dolares.cotizacion = 666.66
-    venta_dolares.clean_save()
-    cuenta_en_dolares.dividir_y_actualizar(
-        ['subcuenta 1 con saldo en dólares', 'scsd1', 0],
-        ['subcuenta 2 con saldo en dólares', 'scsd2'],
-        fecha=fecha
-    )
-    request.getfixturevalue("db_serializada")
-    request.getfixturevalue("vaciar_db")
-
-    call_command("cargar_db_serializada")
-
-    mov_creado = Movimiento.tomar(
-        fecha=venta_dolares.fecha,
-        orden_dia=venta_dolares.orden_dia
-    )
-
-    assert mov_creado.cotizacion == 666.66
-
-
-def test_carga_orden_dia_correcto_en_fechas_en_las_que_se_generaron_movimientos_automaticos(
-        entrada, cuenta_acumulativa, salida, traspaso, db_serializada, vaciar_db):
-    movimientos = db_serializada.filter_by_model("diario.movimiento")
-    call_command("cargar_db_serializada")
-    for movimiento in movimientos:
-        mov_creado = Movimiento.tomar(
-            fecha=movimiento.fields["dia"][0],
-            orden_dia=movimiento.fields["orden_dia"]
-        )
-        slug_cta_entrada = mov_creado.cta_entrada.slug if mov_creado.cta_entrada else None
-        slug_cta_salida = mov_creado.cta_salida.slug if mov_creado.cta_salida else None
-        assert (
-            mov_creado.concepto,
-            mov_creado.importe,
-            slug_cta_entrada,
-            slug_cta_salida,
-        ) == (
-            movimiento.fields["concepto"],
-            movimiento.fields["_importe"],
-            movimiento.fields["cta_entrada"][0] if movimiento.fields["cta_entrada"] else None,
-            movimiento.fields["cta_salida"][0] if movimiento.fields["cta_salida"] else None,
-        )
-
-
-def test_si_al_cargar_movimientos_generales_se_intenta_usar_una_cuenta_que_no_existe_da_error(
-        movimiento_1, db_serializada, vaciar_db):
-    db_sin_cta_2 = [x.data for x in db_serializada if x.fields.get("slug") != "ct2"]
-    with open("db_full.json", "w") as f:
-        json.dump(db_sin_cta_2, f)
-
-    with pytest.raises(
-            ElementoSerializadoInexistente,
-            match="Elemento serializado 'ct2' de modelo 'diario.cuenta' inexistente"):
+    def test_carga_orden_dia_correcto_en_fechas_en_las_que_se_generaron_movimientos_automaticos(
+            self, entrada, cuenta_acumulativa, salida, traspaso, db_serializada, vaciar_db):
+        movimientos = db_serializada.filter_by_model("diario.movimiento")
         call_command("cargar_db_serializada")
+        for movimiento in movimientos:
+            mov_creado = Movimiento.tomar(
+                fecha=movimiento.fields["dia"][0],
+                orden_dia=movimiento.fields["orden_dia"]
+            )
+            slug_cta_entrada = mov_creado.cta_entrada.slug if mov_creado.cta_entrada else None
+            slug_cta_salida = mov_creado.cta_salida.slug if mov_creado.cta_salida else None
+            assert (
+                mov_creado.concepto,
+                mov_creado.importe,
+                slug_cta_entrada,
+                slug_cta_salida,
+            ) == (
+                movimiento.fields["concepto"],
+                movimiento.fields["_importe"],
+                movimiento.fields["cta_entrada"][0] if movimiento.fields["cta_entrada"] else None,
+                movimiento.fields["cta_salida"][0] if movimiento.fields["cta_salida"] else None,
+            )
+
+    def test_si_al_cargar_movimientos_generales_se_intenta_usar_una_cuenta_que_no_existe_da_error(
+            self, movimiento_1, db_serializada, vaciar_db):
+        db_sin_cta_2 = [x.data for x in db_serializada if x.fields.get("slug") != "ct2"]
+        with open("db_full.json", "w") as f:
+            json.dump(db_sin_cta_2, f)
+
+        with pytest.raises(
+                ElementoSerializadoInexistente,
+                match="Elemento serializado 'ct2' de modelo 'diario.cuenta' inexistente"):
+            call_command("cargar_db_serializada")
 
 
-def test_divide_correctamente_cuentas_con_saldo_negativo(cuenta_acumulativa_saldo_negativo, db_serializada, vaciar_db):
-    call_command("cargar_db_serializada")
-    cuenta_recuperada = Cuenta.tomar(slug=cuenta_acumulativa_saldo_negativo.slug)
-    assert cuenta_recuperada.es_acumulativa
-    assert cuenta_recuperada.saldo() == -100
-    subcuentas = cuenta_recuperada.subcuentas.all()
-    assert len(subcuentas) == 2
-    assert subcuentas[0].nombre == "subcuenta 1 saldo negativo"
-    assert subcuentas[0].slug == "scsn1"
-    assert subcuentas[0].saldo() == -10
-    assert subcuentas[1].saldo() == cuenta_recuperada.saldo() + 10
+class TestDivideCuentas:
+    def test_divide_correctamente_cuentas_con_saldo_negativo(
+            self, cuenta_acumulativa_saldo_negativo, db_serializada, vaciar_db):
+        call_command("cargar_db_serializada")
+        cuenta_recuperada = Cuenta.tomar(slug=cuenta_acumulativa_saldo_negativo.slug)
+        assert cuenta_recuperada.es_acumulativa
+        assert cuenta_recuperada.saldo() == -100
+        subcuentas = cuenta_recuperada.subcuentas.all()
+        assert len(subcuentas) == 2
+        assert subcuentas[0].nombre == "subcuenta 1 saldo negativo"
+        assert subcuentas[0].slug == "scsn1"
+        assert subcuentas[0].saldo() == -10
+        assert subcuentas[1].saldo() == cuenta_recuperada.saldo() + 10
 
+    def test_divide_correctamente_cuentas_sin_saldo(self, cuenta_acumulativa_saldo_0, db_serializada, vaciar_db):
+        call_command("cargar_db_serializada")
+        cuenta_recuperada = Cuenta.tomar(slug=cuenta_acumulativa_saldo_0.slug)
+        assert cuenta_recuperada.es_acumulativa
+        assert cuenta_recuperada.saldo() == 0
+        subcuentas = cuenta_recuperada.subcuentas.all()
+        assert len(subcuentas) == 2
+        assert subcuentas[0].nombre == "subcuenta 1 saldo 0"
+        assert subcuentas[0].slug == "sc1"
+        assert subcuentas[0].saldo() == 0
+        assert subcuentas[1].saldo() == 0
 
-def test_divide_correctamente_cuentas_sin_saldo(cuenta_acumulativa_saldo_0, db_serializada, vaciar_db):
-    call_command("cargar_db_serializada")
-    cuenta_recuperada = Cuenta.tomar(slug=cuenta_acumulativa_saldo_0.slug)
-    assert cuenta_recuperada.es_acumulativa
-    assert cuenta_recuperada.saldo() == 0
-    subcuentas = cuenta_recuperada.subcuentas.all()
-    assert len(subcuentas) == 2
-    assert subcuentas[0].nombre == "subcuenta 1 saldo 0"
-    assert subcuentas[0].slug == "sc1"
-    assert subcuentas[0].saldo() == 0
-    assert subcuentas[1].saldo() == 0
+    def test_recupera_correctamente_subcuentas_de_origen_y_subcuentas_agregadas_en_la_misma_fecha_de_la_division(
+            self,
+            cuenta_acumulativa,
+            subcuenta_agregada_en_fecha_conversion_1,
+            subcuenta_agregada_en_fecha_conversion_2,
+            traspaso_a_subcuenta_agregada_1,
+            traspaso_a_subcuenta_agregada_2,
+            db_serializada, vaciar_db,
+    ):
+        call_command("cargar_db_serializada")
+        ca = cuenta_acumulativa.tomar_del_slug()
+        sco1, sco2, sca1, sca2 = ca.subcuentas.all()
+        assert sco1.saldo() == 60-20-15
+        assert sco2.saldo() == 40
+        assert sca1.saldo() == 20
+        assert sca2.saldo() == 15
 
+        traspaso_1 = Movimiento.tomar(concepto="Traspaso de saldo a subcuenta agregada 1")
+        traspaso_2 = Movimiento.tomar(concepto="Traspaso de saldo a subcuenta agregada 2")
+        assert traspaso_1.importe == 20
+        assert traspaso_1.cta_entrada == sca1
+        assert traspaso_1.cta_salida == sco1
+        assert traspaso_1.fecha == ca.fecha_conversion
+        assert traspaso_2.importe == 15
+        assert traspaso_2.cta_entrada == sca2
+        assert traspaso_2.cta_salida == sco1
+        assert traspaso_2.fecha == ca.fecha_conversion
 
-def test_recupera_correctamente_subcuentas_de_origen_y_subcuentas_agregadas_en_la_misma_fecha_de_la_division(
-        cuenta_acumulativa,
-        subcuenta_agregada_en_fecha_conversion_1,
-        subcuenta_agregada_en_fecha_conversion_2,
-        traspaso_a_subcuenta_agregada_1,
-        traspaso_a_subcuenta_agregada_2,
-        db_serializada, vaciar_db,
-):
-    call_command("cargar_db_serializada")
-    ca = cuenta_acumulativa.tomar_del_slug()
-    sco1, sco2, sca1, sca2 = ca.subcuentas.all()
-    assert sco1.saldo() == 60-20-15
-    assert sco2.saldo() == 40
-    assert sca1.saldo() == 20
-    assert sca2.saldo() == 15
+    def test_crea_contramovimiento_de_movimiento_de_traspaso_de_saldo_no_gratuito_al_dividir_cuenta_en_subcuentas_de_distinto_titular(
+            self, cuenta_de_dos_titulares, db_serializada, vaciar_db):
+        call_command("cargar_db_serializada")
+        cuenta_otro_titular = Cuenta.tomar(slug="sctg")
+        traspaso = cuenta_otro_titular.movs().first()
+        assert traspaso.id_contramov is not None
+        contramov = Movimiento.tomar(pk=traspaso.id_contramov)
+        assert contramov.importe == traspaso.importe
 
-    traspaso_1 = Movimiento.tomar(concepto="Traspaso de saldo a subcuenta agregada 1")
-    traspaso_2 = Movimiento.tomar(concepto="Traspaso de saldo a subcuenta agregada 2")
-    assert traspaso_1.importe == 20
-    assert traspaso_1.cta_entrada == sca1
-    assert traspaso_1.cta_salida == sco1
-    assert traspaso_1.fecha == ca.fecha_conversion
-    assert traspaso_2.importe == 15
-    assert traspaso_2.cta_entrada == sca2
-    assert traspaso_2.cta_salida == sco1
-    assert traspaso_2.fecha == ca.fecha_conversion
-
-
-def test_crea_contramovimiento_de_movimiento_de_traspaso_de_saldo_no_gratuito_al_dividir_cuenta_en_subcuentas_de_distinto_titular(
-        cuenta_de_dos_titulares, db_serializada, vaciar_db):
-    call_command("cargar_db_serializada")
-    cuenta_otro_titular = Cuenta.tomar(slug="sctg")
-    traspaso = cuenta_otro_titular.movs().first()
-    assert traspaso.id_contramov is not None
-    contramov = Movimiento.tomar(pk=traspaso.id_contramov)
-    assert contramov.importe == traspaso.importe
-
-
-def test_no_crea_contramovimiento_de_movimiento_de_traspaso_de_saldo_gratuito_al_dividir_cuenta_en_subcuentas_de_distinto_titular(
-        division_gratuita, db_serializada, vaciar_db):
-    call_command("cargar_db_serializada")
-    cuenta_otro_titular = Cuenta.tomar(slug="sctg")
-    traspaso = cuenta_otro_titular.movs().first()
-    assert traspaso.id_contramov is None
+    def test_no_crea_contramovimiento_de_movimiento_de_traspaso_de_saldo_gratuito_al_dividir_cuenta_en_subcuentas_de_distinto_titular(
+            self, division_gratuita, db_serializada, vaciar_db):
+        call_command("cargar_db_serializada")
+        cuenta_otro_titular = Cuenta.tomar(slug="sctg")
+        traspaso = cuenta_otro_titular.movs().first()
+        assert traspaso.id_contramov is None
 
 
 @pytest.mark.xfail
