@@ -45,7 +45,7 @@ def test_agregar_subcuenta_otro_titular(
     browser.pulsar()
 
     # Vamos a la página de detalles del titular agregado
-    browser.ir_a_pag(reverse('titular', args=[otro_titular.titname]))
+    browser.ir_a_pag(reverse('titular', args=[otro_titular.sk]))
 
     # Vemos que la cuenta agregada aparece entre las cuentas del titular
     divs_cuenta = [

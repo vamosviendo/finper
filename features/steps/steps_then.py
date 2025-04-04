@@ -509,11 +509,11 @@ def titular_no_esta_en_grilla(context, nombre):
 
 @then('veo que el capital de "{titular}" es {tantos} pesos')
 def el_capital_es_tanto(context, titular, tantos):
-    titname = Titular.tomar(nombre=titular).titname
+    sk = Titular.tomar(nombre=titular).sk
 
     tantos = formatear_importe(tantos)
 
-    patri = context.browser.esperar_elemento(f'id_capital_{titname}')
+    patri = context.browser.esperar_elemento(f'id_capital_{sk}')
     context.test.assertEqual(patri.text, tantos)
 
 
@@ -543,7 +543,7 @@ def soy_dirigido_a_pagina_de_cuenta(context, pag, nombre):
 
 @then('soy dirigido a la página "{pag}" del titular "{nombre}"')
 def soy_dirigido_a_pagina_de_titular(context, pag, nombre):
-    titular = Titular.tomar(nombre=nombre).titname
+    titular = Titular.tomar(nombre=nombre).sk
     context.execute_steps(
         f'Entonces soy dirigido a la página "{pag}" '
         f'con el argumento "{titular}"'

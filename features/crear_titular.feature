@@ -20,7 +20,7 @@ Escenario: Crear titular datos completos
     Dada una cuenta
 
     Cuando voy a la página "tit_nuevo"
-    Y escribo "Juan" en el campo "titname"
+    Y escribo "Juan" en el campo "sk"
     Y escribo "Juan Juánez" en el campo "nombre"
     Y cliqueo en el botón
     Entonces soy dirigido a la página principal
@@ -31,7 +31,7 @@ Escenario: Crear titular sin nombre
     Dada una cuenta
 
     Cuando voy a la página "tit_nuevo"
-    Y escribo "juan" en el campo "titname"
+    Y escribo "juan" en el campo "sk"
     Y cliqueo en el botón
     Entonces soy dirigido a la página principal
     Y veo un link de texto "juan"

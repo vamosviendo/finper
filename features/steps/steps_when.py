@@ -97,7 +97,7 @@ def cliquear_en_boton_cuenta(context, boton, cuenta):
 @when('cliqueo en el botón "{boton}" del titular "{titular}"')
 def cliquear_en_boton_titular(context, boton, titular):
     titular_pag = context.browser.esperar_elemento(
-        f'id_div_titular_{Titular.tomar(nombre=titular).titname}')
+        f'id_div_titular_{Titular.tomar(nombre=titular).sk}')
     titular_pag.find_element_by_link_text(boton).click()
 
 
@@ -255,7 +255,7 @@ def ir_a_pag_de_coso(context, pag, coso):
 #       pueden unificar
 @when('voy a la página "{pag}" del titular "{coso}"')
 def ir_a_pag_de_coso(context, pag, coso):
-    id_titular = Titular.tomar(nombre=coso).titname
+    id_titular = Titular.tomar(nombre=coso).sk
     context.execute_steps(
         f'cuando voy a la página "{pag}" con el argumento "{id_titular}"'
     )

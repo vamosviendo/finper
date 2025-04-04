@@ -590,11 +590,11 @@ class Movimiento(MiModel):
         try:
             return (
                 cls.tomar(
-                    slug=f'_{self.emisor.titname}'
-                         f'-{self.receptor.titname}'),
+                    slug=f'_{self.emisor.sk}'
+                         f'-{self.receptor.sk}'),
                 cls.tomar(
-                    slug=f'_{self.receptor.titname}'
-                         f'-{self.emisor.titname}'))
+                    slug=f'_{self.receptor.sk}'
+                         f'-{self.emisor.sk}'))
         except cls.DoesNotExist:
             return self._generar_cuentas_credito()
 
@@ -847,14 +847,14 @@ class Movimiento(MiModel):
         cc1 = cls.crear(
             nombre=f'Préstamo de {self.emisor.nombre} '
                    f'a {self.receptor.nombre}',
-            slug=f'_{self.emisor.titname}-{self.receptor.titname}',
+            slug=f'_{self.emisor.sk}-{self.receptor.sk}',
             titular=self.emisor,
             fecha_creacion=self.fecha
         )
         cc2 = cls.crear(
             nombre=f'Deuda de {self.receptor.nombre} '
                    f'con {self.emisor.nombre}',
-            slug=f'_{self.receptor.titname}-{self.emisor.titname}',
+            slug=f'_{self.receptor.sk}-{self.emisor.sk}',
             titular=self.receptor,
             _contracuenta=cc1,
             fecha_creacion=self.fecha

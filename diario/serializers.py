@@ -15,7 +15,7 @@ class CuentaSerializada(SerializedObject):
             elemento = self.container.tomar(model="diario.cuentaacumulativa", pk=self.pk)
         return elemento.fields
 
-    def titname(self) -> str:
+    def sk(self) -> str:
         campos = self.campos_polimorficos()
         try:
             titular = campos["titular"]

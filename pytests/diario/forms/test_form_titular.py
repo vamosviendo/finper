@@ -13,8 +13,8 @@ def test_muestra_campo_nombre(formtit):
     assert 'nombre' in formtit.fields.keys()
 
 
-def test_muestra_campo_titname(formtit):
-    assert 'titname' in formtit.fields.keys()
+def test_muestra_campo_sk(formtit):
+    assert 'sk' in formtit.fields.keys()
 
 
 def test_muestra_campo_fecha_alta(formtit):

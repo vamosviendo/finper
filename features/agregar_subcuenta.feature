@@ -44,7 +44,7 @@ Escenario: Asignar subcuenta a un titular distinto al agregar
         | nombre   | slug | saldo |
         | Efectivo | e    | 200   |
     Y un titular con los siguientes valores:
-        | titname | nombre       |
+        | sk | nombre       |
         | tit2    | Otro Titular |
     Y la cuenta "efectivo" dividida en subcuentas:
         | nombre    | slug | saldo |

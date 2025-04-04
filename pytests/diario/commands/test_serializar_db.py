@@ -66,7 +66,7 @@ def test_archivo_generado_es_json_valido():
 
 
 @pytest.mark.parametrize("modelo, elementos, identificador, key", [
-    ("titular", "varios_titulares", "titname", None),
+    ("titular", "varios_titulares", "sk", None),
     ("moneda", "varias_monedas", "monname", None),
     ("cuenta", "varias_cuentas", "slug", None),
 ])
@@ -133,12 +133,12 @@ def test_serializa_cuentas_y_movimientos_con_natural_key_moneda(entrada, db_seri
 
 def test_serializa_cuentas_interactivas_con_natural_key_titular(cuenta, db_serializada):
     cta = db_serializada.primere("diario.cuentainteractiva")
-    assert cta.fields['titular'] == [cuenta.titular.titname]
+    assert cta.fields['titular'] == [cuenta.titular.sk]
 
 
 def test_serializa_cuentas_acumulativas_con_natural_key_titular_original(cuenta_acumulativa, db_serializada):
     cta = db_serializada.primere("diario.cuentaacumulativa")
-    assert cta.fields['titular_original'] == [cuenta_acumulativa.titular_original.titname]
+    assert cta.fields['titular_original'] == [cuenta_acumulativa.titular_original.sk]
 
 
 def test_serializa_cuentas_con_natural_key_cta_madre(cuenta_acumulativa, db_serializada):

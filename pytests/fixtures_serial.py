@@ -33,6 +33,23 @@ def db_serializada() -> Generator[SerializedDb, Any, None]:
     else:
         db_full.unlink()
 
+@pytest.fixture
+def db_serializada_legacy(db_serializada: SerializedDb) -> SerializedDb:
+   # A los efectos del testeo, cambiar campo sk por antiguo campo titname
+    for titular in db_serializada.filter_by_model("diario.titular"):
+        titular.fields.update({
+            "titname": titular.fields["sk"]
+        })
+        titular.fields.pop("sk")
+
+    # Reescribir el archivo json
+    jsonoutput = [dict(x)for x in db_serializada]
+    with open("db_full.json", "w") as db_full:
+        json.dump(jsonoutput, db_full, indent=2)
+
+    # return SerializedDb([SerializedObject(x) for x in jsonoutput])
+    return db_serializada
+
 
 @pytest.fixture
 def db_serializada_con_datos(

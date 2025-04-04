@@ -460,7 +460,7 @@ class TestSaveCambiaCuentas:
 
         contramov = Movimiento.tomar(id=credito.id_contramov)
         assert getattr(contramov, f'cta_{contrasentido}').id != cuenta_contramov
-        assert cuenta_gorda.titular.titname in getattr(contramov, f'cta_{contrasentido}').slug
+        assert cuenta_gorda.titular.sk in getattr(contramov, f'cta_{contrasentido}').slug
 
     @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
     def test_cambiar_cuenta_por_cuenta_de_otro_titular_en_movimiento_de_traspaso_sin_contramovimiento_genera_contramovimiento(

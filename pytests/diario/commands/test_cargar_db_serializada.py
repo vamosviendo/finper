@@ -178,18 +178,17 @@ class TestCargaTitulares:
         tits = db_serializada.filter_by_model("diario.titular")
         call_command("cargar_db_serializada")
         for tit in tits:
-            Titular.tomar(titname=tit.fields["titname"])
+            Titular.tomar(sk=tit.fields["sk"])
 
-    @pytest.mark.xpass
-    def test_coyuntural_genera_campo_titname_a_partir_de_campo_titname(self, titular, otro_titular, db_serializada_legacy, vaciar_db):
+    def test_coyuntural_genera_campo_sk_a_partir_de_campo_titname(self, titular, otro_titular, db_serializada_legacy, vaciar_db):
         tits = db_serializada_legacy.filter_by_model("diario.titular")
         try:
             call_command("cargar_db_serializada")
         except TypeError:
-            raise AssertionError("comando cargar_db_serializada no convierte campo 'titname' a 'titname'")
+            raise AssertionError("comando cargar_db_serializada no convierte campo 'titname' a 'sk'")
 
         for i, titular in enumerate(Titular.todes()):
-            assert titular.titname == tits[i].fields["titname"]
+            assert titular.sk == tits[i].fields["titname"]
 
 class TestCargaMonedas:
     def test_carga_todas_las_monedas_en_la_base_de_datos(self, peso, dolar, euro, db_serializada, vaciar_db):
@@ -302,10 +301,10 @@ class TestCargaCuentas:
         for cuenta in cuentas:
             cuenta_guardada = Cuenta.tomar(slug=cuenta.fields["slug"])
             try:
-                titular = cuenta_guardada.titular.titname
+                titular = cuenta_guardada.titular.sk
             except AttributeError:
-                titular = cuenta_guardada.titular_original.titname
-            assert titular == cuenta.titname()
+                titular = cuenta_guardada.titular_original.sk
+            assert titular == cuenta.sk()
 
     def test_carga_cuentas_con_moneda_correcta(
             self, cuenta, cuenta_en_euros, cuenta_en_dolares, cuenta_con_saldo_en_dolares,

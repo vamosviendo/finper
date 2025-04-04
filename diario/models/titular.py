@@ -17,20 +17,20 @@ if TYPE_CHECKING:
 
 
 class TitularManager(models.Manager):
-    def get_by_natural_key(self, titname):
-        return self.get(titname=titname)
+    def get_by_natural_key(self, sk):
+        return self.get(sk=sk)
 
 class Titular(MiModel):
-    titname = models.CharField(max_length=100, unique=True)
+    sk = models.CharField(max_length=100, unique=True)
     nombre = models.CharField(max_length=100, blank=True)
     fecha_alta = models.DateField(default=timezone.now)
     deudores = models.ManyToManyField('Titular', related_name='acreedores')
 
     objects = TitularManager()
-    form_fields = ('titname', 'nombre', 'fecha_alta', )
+    form_fields = ('sk', 'nombre', 'fecha_alta', )
 
     def natural_key(self) -> tuple[str]:
-        return (self.titname, )
+        return (self.sk, )
 
     def capital(self, movimiento: 'Movimiento' = None) -> float:
         return sum(c.saldo(movimiento) for c in self.cuentas_interactivas())
@@ -54,8 +54,8 @@ class Titular(MiModel):
 
     def clean(self):
         super().clean()
-        self.nombre = self.nombre or self.titname
-        self._validar_titname()
+        self.nombre = self.nombre or self.sk
+        self._validar_sk()
 
     def __str__(self) -> str:
         return self.nombre
@@ -68,7 +68,7 @@ class Titular(MiModel):
 
     def cuenta_credito_con(self, otro: Self) -> Optional['CuentaInteractiva']:
         try:
-            return self.cuentas.get(slug=f'_{self.titname}-{otro.titname}')
+            return self.cuentas.get(slug=f'_{self.sk}-{otro.sk}')
         except self.get_related_class('cuentas').DoesNotExist:
             return None
 
@@ -84,8 +84,8 @@ class Titular(MiModel):
             )
         self.deudores.remove(otro)
 
-    def _validar_titname(self):
-        self.titname = mi_slugify(
-            self.titname, reemplazo='_')
-        if '-' in self.titname:
-            raise ValidationError('No se admite guión en titname')
+    def _validar_sk(self):
+        self.sk = mi_slugify(
+            self.sk, reemplazo='_')
+        if '-' in self.sk:
+            raise ValidationError('No se admite guión en sk')

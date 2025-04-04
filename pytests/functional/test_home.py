@@ -115,16 +115,16 @@ class TestHomeLinks:
         # Cuando cliqueamos en un titular, vamos a la página de ese titular
         browser.ir_a_pag()
         browser.cliquear_en_titular(titular)
-        browser.assert_url(reverse("titular", args=[titular.titname]))
+        browser.assert_url(reverse("titular", args=[titular.sk]))
 
         # cuando cliqueamos en el ícono de agregar titular, accedemos a la página para agregar titular nuevo
         browser.verificar_link('titular_nuevo', 'tit_nuevo')
 
         # cuando cliqueamos en el link de editar titular, accedemos a la página de edición de ese titular
-        browser.verificar_link(f'tit_mod_{titular.titname}', 'tit_mod', [titular.titname])
+        browser.verificar_link(f'tit_mod_{titular.sk}', 'tit_mod', [titular.sk])
 
         # cuando cliqueamos en el link de borrar titular, accedemos a la página de confirmación
-        browser.verificar_link(f'tit_elim_{titular.titname}', 'tit_elim', [titular.titname])
+        browser.verificar_link(f'tit_elim_{titular.sk}', 'tit_elim', [titular.sk])
 
     def test_seccion_cuentas(self, browser, cuenta, cuenta_2, cuenta_acumulativa):
         subcuenta = cuenta_acumulativa.subcuentas.first()

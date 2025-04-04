@@ -8,7 +8,7 @@ Característica: detalle_cuenta
 
     Escenario: Detalle de cuenta muestra saldo, titulares, subcuentas y movimientos
         Dados 3 titulares con los siguientes valores:
-            | titname | nombre       |
+            | sk | nombre       |
             | juan    | Juan Pérez   |
             | tita    | Tita Gómez   |
             | cecilia | Ceci Cecilia |

@@ -5,7 +5,7 @@ from selenium.webdriver.common.by import By
 
 @pytest.fixture(autouse=True)
 def mock_titular_principal(mocker, titular):
-    return mocker.patch('diario.forms.TITULAR_PRINCIPAL', titular.titname)
+    return mocker.patch('diario.forms.TITULAR_PRINCIPAL', titular.sk)
 
 
 def test_crear_cuenta(browser, titular, fecha):

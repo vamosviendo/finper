@@ -27,7 +27,7 @@ def response_post(client, dia, importe, cuenta) -> HttpResponse:
 
 @pytest.fixture(autouse=True)
 def mock_titular_principal(mocker, titular):
-    return mocker.patch('diario.forms.TITULAR_PRINCIPAL', titular.titname)
+    return mocker.patch('diario.forms.TITULAR_PRINCIPAL', titular.sk)
 
 
 def test_usa_template_mov_form(cuenta, response):

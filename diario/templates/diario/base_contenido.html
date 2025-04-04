@@ -23,19 +23,19 @@
   {% block grid_titulares %}
     <div id="id_grid_titulares" class="card-deck mt-3">
     {% for tit in titulares %}
-      <div id="id_div_titular_{{ tit.titname|lower }}" class="card border-success class_div_titular">
+      <div id="id_div_titular_{{ tit.sk|lower }}" class="card border-success class_div_titular">
         <div class="card-header bg-success text-light class_div_nombre_titular">
-          <a href="{% url 'tit_detalle' tit.titname %}" class="text-light class_link_titular" >
+          <a href="{% url 'tit_detalle' tit.sk %}" class="text-light class_link_titular" >
             {{ tit.nombre }}
           </a>
         </div>
-        <div id="id_capital_{{ tit.titname }}" class="card-body text-success numero class_capital_titular">
+        <div id="id_capital_{{ tit.sk }}" class="card-body text-success numero class_capital_titular">
           {{ tit.capital|floatformat:2 }}
         </div>
         <div class="card-footer">
-          <a href="{% url 'tit_elim' tit.titname %}"
+          <a href="{% url 'tit_elim' tit.sk %}"
              class="btn btn-danger btn-sm link_elim_titular">Borrar</a>
-          <a href="{% url 'tit_mod' tit.titname %}"
+          <a href="{% url 'tit_mod' tit.sk %}"
              class="btn btn-primary btn-sm link_mod_titular">
             Edit
           </a>

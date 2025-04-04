@@ -79,7 +79,7 @@ class Migration(migrations.Migration):
             name='Titular',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('titname', models.CharField(max_length=100, unique=True)),
+                ('sk', models.CharField(max_length=100, unique=True)),
                 ('nombre', models.CharField(blank=True, max_length=100)),
                 ('fecha_alta', models.DateField(default=django.utils.timezone.now)),
                 ('deudores', models.ManyToManyField(related_name='acreedores', to='diario.titular')),

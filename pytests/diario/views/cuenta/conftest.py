@@ -17,4 +17,4 @@ def patch_save() -> Callable:
 
 @pytest.fixture(autouse=True)
 def mock_titular_principal(mocker, titular):
-    return mocker.patch('diario.forms.TITULAR_PRINCIPAL', titular.titname)
+    return mocker.patch('diario.forms.TITULAR_PRINCIPAL', titular.sk)

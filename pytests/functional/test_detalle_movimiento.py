@@ -9,7 +9,7 @@ from utils.numeros import float_format
 
 @pytest.fixture
 def mock_titular_principal(mocker, titular):
-    return mocker.patch('diario.forms.TITULAR_PRINCIPAL', titular.titname)
+    return mocker.patch('diario.forms.TITULAR_PRINCIPAL', titular.sk)
 
 
 def test_detalle_movimiento(browser, entrada, salida, traspaso, cuenta_acumulativa):

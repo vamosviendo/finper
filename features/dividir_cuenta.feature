@@ -64,7 +64,7 @@ Escenario: Asignar subcuenta a un titular distinto al dividir cuenta
         | nombre   | slug | saldo |
         | Efectivo | e    | 200   |
     Y un titular con los siguientes valores:
-        | titname | nombre       |
+        | sk | nombre       |
         | tit2    | Otro Titular |
 
     Cuando voy a la página "cta_div" de la cuenta "Efectivo"
@@ -88,7 +88,7 @@ Escenario: Asignar subcuenta a un titular distinto al dividir cuenta sin generar
         | nombre   | slug | saldo |
         | Efectivo | e    | 200   |
     Y un titular con los siguientes valores:
-        | titname | nombre       |
+        | sk | nombre       |
         | tit2    | Otro Titular |
 
     Cuando voy a la página "cta_div" de la cuenta "Efectivo"

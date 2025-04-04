@@ -524,7 +524,7 @@ class CuentaInteractiva(Cuenta):
     def _corregir_titular_vacio(self):
         if self.titular is None:
             try:
-                titular = Titular.tomar(titname=TITULAR_PRINCIPAL)
+                titular = Titular.tomar(sk=TITULAR_PRINCIPAL)
             except Titular.DoesNotExist:
                 raise errors.ErrorTitularPorDefectoInexistente
             self.titular = titular

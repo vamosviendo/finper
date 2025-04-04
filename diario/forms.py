@@ -16,7 +16,7 @@ class FormCuenta(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['fecha_creacion'].initial = timezone.now().date()
-        self.fields['titular'].initial = Titular.tomar(titname=TITULAR_PRINCIPAL)
+        self.fields['titular'].initial = Titular.tomar(sk=TITULAR_PRINCIPAL)
         self.fields['moneda'].initial = Moneda.tomar(monname=MONEDA_BASE)
         self.fields['moneda'].required = False
 

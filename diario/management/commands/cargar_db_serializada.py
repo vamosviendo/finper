@@ -27,7 +27,7 @@ def _tomar_o_crear_cuenta(cuenta: CuentaSerializada | None) -> CuentaInteractiva
                 slug=cuenta.fields["slug"],
                 cta_madre=cuenta.fields["cta_madre"],
                 fecha_creacion=cuenta.fields["fecha_creacion"],
-                titular=Titular.tomar(titname=cuenta.titname()),
+                titular=Titular.tomar(sk=cuenta.sk()),
                 moneda=Moneda.tomar(monname=cuenta.fields["moneda"][0]),
             )
         finally:
@@ -67,7 +67,7 @@ def _cuenta_mov(
     return None
 
 
-def _cargar_modelo_simple(modelo: str, de_serie: SerializedDb, excluir_campos: list[str] = None) -> None:
+def _cargar_modelo_simple(modelo: str, de_serie: SerializedDb, excluir_campos: list[str] = None):
     """ Carga modelos que no incluyan foreignfields, polimorfismo u otras complicaciones"""
     print(f"Cargando elementos del modelo {modelo}", end=" ")
     excluir_campos = excluir_campos or []
@@ -78,6 +78,15 @@ def _cargar_modelo_simple(modelo: str, de_serie: SerializedDb, excluir_campos: l
         fields = {k: v for k, v in elemento.fields.items() if k not in excluir_campos}
         Modelo.crear(**fields)
     print("- OK")
+
+
+def _cargar_titulares(de_serie: SerializedDb, excluir_campos: list[str] = None):
+    try:
+        for titular in de_serie.filter_by_model("diario.titular"):
+            titular.fields["sk"] = titular.fields.pop("titname")
+    except KeyError:    # Ya se hizo el cambio de titname a sk
+        pass
+    _cargar_modelo_simple("diario.titular", de_serie, excluir_campos)
 
 
 def _cargar_cotizaciones(de_serie: SerializedDb):
@@ -159,7 +168,7 @@ def _subcuentas_originales(
         result.append({
             "nombre": subc.fields["nombre"],
             "slug": subc.fields["slug"],
-            "titular": Titular.tomar(titname=subc.titname()),
+            "titular": Titular.tomar(sk=subc.sk()),
             "saldo": saldo,
             "esgratis": esgratis,
         })
@@ -174,7 +183,7 @@ def _subcuentas_agregadas(
     return [[
         x.fields["nombre"],
         x.fields["slug"],
-        Titular.tomar(titname=x.titname()),
+        Titular.tomar(sk=x.sk()),
         x.fields["fecha_creacion"]
     ]
         for x in subcuentas_cuenta
@@ -322,7 +331,8 @@ class Command(BaseCommand):
                 SerializedObject(x) for x in json.load(db_full_json)
             ])
 
-        _cargar_modelo_simple("diario.titular", db_full, ["deudores"])
+        _cargar_titulares(db_full, ["deudores"])
+        # _cargar_modelo_simple("diario.titular", db_full, ["deudores"])
         _cargar_modelo_simple("diario.moneda", db_full)
         _cargar_cotizaciones(db_full)
 

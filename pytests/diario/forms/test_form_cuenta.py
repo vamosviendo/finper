@@ -9,7 +9,7 @@ from diario.models import Titular, Moneda
 
 @pytest.fixture(autouse=True)
 def mock_titular_principal(mocker, titular):
-    return mocker.patch('diario.forms.TITULAR_PRINCIPAL', titular.titname)
+    return mocker.patch('diario.forms.TITULAR_PRINCIPAL', titular.sk)
 
 
 def test_no_acepta_cuentas_sin_slug():
@@ -41,7 +41,7 @@ def test_campo_fecha_creacion_muestra_fecha_actual_como_valor_por_defecto():
 
 def test_campo_titular_muestra_titular_principal_como_valor_por_defecto(mock_titular_principal):
     formcta = FormCuenta()
-    assert formcta.fields['titular'].initial == Titular.tomar(titname=mock_titular_principal)
+    assert formcta.fields['titular'].initial == Titular.tomar(sk=mock_titular_principal)
 
 
 def test_muestra_campo_moneda():

@@ -78,10 +78,10 @@ def hay_n_titulares(context, n):
     for fila in context.table:
         fijar_atributo(
             context,
-            fila['titname'],
+            fila['sk'],
             Titular.crear(
-                titname=fila['titname'],
-                nombre=fila.get('nombre') or fila['titname']
+                sk=fila['sk'],
+                nombre=fila.get('nombre') or fila['sk']
             )
         )
 
@@ -98,7 +98,7 @@ def hay_un_titular(context):
 def hay_un_titular(context):
     context.execute_steps(
         """Dado un titular con los siguientes valores:
-               | titname | nombre     |
+               | sk | nombre     |
                | tito    | Tito Gómez |
         """
     )
@@ -108,7 +108,7 @@ def hay_un_titular(context):
 def hay_dos_titulares(context):
     context.execute_steps(
         """Dados 2 titulares con los siguientes valores:
-            | titname | nombre      |
+            | sk | nombre      |
             | tito    | Tito Gómez  |
             | juan    | Juan Juánez |
         """
@@ -129,7 +129,7 @@ def hay_n_cuentas(context, n):
             else date.today()
         Cuenta.crear(
             fila['nombre'], fila['slug'],
-            titular=Titular.tomar_o_default(titname=fila.get('titular')),
+            titular=Titular.tomar_o_default(sk=fila.get('titular')),
             saldo=fila.get('saldo', 0.0),
             fecha_creacion=fecha,
         )
@@ -215,13 +215,13 @@ def cuenta_dividida(context, nombre, fecha):
     cta = Cuenta.tomar(nombre=nombre.lower())
     subcuentas = list()
     for fila in context.table:
-        titname = fila.get('titular', None)
+        sk = fila.get('titular', None)
         subcuenta = dict(
                 nombre=fila['nombre'],
                 slug=fila['slug'],
                 saldo=fila['saldo'] or None,)
-        if titname:
-            subcuenta.update({'titular': Titular.tomar(titname=titname)})
+        if sk:
+            subcuenta.update({'titular': Titular.tomar(sk=sk)})
         subcuentas.append(subcuenta)
     cta.dividir_entre(*subcuentas, fecha=fecha_u_hoy(fecha))
 
@@ -231,13 +231,13 @@ def cuenta_dividida(context, nombre):
     cta = Cuenta.tomar(nombre=nombre.lower())
     subcuentas = list()
     for fila in context.table:
-        titname = fila.get('titular', None)
+        sk = fila.get('titular', None)
         subcuenta = dict(
                 nombre=fila['nombre'],
                 slug=fila['slug'],
                 saldo=fila['saldo'] or None,)
-        if titname:
-            subcuenta.update({'titular': Titular.tomar(titname=titname)})
+        if sk:
+            subcuenta.update({'titular': Titular.tomar(sk=sk)})
         subcuentas.append(subcuenta)
     cta.dividir_entre(*subcuentas)
 

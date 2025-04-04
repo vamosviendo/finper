@@ -17,5 +17,5 @@ def test_usa_form_FormTitular(client):
 def test_post_redirige_a_home(client, fecha):
     response = client.post(
         reverse('tit_nuevo'),
-        data={'titname': 'tito', 'nombre': 'Tito Gómez', 'fecha_alta': fecha})
+        data={'sk': 'tito', 'nombre': 'Tito Gómez', 'fecha_alta': fecha})
     asserts.assertRedirects(response, reverse('home'))

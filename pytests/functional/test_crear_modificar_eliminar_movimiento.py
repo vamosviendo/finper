@@ -130,9 +130,9 @@ def test_crear_creditos_o_devoluciones(
     # Si vamos a la página de detalles del titular de la cuenta de salida,
     # vemos entre sus cuentas la cuenta generada automáticamente que lo
     # muestra como acreedor, con saldo igual a {saldo}
-    browser.ir_a_pag(reverse('titular', args=[emisor.titname]))
-    link_cuenta = browser.esperar_elemento(f"id_link_cta__{emisor.titname}-{receptor.titname}")
-    saldo_cuenta = browser.esperar_saldo_en_moneda_de_cuenta(f"_{emisor.titname}-{receptor.titname}")
+    browser.ir_a_pag(reverse('titular', args=[emisor.sk]))
+    link_cuenta = browser.esperar_elemento(f"id_link_cta__{emisor.sk}-{receptor.sk}")
+    saldo_cuenta = browser.esperar_saldo_en_moneda_de_cuenta(f"_{emisor.sk}-{receptor.sk}")
     assert \
         link_cuenta.text == \
         f"préstamo de {emisor.nombre} a {receptor.nombre}".lower()
@@ -152,8 +152,8 @@ def test_crear_creditos_o_devoluciones(
     assert celdas_contramov[5] == float_format(10)
     assert celdas_contramov[3] == f"préstamo de {emisor.nombre} a {receptor.nombre}".lower()
     assert celdas_contramov[4] == f"deuda de {receptor.nombre} con {emisor.nombre}".lower()
-    saldo_cuenta_acreedora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{emisor.titname}-{receptor.titname}")
-    saldo_cuenta_deudora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{receptor.titname}-{emisor.titname}")
+    saldo_cuenta_acreedora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{emisor.sk}-{receptor.sk}")
+    saldo_cuenta_deudora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{receptor.sk}-{emisor.sk}")
     assert saldo_cuenta_acreedora.text == float_format(30+10)
     assert saldo_cuenta_deudora.text == float_format(-30-10)
 
@@ -171,8 +171,8 @@ def test_crear_creditos_o_devoluciones(
     assert celdas_contramov[5] == float_format(15)
     assert celdas_contramov[3] == f"deuda de {receptor.nombre} con {emisor.nombre}".lower()
     assert celdas_contramov[4] == f"préstamo de {emisor.nombre} a {receptor.nombre}".lower()
-    saldo_cuenta_acreedora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{emisor.titname}-{receptor.titname}")
-    saldo_cuenta_deudora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{receptor.titname}-{emisor.titname}")
+    saldo_cuenta_acreedora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{emisor.sk}-{receptor.sk}")
+    saldo_cuenta_deudora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{receptor.sk}-{emisor.sk}")
     assert saldo_cuenta_acreedora.text == float_format(30+10-15)
     assert saldo_cuenta_deudora.text == float_format(-30-10+15)
 
@@ -189,8 +189,8 @@ def test_crear_creditos_o_devoluciones(
     assert celdas_contramov[5] == float_format(7)
     assert celdas_contramov[3] == f"deuda de {receptor.nombre} con {emisor.nombre}".lower()
     assert celdas_contramov[4] == f"préstamo de {emisor.nombre} a {receptor.nombre}".lower()
-    saldo_cuenta_acreedora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{emisor.titname}-{receptor.titname}")
-    saldo_cuenta_deudora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{receptor.titname}-{emisor.titname}")
+    saldo_cuenta_acreedora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{emisor.sk}-{receptor.sk}")
+    saldo_cuenta_deudora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{receptor.sk}-{emisor.sk}")
     assert saldo_cuenta_acreedora.text == float_format(30+10-15-7)
     assert saldo_cuenta_deudora.text == float_format(-30-10+15+7)
 
@@ -210,8 +210,8 @@ def test_crear_creditos_o_devoluciones(
     assert celdas_contramov[5] == float_format(20)
     assert celdas_contramov[3] == f"préstamo de {receptor.nombre} a {emisor.nombre}".lower()
     assert celdas_contramov[4] == f"deuda de {emisor.nombre} con {receptor.nombre}".lower()
-    saldo_cuenta_acreedora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{receptor.titname}-{emisor.titname}")
-    saldo_cuenta_deudora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{emisor.titname}-{receptor.titname}")
+    saldo_cuenta_acreedora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{receptor.sk}-{emisor.sk}")
+    saldo_cuenta_deudora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{emisor.sk}-{receptor.sk}")
     assert saldo_cuenta_acreedora.text == float_format(-30-10+15+7+20)
     assert saldo_cuenta_deudora.text == float_format(30+10-15-7-20)
 
@@ -229,8 +229,8 @@ def test_crear_creditos_o_devoluciones(
     assert celdas_contramov[5] == float_format(2)
     assert celdas_contramov[3] == f"deuda de {emisor.nombre} con {receptor.nombre}".lower()
     assert celdas_contramov[4] == f"préstamo de {receptor.nombre} a {emisor.nombre}".lower()
-    saldo_cuenta_acreedora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{emisor.titname}-{receptor.titname}")
-    saldo_cuenta_deudora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{receptor.titname}-{emisor.titname}")
+    saldo_cuenta_acreedora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{emisor.sk}-{receptor.sk}")
+    saldo_cuenta_deudora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{receptor.sk}-{emisor.sk}")
     assert saldo_cuenta_acreedora.text == float_format(30+10-15-7-18)
     assert saldo_cuenta_deudora.text == float_format(-30-10+15+7+18)
 
@@ -239,13 +239,13 @@ def test_crear_traspaso_entre_titulares_sin_deuda(browser, cuenta, cuenta_ajena,
     # Antes de empezar, tomamos los valores de los capitales mostrados en las
     # páginas de detalle de los titulares cuyas cuentas usaremos
     browser.ir_a_pag(
-        reverse("titular", args=[cuenta_ajena.titular.titname]))
+        reverse("titular", args=[cuenta_ajena.titular.sk]))
     capital_emisor = browser.esperar_elemento(
-        f"id_capital_{cuenta_ajena.titular.titname}").text
+        f"id_capital_{cuenta_ajena.titular.sk}").text
     browser.ir_a_pag(
-        reverse("titular", args=[cuenta.titular.titname]))
+        reverse("titular", args=[cuenta.titular.sk]))
     capital_receptor = browser.esperar_elemento(
-        f"id_capital_{cuenta.titular.titname}").text
+        f"id_capital_{cuenta.titular.sk}").text
 
     # Completamos el form de movimiento nuevo, seleccionando cuentas de
     # titulares distintos en los campos de cuentas. Cliqueamos en la casilla
@@ -268,12 +268,12 @@ def test_crear_traspaso_entre_titulares_sin_deuda(browser, cuenta, cuenta_ajena,
     # Si vamos a la página de detalles del titular de la cuenta de salida
     # (emisor), vemos que entre sus cuentas no hay ninguna generada automáticamente, sólo
     # las cuentas regulares-
-    browser.ir_a_pag(reverse("titular", args=[cuenta_ajena.titular.titname]))
+    browser.ir_a_pag(reverse("titular", args=[cuenta_ajena.titular.sk]))
     cuentas_pag = [
         x.text for x in browser.esperar_elementos("class_link_cuenta")
     ]
     cuenta_credito = \
-        f"_{cuenta_ajena.titular.titname}-{cuenta.titular.titname}".upper()
+        f"_{cuenta_ajena.titular.sk}-{cuenta.titular.sk}".upper()
     assert \
         cuenta_credito not in cuentas_pag, \
         f"Cuenta {cuenta_credito}, que no debería existir, existe"
@@ -283,12 +283,12 @@ def test_crear_traspaso_entre_titulares_sin_deuda(browser, cuenta, cuenta_ajena,
     assert capital_emisor == float_format(cuenta_ajena.titular.capital() + 30)
 
     # Lo mismo con el titular de la cuenta de entrada.
-    browser.ir_a_pag(reverse("titular", args=[cuenta.titular.titname]))
+    browser.ir_a_pag(reverse("titular", args=[cuenta.titular.sk]))
     cuentas_pag = [
         x.text for x in browser.esperar_elementos("class_link_cuenta")
     ]
     cuenta_credito = \
-        f"_{cuenta.titular.titname}-{cuenta_ajena.titular.titname}".upper()
+        f"_{cuenta.titular.sk}-{cuenta_ajena.titular.sk}".upper()
     assert \
         cuenta_credito not in cuentas_pag, \
         f"Cuenta {cuenta_credito}, que no debería existir, existe"

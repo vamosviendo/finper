@@ -12,7 +12,7 @@ from vvmodel.errors import ErrorCambioEnCampoFijo
 def mock_titular_principal(titular, otro_titular, mocker):
     mock_titular_principal = mocker.patch(
         'diario.models.cuenta.TITULAR_PRINCIPAL',
-        otro_titular.titname
+        otro_titular.sk
     )
     return mock_titular_principal
 

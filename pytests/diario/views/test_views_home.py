@@ -142,46 +142,46 @@ def test_si_recibe_slug_de_cuenta_e_id_de_movimiento_pasa_titulo_de_saldo_histor
         f'del {entrada.fecha} ({entrada.concepto})')
 
 
-def test_si_recibe_titname_actualiza_context_con_titular(
+def test_si_recibe_sk_actualiza_context_con_titular(
         titular, cuenta, cuenta_2, entrada, salida, client):
-    response = client.get(reverse('titular', args=[titular.titname]))
+    response = client.get(reverse('titular', args=[titular.sk]))
     assert response.context['titular'] == titular
 
 
-def test_si_recibe_titname_pasa_titular_como_filtro(titular, client):
-    response = client.get(reverse('titular', args=[titular.titname]))
+def test_si_recibe_sk_pasa_titular_como_filtro(titular, client):
+    response = client.get(reverse('titular', args=[titular.sk]))
     assert response.context['filtro'] == titular
 
 
-def test_si_recibe_titname_pasa_titulares_a_template(titular, otro_titular, client):
-    response = client.get(reverse('titular', args=[titular.titname]))
+def test_si_recibe_sk_pasa_titulares_a_template(titular, otro_titular, client):
+    response = client.get(reverse('titular', args=[titular.sk]))
     assert \
         list(response.context['titulares']) == [titular, otro_titular]
 
 
-def test_si_recibe_titname_actualiza_context_con_dias_con_movimientos_del_titular_en_orden_inverso(
+def test_si_recibe_sk_actualiza_context_con_dias_con_movimientos_del_titular_en_orden_inverso(
         titular, entrada, entrada_anterior,
         entrada_posterior_otra_cuenta, entrada_tardia_cuenta_ajena, client):
-    response = client.get(reverse('titular', args=[titular.titname]))
+    response = client.get(reverse('titular', args=[titular.sk]))
     assert \
         list(response.context['dias']) == \
         [entrada_posterior_otra_cuenta.dia, entrada.dia, entrada_anterior.dia]
 
 
-def test_si_recibe_titname_pasa_solo_los_ultimos_7_dias_con_movimientos_del_titular(
+def test_si_recibe_sk_pasa_solo_los_ultimos_7_dias_con_movimientos_del_titular(
         titular, mas_de_7_dias, client):
-    response = client.get(reverse('titular', args=[titular.titname]))
+    response = client.get(reverse('titular', args=[titular.sk]))
     assert len(response.context['dias']) == 7
     assert mas_de_7_dias.first() not in response.context.get('dias')
 
 
-def test_si_recibe_titname_e_id_de_movimiento_pasa_titulo_de_saldo_gral_con_titular_y_movimiento(
+def test_si_recibe_sk_e_id_de_movimiento_pasa_titulo_de_saldo_gral_con_titular_y_movimiento(
         entrada, client):
     titular = entrada.cta_entrada.titular
     response = client.get(
         reverse(
             'titular_movimiento',
-            args=[titular.titname, entrada.pk])
+            args=[titular.sk, entrada.pk])
     )
     assert response.context.get('titulo_saldo_gral') is not None
     assert \
