@@ -169,7 +169,7 @@ def test_vacia_la_base_de_datos_antes_de_cargar_datos_nuevos(mocker, db_serializ
     mock_unlink = mocker.patch("pathlib.Path.unlink", autospec=True)
     mock_call_command = mocker.patch("diario.management.commands.cargar_db_serializada.call_command")
     call_command("cargar_db_serializada")
-    mock_unlink.assert_called_once_with(Path(settings.BASE_DIR / "db.sqlite3"), missing_ok=True)
+    mock_unlink.assert_called_once_with(Path(settings.DATABASES["default"]["NAME"]), missing_ok=True)
     mock_call_command.assert_called_once_with("migrate")
 
 

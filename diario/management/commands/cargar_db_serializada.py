@@ -323,7 +323,7 @@ def _cargar_cuentas_y_movimientos(
 
 class Command(BaseCommand):
     def handle(self, *args, **kwargs):
-        Path(settings.BASE_DIR / "db.sqlite3").unlink(missing_ok=True)
+        Path(settings.DATABASES["default"]["NAME"]).unlink(missing_ok=True)
         call_command("migrate")
 
         with open("db_full.json", "r") as db_full_json:
