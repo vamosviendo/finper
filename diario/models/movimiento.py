@@ -200,13 +200,15 @@ class Movimiento(MiModel):
 
     def __str__(self):
 
-        string = f'{self.fecha.strftime("%Y-%m-%d")} {self.concepto}: ' \
-            f'{self.importe:.2f}'
+        string = f"{self.fecha.strftime("%Y-%m-%d")} {self.orden_dia} {self.concepto} - " \
+                 f"{self.cta_salida or '...'} -> {self.cta_entrada or '...'}: "
 
-        if self.cta_entrada:
-            string += f' +{self.cta_entrada}'
-        if self.cta_salida:
-            string += f' -{self.cta_salida}'
+        if self.cta_entrada and self.cta_salida and self.cta_entrada.moneda != self.cta_salida.moneda:
+            string += f"{self.importe_cta_salida:.2f} {self.cta_salida.moneda.plural} -> " \
+                      f"{self.importe_cta_entrada:.2f} {self.cta_entrada.moneda.plural}"
+        else:
+            string += f"{self.importe:.2f} {self.moneda.plural}"
+
         return string
 
     def natural_key(self):
