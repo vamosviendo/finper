@@ -39,7 +39,7 @@ def test_crear_cuenta_en_otra_moneda(browser, titular, fecha, dolar):
     # Vemos que la cuenta creada tiene resaltado como saldo principal el saldo
     # en dólares
     saldo_cuenta = browser.esperar_elemento("id_row_cta_cd").esperar_elemento("mon_cuenta", By.CLASS_NAME)
-    assert saldo_cuenta.get_attribute("id") == f"id_saldo_cta_cd_{dolar.monname}"
+    assert saldo_cuenta.get_attribute("id") == f"id_saldo_cta_cd_{dolar.sk}"
 
 
 def test_modificar_cuenta(browser, cuenta_ajena, dolar, fecha_anterior):

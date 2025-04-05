@@ -63,14 +63,14 @@ def test_devuelve_importe_de_la_cotizacion_cargada_si_es_distinta_de_la_existent
 
 @pytest.mark.parametrize("tipo", ["compra", "venta"])
 def test_devuelve_importe_de_la_cotizacion_cargada_si_la_moneda_no_esta_en_la_base_de_datos(tipo):
-    moneda = Moneda(nombre="Moneda", monname="m")
+    moneda = Moneda(nombre="Moneda", sk="m")
     setattr(moneda, f"cotizacion_{tipo}", 7.5)
     assert getattr(moneda, f"cotizacion_{tipo}") == 7.5
 
 
 @pytest.mark.parametrize("tipo", ["compra", "venta"])
 def test_devuelve_1_si_la_moneda_no_esta_en_la_base_de_datos_y_no_hay_cotizacion_cargada(tipo):
-    moneda = Moneda(nombre="Moneda", monname="m")
+    moneda = Moneda(nombre="Moneda", sk="m")
     assert getattr(moneda, f"cotizacion_{tipo}") == 1
 
 
@@ -84,12 +84,12 @@ def test_prop_cotizacion_devuelve_cotizacion_venta(dolar, mocker):
 
 
 def test_prop_cotizacion_de_moneda_no_guardada(dolar):
-    moneda = Moneda(nombre="Moneda", monname="m")
+    moneda = Moneda(nombre="Moneda", sk="m")
     moneda.cotizacion_compra = 5
     assert moneda.cotizacion_compra == 5
 
     dolar.cotizacion_compra = 89
     assert dolar.cotizacion_compra == 89
 
-    moneda2 = Moneda(nombre="Moneda2", monname="m2")
+    moneda2 = Moneda(nombre="Moneda2", sk="m2")
     assert moneda2.cotizacion_compra == 1

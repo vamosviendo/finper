@@ -67,7 +67,7 @@ def test_archivo_generado_es_json_valido():
 
 @pytest.mark.parametrize("modelo, elementos, identificador, key", [
     ("titular", "varios_titulares", "sk", None),
-    ("moneda", "varias_monedas", "monname", None),
+    ("moneda", "varias_monedas", "sk", None),
     ("cuenta", "varias_cuentas", "slug", None),
 ])
 def test_serializa_todos_los_titulares_monedas_y_cuentas_de_la_base_de_datos_en_json(
@@ -89,7 +89,7 @@ def test_serializa_todas_las_cotizaciones_de_la_base_de_datos_en_json(
     assert len(cotizaciones) == Cotizacion.cantidad()
     for cotizacion in Cotizacion.todes():
         assert \
-            ([cotizacion.moneda.monname], str(cotizacion.fecha)) in \
+            ([cotizacion.moneda.sk], str(cotizacion.fecha)) in \
             [(cot.fields['moneda'], cot.fields['fecha']) for cot in cotizaciones]
 
 
@@ -127,8 +127,8 @@ def test_serializa_todos_los_movimientos_dias_y_saldos_de_la_base_de_datos(
 def test_serializa_cuentas_y_movimientos_con_natural_key_moneda(entrada, db_serializada):
     cta = db_serializada.primere("diario.cuenta")
     mov = db_serializada.primere("diario.movimiento")
-    assert cta.fields['moneda'] == [entrada.cta_entrada.moneda.monname]
-    assert mov.fields['moneda'] == [entrada.moneda.monname]
+    assert cta.fields['moneda'] == [entrada.cta_entrada.moneda.sk]
+    assert mov.fields['moneda'] == [entrada.moneda.sk]
 
 
 def test_serializa_cuentas_interactivas_con_natural_key_titular(cuenta, db_serializada):

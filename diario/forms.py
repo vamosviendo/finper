@@ -17,7 +17,7 @@ class FormCuenta(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['fecha_creacion'].initial = timezone.now().date()
         self.fields['titular'].initial = Titular.tomar(sk=TITULAR_PRINCIPAL)
-        self.fields['moneda'].initial = Moneda.tomar(monname=MONEDA_BASE)
+        self.fields['moneda'].initial = Moneda.tomar(sk=MONEDA_BASE)
         self.fields['moneda'].required = False
 
     class Meta:
@@ -157,7 +157,7 @@ class FormMovimiento(forms.ModelForm):
         if instance:
             self.fields['importe'].initial = instance.importe
             self.fields['cotizacion'].initial = instance.cotizacion
-        self.fields['moneda'].initial = Moneda.tomar(monname=MONEDA_BASE)
+        self.fields['moneda'].initial = Moneda.tomar(sk=MONEDA_BASE)
 
         try:
             if instance.id_contramov is None:

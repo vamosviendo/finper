@@ -195,7 +195,7 @@ class TestCargaMonedas:
         monedas = db_serializada.filter_by_model("diario.moneda")
         call_command("cargar_db_serializada")
         for moneda in monedas:
-            Moneda.tomar(monname=moneda.fields["monname"])
+            Moneda.tomar(sk=moneda.fields["sk"])
 
 
 class TestCargaCotizaciones:
@@ -207,12 +207,12 @@ class TestCargaCotizaciones:
         for cotizacion in cotizaciones:
             try:
                 Cotizacion.tomar(
-                    moneda=Moneda.tomar(monname=cotizacion.fields["moneda"][0]),
+                    moneda=Moneda.tomar(sk=cotizacion.fields["moneda"][0]),
                     fecha=cotizacion.fields["fecha"]
                 )
             except Cotizacion.DoesNotExist:
                 raise AssertionError(
-                    f"No se creó cotización de moneda {cotizacion.fields['monname']} "
+                    f"No se creó cotización de moneda {cotizacion.fields['sk']} "
                     f"al {cotizacion.fields['fecha']}")
 
 
@@ -316,7 +316,7 @@ class TestCargaCuentas:
         assert len(cuentas) > 0
         for cuenta in cuentas:
             cuenta_guardada = Cuenta.tomar(slug=cuenta.fields["slug"])
-            assert cuenta_guardada.moneda.monname == cuenta.fields["moneda"][0]
+            assert cuenta_guardada.moneda.sk == cuenta.fields["moneda"][0]
 
     def test_carga_subcuentas_con_cta_madre_correcta(self, cuenta_acumulativa, db_serializada, vaciar_db):
         cuentas = CuentaSerializada.todes(container=db_serializada).filter_by_model("diario.cuenta")

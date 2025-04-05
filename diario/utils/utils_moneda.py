@@ -5,7 +5,7 @@ from utils import errors
 
 def moneda_base() -> Moneda:
     try:
-        return Moneda.tomar(monname=MONEDA_BASE)
+        return Moneda.tomar(sk=MONEDA_BASE)
     except Moneda.DoesNotExist:
         raise errors.ErrorMonedaBaseInexistente
 

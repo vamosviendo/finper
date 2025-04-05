@@ -1,8 +1,8 @@
 {% load historicos %}
 <td
-    id="id_saldo_cta_{{ cta.ctaname }}_{{ mon.monname }}"
+    id="id_saldo_cta_{{ cta.ctaname }}_{{ mon.sk }}"
     class="numero chico class_saldo_cuenta div-detalles-subcuenta
-          {% if mon.monname == cta.moneda.monname %} mon_cuenta{% endif %}"
+          {% if mon.sk == cta.moneda.sk %} mon_cuenta{% endif %}"
 >
   {% saldo_en_moneda cta mon movimiento %}
 </td>

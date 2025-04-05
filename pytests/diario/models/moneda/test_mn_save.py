@@ -2,7 +2,7 @@ from diario.models import Moneda, Cotizacion
 
 
 def test_si_tiene_atributo__cotizacion_crea_cotizacion(mock_today):
-    moneda = Moneda(nombre="moneda", monname="mn")
+    moneda = Moneda(nombre="moneda", sk="mn")
     moneda._cotizacion = Cotizacion(fecha=mock_today.return_value, importe_compra=2.5, importe_venta=3)
     moneda.full_clean()
     moneda.save()
@@ -14,7 +14,7 @@ def test_si_tiene_atributo__cotizacion_crea_cotizacion(mock_today):
 
 
 def test_si_no_tiene_atributo__cotizacion_no_crea_cotizacion(mock_today):
-    moneda = Moneda(nombre="moneda", monname="mn")
+    moneda = Moneda(nombre="moneda", sk="mn")
     moneda.full_clean()
     moneda.save()
 

@@ -12,23 +12,25 @@ from vvmodel.models import MiModel
 
 
 class MonedaManager(models.Manager):
-    def get_by_natural_key(self, monname):
-        return self.get(monname=monname)
+    def get_by_natural_key(self, sk):
+        return self.get(sk=sk)
 
 
 class Moneda(MiModel):
-    monname = models.CharField(max_length=100, unique=True)
+    sk = models.CharField(max_length=100, unique=True)
     nombre = models.CharField(max_length=100, unique=True)
     _plural = models.CharField(max_length=100, null=True, blank=True)
 
+    cotizaciones: models.Manager["Cotizacion"]  # related name para Cotizacion.moneda
+
     objects = MonedaManager()
-    form_fields = ('nombre', 'monname', 'plural', 'cotizacion_compra', 'cotizacion_venta', )
+    form_fields = ('nombre', 'sk', 'plural', 'cotizacion_compra', 'cotizacion_venta', )
 
     def __str__(self):
         return self.nombre
 
     def natural_key(self) -> tuple[str]:
-        return (self.monname, )
+        return (self.sk, )
 
     @property
     def cotizacion_compra(self) -> float:
@@ -84,7 +86,7 @@ class Moneda(MiModel):
 
     @classmethod
     def base(cls):
-        return cls.tomar(monname=MONEDA_BASE)
+        return cls.tomar(sk=MONEDA_BASE)
 
     def cotizacion_al(self, fecha: date, compra: bool):
         cotizacion = Cotizacion.tomar(moneda=self, fecha=fecha)

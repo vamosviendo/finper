@@ -51,4 +51,4 @@ def test_muestra_campo_moneda():
 
 def test_campo_moneda_muestra_moneda_base_como_valor_por_defecto(mock_moneda_base):
     formcta = FormCuenta()
-    assert formcta.fields['moneda'].initial == Moneda.tomar(monname=mock_moneda_base)
+    assert formcta.fields['moneda'].initial == Moneda.tomar(sk=mock_moneda_base)

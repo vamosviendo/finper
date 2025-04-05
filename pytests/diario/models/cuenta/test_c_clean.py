@@ -55,9 +55,9 @@ def test_si_no_existe_moneda_base_la_crea_con_datos_de_settings_app():
     cuenta = Cuenta(nombre='cuenta sin moneda', slug='csm')
     cuenta.clean_fields()
     assert Moneda.cantidad() == 1
-    assert Moneda.primere().monname == settings_app.MONEDA_BASE
+    assert Moneda.primere().sk == settings_app.MONEDA_BASE
     assert Moneda.primere().cotizacion == 1
-    assert cuenta.moneda == Moneda.tomar(monname=settings_app.MONEDA_BASE)
+    assert cuenta.moneda == Moneda.tomar(sk=settings_app.MONEDA_BASE)
 
 
 def test_cuenta_no_puede_cambiar_de_moneda(cuenta, dolar):

@@ -10,27 +10,27 @@ from diario.models import Moneda, Cotizacion
 def test_guarda_y_recupera_monedas(mock_moneda_base):
     moneda = Moneda()
     moneda.nombre = "Moneda"
-    moneda.monname = "mn"
+    moneda.sk = "mn"
     # moneda.cotizacion = 1.5
     moneda.clean_save()
 
     assert Moneda.cantidad() == 1
-    mon = Moneda.tomar(monname="mn")
+    mon = Moneda.tomar(sk="mn")
     assert mon.nombre == "Moneda"
     # assert mon.cotizacion == 1.5
 
 
 def test_no_se_permiten_nombres_repetidos(peso):
-    mon2 = Moneda(nombre=peso.nombre, monname="otra", cotizacion_compra=2, cotizacion_venta=3)
+    mon2 = Moneda(nombre=peso.nombre, sk="otra", cotizacion_compra=2, cotizacion_venta=3)
     with pytest.raises(ValidationError):
         mon2.full_clean()
 
 
-def test_no_se_permiten_monnames_repetidos(peso):
-    mon2 = Moneda(nombre='Moneda 2', monname=peso.monname, cotizacion_compra=2, cotizacion_venta=3)
+def test_no_se_permiten_sks_repetidos(peso):
+    mon2 = Moneda(nombre='Moneda 2', sk=peso.sk, cotizacion_compra=2, cotizacion_venta=3)
     with pytest.raises(ValidationError):
         mon2.full_clean()
 
 
-def test_natural_key_devuelve_id_basada_en_monname(peso):
-    assert peso.natural_key() == (peso.monname, )
+def test_natural_key_devuelve_id_basada_en_sk(peso):
+    assert peso.natural_key() == (peso.sk, )

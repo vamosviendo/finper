@@ -88,7 +88,7 @@ def test_dentro_del_dia_movimientos_se_ordenan_por_campo_orden_dia(cuenta, dia):
 def test_moneda_base_es_moneda_por_defecto(cuenta, fecha, mock_moneda_base):
     mov = Movimiento(fecha=fecha, concepto='Pago en efectivo', importe=100, cta_entrada=cuenta)
     mov.clean_save()
-    assert mov.moneda == Moneda.tomar(monname=mock_moneda_base)
+    assert mov.moneda == Moneda.tomar(sk=mock_moneda_base)
 
 
 def test_cotizacion_por_defecto_es_1_para_cuentas_con_la_misma_moneda(cuenta, cuenta_2, fecha):

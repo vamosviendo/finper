@@ -28,7 +28,7 @@ def _tomar_o_crear_cuenta(cuenta: CuentaSerializada | None) -> CuentaInteractiva
                 cta_madre=cuenta.fields["cta_madre"],
                 fecha_creacion=cuenta.fields["fecha_creacion"],
                 titular=Titular.tomar(sk=cuenta.sk()),
-                moneda=Moneda.tomar(monname=cuenta.fields["moneda"][0]),
+                moneda=Moneda.tomar(sk=cuenta.fields["moneda"][0]),
             )
         finally:
             print("- OK")
@@ -94,7 +94,7 @@ def _cargar_cotizaciones(de_serie: SerializedDb):
     print("Cargando elementos del modelo cotizaciones", end=" ")
     for elemento in cotizaciones:
         fields = {k: v for k, v in elemento.fields.items()}
-        fields["moneda"] = Moneda.tomar(monname=fields["moneda"][0])
+        fields["moneda"] = Moneda.tomar(sk=fields["moneda"][0])
         Cotizacion.crear(**fields)
     print("- OK")
 
@@ -226,7 +226,7 @@ def _cargar_cuenta_acumulativa_y_movimientos_anteriores_a_su_conversion(
                 concepto=movimiento.fields['concepto'],
                 importe=movimiento.fields['_importe'],
                 moneda=Moneda.tomar(
-                    monname=movimiento.fields['moneda'][0]
+                    sk=movimiento.fields['moneda'][0]
                 ),
                 cotizacion=movimiento.fields['_cotizacion'],
                 id_contramov=movimiento.fields['id_contramov'],
@@ -310,7 +310,7 @@ def _cargar_cuentas_y_movimientos(
             cta_entrada=_cuenta_mov(movimiento, "cta_entrada", cuentas),
             cta_salida=_cuenta_mov(movimiento, "cta_salida", cuentas),
             moneda=Moneda.tomar(
-                monname=movimiento.fields['moneda'][0]
+                sk=movimiento.fields['moneda'][0]
             ),
             cotizacion=movimiento.fields['_cotizacion'],
             id_contramov=movimiento.fields['id_contramov'],

@@ -18,6 +18,6 @@ def test_usa_form_formmoneda(client):
 def test_post_redirige_a_home(client):
     response = client.post(
         reverse('mon_nueva'),
-        data={'monname': 'd', 'nombre': 'Dólar', 'cotizacion': '15'}
+        data={'sk': 'd', 'nombre': 'Dólar', 'cotizacion': '15'}
     )
     asserts.assertRedirects(response, reverse('home'))

@@ -126,7 +126,7 @@ def test_campo_moneda_muestra_monedas_existentes(peso, dolar, euro):
 
 def test_campo_moneda_muestra_moneda_base_como_valor_por_defecto(mock_moneda_base):
     formmov = FormMovimiento()
-    assert formmov.fields['moneda'].initial == Moneda.tomar(monname=mock_moneda_base)
+    assert formmov.fields['moneda'].initial == Moneda.tomar(sk=mock_moneda_base)
 
 
 def test_muestra_campo_cotizacion():

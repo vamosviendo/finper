@@ -14,8 +14,8 @@ def formmon() -> FormMoneda:
 def formmon_data(request) -> dict:
     return {
         'nombre': 'nombre',
-        'monname': 'monname',
-        'plural': 'monnames',
+        'sk': 'sk',
+        'plural': 'sks',
         'cotizacion_compra': 5.0,
         'cotizacion_venta': 6.0,
     }
@@ -30,8 +30,8 @@ def test_muestra_campo_nombre(formmon):
     assert 'nombre' in formmon.fields.keys()
 
 
-def test_muestra_campo_monname(formmon):
-    assert 'monname' in formmon.fields.keys()
+def test_muestra_campo_sk(formmon):
+    assert 'sk' in formmon.fields.keys()
 
 
 def test_muestra_campo_plural(formmon):
@@ -43,8 +43,8 @@ def test_guarda_campo_plural(formmon_full):
     form.is_valid()
     form.clean()
     form.save()
-    moneda = Moneda.tomar(monname='monname')
-    assert moneda.plural == 'monnames'
+    moneda = Moneda.tomar(sk='sk')
+    assert moneda.plural == 'sks'
 
 
 def test_muestra_campos_cotizacion_compra_y_venta(formmon):
@@ -59,7 +59,7 @@ def test_guarda_cotizaciones_compra_y_venta(formmon_data):
     form.clean()
     form.save()
 
-    moneda = Moneda.tomar(monname='monname')
+    moneda = Moneda.tomar(sk='sk')
     assert moneda.cotizacion_compra == 5.0
     assert moneda.cotizacion_venta == 6.0
 
@@ -73,7 +73,7 @@ def test_guarda_cotizacion_1_por_defecto(sentido, formmon_data):
     form.clean()
     form.save()
 
-    moneda = Moneda.tomar(monname='monname')
+    moneda = Moneda.tomar(sk='sk')
     assert getattr(moneda, f"cotizacion_{sentido}") == 1.0
 
 

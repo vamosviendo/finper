@@ -11,7 +11,7 @@ from diario.models import Moneda, Cotizacion
 def peso(fecha: date) -> Moneda:
     mon = Moneda.crear(
         nombre='Peso',
-        monname='p',
+        sk='p',
     )
     Cotizacion.crear(moneda=mon, fecha=fecha, importe_compra=1, importe_venta=1)
     return mon
@@ -22,7 +22,7 @@ def dolar(fecha: date) -> Moneda:
     mon = Moneda.crear(
         nombre='Dolar',
         plural='dólares',
-        monname='uss',
+        sk='uss',
     )
     Cotizacion.crear(moneda=mon, fecha=fecha, importe_compra=805.0, importe_venta=816.0)
     return mon
@@ -32,7 +32,7 @@ def dolar(fecha: date) -> Moneda:
 def euro(fecha: date) -> Moneda:
     mon = Moneda.crear(
         nombre='Euro',
-        monname='eu',
+        sk='eu',
     )
     Cotizacion.crear(moneda=mon, fecha=fecha, importe_compra=1100, importe_venta=1300)
     return mon
@@ -43,7 +43,7 @@ def real(fecha: date) -> Moneda:
     mon = Moneda.crear(
         nombre='Real',
         plural='Reales',
-        monname='r',
+        sk='r',
     )
     Cotizacion.crear(moneda=mon, fecha=fecha, importe_compra=300, importe_venta=312)
     return mon
@@ -54,7 +54,7 @@ def yen(fecha: date) -> Moneda:
     mon = Moneda.crear(
         nombre='Yen',
         plural='Yenes',
-        monname='y',
+        sk='y',
     )
     Cotizacion.crear(moneda=mon, fecha=fecha, importe_compra=3200, importe_venta=3500)
     return mon
@@ -65,4 +65,4 @@ def mock_moneda_base(mocker, request) -> Optional[MagicMock]:
     if 'nomonbase' in request.keywords:
         return
     peso = request.getfixturevalue('peso')
-    return mocker.patch('diario.utils.utils_moneda.MONEDA_BASE', peso.monname)
+    return mocker.patch('diario.utils.utils_moneda.MONEDA_BASE', peso.sk)

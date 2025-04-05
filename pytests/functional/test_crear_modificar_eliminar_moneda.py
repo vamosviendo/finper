@@ -10,7 +10,7 @@ def test_crear_moneda(browser, cuenta_con_saldo, cuenta_con_saldo_negativo, cuen
     browser.ir_a_pag(reverse("mon_nueva"))
     browser.completar_form(
         nombre="moneda nueva",
-        monname="mn",
+        sk="mn",
         cotizacion_compra="15",
         cotizacion_venta="18"
     )
@@ -28,14 +28,14 @@ def test_crear_moneda(browser, cuenta_con_saldo, cuenta_con_saldo_negativo, cuen
 def test_modificar_moneda(browser, dolar):
     # Vamos a la página de modificación de la moneda donde cambiamos algunos
     # campos
-    browser.ir_a_pag(reverse("mon_mod", args=[dolar.monname]))
+    browser.ir_a_pag(reverse("mon_mod", args=[dolar.sk]))
 
     # En todos los campos del formulario aparece el valor del campo correspondiente de la moneda:
     browser.controlar_modelform(instance=dolar)
 
     browser.completar_form(
         nombre="dolar canadiense",
-        monname="dc"
+        sk="dc"
     )
 
     # Somos dirigidos a la página principal donde verificamos que el nombre
@@ -55,7 +55,7 @@ def test_eliminar_moneda(browser, dolar, euro):
     assert nombre_moneda in nombres_moneda
 
     # Vamos a la página de eliminación de la moneda y confirmamos
-    browser.ir_a_pag(reverse("mon_elim", args=[dolar.monname]))
+    browser.ir_a_pag(reverse("mon_elim", args=[dolar.sk]))
     browser.pulsar("id_btn_confirm")
 
     # Somos dirigidos a la página principal donde verificamos que el nombre

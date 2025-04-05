@@ -85,7 +85,7 @@ def test_home_monedas(
     browser.ir_a_pag()
     for cuenta in (cuenta_con_saldo, cuenta_con_saldo_en_dolares, cuenta_con_saldo_en_euros):
         for moneda in (peso, dolar, euro):
-            saldo_mon = browser.esperar_elemento(f"id_saldo_cta_{cuenta.slug}_{moneda.monname}")
+            saldo_mon = browser.esperar_elemento(f"id_saldo_cta_{cuenta.slug}_{moneda.sk}")
             assert saldo_mon.text == float_format(cuenta.saldo(moneda=moneda, compra=False))
             classname = saldo_mon.get_attribute("class")
             if moneda == cuenta.moneda:
@@ -100,7 +100,7 @@ def test_home_monedas(
     subcuentas = list(cuenta_acumulativa.subcuentas.all() | cuenta_acumulativa_en_dolares.subcuentas.all())
     for cuenta in subcuentas:
         for moneda in (peso, dolar, euro):
-            saldo_mon = browser.esperar_elemento(f"id_saldo_cta_{cuenta.slug}_{moneda.monname}")
+            saldo_mon = browser.esperar_elemento(f"id_saldo_cta_{cuenta.slug}_{moneda.sk}")
             assert saldo_mon.text == float_format(cuenta.saldo(moneda=moneda, compra=False))
             classname = saldo_mon.get_attribute("class")
             if moneda == cuenta.moneda:
@@ -167,7 +167,7 @@ class TestHomeLinks:
         browser.verificar_link('moneda_nueva', 'mon_nueva')
 
         # cuando cliqueamos en el link de editar movimiento, accedemos a la página de edición de ese movimiento
-        browser.verificar_link(f'mon_mod_{peso.monname}', 'mon_mod', [peso.monname])
+        browser.verificar_link(f'mon_mod_{peso.sk}', 'mon_mod', [peso.sk])
 
         # cuando cliqueamos en el link de borrar movimiento, accedemos a la página de confirmación
-        browser.verificar_link(f'mon_elim_{peso.monname}', 'mon_elim', [peso.monname])
+        browser.verificar_link(f'mon_elim_{peso.sk}', 'mon_elim', [peso.sk])

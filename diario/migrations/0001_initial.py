@@ -46,7 +46,7 @@ class Migration(migrations.Migration):
             name='Moneda',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('monname', models.CharField(max_length=100, unique=True)),
+                ('sk', models.CharField(max_length=100, unique=True)),
                 ('nombre', models.CharField(max_length=100, unique=True)),
                 ('_plural', models.CharField(blank=True, max_length=100, null=True)),
                 ('cotizacion', models.FloatField()),
