@@ -203,7 +203,7 @@ class Movimiento(MiModel):
         string = f"{self.fecha.strftime("%Y-%m-%d")} {self.orden_dia} {self.concepto} - " \
                  f"{self.cta_salida or '...'} -> {self.cta_entrada or '...'}: "
 
-        if self.cta_entrada and self.cta_salida and self.cta_entrada.moneda != self.cta_salida.moneda:
+        if self.es_bimonetario():
             string += f"{self.importe_cta_salida:.2f} {self.cta_salida.moneda.plural} -> " \
                       f"{self.importe_cta_entrada:.2f} {self.cta_entrada.moneda.plural}"
         else:
@@ -532,6 +532,11 @@ class Movimiento(MiModel):
         return (self.cta_entrada and self.cta_salida and
                 self.receptor != self.emisor and
                 not self.esgratis)
+
+    def es_bimonetario(self) -> bool:
+        if (self.cta_entrada and self.cta_salida) and (self.cta_entrada.moneda != self.cta_salida.moneda):
+            return True
+        return False
 
     def es_anterior_a(self, otro: Movimiento) -> bool:
         return self.posicion < otro.posicion
