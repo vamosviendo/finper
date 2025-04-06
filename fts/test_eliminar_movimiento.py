@@ -10,8 +10,8 @@ class TestEliminaCuenta(FunctionalTest):
             cta1 (E)   100      45    145    45    0
             cta2 (CA)      200 -45    155   155  200
         """
-        cta1 = Cuenta.crear(nombre='Afectivo', slug='A')
-        cta2 = Cuenta.crear(nombre='Caja de ahorro', slug='ca')
+        cta1 = Cuenta.crear(nombre='Afectivo', sk='A')
+        cta2 = Cuenta.crear(nombre='Caja de ahorro', sk='ca')
         Movimiento.crear(concepto='asaldo', importe=100, cta_entrada=cta1)
         Movimiento.crear(concepto='bsaldo', importe=200, cta_entrada=cta2)
         Movimiento.crear(

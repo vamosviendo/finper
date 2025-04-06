@@ -8,7 +8,7 @@ from .base import FunctionalTest
 class TestDividirCuenta(FunctionalTest):
 
     def test_puede_dividir_cuenta_en_subcuentas(self):
-        cta1 = Cuenta.crear(nombre='Efectivo', slug='E')
+        cta1 = Cuenta.crear(nombre='Efectivo', sk='E')
         Movimiento.crear(
             concepto='Saldo al inicio', importe=200, cta_entrada=cta1
         )
@@ -17,10 +17,10 @@ class TestDividirCuenta(FunctionalTest):
 
         self.pulsar('id_btn_dividir')
         self.completar('id_form-0-nombre', 'Cajón de arriba')
-        self.completar('id_form-0-slug', 'ecar')
+        self.completar('id_form-0-sk', 'ecar')
         self.completar('id_form-0-saldo', 150)
         self.completar('id_form-1-nombre', 'Billetera')
-        self.completar('id_form-1-slug', 'ebil')
+        self.completar('id_form-1-sk', 'ebil')
         self.completar('id_form-1-saldo', 50)
         self.pulsar()
 

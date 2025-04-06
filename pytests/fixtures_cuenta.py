@@ -15,32 +15,32 @@ from diario.models import (
 @pytest.fixture
 def cuenta(titular: Titular, fecha: date) -> CuentaInteractiva:
     return Cuenta.crear(
-        nombre='cuenta', slug='c', titular=titular, fecha_creacion=fecha)
+        nombre='cuenta', sk='c', titular=titular, fecha_creacion=fecha)
 
 
 @pytest.fixture
 def cuenta_2(titular: Titular, fecha: date) -> CuentaInteractiva:
     return Cuenta.crear(
-        nombre='cuenta 2', slug='c2', titular=titular, fecha_creacion=fecha)
+        nombre='cuenta 2', sk='c2', titular=titular, fecha_creacion=fecha)
 
 
 @pytest.fixture
 def cuenta_3(titular: Titular, fecha: date) -> CuentaInteractiva:
     return Cuenta.crear(
-        nombre='cuenta 3', slug='c3', titular=titular, fecha_creacion=fecha)
+        nombre='cuenta 3', sk='c3', titular=titular, fecha_creacion=fecha)
 
 
 @pytest.fixture
 def cuenta_4(titular: Titular, fecha: date) -> CuentaInteractiva:
     return Cuenta.crear(
-        nombre='cuenta 4', slug='c4', titular=titular, fecha_creacion=fecha)
+        nombre='cuenta 4', sk='c4', titular=titular, fecha_creacion=fecha)
 
 
 @pytest.fixture
 def cuenta_con_saldo(titular: Titular, fecha: date) -> CuentaInteractiva:
     return Cuenta.crear(
         nombre='cuenta_con_saldo',
-        slug='ccs',
+        sk='ccs',
         saldo=100,
         titular=titular,
         fecha_creacion=fecha
@@ -51,7 +51,7 @@ def cuenta_con_saldo(titular: Titular, fecha: date) -> CuentaInteractiva:
 def cuenta_con_saldo_negativo(titular: Titular, fecha: date) -> CuentaInteractiva:
     return Cuenta.crear(
         nombre='cuenta_con_saldo_negativo',
-        slug='ccsn',
+        sk='ccsn',
         saldo=-100,
         titular=titular,
         fecha_creacion=fecha
@@ -62,7 +62,7 @@ def cuenta_con_saldo_negativo(titular: Titular, fecha: date) -> CuentaInteractiv
 def cuenta_ajena(otro_titular: Titular, fecha: date) -> CuentaInteractiva:
     return Cuenta.crear(
         nombre='cuenta ajena',
-        slug='caj',
+        sk='caj',
         titular=otro_titular,
         fecha_creacion=fecha
     )
@@ -72,7 +72,7 @@ def cuenta_ajena(otro_titular: Titular, fecha: date) -> CuentaInteractiva:
 def cuenta_ajena_2(otro_titular: Titular, fecha: date) -> CuentaInteractiva:
     return Cuenta.crear(
         nombre='cuenta ajena 2',
-        slug='caj2',
+        sk='caj2',
         titular=otro_titular,
         fecha_creacion=fecha
     )
@@ -82,7 +82,7 @@ def cuenta_ajena_2(otro_titular: Titular, fecha: date) -> CuentaInteractiva:
 def cuenta_gorda(titular_gordo: Titular, fecha: date) -> CuentaInteractiva:
     return Cuenta.crear(
         nombre='cuenta gorda',
-        slug='cg',
+        sk='cg',
         titular=titular_gordo,
         fecha_creacion=fecha
     )
@@ -124,12 +124,12 @@ def cuenta_de_dos_titulares(
     return cuenta_ajena.dividir_y_actualizar(
         {
             'nombre': 'Subcuenta otro titular',
-            'slug': 'scot',
+            'sk': 'scot',
             'saldo': cuenta_ajena.saldo() - 10
         },
         {
             'nombre': 'Subcuenta titular gordo',
-            'slug': 'sctg',
+            'sk': 'sctg',
             'saldo': 10,
             'titular': titular_gordo
         },
@@ -147,12 +147,12 @@ def division_gratuita(
     return cuenta_ajena.dividir_y_actualizar(
         {
             'nombre': 'Subcuenta otro titular',
-            'slug': 'scot',
+            'sk': 'scot',
             'saldo': saldo - 10
         },
         {
             'nombre': 'Subcuenta titular gordo',
-            'slug': 'sctg',
+            'sk': 'sctg',
             'saldo': 10,
             'titular': titular_gordo,
             'esgratis': True
@@ -175,13 +175,13 @@ def subsubcuenta(cuenta_acumulativa: CuentaAcumulativa, fecha: date) -> CuentaIn
     ssc11, ssc12 = sc1.dividir_entre(
         {
             'nombre': 'subsubcuenta 1',
-            'slug': 'ssc1',
+            'sk': 'ssc1',
             'saldo': 10,
             'titular': sc1.titular
         },
         {
             'nombre': 'subsubcuenta 2',
-            'slug': 'ssc2',
+            'sk': 'ssc2',
             'titular': sc1.titular
         },
         fecha=fecha,
@@ -219,20 +219,20 @@ def cuenta_credito_deudor(cuentas_credito: Tuple[CuentaInteractiva]) -> CuentaIn
 @pytest.fixture
 def cuenta_en_dolares(titular: Titular, fecha: date, dolar: Moneda) -> CuentaInteractiva:
     return Cuenta.crear(
-        nombre='cuenta en dolares', slug='cd', titular=titular, fecha_creacion=fecha, moneda=dolar)
+        nombre='cuenta en dolares', sk='cd', titular=titular, fecha_creacion=fecha, moneda=dolar)
 
 
 @pytest.fixture
 def cuenta_en_euros(titular: Titular, fecha: date, euro: Moneda) -> CuentaInteractiva:
     return Cuenta.crear(
-        nombre='cuenta en euros', slug='ce', titular=titular, fecha_creacion=fecha, moneda=euro)
+        nombre='cuenta en euros', sk='ce', titular=titular, fecha_creacion=fecha, moneda=euro)
 
 
 @pytest.fixture
 def cuenta_con_saldo_en_dolares(titular: Titular, fecha: date, dolar: Moneda) -> CuentaInteractiva:
     return Cuenta.crear(
         nombre='cuenta con saldo en dólares',
-        slug='ccsd',
+        sk='ccsd',
         saldo=100,
         titular=titular,
         fecha_creacion=fecha,
@@ -244,7 +244,7 @@ def cuenta_con_saldo_en_dolares(titular: Titular, fecha: date, dolar: Moneda) ->
 def cuenta_con_saldo_en_euros(titular: Titular, fecha: date, euro: Moneda) -> CuentaInteractiva:
     return Cuenta.crear(
         nombre='cuenta con saldo en euros',
-        slug='ccse',
+        sk='ccse',
         saldo=100,
         titular=titular,
         fecha_creacion=fecha,
@@ -256,7 +256,7 @@ def cuenta_con_saldo_en_euros(titular: Titular, fecha: date, euro: Moneda) -> Cu
 def cuenta_con_saldo_en_reales(titular: Titular, fecha: date, real: Moneda) -> CuentaInteractiva:
     return Cuenta.crear(
         nombre='cuenta con saldo en reales',
-        slug='ccsr',
+        sk='ccsr',
         saldo=100,
         titular=titular,
         fecha_creacion=fecha,
@@ -268,7 +268,7 @@ def cuenta_con_saldo_en_reales(titular: Titular, fecha: date, real: Moneda) -> C
 def cuenta_con_saldo_en_yenes(titular: Titular, fecha: date, yen: Moneda) -> CuentaInteractiva:
     return Cuenta.crear(
         nombre='cuenta con saldo en yenes',
-        slug='ccsy',
+        sk='ccsy',
         saldo=100,
         titular=titular,
         fecha_creacion=fecha,

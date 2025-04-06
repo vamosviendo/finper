@@ -39,7 +39,7 @@ class TestRecorrido(FunctionalTest):
         # cargarle movimientos.
         self.esperar_elemento('id_btn_cta_nueva').click()
         self.completar('id_nombre', 'Efectivo')
-        self.completar('id_slug', 'E')
+        self.completar('id_sk', 'E')
         self.pulsar()
 
         # Aparece una caja para la nueva cuenta, con saldo cero

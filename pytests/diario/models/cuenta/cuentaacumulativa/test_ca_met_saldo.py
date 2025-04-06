@@ -22,7 +22,7 @@ def test_devuelve_suma_de_saldos_incluyendo_subcuentas_acumulativas(cuenta_acumu
         fecha=fecha
     )
     Movimiento.crear('saldo sc11', 60, sc11, fecha=fecha)
-    sc1 = sc1.tomar_del_slug()
+    sc1 = sc1.tomar_del_sk()
 
     assert sc1.saldo() == 90 + 70
     assert cuenta_acumulativa_saldo_0.saldo() == 160 - 70

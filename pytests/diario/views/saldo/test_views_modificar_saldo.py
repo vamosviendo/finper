@@ -8,8 +8,8 @@ from utils.helpers_tests import dividir_en_dos_subcuentas
 
 @pytest.fixture
 def full_url(cuenta: Cuenta, cuenta_2: Cuenta) -> str:
-    return f"{reverse('modificar_saldo', args=[cuenta.slug])}" \
-           f"?ctas={cuenta.slug}!{cuenta_2.slug}"
+    return f"{reverse('modificar_saldo', args=[cuenta.sk])}" \
+           f"?ctas={cuenta.sk}!{cuenta_2.sk}"
 
 
 def test_redirige_a_corregir_saldo_con_ctas_erroneas_menos_la_corregida(
@@ -17,14 +17,14 @@ def test_redirige_a_corregir_saldo_con_ctas_erroneas_menos_la_corregida(
     response = client.get(full_url)
     asserts.assertRedirects(
         response,
-        f"{reverse('corregir_saldo')}?ctas={cuenta_2.slug}"
+        f"{reverse('corregir_saldo')}?ctas={cuenta_2.sk}"
     )
 
 
 def test_redirige_a_home_si_es_la_unica_cuenta_erronea(client, cuenta_2):
     response = client.get(
-        f"{reverse('modificar_saldo', args=[cuenta_2.slug])}"
-        f"?ctas={cuenta_2.slug}"
+        f"{reverse('modificar_saldo', args=[cuenta_2.sk])}"
+        f"?ctas={cuenta_2.sk}"
     )
     asserts.assertRedirects(response, f"{reverse('home')}")
 

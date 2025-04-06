@@ -48,7 +48,7 @@ class Saldo(MiModel):
 
     @property
     def identidad(self) -> str:
-        return f"{self.movimiento.identidad}{self.cuenta.slug}"
+        return f"{self.movimiento.identidad}{self.cuenta.sk}"
 
     @property
     def posicion(self) -> Posicion:

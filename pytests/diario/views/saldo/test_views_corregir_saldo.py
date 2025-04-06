@@ -7,7 +7,7 @@ from diario.models import Cuenta
 
 @pytest.fixture
 def full_url(cuenta: Cuenta, cuenta_2: Cuenta) -> str:
-    return f"{reverse('corregir_saldo')}?ctas={cuenta.slug}!{cuenta_2.slug}"
+    return f"{reverse('corregir_saldo')}?ctas={cuenta.sk}!{cuenta_2.sk}"
 
 
 def test_usa_template_corregir_saldo(client, full_url):

@@ -8,8 +8,8 @@ from .base import FunctionalTest
 class TestEliminaCuenta(FunctionalTest):
 
     def test_puede_eliminar_cuentas(self):
-        Cuenta.crear(nombre='Efectivo', slug='E')
-        Cuenta.crear(nombre='Caja de ahorro', slug='ca')
+        Cuenta.crear(nombre='Efectivo', sk='E')
+        Cuenta.crear(nombre='Caja de ahorro', sk='ca')
         self.ir_a_pag()
         self.esperar_elemento('link_elim_cuenta', By.CLASS_NAME).click()
 
@@ -19,7 +19,7 @@ class TestEliminaCuenta(FunctionalTest):
         self.assertEqual(len(cuentas), 1)
 
     def test_no_permite_eliminar_si_el_saldo_no_es_cero(self):
-        cta1 = Cuenta.crear(nombre='aEfectivo', slug='A')
+        cta1 = Cuenta.crear(nombre='aEfectivo', sk='A')
         Movimiento.crear(
             concepto='saldo', importe=100, cta_entrada=cta1)
         self.ir_a_pag()

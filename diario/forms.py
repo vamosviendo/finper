@@ -27,11 +27,11 @@ class FormCuenta(forms.ModelForm):
             'fecha_creacion': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
         }
 
-    def clean_slug(self) -> str:
-        data = self.cleaned_data.get('slug')
+    def clean_sk(self) -> str:
+        data = self.cleaned_data.get('sk')
         if data.startswith('_'):
             raise forms.ValidationError(
-                'No se permite guión bajo inicial en slug', code='guionbajo')
+                'No se permite guión bajo inicial en sk', code='guionbajo')
 
         return data
 
@@ -42,14 +42,14 @@ class FormCrearSubcuenta(forms.Form):
         widget=forms.DateInput(format="%Y-%m-%d", attrs={'type': 'date'})
     )
     nombre = forms.CharField()
-    slug = forms.CharField()
+    sk = forms.CharField()
     titular = forms.ModelChoiceField(
         queryset=Titular.todes(),
         empty_label=None,
     )
 
     def __init__(self, *args, **kwargs):
-        self.cuenta = CuentaAcumulativa.tomar(slug=kwargs.pop('cuenta'))
+        self.cuenta = CuentaAcumulativa.tomar(sk=kwargs.pop('cuenta'))
         super().__init__(*args, **kwargs)
         self.fields['titular'].initial = self.cuenta.titular_original
 
@@ -72,7 +72,7 @@ class FormDividirCuenta(forms.Form):
         widget=forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'})
     )
     form_0_nombre = forms.CharField()
-    form_0_slug = forms.CharField()
+    form_0_sk = forms.CharField()
     form_0_saldo = forms.FloatField(required=False)
     form_0_titular = forms.ModelChoiceField(
         queryset=Titular.todes(),
@@ -84,7 +84,7 @@ class FormDividirCuenta(forms.Form):
         initial=False
     )
     form_1_nombre = forms.CharField()
-    form_1_slug = forms.CharField()
+    form_1_sk = forms.CharField()
     form_1_saldo = forms.FloatField(required=False)
     form_1_titular = forms.ModelChoiceField(
         queryset=Titular.todes(),
@@ -98,7 +98,7 @@ class FormDividirCuenta(forms.Form):
 
     def __init__(self, *args, cuenta, **kwargs):
         super().__init__(*args, **kwargs)
-        self.cuenta_madre = CuentaInteractiva.tomar(slug=cuenta)
+        self.cuenta_madre = CuentaInteractiva.tomar(sk=cuenta)
         self.subcuentas = []
         self.fecha = None
         self.fields['form_0_titular'].initial = self.cuenta_madre.titular
@@ -113,13 +113,13 @@ class FormDividirCuenta(forms.Form):
 
         self.subcuentas = [{
             'nombre': cleaned_data['form_0_nombre'],
-            'slug': cleaned_data['form_0_slug'],
+            'sk': cleaned_data['form_0_sk'],
             'saldo': cleaned_data['form_0_saldo'],
             'titular': cleaned_data['form_0_titular'],
             'esgratis': cleaned_data['form_0_esgratis'],
         }, {
             'nombre': cleaned_data['form_1_nombre'],
-            'slug': cleaned_data['form_1_slug'],
+            'sk': cleaned_data['form_1_sk'],
             'saldo': cleaned_data['form_1_saldo'],
             'titular': cleaned_data['form_1_titular'],
             'esgratis': cleaned_data['form_1_esgratis'],

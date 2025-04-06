@@ -14,7 +14,7 @@ def test_crear_cuenta(browser, titular, fecha):
     browser.ir_a_pag(reverse("cta_nueva"))
     browser.completar_form(
         nombre="cuenta nueva",
-        slug="cn",
+        sk="cn",
         titular=titular.nombre,
         fecha_creacion=fecha,
     )
@@ -31,7 +31,7 @@ def test_crear_cuenta_en_otra_moneda(browser, titular, fecha, dolar):
     browser.ir_a_pag(reverse("cta_nueva"))
     browser.completar_form(
         nombre="cuenta en dólares",
-        slug="cd",
+        sk="cd",
         titular=titular.nombre,
         fecha_creacion=fecha,
         moneda=dolar.nombre,
@@ -45,13 +45,13 @@ def test_crear_cuenta_en_otra_moneda(browser, titular, fecha, dolar):
 def test_modificar_cuenta(browser, cuenta_ajena, dolar, fecha_anterior):
     """ Cuando vamos a la página de modificar cuenta y completamos el
         formulario, la cuenta se modifica"""
-    browser.ir_a_pag(reverse('cta_mod', args=[cuenta_ajena.slug]))
+    browser.ir_a_pag(reverse('cta_mod', args=[cuenta_ajena.sk]))
     # En todos los campos del formulario aparece el valor del campo correspondiente de la cuenta:
     browser.controlar_modelform(instance=cuenta_ajena)
 
     browser.completar_form(
         nombre="cuenta con nombre modificado",
-        slug="ccnm",
+        sk="ccnm",
     )
     browser.assert_url(reverse("home"))
     nombre_cuenta = browser.esperar_elemento("id_link_cta_ccnm").text.strip()
@@ -62,7 +62,7 @@ def test_eliminar_cuenta(browser, cuenta, cuenta_2):
     """ Cuando vamos a la página de eliminar cuenta y cliqueamos en confirmar,
         la cuenta es eliminada"""
     nombre_cuenta = cuenta.nombre
-    browser.ir_a_pag(reverse('cta_elim', args=[cuenta.slug]))
+    browser.ir_a_pag(reverse('cta_elim', args=[cuenta.sk]))
     browser.pulsar('id_btn_confirm')
     browser.assert_url(reverse('home'))
     nombres_cuenta = [x.text.strip() for x in browser.esperar_elementos('class_link_cuenta')]

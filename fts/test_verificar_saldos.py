@@ -77,12 +77,12 @@ class TestVerificarSaldo(FunctionalTest):
         cuenta3.dividir_entre(
             {
                 'nombre': 'Banco Nación Caja de Ahorro',
-                'slug': 'bnca',
+                'sk': 'bnca',
                 'saldo': 200,
             },
             {
                 'nombre': 'Banco Nación Cuenta Corriente',
-                'slug': 'bncc',
+                'sk': 'bncc',
             }
         )
         cuenta3.saldo = 600

@@ -1,5 +1,5 @@
-{% if subc.slug == mov.cta_salida.slug %}
+{% if subc.sk == mov.cta_salida.sk %}
   text-danger bg-gray font-weight-bold
-{% elif subc.slug == mov.cta_entrada.slug %}
+{% elif subc.sk == mov.cta_entrada.sk %}
   text-success font-weight-bold
 {% endif %}

@@ -19,12 +19,12 @@ def _tomar_o_crear_cuenta(cuenta: CuentaSerializada | None) -> CuentaInteractiva
     if cuenta:
         try:
             print(f"Tomando cuenta existente <{cuenta.fields['nombre']}>", end=" ")
-            return CuentaInteractiva.tomar(slug=cuenta.fields["slug"])
+            return CuentaInteractiva.tomar(sk=cuenta.fields["sk"])
         except CuentaInteractiva.DoesNotExist:
             print(f"Creando cuenta <{cuenta.fields['nombre']}>", end=" ")
             return Cuenta.crear(
                 nombre=cuenta.fields["nombre"],
-                slug=cuenta.fields["slug"],
+                sk=cuenta.fields["sk"],
                 cta_madre=cuenta.fields["cta_madre"],
                 fecha_creacion=cuenta.fields["fecha_creacion"],
                 titular=Titular.tomar(sk=cuenta.sk()),
@@ -36,20 +36,20 @@ def _tomar_o_crear_cuenta(cuenta: CuentaSerializada | None) -> CuentaInteractiva
     return None
 
 
-def _slug_cuenta_mov(
+def _sk_cuenta_mov(
         movimiento: MovimientoSerializado,
         posicion: str,
         container_cuentas: SerializedDb[CuentaSerializada]) -> str:
-    """ Toma un movimiento y devuelve el slug de la cuenta interviniente
+    """ Toma un movimiento y devuelve el sk de la cuenta interviniente
         en la posición indicada. """
     if posicion not in ["entrada", "salida", "cta_entrada", "cta_salida"]:
         raise ValueError('Los valores aceptados para posicion son "entrada", "salida", "cta_entrada" o "cta_salida"')
     cta = movimiento.fields[posicion] if posicion.startswith("cta_") else f"cta_{posicion}"
-    slug = cta[0] if cta else None
+    sk = cta[0] if cta else None
     # Si la cuenta del movimiento no existe como objeto serializado, lanzar excepción
-    if slug and slug not in [x.fields["slug"] for x in container_cuentas.filter_by_model("diario.cuenta")]:
-        raise ElementoSerializadoInexistente(modelo="diario.cuenta", identificador=slug)
-    return slug
+    if sk and sk not in [x.fields["sk"] for x in container_cuentas.filter_by_model("diario.cuenta")]:
+        raise ElementoSerializadoInexistente(modelo="diario.cuenta", identificador=sk)
+    return sk
 
 
 def _cuenta_mov(
@@ -59,11 +59,11 @@ def _cuenta_mov(
     if posicion not in ["entrada", "salida", "cta_entrada", "cta_salida"]:
         raise ValueError('Los valores aceptados para posicion son "entrada", "salida", "cta_entrada" o "cta_salida"')
     cta = movimiento.fields[posicion] if posicion.startswith("cta_") else f"cta_{posicion}"
-    slug = movimiento.fields[posicion][0] if movimiento.fields[posicion] else None
-    if slug:
-        if slug not in [x.fields["slug"] for x in container_cuentas.filter_by_model("diario.cuenta")]:
-            raise ElementoSerializadoInexistente(modelo="diario.cuenta", identificador=slug)
-        return CuentaInteractiva.tomar(slug=slug)
+    sk = movimiento.fields[posicion][0] if movimiento.fields[posicion] else None
+    if sk:
+        if sk not in [x.fields["sk"] for x in container_cuentas.filter_by_model("diario.cuenta")]:
+            raise ElementoSerializadoInexistente(modelo="diario.cuenta", identificador=sk)
+        return CuentaInteractiva.tomar(sk=sk)
     return None
 
 
@@ -100,12 +100,12 @@ def _cargar_cotizaciones(de_serie: SerializedDb):
 
 
 def _tomar_cuenta_ser(
-        slug: str | None,
+        sk: str | None,
         container: SerializedDb | None) -> CuentaSerializada | None:
-    """ Toma y devuelve una cuenta serializada de un contenedor a partir del slug """
-    if slug is None or container is None:
+    """ Toma y devuelve una cuenta serializada de un contenedor a partir del sk """
+    if sk is None or container is None:
         return None
-    return CuentaSerializada(container.tomar(model="diario.cuenta", slug=slug))
+    return CuentaSerializada(container.tomar(model="diario.cuenta", sk=sk))
 
 
 def _mov_es_traspaso_a_subcuenta(
@@ -116,13 +116,13 @@ def _mov_es_traspaso_a_subcuenta(
     if movimiento.es_entrada_o_salida():
         return False
 
-    pos_cuenta = "cta_entrada" if movimiento.fields["cta_entrada"] == [cuenta.fields["slug"]] else "cta_salida"
+    pos_cuenta = "cta_entrada" if movimiento.fields["cta_entrada"] == [cuenta.fields["sk"]] else "cta_salida"
     pos_contracuenta = "cta_salida" if pos_cuenta == "cta_entrada" else "cta_entrada"
-    slug_contracuenta = _slug_cuenta_mov(movimiento, pos_contracuenta, cuentas)
-    if CuentaInteractiva.filtro(slug=slug_contracuenta).exists():
+    sk_contracuenta = _sk_cuenta_mov(movimiento, pos_contracuenta, cuentas)
+    if CuentaInteractiva.filtro(sk=sk_contracuenta).exists():
         return False
 
-    contracuenta_ser = _tomar_cuenta_ser(slug_contracuenta, container=cuentas)
+    contracuenta_ser = _tomar_cuenta_ser(sk_contracuenta, container=cuentas)
     if not contracuenta_ser.es_subcuenta_de(cuenta):
         return False
 
@@ -136,7 +136,7 @@ def _contracuenta_db(
 ) -> CuentaInteractiva | None:
     return _tomar_o_crear_cuenta(
         _tomar_cuenta_ser(
-            slug=_slug_cuenta_mov(movimiento, pos_contracuenta, cuentas),
+            sk=_sk_cuenta_mov(movimiento, pos_contracuenta, cuentas),
             container=cuentas
         )
     )
@@ -146,28 +146,28 @@ def _subcuentas_originales(
         subcuentas_cuenta: SerializedDb[CuentaSerializada],
         fecha_conversion: datetime.date,
         traspasos_de_saldo: SerializedDb[MovimientoSerializado],
-        slugs_subcuentas_con_saldo: list[str],
+        sks_subcuentas_con_saldo: list[str],
 ) -> list[dict[str, str | float | Titular]]:
     result = []
     for subc in subcuentas_cuenta.filtrar(fecha_creacion=fecha_conversion):
-        slug_subc = subc.fields["slug"]
+        sk_subc = subc.fields["sk"]
         # Si la subcuenta tiene saldo
         try:
-            mov = traspasos_de_saldo[slugs_subcuentas_con_saldo.index(slug_subc)]
+            mov = traspasos_de_saldo[sks_subcuentas_con_saldo.index(sk_subc)]
             esgratis = mov.fields["id_contramov"] is None
             saldo = traspasos_de_saldo.tomar(
-                **{mov.pos_cta_receptora: [slug_subc]}
+                **{mov.pos_cta_receptora: [sk_subc]}
             ).fields["_importe"]
             # TODO: ¿Esto que sigue no debería ser responsabilidad de dividir_entre?:
             if mov.pos_cta_receptora == "cta_salida":
                 saldo = -saldo
-        except ValueError:  # slug_subc no está en slugs_subcuentas_con_saldo
+        except ValueError:  # sk_subc no está en sks_subcuentas_con_saldo
             saldo = 0
             esgratis = False
 
         result.append({
             "nombre": subc.fields["nombre"],
-            "slug": subc.fields["slug"],
+            "sk": subc.fields["sk"],
             "titular": Titular.tomar(sk=subc.sk()),
             "saldo": saldo,
             "esgratis": esgratis,
@@ -182,7 +182,7 @@ def _subcuentas_agregadas(
 ) -> list[list[str | datetime.date | Titular]]:
     return [[
         x.fields["nombre"],
-        x.fields["slug"],
+        x.fields["sk"],
         Titular.tomar(sk=x.sk()),
         x.fields["fecha_creacion"]
     ]
@@ -201,7 +201,7 @@ def _cargar_cuenta_acumulativa_y_movimientos_anteriores_a_su_conversion(
     traspasos_de_saldo = SerializedDb()
 
     for movimiento in movimientos_cuenta:
-        pos_cuenta = "cta_entrada" if movimiento.fields["cta_entrada"] == [cuenta.fields["slug"]] \
+        pos_cuenta = "cta_entrada" if movimiento.fields["cta_entrada"] == [cuenta.fields["sk"]] \
             else "cta_salida"
         pos_contracuenta = "cta_salida" if pos_cuenta == "cta_entrada" else "cta_entrada"
 
@@ -243,10 +243,10 @@ def _cargar_cuenta_acumulativa_y_movimientos_anteriores_a_su_conversion(
     # Si hay movimientos marcados como traspasos de saldo, los usamos para
     # tomar el dato del saldo traspasado desde la cuenta acumulativa
     # a sus subcuentas al momento de la conversión.
-    slugs_subcuentas_con_saldo = [mov.fields[mov.pos_cta_receptora][0] for mov in traspasos_de_saldo]
+    sks_subcuentas_con_saldo = [mov.fields[mov.pos_cta_receptora][0] for mov in traspasos_de_saldo]
 
     # Buscar las subcuentas en las que está dividida la cuenta
-    subcuentas_cuenta = cuentas.filtrar(cta_madre=[cuenta.fields["slug"]])
+    subcuentas_cuenta = cuentas.filtrar(cta_madre=[cuenta.fields["sk"]])
 
     # De las subcuentas encontradas, usar aquellas cuya fecha de creación
     # coincide con la fecha de conversión de la cuenta en acumulativa
@@ -254,7 +254,7 @@ def _cargar_cuenta_acumulativa_y_movimientos_anteriores_a_su_conversion(
     fecha_conversion = cuenta.campos_polimorficos()["fecha_conversion"]
 
     subcuentas_conversion = _subcuentas_originales(
-        subcuentas_cuenta, fecha_conversion, traspasos_de_saldo, slugs_subcuentas_con_saldo
+        subcuentas_cuenta, fecha_conversion, traspasos_de_saldo, sks_subcuentas_con_saldo
     )
     cuenta_db = cuenta_db.dividir_y_actualizar(
         *subcuentas_conversion,

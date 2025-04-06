@@ -16,8 +16,8 @@ def test_devuelve_lista_de_todas_las_cuentas_ancestro(cuenta: CuentaInteractiva)
         ['subsubsubcuenta 1', 'sssc1', 0],
         ['subsubsubcuenta 2', 'sssc2']
     )
-    subsubc1 = subsubc1.tomar_del_slug()
-    subc1 = subc1.tomar_del_slug()
-    cta = cuenta.tomar_del_slug()
+    subsubc1 = subsubc1.tomar_del_sk()
+    subc1 = subc1.tomar_del_sk()
+    cta = cuenta.tomar_del_sk()
 
     assert subsubsubc1.ancestros() == [subsubc1, subc1, cta]

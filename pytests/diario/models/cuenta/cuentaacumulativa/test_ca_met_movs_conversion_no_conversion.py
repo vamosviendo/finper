@@ -11,7 +11,7 @@ class TestsMovConversion:
             fecha=fecha
         )
         sc1, sc2 = cuenta.dividir_entre(*dicts_subcuentas, fecha=fecha_posterior)
-        cuenta_acumulativa = cuenta.tomar_del_slug()
+        cuenta_acumulativa = cuenta.tomar_del_sk()
 
         mov1 = Movimiento.tomar(cta_entrada=sc1)
         mov2 = Movimiento.tomar(cta_entrada=sc2)

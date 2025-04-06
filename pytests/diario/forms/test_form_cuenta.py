@@ -12,13 +12,13 @@ def mock_titular_principal(mocker, titular):
     return mocker.patch('diario.forms.TITULAR_PRINCIPAL', titular.sk)
 
 
-def test_no_acepta_cuentas_sin_slug():
+def test_no_acepta_cuentas_sin_sk():
     formcta = FormCuenta(data={'nombre': 'Efectivo'})
     assert not formcta.is_valid()
 
 
-def test_no_acepta_guion_bajo_inicial_en_slug():
-    formcta = FormCuenta(data={'nombre': '_Efectivo', 'slug': '_efe'})
+def test_no_acepta_guion_bajo_inicial_en_sk():
+    formcta = FormCuenta(data={'nombre': '_Efectivo', 'sk': '_efe'})
     assert not formcta.is_valid()
 
 

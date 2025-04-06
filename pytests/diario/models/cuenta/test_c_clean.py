@@ -11,26 +11,26 @@ from diario.models import Cuenta, Moneda
 from utils import errors
 
 
-def test_no_permite_nombres_ni_slugs_duplicados(titular_principal):
-    Cuenta.crear(nombre='Efectivo', slug='E')
-    cuenta2 = Cuenta(nombre='Efectivo', slug='EF')
+def test_no_permite_nombres_ni_sks_duplicados(titular_principal):
+    Cuenta.crear(nombre='Efectivo', sk='E')
+    cuenta2 = Cuenta(nombre='Efectivo', sk='EF')
 
     with pytest.raises(ValidationError):
         cuenta2.full_clean()
 
-    cuenta3 = Cuenta(nombre='Otro nombre', slug='e')
+    cuenta3 = Cuenta(nombre='Otro nombre', sk='e')
 
     with pytest.raises(ValidationError):
         cuenta3.full_clean()
 
 
 def test_no_permite_nombres_duplicados_con_distintas_mayusculas(cuenta):
-    cuenta2 = Cuenta(nombre='CUENTA', slug='xx')
+    cuenta2 = Cuenta(nombre='CUENTA', sk='xx')
     with pytest.raises(ValidationError):
         cuenta2.full_clean()
 
 
-def test_no_permite_slug_vacio():
+def test_no_permite_sk_vacio():
     cuenta = Cuenta(nombre='Efectivo')
     with pytest.raises(ValidationError):
         cuenta.full_clean()
@@ -45,14 +45,14 @@ def test_subcuenta_no_puede_tener_fecha_de_creacion_anterior_a_la_fecha_de_conve
 
 
 def test_si_moneda_es_none_completa_con_moneda_base():
-    cuenta = Cuenta(nombre='cuenta sin moneda', slug='csm')
+    cuenta = Cuenta(nombre='cuenta sin moneda', sk='csm')
     cuenta.clean_fields()
     assert cuenta.moneda == moneda_base()
 
 
 def test_si_no_existe_moneda_base_la_crea_con_datos_de_settings_app():
     Moneda.todes().delete()
-    cuenta = Cuenta(nombre='cuenta sin moneda', slug='csm')
+    cuenta = Cuenta(nombre='cuenta sin moneda', sk='csm')
     cuenta.clean_fields()
     assert Moneda.cantidad() == 1
     assert Moneda.primere().sk == settings_app.MONEDA_BASE

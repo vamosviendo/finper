@@ -29,7 +29,7 @@ class CuentaSerializada(SerializedObject):
             x.fields["_contracuenta"][0] if x.fields["_contracuenta"] else None
             for x in cuentas_interactivas
         ]
-        return self.fields["slug"] in contracuentas or (
+        return self.fields["sk"] in contracuentas or (
             self.campos_polimorficos().get("_contracuenta") is not None
         )
 
@@ -44,7 +44,7 @@ class CuentaSerializada(SerializedObject):
         return self.pk in [x.pk for x in self.container.filter_by_model("diario.cuentaacumulativa")]
 
     def es_subcuenta_de(self, otra: Self):
-        return self.fields["cta_madre"] == [otra.fields["slug"]]
+        return self.fields["cta_madre"] == [otra.fields["sk"]]
 
 class DiaSerializado(SerializedObject):
     @classmethod
@@ -70,7 +70,7 @@ class MovimientoSerializado(SerializedObject):
         return f"{self.fecha.replace('-', '')}{self.fields['orden_dia']:02d}"
 
     def involucra_cuenta(self, cuenta: CuentaSerializada) -> bool:
-        return [cuenta.fields["slug"]] in (self.fields["cta_entrada"], self.fields["cta_salida"])
+        return [cuenta.fields["sk"]] in (self.fields["cta_entrada"], self.fields["cta_salida"])
 
     def es_entrada_o_salida(self):
         return self.fields["cta_entrada"] is None or self.fields["cta_salida"] is None

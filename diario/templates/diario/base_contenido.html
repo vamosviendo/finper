@@ -56,19 +56,19 @@
   <div id="id_grid_cuentas" class="card-deck mt-3">
 
     {% for subc in subcuentas %}
-    <div id="id_div_cta_{{ subc.slug|lower }}" class="card border-danger class_div_cuenta">
+    <div id="id_div_cta_{{ subc.sk|lower }}" class="card border-danger class_div_cuenta">
       <div class="card-header bg-danger text-light class_nombre_cuenta">
-        <a href="{% url 'cta_detalle' subc.slug %}" class="text-light class_link_cuenta" title="{{subc.nombre}}">
-          {{ subc.slug|upper }}
+        <a href="{% url 'cta_detalle' subc.sk %}" class="text-light class_link_cuenta" title="{{subc.nombre}}">
+          {{ subc.sk|upper }}
         </a>
       </div>
-      <div id="id_saldo_cta_{{ subc.slug|lower }}" class="card-body text-danger numero class_saldo_cuenta">
+      <div id="id_saldo_cta_{{ subc.sk|lower }}" class="card-body text-danger numero class_saldo_cuenta">
         {{ subc.saldo|floatformat:2}}
       </div>
       <div class="card-footer">
-        <a href="{% url 'cta_elim' subc.slug %}"
+        <a href="{% url 'cta_elim' subc.sk %}"
            class="btn btn-danger btn-sm link_elim_cuenta">Borrar</a>
-        <a href="{% url 'cta_mod' subc.slug %}"
+        <a href="{% url 'cta_mod' subc.sk %}"
            class="btn btn-primary btn-sm link_mod_cuenta">
           Edit
         </a>
@@ -100,8 +100,8 @@
         <th id="id_th_cuentas">Cuentas</th>
         <th class="chico fondo_resaltado" id="id_th_general">General</th>
         {% for subc in subcuentas %}
-        <th class="chico" id="id_th_{{ subc.slug }}">
-          {{ subc.slug }}
+        <th class="chico" id="id_th_{{ subc.sk }}">
+          {{ subc.sk }}
         </th>
         {% endfor %}
         <th>Menu</th>
@@ -141,7 +141,7 @@
         {% for subc in subcuentas %}
         <td class="text-right
                   {% include './snippets/color_saldos.html' %}
-                  numero chico class_td_saldo class_td_{{ subc.slug }}"
+                  numero chico class_td_saldo class_td_{{ subc.sk }}"
         >
           {% saldo_en_moneda subc subc.moneda mov %}
         </td>

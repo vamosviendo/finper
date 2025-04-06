@@ -29,7 +29,7 @@ def test_redirige_a_corregir_saldo_si_hay_saldos_erroneos(
 
     asserts.assertRedirects(
         response,
-        reverse('corregir_saldo') + f'?ctas={cuenta.slug}!{cuenta_2.slug}',
+        reverse('corregir_saldo') + f'?ctas={cuenta.sk}!{cuenta_2.sk}',
     )
 
 
@@ -39,6 +39,6 @@ def test_pasa_cuentas_con_saldo_erroneo_a_corregir_saldo(
 
     response = client.get(reverse('verificar_saldos'))
 
-    assert cuenta.slug in response.url
-    assert cuenta_2.slug in response.url
-    assert cuenta_3.slug not in response.url
+    assert cuenta.sk in response.url
+    assert cuenta_2.sk in response.url
+    assert cuenta_3.sk not in response.url

@@ -51,25 +51,25 @@ def test_detalle_movimiento_en_cuenta_acumulativa(
     browser.ir_a_pag(reverse('cta_nueva'))
     browser.completar_form(
         nombre="cuenta",
-        slug="c",
+        sk="c",
         fecha_creacion=fecha,
     )
-    cuenta = Cuenta.tomar(slug='c')
+    cuenta = Cuenta.tomar(sk='c')
 
     # La dividimos en dos subcuentas con saldo cero
-    browser.ir_a_pag(reverse('cta_div', args=cuenta.slug))
+    browser.ir_a_pag(reverse('cta_div', args=cuenta.sk))
     browser.completar_form(
         fecha=fecha,
         form_0_nombre='primera subcuenta',
-        form_0_slug='psc',
+        form_0_sk='psc',
         form_0_saldo='0',
         form_0_titular=titular.nombre,
         form_1_nombre='segunda subcuenta',
-        form_1_slug='ssc',
+        form_1_sk='ssc',
         form_1_titular=otro_titular.nombre,
     )
-    sc1 = Cuenta.tomar(slug='psc')
-    sc2 = Cuenta.tomar(slug='ssc')
+    sc1 = Cuenta.tomar(sk='psc')
+    sc2 = Cuenta.tomar(sk='ssc')
 
     # Cargamos un saldo a la primera subcuenta por medio de un movimiento
     browser.ir_a_pag(reverse('mov_nuevo'))

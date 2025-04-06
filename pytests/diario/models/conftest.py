@@ -10,8 +10,8 @@ from diario.models import Titular
 @pytest.fixture
 def dicts_subcuentas() -> List[Dict[str, Any]]:
     return [
-        {'nombre': 'Subcuenta 1', 'slug': 'sc1', 'saldo': 50},
-        {'nombre': 'Subcuenta 2', 'slug': 'sc2'},
+        {'nombre': 'Subcuenta 1', 'sk': 'sc1', 'saldo': 50},
+        {'nombre': 'Subcuenta 2', 'sk': 'sc2'},
     ]
 
 

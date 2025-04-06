@@ -37,13 +37,13 @@ def signo(condicion):
 
 
 class CuentaManager(PolymorphManager):
-    def get_by_natural_key(self, slug):
-        return self.get(slug=slug)
+    def get_by_natural_key(self, sk):
+        return self.get(sk=sk)
 
 
 class Cuenta(PolymorphModel):
     nombre = CaseInsensitiveCharField(max_length=100, unique=True)
-    slug = models.CharField(
+    sk = models.CharField(
         max_length=20, unique=True, validators=[alfaminusculas])
     cta_madre = models.ForeignKey(
         'CuentaAcumulativa',
@@ -64,16 +64,16 @@ class Cuenta(PolymorphModel):
         ordering = ('nombre', )
 
     @classmethod
-    def crear(cls, nombre: str, slug: str, cta_madre: 'CuentaAcumulativa' = None, finalizar=False, **kwargs) -> CuentaInteractiva:
+    def crear(cls, nombre: str, sk: str, cta_madre: 'CuentaAcumulativa' = None, finalizar=False, **kwargs) -> CuentaInteractiva:
         """
 
         @rtype: object
         """
         if finalizar:
-            cuenta_nueva = super().crear(nombre=nombre, slug=slug,
+            cuenta_nueva = super().crear(nombre=nombre, sk=sk,
                                          cta_madre=cta_madre, **kwargs)
         else:
-            cuenta_nueva = CuentaInteractiva.crear(nombre=nombre, slug=slug,
+            cuenta_nueva = CuentaInteractiva.crear(nombre=nombre, sk=sk,
                                                    cta_madre=cta_madre,
                                                    **kwargs)
         return cuenta_nueva
@@ -82,11 +82,11 @@ class Cuenta(PolymorphModel):
         return self.nombre
 
     def natural_key(self):
-        return (self.slug, )
+        return (self.sk, )
 
     @property
     def ctaname(self):
-        return self.slug
+        return self.sk
 
     @property
     def es_interactiva(self) -> bool:
@@ -145,7 +145,7 @@ class Cuenta(PolymorphModel):
         return self.saldo_set.last()
 
     def clean_fields(self, exclude: Sequence[str] = None):
-        self._pasar_slug_a_minuscula()
+        self._pasar_sk_a_minuscula()
 
         if self.moneda is None:
             try:
@@ -169,7 +169,7 @@ class Cuenta(PolymorphModel):
         super().delete(*args, **kwargs)
 
     def get_absolute_url(self) -> str:
-        return reverse('cuenta', args=[self.slug])
+        return reverse('cuenta', args=[self.sk])
 
     def movs_directos(self) -> models.QuerySet[Movimiento]:
         """ Devuelve entradas y salidas de la cuenta sin los de sus subcuentas
@@ -221,8 +221,8 @@ class Cuenta(PolymorphModel):
     def tiene_madre(self) -> bool:
         return self.cta_madre is not None
 
-    def tomar_del_slug(self) -> Self:
-        return Cuenta.tomar_o_nada(slug=self.slug)
+    def tomar_del_sk(self) -> Self:
+        return Cuenta.tomar_o_nada(sk=self.sk)
 
     def hermanas(self) -> Optional[models.QuerySet[Self]]:
         if self.cta_madre:
@@ -241,9 +241,9 @@ class Cuenta(PolymorphModel):
 
     # Métodos protegidos
 
-    def _pasar_slug_a_minuscula(self):
-        if self.slug:
-            self.slug = self.slug.lower()
+    def _pasar_sk_a_minuscula(self):
+        if self.sk:
+            self.sk = self.sk.lower()
 
     def _chequear_incongruencias_de_clase(self):
         if self.es_acumulativa and self.como_subclase().subcuentas.count()== 0:
@@ -273,12 +273,12 @@ class CuentaInteractiva(Cuenta):
 
     _cuentacontra: CuentaManager["CuentaInteractiva"]    # related name para campo _contracuenta
 
-    form_fields = ('nombre', 'slug', 'titular', 'fecha_creacion', 'moneda', )
+    form_fields = ('nombre', 'sk', 'titular', 'fecha_creacion', 'moneda', )
 
     @classmethod
-    def crear(cls, nombre: str, slug: str, cta_madre: Cuenta = None, saldo: float = None, **kwargs) -> Self:
+    def crear(cls, nombre: str, sk: str, cta_madre: Cuenta = None, saldo: float = None, **kwargs) -> Self:
 
-        cuenta_nueva = super().crear(nombre=nombre, slug=slug,
+        cuenta_nueva = super().crear(nombre=nombre, sk=sk,
                                      cta_madre=cta_madre, finalizar=True,
                                      **kwargs)
 
@@ -376,7 +376,7 @@ class CuentaInteractiva(Cuenta):
 
     def dividir_y_actualizar(self, *subcuentas: Sequence[dict | Sequence | int], fecha: date = None) -> Cuenta | CuentaAcumulativa:
         self.dividir_entre(*subcuentas, fecha=fecha)
-        return self.tomar_del_slug()
+        return self.tomar_del_sk()
 
     # Protected
 
@@ -439,7 +439,7 @@ class CuentaInteractiva(Cuenta):
         if type(subcuenta) in (tuple, list):
             dic_subcuenta = {
                 'nombre': subcuenta[0],
-                'slug': subcuenta[1],
+                'sk': subcuenta[1],
             }
             try:
                 dic_subcuenta['saldo'] = subcuenta[2]
@@ -586,11 +586,11 @@ class CuentaAcumulativa(Cuenta):
         cotizacion = self.moneda.cotizacion_en_al(moneda, fecha, compra) if moneda else 1
 
         if movimiento:
-            slugs_ctas_mov = [
-                movimiento.cta_entrada.slug if movimiento.cta_entrada else None,
-                movimiento.cta_salida.slug if movimiento.cta_salida else None,
+            sks_ctas_mov = [
+                movimiento.cta_entrada.sk if movimiento.cta_entrada else None,
+                movimiento.cta_salida.sk if movimiento.cta_salida else None,
             ]
-            if self.slug in slugs_ctas_mov: # La cuenta participó del movimiento cuando aún era interactiva
+            if self.sk in sks_ctas_mov: # La cuenta participó del movimiento cuando aún era interactiva
                 return round(Saldo.tomar(cuenta=self, movimiento=movimiento).importe * cotizacion, 2)
         return round(
             sum([subc.saldo(movimiento=movimiento) for subc in self.subcuentas.all()]) * cotizacion,
@@ -631,10 +631,10 @@ class CuentaAcumulativa(Cuenta):
     def movs_no_conversion(self) -> models.QuerySet[Movimiento]:
         return self.movs().filter(convierte_cuenta=None)
 
-    def agregar_subcuenta(self, nombre: str, slug: str, titular: Titular, fecha: date = None) -> CuentaInteractiva:
+    def agregar_subcuenta(self, nombre: str, sk: str, titular: Titular, fecha: date = None) -> CuentaInteractiva:
         return Cuenta.crear(
             nombre=nombre,
-            slug=slug,
+            sk=sk,
             cta_madre=self,
             titular=titular,
             fecha_creacion=fecha or date.today(),

@@ -17,11 +17,11 @@ class TestDetalleCuenta(FunctionalTest):
 
     def entrar_en_cuenta(self, link_cuenta):
         nombre = link_cuenta.text.lower()
-        slug = Cuenta.tomar(nombre=nombre).slug
+        sk = Cuenta.tomar(nombre=nombre).sk
         link_cuenta.click()
         self.assertEqual(
             self.esperar_elemento(
-                f'#id_div_cta_{slug} .class_nombre_cuenta_main',
+                f'#id_div_cta_{sk} .class_nombre_cuenta_main',
                 By.CSS_SELECTOR
             ).text,
             nombre
@@ -41,11 +41,11 @@ class TestDetalleCuenta(FunctionalTest):
 
         # Dividir cuenta en subcuentas
         cta2.dividir_entre(
-            {'nombre': 'Caja de ahorro', 'slug': 'bca', 'saldo': 100, },
-            {'nombre': 'Cuenta corriente', 'slug': 'bcc', 'saldo': 200, },
+            {'nombre': 'Caja de ahorro', 'sk': 'bca', 'saldo': 100, },
+            {'nombre': 'Cuenta corriente', 'sk': 'bcc', 'saldo': 200, },
         )
-        cta3 = Cuenta.tomar(slug='bca')
-        cta4 = Cuenta.tomar(slug='bcc')
+        cta3 = Cuenta.tomar(sk='bca')
+        cta4 = Cuenta.tomar(sk='bcc')
 
         # Movimiento entre cuenta principal (no subdividida) y subcuenta de
         # cuenta principal subdividida

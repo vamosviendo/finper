@@ -20,11 +20,11 @@ def test_si_recibe_cuenta_devuelve_solo_los_movimientos_del_dia_en_los_que_inter
 def test_si_recibe_cuenta_acumulativa_devuelve_movimientos_del_dia_en_los_que_interviene_la_cuenta_o_sus_subcuentas(
         dia, dia_posterior, cuenta):
     sc11, sc12 = cuenta.dividir_entre(
-        {'nombre': 'subcuenta 1', 'slug': 'sc1', 'saldo': 30, },
-        {'nombre': 'subcuenta 2', 'slug': 'sc2', },
+        {'nombre': 'subcuenta 1', 'sk': 'sc1', 'saldo': 30, },
+        {'nombre': 'subcuenta 2', 'sk': 'sc2', },
         fecha=dia.fecha
     )
-    cuenta = cuenta.tomar_del_slug()
+    cuenta = cuenta.tomar_del_sk()
     mov_subcuenta = Movimiento.crear(
         concepto='movsubc', importe=10, cta_salida=sc11, dia=dia)
     mov_subcuenta_2 = Movimiento.crear(

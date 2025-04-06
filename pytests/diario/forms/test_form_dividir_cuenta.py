@@ -15,16 +15,16 @@ def form(cuenta_con_saldo: CuentaInteractiva, otro_titular: Titular, fecha: date
         data={
             'fecha': fecha,
             'form_0_nombre': 'Subcuenta 1',
-            'form_0_slug': 'sc1',
+            'form_0_sk': 'sc1',
             'form_0_saldo': 50,
             'form_0_titular': cuenta_con_saldo.titular,
             'form_1_nombre': 'Subcuenta 2',
-            'form_1_slug': 'sc2',
+            'form_1_sk': 'sc2',
             'form_1_saldo': cuenta_con_saldo.saldo() - 50,
             'form_1_titular': otro_titular,
             'form_1_esgratis': True,
         },
-        cuenta=cuenta_con_saldo.slug,
+        cuenta=cuenta_con_saldo.sk,
     )
 
 
@@ -33,13 +33,13 @@ def subcuentas(cuenta_con_saldo: CuentaInteractiva, otro_titular: Titular) -> Li
     return [
             {
                 'nombre': 'Subcuenta 1',
-                'slug': 'sc1',
+                'sk': 'sc1',
                 'saldo': 50.0,
                 'titular': cuenta_con_saldo.titular,
                 'esgratis': False,
             }, {
                 'nombre': 'Subcuenta 2',
-                'slug': 'sc2',
+                'sk': 'sc2',
                 'saldo': cuenta_con_saldo.saldo() - 50.0,
                 'titular': otro_titular,
                 'esgratis': True,

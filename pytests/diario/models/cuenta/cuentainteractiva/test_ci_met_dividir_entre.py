@@ -4,7 +4,6 @@ from unittest.mock import MagicMock
 
 import pytest
 from django.core.exceptions import ValidationError
-from mypy.typeops import false_only
 
 from diario.models import Cuenta, Movimiento
 from utils.errors import ErrorFechaCreacionPosteriorAConversion, \
@@ -37,8 +36,8 @@ def test_da_error_si_saldo_no_ok(mock_saldo_ok, cuenta, dicts_subcuentas):
 def test_genera_cuentas_a_partir_de_lista_de_diccionarios(cuenta, dicts_subcuentas):
     cuenta.dividir_entre(*dicts_subcuentas)
 
-    subcuenta1 = Cuenta.tomar(slug='sc1')
-    subcuenta2 = Cuenta.tomar(slug='sc2')
+    subcuenta1 = Cuenta.tomar(sk='sc1')
+    subcuenta2 = Cuenta.tomar(sk='sc2')
     assert subcuenta1.nombre == "subcuenta 1"
     assert subcuenta2.nombre == "subcuenta 2"
 
@@ -46,14 +45,14 @@ def test_genera_cuentas_a_partir_de_lista_de_diccionarios(cuenta, dicts_subcuent
 def test_devuelve_lista_con_subcuentas_creadas(cuenta, dicts_subcuentas):
     assert \
         cuenta.dividir_entre(*dicts_subcuentas) == \
-        [Cuenta.tomar(slug='sc1'), Cuenta.tomar(slug='sc2')]
+        [Cuenta.tomar(sk='sc1'), Cuenta.tomar(sk='sc2')]
 
 
 def test_cuentas_generadas_son_subcuentas_de_cuenta_madre(cuenta, dicts_subcuentas):
     cuenta.dividir_entre(*dicts_subcuentas)
-    cta_madre = cuenta.tomar_del_slug()
-    cta1 = Cuenta.tomar(slug='sc1')
-    cta2 = Cuenta.tomar(slug='sc2')
+    cta_madre = cuenta.tomar_del_sk()
+    cta1 = Cuenta.tomar(sk='sc1')
+    cta2 = Cuenta.tomar(sk='sc2')
 
     assert cta1.cta_madre == cta_madre
     assert cta2.cta_madre == cta_madre
@@ -106,7 +105,7 @@ def test_genera_movimientos_de_salida_en_cta_madre_con_saldo_positivo(cuenta_con
     importe2 = cuenta_con_saldo.saldo() - importe1
 
     cuenta_con_saldo.dividir_entre(*dicts_subcuentas)
-    cuenta = Cuenta.tomar(slug=cuenta_con_saldo.slug, polymorphic=False)
+    cuenta = Cuenta.tomar(sk=cuenta_con_saldo.sk, polymorphic=False)
 
     assert cuenta.movs_directos().count() == movs_cuenta_antes + 2
 
@@ -129,7 +128,7 @@ def test_genera_movimientos_de_entrada_en_cta_madre_con_saldo_negativo(
     importe2 = cuenta_con_saldo_negativo.saldo() - importe1
 
     cuenta_con_saldo_negativo.dividir_entre(*dicts_subcuentas)
-    cuenta = Cuenta.tomar(slug=cuenta_con_saldo_negativo.slug, polymorphic=False)
+    cuenta = Cuenta.tomar(sk=cuenta_con_saldo_negativo.sk, polymorphic=False)
 
     assert cuenta.movs_directos().count() == movs_cuenta_antes + 2
 
@@ -154,13 +153,13 @@ def test_agrega_subcuenta_como_contrapartida_de_cuenta_en_movimiento(
     for i, mov in enumerate(movs):
         assert \
             mov.cta_entrada.como_subclase() == \
-            Cuenta.tomar(slug=dicts_subcuentas[i]['slug'])
+            Cuenta.tomar(sk=dicts_subcuentas[i]['sk'])
 
 
 def test_acepta_mas_de_dos_subcuentas(cuenta, dicts_subcuentas):
     dicts_subcuentas[1]['saldo'] = 130
     dicts_subcuentas.append(
-        {'nombre': 'subcuenta 3', 'slug': 'sc3'})
+        {'nombre': 'subcuenta 3', 'sk': 'sc3'})
 
     cuenta = cuenta.dividir_y_actualizar(*dicts_subcuentas)
 
@@ -223,7 +222,7 @@ def test_no_acepta_fecha_de_conversion_anterior_a_la_de_cualquier_movimiento_de_
 
 def test_calcula_saldo_de_hasta_una_subcuenta_sin_saldo(cuenta, dicts_subcuentas):
     dicts_subcuentas[1]['saldo'] = 130
-    dicts_subcuentas.append({'nombre': 'Subcuenta 3', 'slug': 'sc3'})
+    dicts_subcuentas.append({'nombre': 'Subcuenta 3', 'sk': 'sc3'})
 
     sc1, sc2, sc3 = cuenta.dividir_entre(*dicts_subcuentas)
 
@@ -231,7 +230,7 @@ def test_calcula_saldo_de_hasta_una_subcuenta_sin_saldo(cuenta, dicts_subcuentas
 
 
 def test_no_acepta_mas_de_una_subcuenta_sin_saldo(cuenta, dicts_subcuentas):
-    dicts_subcuentas.append({'nombre': 'Subcuenta 3', 'slug': 'sc3'})
+    dicts_subcuentas.append({'nombre': 'Subcuenta 3', 'sk': 'sc3'})
     with pytest.raises(ErrorDeSuma):
         cuenta.dividir_entre(*dicts_subcuentas)
 

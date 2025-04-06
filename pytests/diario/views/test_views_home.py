@@ -84,58 +84,58 @@ def test_pasa_titulo_de_saldo_general_a_template(response):
     assert response.context['titulo_saldo_gral'] == "Saldo general"
 
 
-def test_si_recibe_slug_de_cuenta_pasa_cuenta_como_filtro(
+def test_si_recibe_sk_de_cuenta_pasa_cuenta_como_filtro(
         cuenta, client):
-    response = client.get(reverse('cuenta', args=[cuenta.slug]))
+    response = client.get(reverse('cuenta', args=[cuenta.sk]))
     assert response.context['filtro'] == cuenta
 
 
-def test_si_recibe_slug_de_cuenta_actualiza_context_con_cuenta(
+def test_si_recibe_sk_de_cuenta_actualiza_context_con_cuenta(
         cuenta, client):
-    response = client.get(reverse('cuenta', args=[cuenta.slug]))
+    response = client.get(reverse('cuenta', args=[cuenta.sk]))
     assert response.context['cuenta'] == cuenta
 
 
-def test_si_recibe_slug_de_cuenta_acumulativa_actualiza_context_con_lista_de_titulares_de_subcuentas(
+def test_si_recibe_sk_de_cuenta_acumulativa_actualiza_context_con_lista_de_titulares_de_subcuentas(
         cuenta_de_dos_titulares, client):
-    response = client.get(reverse('cuenta', args=[cuenta_de_dos_titulares.slug]))
+    response = client.get(reverse('cuenta', args=[cuenta_de_dos_titulares.sk]))
     assert list(response.context['titulares']) == cuenta_de_dos_titulares.titulares
 
 
-def test_si_recibe_slug_de_cuenta_interactiva_actualiza_context_con_lista_con_nombre_de_titular(
+def test_si_recibe_sk_de_cuenta_interactiva_actualiza_context_con_lista_con_nombre_de_titular(
         cuenta, client):
-    response = client.get(reverse('cuenta', args=[cuenta.slug]))
+    response = client.get(reverse('cuenta', args=[cuenta.sk]))
     assert list(response.context['titulares']) == [cuenta.titular]
 
 
-def test_si_recibe_slug_de_cuenta_actualiza_context_con_dias_con_movimientos_de_la_cuenta(
+def test_si_recibe_sk_de_cuenta_actualiza_context_con_dias_con_movimientos_de_la_cuenta(
         cuenta, entrada, entrada_anterior, entrada_posterior_otra_cuenta, client):
-    response = client.get(reverse('cuenta', args=[cuenta.slug]))
+    response = client.get(reverse('cuenta', args=[cuenta.sk]))
     assert list(response.context['dias']) == [entrada.dia, entrada_anterior.dia]
 
 
-def test_si_recibe_slug_de_cuenta_pasa_solo_los_ultimos_7_dias_con_movimientos_de_la_cuenta(
+def test_si_recibe_sk_de_cuenta_pasa_solo_los_ultimos_7_dias_con_movimientos_de_la_cuenta(
         cuenta, mas_de_7_dias, client):
-    response = client.get(reverse('cuenta', args=[cuenta.slug]))
+    response = client.get(reverse('cuenta', args=[cuenta.sk]))
     assert len(response.context['dias']) == 7
     assert mas_de_7_dias.first() not in response.context.get('dias')
 
 
-def test_si_recibe_slug_de_cuenta_pasa_saldo_de_cuenta_como_saldo_general(
+def test_si_recibe_sk_de_cuenta_pasa_saldo_de_cuenta_como_saldo_general(
         cuenta_con_saldo, entrada, client):
-    response = client.get(reverse('cuenta', args=[cuenta_con_saldo.slug]))
+    response = client.get(reverse('cuenta', args=[cuenta_con_saldo.sk]))
     assert response.context['saldo_gral'] == cuenta_con_saldo.saldo()
 
 
-def test_si_recibe_slug_de_cuenta_pasa_titulo_de_saldo_gral_con_cuenta(cuenta, client):
-    response = client.get(reverse('cuenta', args=[cuenta.slug]))
+def test_si_recibe_sk_de_cuenta_pasa_titulo_de_saldo_gral_con_cuenta(cuenta, client):
+    response = client.get(reverse('cuenta', args=[cuenta.sk]))
     assert response.context['titulo_saldo_gral'] == f"{cuenta.nombre} (fecha alta: {cuenta.fecha_creacion})"
 
 
-def test_si_recibe_slug_de_cuenta_e_id_de_movimiento_pasa_titulo_de_saldo_historico_con_cuenta_y_movimiento(
+def test_si_recibe_sk_de_cuenta_e_id_de_movimiento_pasa_titulo_de_saldo_historico_con_cuenta_y_movimiento(
         entrada, client):
     cuenta = entrada.cta_entrada
-    response = client.get(reverse('cuenta_movimiento', args=[cuenta.slug, entrada.pk]))
+    response = client.get(reverse('cuenta_movimiento', args=[cuenta.sk, entrada.pk]))
     assert (
         response.context['titulo_saldo_gral'] ==
         f'{cuenta.nombre} (fecha alta: {cuenta.fecha_creacion}) en movimiento {entrada.orden_dia} '
@@ -233,10 +233,10 @@ def test_si_recibe_id_de_movimiento_pasa_titulo_de_saldo_gral_con_movimiento(
 def test_considera_solo_cuentas_independientes_para_calcular_saldo_gral(
         cuenta, cuenta_2, entrada, entrada_otra_cuenta, salida, client):
     cuenta_2.dividir_entre(
-        {'nombre': 'subcuenta 2.1', 'slug': 'sc21', 'saldo': 200},
-        {'nombre': 'subcuenta 2.2', 'slug': 'sc22'},
+        {'nombre': 'subcuenta 2.1', 'sk': 'sc21', 'saldo': 200},
+        {'nombre': 'subcuenta 2.2', 'sk': 'sc22'},
     )
-    cuenta_2 = cuenta_2.tomar_del_slug()
+    cuenta_2 = cuenta_2.tomar_del_sk()
     response = client.get(reverse('home'))
 
     assert response.context['saldo_gral'] == cuenta.saldo() + cuenta_2.saldo()

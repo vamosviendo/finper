@@ -9,7 +9,7 @@ class TestModificaMovimiento(FunctionalTest):
 
     def setUp(self):
         super().setUp()
-        self.cta1 = Cuenta.crear(nombre='Afectivo', slug='A')
+        self.cta1 = Cuenta.crear(nombre='Afectivo', sk='A')
         self.mov1 = Movimiento.crear(
             concepto='aSaldo', importe=200, cta_entrada=self.cta1)
         self.ir_a_pag()

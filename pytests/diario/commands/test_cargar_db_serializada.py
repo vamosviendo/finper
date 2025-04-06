@@ -29,10 +29,10 @@ def _tomar_movimiento(movimiento: MovimientoSerializado) -> Movimiento:
         detalle=movimiento.fields["detalle"],
         _importe=movimiento.fields["_importe"],
         cta_entrada=Cuenta.tomar(
-            slug=movimiento.fields["cta_entrada"][0]
+            sk=movimiento.fields["cta_entrada"][0]
         ) if movimiento.fields["cta_entrada"] else None,
         cta_salida=Cuenta.tomar(
-            slug=movimiento.fields["cta_salida"][0]
+            sk=movimiento.fields["cta_salida"][0]
         ) if movimiento.fields["cta_salida"] else None,
     )
 
@@ -98,7 +98,7 @@ def cuenta_posterior(otro_titular: Titular, dolar: Moneda, dia_posterior: Dia) -
 def subcuenta_agregada_en_fecha_conversion_1(cuenta_acumulativa: CuentaAcumulativa) -> CuentaInteractiva:
     return cuenta_acumulativa.agregar_subcuenta(
         nombre="subcuenta agregada 1",
-        slug="sca1",
+        sk="sca1",
         titular=cuenta_acumulativa.titular_original,
         fecha=cuenta_acumulativa.fecha_conversion
     )
@@ -108,7 +108,7 @@ def subcuenta_agregada_en_fecha_conversion_1(cuenta_acumulativa: CuentaAcumulati
 def subcuenta_agregada_en_fecha_conversion_2(cuenta_acumulativa: CuentaAcumulativa) -> CuentaInteractiva:
     return cuenta_acumulativa.agregar_subcuenta(
         nombre="subcuenta agregada 2",
-        slug="sca2",
+        sk="sca2",
         titular=cuenta_acumulativa.titular_original,
         fecha=cuenta_acumulativa.fecha_conversion
     )
@@ -224,9 +224,9 @@ class TestCargaCuentas:
         assert len(cuentas) > 0
         for cuenta in cuentas:
             try:
-                Cuenta.tomar(slug=cuenta.fields["slug"])
+                Cuenta.tomar(sk=cuenta.fields["sk"])
             except Cuenta.DoesNotExist:
-                raise AssertionError(f"No se creó cuenta con slug {cuenta.fields['slug']}")
+                raise AssertionError(f"No se creó cuenta con sk {cuenta.fields['sk']}")
 
     def test_carga_cuentas_con_fecha_de_creacion_correcta(
             self, cuenta_temprana_1, cuenta, cuenta_posterior, db_serializada, vaciar_db):
@@ -235,9 +235,9 @@ class TestCargaCuentas:
         assert len(cuentas) > 0
         for cuenta in cuentas:
             assert \
-                Cuenta.tomar(slug=cuenta.fields["slug"]).fecha_creacion.strftime("%Y-%m-%d") == \
+                Cuenta.tomar(sk=cuenta.fields["sk"]).fecha_creacion.strftime("%Y-%m-%d") == \
                 cuenta.fields["fecha_creacion"], \
-                f"Error en fecha de creación de cuenta \"{cuenta.fields['nombre']} ({cuenta.fields['slug']})\""
+                f"Error en fecha de creación de cuenta \"{cuenta.fields['nombre']} ({cuenta.fields['sk']})\""
 
     def test_carga_cuentas_acumulativas_con_fecha_de_conversion_correcta(
             self, cuenta_acumulativa, cuenta_temprana_acumulativa, cuenta_2_acumulativa, db_serializada, vaciar_db):
@@ -247,7 +247,7 @@ class TestCargaCuentas:
         for cuenta in cuentas:
             assert \
                 CuentaAcumulativa.tomar(
-                    slug=db_serializada.tomar(model="diario.cuenta", pk=cuenta.pk).fields["slug"]
+                    sk=db_serializada.tomar(model="diario.cuenta", pk=cuenta.pk).fields["sk"]
                 ).fecha_conversion.strftime("%Y-%m-%d") == \
                 cuenta.fields["fecha_conversion"]
 
@@ -262,8 +262,8 @@ class TestCargaCuentas:
         for cuenta in cuentas:
             movs_cuenta = [
                 x for x in MovimientoSerializado.todes(container=db_serializada)
-                if x.fields["cta_entrada"] == [cuenta.fields["slug"]] or
-                   x.fields["cta_salida"] == [cuenta.fields["slug"]]
+                if x.fields["cta_entrada"] == [cuenta.fields["sk"]] or
+                   x.fields["cta_salida"] == [cuenta.fields["sk"]]
             ]
             assert len(movs_cuenta) > 0     # Puede fallar. Tal vez hay que puntualizar más o retirar
             for mov in movs_cuenta:
@@ -271,7 +271,7 @@ class TestCargaCuentas:
 
     def test_si_al_cargar_movimientos_anteriores_de_cuenta_acumulativa_se_intenta_usar_una_cuenta_que_no_existe_da_error(
             self, movimiento_1, movimiento_2, cuenta_2_acumulativa, db_serializada, vaciar_db):
-        db_sin_cta_1 = [x.data for x in db_serializada if x.fields.get("slug") != "ct1"]
+        db_sin_cta_1 = [x.data for x in db_serializada if x.fields.get("sk") != "ct1"]
         with open("db_full.json", "w") as f:
             json.dump(db_sin_cta_1, f)
 
@@ -286,10 +286,10 @@ class TestCargaCuentas:
             cuenta_2_acumulativa, db_serializada, vaciar_db):
         call_command("cargar_db_serializada")
         try:
-            Cuenta.tomar(slug="ct1")
+            Cuenta.tomar(sk="ct1")
         except Cuenta.DoesNotExist:
             raise AssertionError(
-                f"No se creó cuenta con slug ct1, ubicada después del movimiento en la serialización"
+                f"No se creó cuenta con sk ct1, ubicada después del movimiento en la serialización"
             )
 
     def test_carga_cuentas_con_titular_correcto(self, cuenta, cuenta_ajena, cuenta_gorda, db_serializada, vaciar_db):
@@ -299,7 +299,7 @@ class TestCargaCuentas:
 
         assert len(cuentas) > 0
         for cuenta in cuentas:
-            cuenta_guardada = Cuenta.tomar(slug=cuenta.fields["slug"])
+            cuenta_guardada = Cuenta.tomar(sk=cuenta.fields["sk"])
             try:
                 titular = cuenta_guardada.titular.sk
             except AttributeError:
@@ -315,7 +315,7 @@ class TestCargaCuentas:
 
         assert len(cuentas) > 0
         for cuenta in cuentas:
-            cuenta_guardada = Cuenta.tomar(slug=cuenta.fields["slug"])
+            cuenta_guardada = Cuenta.tomar(sk=cuenta.fields["sk"])
             assert cuenta_guardada.moneda.sk == cuenta.fields["moneda"][0]
 
     def test_carga_subcuentas_con_cta_madre_correcta(self, cuenta_acumulativa, db_serializada, vaciar_db):
@@ -325,8 +325,8 @@ class TestCargaCuentas:
 
         assert len(subcuentas) > 0
         for cuenta in subcuentas:
-            cuenta_guardada = Cuenta.tomar(slug=cuenta.fields["slug"])
-            assert cuenta_guardada.cta_madre.slug == cuenta.fields["cta_madre"][0]
+            cuenta_guardada = Cuenta.tomar(sk=cuenta.fields["sk"])
+            assert cuenta_guardada.cta_madre.sk == cuenta.fields["cta_madre"][0]
 
 
 class TestCargaMovimientos:
@@ -375,13 +375,13 @@ class TestCargaMovimientos:
                 fecha=movimiento.fields["dia"][0],
                 orden_dia=movimiento.fields["orden_dia"]
             )
-            slug_cta_entrada = mov_creado.cta_entrada.slug if mov_creado.cta_entrada else None
-            slug_cta_salida = mov_creado.cta_salida.slug if mov_creado.cta_salida else None
+            sk_cta_entrada = mov_creado.cta_entrada.sk if mov_creado.cta_entrada else None
+            sk_cta_salida = mov_creado.cta_salida.sk if mov_creado.cta_salida else None
             assert (
                 mov_creado.concepto,
                 mov_creado.importe,
-                slug_cta_entrada,
-                slug_cta_salida,
+                sk_cta_entrada,
+                sk_cta_salida,
             ) == (
                 movimiento.fields["concepto"],
                 movimiento.fields["_importe"],
@@ -431,13 +431,13 @@ class TestCargaMovimientos:
                 fecha=movimiento.fields["dia"][0],
                 orden_dia=movimiento.fields["orden_dia"]
             )
-            slug_cta_entrada = mov_creado.cta_entrada.slug if mov_creado.cta_entrada else None
-            slug_cta_salida = mov_creado.cta_salida.slug if mov_creado.cta_salida else None
+            sk_cta_entrada = mov_creado.cta_entrada.sk if mov_creado.cta_entrada else None
+            sk_cta_salida = mov_creado.cta_salida.sk if mov_creado.cta_salida else None
             assert (
                 mov_creado.concepto,
                 mov_creado.importe,
-                slug_cta_entrada,
-                slug_cta_salida,
+                sk_cta_entrada,
+                sk_cta_salida,
             ) == (
                 movimiento.fields["concepto"],
                 movimiento.fields["_importe"],
@@ -447,7 +447,7 @@ class TestCargaMovimientos:
 
     def test_si_al_cargar_movimientos_generales_se_intenta_usar_una_cuenta_que_no_existe_da_error(
             self, movimiento_1, db_serializada, vaciar_db):
-        db_sin_cta_2 = [x.data for x in db_serializada if x.fields.get("slug") != "ct2"]
+        db_sin_cta_2 = [x.data for x in db_serializada if x.fields.get("sk") != "ct2"]
         with open("db_full.json", "w") as f:
             json.dump(db_sin_cta_2, f)
 
@@ -461,25 +461,25 @@ class TestDivideCuentas:
     def test_divide_correctamente_cuentas_con_saldo_negativo(
             self, cuenta_acumulativa_saldo_negativo, db_serializada, vaciar_db):
         call_command("cargar_db_serializada")
-        cuenta_recuperada = Cuenta.tomar(slug=cuenta_acumulativa_saldo_negativo.slug)
+        cuenta_recuperada = Cuenta.tomar(sk=cuenta_acumulativa_saldo_negativo.sk)
         assert cuenta_recuperada.es_acumulativa
         assert cuenta_recuperada.saldo() == -100
         subcuentas = cuenta_recuperada.subcuentas.all()
         assert len(subcuentas) == 2
         assert subcuentas[0].nombre == "subcuenta 1 saldo negativo"
-        assert subcuentas[0].slug == "scsn1"
+        assert subcuentas[0].sk == "scsn1"
         assert subcuentas[0].saldo() == -10
         assert subcuentas[1].saldo() == cuenta_recuperada.saldo() + 10
 
     def test_divide_correctamente_cuentas_sin_saldo(self, cuenta_acumulativa_saldo_0, db_serializada, vaciar_db):
         call_command("cargar_db_serializada")
-        cuenta_recuperada = Cuenta.tomar(slug=cuenta_acumulativa_saldo_0.slug)
+        cuenta_recuperada = Cuenta.tomar(sk=cuenta_acumulativa_saldo_0.sk)
         assert cuenta_recuperada.es_acumulativa
         assert cuenta_recuperada.saldo() == 0
         subcuentas = cuenta_recuperada.subcuentas.all()
         assert len(subcuentas) == 2
         assert subcuentas[0].nombre == "subcuenta 1 saldo 0"
-        assert subcuentas[0].slug == "sc1"
+        assert subcuentas[0].sk == "sc1"
         assert subcuentas[0].saldo() == 0
         assert subcuentas[1].saldo() == 0
 
@@ -493,7 +493,7 @@ class TestDivideCuentas:
             db_serializada, vaciar_db,
     ):
         call_command("cargar_db_serializada")
-        ca = cuenta_acumulativa.tomar_del_slug()
+        ca = cuenta_acumulativa.tomar_del_sk()
         sco1, sco2, sca1, sca2 = ca.subcuentas.all()
         assert sco1.saldo() == 60-20-15
         assert sco2.saldo() == 40
@@ -514,7 +514,7 @@ class TestDivideCuentas:
     def test_crea_contramovimiento_de_movimiento_de_traspaso_de_saldo_no_gratuito_al_dividir_cuenta_en_subcuentas_de_distinto_titular(
             self, cuenta_de_dos_titulares, db_serializada, vaciar_db):
         call_command("cargar_db_serializada")
-        cuenta_otro_titular = Cuenta.tomar(slug="sctg")
+        cuenta_otro_titular = Cuenta.tomar(sk="sctg")
         traspaso = cuenta_otro_titular.movs().first()
         assert traspaso.id_contramov is not None
         contramov = Movimiento.tomar(pk=traspaso.id_contramov)
@@ -523,7 +523,7 @@ class TestDivideCuentas:
     def test_no_crea_contramovimiento_de_movimiento_de_traspaso_de_saldo_gratuito_al_dividir_cuenta_en_subcuentas_de_distinto_titular(
             self, division_gratuita, db_serializada, vaciar_db):
         call_command("cargar_db_serializada")
-        cuenta_otro_titular = Cuenta.tomar(slug="sctg")
+        cuenta_otro_titular = Cuenta.tomar(sk="sctg")
         traspaso = cuenta_otro_titular.movs().first()
         assert traspaso.id_contramov is None
 

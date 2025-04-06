@@ -24,10 +24,10 @@ urlpatterns = [
     path('cm/<slug:ctaname>/<int:pk>', views.HomeView.as_view(), name='cuenta_movimiento'),
     path('tm/<slug:sk>/<int:pk>', views.HomeView.as_view(), name='titular_movimiento'),
     path('cta_nueva', views.CtaNuevaView.as_view(), name='cta_nueva'),
-    path('cta_elim/<slug:slug>', views.CtaElimView.as_view(), name='cta_elim'),
-    path('cta_mod/<slug:slug>', views.CtaModView.as_view(), name='cta_mod'),
-    path('cta_div/<slug:slug>', views.cta_div_view, name='cta_div'),
-    path('cta_agregar_subc/<slug:slug>', views.cta_agregar_subc_view, name='cta_agregar_subc'),
+    path('cta_elim/<slug:sk>', views.CtaElimView.as_view(), name='cta_elim'),
+    path('cta_mod/<slug:sk>', views.CtaModView.as_view(), name='cta_mod'),
+    path('cta_div/<slug:sk>', views.cta_div_view, name='cta_div'),
+    path('cta_agregar_subc/<slug:sk>', views.cta_agregar_subc_view, name='cta_agregar_subc'),
     path('tit_nuevo', views.TitularNuevoView.as_view(), name='tit_nuevo'),
     path('tit_elim/<slug:sk>', views.TitElimView.as_view(), name='tit_elim'),
     path('tit_mod/<slug:sk>', views.TitModView.as_view(), name='tit_mod'),
@@ -40,6 +40,6 @@ urlpatterns = [
     # URLs de verificación / corrección de saldos
     path('verificar_saldos', views.verificar_saldos_view, name='verificar_saldos'),
     path('corregir_saldo', views.CorregirSaldo.as_view(), name='corregir_saldo'),
-    path('modificar_saldo/<slug:slug>', views.modificar_saldo_view, name='modificar_saldo'),
-    path('agregar_movimiento/<slug:slug>', views.agregar_movimiento_view,  name='agregar_movimiento'),
+    path('modificar_saldo/<slug:sk>', views.modificar_saldo_view, name='modificar_saldo'),
+    path('agregar_movimiento/<slug:sk>', views.agregar_movimiento_view,  name='agregar_movimiento'),
 ]

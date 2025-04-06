@@ -57,7 +57,7 @@ def test_crear_movimiento(browser, cuenta, dia, dia_posterior):
 
     # El saldo de la cuenta sobre la que se realizó el movimiento y el saldo
     # general de la página reflejan el cambio provocado por el nuevo movimiento
-    assert browser.esperar_saldo_en_moneda_de_cuenta(cuenta.slug).text == importe_localizado
+    assert browser.esperar_saldo_en_moneda_de_cuenta(cuenta.sk).text == importe_localizado
     assert \
         browser.esperar_elemento('id_importe_saldo_gral').text == \
         importe_localizado
@@ -197,7 +197,7 @@ def test_crear_creditos_o_devoluciones(
     # Si generamos un movimiento entre ambos titulares con importe mayor al
     # total de la deuda:
     # - el contramovimiento se genera con concepto ""
-    # - las cuentas crédito cambian de nombre y de slug (deuda de receptor con emisor se convierte en
+    # - las cuentas crédito cambian de nombre y de sk (deuda de receptor con emisor se convierte en
     #   préstamo de receptor a emisor y viceversa)
     browser.crear_movimiento(
         concepto="Devolución con exceso",
@@ -309,8 +309,8 @@ def test_crear_movimiento_con_cuenta_en_moneda_no_base(
     browser.ir_a_pag()
 
     # Dadas dos cuentas en una misma moneda
-    saldo_base_original_ce = format_float(browser.esperar_saldo_en_moneda_de_cuenta(ce.slug).text) if ce else None
-    saldo_base_original_cs = format_float(browser.esperar_saldo_en_moneda_de_cuenta(cs.slug).text) if cs else None
+    saldo_base_original_ce = format_float(browser.esperar_saldo_en_moneda_de_cuenta(ce.sk).text) if ce else None
+    saldo_base_original_cs = format_float(browser.esperar_saldo_en_moneda_de_cuenta(cs.sk).text) if cs else None
 
     # Cuando generamos un movimiento sobre una o ambas cuentas
     browser.crear_movimiento(
@@ -336,10 +336,10 @@ def test_crear_movimiento_con_cuenta_en_moneda_no_base(
     # principal de la o las cuentas cambió en el importe registrado en el movimiento,
     browser.assert_url(reverse('home'))
     if ce:
-        saldo_base = browser.esperar_saldo_en_moneda_de_cuenta(ce.slug)
+        saldo_base = browser.esperar_saldo_en_moneda_de_cuenta(ce.sk)
         assert saldo_base.text == float_format(saldo_base_original_ce + importe)
     if cs:
-        saldo_base = browser.esperar_saldo_en_moneda_de_cuenta(cs.slug)
+        saldo_base = browser.esperar_saldo_en_moneda_de_cuenta(cs.sk)
         assert saldo_base.text == float_format(saldo_base_original_cs - importe)
 
 
@@ -364,12 +364,12 @@ def test_crear_traspaso_entre_cuentas_en_distinta_moneda(
     # Dadas dos cuentas en monedas distintas
     saldo_base_original_csmm = format_float(
         browser.esperar_saldo_en_moneda_de_cuenta(
-            cuenta_con_saldo_en_moneda_mov.slug
+            cuenta_con_saldo_en_moneda_mov.sk
         ).text
     )
     saldo_base_original_csom = format_float(
         browser.esperar_saldo_en_moneda_de_cuenta(
-            cuenta_con_saldo_en_otra_moneda.slug
+            cuenta_con_saldo_en_otra_moneda.sk
         ).text
     )
 
@@ -399,9 +399,9 @@ def test_crear_traspaso_entre_cuentas_en_distinta_moneda(
     browser.assert_url(reverse('home'))
     importe_en_moneda_mov = 20
     importe_en_otra_moneda = round(20 * float(cotizacion_mov), 2)
-    saldo_base = browser.esperar_saldo_en_moneda_de_cuenta(cuenta_con_saldo_en_moneda_mov.slug)
+    saldo_base = browser.esperar_saldo_en_moneda_de_cuenta(cuenta_con_saldo_en_moneda_mov.sk)
     assert saldo_base.text == float_format(saldo_base_original_csmm + importe_en_moneda_mov)
-    saldo_base = browser.esperar_saldo_en_moneda_de_cuenta(cuenta_con_saldo_en_otra_moneda.slug)
+    saldo_base = browser.esperar_saldo_en_moneda_de_cuenta(cuenta_con_saldo_en_otra_moneda.sk)
     assert saldo_base.text == float_format(saldo_base_original_csom - importe_en_otra_moneda)
 
 
@@ -414,12 +414,12 @@ def test_crear_traspaso_entre_cuentas_en_distinta_moneda_con_una_cotizacion_ante
     # Dadas dos cuentas en monedas distintas
     saldo_base_original_ce = format_float(
         browser.esperar_saldo_en_moneda_de_cuenta(
-            cuenta_con_saldo_en_euros.slug
+            cuenta_con_saldo_en_euros.sk
         ).text
     )
     saldo_base_original_cs = format_float(
         browser.esperar_saldo_en_moneda_de_cuenta(
-            cuenta_con_saldo_en_dolares.slug
+            cuenta_con_saldo_en_dolares.sk
         ).text
     )
 
@@ -440,9 +440,9 @@ def test_crear_traspaso_entre_cuentas_en_distinta_moneda_con_una_cotizacion_ante
     browser.assert_url(reverse('home'))
     importe_en_euros = round(20 * dolar.cotizacion_en_al(euro, fecha, compra=False), 2)
     importe_en_dolares = 20
-    saldo_base = browser.esperar_saldo_en_moneda_de_cuenta(cuenta_con_saldo_en_euros.slug)
+    saldo_base = browser.esperar_saldo_en_moneda_de_cuenta(cuenta_con_saldo_en_euros.sk)
     assert saldo_base.text == float_format(saldo_base_original_ce + importe_en_euros)
-    saldo_base = browser.esperar_saldo_en_moneda_de_cuenta(cuenta_con_saldo_en_dolares.slug)
+    saldo_base = browser.esperar_saldo_en_moneda_de_cuenta(cuenta_con_saldo_en_dolares.sk)
     assert saldo_base.text == float_format(saldo_base_original_cs - importe_en_dolares)
 
 

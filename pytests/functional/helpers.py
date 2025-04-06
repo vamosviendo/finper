@@ -104,9 +104,9 @@ class FinperFirefox(MiFirefox):
             f"{dia_de_la_semana[fecha.weekday()]} {fecha.strftime('%Y-%m-%d')}"
         )
 
-    def esperar_saldo_en_moneda_de_cuenta(self, slug: str) -> FinperWebElement:
+    def esperar_saldo_en_moneda_de_cuenta(self, sk: str) -> FinperWebElement:
         return self\
-            .esperar_elemento(f'id_row_cta_{slug}')\
+            .esperar_elemento(f'id_row_cta_{sk}')\
             .esperar_elemento(f'.class_saldo_cuenta.mon_cuenta', By.CSS_SELECTOR)
 
     def comparar_dias_de(self, ente: Cuenta | Titular) -> list[FinperWebElement]:

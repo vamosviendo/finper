@@ -23,10 +23,10 @@ class TestMetodoCuentaCreditoCon:
             self, titular, otro_titular, credito):
         assert \
             titular.cuenta_credito_con(otro_titular) == \
-            Cuenta.tomar(slug=f'_{titular.sk}-{otro_titular.sk}')
+            Cuenta.tomar(sk=f'_{titular.sk}-{otro_titular.sk}')
         assert \
             otro_titular.cuenta_credito_con(titular) == \
-            Cuenta.tomar(slug=f'_{otro_titular.sk}-{titular.sk}')
+            Cuenta.tomar(sk=f'_{otro_titular.sk}-{titular.sk}')
 
     def test_devuelve_none_si_no_hay_relacion_crediticia_con_otro_titular(
             self, titular, otro_titular):

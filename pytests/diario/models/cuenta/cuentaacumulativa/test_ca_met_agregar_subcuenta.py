@@ -19,7 +19,7 @@ def test_crea_nueva_subcuenta(cuenta_acumulativa, titular):
 def test_devuelve_subcuenta_agregada(cuenta_acumulativa, titular):
     subcuenta_agregada = cuenta_acumulativa.agregar_subcuenta(
         'subc3', 'sc3', titular)
-    subcuenta = Cuenta.tomar(slug='sc3')
+    subcuenta = Cuenta.tomar(sk='sc3')
     assert subcuenta_agregada == subcuenta
 
 

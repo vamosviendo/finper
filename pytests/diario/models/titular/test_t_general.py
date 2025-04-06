@@ -33,7 +33,7 @@ def test_toma_fecha_actual_como_fecha_de_alta_por_defecto():
 
 
 def test_se_relaciona_con_cuentas(titular):
-    cuenta = CuentaInteractiva(nombre='cuenta', slug='cta')
+    cuenta = CuentaInteractiva(nombre='cuenta', sk='cta')
     cuenta.titular = titular
     cuenta.clean_save()
 

@@ -68,7 +68,7 @@ def test_archivo_generado_es_json_valido():
 @pytest.mark.parametrize("modelo, elementos, identificador, key", [
     ("titular", "varios_titulares", "sk", None),
     ("moneda", "varias_monedas", "sk", None),
-    ("cuenta", "varias_cuentas", "slug", None),
+    ("cuenta", "varias_cuentas", "sk", None),
 ])
 def test_serializa_todos_los_titulares_monedas_y_cuentas_de_la_base_de_datos_en_json(
         modelo, elementos, identificador, key, request):
@@ -102,7 +102,7 @@ def test_serializa_todas_las_cuentas_interactivas_y_acumulativas(modelo, varias_
     clase_modelo = apps.get_model("diario", modelo)
     assert len(cuentas_subc_ser) == clase_modelo.cantidad()
     for ci in clase_modelo.todes():
-        assert ci.slug in [cis.fields['slug'] for cis in cuentas_subc_ser]
+        assert ci.sk in [cis.fields['sk'] for cis in cuentas_subc_ser]
 
 
 @pytest.mark.parametrize(
@@ -142,14 +142,14 @@ def test_serializa_cuentas_acumulativas_con_natural_key_titular_original(cuenta_
 
 
 def test_serializa_cuentas_con_natural_key_cta_madre(cuenta_acumulativa, db_serializada):
-    cta = db_serializada.primere("diario.cuenta", slug="scs1")
-    assert cta.fields["cta_madre"] == [cuenta_acumulativa.slug]
+    cta = db_serializada.primere("diario.cuenta", sk="scs1")
+    assert cta.fields["cta_madre"] == [cuenta_acumulativa.sk]
 
 
 def test_serializa_movimientos_con_natural_keys_cta_entrada_cta_salida(traspaso, db_serializada):
     mov = db_serializada.primere("diario.movimiento", concepto="Traspaso")
-    assert mov.fields["cta_entrada"] == [traspaso.cta_entrada.slug]
-    assert mov.fields["cta_salida"] == [traspaso.cta_salida.slug]
+    assert mov.fields["cta_entrada"] == [traspaso.cta_entrada.sk]
+    assert mov.fields["cta_salida"] == [traspaso.cta_salida.sk]
 
 
 def test_serializa_movimientos_con_natural_key_dia(entrada, db_serializada):
@@ -161,9 +161,9 @@ def test_serializa_saldos_con_natural_key_cuenta(saldo, db_serializada):
         "diario.saldo",
         movimiento=[str(saldo.movimiento.dia), saldo.movimiento.orden_dia]
     )
-    assert sdo.fields["cuenta"] == [saldo.cuenta.slug]
+    assert sdo.fields["cuenta"] == [saldo.cuenta.sk]
 
 def test_serializa_saldos_con_natural_key_movimiento(saldo, db_serializada):
-    sdo = db_serializada.primere("diario.saldo", cuenta=[saldo.cuenta.slug])
+    sdo = db_serializada.primere("diario.saldo", cuenta=[saldo.cuenta.sk])
     assert \
         sdo.fields["movimiento"] == [str(saldo.movimiento.dia), saldo.movimiento.orden_dia]

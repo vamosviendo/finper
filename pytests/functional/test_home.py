@@ -85,7 +85,7 @@ def test_home_monedas(
     browser.ir_a_pag()
     for cuenta in (cuenta_con_saldo, cuenta_con_saldo_en_dolares, cuenta_con_saldo_en_euros):
         for moneda in (peso, dolar, euro):
-            saldo_mon = browser.esperar_elemento(f"id_saldo_cta_{cuenta.slug}_{moneda.sk}")
+            saldo_mon = browser.esperar_elemento(f"id_saldo_cta_{cuenta.sk}_{moneda.sk}")
             assert saldo_mon.text == float_format(cuenta.saldo(moneda=moneda, compra=False))
             classname = saldo_mon.get_attribute("class")
             if moneda == cuenta.moneda:
@@ -100,7 +100,7 @@ def test_home_monedas(
     subcuentas = list(cuenta_acumulativa.subcuentas.all() | cuenta_acumulativa_en_dolares.subcuentas.all())
     for cuenta in subcuentas:
         for moneda in (peso, dolar, euro):
-            saldo_mon = browser.esperar_elemento(f"id_saldo_cta_{cuenta.slug}_{moneda.sk}")
+            saldo_mon = browser.esperar_elemento(f"id_saldo_cta_{cuenta.sk}_{moneda.sk}")
             assert saldo_mon.text == float_format(cuenta.saldo(moneda=moneda, compra=False))
             classname = saldo_mon.get_attribute("class")
             if moneda == cuenta.moneda:
@@ -132,23 +132,23 @@ class TestHomeLinks:
         # Cuando cliqueamos en una cuenta, vamos a la página de esa cuenta
         browser.ir_a_pag()
         browser.cliquear_en_cuenta(cuenta_2)
-        browser.assert_url(reverse("cuenta", args=[cuenta_2.slug]))
+        browser.assert_url(reverse("cuenta", args=[cuenta_2.sk]))
 
         # Cuando cliqueamos en una subcuenta, vamos a la página de esa subcuenta
         browser.ir_a_pag()
         browser.cliquear_en_cuenta(subcuenta)
-        browser.assert_url(reverse("cuenta", args=[subcuenta.slug]))
+        browser.assert_url(reverse("cuenta", args=[subcuenta.sk]))
 
         # cuando cliqueamos en el ícono de agregar cuenta, accedemos a la página para agregar cuenta nueva
         browser.verificar_link('cuenta_nueva', 'cta_nueva')
 
         # cuando cliqueamos en el link de editar cuenta, accedemos a la página de edición de esa cuenta
-        browser.verificar_link(f'cta_mod_{cuenta.slug}', 'cta_mod', [cuenta.slug])
-        browser.verificar_link(f'cta_mod_{subcuenta.slug}', 'cta_mod', [subcuenta.slug])
+        browser.verificar_link(f'cta_mod_{cuenta.sk}', 'cta_mod', [cuenta.sk])
+        browser.verificar_link(f'cta_mod_{subcuenta.sk}', 'cta_mod', [subcuenta.sk])
 
         # cuando cliqueamos en el link de borrar cuenta, accedemos a la página de confirmación
-        browser.verificar_link(f'cta_elim_{cuenta.slug}', 'cta_elim', [cuenta.slug])
-        browser.verificar_link(f'cta_elim_{subcuenta.slug}', 'cta_elim', [subcuenta.slug])
+        browser.verificar_link(f'cta_elim_{cuenta.sk}', 'cta_elim', [cuenta.sk])
+        browser.verificar_link(f'cta_elim_{subcuenta.sk}', 'cta_elim', [subcuenta.sk])
 
     def test_seccion_movimientos(self, browser, entrada, salida):
 

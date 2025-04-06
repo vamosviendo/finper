@@ -12,18 +12,18 @@ def test_no_incluye_movimientos_que_no_sean_de_la_cuenta(cuenta, entrada, entrad
 
 def test_incluye_movimientos_de_subcuentas(cuenta: CuentaInteractiva):
     sc11, sc12 = cuenta.dividir_entre(
-        {'nombre': 'subcuenta 1', 'slug': 'sc1', 'saldo': 30, },
-        {'nombre': 'subcuenta 2', 'slug': 'sc2', }
+        {'nombre': 'subcuenta 1', 'sk': 'sc1', 'saldo': 30, },
+        {'nombre': 'subcuenta 2', 'sk': 'sc2', }
     )
-    cuenta = cuenta.tomar_del_slug()
+    cuenta = cuenta.tomar_del_sk()
     mov_subcuenta = Movimiento.crear(
         concepto='movsubc', importe=10, cta_salida=sc11)
 
     assert mov_subcuenta in cuenta.movs()
 
-    subsubctas = Cuenta.tomar(slug='sc1').dividir_entre(
-        {'nombre': 'subsubcuenta 1.1', 'slug': 'eb1', 'saldo': 15},
-        {'nombre': 'subsubcuenta 1.2', 'slug': 'eb2', },
+    subsubctas = Cuenta.tomar(sk='sc1').dividir_entre(
+        {'nombre': 'subsubcuenta 1.1', 'sk': 'eb1', 'saldo': 15},
+        {'nombre': 'subsubcuenta 1.2', 'sk': 'eb2', },
     )
     mov_subsubc = Movimiento.crear(
         concepto='movsubsub', importe=5, cta_salida=subsubctas[1])

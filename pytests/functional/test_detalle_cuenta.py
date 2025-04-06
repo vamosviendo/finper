@@ -74,13 +74,13 @@ def test_detalle_de_cuenta_interactiva(
     # Cuando cliqueamos en el ícono de agregar cuenta, accedemos a la página
     # de dividir cuenta en subcuentas
     browser.esperar_elemento("id_link_cuenta_nueva").click()
-    browser.assert_url(reverse('cta_div', args=[cuenta.slug]))
+    browser.assert_url(reverse('cta_div', args=[cuenta.sk]))
 
     # Cuando cliqueamos en un movimiento, sólo se muestran los días con
     # movimientos relacionados con la cuenta, y en esos días se muestran
     # sólo los movimientos relacionados con la cuenta, con el movimiento
     # cliqueado resaltado.
-    browser.ir_a_pag(reverse('cuenta', args=[cuenta.slug]))
+    browser.ir_a_pag(reverse('cuenta', args=[cuenta.sk]))
     dias_pag = browser.esperar_elementos("class_div_dia")
 
     fecha_dia = dias_pag[1].esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text
@@ -146,14 +146,14 @@ def test_detalle_de_cuenta_acumulativa(
     browser.esperar_elemento("id_link_cuenta_nueva").click()
     browser.assert_url(reverse(
         'cta_agregar_subc',
-        args=[cuenta_de_dos_titulares.slug])
+        args=[cuenta_de_dos_titulares.sk])
     )
 
     # Volvemos a la página de la cuenta y cliqueamos en el nombre de la
     # primera subcuenta
     primera_subcuenta = cuenta_de_dos_titulares.subcuentas.first()
     browser.ir_a_pag(
-        reverse('cuenta', args=[cuenta_de_dos_titulares.slug])
+        reverse('cuenta', args=[cuenta_de_dos_titulares.sk])
     )
     browser.cliquear_en_cuenta(primera_subcuenta)
 
@@ -192,7 +192,7 @@ def test_detalle_de_cuenta_acumulativa(
     # Volvemos a la página de la cuenta acumulativa y cliqueamos en el nombre
     # de la segunda subcuenta
     browser.ir_a_pag(
-        reverse('cuenta', args=[cuenta_de_dos_titulares.slug])
+        reverse('cuenta', args=[cuenta_de_dos_titulares.sk])
     )
     segunda_subcuenta = cuenta_de_dos_titulares.subcuentas.last()
     browser.cliquear_en_cuenta(segunda_subcuenta)
@@ -205,7 +205,7 @@ def test_detalle_de_cuenta_acumulativa(
     # Volvemos a la página de la cuenta acumulativa y cliqueamos en un
     # movimiento
     browser.ir_a_pag(
-        reverse('cuenta', args=[cuenta_de_dos_titulares.slug])
+        reverse('cuenta', args=[cuenta_de_dos_titulares.sk])
     )
     links_movimiento = browser.esperar_elementos("class_link_movimiento")
     links_movimiento[1].click()
@@ -297,7 +297,7 @@ def subsubcuenta_3_con_movimientos(
         dia: Dia, dia_tardio: Dia) -> CuentaInteractiva:
     ssc3 = subsubcuenta_2.cta_madre.agregar_subcuenta(
         nombre='subsubcuenta 3',
-        slug='ssc3',
+        sk='ssc3',
         titular=subsubcuenta_2.titular,
         fecha=dia.fecha
     )
@@ -326,7 +326,7 @@ def test_detalle_de_subcuenta(
     # Y algunos movimientos de las tres subcuentas
 
     # Cuando vamos a la página de la primera subcuenta de la subcuenta dividida
-    browser.ir_a_pag(reverse("cuenta", args=[subsubcuenta_1_con_movimientos.slug]))
+    browser.ir_a_pag(reverse("cuenta", args=[subsubcuenta_1_con_movimientos.sk]))
 
     # Vemos el nombre de la cuenta encabezando la página
     # Y vemos que al lado del nombre aparece el saldo de la sub-subcuenta
@@ -356,7 +356,7 @@ def test_detalle_de_subcuenta(
 
     # Cliqueamos en un movimiento
     movimiento = Movimiento.tomar(fecha=date(2011, 5, 1), orden_dia=0)
-    browser.ir_a_pag(reverse("cuenta_movimiento", args=[subsubcuenta_1_con_movimientos.slug, movimiento.pk]))
+    browser.ir_a_pag(reverse("cuenta_movimiento", args=[subsubcuenta_1_con_movimientos.sk, movimiento.pk]))
 
     # Vemos que en la sección de movimientos aparecen los días en los que hay movimientos
     # de la cuenta, con el movimiento cliqueado resaltado

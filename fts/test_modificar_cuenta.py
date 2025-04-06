@@ -9,7 +9,7 @@ from .base import FunctionalTest
 class TestModificaCuenta(FunctionalTest):
 
     def test_puede_modificar_nombre_de_cuenta(self):
-        Cuenta.crear(nombre='Efetivo', slug='E')
+        Cuenta.crear(nombre='Efetivo', sk='E')
         self.ir_a_pag()
         self.pulsar("link_mod_cuenta", By.CLASS_NAME)
 

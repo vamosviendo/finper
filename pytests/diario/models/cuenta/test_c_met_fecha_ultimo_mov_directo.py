@@ -27,7 +27,7 @@ def test_en_cta_acumulativa_devuelve_ultimo_mov_directo(cuenta: CuentaInteractiv
         ['subcuenta2', 'sc2'],
         fecha=fecha_tardia
     )[0]
-    cuenta = cuenta.tomar_del_slug()
+    cuenta = cuenta.tomar_del_sk()
 
     Movimiento.crear(
         'cuarto movimiento', 100, subcuenta1, fecha=fecha_tardia_plus)

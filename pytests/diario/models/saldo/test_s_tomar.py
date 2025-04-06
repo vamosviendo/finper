@@ -36,7 +36,7 @@ def test_si_cuenta_es_acumulativa_y_movimiento_es_de_fecha_posterior_a_su_conver
     )
     Movimiento.crear('mov', 50, sc1, fecha=fecha_posterior)
     mov = Movimiento.crear('mov2', 20, None, sc2, fecha=fecha_posterior)
-    cuenta = cuenta.tomar_del_slug()
+    cuenta = cuenta.tomar_del_sk()
 
     assert Saldo.tomar(cuenta=cuenta, movimiento=mov).importe == sc1.saldo(mov) + sc2.saldo(mov)
 

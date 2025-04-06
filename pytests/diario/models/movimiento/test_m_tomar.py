@@ -13,7 +13,7 @@ def test_actualiza_subclase_de_cuentas_intervinientes(sentido, mocker, request):
 
     Movimiento.tomar(pk=mov.pk)
     mock_actualizar_subclase.assert_called_once()
-    assert mock_actualizar_subclase.call_args_list[0].args[0].slug == cuenta.slug
+    assert mock_actualizar_subclase.call_args_list[0].args[0].sk == cuenta.sk
 
 
 def test_permite_tomar_movimiento_por_fecha_y_orden_dia(entrada, salida_posterior, entrada_anterior, request):

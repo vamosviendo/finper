@@ -34,7 +34,7 @@ class HomeView(TemplateView):
         context = super().get_context_data(**kwargs)
         movimiento = Movimiento.tomar(pk=kwargs['pk']) \
             if kwargs.get('pk') else None
-        cuenta: Cuenta | CuentaInteractiva | CuentaAcumulativa = Cuenta.tomar(slug=kwargs['ctaname']) \
+        cuenta: Cuenta | CuentaInteractiva | CuentaAcumulativa = Cuenta.tomar(sk=kwargs['ctaname']) \
             if kwargs.get('ctaname') else None
         titular = Titular.tomar(sk=kwargs['sk']) \
             if kwargs.get('sk') else None
@@ -105,6 +105,8 @@ class CtaNuevaView(CreateView):
 
 class CtaElimView(DeleteView):
     model = Cuenta
+    slug_url_kwarg = 'sk'
+    slug_field = 'sk'
 
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
@@ -126,10 +128,12 @@ class CtaModView(UpdateView):
     success_url = reverse_lazy('home')
     context_object_name = 'cta'
     form_class = FormCuenta
+    slug_url_kwarg = 'sk'
+    slug_field = 'sk'
 
     def setup(self, request, *args, **kwargs):
         super().setup(request, *args, **kwargs)
-        self.cuenta = Cuenta.tomar(slug=self.kwargs.get('slug'))
+        self.cuenta = Cuenta.tomar(sk=self.kwargs.get('sk'))
 
     def get_queryset(self):
         if self.cuenta.es_interactiva:
@@ -143,12 +147,12 @@ class CtaModView(UpdateView):
         return formu
 
 
-def cta_div_view(request, slug):
+def cta_div_view(request, sk):
     if request.method == 'GET':
-        form = FormDividirCuenta(cuenta=slug)
+        form = FormDividirCuenta(cuenta=sk)
 
     if request.method == 'POST':
-        form = FormDividirCuenta(data=request.POST, cuenta=slug)
+        form = FormDividirCuenta(data=request.POST, cuenta=sk)
         if form.is_valid():
             cuenta = form.save()
             return redirect(cuenta)
@@ -156,13 +160,13 @@ def cta_div_view(request, slug):
     return render(request, 'diario/cta_div_form.html', {'form': form})
 
 
-def cta_agregar_subc_view(request, slug):
+def cta_agregar_subc_view(request, sk):
     global form
     if request.method == 'GET':
-        form = FormCrearSubcuenta(cuenta=slug)
+        form = FormCrearSubcuenta(cuenta=sk)
 
     if request.method == 'POST':
-        form = FormCrearSubcuenta(data=request.POST, cuenta=slug)
+        form = FormCrearSubcuenta(data=request.POST, cuenta=sk)
         if form.is_valid():
             cuenta = form.save()
             return redirect(cuenta)
@@ -274,7 +278,7 @@ class CorregirSaldo(TemplateView):
     def get(self, request, *args, **kwargs):
         try:
             self.ctas_erroneas = [
-                Cuenta.tomar(slug=c)
+                Cuenta.tomar(sk=c)
                 for c in request.GET.get('ctas').split('!')
             ]
         except (AttributeError, Cuenta.DoesNotExist) as BadQuerystringError:
@@ -291,28 +295,28 @@ class CorregirSaldo(TemplateView):
 def verificar_saldos_view(request):
     ctas_erroneas = verificar_saldos()
     if len(ctas_erroneas) > 0:
-        slugs = '!'.join([c.slug.lower() for c in ctas_erroneas])
-        return redirect(f"{reverse('corregir_saldo')}?ctas={slugs}")
+        sks = '!'.join([c.sk.lower() for c in ctas_erroneas])
+        return redirect(f"{reverse('corregir_saldo')}?ctas={sks}")
 
     return redirect(reverse('home'))
 
 
-def modificar_saldo_view(request, slug):
-    cta_a_corregir = Cuenta.tomar(slug=slug)
+def modificar_saldo_view(request, sk):
+    cta_a_corregir = Cuenta.tomar(sk=sk)
     cta_a_corregir.corregir_saldo()
     ctas_erroneas = [c.lower() for c in request.GET.get('ctas').split('!')
-                               if c != slug.lower()]
+                               if c != sk.lower()]
     if not ctas_erroneas:
         return redirect(reverse('home'))
     return redirect(
         f"{reverse('corregir_saldo')}?ctas={'!'.join(ctas_erroneas)}")
 
 
-def agregar_movimiento_view(request, slug):
-    cta_a_corregir = Cuenta.tomar(slug=slug)
+def agregar_movimiento_view(request, sk):
+    cta_a_corregir = Cuenta.tomar(sk=sk)
     cta_a_corregir.agregar_mov_correctivo()
     ctas_erroneas_restantes = [c.lower() for c in request.GET.get('ctas').split('!')
-                               if c != slug.lower()]
+                               if c != sk.lower()]
     if not ctas_erroneas_restantes:
         return redirect(reverse('home'))
 

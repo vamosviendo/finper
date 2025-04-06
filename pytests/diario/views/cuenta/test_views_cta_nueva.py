@@ -24,18 +24,18 @@ def test_usa_template_cta_form(client):
 def test_post_guarda_cuenta_nueva(client, fecha):
     client.post(
         reverse('cta_nueva'),
-        data={'nombre': 'Cuenta nueva', 'slug': 'cn', 'fecha_creacion': fecha}
+        data={'nombre': 'Cuenta nueva', 'sk': 'cn', 'fecha_creacion': fecha}
     )
     assert Cuenta.cantidad() == 1
     cuenta_nueva = Cuenta.primere()
     assert cuenta_nueva.nombre == 'cuenta nueva'
-    assert cuenta_nueva.slug == 'cn'
+    assert cuenta_nueva.sk == 'cn'
 
 
 def test_post_redirige_a_home(client, fecha):
     response = client.post(
         reverse('cta_nueva'),
-        data={'nombre': 'Cuenta nueva', 'slug': 'cn', 'fecha_creacion': fecha}
+        data={'nombre': 'Cuenta nueva', 'sk': 'cn', 'fecha_creacion': fecha}
     )
     asserts.assertRedirects(response, reverse('home'))
 
@@ -43,7 +43,7 @@ def test_post_redirige_a_home(client, fecha):
 def test_cuentas_creadas_son_interactivas(client, fecha):
     client.post(
         reverse('cta_nueva'),
-        data={'nombre': 'Cuenta nueva', 'slug': 'cn', 'fecha_creacion': fecha}
+        data={'nombre': 'Cuenta nueva', 'sk': 'cn', 'fecha_creacion': fecha}
     )
     cuenta_nueva = Cuenta.primere()
     assert cuenta_nueva.get_class() == CuentaInteractiva

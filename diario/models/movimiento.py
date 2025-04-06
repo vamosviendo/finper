@@ -599,10 +599,10 @@ class Movimiento(MiModel):
         try:
             return (
                 cls.tomar(
-                    slug=f'_{self.emisor.sk}'
+                    sk=f'_{self.emisor.sk}'
                          f'-{self.receptor.sk}'),
                 cls.tomar(
-                    slug=f'_{self.receptor.sk}'
+                    sk=f'_{self.receptor.sk}'
                          f'-{self.emisor.sk}'))
         except cls.DoesNotExist:
             return self._generar_cuentas_credito()
@@ -625,9 +625,9 @@ class Movimiento(MiModel):
             su cuenta de salida/entrada se ha convertido en acumulativa, para que la
             trate como tal.
         """
-        self.cta_salida = self.cta_salida.tomar_del_slug() \
+        self.cta_salida = self.cta_salida.tomar_del_sk() \
             if self.cta_salida else None
-        self.cta_entrada = self.cta_entrada.tomar_del_slug() \
+        self.cta_entrada = self.cta_entrada.tomar_del_sk() \
             if self.cta_entrada else None
 
     def _actualizar_saldos_cuenta(self, campo_cuenta: str, mantiene_orden_dia: bool):
@@ -856,14 +856,14 @@ class Movimiento(MiModel):
         cc1 = cls.crear(
             nombre=f'Préstamo de {self.emisor.nombre} '
                    f'a {self.receptor.nombre}',
-            slug=f'_{self.emisor.sk}-{self.receptor.sk}',
+            sk=f'_{self.emisor.sk}-{self.receptor.sk}',
             titular=self.emisor,
             fecha_creacion=self.fecha
         )
         cc2 = cls.crear(
             nombre=f'Deuda de {self.receptor.nombre} '
                    f'con {self.emisor.nombre}',
-            slug=f'_{self.receptor.sk}-{self.emisor.sk}',
+            sk=f'_{self.receptor.sk}-{self.emisor.sk}',
             titular=self.receptor,
             _contracuenta=cc1,
             fecha_creacion=self.fecha

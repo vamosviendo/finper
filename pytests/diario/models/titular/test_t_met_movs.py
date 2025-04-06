@@ -23,11 +23,11 @@ def test_no_incluye_movimientos_de_subcuentas_de_otro_titular_de_cuentas_que_era
     sc_ajena, sc_propia = cuenta.dividir_entre(
         {
             'nombre': 'subcuenta ajena',
-            'slug': 'scaj',
+            'sk': 'scaj',
             'saldo': 30,
             'titular': otro_titular
         },
-        {'nombre': 'subcuenta propia', 'slug': 'scpr'},
+        {'nombre': 'subcuenta propia', 'sk': 'scpr'},
     )
     mov_sc_propia = Movimiento.crear(
         concepto='Movimiento de subcuenta propia',
