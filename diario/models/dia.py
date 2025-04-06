@@ -9,7 +9,8 @@ from django.db.models import Count, QuerySet
 from vvmodel.models import MiModel
 
 if TYPE_CHECKING:
-    from diario.models import Cuenta, CuentaInteractiva, Movimiento, Titular
+    from diario.models import Cuenta, Movimiento, Titular
+    from diario.models.movimiento import MovimientoManager
 
 
 class DiaManager(models.Manager):
@@ -19,6 +20,8 @@ class DiaManager(models.Manager):
 
 class Dia (MiModel):
     fecha = models.DateField(unique=True)
+
+    movimiento_set: MovimientoManager["Movimiento"]  # related name para Movimiento.dia
 
     objects = DiaManager()
 

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import Optional, Self, List, Sequence, Set, Any, TYPE_CHECKING
+from typing import Optional, Self, List, Sequence, Set, TYPE_CHECKING
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
@@ -23,6 +23,9 @@ from utils.iterables import remove_duplicates
 from utils.tiempo import Posicion
 from vvmodel.managers import PolymorphManager
 from vvmodel.models import PolymorphModel
+
+if TYPE_CHECKING:
+    from diario.models.movimiento import MovimientoManager, Movimiento
 
 
 alfaminusculas = RegexValidator(
@@ -50,6 +53,10 @@ class Cuenta(PolymorphModel):
     )
     fecha_creacion = models.DateField(default=date.today)
     moneda = models.ForeignKey(Moneda, on_delete=models.CASCADE, null=True, blank=True)
+
+    entradas: MovimientoManager["Movimiento"]   # related name para Movimiento.cta_entrada
+    salidas: MovimientoManager["Movimiento"]    # related name para Movimiento.cta_salida
+    saldo_set: models.Manager["Saldo"]          # related name para Saldo.cuenta
 
     objects = CuentaManager()
 
@@ -263,6 +270,8 @@ class CuentaInteractiva(Cuenta):
                                 on_delete=models.CASCADE,
                                 null=True,
                                 blank=True)
+
+    _cuentacontra: CuentaManager["CuentaInteractiva"]    # related name para campo _contracuenta
 
     form_fields = ('nombre', 'slug', 'titular', 'fecha_creacion', 'moneda', )
 

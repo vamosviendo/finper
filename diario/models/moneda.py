@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import Self
+from typing import Self, TYPE_CHECKING
 
 from django.core.exceptions import EmptyResultSet
 from django.db import models
@@ -9,6 +9,10 @@ from django.db import models
 from diario.models import Cotizacion
 from diario.settings_app import MONEDA_BASE
 from vvmodel.models import MiModel
+
+if TYPE_CHECKING:
+    from diario.models.cuenta import CuentaManager, Cuenta
+    from diario.models.movimiento import MovimientoManager, Movimiento
 
 
 class MonedaManager(models.Manager):
@@ -21,7 +25,9 @@ class Moneda(MiModel):
     nombre = models.CharField(max_length=100, unique=True)
     _plural = models.CharField(max_length=100, null=True, blank=True)
 
-    cotizaciones: models.Manager["Cotizacion"]  # related name para Cotizacion.moneda
+    cotizaciones: models.Manager["Cotizacion"]      # related name para Cotizacion.moneda
+    cuenta_set: CuentaManager["Cuenta"]             # related name para Cuenta.moneda
+    movimientos: MovimientoManager["Movimiento"]    # related name para Movimiento.moneda
 
     objects = MonedaManager()
     form_fields = ('nombre', 'sk', 'plural', 'cotizacion_compra', 'cotizacion_venta', )

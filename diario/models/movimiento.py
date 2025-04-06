@@ -187,6 +187,8 @@ class Movimiento(MiModel):
     )
     es_automatico = models.BooleanField(default=False)
 
+    movimiento_set: models.Manager["Saldo"]     # related name para Saldo.movimiento
+
     objects = MovimientoManager()
     form_fields = (
         "fecha", "concepto", "detalle", "cotizacion", "importe", "cta_entrada", "cta_salida", "moneda"

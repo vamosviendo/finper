@@ -13,7 +13,9 @@ from vvutils.text import mi_slugify
 from diario.models.dia import Dia
 
 if TYPE_CHECKING:
-    from diario.models import CuentaInteractiva, Movimiento
+    from diario.models import CuentaAcumulativa, CuentaInteractiva, Movimiento
+    from diario.models.cuenta import CuentaManager
+    from diario.models.movimiento import MovimientoManager
 
 
 class TitularManager(models.Manager):
@@ -25,6 +27,10 @@ class Titular(MiModel):
     nombre = models.CharField(max_length=100, blank=True)
     fecha_alta = models.DateField(default=timezone.now)
     deudores = models.ManyToManyField('Titular', related_name='acreedores')
+
+    acreedores: TitularManager["Titular"]           # related name para campo deudores
+    cuentas: CuentaManager["CuentaInteractiva"]     # related name para CuentaInteractiva.titular
+    ex_cuentas: CuentaManager["CuentaAcumulativa"]  # related name para CuentaAcumulativa.titular_original
 
     objects = TitularManager()
     form_fields = ('sk', 'nombre', 'fecha_alta', )
