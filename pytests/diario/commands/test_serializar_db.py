@@ -121,7 +121,7 @@ def test_serializa_todos_los_movimientos_dias_y_saldos_de_la_base_de_datos(
 
     identidades = [x.identidad for x in elementos_ser]
     for elemento in Modelo.todes():
-        assert elemento.identidad in identidades
+        assert elemento.sk in identidades
 
 
 def test_serializa_cuentas_y_movimientos_con_natural_key_moneda(entrada, db_serializada):

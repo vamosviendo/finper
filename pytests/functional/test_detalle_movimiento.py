@@ -91,7 +91,7 @@ def test_detalle_movimiento_en_cuenta_acumulativa(
     mov1 = Movimiento.tomar(concepto='Saldo al inicio sc1')
     mov2 = Movimiento.tomar(concepto='Saldo al inicio sc2')
 
-    link_mov_1 = browser.esperar_elemento(f'id_link_mov_{mov1.identidad}')
+    link_mov_1 = browser.esperar_elemento(f'id_link_mov_{mov1.sk}')
     link_mov_1.click()
     saldo_sc1 = browser.esperar_elemento(f'id_saldo_cta_psc_{cuenta.moneda.sk}')
     saldo_sc2 = browser.esperar_elemento(f'id_saldo_cta_ssc_{cuenta.moneda.sk}')
@@ -100,7 +100,7 @@ def test_detalle_movimiento_en_cuenta_acumulativa(
     assert saldo_sc2.text == '0,00'
     assert saldo_c.text == '110,00'
 
-    link_mov_2 = browser.esperar_elemento(f'id_link_mov_{mov2.identidad}')
+    link_mov_2 = browser.esperar_elemento(f'id_link_mov_{mov2.sk}')
     link_mov_2.click()
     saldo_sc1 = browser.esperar_elemento(f'id_saldo_cta_psc_{cuenta.moneda.sk}')
     saldo_sc2 = browser.esperar_elemento(f'id_saldo_cta_ssc_{cuenta.moneda.sk}')

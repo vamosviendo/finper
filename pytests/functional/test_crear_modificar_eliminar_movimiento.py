@@ -462,9 +462,9 @@ def test_modificar_movimiento(browser, entrada, cuenta_2):
         importe='124',
     )
     browser.assert_url(reverse('home'))
-    concepto_movimiento = browser.esperar_elemento(f"id_link_mov_{entrada.identidad}").text.strip()
+    concepto_movimiento = browser.esperar_elemento(f"id_link_mov_{entrada.sk}").text.strip()
     assert concepto_movimiento == "Movimiento con concepto modificado"
-    fila_movimiento = browser.esperar_elemento(f"id_row_mov_{entrada.identidad}")
+    fila_movimiento = browser.esperar_elemento(f"id_row_mov_{entrada.sk}")
     cuenta_movimiento = fila_movimiento.esperar_elemento('class_td_cta_entrada', By.CLASS_NAME).text.strip()
     assert cuenta_movimiento == cuenta_2.nombre
     importe_movimiento = fila_movimiento.esperar_elemento('class_td_importe', By.CLASS_NAME).text.strip()

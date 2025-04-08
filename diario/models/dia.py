@@ -42,7 +42,7 @@ class Dia (MiModel):
         return (self.fecha, )
 
     @property
-    def identidad(self) -> str:
+    def sk(self) -> str:
         return self.fecha.strftime('%Y%m%d')
 
     @classmethod

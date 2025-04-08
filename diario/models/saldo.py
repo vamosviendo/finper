@@ -47,8 +47,8 @@ class Saldo(MiModel):
         self._importe = round(valor, 2)
 
     @property
-    def identidad(self) -> str:
-        return f"{self.movimiento.identidad}{self.cuenta.sk}"
+    def sk(self) -> str:
+        return f"{self.movimiento.sk}{self.cuenta.sk}"
 
     @property
     def posicion(self) -> Posicion:
