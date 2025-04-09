@@ -85,7 +85,7 @@ class Cuenta(PolymorphModel):
         return (self.sk, )
 
     @property
-    def ctaname(self):
+    def sk_cta(self):
         return self.sk
 
     @property

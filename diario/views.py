@@ -34,8 +34,8 @@ class HomeView(TemplateView):
         context = super().get_context_data(**kwargs)
         movimiento = Movimiento.tomar(pk=kwargs['pk']) \
             if kwargs.get('pk') else None
-        cuenta: Cuenta | CuentaInteractiva | CuentaAcumulativa = Cuenta.tomar(sk=kwargs['ctaname']) \
-            if kwargs.get('ctaname') else None
+        cuenta: Cuenta | CuentaInteractiva | CuentaAcumulativa = Cuenta.tomar(sk=kwargs['sk_cta']) \
+            if kwargs.get('sk_cta') else None
         titular = Titular.tomar(sk=kwargs['sk']) \
             if kwargs.get('sk') else None
         movimiento_en_titulo = \

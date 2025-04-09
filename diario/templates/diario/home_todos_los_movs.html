@@ -98,11 +98,11 @@
           <td class="menu-item class_td_cuenta">
             <div id="id_div_cuenta_nueva">
               <a
-                {% if ctaname %}
+                {% if sk_cta %}
                   {% if es_acumulativa %}
-                    href={% url 'cta_agregar_subc' ctaname %}
+                    href={% url 'cta_agregar_subc' sk_cta %}
                   {% else %}
-                    href="{% url 'cta_div' ctaname %}"
+                    href="{% url 'cta_div' sk_cta %}"
                   {% endif %}
                 {% else %}
                   href="{% url 'cta_nueva' %}"
@@ -192,8 +192,8 @@
             <a href="
                 {% if sk %}
                   {% url 'titular_movimiento' sk mov.pk %}
-                {% elif ctaname %}
-                  {% url 'cuenta_movimiento' ctaname mov.pk %}
+                {% elif sk_cta %}
+                  {% url 'cuenta_movimiento' sk_cta mov.pk %}
                 {% else %}
                   {% url 'movimiento' mov.pk %}
                 {% endif %}"

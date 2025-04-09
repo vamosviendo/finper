@@ -102,9 +102,9 @@
               <a
                 {% if cuenta %}
                   {% if cuenta.es_acumulativa %}
-                    href={% url 'cta_agregar_subc' cuenta.ctaname %}
+                    href={% url 'cta_agregar_subc' cuenta.sk %}
                   {% else %}
-                    href="{% url 'cta_div' cuenta.ctaname %}"
+                    href="{% url 'cta_div' cuenta.sk %}"
                   {% endif %}
                 {% else %}
                   href="{% url 'cta_nueva' %}"
@@ -203,8 +203,8 @@
               <a href="
                   {% if sk %}
                     {% url 'titular_movimiento' sk mov.pk %}
-                  {% elif ctaname %}
-                    {% url 'cuenta_movimiento' ctaname mov.pk %}
+                  {% elif sk_cta %}
+                    {% url 'cuenta_movimiento' sk_cta mov.pk %}
                   {% else %}
                     {% url 'movimiento' mov.pk %}
                   {% endif %}"
