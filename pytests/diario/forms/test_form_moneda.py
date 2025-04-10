@@ -47,6 +47,17 @@ def test_guarda_campo_plural(formmon_full):
     assert moneda.plural == 'sks'
 
 
+def test_guarda_sk(formmon_full):
+    formmon_full.is_valid()
+    formmon_full.clean()
+    formmon_full.save()
+    try:
+        m = Moneda.tomar(sk="sk")
+    except Moneda.DoesNotExist:
+        raise AssertionError("No se guardó sk")
+    assert m.nombre == "nombre"
+
+
 def test_muestra_campos_cotizacion_compra_y_venta(formmon):
     assert 'cotizacion_compra' in formmon.fields.keys()
     assert 'cotizacion_venta' in formmon.fields.keys()
@@ -75,6 +86,11 @@ def test_guarda_cotizacion_1_por_defecto(sentido, formmon_data):
 
     moneda = Moneda.tomar(sk='sk')
     assert getattr(moneda, f"cotizacion_{sentido}") == 1.0
+
+
+def test_muestra_al_inicio_sk_de_moneda_asociada(dolar):
+    f = FormMoneda(instance=dolar)
+    assert f.fields["sk"].initial == dolar.sk
 
 
 def test_permite_campo_plural_vacio(formmon_data):

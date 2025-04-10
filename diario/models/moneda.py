@@ -21,7 +21,7 @@ class MonedaManager(models.Manager):
 
 
 class Moneda(MiModel):
-    sk = models.CharField(max_length=100, unique=True)
+    _sk = models.CharField(max_length=100, unique=True)
     nombre = models.CharField(max_length=100, unique=True)
     _plural = models.CharField(max_length=100, null=True, blank=True)
 
@@ -37,6 +37,14 @@ class Moneda(MiModel):
 
     def natural_key(self) -> tuple[str]:
         return (self.sk, )
+
+    @property
+    def sk(self) -> str:
+        return self._sk
+
+    @sk.setter
+    def sk(self, value: str):
+        self._sk = value
 
     @property
     def cotizacion_compra(self) -> float:
@@ -89,6 +97,13 @@ class Moneda(MiModel):
     @plural.setter
     def plural(self, value: str):
         self._plural = value.lower()
+
+
+    @classmethod
+    def tomar(cls, **kwargs):
+        if "sk" in kwargs.keys():
+            kwargs["_sk"] = kwargs.pop("sk")
+        return super().tomar(**kwargs)
 
     @classmethod
     def base(cls):

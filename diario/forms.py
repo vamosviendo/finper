@@ -219,6 +219,7 @@ class FormTitular(forms.ModelForm):
 
 
 class FormMoneda(forms.ModelForm):
+    sk = forms.CharField(max_length=100)
     plural = forms.CharField(max_length=100, required=False)
     cotizacion_compra = forms.FloatField(required=False)
     cotizacion_venta = forms.FloatField(required=False)
@@ -227,6 +228,7 @@ class FormMoneda(forms.ModelForm):
         super().__init__(*args, **kwargs)
         instance: Moneda = kwargs.get('instance')
         if instance:
+            self.fields['sk'].initial = instance.sk
             self.fields['plural'].initial = instance.plural
             self.fields['cotizacion_compra'].initial = instance.cotizacion_compra
             self.fields['cotizacion_venta'].initial = instance.cotizacion_venta
@@ -236,6 +238,7 @@ class FormMoneda(forms.ModelForm):
         fields = Moneda.form_fields
 
     def save(self, *args, **kwargs) -> Moneda:
+        self.instance.sk = self.cleaned_data['sk']
         self.instance.plural = self.cleaned_data['plural']
         self.instance.cotizacion_compra = self.cleaned_data['cotizacion_compra'] or 1.0
         self.instance.cotizacion_venta = self.cleaned_data['cotizacion_venta'] or 1.0

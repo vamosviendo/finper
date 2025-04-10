@@ -67,7 +67,7 @@ def test_archivo_generado_es_json_valido():
 
 @pytest.mark.parametrize("modelo, elementos, identificador, key", [
     ("titular", "varios_titulares", "_sk", None),
-    ("moneda", "varias_monedas", "sk", None),
+    ("moneda", "varias_monedas", "_sk", None),
     ("cuenta", "varias_cuentas", "sk", None),
 ])
 def test_serializa_todos_los_titulares_monedas_y_cuentas_de_la_base_de_datos_en_json(

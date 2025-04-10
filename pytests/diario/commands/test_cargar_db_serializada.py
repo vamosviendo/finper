@@ -195,7 +195,7 @@ class TestCargaMonedas:
         monedas = db_serializada.filter_by_model("diario.moneda")
         call_command("cargar_db_serializada")
         for moneda in monedas:
-            Moneda.tomar(sk=moneda.fields["sk"])
+            Moneda.tomar(sk=moneda.fields["_sk"])
 
 
 class TestCargaCotizaciones:

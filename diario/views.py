@@ -263,14 +263,14 @@ class MonModView(UpdateView):
     form_class = FormMoneda
     template_name = 'diario/moneda_form.html'
     slug_url_kwarg = 'sk'
-    slug_field = 'sk'
+    slug_field = '_sk'
     success_url = reverse_lazy('home')
 
 
 class MonElimView(DeleteView):
     model = Moneda
     slug_url_kwarg = 'sk'
-    slug_field = 'sk'
+    slug_field = '_sk'
     success_url = reverse_lazy('home')
 
 
