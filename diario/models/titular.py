@@ -22,7 +22,7 @@ class TitularManager(models.Manager):
         return self.get(_sk=sk)
 
 class Titular(MiModel):
-    _sk = models.CharField(max_length=100, unique=True)
+    _sk = models.CharField(max_length=20, unique=True)
     nombre = models.CharField(max_length=100, blank=True)
     fecha_alta = models.DateField(default=timezone.now)
     deudores = models.ManyToManyField('Titular', related_name='acreedores')

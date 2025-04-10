@@ -21,7 +21,7 @@ class MonedaManager(models.Manager):
 
 
 class Moneda(MiModel):
-    _sk = models.CharField(max_length=100, unique=True)
+    _sk = models.CharField(max_length=20, unique=True)
     nombre = models.CharField(max_length=100, unique=True)
     _plural = models.CharField(max_length=100, null=True, blank=True)
 

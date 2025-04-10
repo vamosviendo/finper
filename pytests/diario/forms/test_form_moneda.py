@@ -11,7 +11,7 @@ def formmon() -> FormMoneda:
 
 
 @pytest.fixture
-def formmon_data(request) -> dict:
+def formmon_data() -> dict:
     return {
         'nombre': 'nombre',
         'sk': 'sk',
