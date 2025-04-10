@@ -15,15 +15,14 @@ from diario.models.dia import Dia
 if TYPE_CHECKING:
     from diario.models import CuentaAcumulativa, CuentaInteractiva, Movimiento
     from diario.models.cuenta import CuentaManager
-    from diario.models.movimiento import MovimientoManager
 
 
 class TitularManager(models.Manager):
     def get_by_natural_key(self, sk):
-        return self.get(sk=sk)
+        return self.get(_sk=sk)
 
 class Titular(MiModel):
-    sk = models.CharField(max_length=100, unique=True)
+    _sk = models.CharField(max_length=100, unique=True)
     nombre = models.CharField(max_length=100, blank=True)
     fecha_alta = models.DateField(default=timezone.now)
     deudores = models.ManyToManyField('Titular', related_name='acreedores')
@@ -37,6 +36,20 @@ class Titular(MiModel):
 
     def natural_key(self) -> tuple[str]:
         return (self.sk, )
+
+    @property
+    def sk(self) -> str:
+        return self._sk
+
+    @sk.setter
+    def sk(self, value: str):
+        self._sk = value
+
+    @classmethod
+    def tomar(self, **kwargs):
+        if "sk" in kwargs.keys():
+            kwargs["_sk"] = kwargs.pop("sk")
+        return super().tomar(**kwargs)
 
     def capital(self, movimiento: 'Movimiento' = None) -> float:
         return sum(c.saldo(movimiento) for c in self.cuentas_interactivas())

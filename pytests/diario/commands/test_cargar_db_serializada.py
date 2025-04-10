@@ -178,7 +178,7 @@ class TestCargaTitulares:
         tits = db_serializada.filter_by_model("diario.titular")
         call_command("cargar_db_serializada")
         for tit in tits:
-            Titular.tomar(sk=tit.fields["sk"])
+            Titular.tomar(sk=tit.fields["_sk"])
 
     def test_coyuntural_genera_campo_sk_a_partir_de_campo_titname(self, titular, otro_titular, db_serializada_legacy, vaciar_db):
         tits = db_serializada_legacy.filter_by_model("diario.titular")

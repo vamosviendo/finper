@@ -60,9 +60,9 @@ class HomeView(TemplateView):
                 'ancestros': reversed(cuenta.ancestros()),
                 'hermanas': cuenta.hermanas(),
                 'titulares': Titular.filtro(
-                    sk__in=[x.sk for x in cuenta.titulares]
+                    _sk__in=[x.sk for x in cuenta.titulares]
                 ) if cuenta.es_acumulativa else Titular.filtro(
-                    sk=cuenta.titular.sk
+                    _sk=cuenta.titular.sk
                 ),
                 'cuentas': cuenta.subcuentas.all() if cuenta.es_acumulativa else Cuenta.objects.none(),
                 'dias': Paginator(cuenta.dias().reverse(), 7).get_page(self.request.GET.get('page')),
@@ -230,13 +230,15 @@ class TitularNuevoView(CreateView):
     model = Titular
     template_name = 'diario/tit_form.html'
     form_class = FormTitular
-    success_url = '/'
+
+    def get_success_url(self):
+        return reverse('home')
 
 
 class TitElimView(DeleteView):
     model = Titular
     slug_url_kwarg = 'sk'
-    slug_field = 'sk'
+    slug_field = '_sk'
     success_url = reverse_lazy('home')
 
 
@@ -245,7 +247,7 @@ class TitModView(UpdateView):
     template_name = 'diario/tit_form.html'
     form_class = FormTitular
     slug_url_kwarg = 'sk'
-    slug_field = 'sk'
+    slug_field = '_sk'
     success_url = reverse_lazy('home')
 
 

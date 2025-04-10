@@ -195,6 +195,13 @@ class FormMovimiento(forms.ModelForm):
 
 
 class FormTitular(forms.ModelForm):
+    sk = forms.CharField(max_length=100)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        instance = kwargs.get("instance")
+        if instance:
+            self.fields["sk"].initial = instance.sk
 
     class Meta:
         model = Titular
@@ -202,6 +209,13 @@ class FormTitular(forms.ModelForm):
         widgets = {
             'fecha_alta': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
         }
+
+    def save(self, commit=True):
+        titular = super().save(commit=False)
+        titular.sk = self.cleaned_data["sk"]
+        if commit:
+            titular.save()
+        return titular
 
 
 class FormMoneda(forms.ModelForm):
