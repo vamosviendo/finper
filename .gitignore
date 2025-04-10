@@ -2,9 +2,9 @@ db.sqlite*
 *.sqlite3
 pruebadb.sqlite3
 geckodriver.log
-venv
-vfinper
-vfinperprod
+venv*
+vfinper*
+vfinperprod*
 __pycache__
 *.pyc
 *.json
@@ -19,5 +19,3 @@ notas
 .settings
 .mypy_cache
 .pytest_cache
-vfinper-old
-vfinper3.12
