@@ -12,12 +12,16 @@ from utils.iterables import hay_mas_de_un_none_en
 
 
 class FormCuenta(forms.ModelForm):
+    sk = forms.CharField(max_length=20)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['fecha_creacion'].initial = timezone.now().date()
         self.fields['titular'].initial = Titular.tomar(sk=TITULAR_PRINCIPAL)
         self.fields['moneda'].initial = Moneda.tomar(sk=MONEDA_BASE)
+        if self.instance:
+            self.fields["sk"].initial = self.instance.sk
+
         self.fields['moneda'].required = False
 
     class Meta:
@@ -34,6 +38,13 @@ class FormCuenta(forms.ModelForm):
                 'No se permite guión bajo inicial en sk', code='guionbajo')
 
         return data
+
+    def save(self, commit=True):
+        cuenta = super().save(commit=False)
+        cuenta.sk = self.cleaned_data["sk"]
+        if commit:
+            cuenta.clean_save()
+        return cuenta
 
 
 class FormCrearSubcuenta(forms.Form):

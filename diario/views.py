@@ -106,7 +106,7 @@ class CtaNuevaView(CreateView):
 class CtaElimView(DeleteView):
     model = Cuenta
     slug_url_kwarg = 'sk'
-    slug_field = 'sk'
+    slug_field = '_sk'
 
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
@@ -129,7 +129,7 @@ class CtaModView(UpdateView):
     context_object_name = 'cta'
     form_class = FormCuenta
     slug_url_kwarg = 'sk'
-    slug_field = 'sk'
+    slug_field = '_sk'
 
     def setup(self, request, *args, **kwargs):
         super().setup(request, *args, **kwargs)

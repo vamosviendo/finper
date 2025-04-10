@@ -19,12 +19,12 @@ def _tomar_o_crear_cuenta(cuenta: CuentaSerializada | None) -> CuentaInteractiva
     if cuenta:
         try:
             print(f"Tomando cuenta existente <{cuenta.fields['nombre']}>", end=" ")
-            return CuentaInteractiva.tomar(sk=cuenta.fields["sk"])
+            return CuentaInteractiva.tomar(sk=cuenta.fields["_sk"])
         except CuentaInteractiva.DoesNotExist:
             print(f"Creando cuenta <{cuenta.fields['nombre']}>", end=" ")
             return Cuenta.crear(
                 nombre=cuenta.fields["nombre"],
-                sk=cuenta.fields["sk"],
+                sk=cuenta.fields["_sk"],
                 cta_madre=cuenta.fields["cta_madre"],
                 fecha_creacion=cuenta.fields["fecha_creacion"],
                 titular=Titular.tomar(sk=cuenta.sk()),
@@ -47,7 +47,7 @@ def _sk_cuenta_mov(
     cta = movimiento.fields[posicion] if posicion.startswith("cta_") else f"cta_{posicion}"
     sk = cta[0] if cta else None
     # Si la cuenta del movimiento no existe como objeto serializado, lanzar excepción
-    if sk and sk not in [x.fields["sk"] for x in container_cuentas.filter_by_model("diario.cuenta")]:
+    if sk and sk not in [x.fields["_sk"] for x in container_cuentas.filter_by_model("diario.cuenta")]:
         raise ElementoSerializadoInexistente(modelo="diario.cuenta", identificador=sk)
     return sk
 
@@ -61,7 +61,7 @@ def _cuenta_mov(
     cta = movimiento.fields[posicion] if posicion.startswith("cta_") else f"cta_{posicion}"
     sk = movimiento.fields[posicion][0] if movimiento.fields[posicion] else None
     if sk:
-        if sk not in [x.fields["sk"] for x in container_cuentas.filter_by_model("diario.cuenta")]:
+        if sk not in [x.fields["_sk"] for x in container_cuentas.filter_by_model("diario.cuenta")]:
             raise ElementoSerializadoInexistente(modelo="diario.cuenta", identificador=sk)
         return CuentaInteractiva.tomar(sk=sk)
     return None
@@ -105,7 +105,7 @@ def _tomar_cuenta_ser(
     """ Toma y devuelve una cuenta serializada de un contenedor a partir del sk """
     if sk is None or container is None:
         return None
-    return CuentaSerializada(container.tomar(model="diario.cuenta", sk=sk))
+    return CuentaSerializada(container.tomar(model="diario.cuenta", _sk=sk))
 
 
 def _mov_es_traspaso_a_subcuenta(
@@ -116,10 +116,10 @@ def _mov_es_traspaso_a_subcuenta(
     if movimiento.es_entrada_o_salida():
         return False
 
-    pos_cuenta = "cta_entrada" if movimiento.fields["cta_entrada"] == [cuenta.fields["sk"]] else "cta_salida"
+    pos_cuenta = "cta_entrada" if movimiento.fields["cta_entrada"] == [cuenta.fields["_sk"]] else "cta_salida"
     pos_contracuenta = "cta_salida" if pos_cuenta == "cta_entrada" else "cta_entrada"
     sk_contracuenta = _sk_cuenta_mov(movimiento, pos_contracuenta, cuentas)
-    if CuentaInteractiva.filtro(sk=sk_contracuenta).exists():
+    if CuentaInteractiva.filtro(_sk=sk_contracuenta).exists():
         return False
 
     contracuenta_ser = _tomar_cuenta_ser(sk_contracuenta, container=cuentas)
@@ -150,7 +150,7 @@ def _subcuentas_originales(
 ) -> list[dict[str, str | float | Titular]]:
     result = []
     for subc in subcuentas_cuenta.filtrar(fecha_creacion=fecha_conversion):
-        sk_subc = subc.fields["sk"]
+        sk_subc = subc.fields["_sk"]
         # Si la subcuenta tiene saldo
         try:
             mov = traspasos_de_saldo[sks_subcuentas_con_saldo.index(sk_subc)]
@@ -167,7 +167,7 @@ def _subcuentas_originales(
 
         result.append({
             "nombre": subc.fields["nombre"],
-            "sk": subc.fields["sk"],
+            "sk": subc.fields["_sk"],
             "titular": Titular.tomar(sk=subc.sk()),
             "saldo": saldo,
             "esgratis": esgratis,
@@ -201,7 +201,7 @@ def _cargar_cuenta_acumulativa_y_movimientos_anteriores_a_su_conversion(
     traspasos_de_saldo = SerializedDb()
 
     for movimiento in movimientos_cuenta:
-        pos_cuenta = "cta_entrada" if movimiento.fields["cta_entrada"] == [cuenta.fields["sk"]] \
+        pos_cuenta = "cta_entrada" if movimiento.fields["cta_entrada"] == [cuenta.fields["_sk"]] \
             else "cta_salida"
         pos_contracuenta = "cta_salida" if pos_cuenta == "cta_entrada" else "cta_entrada"
 
@@ -246,7 +246,7 @@ def _cargar_cuenta_acumulativa_y_movimientos_anteriores_a_su_conversion(
     sks_subcuentas_con_saldo = [mov.fields[mov.pos_cta_receptora][0] for mov in traspasos_de_saldo]
 
     # Buscar las subcuentas en las que está dividida la cuenta
-    subcuentas_cuenta = cuentas.filtrar(cta_madre=[cuenta.fields["sk"]])
+    subcuentas_cuenta = cuentas.filtrar(cta_madre=[cuenta.fields["_sk"]])
 
     # De las subcuentas encontradas, usar aquellas cuya fecha de creación
     # coincide con la fecha de conversión de la cuenta en acumulativa

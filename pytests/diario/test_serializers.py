@@ -69,21 +69,21 @@ class TestCuentaSerializada:
         cuentas = CuentaSerializada.todes(db_serializada)
         for cta in cuentas:
             print(cta)
-        cuenta_credito = CuentaSerializada(cuentas.tomar(sk="_otro-titular"))
-        cuenta_credito_2 = CuentaSerializada(cuentas.tomar(sk="_titular-otro"))
+        cuenta_credito = CuentaSerializada(cuentas.tomar(_sk="_otro-titular"))
+        cuenta_credito_2 = CuentaSerializada(cuentas.tomar(_sk="_titular-otro"))
         assert cuenta_credito.es_cuenta_credito() is True
         assert cuenta_credito_2.es_cuenta_credito() is True
 
     def test_es_cuenta_credito_devuelve_False_si_la_cuenta_no_es_cuenta_credito(self, credito, db_serializada):
         cuentas = CuentaSerializada.todes(db_serializada)
-        cuenta_credito = CuentaSerializada(cuentas.tomar(sk="caj"))
+        cuenta_credito = CuentaSerializada(cuentas.tomar(_sk="caj"))
         assert cuenta_credito.es_cuenta_credito() is False
 
     def test_es_subcuenta_de_devuelve_True_si_la_cuenta_es_subcuenta_de_otra_cuenta(
             self, cuenta_acum_serializada, db_serializada):
         subcuentas = SerializedDb([
             CuentaSerializada(x) for x in db_serializada.filter_by_model("diario.cuenta")
-            if x.fields["cta_madre"] == [cuenta_acum_serializada.fields["sk"]]
+            if x.fields["cta_madre"] == [cuenta_acum_serializada.fields["_sk"]]
         ])
         assert len(subcuentas) > 0
         for subcuenta in subcuentas:
