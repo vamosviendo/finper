@@ -40,3 +40,7 @@ update-vvsteps:
 push:
 	~/bin/git_push_en_arch
 
+struct:
+	tree -I "vfinper*|migrations|__pycache__|static|features|freeze.txt|fts|geckodriver.log|notastests" > struct.txt
+
+
