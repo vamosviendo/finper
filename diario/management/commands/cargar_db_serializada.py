@@ -119,7 +119,7 @@ def _mov_es_traspaso_a_subcuenta(
     pos_cuenta = "cta_entrada" if movimiento.fields["cta_entrada"] == [cuenta.fields["_sk"]] else "cta_salida"
     pos_contracuenta = "cta_salida" if pos_cuenta == "cta_entrada" else "cta_entrada"
     sk_contracuenta = _sk_cuenta_mov(movimiento, pos_contracuenta, cuentas)
-    if CuentaInteractiva.filtro(_sk=sk_contracuenta).exists():
+    if CuentaInteractiva.filtro(sk=sk_contracuenta).exists():
         return False
 
     contracuenta_ser = _tomar_cuenta_ser(sk_contracuenta, container=cuentas)
