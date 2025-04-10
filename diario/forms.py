@@ -225,7 +225,7 @@ class FormTitular(forms.ModelForm):
         titular = super().save(commit=False)
         titular.sk = self.cleaned_data["sk"]
         if commit:
-            titular.save()
+            titular.clean_save()
         return titular
 
 
