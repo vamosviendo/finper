@@ -55,14 +55,14 @@ class TestCuentaSerializada:
                 pk=cuenta_acum_serializada.pk
             ).fields
 
-    def test_sk_devuelve_sk_de_titular_de_cuenta_interactiva(self, cuenta_int_serializada):
+    def test_sk_tit_devuelve_sk_de_titular_de_cuenta_interactiva(self, cuenta_int_serializada):
         assert \
-            cuenta_int_serializada.sk() == \
+            cuenta_int_serializada.sk_tit() == \
             cuenta_int_serializada.campos_polimorficos()["titular"][0]
 
-    def test_sk_devuelve_sk_de_titular_de_cuenta_acumulactiva(self, cuenta_acum_serializada):
+    def test_sk_tit_devuelve_sk_de_titular_de_cuenta_acumulactiva(self, cuenta_acum_serializada):
         assert \
-            cuenta_acum_serializada.sk() == \
+            cuenta_acum_serializada.sk_tit() == \
             cuenta_acum_serializada.campos_polimorficos()["titular_original"][0]
 
     def test_es_cuenta_credito_devuelve_True_si_la_cuenta_es_cuenta_credito(self, credito, db_serializada):
