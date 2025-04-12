@@ -20,6 +20,10 @@ class Cotizacion(MiModel):
     def __str__(self):
         return f"Cotización {self.moneda} al {self.fecha}: {self.importe_compra} / {self.importe_venta}"
 
+    @property
+    def sk(self) -> str:
+        return f"{self.fecha.year}{self.fecha.month}{self.fecha.day}{self.moneda.sk}"
+
     @classmethod
     def tomar(cls, **kwargs):
         kwargs["fecha"] = kwargs.get("fecha") or date.today()
