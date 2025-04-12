@@ -3,7 +3,19 @@ from typing import Self
 from vvmodel.serializers import SerializedObject
 
 
-class CuentaSerializada(SerializedObject):
+class SkSimpleMixin:
+    fields: dict
+
+    @property
+    def sk(self) -> str:
+        return self.fields["_sk"]
+
+    @sk.setter
+    def sk(self, value: str):
+        self.fields["_sk"] = value
+
+
+class CuentaSerializada(SerializedObject, SkSimpleMixin):
     @classmethod
     def model_string(cls) -> str:
         return "diario.cuenta"
@@ -52,7 +64,7 @@ class DiaSerializado(SerializedObject):
         return "diario.dia"
 
     @property
-    def identidad(self) -> str:
+    def sk(self) -> str:
         return self.fields["fecha"].replace("-", "")
 
 
@@ -66,7 +78,7 @@ class MovimientoSerializado(SerializedObject):
         return self.fields["dia"][0]
 
     @property
-    def identidad(self) -> str:
+    def sk(self) -> str:
         return f"{self.fecha.replace('-', '')}{self.fields['orden_dia']:02d}"
 
     def involucra_cuenta(self, cuenta: CuentaSerializada) -> bool:
@@ -82,7 +94,29 @@ class SaldoSerializado(SerializedObject):
         return "diario.saldo"
 
     @property
-    def identidad(self) -> str:
+    def sk(self) -> str:
         return f"{self.fields['movimiento'][0].replace('-', '')}" \
                f"{self.fields['movimiento'][1]:02d}" \
                f"{self.fields['cuenta'][0]}"
+
+
+class MonedaSerializada(SerializedObject, SkSimpleMixin):
+    @classmethod
+    def model_string(cls) -> str:
+        return "diario.moneda"
+
+
+class TitularSerializado(SerializedObject, SkSimpleMixin):
+    @classmethod
+    def model_string(cls) -> str:
+        return "diario.titular"
+
+
+class CotizacionSerializada(SerializedObject):
+    @classmethod
+    def model_string(cls) -> str:
+        return "diario.cotizacion"
+
+    @property
+    def sk(self) -> str:
+        return self.fields["fecha"].replace("-", "") + self.fields["moneda"][0]

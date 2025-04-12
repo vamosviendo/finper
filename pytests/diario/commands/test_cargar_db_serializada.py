@@ -304,7 +304,7 @@ class TestCargaCuentas:
                 titular = cuenta_guardada.titular.sk
             except AttributeError:
                 titular = cuenta_guardada.titular_original.sk
-            assert titular == cuenta.sk()
+            assert titular == cuenta.sk_tit()
 
     def test_carga_cuentas_con_moneda_correcta(
             self, cuenta, cuenta_en_euros, cuenta_en_dolares, cuenta_con_saldo_en_dolares,

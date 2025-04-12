@@ -27,7 +27,7 @@ def _tomar_o_crear_cuenta(cuenta: CuentaSerializada | None) -> CuentaInteractiva
                 sk=cuenta.fields["_sk"],
                 cta_madre=cuenta.fields["cta_madre"],
                 fecha_creacion=cuenta.fields["fecha_creacion"],
-                titular=Titular.tomar(sk=cuenta.sk()),
+                titular=Titular.tomar(sk=cuenta.sk_tit()),
                 moneda=Moneda.tomar(sk=cuenta.fields["moneda"][0]),
             )
         finally:
@@ -168,7 +168,7 @@ def _subcuentas_originales(
         result.append({
             "nombre": subc.fields["nombre"],
             "sk": subc.fields["_sk"],
-            "titular": Titular.tomar(sk=subc.sk()),
+            "titular": Titular.tomar(sk=subc.sk_tit()),
             "saldo": saldo,
             "esgratis": esgratis,
         })

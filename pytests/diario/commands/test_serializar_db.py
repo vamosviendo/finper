@@ -119,9 +119,9 @@ def test_serializa_todos_los_movimientos_dias_y_saldos_de_la_base_de_datos(
     Modelo = apps.get_model("diario", modelo)
     assert len(elementos_ser) == Modelo.cantidad()
 
-    identidades = [x.identidad for x in elementos_ser]
+    sks = [x.sk for x in elementos_ser]
     for elemento in Modelo.todes():
-        assert elemento.sk in identidades
+        assert elemento.sk in sks
 
 
 def test_serializa_cuentas_y_movimientos_con_natural_key_moneda(entrada, db_serializada):

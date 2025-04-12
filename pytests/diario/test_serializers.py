@@ -1,9 +1,10 @@
 import pytest
 
-from diario.models import CuentaAcumulativa, CuentaInteractiva, Movimiento, Dia, Saldo
+from diario.models import CuentaAcumulativa, CuentaInteractiva, Movimiento, Dia, Saldo, Moneda, Titular, Cotizacion
 from vvmodel.serializers import SerializedDb
 
-from diario.serializers import CuentaSerializada, DiaSerializado, MovimientoSerializado, SaldoSerializado
+from diario.serializers import CuentaSerializada, DiaSerializado, MovimientoSerializado, SaldoSerializado, \
+    MonedaSerializada, TitularSerializado, CotizacionSerializada
 
 
 @pytest.fixture
@@ -13,7 +14,6 @@ def cuenta_int_serializada(cuenta: CuentaInteractiva, db_serializada: Serialized
 @pytest.fixture
 def cuenta_acum_serializada(cuenta_acumulativa: CuentaAcumulativa, db_serializada: SerializedDb) -> CuentaSerializada:
     return CuentaSerializada.primere(db_serializada)
-
 
 @pytest.fixture
 def mov_serializado(entrada: Movimiento, db_serializada: SerializedDb) -> MovimientoSerializado:
@@ -34,6 +34,18 @@ def dia_serializado(dia: Dia, db_serializada: SerializedDb) -> DiaSerializado:
 @pytest.fixture
 def saldo_serializado(saldo: Saldo, db_serializada: SerializedDb) -> SaldoSerializado:
     return SaldoSerializado.primere(db_serializada)
+
+@pytest.fixture
+def moneda_serializada(dolar: Moneda, db_serializada: SerializedDb) -> MonedaSerializada:
+    return MonedaSerializada.primere(db_serializada)
+
+@pytest.fixture
+def titular_serializado(titular: Titular, db_serializada: SerializedDb) -> TitularSerializado:
+    return TitularSerializado.primere(db_serializada)
+
+@pytest.fixture
+def cotizacion_serializada(cotizacion: Cotizacion, db_serializada: SerializedDb) -> CotizacionSerializada:
+    return CotizacionSerializada.primere(db_serializada)
 
 
 class TestCuentaSerializada:
@@ -98,8 +110,8 @@ class TestMovimientoSerializado:
     def test_prop_fecha_devuelve_fecha_del_dia_del_movimiento(self, mov_serializado):
         assert mov_serializado.fecha == mov_serializado.fields["dia"][0]
 
-    def test_prop_identidad_devuelve_cadena_con_fecha_y_orden_dia(self, mov_serializado):
-        assert mov_serializado.identidad == f"{mov_serializado.fecha.replace('-', '')}{mov_serializado.fields['orden_dia']:02d}"
+    def test_prop_sk_devuelve_cadena_con_fecha_y_orden_dia(self, mov_serializado):
+        assert mov_serializado.sk == f"{mov_serializado.fecha.replace('-', '')}{mov_serializado.fields['orden_dia']:02d}"
 
     @pytest.mark.parametrize("mov", ["mov_serializado", "salida_serializada"])
     def test_met_es_entrada_o_salida_devuelve_true_si_es_entrada_o_salida(self, mov, request):
@@ -111,10 +123,29 @@ class TestMovimientoSerializado:
 
 
 class TestDiaSerializado:
-    def test_prop_identidad_devuelve_identidad_basada_en_fecha(self, dia_serializado):
-        assert dia_serializado.identidad == dia_serializado.fields["fecha"].replace('-', '')
+    def test_prop_sk_devuelve_cadena_con_fecha_formateada_como_numero(self, dia_serializado):
+        assert dia_serializado.sk == dia_serializado.fields["fecha"].replace('-', '')
 
 
 class TestSaldoSerializado:
-    def test_prop_identidad_devuelve_identidad_basada_en_identidad_de_movimiento_y_sk_de_cuenta(self, saldo_serializado):
-        assert saldo_serializado.identidad == "2010111200c"
+    def test_prop_sk_devuelve_cadena_con_sk_de_movimiento_y_sk_de_cuenta(self, saldo_serializado):
+        assert saldo_serializado.sk == "2010111200c"
+
+
+class TestCotizacionSerializada:
+    def test_prop_sk_devuelve_cadena_con_fecha_formateada_como_numero_y_sk_de_moneda(self, cotizacion_serializada):
+        assert \
+            cotizacion_serializada.sk == \
+            cotizacion_serializada.fields["fecha"].replace("-", "") +  cotizacion_serializada.fields["moneda"][0]
+
+
+@pytest.mark.parametrize("fixt_obj", ["cuenta_int_serializada", "moneda_serializada", "titular_serializado"])
+class TestSkSimpleMixin:
+    def test_prop_sk_devuelve_contenido_del_campo__sk(self, fixt_obj, request):
+        obj = request.getfixturevalue(fixt_obj)
+        assert obj.sk == obj.fields["_sk"]
+
+    def test_prop_sk_permite_fijar_contenido_del_campo__sk(self, fixt_obj, request):
+        obj = request.getfixturevalue(fixt_obj)
+        obj.sk = "ccc"
+        assert obj.fields["_sk"] == "ccc"
