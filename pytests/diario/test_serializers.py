@@ -95,7 +95,7 @@ class TestCuentaSerializada:
             self, cuenta_acum_serializada, db_serializada):
         subcuentas = SerializedDb([
             CuentaSerializada(x) for x in db_serializada.filter_by_model("diario.cuenta")
-            if x.fields["cta_madre"] == [cuenta_acum_serializada.fields["_sk"]]
+            if x.fields["cta_madre"] == [cuenta_acum_serializada.sk]
         ])
         assert len(subcuentas) > 0
         for subcuenta in subcuentas:

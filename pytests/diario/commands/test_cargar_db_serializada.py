@@ -16,7 +16,7 @@ from diario.models import (
     Dia,
     Movimiento
 )
-from diario.serializers import CuentaSerializada, MovimientoSerializado
+from diario.serializers import CuentaSerializada, MovimientoSerializado, TitularSerializado, MonedaSerializada
 from finper import settings
 from utils.errors import ElementoSerializadoInexistente
 from vvmodel.serializers import SerializedDb
@@ -175,10 +175,10 @@ def test_vacia_la_base_de_datos_antes_de_cargar_datos_nuevos(mocker, db_serializ
 
 class TestCargaTitulares:
     def test_carga_todos_los_titulares_en_la_base_de_datos(self, titular, otro_titular, db_serializada, vaciar_db):
-        tits = db_serializada.filter_by_model("diario.titular")
+        tits = TitularSerializado.todes(db_serializada).filter_by_model("diario.titular")
         call_command("cargar_db_serializada")
         for tit in tits:
-            Titular.tomar(sk=tit.fields["_sk"])
+            Titular.tomar(sk=tit.sk)
 
     def test_coyuntural_genera_campo_sk_a_partir_de_campo_titname(self, titular, otro_titular, db_serializada_legacy, vaciar_db):
         tits = db_serializada_legacy.filter_by_model("diario.titular")
@@ -192,10 +192,10 @@ class TestCargaTitulares:
 
 class TestCargaMonedas:
     def test_carga_todas_las_monedas_en_la_base_de_datos(self, peso, dolar, euro, db_serializada, vaciar_db):
-        monedas = db_serializada.filter_by_model("diario.moneda")
+        monedas = MonedaSerializada.todes(db_serializada).filter_by_model("diario.moneda")
         call_command("cargar_db_serializada")
         for moneda in monedas:
-            Moneda.tomar(sk=moneda.fields["_sk"])
+            Moneda.tomar(sk=moneda.sk)
 
 
 class TestCargaCotizaciones:
@@ -212,49 +212,49 @@ class TestCargaCotizaciones:
                 )
             except Cotizacion.DoesNotExist:
                 raise AssertionError(
-                    f"No se creó cotización de moneda {cotizacion.fields['sk']} "
+                    f"No se creó cotización de moneda {cotizacion.sk} "
                     f"al {cotizacion.fields['fecha']}")
 
 
 class TestCargaCuentas:
     def test_carga_todas_las_cuentas_en_la_base_de_datos(
             self, cuenta, cuenta_2, cuenta_3, cuenta_4, db_serializada, vaciar_db):
-        cuentas = db_serializada.filter_by_model("diario.cuenta")
+        cuentas = CuentaSerializada.todes(container=db_serializada).filter_by_model("diario.cuenta")
         call_command("cargar_db_serializada")
         assert len(cuentas) > 0
         for cuenta in cuentas:
             try:
-                Cuenta.tomar(sk=cuenta.fields["_sk"])
+                Cuenta.tomar(sk=cuenta.sk)
             except Cuenta.DoesNotExist:
-                raise AssertionError(f"No se creó cuenta con sk {cuenta.fields['sk']}")
+                raise AssertionError(f"No se creó cuenta con sk {cuenta.sk}")
 
     def test_carga_cuentas_con_fecha_de_creacion_correcta(
             self, cuenta_temprana_1, cuenta, cuenta_posterior, db_serializada, vaciar_db):
-        cuentas = db_serializada.filter_by_model("diario.cuenta")
+        cuentas = CuentaSerializada.todes(container=db_serializada).filter_by_model("diario.cuenta")
         call_command("cargar_db_serializada")
         assert len(cuentas) > 0
         for cuenta in cuentas:
             assert \
-                Cuenta.tomar(sk=cuenta.fields["_sk"]).fecha_creacion.strftime("%Y-%m-%d") == \
+                Cuenta.tomar(sk=cuenta.sk).fecha_creacion.strftime("%Y-%m-%d") == \
                 cuenta.fields["fecha_creacion"], \
-                f"Error en fecha de creación de cuenta \"{cuenta.fields['nombre']} ({cuenta.fields['sk']})\""
+                f"Error en fecha de creación de cuenta \"{cuenta.fields['nombre']} ({cuenta.sk})\""
 
     def test_carga_cuentas_acumulativas_con_fecha_de_conversion_correcta(
             self, cuenta_acumulativa, cuenta_temprana_acumulativa, cuenta_2_acumulativa, db_serializada, vaciar_db):
-        cuentas = db_serializada.filter_by_model("diario.cuentaacumulativa")
+        cuentas = CuentaSerializada.todes(container=db_serializada).filter_by_model("diario.cuentaacumulativa")
         call_command("cargar_db_serializada")
         assert len(cuentas) > 0
         for cuenta in cuentas:
             assert \
                 CuentaAcumulativa.tomar(
-                    sk=db_serializada.tomar(model="diario.cuenta", pk=cuenta.pk).fields["_sk"]
+                    sk=CuentaSerializada(db_serializada.tomar(model="diario.cuenta", pk=cuenta.pk)).sk
                 ).fecha_conversion.strftime("%Y-%m-%d") == \
                 cuenta.fields["fecha_conversion"]
 
     def test_al_cargar_cuenta_acumulativa_carga_movimientos_anteriores_en_los_que_haya_participado(
             self, movimiento_1, movimiento_2, cuenta_2_acumulativa, db_serializada, vaciar_db):
         cuentas = [
-            x for x in db_serializada.filter_by_model("diario.cuenta")
+            CuentaSerializada(x) for x in db_serializada.filter_by_model("diario.cuenta")
             if x.pk in [x.pk for x in db_serializada.filter_by_model("diario.cuentaacumulativa")]
         ]
         call_command("cargar_db_serializada")
@@ -262,8 +262,7 @@ class TestCargaCuentas:
         for cuenta in cuentas:
             movs_cuenta = [
                 x for x in MovimientoSerializado.todes(container=db_serializada)
-                if x.fields["cta_entrada"] == [cuenta.fields["_sk"]] or
-                   x.fields["cta_salida"] == [cuenta.fields["_sk"]]
+                if x.fields["cta_entrada"] == [cuenta.sk] or x.fields["cta_salida"] == [cuenta.sk]
             ]
             assert len(movs_cuenta) > 0     # Puede fallar. Tal vez hay que puntualizar más o retirar
             for mov in movs_cuenta:
@@ -299,7 +298,7 @@ class TestCargaCuentas:
 
         assert len(cuentas) > 0
         for cuenta in cuentas:
-            cuenta_guardada = Cuenta.tomar(sk=cuenta.fields["_sk"])
+            cuenta_guardada = Cuenta.tomar(sk=cuenta.sk)
             try:
                 titular = cuenta_guardada.titular.sk
             except AttributeError:
@@ -315,7 +314,7 @@ class TestCargaCuentas:
 
         assert len(cuentas) > 0
         for cuenta in cuentas:
-            cuenta_guardada = Cuenta.tomar(sk=cuenta.fields["_sk"])
+            cuenta_guardada = Cuenta.tomar(sk=cuenta.sk)
             assert cuenta_guardada.moneda.sk == cuenta.fields["moneda"][0]
 
     def test_carga_subcuentas_con_cta_madre_correcta(self, cuenta_acumulativa, db_serializada, vaciar_db):
@@ -325,7 +324,7 @@ class TestCargaCuentas:
 
         assert len(subcuentas) > 0
         for cuenta in subcuentas:
-            cuenta_guardada = Cuenta.tomar(sk=cuenta.fields["_sk"])
+            cuenta_guardada = Cuenta.tomar(sk=cuenta.sk)
             assert cuenta_guardada.cta_madre.sk == cuenta.fields["cta_madre"][0]
 
 

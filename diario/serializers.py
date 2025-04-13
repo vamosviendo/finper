@@ -1,6 +1,19 @@
+import sys, inspect
+
 from typing import Self
 
 from vvmodel.serializers import SerializedObject
+
+
+def get_class_tuples() -> list[tuple[str, type]]:
+    return [x for x in inspect.getmembers(sys.modules[__name__]) if inspect.isclass(x[1])]
+
+def get_serializers() -> list[type]:
+    return [x[1] for x in get_class_tuples() if issubclass(x[1], SerializedObject)]
+
+def get_serializer(name: str) -> type:
+    serializers = get_class_tuples()
+    return next(x for x in serializers if x[0] == name)[1]
 
 
 class SkSimpleMixin:
@@ -41,7 +54,7 @@ class CuentaSerializada(SerializedObject, SkSimpleMixin):
             x.fields["_contracuenta"][0] if x.fields["_contracuenta"] else None
             for x in cuentas_interactivas
         ]
-        return self.fields["_sk"] in contracuentas or (
+        return self.sk in contracuentas or (
             self.campos_polimorficos().get("_contracuenta") is not None
         )
 
@@ -56,7 +69,7 @@ class CuentaSerializada(SerializedObject, SkSimpleMixin):
         return self.pk in [x.pk for x in self.container.filter_by_model("diario.cuentaacumulativa")]
 
     def es_subcuenta_de(self, otra: Self):
-        return self.fields["cta_madre"] == [otra.fields["_sk"]]
+        return self.fields["cta_madre"] == [otra.sk]
 
 class DiaSerializado(SerializedObject):
     @classmethod
@@ -82,7 +95,7 @@ class MovimientoSerializado(SerializedObject):
         return f"{self.fecha.replace('-', '')}{self.fields['orden_dia']:02d}"
 
     def involucra_cuenta(self, cuenta: CuentaSerializada) -> bool:
-        return [cuenta.fields["_sk"]] in (self.fields["cta_entrada"], self.fields["cta_salida"])
+        return [cuenta.sk] in (self.fields["cta_entrada"], self.fields["cta_salida"])
 
     def es_entrada_o_salida(self):
         return self.fields["cta_entrada"] is None or self.fields["cta_salida"] is None

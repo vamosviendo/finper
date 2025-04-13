@@ -6,7 +6,8 @@ from django.apps import apps
 from django.core.management import call_command
 
 from diario.models import Cotizacion
-from diario.serializers import MovimientoSerializado, DiaSerializado, SaldoSerializado
+from diario.serializers import MovimientoSerializado, DiaSerializado, SaldoSerializado, get_serializer, \
+    CuentaSerializada
 from utils.archivos import es_json_valido
 
 
@@ -65,21 +66,21 @@ def test_archivo_generado_es_json_valido():
         assert es_json_valido(db_full)
 
 
-@pytest.mark.parametrize("modelo, elementos, identificador, key", [
-    ("titular", "varios_titulares", "_sk", None),
-    ("moneda", "varias_monedas", "_sk", None),
-    ("cuenta", "varias_cuentas", "_sk", None),
+@pytest.mark.parametrize("modelo, serializer, elementos", [
+    ("titular", "TitularSerializado", "varios_titulares"),
+    ("moneda", "MonedaSerializada", "varias_monedas"),
+    ("cuenta", "CuentaSerializada", "varias_cuentas"),
 ])
 def test_serializa_todos_los_titulares_monedas_y_cuentas_de_la_base_de_datos_en_json(
-        modelo, elementos, identificador, key, request):
-    key = key or identificador
+        modelo, serializer, elementos, request):
     elementos = request.getfixturevalue(elementos)
     db_serializada = request.getfixturevalue("db_serializada")
-    elementos_ser = db_serializada.filter_by_model(f"diario.{modelo}")
+    serializer = get_serializer(serializer)
+    elementos_ser = serializer.todes(container=db_serializada).filter_by_model(f"diario.{modelo}")
     assert len(elementos_ser) == apps.get_model("diario", modelo).cantidad()
     for elem in elementos:
-        assert getattr(elem, identificador) in [
-            es.fields[key] for es in elementos_ser
+        assert getattr(elem, "sk") in [
+            es.sk for es in elementos_ser
         ]
 
 
@@ -96,13 +97,13 @@ def test_serializa_todas_las_cotizaciones_de_la_base_de_datos_en_json(
 @pytest.mark.parametrize("modelo", ["cuentainteractiva", "cuentaacumulativa"])
 def test_serializa_todas_las_cuentas_interactivas_y_acumulativas(modelo, varias_cuentas, db_serializada):
     cuentas_ser = db_serializada.filter_by_model("diario.cuenta")
-    cuentas_subc_ser = db_serializada.filter_by_model(f"diario.{modelo}")
+    cuentas_subc_ser = CuentaSerializada.todes(container=db_serializada).filter_by_model(f"diario.{modelo}")
     for cuenta_int in cuentas_subc_ser:
         cuenta_int.fields.update(next(x.fields for x in cuentas_ser if x.pk == cuenta_int.pk))
     clase_modelo = apps.get_model("diario", modelo)
     assert len(cuentas_subc_ser) == clase_modelo.cantidad()
     for ci in clase_modelo.todes():
-        assert ci.sk in [cis.fields['_sk'] for cis in cuentas_subc_ser]
+        assert ci.sk in [cis.sk for cis in cuentas_subc_ser]
 
 
 @pytest.mark.parametrize(
