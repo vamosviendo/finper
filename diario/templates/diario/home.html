@@ -183,14 +183,14 @@
           <span class="class_span_saldo_dia">{{ dia.saldo|floatformat:2 }}</span>
         </strong>
       </div>
-      <table id="id_table_movimientos_dia" class="class_table_movimientos">
-        <thead><tr>
-          <th id="id_th_orden_dia"></th>
-          <th id="id_th_concepto">Concepto</th>
-          <th id="id_th_detalle">Detalle</th>
-          <th id="id_th_cta_entrada">Entra en</th>
-          <th id="id_th_cta_salida">Sale de</th>
-          <th id="id_th_importe">Importe</th>
+      <table id="id_table_movimientos_dia_{{dia.sk}}" class="class_table_movimientos">
+        <thead id="id_thead_movimientos_dia_{{dia.sk}}" class="class_thead_movimientos"><tr>
+          <th id="id_th_orden_dia_{{dia.sk}}"></th>
+          <th id="id_th_concepto_{{dia.sk}}">Concepto</th>
+          <th id="id_th_detalle_{{dia.sk}}">Detalle</th>
+          <th id="id_th_cta_entrada_{{dia.sk}}">Entra en</th>
+          <th id="id_th_cta_salida_{{dia.sk}}">Sale de</th>
+          <th id="id_th_importe_{{dia.sk}}">Importe</th>
           <th>Menu</th>
         </tr></thead>
         {% for mov in dia|movs_seleccionados:filtro %}

@@ -91,6 +91,15 @@ class FinperFirefox(MiFirefox):
                 f'Contenido "{contenido}" no encontrado en columna "{columna}"'
             )
 
+    def dict_movimiento(
+            self,
+            concepto: str,
+            ocurrencia: int = 0
+    ) -> dict[str, str]:
+        titulos = self.esperar_elemento("class_thead_movimientos", By.CLASS_NAME)
+        movimiento = self.esperar_movimientos("concepto", concepto)[ocurrencia]
+        return dict(zip(textos_hijos(titulos, "th"), textos_hijos(movimiento, "td")))
+
     def esperar_movimientos(self, columna: str, contenido: str) -> list[FinperWebElement]:
         return [
             x for x in self.esperar_elementos("class_row_mov", By.CLASS_NAME, fail=False)
@@ -258,3 +267,6 @@ def texto_en_hijos_respectivos(
     """
     return [x.texto_en_hijo(classname) for x in lista_elementos]
 
+
+def textos_hijos(elemento: FinperWebElement, tag_subelem: str) -> List[str]:
+    return [x.text for x in elemento.esperar_elementos(tag_subelem, By.TAG_NAME)]

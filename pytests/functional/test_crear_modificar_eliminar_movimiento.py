@@ -1,18 +1,12 @@
 from datetime import date
-from typing import List
 
 import pytest
 from django.urls import reverse
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 
-from pytests.functional.helpers import FinperWebElement
 from utils.numeros import float_format, format_float
 from utils.varios import el_que_no_es
-
-
-def textos_hijos(elemento: FinperWebElement, tag_subelem: str) -> List[str]:
-    return [x.text for x in elemento.esperar_elementos(tag_subelem, By.TAG_NAME)]
 
 
 def test_crear_movimiento(browser, cuenta, dia, dia_posterior):
@@ -100,23 +94,23 @@ def test_crear_creditos_o_devoluciones(
     # con las siguientes características:
     # - concepto "{concepto}"
     mov = browser.esperar_movimiento("concepto", "Préstamo")
+    celdas_mov = browser.dict_movimiento("Préstamo")
     contramov = browser.esperar_movimiento("concepto", "Constitución de crédito")
-    celdas_mov = textos_hijos(mov, "td")
-    celdas_contramov = textos_hijos(contramov, "td")
+    celdas_contramov = browser.dict_movimiento("Constitución de crédito")
 
     # - los nombres de los titulares en el detalle
-    assert celdas_contramov[3] == f"préstamo de {emisor.nombre.lower()} a {receptor.nombre.lower()}"
+    assert celdas_contramov["Detalle"] == f"de {emisor.nombre} a {receptor.nombre}"
 
     # - el mismo importe que el movimiento creado
-    assert celdas_mov[5] == celdas_contramov[5] == float_format(30)
+    assert celdas_mov["Importe"] == celdas_contramov["Importe"] == float_format(30)
 
     # - dos cuentas generadas automáticamente a partir de los titulares,
     #   con la cuenta del titular de la cuenta de entrada del movimiento
     #   creado como cuenta de salida, y viceversa
-    assert celdas_mov[3] == cuenta.nombre
-    assert celdas_mov[4] == cuenta_ajena.nombre
-    assert celdas_contramov[3] == f"préstamo de {emisor.nombre} a {receptor.nombre}".lower()
-    assert celdas_contramov[4] == f"deuda de {receptor.nombre} con {emisor.nombre}".lower()
+    assert celdas_mov["Entra en"] == cuenta.nombre
+    assert celdas_mov["Sale de"] == cuenta_ajena.nombre
+    assert celdas_contramov["Entra en"] == f"préstamo de {emisor.nombre} a {receptor.nombre}".lower()
+    assert celdas_contramov["Sale de"] == f"deuda de {receptor.nombre} con {emisor.nombre}".lower()
 
     # - a diferencia del movimiento creado manualmente, no muestra botones
     #   de editar o borrar.
@@ -147,11 +141,10 @@ def test_crear_creditos_o_devoluciones(
         cta_entrada=cuenta.nombre,
         cta_salida=cuenta_ajena.nombre
     )
-    contramov = browser.esperar_movimiento("concepto", "Aumento de crédito")
-    celdas_contramov = textos_hijos(contramov, "td")
-    assert celdas_contramov[5] == float_format(10)
-    assert celdas_contramov[3] == f"préstamo de {emisor.nombre} a {receptor.nombre}".lower()
-    assert celdas_contramov[4] == f"deuda de {receptor.nombre} con {emisor.nombre}".lower()
+    celdas_contramov = browser.dict_movimiento("Aumento de crédito")
+    assert celdas_contramov["Importe"] == float_format(10)
+    assert celdas_contramov["Entra en"] == f"préstamo de {emisor.nombre} a {receptor.nombre}".lower()
+    assert celdas_contramov["Sale de"] == f"deuda de {receptor.nombre} con {emisor.nombre}".lower()
     saldo_cuenta_acreedora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{emisor.sk}-{receptor.sk}")
     saldo_cuenta_deudora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{receptor.sk}-{emisor.sk}")
     assert saldo_cuenta_acreedora.text == float_format(30+10)
@@ -166,11 +159,10 @@ def test_crear_creditos_o_devoluciones(
         cta_entrada=cuenta_ajena.nombre,
         cta_salida=cuenta.nombre
     )
-    contramov = browser.esperar_movimiento("concepto", "Pago a cuenta de crédito")
-    celdas_contramov = textos_hijos(contramov, "td")
-    assert celdas_contramov[5] == float_format(15)
-    assert celdas_contramov[3] == f"deuda de {receptor.nombre} con {emisor.nombre}".lower()
-    assert celdas_contramov[4] == f"préstamo de {emisor.nombre} a {receptor.nombre}".lower()
+    celdas_contramov = browser.dict_movimiento("Pago a cuenta de crédito")
+    assert celdas_contramov["Importe"] == float_format(15)
+    assert celdas_contramov["Entra en"] == f"deuda de {receptor.nombre} con {emisor.nombre}".lower()
+    assert celdas_contramov["Sale de"] == f"préstamo de {emisor.nombre} a {receptor.nombre}".lower()
     saldo_cuenta_acreedora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{emisor.sk}-{receptor.sk}")
     saldo_cuenta_deudora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{receptor.sk}-{emisor.sk}")
     assert saldo_cuenta_acreedora.text == float_format(30+10-15)
@@ -184,11 +176,10 @@ def test_crear_creditos_o_devoluciones(
         cta_entrada=cuenta_ajena_2.nombre,
         cta_salida=cuenta_2.nombre
     )
-    contramov = browser.esperar_movimientos("concepto", "Pago a cuenta de crédito")[1]
-    celdas_contramov = textos_hijos(contramov, "td")
-    assert celdas_contramov[5] == float_format(7)
-    assert celdas_contramov[3] == f"deuda de {receptor.nombre} con {emisor.nombre}".lower()
-    assert celdas_contramov[4] == f"préstamo de {emisor.nombre} a {receptor.nombre}".lower()
+    celdas_contramov = browser.dict_movimiento("Pago a cuenta de crédito", 1)
+    assert celdas_contramov["Importe"] == float_format(7)
+    assert celdas_contramov["Entra en"] == f"deuda de {receptor.nombre} con {emisor.nombre}".lower()
+    assert celdas_contramov["Sale de"] == f"préstamo de {emisor.nombre} a {receptor.nombre}".lower()
     saldo_cuenta_acreedora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{emisor.sk}-{receptor.sk}")
     saldo_cuenta_deudora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{receptor.sk}-{emisor.sk}")
     assert saldo_cuenta_acreedora.text == float_format(30+10-15-7)
@@ -205,11 +196,10 @@ def test_crear_creditos_o_devoluciones(
         cta_entrada=cuenta_ajena.nombre,
         cta_salida=cuenta.nombre
     )
-    contramov = browser.esperar_movimiento("concepto", "Pago en exceso de crédito")
-    celdas_contramov = textos_hijos(contramov, "td")
-    assert celdas_contramov[5] == float_format(20)
-    assert celdas_contramov[3] == f"préstamo de {receptor.nombre} a {emisor.nombre}".lower()
-    assert celdas_contramov[4] == f"deuda de {emisor.nombre} con {receptor.nombre}".lower()
+    celdas_contramov = browser.dict_movimiento("Pago en exceso de crédito")
+    assert celdas_contramov["Importe"] == float_format(20)
+    assert celdas_contramov["Entra en"] == f"préstamo de {receptor.nombre} a {emisor.nombre}".lower()
+    assert celdas_contramov["Sale de"] == f"deuda de {emisor.nombre} con {receptor.nombre}".lower()
     saldo_cuenta_acreedora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{receptor.sk}-{emisor.sk}")
     saldo_cuenta_deudora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{emisor.sk}-{receptor.sk}")
     assert saldo_cuenta_acreedora.text == float_format(-30-10+15+7+20)
@@ -224,11 +214,10 @@ def test_crear_creditos_o_devoluciones(
         cta_entrada=cuenta.nombre,
         cta_salida=cuenta_ajena.nombre
     )
-    contramov = browser.esperar_movimiento("concepto", "Cancelación de crédito")
-    celdas_contramov = textos_hijos(contramov, "td")
-    assert celdas_contramov[5] == float_format(2)
-    assert celdas_contramov[3] == f"deuda de {emisor.nombre} con {receptor.nombre}".lower()
-    assert celdas_contramov[4] == f"préstamo de {receptor.nombre} a {emisor.nombre}".lower()
+    celdas_contramov = browser.dict_movimiento("Cancelación de crédito")
+    assert celdas_contramov["Importe"] == float_format(2)
+    assert celdas_contramov["Entra en"] == f"deuda de {emisor.nombre} con {receptor.nombre}".lower()
+    assert celdas_contramov["Sale de"] == f"préstamo de {receptor.nombre} a {emisor.nombre}".lower()
     saldo_cuenta_acreedora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{emisor.sk}-{receptor.sk}")
     saldo_cuenta_deudora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{receptor.sk}-{emisor.sk}")
     assert saldo_cuenta_acreedora.text == float_format(30+10-15-7-18)
