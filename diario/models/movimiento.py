@@ -10,7 +10,7 @@ from django_ordered_field import OrderedCollectionField
 
 from vvmodel.models import MiModel
 from utils import errors
-from utils.tiempo import Posicion
+from utils.tiempo import Posicion, str2date
 from utils.varios import el_que_no_es
 
 from diario.consts import *
@@ -344,6 +344,10 @@ class Movimiento(MiModel):
 
     @classmethod
     def tomar(cls, **kwargs) -> Movimiento:
+        if "sk" in kwargs.keys():
+            kwargs["fecha"] = str2date(kwargs["sk"][:8])
+            kwargs["orden_dia"] = kwargs["sk"][8:]
+            kwargs.pop("sk")
         if "fecha" in kwargs.keys():
             kwargs["dia"] = Dia.tomar(fecha=kwargs.pop("fecha"))
 

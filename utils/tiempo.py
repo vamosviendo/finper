@@ -50,4 +50,9 @@ dia_de_la_semana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sába
 
 
 def str2date(string: str) -> date:
-    return date(*[int(x) for x in string.split("-")])
+    if "-" in string:
+        return date(*[int(x) for x in string.split("-")])
+    elif len(string) == 8:
+        return date(int(string[:4]), int(string[4:6]), int(string[6:]))
+    else:
+        raise ValueError("Cadena mal formateada")
