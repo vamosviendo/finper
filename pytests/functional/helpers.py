@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import List
-from urllib.parse import urlparse
+from typing import cast, List
 
 from django.urls import reverse
 from selenium.common.exceptions import NoSuchElementException
@@ -13,7 +12,6 @@ from utils.numeros import float_format
 from utils.tiempo import dia_de_la_semana
 from vvmodel.models import MiModel
 from vvsteps.driver import MiFirefox, MiWebElement
-from vvsteps.helpers import esperar
 
 
 class FinperWebElement(MiWebElement):
@@ -27,63 +25,13 @@ class FinperWebElement(MiWebElement):
 class FinperFirefox(MiFirefox):
     _web_element_cls = FinperWebElement
 
-    # TODO: ¿pasar a MiFirefox?
-    def __init__(self, base_url=None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.base_url = base_url
-
-    # TODO: pasar a MiFirefox
-    def ir_a_pag(self, url: str = ''):
-        self.get(f"{self.base_url}{url}")
-
-    # TODO: pasar a MiFirefox
-    @esperar
-    def assert_url(self, url: str):
-        assert url == urlparse(self.current_url).path
-
-    # TODO: pasar a MiFirefox o eliminar si no se la usa
-    @esperar
-    def esperar_que_no_este(self, elemento, criterio=By.ID):
-        try:
-            self.find_element(criterio, elemento)
-            raise AssertionError(
-                f'El elemento {elemento}, que no debería existir, existe'
-            )
-        except NoSuchElementException:
-            pass
-
-    # TODO: pasar a MiFirefox
-    def completar_form(self, **kwargs: str | date):
-        for key, value in kwargs.items():
-            self.completar(f"id_{key}", value)
-        self.pulsar()
-
-    # TODO: pasar a MiFirefox
-    def controlar_form(self, **kwargs: str | date | float | MiModel):
-        for key, value in kwargs.items():
-            if value is None:
-                value = ""
-            if type(value) is date:
-                value = value.strftime('%Y-%m-%d')
-            elif type(value) is float:
-                value = str(value)
-            elif isinstance(value, MiModel):
-                value = str(value.pk)
-            campo = self.esperar_elemento(f"id_{key}")
-            assert campo.get_attribute("value") == value
-
-    def controlar_modelform(self, instance: MiModel):
-        self.controlar_form(**{
-            k: getattr(instance, k) for k in instance.form_fields
-        })
-
     def cliquear_en_cuenta(self, cuenta):
         self.esperar_elemento(cuenta.nombre, By.LINK_TEXT).click()
 
     def cliquear_en_titular(self, titular):
         self.esperar_elemento(titular.nombre, By.LINK_TEXT).click()
 
-    def esperar_movimiento(self, columna: str, contenido: str) -> FinperWebElement:
+    def esperar_movimiento(self, columna: str, contenido: str) -> MiWebElement:
         try:
             return self.esperar_movimientos(columna, contenido)[0]
         except IndexError:
@@ -100,25 +48,25 @@ class FinperFirefox(MiFirefox):
         movimiento = self.esperar_movimientos("concepto", concepto)[ocurrencia]
         return dict(zip(textos_hijos(titulos, "th"), textos_hijos(movimiento, "td")))
 
-    def esperar_movimientos(self, columna: str, contenido: str) -> list[FinperWebElement]:
+    def esperar_movimientos(self, columna: str, contenido: str) -> list[MiWebElement]:
         return [
             x for x in self.esperar_elementos("class_row_mov", By.CLASS_NAME, fail=False)
             if x.esperar_elemento(f"class_td_{columna}", By.CLASS_NAME).text == contenido
         ]
 
-    def esperar_dia(self, fecha: date) -> FinperWebElement:
+    def esperar_dia(self, fecha: date) -> MiWebElement:
         return next(
             x for x in self.esperar_elementos("class_div_dia")
             if x.esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text ==
             f"{dia_de_la_semana[fecha.weekday()]} {fecha.strftime('%Y-%m-%d')}"
         )
 
-    def esperar_saldo_en_moneda_de_cuenta(self, sk: str) -> FinperWebElement:
+    def esperar_saldo_en_moneda_de_cuenta(self, sk: str) -> MiWebElement:
         return self\
             .esperar_elemento(f'id_row_cta_{sk}')\
             .esperar_elemento(f'.class_saldo_cuenta.mon_cuenta', By.CSS_SELECTOR)
 
-    def comparar_dias_de(self, ente: Cuenta | Titular) -> list[FinperWebElement]:
+    def comparar_dias_de(self, ente: Cuenta | Titular) -> list[MiWebElement]:
         """ Dada una cuenta o un titular, comparar sus últimos 7 días con los que
             aparecen en la página.
             Si las comparaciones son correctas, devuelve lista de días de la página.
@@ -128,18 +76,21 @@ class FinperFirefox(MiFirefox):
 
         assert dias_db.count() == len(dias_pag)
         for index, dia in enumerate(dias_pag):
-            assert dia.texto_en_hijo("class_span_fecha_dia") == dias_db[index].str_dia_semana()
+            assert \
+                cast(FinperWebElement, dia).texto_en_hijo("class_span_fecha_dia") == \
+                dias_db[index].str_dia_semana()
             self.comparar_movimientos_de_dia_de(dia, dias_db[index], ente)
         return dias_pag
 
-    def comparar_dia(self, dia_web: FinperWebElement, dia_db: Dia):
+    def comparar_dia(self, dia_web: MiWebElement, dia_db: Dia):
+        dia_web = cast(FinperWebElement, dia_web)
         assert dia_web.texto_en_hijo("class_span_fecha_dia") == dia_db.str_dia_semana()
         assert dia_web.texto_en_hijo("class_span_saldo_dia") == float_format(dia_db.saldo())
         self.comparar_movimientos_de_dia_de(dia_web, dia_db)
 
     def comparar_movimientos_de_dia_de(
             self,
-            dia_web: FinperWebElement,
+            dia_web: MiWebElement,
             dia_db: Dia,
             ente: Cuenta | Titular | None = None):
         movs_dia_web = dia_web.esperar_elementos("class_row_mov")
@@ -147,7 +98,7 @@ class FinperFirefox(MiFirefox):
         assert len(movs_dia_web) == movs_dia_db.count()
 
         for j, mov in enumerate(movs_dia_db):
-            mov_web = movs_dia_web[j]
+            mov_web = cast(FinperWebElement, movs_dia_web[j])
             assert mov_web.texto_en_hijo("class_td_orden_dia") == str(mov.orden_dia)
             assert mov_web.texto_en_hijo("class_td_concepto") == mov.concepto
             assert mov_web.texto_en_hijo("class_td_detalle") == (
@@ -259,14 +210,15 @@ class FinperFirefox(MiFirefox):
 
 def texto_en_hijos_respectivos(
         classname: str,
-        lista_elementos: List[FinperWebElement]
+        lista_elementos: List[MiWebElement]
 ) -> List[str]:
     """ A partir de una lista de elementos web, devuelve una lista de str
         con el contenido del hijo de cada uno de esos elementos de una
         clase css dada.
     """
+    lista_elementos = cast(list[FinperWebElement], lista_elementos)
     return [x.texto_en_hijo(classname) for x in lista_elementos]
 
 
-def textos_hijos(elemento: FinperWebElement, tag_subelem: str) -> List[str]:
+def textos_hijos(elemento: MiWebElement, tag_subelem: str) -> List[str]:
     return [x.text for x in elemento.esperar_elementos(tag_subelem, By.TAG_NAME)]

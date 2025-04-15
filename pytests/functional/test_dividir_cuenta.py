@@ -1,4 +1,3 @@
-import pytest
 from django.urls import reverse
 from selenium.webdriver.common.by import By
 
