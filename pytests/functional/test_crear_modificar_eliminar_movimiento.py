@@ -250,7 +250,7 @@ def test_crear_traspaso_entre_titulares_sin_deuda(browser, cuenta, cuenta_ajena,
 
     # Vemos que sólo se genera el movimiento creado, sin que se genere ningún
     # movimiento automático de deuda.
-    mov = browser.esperar_movimiento("concepto", "Donación")
+    browser.esperar_movimiento("concepto", "Donación")
     with pytest.raises(NoSuchElementException):
         browser.esperar_movimiento("concepto", "Constitución de crédito")
 
@@ -307,7 +307,7 @@ def test_crear_movimiento_con_cuenta_en_moneda_no_base(
         importe=str(importe),
         fecha=fecha,
         cta_entrada=ce.nombre if ce else None,
-        cta_salida= cs.nombre if cs else None,
+        cta_salida=cs.nombre if cs else None,
         moneda=moneda.nombre,
     )
 
