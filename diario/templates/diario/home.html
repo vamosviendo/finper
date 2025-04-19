@@ -174,17 +174,22 @@
         <!-- Botones de navegación -->
         <ul class="pagination mb-0 d-flex flex-wrap">
           <li class="page-item disabled">
-            <a id="id_div_boton_anterior_init" class="class_link_pagina page-link" href="#"
+            <a id="id_link_anterior_init" class="class_link_pagina page-link" href="#" title="Días posteriores"
                tabindex="-1" aria-disabled="true"
             >
-              Anterior
+              Días posteriores
             </a>
           </li>
           <li class="class_li_pagina page-item active"><a class="class_link_pagina page-link" href="#">1</a></li>
           <li class="class_li_pagina page-item"><a class="class_link_pagina page-link" href="#">2</a></li>
           <li class="class_li_pagina page-item"><a class="class_link_pagina page-link" href="#">3</a></li>
-          <li id="id_div_boton_siguiente_init" class="class_li_pagina page-item">
-            <a class="class_link_pagina page-link" href="#">Siguiente</a>
+          <li class="class_li_pagina page-item">
+            <a id="id_link_siguiente_init" class="class_link_pagina page-link"
+               href="?page={% if dias.has_next %}{{ dias.next_page_number }}#{% else %}#{% endif %}id_section_movimientos"
+               title="Días anteriores"
+            >
+              Días anteriores
+            </a>
           </li>
         </ul>
 

@@ -12,7 +12,7 @@ def test_home(
         browser, titular, otro_titular,
         cuenta, cuenta_2, cuenta_3, cuenta_acumulativa,
         entrada, traspaso, entrada_posterior_otra_cuenta,
-        mas_de_15_dias_con_dias_sin_movimientos):
+        mas_de_28_dias_con_dias_sin_movimientos):
     # Vamos a la página principal
     browser.ir_a_pag()
 
@@ -74,6 +74,34 @@ def test_home(
     dias = Dia.con_movimientos().reverse()[:7]
     for i, dia in enumerate(dias):
         browser.comparar_dia(divs_dia[i], dia)
+
+    # Al comienzo y al final de la sección de movimientos hay una barra de navegación
+    # que nos permite ver días anteriores o posteriores.
+    # El link correspondiente a "Días posteriores" está desactivado
+    link_posteriores = browser.esperar_elemento("id_link_anterior_init")
+    assert link_posteriores.get_attribute("aria-disabled") == "true"
+
+    # Si cliqueamos en el link que dice "Días anteriores", podemos ver la página con los 7
+    # días anteriores.
+    primer_dia_pag = divs_dia[-1].esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text[-10:]
+    browser.esperar_elemento("id_link_siguiente_init").click()
+    divs_dia = browser.esperar_elementos("class_div_dia")
+    assert len(divs_dia) == 7
+    ultimo_dia_pag = divs_dia[0].esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text[-10:]
+    assert ultimo_dia_pag < primer_dia_pag
+
+    # Si vamos a la última página, veremos solamente los días anteriores restantes, que pueden
+    # ser menos de 7
+    # En esta página, el link correspondiente a "Días anteriores" está desactivado
+
+    # Si desde esta última página cliqueamos en el link que dice "Días posteriores",
+    # podemos ver la página con los 7 días posteriores.
+
+    # Si cliqueamos en un número de página, seremos dirigidos a la página con los
+    # 7 (o menos si es la última) días correspondientes.
+
+    # Al final de la barra de navegación hay un campo en el cual podemos seleccionar
+    # un día y seremos dirigidos a la página que contenga ese día.
 
 
 def test_home_monedas(
