@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+from urllib.parse import urlparse
+
 from django.urls import reverse
 from selenium.webdriver.common.by import By
 
 from diario.models import Dia
+from utils.tiempo import str2date
 from .helpers import texto_en_hijos_respectivos
 from utils.numeros import float_format
 
@@ -90,18 +93,65 @@ def test_home(
     ultimo_dia_pag = divs_dia[0].esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text[-10:]
     assert ultimo_dia_pag < primer_dia_pag
 
-    # Si vamos a la última página, veremos solamente los días anteriores restantes, que pueden
-    # ser menos de 7
-    # En esta página, el link correspondiente a "Días anteriores" está desactivado
+    # Y vemos que en esta página el link correspondiente a "Días posteriores" está activado
+    link_posteriores = browser.esperar_elemento("id_link_anterior_init")
+    assert link_posteriores.get_attribute("aria-disabled") == "false"
+
+    # Si cliqueamos en el link que dice "Primeros días", veremos solamente los días anteriores restantes,
+    # que pueden ser menos de 7, y el último día de la página será el primer día con movimientos.
+    browser.esperar_elemento("id_link_ultima_init").click()
+    divs_dia = browser.esperar_elementos("class_div_dia")
+    assert len(divs_dia) == Dia.con_movimientos().count() % 7
+    primer_dia_pag = divs_dia[-1].esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text[-10:]
+    assert str2date(primer_dia_pag) == Dia.con_movimientos().first().fecha
+
+    # Y en esta página, el link correspondiente a "Días anteriores" está desactivado
+    link_anteriores = browser.esperar_elemento("id_link_siguiente_init")
+    assert link_anteriores.get_attribute("aria-disabled") == "true"
 
     # Si desde esta última página cliqueamos en el link que dice "Días posteriores",
     # podemos ver la página con los 7 días posteriores.
+    ultimo_dia_pag = divs_dia[0].esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text[-10:]
+    browser.esperar_elemento("id_link_anterior_init").click()
+    divs_dia = browser.esperar_elementos("class_div_dia")
+    primer_dia_pag = divs_dia[-1].esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text[-10:]
+    assert primer_dia_pag > ultimo_dia_pag
+    assert len(divs_dia) == 7
+
+    # Si cliqueamos en el link que dice "Últimos días", volveremos a la primera página, que muestra
+    # los últimos días con movimientos
+    browser.esperar_elemento("id_link_primera_init").click()
+    divs_dia = browser.esperar_elementos("class_div_dia")
+    ultimo_dia_pag = divs_dia[0].esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text[-10:]
+    assert str2date(ultimo_dia_pag) == Dia.con_movimientos().last().fecha
+
+    # La barra de navegación incluye un número por cada página de 7 días.
+    nros_pagina = browser.esperar_elementos("class_li_pagina_nro")
+    assert len(nros_pagina) == (Dia.con_movimientos().count() // 7) + 1
+
+    # El número de página que coincide con la página activa se muestra destacado
+    # entre los otros números de página, y su link está desactivado.
+    pag_actual = nros_pagina[0]
+    assert "active" in pag_actual.get_attribute("class")
+    link_pag_actual = pag_actual.esperar_elemento("class_link_pagina", By.CLASS_NAME)
+    assert link_pag_actual.get_attribute("aria-disabled") == "true"
+    for np in nros_pagina[1:]:
+        assert "active" not in np.get_attribute("class")
+        link_pag = np.esperar_elemento("class_link_pagina", By.CLASS_NAME)
+        assert link_pag.get_attribute("aria-disabled") == "false"
 
     # Si cliqueamos en un número de página, seremos dirigidos a la página con los
     # 7 (o menos si es la última) días correspondientes.
+    nro_pag = nros_pagina[2].text
+    nros_pagina[2].click()
+    assert urlparse(browser.current_url).query == f"page={nro_pag}"
 
     # Al final de la barra de navegación hay un campo en el cual podemos seleccionar
     # un día y seremos dirigidos a la página que contenga ese día.
+
+    # Si seleccionamos un día inexistente, seremos llevados a la página que contengan
+    # los días aledaños al seleccionado.
+    # Lo mismo si seleccionamos un día que no contenga movimientos.
 
 
 def test_home_monedas(
