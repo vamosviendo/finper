@@ -1,9 +1,11 @@
+from datetime import timedelta
+
 import pytest
 from django.template.response import TemplateResponse
 from django.urls import reverse
 from pytest_django import asserts
 
-from utils.iterables import dict_en_lista, listas_de_dicts_iguales
+from diario.models import Dia
 from diario.settings_app import TEMPLATE_HOME
 from diario.utils.utils_saldo import saldo_general_historico
 
@@ -244,3 +246,24 @@ def test_considera_solo_cuentas_independientes_para_calcular_saldo_gral(
 
 def test_si_no_hay_movimientos_pasa_0_a_saldo_general(response):
     assert response.context['saldo_gral'] == 0
+
+
+def test_si_recibe_querydict_con_fecha_busca_pagina_con_la_fecha_recibida(
+        mas_de_28_dias_con_dias_sin_movimientos, dia, client):
+    response = client.get(f"/?fecha={str(dia)}")
+    assert \
+        response.context["dias"].number == \
+        (Dia.con_movimientos().filter(fecha__gt=dia.fecha).count() // 7) + 1
+
+def test_si_la_fecha_recibida_en_el_querydict_no_corresponde_a_un_dia_existente_muestra_pagina_con_dias_adyacentes(
+        mas_de_28_dias_con_dias_sin_movimientos, client):
+    response1 = client.get("/?fecha=2011-04-21")
+    response2 = client.get("/?fecha=2011-05-01")
+    assert response1.context["dias"].number == response2.context["dias"].number
+
+def test_si_la_fecha_recibida_en_el_querydict_corresponde_a_un_dia_sin_movimientos_muestra_pagina_con_dias_adyacentes(
+        mas_de_28_dias_con_dias_sin_movimientos, fecha_tardia, client):
+    dia_sin_movs = Dia.tomar(fecha=fecha_tardia - timedelta(1))
+    response1 = client.get(f"/?fecha={dia_sin_movs}")
+    response2 = client.get(f"/?fecha={Dia.tomar(fecha=fecha_tardia)}")
+    assert response1.context["dias"].number == response2.context["dias"].number

@@ -10,7 +10,6 @@ from selenium.webdriver.common.by import By
 from diario.models import Cuenta, CuentaInteractiva, CuentaAcumulativa, Dia, Movimiento, Titular
 from utils.numeros import float_format
 from utils.tiempo import dia_de_la_semana
-from vvmodel.models import MiModel
 from vvsteps.driver import MiFirefox, MiWebElement
 
 
@@ -24,6 +23,12 @@ class FinperWebElement(MiWebElement):
 
 class FinperFirefox(MiFirefox):
     _web_element_cls = FinperWebElement
+
+    # TODO: Corregir en MiFirefox
+    def completar_form(self, boton="id_btn_submit", **kwargs: str | date):
+        for key, value in kwargs.items():
+            self.completar(f"id_{key}", value)
+        self.pulsar(boton)
 
     def cliquear_en_cuenta(self, cuenta):
         self.esperar_elemento(cuenta.nombre, By.LINK_TEXT).click()

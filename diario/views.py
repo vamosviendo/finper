@@ -32,6 +32,8 @@ class HomeView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        querydict = self.request.GET.dict()
+
         movimiento = Movimiento.tomar(pk=kwargs['pk']) \
             if kwargs.get('pk') else None
         cuenta: Cuenta | CuentaInteractiva | CuentaAcumulativa = Cuenta.tomar(sk=kwargs['sk_cta']) \
@@ -42,6 +44,16 @@ class HomeView(TemplateView):
             f" en movimiento {movimiento.orden_dia} " \
             f"del {movimiento.fecha} ({movimiento.concepto})" \
             if movimiento else ""
+
+        if "fecha" in querydict and "page" not in querydict:
+            try:
+                fecha = querydict["fecha"]
+                posicion = Dia.con_movimientos().filter(fecha__gt=fecha).count()
+                pagina = (posicion // 7) + 1
+                if pagina > 0:
+                    querydict["page"] = str(pagina)
+            except (ValueError, TypeError):
+                pass
 
         context.update({
             'movimiento': movimiento or None,
@@ -65,7 +77,7 @@ class HomeView(TemplateView):
                     _sk=cuenta.titular.sk
                 ),
                 'cuentas': cuenta.subcuentas.all() if cuenta.es_acumulativa else Cuenta.objects.none(),
-                'dias': Paginator(cuenta.dias().reverse(), 7).get_page(self.request.GET.get('page')),
+                'dias': Paginator(cuenta.dias().reverse(), 7).get_page(querydict.get('page')),
             })
         elif titular:
             context.update({
@@ -74,7 +86,7 @@ class HomeView(TemplateView):
                     f"Capital de {titular.nombre}{movimiento_en_titulo}",
                 'titulares': Titular.todes(),
                 'cuentas': titular.cuentas.all(),
-                'dias': Paginator(titular.dias().reverse(), 7).get_page(self.request.GET.get('page')),
+                'dias': Paginator(titular.dias().reverse(), 7).get_page(querydict.get('page')),
             })
 
         else:
@@ -85,7 +97,7 @@ class HomeView(TemplateView):
                 'titulo_saldo_gral': f'Saldo general{movimiento_en_titulo}',
                 'titulares': Titular.todes(),
                 'cuentas': Cuenta.todes().order_by(Lower('nombre')),
-                'dias': Paginator(Dia.con_movimientos().reverse(), 7).get_page(self.request.GET.get('page')),
+                'dias': Paginator(Dia.con_movimientos().reverse(), 7).get_page(querydict.get('page')),
             })
 
         return context

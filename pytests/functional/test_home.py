@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import date, timedelta
 from urllib.parse import urlparse
 
 from django.urls import reverse
@@ -15,6 +16,7 @@ def test_home(
         browser, titular, otro_titular,
         cuenta, cuenta_2, cuenta_3, cuenta_acumulativa,
         entrada, traspaso, entrada_posterior_otra_cuenta,
+        fecha, fecha_tardia,
         mas_de_28_dias_con_dias_sin_movimientos):
     # Vamos a la página principal
     browser.ir_a_pag()
@@ -148,10 +150,35 @@ def test_home(
 
     # Al final de la barra de navegación hay un campo en el cual podemos seleccionar
     # un día y seremos dirigidos a la página que contenga ese día.
+    browser.completar_form(boton="id_btn_buscar_dia_init", input_dia_init=fecha)
+    fechas = [str2date(x.text[-10:]) for x in browser.esperar_elementos("class_span_fecha_dia")]
+    assert fecha in fechas
 
     # Si seleccionamos un día inexistente, seremos llevados a la página que contengan
     # los días aledaños al seleccionado.
+    fecha_inexistente = date(2011,4,21)
+    browser.completar_form(boton="id_btn_buscar_dia_init", input_dia_init=fecha_inexistente)
+    fecha_anterior = Dia.filtro(fecha__lt=fecha_inexistente).last().fecha
+    fecha_posterior = Dia.filtro(fecha__gt=fecha_inexistente).first().fecha
+    fechas = [str2date(x.text[-10:]) for x in browser.esperar_elementos("class_span_fecha_dia")]
+    assert fecha_anterior in fechas
+    assert fecha_posterior in fechas
+    assert fecha_inexistente not in fechas
+
     # Lo mismo si seleccionamos un día que no contenga movimientos.
+    fecha_sin_movs = fecha_tardia - timedelta(1)
+    browser.completar_form(boton="id_btn_buscar_dia_init", input_dia_init=fecha_sin_movs)
+    fecha_anterior = Dia.filtro(fecha__lt=fecha_sin_movs).last().fecha
+    fechas = [str2date(x.text[-10:]) for x in browser.esperar_elementos("class_span_fecha_dia")]
+    assert fecha_sin_movs not in fechas
+    assert fecha_anterior in fechas
+    assert fecha_tardia in fechas
+
+    # Si buscamos un día con una cuenta seleccionada, sólo se tendrán en cuenta
+    # los días en los que haya movimientos de la cuenta seleccionada, y sólo se
+    # mostrarán esos movimientos dentro de los días.
+
+    # Lo mismo si lo hacemos con un titular seleccionado.
 
 
 def test_home_monedas(
