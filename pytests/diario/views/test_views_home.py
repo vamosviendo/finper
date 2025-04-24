@@ -117,10 +117,10 @@ def test_si_recibe_sk_de_cuenta_actualiza_context_con_dias_con_movimientos_de_la
 
 
 def test_si_recibe_sk_de_cuenta_pasa_solo_los_ultimos_7_dias_con_movimientos_de_la_cuenta(
-        cuenta, mas_de_7_dias, client):
+        cuenta, mas_de_28_dias_con_dias_sin_movimientos, client):
     response = client.get(reverse('cuenta', args=[cuenta.sk]))
     assert len(response.context['dias']) == 7
-    assert mas_de_7_dias.first() not in response.context.get('dias')
+    assert mas_de_28_dias_con_dias_sin_movimientos.first() not in response.context.get('dias')
 
 
 def test_si_recibe_sk_de_cuenta_pasa_saldo_de_cuenta_como_saldo_general(

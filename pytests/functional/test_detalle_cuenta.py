@@ -7,6 +7,7 @@ from selenium.webdriver.common.by import By
 from diario.models import CuentaAcumulativa, CuentaInteractiva, Dia, Movimiento
 from pytests.functional.helpers import texto_en_hijos_respectivos
 from utils.numeros import float_format
+from utils.tiempo import str2date
 
 
 @pytest.fixture
@@ -37,6 +38,78 @@ def entrada_posterior_subcuenta(subcuenta_otro_titular: CuentaInteractiva, fecha
         cta_entrada=subcuenta_otro_titular,
         fecha=fecha_posterior,
     )
+
+
+@pytest.fixture
+def subsubcuenta_1_con_movimientos(
+        subsubcuenta: CuentaInteractiva,
+        dia: Dia, dia_posterior: Dia, dia_tardio: Dia) -> CuentaInteractiva:
+    Movimiento.crear(
+        concepto='entrada en subsubcuenta 1',
+        importe=34,
+        cta_entrada=subsubcuenta,
+        dia=dia,
+    )
+    Movimiento.crear(
+        concepto='entrada posterior en subsubcuenta 2',
+        importe=242,
+        cta_entrada=subsubcuenta,
+        dia=dia_posterior,
+    )
+    Movimiento.crear(
+        concepto='salida de subsubcuenta 1',
+        importe=49,
+        cta_salida=subsubcuenta,
+        dia=dia_tardio,
+    )
+
+    return subsubcuenta
+
+
+@pytest.fixture
+def subsubcuenta_2_con_movimientos(
+        subsubcuenta_2: CuentaInteractiva,
+        dia: Dia, dia_posterior: Dia) -> CuentaInteractiva:
+    Movimiento.crear(
+        concepto='entrada en subsubcuenta 2',
+        importe=25,
+        cta_entrada=subsubcuenta_2,
+        dia=dia,
+    )
+    Movimiento.crear(
+        concepto='entrada posterior en subsubcuenta 2',
+        importe=158,
+        cta_entrada=subsubcuenta_2,
+        dia=dia_posterior,
+    )
+    return subsubcuenta_2
+
+
+@pytest.fixture
+def subsubcuenta_3_con_movimientos(
+        subsubcuenta_2: CuentaInteractiva,
+        dia: Dia, dia_tardio: Dia) -> CuentaInteractiva:
+    ssc3 = subsubcuenta_2.cta_madre.agregar_subcuenta(
+        nombre='subsubcuenta 3',
+        sk='ssc3',
+        titular=subsubcuenta_2.titular,
+        fecha=dia.fecha
+    )
+
+    Movimiento.crear(
+        concepto='entrada en subsubcuenta 3',
+        importe=28,
+        cta_entrada=ssc3,
+        dia=dia,
+    )
+    Movimiento.crear(
+        concepto='entrada tardía en subsubcuenta 3',
+        importe=281,
+        cta_entrada=ssc3,
+        dia=dia_tardio,
+    )
+
+    return ssc3
 
 
 def test_detalle_de_cuenta_interactiva(
@@ -83,17 +156,18 @@ def test_detalle_de_cuenta_interactiva(
     browser.ir_a_pag(reverse('cuenta', args=[cuenta.sk]))
     dias_pag = browser.esperar_elementos("class_div_dia")
 
-    fecha_dia = dias_pag[1].esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text
+    fecha_dia = dias_pag[1].esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text[-10:]
     dias_pag[1].esperar_elementos("class_row_mov")[0].esperar_elemento("class_link_movimiento", By.CLASS_NAME).click()
 
     dias_pag_nueva = browser.comparar_dias_de(cuenta)
     assert "mov_selected" in dias_pag_nueva[1].esperar_elementos("class_row_mov")[0].get_attribute("class")
+
     # Y vemos que en el saldo de la página aparece el saldo histórico
     # de la cuenta al momento del movimiento
     nombre_cuenta = browser.esperar_elemento(
         'id_titulo_saldo_gral'
     ).text.strip()
-    movimiento = cuenta.movs().get(dia=Dia.tomar(fecha=fecha_dia[-10:]), orden_dia=0)
+    movimiento = cuenta.movs().filter(dia=Dia.tomar(fecha=fecha_dia)).first()
 
     assert nombre_cuenta == (f"{cuenta.nombre} (fecha alta: {cuenta.fecha_creacion}) "
                               f"en movimiento {movimiento.orden_dia} "
@@ -246,78 +320,6 @@ def test_detalle_de_cuenta_acumulativa(
         assert capitales_historicos[index] == float_format(titular.capital(movimiento))
 
 
-@pytest.fixture
-def subsubcuenta_1_con_movimientos(
-        subsubcuenta: CuentaInteractiva,
-        dia: Dia, dia_posterior: Dia, dia_tardio: Dia) -> CuentaInteractiva:
-    Movimiento.crear(
-        concepto='entrada en subsubcuenta 1',
-        importe=34,
-        cta_entrada=subsubcuenta,
-        dia=dia,
-    )
-    Movimiento.crear(
-        concepto='entrada posterior en subsubcuenta 2',
-        importe=242,
-        cta_entrada=subsubcuenta,
-        dia=dia_posterior,
-    )
-    Movimiento.crear(
-        concepto='salida de subsubcuenta 1',
-        importe=49,
-        cta_salida=subsubcuenta,
-        dia=dia_tardio,
-    )
-
-    return subsubcuenta
-
-
-@pytest.fixture
-def subsubcuenta_2_con_movimientos(
-        subsubcuenta_2: CuentaInteractiva,
-        dia: Dia, dia_posterior: Dia) -> CuentaInteractiva:
-    Movimiento.crear(
-        concepto='entrada en subsubcuenta 2',
-        importe=25,
-        cta_entrada=subsubcuenta_2,
-        dia=dia,
-    )
-    Movimiento.crear(
-        concepto='entrada posterior en subsubcuenta 2',
-        importe=158,
-        cta_entrada=subsubcuenta_2,
-        dia=dia_posterior,
-    )
-    return subsubcuenta_2
-
-
-@pytest.fixture
-def subsubcuenta_3_con_movimientos(
-        subsubcuenta_2: CuentaInteractiva,
-        dia: Dia, dia_tardio: Dia) -> CuentaInteractiva:
-    ssc3 = subsubcuenta_2.cta_madre.agregar_subcuenta(
-        nombre='subsubcuenta 3',
-        sk='ssc3',
-        titular=subsubcuenta_2.titular,
-        fecha=dia.fecha
-    )
-
-    Movimiento.crear(
-        concepto='entrada en subsubcuenta 3',
-        importe=28,
-        cta_entrada=ssc3,
-        dia=dia,
-    )
-    Movimiento.crear(
-        concepto='entrada tardía en subsubcuenta 3',
-        importe=281,
-        cta_entrada=ssc3,
-        dia=dia_tardio,
-    )
-
-    return ssc3
-
-
 def test_detalle_de_subcuenta(
         browser, cuenta_acumulativa, subsubcuenta_1_con_movimientos, subsubcuenta_2_con_movimientos,
         subsubcuenta_3_con_movimientos):
@@ -383,3 +385,44 @@ def test_detalle_de_subcuenta(
         x.text for x in browser.esperar_elementos("class_div_saldo_hermana")]
     for index, cta in enumerate(subsubcuenta_1_con_movimientos.hermanas()):
         assert saldos_historicos[index] == f"Saldo de cuenta hermana {cta.nombre}: {float_format(cta.saldo(movimiento))}"
+
+
+def test_busqueda_de_fecha_en_detalle_de_cuenta(browser, cuenta, cuenta_2, mas_de_28_dias_con_dias_sin_movimientos):
+    # Vamos a la página de detalle de una cuenta
+    browser.ir_a_pag(reverse("cuenta", args=[cuenta.sk]))
+
+    # Si completamos el form de búsqueda con una fecha determinada, somos llevados
+    # a la página que contiene esa fecha teniendo en cuenta solamente los días
+    # que contengan movimientos en los que interviene la cuenta.
+    mov = Movimiento.tomar(sk="2010112600")
+    mov2 = Movimiento.tomar(sk="2010112400")
+    mov_cuenta_2 = Movimiento.tomar(sk="2010112500")
+    mov2_cuenta_2 = Movimiento.crear(
+        concepto='Movimiento de otra cuenta', importe=47,
+        cta_entrada=cuenta_2, fecha=mov2.fecha
+    )
+
+    browser.completar_form(boton="id_btn_buscar_dia_init", input_dia_init=mov.fecha)
+
+    # El url de la página de destino corresponde a la cuenta
+    browser.assert_url(reverse("cuenta", args=[cuenta.sk]))
+
+    # En la página se muestran solamente los días con movimientos de la cuenta.
+    # No se muestran los demás días.
+    fechas = [str2date(x.text[-10:]) for x in browser.esperar_elementos("class_span_fecha_dia")]
+    assert mov.fecha in fechas
+    assert mov_cuenta_2.fecha not in fechas
+
+    # Si en alguno de los días que se muestran hay movimientos que no involucren
+    # a la cuenta, esos movimientos no se muestran.
+    assert mov2.fecha in fechas, "Justo ese movimiento no se encuentra entre las fechas de la página. Probar con otro"
+    dia = next(
+        x for x in browser.esperar_elementos("class_div_dia")
+        if str2date(x.esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text[-10:]) == mov2.fecha
+    )
+    orden_movs_dia = [
+        x.esperar_elemento("class_td_orden_dia", By.CLASS_NAME).text
+        for x in dia.esperar_elementos("class_row_mov")
+    ]
+    assert str(mov2.orden_dia) in orden_movs_dia
+    assert str(mov2_cuenta_2.orden_dia) not in orden_movs_dia

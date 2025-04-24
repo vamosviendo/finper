@@ -224,7 +224,13 @@
         </ul>
 
         <!-- Búsqueda por día -->
-        <form id="id_form_buscar_dia_init" class="d-flex mb-0" method="get" action="{% url "home" %}#id_section_movimientos">
+        <form id="id_form_buscar_dia_init" class="d-flex mb-0"
+              method="get"
+              {% if cuenta %}
+                action="{% url 'cuenta' cuenta.sk %}#id_section_movimientos"
+              {% else %}
+                action="{% url 'home' %}#id_section_movimientos"
+              {% endif %}
           <div class="input-group">
             <input id="id_input_dia_init" type="date" name="fecha"
                    class="form-control" placeholder="YYYY-MM-DD" aria-label="Buscar día">

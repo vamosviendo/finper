@@ -70,6 +70,7 @@ def mas_de_7_dias(
         dia_con_movs: Dia,
         titular: Titular,
         cuenta: CuentaInteractiva,
+        cuenta_2: CuentaInteractiva,
         dia_temprano: Dia,
         dia_tardio_con_movs: Dia,
         dia_posterior_con_movs: Dia,
@@ -78,13 +79,14 @@ def mas_de_7_dias(
         dia_hoy: Dia) -> QuerySet[Dia]:
     titular.fecha_alta = date(2001, 1, 2)
     titular.clean_save()
-    cuenta.fecha_creacion = date(2001, 1, 2)
+    cuenta.fecha_creacion = cuenta_2.fecha_creacion = date(2001, 1, 2)
     cuenta.clean_save()
+    cuenta_2.clean_save()
     Movimiento.crear(fecha=dia_temprano.fecha, concepto="mov", cta_entrada=cuenta, importe=100)
-    Movimiento.crear(fecha=dia_tardio_plus.fecha, concepto="mov", cta_entrada=cuenta, importe=100)
+    Movimiento.crear(fecha=dia_tardio_plus.fecha, concepto="mov", cta_entrada=cuenta_2, importe=100)
     Movimiento.crear(fecha=dia_hoy.fecha, concepto="mov", cta_entrada=cuenta, importe=100)
     Movimiento.crear(
-        fecha=date(2001, 1, 2), concepto="mov", cta_entrada=cuenta, importe=100)
+        fecha=date(2001, 1, 2), concepto="mov", cta_entrada=cuenta_2, importe=100)
     return Dia.todes()
 
 
@@ -93,10 +95,13 @@ def mas_de_28_dias_con_dias_sin_movimientos(
         mas_de_7_dias: QuerySet[Dia],
         fecha_tardia: date,
         fecha: date,
-        cuenta: CuentaInteractiva) -> QuerySet[Dia]:
+        cuenta: CuentaInteractiva,
+        cuenta_2: CuentaInteractiva) -> QuerySet[Dia]:
     Dia.crear(fecha=fecha_tardia - timedelta(1))
+    c = cuenta
     for x in range(1, 23):
+        c = cuenta_2 if c == cuenta else cuenta
         fecha_dia = fecha + timedelta(x)
-        Movimiento.crear(fecha=fecha_dia, concepto=f"mov día {fecha_dia}", cta_entrada=cuenta, importe=100)
+        Movimiento.crear(fecha=fecha_dia, concepto=f"mov día {fecha_dia}", cta_entrada=c, importe=100)
     assert Dia.cantidad() > 28
     return Dia.todes()
