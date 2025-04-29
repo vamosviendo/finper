@@ -68,7 +68,9 @@ class Dia (MiModel):
         return cls.ultime().pk
 
     @classmethod
-    def con_movimientos(cls) -> QuerySet[Self]:
+    def con_movimientos(cls, cuenta: Cuenta | None = None) -> QuerySet[Self]:
+        if cuenta:
+            return cuenta.dias()
         dias = Dia.objects.annotate(mov_count=Count('movimiento_set'))
         return dias.filter(mov_count__gt=0).order_by('fecha')
 

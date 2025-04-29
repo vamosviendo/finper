@@ -17,3 +17,8 @@ def test_devuelve_dias_ordenados_por_fecha(entrada, entrada_anterior, salida_pos
     for dia in [entrada_anterior.dia, entrada.dia, salida_posterior.dia]:
         print(dia)
     assert list(Dia.con_movimientos()) == [entrada_anterior.dia, entrada.dia, salida_posterior.dia]
+
+
+def test_si_recibe_cuenta_devuelve_solo_dias_con_movimientos_de_la_cuenta(
+        cuenta, entrada, entrada_posterior_cuenta_ajena, entrada_tardia, entrada_tardia_cuenta_ajena):
+    assert list(Dia.con_movimientos(cuenta=cuenta)) == [entrada.dia, entrada_tardia.dia]
