@@ -10,7 +10,4 @@ register = template.Library()
 
 @register.filter
 def movs_seleccionados(dia: Dia, ente: Cuenta | Titular | None) -> QuerySet[Movimiento]:
-    try:
-        return ente.movs().filter(dia=dia)
-    except AttributeError:
-        return dia.movimientos
+    return dia.movimientos_filtrados(ente)
