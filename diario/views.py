@@ -46,14 +46,12 @@ class HomeView(TemplateView):
             if movimiento else ""
 
         if "fecha" in querydict and "page" not in querydict:
-            try:
-                fecha = querydict["fecha"]
-                posicion = Dia.con_movimientos().filter(fecha__gt=fecha).count()
-                pagina = (posicion // 7) + 1
-                if pagina > 0:
-                    querydict["page"] = str(pagina)
-            except (ValueError, TypeError):
-                pass
+            fecha = querydict["fecha"]
+            queryset = cuenta.dias() if cuenta else Dia.con_movimientos()
+            posicion = queryset.filter(fecha__gt=fecha).count()
+            pagina = (posicion // 7) + 1
+            if pagina > 0:
+                querydict["page"] = str(pagina)
 
         context.update({
             'movimiento': movimiento or None,
