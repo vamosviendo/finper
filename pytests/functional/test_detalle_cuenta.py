@@ -395,17 +395,16 @@ def test_busqueda_de_fecha_en_detalle_de_cuenta(browser, cuenta, cuenta_2, mas_d
     # a la página que contiene esa fecha teniendo en cuenta solamente los días
     # que contengan movimientos en los que interviene la cuenta.
 
-    dia = cuenta.dias()[6]  # Movimiento de un día con sólo movimientos de la cuenta anterior a los últimos 7
-    dia2 = cuenta.dias()[7]  # Movimiento de un día adyacente a mov (el día debería aparecer en la misma página)
-    # Movimiento adyacente a mov de otra cuenta (el día no debería aparecer en la página):
+    dia = cuenta.dias()[6]  # Dia con sólo movimientos de la cuenta anterior a los últimos 7
+    dia2 = cuenta.dias()[7]  # Dia adyacente a dia (debería aparecer en la misma página)
+    # Dia adyacente a dia sin movimientos de la cuenta (el día no debería aparecer en la página):
     dias_no_cuenta = [x for x in Dia.todes() if x not in cuenta.dias()]
     dia_no_cuenta = dias_no_cuenta[7]
-    # Movimiento de la misma fecha que mov2 pero de otra cuenta (no debería aparecer en el día
-    # en el que aparece mov2)
+    # Movimiento de dia2 pero de otra cuenta (no debería aparecer en día2)
     mov_cuenta_dia2 = Movimiento.tomar(dia=dia2)
     mov_no_cuenta_dia2 = Movimiento.crear(
         concepto='Movimiento de otra cuenta', importe=47,
-        cta_entrada=cuenta_2, fecha=dia2.fecha
+        cta_entrada=cuenta_2, dia=dia2
     )
 
     browser.completar_form(boton="id_btn_buscar_dia_init", input_dia_init=dia.fecha)
