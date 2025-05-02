@@ -152,7 +152,7 @@ def test_detalle_titular(
     browser.assert_url(reverse('home'))
 
 
-def test_busqueda_de_fecha_en_detalle_de_titular(browser, titular, cuenta_ajena, mas_de_28_dias_con_movs_de_distintos_titulares):
+def test_busqueda_de_fecha_en_detalle_de_titular(browser, titular, cuenta_ajena, muchos_dias_distintos_titulares):
     # Vamos a la página de detalle de un titular
     browser.ir_a_pag(reverse("titular", args=[titular.sk]))
 

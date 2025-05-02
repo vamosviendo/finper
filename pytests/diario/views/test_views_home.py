@@ -116,10 +116,10 @@ class TestDetalleCuenta:
         assert list(response.context['dias']) == [entrada.dia, entrada_anterior.dia]
 
     def test_pasa_solo_los_ultimos_7_dias_con_movimientos_de_la_cuenta(
-            self, cuenta, mas_de_28_dias_con_dias_sin_movimientos, client):
+            self, cuenta, muchos_dias, client):
         response = client.get(reverse('cuenta', args=[cuenta.sk]))
         assert len(response.context['dias']) == 7
-        assert mas_de_28_dias_con_dias_sin_movimientos.first() not in response.context.get('dias')
+        assert muchos_dias.first() not in response.context.get('dias')
 
     def test_pasa_saldo_de_cuenta_como_saldo_general(
             self, cuenta_con_saldo, entrada, client):
@@ -140,13 +140,13 @@ class TestDetalleCuenta:
             f'del {entrada.fecha} ({entrada.concepto})')
 
     def test_si_recibe_querydict_con_fecha_calcula_la_pagina_en_base_a_los_movimientos_de_la_cuenta(
-            self, mas_de_28_dias_con_dias_sin_movimientos, cuenta, client):
+            self, muchos_dias, cuenta, client):
         dia = cuenta.dias()[6]
         response = client.get(f"{reverse('cuenta', args=[cuenta.sk])}?fecha={str(dia)}")
         assert response.context["dias"].number == 2
 
     def test_si_recibe_querydict_con_fecha_muestra_solo_dias_con_movimientos_de_la_cuenta(
-            self, mas_de_28_dias_con_dias_sin_movimientos, cuenta, client):
+            self, muchos_dias, cuenta, client):
         dias_cuenta = cuenta.dias()
         dias_no_cuenta = [x for x in Dia.todes() if x not in dias_cuenta]
         dia = dias_cuenta[6]
@@ -200,14 +200,14 @@ class TestDetalleTitular:
             f"del {entrada.fecha} ({entrada.concepto})"
 
     def test_si_recibe_querydict_con_fecha_calcula_la_pagina_en_base_a_los_movimientos_de_cuentas_del_titular(
-            self, mas_de_28_dias_con_movs_de_distintos_titulares, titular, client):
+            self, muchos_dias_distintos_titulares, titular, client):
         # print("Dias titular", *titular.dias(), sep="\n")
         dia = titular.dias()[6]
         response = client.get(f"{reverse('titular', args=[titular.sk])}?fecha={str(dia)}")
         assert response.context["dias"].number == 4
 
     def test_si_recibe_querydict_con_fecha_muestra_solo_dias_con_movimientos_de_la_cuenta(
-            self, mas_de_28_dias_con_movs_de_distintos_titulares, titular, client):
+            self, muchos_dias_distintos_titulares, titular, client):
         dias_titular = titular.dias()
         dias_no_titular = [x for x in Dia.todes() if x not in dias_titular]
         dia = dias_titular[4]
@@ -255,20 +255,20 @@ class TestDetalleMovimiento:
 
 class TestBusquedaFecha:
     def test_si_recibe_querydict_con_fecha_busca_pagina_con_la_fecha_recibida(
-            self, mas_de_28_dias_con_dias_sin_movimientos, dia, client):
+            self, muchos_dias, dia, client):
         response = client.get(f"/?fecha={str(dia)}")
         assert \
             response.context["dias"].number == \
             (Dia.con_movimientos().filter(fecha__gt=dia.fecha).count() // 7) + 1
 
     def test_si_la_fecha_recibida_en_el_querydict_no_corresponde_a_un_dia_existente_muestra_pagina_con_dias_adyacentes(
-            self, mas_de_28_dias_con_dias_sin_movimientos, client):
+            self, muchos_dias, client):
         response1 = client.get("/?fecha=2011-04-21")
         response2 = client.get("/?fecha=2011-05-01")
         assert response1.context["dias"].number == response2.context["dias"].number
 
     def test_si_la_fecha_recibida_en_el_querydict_corresponde_a_un_dia_sin_movimientos_muestra_pagina_con_dias_adyacentes(
-            self, mas_de_28_dias_con_dias_sin_movimientos, fecha_tardia, client):
+            self, muchos_dias, fecha_tardia, client):
         dia_sin_movs = Dia.tomar(fecha=fecha_tardia - timedelta(1))
         response1 = client.get(f"/?fecha={dia_sin_movs}")
         response2 = client.get(f"/?fecha={Dia.tomar(fecha=fecha_tardia)}")

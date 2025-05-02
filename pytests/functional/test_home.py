@@ -17,7 +17,7 @@ def test_home(
         cuenta, cuenta_2, cuenta_3, cuenta_acumulativa,
         entrada, traspaso, entrada_posterior_otra_cuenta,
         fecha, fecha_tardia,
-        mas_de_28_dias_con_dias_sin_movimientos):
+        muchos_dias):
     # Vamos a la página principal
     browser.ir_a_pag()
 

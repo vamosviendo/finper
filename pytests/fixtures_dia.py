@@ -92,7 +92,7 @@ def mas_de_7_dias(
 
 
 @pytest.fixture
-def mas_de_28_dias_con_dias_sin_movimientos(
+def muchos_dias(
         mas_de_7_dias: QuerySet[Dia],
         fecha_tardia: date,
         fecha: date,
@@ -109,7 +109,7 @@ def mas_de_28_dias_con_dias_sin_movimientos(
 
 
 @pytest.fixture
-def mas_de_28_dias_con_movs_de_distintos_titulares(cuenta, cuenta_2, cuenta_ajena, otro_titular, mas_de_28_dias_con_dias_sin_movimientos):
+def muchos_dias_distintos_titulares(cuenta, cuenta_2, cuenta_ajena, otro_titular, muchos_dias):
     cuenta_ajena.fecha_creacion = otro_titular.fecha_alta = date(2001, 1, 2)
     otro_titular.clean_save()
     cuenta_ajena.clean_save()

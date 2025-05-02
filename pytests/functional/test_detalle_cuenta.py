@@ -387,7 +387,7 @@ def test_detalle_de_subcuenta(
         assert saldos_historicos[index] == f"Saldo de cuenta hermana {cta.nombre}: {float_format(cta.saldo(movimiento))}"
 
 
-def test_busqueda_de_fecha_en_detalle_de_cuenta(browser, cuenta, cuenta_2, mas_de_28_dias_con_dias_sin_movimientos):
+def test_busqueda_de_fecha_en_detalle_de_cuenta(browser, cuenta, cuenta_2, muchos_dias):
     # Vamos a la página de detalle de una cuenta
     browser.ir_a_pag(reverse("cuenta", args=[cuenta.sk]))
 
