@@ -47,7 +47,7 @@ class HomeView(TemplateView):
 
         if "fecha" in querydict and "page" not in querydict:
             fecha = querydict["fecha"]
-            queryset = cuenta.dias() if cuenta else Dia.con_movimientos()
+            queryset = cuenta.dias() if cuenta else titular.dias() if titular else Dia.con_movimientos()
             posicion = queryset.filter(fecha__gt=fecha).count()
             pagina = (posicion // 7) + 1
             if pagina > 0:

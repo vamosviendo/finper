@@ -199,6 +199,23 @@ class TestDetalleTitular:
             f"Capital de {titular.nombre} en movimiento {entrada.orden_dia} " \
             f"del {entrada.fecha} ({entrada.concepto})"
 
+    def test_si_recibe_querydict_con_fecha_calcula_la_pagina_en_base_a_los_movimientos_de_cuentas_del_titular(
+            self, mas_de_28_dias_con_movs_de_distintos_titulares, titular, client):
+        # print("Dias titular", *titular.dias(), sep="\n")
+        dia = titular.dias()[6]
+        response = client.get(f"{reverse('titular', args=[titular.sk])}?fecha={str(dia)}")
+        assert response.context["dias"].number == 4
+
+    def test_si_recibe_querydict_con_fecha_muestra_solo_dias_con_movimientos_de_la_cuenta(
+            self, mas_de_28_dias_con_movs_de_distintos_titulares, titular, client):
+        dias_titular = titular.dias()
+        dias_no_titular = [x for x in Dia.todes() if x not in dias_titular]
+        dia = dias_titular[4]
+        dia_no_titular = dias_no_titular[4]
+        response = client.get(f"{reverse('titular', args=[titular.sk])}?fecha={str(dia)}")
+        assert dia in response.context["dias"]
+        assert dia_no_titular not in response.context["dias"]
+
 
 class TestDetalleMovimiento:
     def test_pasa_movimiento_a_template(self, entrada, client):

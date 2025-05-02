@@ -228,6 +228,8 @@
               method="get"
               {% if cuenta %}
                 action="{% url 'cuenta' cuenta.sk %}#id_section_movimientos"
+              {% elif titular %}
+                action="{% url 'titular' titular.sk %}#id_section_movimientos"
               {% else %}
                 action="{% url 'home' %}#id_section_movimientos"
               {% endif %}

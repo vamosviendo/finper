@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import QuerySet
 
 from diario.models import Dia, Movimiento, Titular, CuentaInteractiva
+from utils.varios import el_que_no_es
 
 
 @pytest.fixture
@@ -100,8 +101,27 @@ def mas_de_28_dias_con_dias_sin_movimientos(
     Dia.crear(fecha=fecha_tardia - timedelta(1))
     c = cuenta
     for x in range(1, 23):
-        c = cuenta_2 if c == cuenta else cuenta
+        c = el_que_no_es(c, cuenta, cuenta_2)
         fecha_dia = fecha + timedelta(x)
         Movimiento.crear(fecha=fecha_dia, concepto=f"mov día {fecha_dia}", cta_entrada=c, importe=100)
     assert Dia.cantidad() > 28
+    return Dia.todes()
+
+
+@pytest.fixture
+def mas_de_28_dias_con_movs_de_distintos_titulares(cuenta, cuenta_2, cuenta_ajena, otro_titular, mas_de_28_dias_con_dias_sin_movimientos):
+    cuenta_ajena.fecha_creacion = otro_titular.fecha_alta = date(2001, 1, 2)
+    otro_titular.clean_save()
+    cuenta_ajena.clean_save()
+    c = cuenta_2
+    for mov in cuenta_2.movs():
+        c = el_que_no_es(c, cuenta_2, cuenta_ajena)
+        if c == cuenta_ajena:
+            mov.cta_entrada = c
+            mov.clean_save()
+    fecha = Dia.ultime().fecha
+    for x in range(1, 14):
+        c = el_que_no_es(c, cuenta_2, cuenta_ajena)
+        fecha_dia = fecha + timedelta(x)
+        Movimiento.crear(fecha=fecha_dia, concepto=f"mov día {fecha_dia}", cta_entrada=c, importe=100)
     return Dia.todes()
