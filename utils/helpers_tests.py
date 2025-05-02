@@ -15,9 +15,10 @@ def cambiar_fecha_creacion(cuenta: CuentaInteractiva | CuentaAcumulativa, fecha:
     cuenta.fecha_creacion = fecha
     try:
         cuenta.clean_save()
-    except ValidationError:
+    except ValidationError:     # Fecha de alta del titular de la cuenta es posterior a fecha
         cuenta.titular.fecha_alta = fecha
         cuenta.titular.clean_save()
+        cuenta.clean_save()
 
 
 def dividir_en_dos_subcuentas(cuenta: CuentaInteractiva, saldo: float = 0, fecha: date = None) -> CuentaAcumulativa:
