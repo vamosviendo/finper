@@ -10,3 +10,4 @@ class SaldoDiario(MiModel):
 
     class Meta:
         unique_together = ['cuenta', 'dia']
+        ordering = ['dia']

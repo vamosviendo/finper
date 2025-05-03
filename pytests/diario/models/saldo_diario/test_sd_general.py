@@ -16,5 +16,8 @@ def test_hay_solo_un_saldo_diario_por_cuenta_en_un_dia(cuenta, cuenta_2, dia):
     with pytest.raises(ValidationError):
         SaldoDiario.crear(cuenta=cuenta, dia=dia, _importe=90)
 
-def test_saldos_se_ordenan_por_dia():
-    pass
+def test_saldos_se_ordenan_por_dia(cuenta, dia, dia_anterior, dia_posterior):
+    sd = SaldoDiario.crear(cuenta=cuenta, dia=dia, _importe=1)
+    sd_anterior = SaldoDiario.crear(cuenta=cuenta, dia=dia_anterior, _importe=1)
+    sd_posterior = SaldoDiario.crear(cuenta=cuenta, dia=dia_posterior, _importe=1)
+    assert [*SaldoDiario.todes()] == [sd_anterior, sd, sd_posterior]

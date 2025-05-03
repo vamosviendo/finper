@@ -14,7 +14,6 @@ from typing import Self, TYPE_CHECKING
 
 from django.db import models
 
-from utils import errors
 from vvmodel.models import MiModel
 
 from utils.tiempo import Posicion
