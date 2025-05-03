@@ -11,6 +11,7 @@ pytest_plugins = [
     "pytests.fixtures_moneda",
     "pytests.fixtures_movimiento",
     "pytests.fixtures_saldo",
+    "pytests.fixtures_saldo_diario",
     "pytests.fixtures_serial",
     "pytests.fixtures_titular",
 ]
