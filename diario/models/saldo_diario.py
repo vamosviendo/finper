@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 from django.db import models
 
-from diario.models import Movimiento
+from diario.models import Cuenta, Dia
 from vvmodel.models import MiModel
 
 class SaldoDiario(MiModel):
@@ -20,3 +22,7 @@ class SaldoDiario(MiModel):
     @importe.setter
     def importe(self, value: float):
         self._importe = round(value, 2)
+
+    @classmethod
+    def anterior_a(cls, cuenta: Cuenta, dia: Dia):
+        return cls.filtro(cuenta=cuenta, dia__fecha__lt=dia.fecha).last()
