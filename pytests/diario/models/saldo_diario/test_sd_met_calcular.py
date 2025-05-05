@@ -1,4 +1,3 @@
-from datetime import timedelta
 from unittest.mock import ANY, MagicMock
 
 import pytest
@@ -113,7 +112,7 @@ def test_si_moneda_del_movimiento_es_distinta_de_la_de_la_cuenta_suma_importe_de
     sentido_opuesto = el_que_no_es(sentido, "entrada", "salida")
     cuenta = getattr(mov_distintas_monedas, f"cta_{sentido_opuesto}")
     dia = mov_distintas_monedas.dia
-    dia_anterior = Dia.crear(fecha=dia.fecha-timedelta(1))
+    dia_anterior = dia.timedelta(-1)
     saldo_diario_anterior = SaldoDiario.crear(cuenta=cuenta, dia=dia_anterior, importe=3)
     mock_saldo_crear = request.getfixturevalue('mock_saldo_crear')
 
