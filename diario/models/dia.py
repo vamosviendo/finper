@@ -31,6 +31,9 @@ class Dia (MiModel):
     def __str__(self) -> str:
         return self.fecha.strftime('%Y-%m-%d')
 
+    def __gt__(self, otro: Self) -> bool:
+        return self.fecha > otro.fecha
+
     def de_la_semana(self):
         from utils.tiempo import dia_de_la_semana
         return dia_de_la_semana[self.fecha.weekday()]
