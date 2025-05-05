@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 from typing import Optional, Self, TYPE_CHECKING
 
 from django.db import models
@@ -80,6 +80,12 @@ class Dia (MiModel):
     @property
     def movimientos(self) -> models.QuerySet['Movimiento']:
         return self.movimiento_set.all()
+
+    def timedelta(self, cantidad: int) -> Self:
+        try:
+            return Dia.tomar(fecha=self.fecha+timedelta(cantidad))
+        except Dia.DoesNotExist:
+            return Dia.crear(fecha=self.fecha+timedelta(cantidad))
 
     def movimientos_filtrados(
             self, ente: Cuenta | Titular | None = None) -> models.QuerySet['Movimiento']:
