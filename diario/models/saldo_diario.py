@@ -15,6 +15,9 @@ class SaldoDiario(MiModel):
         unique_together = ['cuenta', 'dia']
         ordering = ['dia']
 
+    def __str__(self):
+        return f"{self.cuenta} al {self.dia}: {self.importe}"
+
     @property
     def importe(self) -> float:
         return self._importe
