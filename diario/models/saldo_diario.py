@@ -68,6 +68,11 @@ class SaldoDiario(MiModel):
 
         return saldo_diario.tomar_de_bd()
 
+    def eliminar(self):
+        importe = self.importe
+        self.delete()
+        self._actualizar_posteriores(-importe)
+
     # Métodos protegidos
     def _actualizar_posteriores(self, importe):
         for sd in SaldoDiario.filtro(cuenta=self.cuenta, dia__fecha__gt=self.dia.fecha):
