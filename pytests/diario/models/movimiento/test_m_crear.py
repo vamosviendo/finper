@@ -2,15 +2,19 @@ from unittest.mock import call
 
 import pytest
 
-from diario.models import Movimiento, Saldo, Cuenta, CuentaInteractiva, Moneda, Dia
+from diario.models import Movimiento, Saldo, Cuenta, CuentaInteractiva, Moneda, SaldoDiario
 from utils import errors
 from utils.helpers_tests import cambiar_fecha_creacion
-from utils.varios import el_que_no_es
 
 
 @pytest.fixture
 def mock_generar(mocker):
     return mocker.patch('diario.models.movimiento.Saldo.generar')
+
+
+@pytest.fixture
+def mock_calcular(mocker):
+    return mocker.patch('diario.models.movimiento.SaldoDiario.calcular')
 
 
 @pytest.fixture(autouse=True)
@@ -105,10 +109,22 @@ def test_mov_salida_llama_a_generar_saldo_con_arg_salida(mock_generar, cuenta):
     mock_generar.assert_called_once_with(mov, "salida")
 
 
+@pytest.mark.parametrize("sentido", ["entrada", "salida"])
+def test_llama_a_calcular_saldo_con_arg_correspondiente(mock_calcular, cuenta, sentido):
+    mov = Movimiento.crear("Nuevo mov", 20, **{f"cta_{sentido}": cuenta})
+    mock_calcular.assert_called_once_with(mov, sentido)
+
+
 def test_mov_traspaso_llama_a_generar_saldo_con_salida_False_para_cta_entrada_y_salida_True_para_cta_salida(
         mock_generar, cuenta, cuenta_2):
     mov = Movimiento.crear('Nuevo mov', 20, cuenta, cuenta_2)
     assert mock_generar.call_args_list == [call(mov, "entrada"), call(mov, "salida")]
+
+
+def test_mov_traspaso_llama_a_calcular_saldo_diario_con_salida_False_para_cta_entrada_y_salida_True_para_cta_salida(
+        mock_calcular, cuenta, cuenta_2):
+    mov = Movimiento.crear("Traspaso", 20, cuenta, cuenta_2)
+    assert mock_calcular.call_args_list == [call(mov, "entrada"), call(mov, "salida")]
 
 
 def test_integrativo_genera_saldo_para_cta_entrada(cuenta):
@@ -130,12 +146,47 @@ def test_integrativo_genera_saldo_para_cta_salida(cuenta):
     assert saldo.movimiento == mov
 
 
+@pytest.mark.parametrize("sentido", ["entrada", "salida"])
+def test_integrativo_calcula_saldo_diario_si_no_existe(cuenta, dia, sentido):
+    with pytest.raises(SaldoDiario.DoesNotExist):
+        SaldoDiario.tomar(cuenta=cuenta, dia=dia)
+    mov = Movimiento.crear("Nuevo mov", 20, dia=dia, **{f"cta_{sentido}": cuenta})
+
+    try:
+        saldo = SaldoDiario.objects.get(cuenta=cuenta, dia=mov.dia)
+    except SaldoDiario.DoesNotExist:
+        raise AssertionError("No se calculó saldo diario")
+
+    assert saldo.cuenta.pk == cuenta.pk
+    assert saldo.dia == mov.dia
+
+
+@pytest.mark.parametrize("sentido", ["entrada", "salida"])
+def test_integrativo_modifica_saldo_diario_si_ya_existe(saldo_diario, sentido):
+    importe_saldo_diario = saldo_diario.importe
+    cuenta = saldo_diario.cuenta
+    dia = saldo_diario.dia
+
+    mov = Movimiento.crear("Nuevo mov", 20, dia=dia, **{f"cta_{sentido}": cuenta})
+    saldo_diario.refresh_from_db()
+
+    assert saldo_diario.importe == importe_saldo_diario + getattr(mov, f"importe_cta_{sentido}")
+
+
 def test_integrativo_crear_movimiento_en_fecha_antigua_modifica_saldos_de_fechas_posteriores(
         cuenta, entrada, fecha_anterior):
     cambiar_fecha_creacion(cuenta, fecha_anterior)
     importe_saldo = Saldo.tomar(cuenta=cuenta, movimiento=entrada).importe
     mov_anterior = Movimiento.crear('Movimiento anterior', 30, cuenta, fecha=fecha_anterior)
     assert Saldo.tomar(cuenta=cuenta, movimiento=entrada).importe == importe_saldo + mov_anterior.importe
+
+
+def test_integrativo_crear_movimiento_en_fecha_antigua_modifica_saldos_diarios_posteriores(
+        cuenta, entrada, dia_anterior):
+    cambiar_fecha_creacion(cuenta, dia_anterior.fecha)
+    importe_saldo = SaldoDiario.tomar(cuenta=cuenta, dia=entrada.dia).importe
+    mov_anterior = Movimiento.crear("Movimiento anterior", 30, cuenta, dia=dia_anterior)
+    assert SaldoDiario.tomar(cuenta=cuenta, dia=entrada.dia).importe == importe_saldo + mov_anterior.importe
 
 
 @pytest.mark.parametrize('cta_entrada, cta_salida, moneda, cot', [
@@ -200,7 +251,7 @@ class TestMovimientoEntreCuentasDeDistintosTitulares:
         mov = Movimiento.crear('Entre titulares', imp, ce, cs)
         assert Movimiento.tomar(id=mov.id_contramov).concepto == concepto
 
-    def test_si_cuenta_acreedora_tiene_saldo_cero_concepto_contramovimiento_es_constitución_de_credito(
+    def test_si_cuenta_acreedora_tiene_saldo_cero_concepto_contramovimiento_es_constitucion_de_credito(
             self, credito):
         Movimiento.crear('Devolución', credito.importe, credito.cta_salida, credito.cta_entrada)
         mov = Movimiento.crear('Nuevo crédito', 100, credito.cta_entrada, credito.cta_salida)

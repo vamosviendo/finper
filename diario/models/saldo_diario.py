@@ -1,14 +1,17 @@
 from __future__ import annotations
+from typing import TYPE_CHECKING
 
 from django.db import models
 
-from diario.models import Movimiento, Cuenta, Dia
 from vvmodel.models import MiModel
+
+if TYPE_CHECKING:
+    from diario.models import Movimiento, Cuenta, Dia
+
 
 class SaldoDiario(MiModel):
     cuenta = models.ForeignKey('diario.Cuenta', on_delete=models.CASCADE)
-    dia = models.ForeignKey(
-        'diario.Dia', on_delete=models.CASCADE)
+    dia = models.ForeignKey('diario.Dia', on_delete=models.CASCADE)
     _importe = models.FloatField()
 
     class Meta:

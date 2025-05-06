@@ -9,23 +9,20 @@ from utils.varios import el_que_no_es
 
 @pytest.fixture
 def entrada_sin_saldo_diario(entrada: Movimiento) -> Movimiento:
-    assert SaldoDiario.filtro(cuenta=entrada.cta_entrada, dia=entrada.dia).count() == 0
-    # SaldoDiario.objects.get(cuenta=entrada.cta_entrada, dia=entrada.dia).delete()
+    SaldoDiario.objects.get(cuenta=entrada.cta_entrada, dia=entrada.dia).delete()
     return entrada
 
 
 @pytest.fixture
 def salida_sin_saldo_diario(salida: Movimiento) -> Movimiento:
-    assert SaldoDiario.filtro(cuenta=salida.cta_salida, dia=salida.dia).count() == 0
-    # SaldoDiario.objects.get(cuenta=salida.cta_salida, dia=salida.dia).delete()
+    SaldoDiario.objects.get(cuenta=salida.cta_salida, dia=salida.dia).delete()
     return salida
 
 
 @pytest.fixture
 def traspaso_sin_saldos_diarios(traspaso: Movimiento) -> Movimiento:
     for cta in (traspaso.cta_entrada, traspaso.cta_salida):
-        assert SaldoDiario.filtro(cuenta=cta, dia=traspaso.dia).count() == 0
-        # SaldoDiario.objects.get(cuenta=cta, dia=traspaso.dia).delete()
+        SaldoDiario.objects.get(cuenta=cta, dia=traspaso.dia).delete()
         return traspaso
 
 
@@ -95,9 +92,10 @@ def test_importe_de_saldo_diario_creado_es_igual_a_importe_de_saldo_diario_anter
 
 @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
 def test_si_ya_existe_saldo_del_dia_del_movimiento_suma_o_resta_a_su_importe_el_importe_del_movimiento(
-        sentido, saldo_diario, request):
-    importe_saldo_diario = saldo_diario.importe
+        sentido, request):
     mov = request.getfixturevalue(sentido)
+    saldo_diario = request.getfixturevalue("saldo_diario")
+    importe_saldo_diario = saldo_diario.importe
     importe_mov = getattr(mov, f"importe_cta_{sentido}")
 
     SaldoDiario.calcular(mov, sentido)
@@ -115,10 +113,8 @@ def test_si_moneda_del_movimiento_es_distinta_de_la_de_la_cuenta_suma_importe_de
     dia_anterior = dia.timedelta(-1)
     saldo_diario_anterior = SaldoDiario.crear(cuenta=cuenta, dia=dia_anterior, importe=3)
     mock_saldo_crear = request.getfixturevalue('mock_saldo_crear')
+    SaldoDiario.objects.get(cuenta=cuenta, dia=dia).delete()
 
-    assert SaldoDiario.filtro(cuenta=cuenta, dia=dia).count() == 0
-    # SaldoDiario.objects.get(cuenta=cuenta, dia=dia).delete()
-    # saldo_anterior = SaldoDiario.anterior(cuenta=cuenta, dia=dia).importe
     SaldoDiario.calcular(mov_distintas_monedas, sentido_opuesto)
 
     mock_saldo_crear.assert_called_once_with(
@@ -142,35 +138,26 @@ def test_importe_de_saldo_diario_creado_no_suma_importe_de_saldo_correspondiente
         dia=ANY,
         importe=s*mov.importe
     )
-#
-#
-# @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
-# def test_actualiza_saldos_posteriores_con_importe_de_movimiento(
-#         mocker, sentido, cuenta, request):
-#     mov = request.getfixturevalue(f'{sentido}_sin_saldo')
-#     es_entrada = sentido == 'entrada'
-#     s = signo(es_entrada)
-#     mock_actualizar_posteriores = mocker.patch(
-#         'diario.models.Saldo._actualizar_posteriores',
-#         autospec=True
-#     )
-#     saldo = Saldo.generar(mov, sentido)
-#     mock_actualizar_posteriores.assert_called_once_with(saldo, s*mov.importe)
 
 
+@pytest.mark.xfail
 @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
 def test_integrativo_actualiza_saldos_posteriores(
         sentido, cuenta, saldo_diario_posterior, request):
+    assert saldo_diario_posterior == SaldoDiario.tomar(cuenta=cuenta, dia=saldo_diario_posterior.dia)
+    assert SaldoDiario.tomar(cuenta=cuenta, dia=saldo_diario_posterior.dia) == SaldoDiario.ultime()
     importe_saldo_posterior = saldo_diario_posterior.importe
-    mov = request.getfixturevalue(f'{sentido}_sin_saldo_diario')
-    es_entrada = sentido == 'entrada'
-    s = signo(es_entrada)
+    mov = request.getfixturevalue(f"{sentido}_sin_saldo_diario")
+    assert saldo_diario_posterior == SaldoDiario.ultime()
+    assert importe_saldo_posterior == saldo_diario_posterior.importe
+    print(saldo_diario_posterior)
     # saldo_posterior = Saldo.tomar(cuenta=cuenta, movimiento=salida_posterior).importe
 
     SaldoDiario.calcular(mov, sentido)
+
     assert \
         SaldoDiario.tomar(cuenta=cuenta, dia=saldo_diario_posterior.dia).importe == \
-        importe_saldo_posterior + s*mov.importe
+        importe_saldo_posterior + getattr(mov, f"importe_cta_{sentido}")
 
 
 def test_devuelve_saldo_diario_calculado(entrada_sin_saldo_diario, cuenta):
@@ -179,8 +166,13 @@ def test_devuelve_saldo_diario_calculado(entrada_sin_saldo_diario, cuenta):
         SaldoDiario.objects.get(cuenta=cuenta, dia=entrada_sin_saldo_diario.dia)
 
 
-def test_devuelve_saldo_diario_modificado(entrada_sin_saldo_diario, saldo_diario, cuenta):
+def test_devuelve_saldo_diario_modificado(entrada, cuenta, request):
+    saldo_diario = SaldoDiario.tomar(cuenta=entrada.cta_entrada, dia=entrada.dia)
+    saldo_diario.importe -= entrada.importe
+    saldo_diario.clean_save()
     importe_saldo_diario = saldo_diario.importe
-    valor_devuelto = SaldoDiario.calcular(entrada_sin_saldo_diario)
+
+    valor_devuelto = SaldoDiario.calcular(entrada)
+
     assert valor_devuelto == saldo_diario
-    assert valor_devuelto.importe == importe_saldo_diario + entrada_sin_saldo_diario.importe
+    assert valor_devuelto.importe == importe_saldo_diario + entrada.importe

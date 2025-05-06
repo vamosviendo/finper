@@ -16,6 +16,7 @@ from utils.varios import el_que_no_es
 from diario.consts import *
 from diario.models.dia import Dia
 from diario.models.saldo import Saldo
+from diario.models.saldo_diario import SaldoDiario
 
 if TYPE_CHECKING:
     from diario.models import Titular, CuentaInteractiva, Cuenta, Moneda
@@ -449,8 +450,10 @@ class Movimiento(MiModel):
             super().save(*args, **kwargs)
             if self.cta_entrada:
                 Saldo.generar(self, "entrada")
+                SaldoDiario.calcular(self, "entrada")
             if self.cta_salida:
                 Saldo.generar(self, "salida")
+                SaldoDiario.calcular(self, "salida")
 
         else:  # Movimiento existente
             self.viejo = self.tomar_de_bd()
