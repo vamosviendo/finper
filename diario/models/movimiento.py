@@ -398,11 +398,16 @@ class Movimiento(MiModel):
             raise errors.ErrorCuentaEsAcumulativa(
                 errors.MOVIMIENTO_CON_CA_ELIMINADO)
 
-        if self.cta_entrada:
-            self.cta_entrada.saldo_set.get(movimiento=self).eliminar()
-
-        if self.cta_salida:
-            self.cta_salida.saldo_set.get(movimiento=self).eliminar()
+        for sentido in ("entrada", "salida"):
+            cuenta = getattr(self, f"cta_{sentido}")
+            if cuenta is not None:
+                cuenta.saldo_set.get(movimiento=self).eliminar()
+                saldo_diario = cuenta.saldodiario_set.get(dia=self.dia)
+                if cuenta.movs_en_fecha(self.dia).count() == 1:
+                    saldo_diario.eliminar()
+                else:
+                    saldo_diario.importe -= getattr(self, f"importe_cta_{sentido}")
+                    saldo_diario.clean_save()
 
         super().delete(*args, **kwargs)
 
