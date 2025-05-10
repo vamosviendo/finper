@@ -140,23 +140,16 @@ def test_importe_de_saldo_diario_creado_no_suma_importe_de_saldo_correspondiente
     )
 
 
-@pytest.mark.xfail
 @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
 def test_integrativo_actualiza_saldos_posteriores(
         sentido, cuenta, saldo_diario_posterior, request):
-    assert saldo_diario_posterior == SaldoDiario.tomar(cuenta=cuenta, dia=saldo_diario_posterior.dia)
-    assert SaldoDiario.tomar(cuenta=cuenta, dia=saldo_diario_posterior.dia) == SaldoDiario.ultime()
     importe_saldo_posterior = saldo_diario_posterior.importe
-    mov = request.getfixturevalue(f"{sentido}_sin_saldo_diario")
-    assert saldo_diario_posterior == SaldoDiario.ultime()
-    assert importe_saldo_posterior == saldo_diario_posterior.importe
-    print(saldo_diario_posterior)
-    # saldo_posterior = Saldo.tomar(cuenta=cuenta, movimiento=salida_posterior).importe
 
-    SaldoDiario.calcular(mov, sentido)
+    mov = request.getfixturevalue(sentido)
 
+    saldo_diario_posterior.refresh_from_db()
     assert \
-        SaldoDiario.tomar(cuenta=cuenta, dia=saldo_diario_posterior.dia).importe == \
+        saldo_diario_posterior.importe == \
         importe_saldo_posterior + getattr(mov, f"importe_cta_{sentido}")
 
 

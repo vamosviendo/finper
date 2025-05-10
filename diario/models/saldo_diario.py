@@ -64,14 +64,41 @@ class SaldoDiario(MiModel):
                 importe = importe_mov
             saldo_diario = cls.crear(cuenta=cuenta, dia=mov.dia, importe=importe)
 
-        saldo_diario._actualizar_posteriores(importe_mov)
-
         return saldo_diario.tomar_de_bd()
 
     def eliminar(self):
         importe = self.importe
         self.delete()
         self._actualizar_posteriores(-importe)
+
+    def save(self, *args, **kwargs):
+        if self._state.adding:
+            try:
+                importe_anterior = self.anterior_a(self.cuenta, self.dia).importe
+                importe = self.importe - importe_anterior
+            except AttributeError:  # No hay movimiento anterior.
+                importe = self.importe
+            self._actualizar_posteriores(importe)
+
+        else:
+            if self.cambia_campo("_importe"):
+                importe_guardado = self.tomar_de_bd().importe
+                importe = self.importe - importe_guardado
+                self._actualizar_posteriores(importe)
+
+        return super().save(*args, **kwargs)
+
+    def cambia_campo(self, *args, contraparte: Movimiento = None) -> bool:
+        mov_guardado = contraparte or self.tomar_de_bd()
+        for campo in args:
+            if campo not in [x.name for x in self._meta.fields]:
+                raise ValueError(f"Campo inexistente: {campo}")
+            try:
+                if getattr(self, campo) != getattr(mov_guardado, campo):
+                    return True
+            except AttributeError:  # mov_guardado == None => El movimiento es nuevo.
+                return True
+        return False
 
     # Métodos protegidos
     def _actualizar_posteriores(self, importe):
