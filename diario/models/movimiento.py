@@ -490,6 +490,18 @@ class Movimiento(MiModel):
             if self._hay_que_recalcular_importe():
                 self._recalcular_importe()
 
+            for campo_cuenta in campos_cuenta:
+                if self.cambia_campo(campo_cuenta):
+                    cta_vieja = getattr(self.viejo, campo_cuenta)
+                    if cta_vieja is not None:
+                        saldo_cta_vieja = SaldoDiario.tomar(cuenta=cta_vieja, dia=self.viejo.dia)
+
+                        if cta_vieja.movs().filter(dia=self.viejo.dia).count() < 2:
+                            saldo_cta_vieja.delete()
+                        else:
+                            saldo_cta_vieja.importe -= getattr(self.viejo, f"importe_{campo_cuenta}")
+                            saldo_cta_vieja.clean_save()
+
             super().save(*args, **kwargs)
 
             if self.cambia_campo(

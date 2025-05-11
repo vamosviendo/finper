@@ -4,7 +4,7 @@ from typing import Tuple
 import pytest
 from pytest import approx
 
-from diario.models import Movimiento, Cuenta, CuentaInteractiva, Saldo, Dia
+from diario.models import Movimiento, Cuenta, CuentaInteractiva, Saldo, Dia, SaldoDiario
 from utils.helpers_tests import \
     cambiar_fecha, cambiar_fecha_creacion, dividir_en_dos_subcuentas, signo
 from utils.varios import el_que_no_es
@@ -227,7 +227,36 @@ class TestSaveModificaImporte:
         )
 
 
-class TestSaveCambiaCuentas:
+class TestSaveCambiaCuentasSaldoDiario:
+    @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
+    def test_si_no_hay_mas_movs_de_cuenta_vieja_en_el_dia_elimina_su_saldo_diario(
+            self, sentido, cuenta_2, request, mocker):
+        mov = request.getfixturevalue(sentido)
+        cuenta = getattr(mov, f"cta_{sentido}")
+        saldo_diario = SaldoDiario.tomar(cuenta=cuenta, dia=mov.dia)
+        mock_delete = mocker.patch("diario.models.movimiento.SaldoDiario.delete", autospec=True)
+
+        setattr(mov, f"cta_{sentido}", cuenta_2)
+        mov.clean_save()
+
+        mock_delete.assert_called_once_with(saldo_diario)
+
+    @pytest.mark.parametrize("sentido", ["entrada", "salida"])
+    def test_si_hay_mas_movs_de_cuenta_vieja_en_el_dia_resta_importe_de_su_saldo_diario(
+            self, sentido, traspaso, cuenta_2, request):
+        mov = request.getfixturevalue(sentido)
+        cuenta = getattr(mov, f"cta_{sentido}")
+        saldo_diario = SaldoDiario.tomar(cuenta=cuenta, dia=mov.dia)
+        importe = saldo_diario.importe
+
+        setattr(mov, f"cta_{sentido}", cuenta_2)
+        mov.clean_save()
+
+        saldo_diario.refresh_from_db()
+        assert saldo_diario.importe == importe - getattr(mov, f"importe_cta_{sentido}")
+
+
+class TestSaveCambiaCuentasSaldoEnMov:
 
     @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
     def test_genera_saldo_de_cuenta_nueva_y_elimina_el_de_cuenta_vieja_en_movimiento(
