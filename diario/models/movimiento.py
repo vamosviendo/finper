@@ -490,17 +490,40 @@ class Movimiento(MiModel):
             if self._hay_que_recalcular_importe():
                 self._recalcular_importe()
 
+            # Cálculo de saldo diario ante modificación de movimiento
             for campo_cuenta in campos_cuenta:
+                campo_opuesto = el_que_no_es(campo_cuenta, *campos_cuenta)
                 if self.cambia_campo(campo_cuenta):
                     cta_vieja = getattr(self.viejo, campo_cuenta)
+                    cta_nueva = getattr(self, campo_cuenta)
+
                     if cta_vieja is not None:
                         saldo_cta_vieja = SaldoDiario.tomar(cuenta=cta_vieja, dia=self.viejo.dia)
+                        movs_dia_cta_vieja = cta_vieja.movs().filter(dia=self.viejo.dia)
 
-                        if cta_vieja.movs().filter(dia=self.viejo.dia).count() < 2:
-                            saldo_cta_vieja.delete()
+                        if movs_dia_cta_vieja.count() < 2:
+                            if cta_nueva is None and getattr(self, campo_opuesto) == cta_vieja:  # La misma cuenta cambia de sentido
+                                saldo_cta_vieja.importe = \
+                                    saldo_cta_vieja.importe - \
+                                    getattr(self.viejo, f"importe_{campo_cuenta}") + \
+                                    getattr(self, f"importe_{campo_opuesto}")
+                                saldo_cta_vieja.clean_save()
+                            else:
+                                saldo_cta_vieja.delete()
                         else:
                             saldo_cta_vieja.importe -= getattr(self.viejo, f"importe_{campo_cuenta}")
                             saldo_cta_vieja.clean_save()
+
+                    if cta_nueva is not None:
+                        movs_dia = cta_nueva.movs().filter(dia=self.dia)
+                        if movs_dia.count() == 0:
+                            SaldoDiario.crear(cuenta=cta_nueva, dia=self.dia, importe=getattr(self, f"importe_{campo_cuenta}"))
+                        elif list(movs_dia) == [self]:   # cta_entrada pasa a cta_salida?
+                            pass
+                        else:
+                            saldo_cta_nueva = SaldoDiario.tomar(cuenta=cta_nueva, dia=self.dia)
+                            saldo_cta_nueva.importe += getattr(self, f"importe_{campo_cuenta}")
+                            saldo_cta_nueva.clean_save()
 
             super().save(*args, **kwargs)
 

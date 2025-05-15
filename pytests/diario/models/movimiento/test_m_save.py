@@ -1,5 +1,6 @@
 from datetime import timedelta
 from typing import Tuple
+from unittest.mock import call
 
 import pytest
 from pytest import approx
@@ -227,8 +228,8 @@ class TestSaveModificaImporte:
         )
 
 
+@pytest.mark.parametrize('sentido', ['entrada', 'salida'])
 class TestSaveCambiaCuentasSaldoDiario:
-    @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
     def test_si_no_hay_mas_movs_de_cuenta_vieja_en_el_dia_elimina_su_saldo_diario(
             self, sentido, cuenta_2, request, mocker):
         mov = request.getfixturevalue(sentido)
@@ -241,7 +242,6 @@ class TestSaveCambiaCuentasSaldoDiario:
 
         mock_delete.assert_called_once_with(saldo_diario)
 
-    @pytest.mark.parametrize("sentido", ["entrada", "salida"])
     def test_si_hay_mas_movs_de_cuenta_vieja_en_el_dia_resta_importe_de_su_saldo_diario(
             self, sentido, traspaso, cuenta_2, request):
         mov = request.getfixturevalue(sentido)
@@ -254,6 +254,302 @@ class TestSaveCambiaCuentasSaldoDiario:
 
         saldo_diario.refresh_from_db()
         assert saldo_diario.importe == importe - getattr(mov, f"importe_cta_{sentido}")
+
+    def test_si_no_hay_movs_de_cuenta_nueva_en_el_dia_crea_saldo_diario(self, sentido, cuenta_2, request, mocker):
+        mov = request.getfixturevalue(sentido)
+        mock_crear = mocker.patch("diario.models.movimiento.SaldoDiario.crear")
+
+        setattr(mov, f"cta_{sentido}", cuenta_2)
+        mov.clean_save()
+
+        mock_crear.assert_called_once_with(cuenta=cuenta_2, dia=mov.dia, importe=getattr(mov, f"importe_cta_{sentido}"))
+
+    def test_si_hay_movs_de_cuenta_nueva_en_el_dia_suma_importe_a_su_saldo_diario(
+            self, sentido, traspaso, cuenta_2, request):
+        mov = request.getfixturevalue(sentido)
+        saldo_diario = SaldoDiario.tomar(cuenta=cuenta_2, dia=mov.dia)
+        importe = saldo_diario.importe
+
+        setattr(mov, f"cta_{sentido}", cuenta_2)
+        mov.clean_save()
+
+        saldo_diario.refresh_from_db()
+        assert saldo_diario.importe == importe + getattr(mov, f"importe_cta_{sentido}")
+
+    def test_si_cta_cambia_de_sentido_en_dia_sin_mas_movimientos_de_la_cuenta_se_resta_importe_sentido_viejo_y_se_suma_importe_sentido_nuevo(
+            self, sentido, request):
+        mov = request.getfixturevalue(sentido)
+        cuenta = getattr(mov, f"cta_{sentido}")
+        importe_mov = getattr(mov, f"importe_cta_{sentido}")
+        sentido_opuesto = el_que_no_es(sentido, "entrada", "salida")
+        saldo_diario = SaldoDiario.tomar(cuenta=cuenta, dia=mov.dia)
+        importe_saldo_diario = saldo_diario.importe
+
+        setattr(mov, f"cta_{sentido_opuesto}", cuenta)
+        setattr(mov, f"cta_{sentido}", None)
+        mov.clean_save()
+
+        saldo_diario.refresh_from_db()
+        assert \
+            saldo_diario.importe == \
+            importe_saldo_diario - importe_mov + getattr(mov, f"importe_cta_{sentido_opuesto}")
+
+    def test_si_cta_cambia_de_sentido_en_dia_con_mas_movimientos_de_la_cuenta_se_resta_importe_sentido_viejo_y_se_suma_importe_sentido_nuevo(
+            self, sentido, traspaso, request):
+        mov = request.getfixturevalue(sentido)
+        cuenta = getattr(mov, f"cta_{sentido}")
+        importe_mov = getattr(mov, f"importe_cta_{sentido}")
+        sentido_opuesto = el_que_no_es(sentido, "entrada", "salida")
+        saldo_diario = SaldoDiario.tomar(cuenta=cuenta, dia=mov.dia)
+        importe_saldo_diario = saldo_diario.importe
+
+        setattr(mov, f"cta_{sentido_opuesto}", cuenta)
+        setattr(mov, f"cta_{sentido}", None)
+        mov.clean_save()
+
+        saldo_diario.refresh_from_db()
+        assert \
+            saldo_diario.importe == \
+            importe_saldo_diario - importe_mov + getattr(mov, f"importe_cta_{sentido_opuesto}")
+
+    def test_en_traspaso_en_dia_sin_mas_movimientos_de_la_cuenta_reemplazada_se_elimina_su_saldo_diario(
+            self, sentido, traspaso, cuenta_3, mocker):
+        cuenta = getattr(traspaso, f"cta_{sentido}")
+        saldo_diario = SaldoDiario.tomar(cuenta=cuenta, dia=traspaso.dia)
+        mock_delete = mocker.patch("diario.models.movimiento.SaldoDiario.delete", autospec=True)
+
+        setattr(traspaso, f"cta_{sentido}", cuenta_3)
+        traspaso.clean_save()
+        mock_delete.assert_called_once_with(saldo_diario)
+
+    def test_en_traspaso_en_dia_con_mas_movimientos_de_la_cuenta_reemplazada_se_resta_importe_de_su_saldo_diario(
+            self, sentido, traspaso, cuenta_3):
+        cuenta = getattr(traspaso, f"cta_{sentido}")
+        Movimiento.crear(f"Otro movimiento de {cuenta.nombre}", 200, cuenta, dia=traspaso.dia)
+        saldo_diario = SaldoDiario.tomar(cuenta=cuenta, dia=traspaso.dia)
+        importe_sd = saldo_diario.importe
+
+        setattr(traspaso, f"cta_{sentido}", cuenta_3)
+        traspaso.clean_save()
+
+        saldo_diario.refresh_from_db()
+        assert saldo_diario.importe == importe_sd - getattr(traspaso, f"importe_cta_{sentido}")
+
+    def test_si_cambia_cuenta_en_traspaso_en_dia_sin_mas_movimientos_de_la_cuenta_reemplazante_se_crea_saldo_diario(
+            self, sentido, traspaso, cuenta_3, mocker):
+        mock_crear = mocker.patch("diario.models.movimiento.SaldoDiario.crear")
+
+        setattr(traspaso, f"cta_{sentido}", cuenta_3)
+        traspaso.clean_save()
+        mock_crear.assert_called_once_with(cuenta=cuenta_3, dia=traspaso.dia, importe=getattr(traspaso, f"importe_cta_{sentido}"))
+
+    def test_si_cambia_cuenta_en_traspaso_en_dia_con_mas_movimientos_de_la_cuenta_reemplazante_se_suma_importe_a_su_saldo_diario(
+            self, sentido, traspaso, cuenta_3):
+        Movimiento.crear(f"Otro movimientod de cuenta_3", 200, cuenta_3, dia=traspaso.dia)
+        saldo_diario = SaldoDiario.tomar(cuenta=cuenta_3, dia=traspaso.dia)
+        importe_sd = saldo_diario.importe
+
+        setattr(traspaso, f"cta_{sentido}", cuenta_3)
+        traspaso.clean_save()
+
+        saldo_diario.refresh_from_db()
+        assert saldo_diario.importe == importe_sd + getattr(traspaso, f"importe_cta_{sentido}")
+
+    def test_si_cambian_ambas_cuentas_en_traspaso_en_dia_sin_mas_movimientos_de_ninguna_de_las_cuentas_reemplazadas_se_eliminan_saldo_de_ambas_cuentas(
+            self, sentido, traspaso, cuenta_3, cuenta_4, mocker):
+        sentido_opuesto = el_que_no_es(sentido, "entrada", "salida")
+        cuenta = getattr(traspaso, f"cta_{sentido}")
+        saldo_diario_cuenta = SaldoDiario.tomar(cuenta=cuenta, dia=traspaso.dia)
+        cuenta_opuesta = getattr(traspaso, f"cta_{sentido_opuesto}")
+        saldo_diario_cuenta_opuesta = SaldoDiario.tomar(cuenta=cuenta_opuesta, dia=traspaso.dia)
+        mock_delete = mocker.patch("diario.models.movimiento.SaldoDiario.delete", autospec=True)
+
+        setattr(traspaso, f"cta_{sentido}", cuenta_3)
+        setattr(traspaso, f"cta_{sentido_opuesto}", cuenta_4)
+        traspaso.clean_save()
+
+        for saldo_diario in (saldo_diario_cuenta, saldo_diario_cuenta_opuesta):
+            assert call(saldo_diario) in mock_delete.call_args_list
+
+    def test_si_cambian_ambas_cuentas_en_traspaso_en_dia_con_mas_movimientos_de_una_de_las_cuentas_reemplazadas_se_resta_importe_del_saldo_diario_de_la_cuenta_con_otros_movimientos_y_se_elimina_el_saldo_diario_de_la_otra(
+            self, sentido, traspaso, cuenta_3, cuenta_4, mocker):
+        sentido_opuesto = el_que_no_es(sentido, "entrada", "salida")
+        cuenta = getattr(traspaso, f"cta_{sentido}")
+        Movimiento.crear(f"Otro movimiento de {cuenta.nombre}", 200, cuenta, dia=traspaso.dia)
+        saldo_diario_cuenta = SaldoDiario.tomar(cuenta=cuenta, dia=traspaso.dia)
+        importe_sdc = saldo_diario_cuenta.importe
+        cuenta_opuesta = getattr(traspaso, f"cta_{sentido_opuesto}")
+        saldo_diario_cuenta_opuesta = SaldoDiario.tomar(cuenta=cuenta_opuesta, dia=traspaso.dia)
+        mock_delete = mocker.patch("diario.models.movimiento.SaldoDiario.delete", autospec=True)
+
+        setattr(traspaso, f"cta_{sentido}", cuenta_3)
+        setattr(traspaso, f"cta_{sentido_opuesto}", cuenta_4)
+        traspaso.clean_save()
+
+        mock_delete.assert_called_once_with(saldo_diario_cuenta_opuesta)
+        saldo_diario_cuenta.refresh_from_db()
+        assert saldo_diario_cuenta.importe == importe_sdc - getattr(traspaso, f"importe_cta_{sentido}")
+
+    def test_si_cambian_ambas_cuentas_en_traspaso_en_dia_con_mas_movimientos_de_ambas_cuentas_reemplazadas_se_resta_importe_de_saldo_diario_de_ambas_cuentas(
+            self, sentido, traspaso, entrada, entrada_otra_cuenta, cuenta_3, cuenta_4):
+        sentido_opuesto = el_que_no_es(sentido, "entrada", "salida")
+        cuenta = getattr(traspaso, f"cta_{sentido}")
+        saldo_diario_cuenta = SaldoDiario.tomar(cuenta=cuenta, dia=traspaso.dia)
+        importe_sdc = saldo_diario_cuenta.importe
+        cuenta_opuesta = getattr(traspaso, f"cta_{sentido_opuesto}")
+        saldo_diario_cuenta_opuesta = SaldoDiario.tomar(cuenta=cuenta_opuesta, dia=traspaso.dia)
+        importe_sdco = saldo_diario_cuenta_opuesta.importe
+
+        setattr(traspaso, f"cta_{sentido}", cuenta_3)
+        setattr(traspaso, f"cta_{sentido_opuesto}", cuenta_4)
+        traspaso.clean_save()
+
+        saldo_diario_cuenta.refresh_from_db()
+        assert saldo_diario_cuenta.importe == importe_sdc - getattr(traspaso, f"importe_cta_{sentido}")
+        saldo_diario_cuenta_opuesta.refresh_from_db()
+        assert \
+            saldo_diario_cuenta_opuesta.importe == \
+            importe_sdco - getattr(traspaso, f"importe_cta_{sentido_opuesto}")
+
+    def test_si_cambian_ambas_cuentas_en_traspaso_en_dia_sin_mas_movimientos_de_ninguna_de_las_cuentas_reemplazantes_se_crean_saldos_diarios_para_ambas_cuentas(
+            self, sentido, traspaso, cuenta_3, cuenta_4, mocker):
+        sentido_opuesto = el_que_no_es(sentido, "entrada", "salida")
+        mock_crear = mocker.patch("diario.models.movimiento.SaldoDiario.crear")
+
+        setattr(traspaso, f"cta_{sentido}", cuenta_3)
+        setattr(traspaso, f"cta_{sentido_opuesto}", cuenta_4)
+        traspaso.clean_save()
+
+        assert call(
+            cuenta=cuenta_3,
+            dia=traspaso.dia,
+            importe=getattr(traspaso, f"importe_cta_{sentido}")
+        ) in mock_crear.call_args_list
+        assert call(
+            cuenta=cuenta_4,
+            dia=traspaso.dia,
+            importe=getattr(traspaso, f"importe_cta_{sentido_opuesto}")
+        ) in mock_crear.call_args_list
+
+    def test_si_cambian_ambas_cuentas_en_traspaso_en_dia_con_mas_movimientos_de_una_de_las_cuentas_reemplazantes_se_suma_importe_al_saldo_diario_de_la_cuenta_con_otros_movimientos_y_se_crea_el_saldo_diario_de_la_otra(
+            self, sentido, traspaso, cuenta_3, cuenta_4, mocker):
+        Movimiento.crear("Otro movimiento de cuenta 3", 100, cuenta_3, dia=traspaso.dia)
+        sentido_opuesto = el_que_no_es(sentido, "entrada", "salida")
+        mock_crear = mocker.patch("diario.models.movimiento.SaldoDiario.crear")
+        saldo_diario = SaldoDiario.tomar(cuenta=cuenta_3, dia=traspaso.dia)
+        importe_saldo_diario = saldo_diario.importe
+
+        setattr(traspaso, f"cta_{sentido}", cuenta_3)
+        setattr(traspaso, f"cta_{sentido_opuesto}", cuenta_4)
+        traspaso.clean_save()
+
+        mock_crear.assert_called_once_with(
+            cuenta=cuenta_4,
+            dia=traspaso.dia,
+            importe=getattr(traspaso, f"importe_cta_{sentido_opuesto}")
+        )
+        saldo_diario.refresh_from_db()
+        assert saldo_diario.importe == importe_saldo_diario + getattr(traspaso, f"importe_cta_{sentido}")
+
+    def test_si_cambian_ambas_cuentas_en_traspaso_en_dia_con_mas_movimientos_de_ambas_cuentas_reemplazantes_se_suma_importe_a_saldo_diario_de_ambas_cuentas(
+            self, sentido, traspaso, cuenta_3, cuenta_4):
+        Movimiento.crear("Otro movimiento de cuenta 3", 100, cuenta_3, dia=traspaso.dia)
+        Movimiento.crear("Otro movimiento de cuenta 4", 100, cuenta_4, dia=traspaso.dia)
+        sentido_opuesto = el_que_no_es(sentido, "entrada", "salida")
+        saldo_diario_cta_3 = SaldoDiario.tomar(cuenta=cuenta_3, dia=traspaso.dia)
+        saldo_diario_cta_4 = SaldoDiario.tomar(cuenta=cuenta_4, dia=traspaso.dia)
+        importe_sdc3 = saldo_diario_cta_3.importe
+        importe_sdc4 = saldo_diario_cta_4.importe
+
+        setattr(traspaso, f"cta_{sentido}", cuenta_3)
+        setattr(traspaso, f"cta_{sentido_opuesto}", cuenta_4)
+        traspaso.clean_save()
+
+        saldo_diario_cta_3.refresh_from_db()
+        assert saldo_diario_cta_3.importe == importe_sdc3 + getattr(traspaso, f"importe_cta_{sentido}")
+        saldo_diario_cta_4.refresh_from_db()
+        assert saldo_diario_cta_4.importe == importe_sdc4 + getattr(traspaso, f"importe_cta_{sentido_opuesto}")
+
+    def test_si_cambian_ambas_cuentas_en_traspaso_en_dia_sin_mas_movimientos_de_cuentas_reemplazadas_ni_reemplazantes_se_eliminan_saldos_diarios_de_cuentas_reemplazadas_y_se_crean_saldos_diarios_de_cuentas_reemplazantes(
+            self, sentido, traspaso, cuenta_3, cuenta_4, mocker):
+        """ Test redundante """
+        sentido_opuesto = el_que_no_es(sentido, "entrada", "salida")
+        saldo_diario_cuenta = SaldoDiario.tomar(
+            cuenta=getattr(traspaso, f"cta_{sentido}"),
+            dia=traspaso.dia
+        )
+        saldo_diario_cuenta_opuesta = SaldoDiario.tomar(
+            cuenta=getattr(traspaso, f"cta_{sentido_opuesto}"),
+            dia=traspaso.dia
+        )
+        mock_crear = mocker.patch("diario.models.movimiento.SaldoDiario.crear")
+        mock_delete = mocker.patch("diario.models.movimiento.SaldoDiario.delete", autospec=True)
+
+        setattr(traspaso, f"cta_{sentido}", cuenta_3)
+        setattr(traspaso, f"cta_{sentido_opuesto}", cuenta_4)
+        traspaso.clean_save()
+
+        assert call(
+            cuenta=cuenta_3,
+            dia=traspaso.dia,
+            importe=getattr(traspaso, f"importe_cta_{sentido}")
+        ) in mock_crear.call_args_list
+        assert call(
+            cuenta=cuenta_4,
+            dia=traspaso.dia,
+            importe=getattr(traspaso, f"importe_cta_{sentido_opuesto}")
+        ) in mock_crear.call_args_list
+        assert call(saldo_diario_cuenta) in mock_delete.call_args_list
+        assert call(saldo_diario_cuenta_opuesta) in mock_delete.call_args_list
+
+    def test_si_cambian_ambas_cuentas_en_traspaso_en_dia_con_mas_movimientos_de_cuentas_reempazadas_y_reemplazantes_se_resta_importe_de_saldo_diario_de_cuentas_reemplazadas_y_se_suma_a_saldo_diario_de_cuentas_reemplazantes(
+            self, sentido, traspaso, entrada, entrada_otra_cuenta, cuenta_3, cuenta_4):
+        """ Test redundante """
+        Movimiento.crear("Otro movimiento de cuenta 3", 100, cuenta_3, dia=traspaso.dia)
+        Movimiento.crear("Otro movimiento de cuenta 4", 100, cuenta_4, dia=traspaso.dia)
+        sentido_opuesto = el_que_no_es(sentido, "entrada", "salida")
+        saldo_diario_cuenta = SaldoDiario.tomar(
+            cuenta=getattr(traspaso, f"cta_{sentido}"),
+            dia=traspaso.dia
+        )
+        saldo_diario_cuenta_opuesta = SaldoDiario.tomar(
+            cuenta=getattr(traspaso, f"cta_{sentido_opuesto}"),
+            dia=traspaso.dia
+        )
+        saldo_diario_cta_3 = SaldoDiario.tomar(cuenta=cuenta_3, dia=traspaso.dia)
+        saldo_diario_cta_4 = SaldoDiario.tomar(cuenta=cuenta_4, dia=traspaso.dia)
+        importe_sdc = saldo_diario_cuenta.importe
+        importe_sdco = saldo_diario_cuenta_opuesta.importe
+        importe_sdc3 = saldo_diario_cta_3.importe
+        importe_sdc4 = saldo_diario_cta_4.importe
+
+        setattr(traspaso, f"cta_{sentido}", cuenta_3)
+        setattr(traspaso, f"cta_{sentido_opuesto}", cuenta_4)
+        traspaso.clean_save()
+
+        saldo_diario_cuenta.refresh_from_db()
+        assert saldo_diario_cuenta.importe == importe_sdc - getattr(traspaso, f"importe_cta_{sentido}")
+        saldo_diario_cuenta_opuesta.refresh_from_db()
+        assert saldo_diario_cuenta_opuesta.importe == importe_sdco - getattr(traspaso, f"importe_cta_{sentido_opuesto}")
+        saldo_diario_cta_3.refresh_from_db()
+        assert saldo_diario_cta_3.importe == importe_sdc3 + getattr(traspaso, f"importe_cta_{sentido}")
+        saldo_diario_cta_4.refresh_from_db()
+        assert saldo_diario_cta_4.importe == importe_sdc4 + getattr(traspaso, f"importe_cta_{sentido_opuesto}")
+
+    def test_si_se_intercambian_cuentas_en_traspaso_en_dia_sin_mas_movimientos_de_ninguna_de_las_cuentas(self, sentido):
+        pass
+
+    def test_si_se_intercambian_cuentas_en_traspaso_en_dia_con_mas_movimientos_de_una_de_las_cuentas(self, sentido):
+        pass
+
+    def test_si_se_intercambian_cuentas_en_traspaso_en_dia_con_mas_movimientos_de_ambas_cuentas(self, sentido):
+        pass
+
+    def test_resta_importe_de_saldos_diarios_posteriores_de_cuenta_vieja(self, sentido):
+        pass
+
+    def test_suma_importe_a_saldos_diarios_posteriores_de_cuenta_nueva(self, sentido):
+        pass
 
 
 class TestSaveCambiaCuentasSaldoEnMov:
