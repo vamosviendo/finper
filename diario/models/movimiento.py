@@ -507,19 +507,17 @@ class Movimiento(MiModel):
                             saldo_cta_vieja.clean_save()
 
                     cta_nueva = getattr(self, campo_cuenta)
-                    cta_vieja_opuesta = getattr(self.viejo, campo_opuesto)
                     if cta_nueva is not None:
-                        movs_dia_cta_nueva = cta_nueva.movs().filter(dia=self.dia)
-                        if movs_dia_cta_nueva.count() < 1 and cta_nueva != cta_vieja_opuesta:
+                        try:
+                            saldo_cta_nueva = SaldoDiario.tomar(cuenta=cta_nueva, dia=self.dia)
+                            saldo_cta_nueva.importe += getattr(self, f"importe_{campo_cuenta}")
+                            saldo_cta_nueva.clean_save()
+                        except SaldoDiario.DoesNotExist:
                             SaldoDiario.crear(
                                 cuenta=cta_nueva,
                                 dia=self.dia,
                                 importe=getattr(self, f"importe_{campo_cuenta}")
                             )
-                        else:
-                            saldo_cta_nueva = SaldoDiario.tomar(cuenta=cta_nueva, dia=self.dia)
-                            saldo_cta_nueva.importe += getattr(self, f"importe_{campo_cuenta}")
-                            saldo_cta_nueva.clean_save()
 
             super().save(*args, **kwargs)
 
