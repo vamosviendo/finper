@@ -501,7 +501,7 @@ class Movimiento(MiModel):
                         movs_dia_cta_vieja = cta_vieja.movs().filter(dia=self.viejo.dia)
 
                         if movs_dia_cta_vieja.count() < 2 and cta_nueva_opuesta != cta_vieja:
-                            saldo_cta_vieja.delete()
+                            saldo_cta_vieja.eliminar()
                         else:
                             saldo_cta_vieja.importe -= getattr(self.viejo, f"importe_{campo_cuenta}")
                             saldo_cta_vieja.clean_save()

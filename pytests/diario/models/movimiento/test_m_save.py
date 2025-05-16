@@ -573,11 +573,34 @@ class TestSaveCambiaCuentasSaldoDiario:
                 getattr(traspaso, f"importe_cta_{sentido_opuesto}") + \
                 getattr(traspaso, f"importe_cta_{sentido}")
 
-    def test_resta_importe_de_saldos_diarios_posteriores_de_cuenta_vieja(self, sentido):
-        pass
+    @pytest.mark.parametrize("otros_movs", [[], ["traspaso"]])
+    def test_resta_importe_de_saldos_diarios_posteriores_de_cuenta_vieja(
+            self, sentido, cuenta_2, otros_movs, salida_posterior, request):
+        for otro_mov in otros_movs:
+            request.getfixturevalue(otro_mov)
+        mov = request.getfixturevalue(sentido)
+        cuenta= getattr(mov, f"cta_{sentido}")
+        saldo_posterior = SaldoDiario.tomar(cuenta=cuenta, dia=salida_posterior.dia)
+        importe_sp = saldo_posterior.importe
 
-    def test_suma_importe_a_saldos_diarios_posteriores_de_cuenta_nueva(self, sentido):
-        pass
+        setattr(mov, f"cta_{sentido}", cuenta_2)
+        mov.clean_save()
+
+        saldo_posterior.refresh_from_db()
+        assert saldo_posterior.importe == importe_sp - getattr(mov, f"importe_cta_{sentido}")
+
+    @pytest.mark.parametrize("otros_movs", [[], ["traspaso"]])
+    def test_suma_importe_a_saldos_diarios_posteriores_de_cuenta_nueva(
+            self, sentido, cuenta_2, otros_movs, entrada_posterior_otra_cuenta, request):
+        mov = request.getfixturevalue(sentido)
+        saldo_posterior = SaldoDiario.tomar(cuenta=cuenta_2, dia=entrada_posterior_otra_cuenta.dia)
+        importe_sp = saldo_posterior.importe
+
+        setattr(mov, f"cta_{sentido}", cuenta_2)
+        mov.clean_save()
+
+        saldo_posterior.refresh_from_db()
+        assert saldo_posterior.importe == importe_sp + getattr(mov, f"importe_cta_{sentido}")
 
 
 class TestSaveCambiaCuentasSaldoEnMov:
@@ -1664,6 +1687,7 @@ class TestSaveCambiaImporteYCuentasSaldoDiario:
 
         saldo_diario.refresh_from_db()
         assert saldo_diario.importe == importe_sd + getattr(mov, f"importe_cta_{sentido}")
+
 
 @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
 class TestSaveCambiaImporteYCuentas:
