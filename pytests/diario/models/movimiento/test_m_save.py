@@ -536,14 +536,42 @@ class TestSaveCambiaCuentasSaldoDiario:
         saldo_diario_cta_4.refresh_from_db()
         assert saldo_diario_cta_4.importe == importe_sdc4 + getattr(traspaso, f"importe_cta_{sentido_opuesto}")
 
-    def test_si_se_intercambian_cuentas_en_traspaso_en_dia_sin_mas_movimientos_de_ninguna_de_las_cuentas(self, sentido):
-        pass
+    @pytest.mark.parametrize("otros_movs", [
+        [],
+        ["entrada", "entrada_otra_cuenta"],
+        ["entrada"],
+        ["entrada_otra_cuenta"]
+    ])
+    def test_si_se_intercambian_cuentas_en_traspaso_se_resta_importe_dos_veces_de_cta_que_pasa_a_salida_y_se_suma_dos_veces_a_cta_que_pasa_a_entrada(
+            self, sentido, traspaso, otros_movs, request):
+        for otro_mov in otros_movs:
+            request.getfixturevalue(otro_mov)
 
-    def test_si_se_intercambian_cuentas_en_traspaso_en_dia_con_mas_movimientos_de_una_de_las_cuentas(self, sentido):
-        pass
+        sentido_opuesto = el_que_no_es(sentido, "entrada", "salida")
+        cuenta = getattr(traspaso, f"cta_{sentido}")
+        cuenta_opuesta = getattr(traspaso, f"cta_{sentido_opuesto}")
+        saldo_diario = SaldoDiario.tomar(cuenta=cuenta, dia=traspaso.dia)
+        saldo_diario_opuesto = SaldoDiario.tomar(cuenta=cuenta_opuesta, dia=traspaso.dia)
+        importe_sd = saldo_diario.importe
+        importe_sdo = saldo_diario_opuesto.importe
 
-    def test_si_se_intercambian_cuentas_en_traspaso_en_dia_con_mas_movimientos_de_ambas_cuentas(self, sentido):
-        pass
+        setattr(traspaso, f"cta_{sentido}", cuenta_opuesta)
+        setattr(traspaso, f"cta_{sentido_opuesto}", cuenta)
+        traspaso.clean_save()
+
+        saldo_diario.refresh_from_db()
+        assert \
+            saldo_diario.importe == \
+            importe_sd \
+                - getattr(traspaso, f"importe_cta_{sentido}") \
+                + getattr(traspaso, f"importe_cta_{sentido_opuesto}")
+
+        saldo_diario_opuesto.refresh_from_db()
+        assert \
+            saldo_diario_opuesto.importe == \
+            importe_sdo - \
+                getattr(traspaso, f"importe_cta_{sentido_opuesto}") + \
+                getattr(traspaso, f"importe_cta_{sentido}")
 
     def test_resta_importe_de_saldos_diarios_posteriores_de_cuenta_vieja(self, sentido):
         pass
