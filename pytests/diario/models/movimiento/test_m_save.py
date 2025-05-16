@@ -1599,6 +1599,73 @@ class TestSaveCambiaCuentasSaldoEnMov:
 
 
 @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
+class TestSaveCambiaImporteYCuentasSaldoDiario:
+    def test_si_cambia_cuenta_e_importe_en_dia_sin_mas_movimientos_de_la_cuenta_reemplazada_elimina_su_saldo_diario(
+            self, sentido, cuenta_2, request, mocker):
+        mov = request.getfixturevalue(sentido)
+        mock_delete = mocker.patch("diario.models.movimiento.SaldoDiario.delete", autospec=True)
+
+        cuenta = getattr(mov, f"cta_{sentido}")
+        importe_viejo = getattr(mov, f"importe_cta_{sentido}")
+        importe_nuevo = importe_viejo + 100
+        saldo_diario = SaldoDiario.tomar(cuenta=cuenta, dia=mov.dia)
+
+        setattr(mov, f"cta_{sentido}", cuenta_2)
+        mov.importe = importe_nuevo
+        mov.clean_save()
+
+        mock_delete.assert_called_once_with(saldo_diario)
+
+    def test_si_cambia_cuenta_e_importe_en_dia_con_mas_movimientos_de_la_cuenta_reemplazada_resta_importe_viejo_de_su_saldo_diario(
+            self, sentido, cuenta_2, traspaso, request):
+        mov = request.getfixturevalue(sentido)
+
+        cuenta = getattr(mov, f"cta_{sentido}")
+        importe_viejo = getattr(mov, f"importe_cta_{sentido}")
+        importe_nuevo = importe_viejo + 100
+        saldo_diario = SaldoDiario.tomar(cuenta=cuenta, dia=mov.dia)
+        importe_sd = saldo_diario.importe
+
+        setattr(mov, f"cta_{sentido}", cuenta_2)
+        mov.importe = importe_nuevo
+        mov.clean_save()
+
+        saldo_diario.refresh_from_db()
+        assert saldo_diario.importe == importe_sd - importe_viejo
+
+    def test_si_cambia_cuenta_e_importe_en_dia_sin_movimientos_de_la_cuenta_reemplazante_crea_saldo_diario_con_nuevo_importe(
+            self, sentido, cuenta_2, request, mocker):
+        mov = request.getfixturevalue(sentido)
+        mock_crear = mocker.patch("diario.models.movimiento.SaldoDiario.crear")
+
+        importe_viejo = getattr(mov, f"importe_cta_{sentido}")
+        importe_nuevo = importe_viejo + 100
+
+        setattr(mov, f"cta_{sentido}", cuenta_2)
+        mov.importe = importe_nuevo
+        mov.clean_save()
+
+        mock_crear.assert_called_once_with(
+            cuenta=cuenta_2,
+            dia=mov.dia,
+            importe=getattr(mov, f"importe_cta_{sentido}")
+        )
+
+    def test_si_cambia_cuenta_e_importe_en_dia_con_movimientos_de_la_cuenta_reemplazante_suma_importe_nuevo_a_su_saldo(
+            self, sentido, traspaso, cuenta_2, request):
+        mov = request.getfixturevalue(sentido)
+        importe_nuevo = mov.importe + 100
+        saldo_diario = SaldoDiario.tomar(cuenta=cuenta_2, dia=mov.dia)
+        importe_sd = saldo_diario.importe
+
+        setattr(mov, f"cta_{sentido}", cuenta_2)
+        mov.importe = importe_nuevo
+        mov.clean_save()
+
+        saldo_diario.refresh_from_db()
+        assert saldo_diario.importe == importe_sd + getattr(mov, f"importe_cta_{sentido}")
+
+@pytest.mark.parametrize('sentido', ['entrada', 'salida'])
 class TestSaveCambiaImporteYCuentas:
     def test_si_cambia_cuenta_e_importe_desaparece_saldo_en_movimiento_de_cuenta_anterior_y_aparece_el_de_la_nueva_con_el_nuevo_importe(
             self, sentido, cuenta_2, importe_aleatorio, request):
