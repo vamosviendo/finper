@@ -20,7 +20,7 @@ from utils.tiempo import Posicion
 
 
 if TYPE_CHECKING:
-    from diario.models import Movimiento, Cuenta, CuentaInteractiva
+    from diario.models import Movimiento, Cuenta
 
 
 class Saldo(MiModel):
@@ -160,18 +160,18 @@ class Saldo(MiModel):
         )
 
     @staticmethod
-    def _anterior_a(posicion: Posicion, cuenta: models.ForeignKey['Cuenta']) -> 'Saldo':
+    def _anterior_a(posicion: Posicion, cuenta: 'Cuenta') -> 'Saldo':
         return Saldo.anteriores_a(cuenta, posicion).last()
 
     @staticmethod
     def anteriores_a(
-            cuenta: models.ForeignKey['Cuenta'],
+            cuenta: 'Cuenta',
             posicion: Posicion = Posicion(),
             inclusive_od: bool = False
     ) -> models.QuerySet['Saldo']:
         es_anterior = operator.le if inclusive_od else operator.lt
         ids = [
-            saldo.id for saldo in cuenta.saldo_set.all()
+            saldo.pk for saldo in cuenta.saldo_set.all()
             if es_anterior(saldo.posicion, posicion)
         ]
 
@@ -179,13 +179,13 @@ class Saldo(MiModel):
 
     @staticmethod
     def posteriores_a(
-            cuenta: models.ForeignKey['Cuenta'],
+            cuenta: 'Cuenta',
             posicion: Posicion = Posicion(),
             inclusive_od: bool = False
     ) -> models.QuerySet['Saldo']:
         es_posterior = operator.ge if inclusive_od else operator.gt
         ids = [
-            saldo.id for saldo in cuenta.saldo_set.all()
+            saldo.pk for saldo in cuenta.saldo_set.all()
             if es_posterior(saldo.posicion, posicion)
         ]
 
