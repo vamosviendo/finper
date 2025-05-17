@@ -100,6 +100,9 @@ class SaldoDiario(MiModel):
                 return True
         return False
 
+    def movimientos(self):
+        return self.cuenta.movs().filter(dia=self.dia)
+
     # Métodos protegidos
     def _actualizar_posteriores(self, importe):
         for sd in SaldoDiario.filtro(cuenta=self.cuenta, dia__fecha__gt=self.dia.fecha):
