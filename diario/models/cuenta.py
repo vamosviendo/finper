@@ -15,6 +15,7 @@ from diario.models.dia import Dia
 from diario.models.moneda import Moneda
 from diario.models.movimiento import Movimiento
 from diario.models.saldo import Saldo
+from diario.models.saldo_diario import SaldoDiario
 from diario.models.titular import Titular
 from diario.settings_app import MONEDA_BASE, TITULAR_PRINCIPAL
 from diario.utils.utils_moneda import id_moneda_base
@@ -57,6 +58,7 @@ class Cuenta(PolymorphModel):
     entradas: MovimientoManager["Movimiento"]   # related name para Movimiento.cta_entrada
     salidas: MovimientoManager["Movimiento"]    # related name para Movimiento.cta_salida
     saldo_set: models.Manager["Saldo"]          # related name para Saldo.cuenta
+    saldodiario_set: models.Manager["SaldoDiario"]  # related name para SaldoDiario.cuenta
 
     objects = CuentaManager()
 
@@ -159,6 +161,16 @@ class Cuenta(PolymorphModel):
             saldo.importe += saldo.movimiento.importe_cta_entrada if saldo.viene_de_entrada \
                 else saldo.movimiento.importe_cta_salida
             saldo.save()
+
+    def recalcular_saldos_diarios_entre(self, fecha_inicial: date, fecha_final: date):
+        for saldo in self.saldodiario_set.filter(dia__fecha__gte=fecha_inicial, dia__fecha__lte=fecha_final):
+            importe = saldo.importe_movs()
+            try:
+                saldo.importe = SaldoDiario.anterior_a(saldo.cuenta, saldo.dia).importe
+            except AttributeError:  # No hay saldo diario anterior
+                saldo.importe = 0
+            saldo.importe += importe
+            saldo.clean_save()
 
     @property
     def ultimo_saldo(self) -> Saldo:
