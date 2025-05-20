@@ -158,6 +158,160 @@ class TestSaveMovimientoEntreCuentasDeDistintosTitulares:
         assert getattr(contramov, campo) == valor
 
 
+@pytest.mark.parametrize('sentido', ['entrada', 'salida'])
+class TestSaveCambiaImporteSaldoDiario:
+    def test_si_hay_mas_movs_de_la_cuenta_en_el_dia_resta_importe_antiguo_y_suma_el_nuevo_a_saldo_diario(
+            self, sentido, traspaso, request):
+        mov = request.getfixturevalue(sentido)
+        cuenta = getattr(mov, f"cta_{sentido}")
+        saldo_diario = SaldoDiario.tomar(cuenta=cuenta, dia=mov.dia)
+        importe_mov = getattr(mov, f"importe_cta_{sentido}")
+        importe_sd = saldo_diario.importe
+
+        mov.importe += 50
+        mov.clean_save()
+
+        saldo_diario.refresh_from_db()
+        assert saldo_diario.importe == importe_sd - importe_mov + getattr(mov, f"importe_cta_{sentido}")
+
+    def test_si_no_hay_mas_movs_de_la_cuenta_en_el_dia_elimina_saldo_diario_con_el_importe_antiguo(
+            self, sentido, request, mocker):
+        mov = request.getfixturevalue(sentido)
+        cuenta = getattr(mov, f"cta_{sentido}")
+        saldo_diario = SaldoDiario.tomar(cuenta=cuenta, dia=mov.dia)
+        mock_delete = mocker.patch("diario.models.movimiento.SaldoDiario.delete", autospec=True)
+
+        mov.importe += 50
+        mov.clean_save()
+
+        mock_delete.assert_called_once_with(saldo_diario)
+
+    def test_si_no_hay_mas_movs_de_la_cuenta_en_el_dia_crea_saldo_diario_con_el_nuevo_importe(
+            self, sentido, request, mocker):
+        mov = request.getfixturevalue(sentido)
+        cuenta = getattr(mov, f"cta_{sentido}")
+        mock_crear = mocker.patch("diario.models.movimiento.SaldoDiario.crear")
+
+        mov.importe += 50
+        mov.clean_save()
+
+        mock_crear.assert_called_once_with(cuenta=cuenta, dia=mov.dia, importe=getattr(mov, f"importe_cta_{sentido}"))
+
+    def test_en_mov_de_traspaso_con_mas_movs_de_ambas_cuentas_en_el_dia_modifica_importe_de_ambos_saldos_diarios(
+            self, traspaso, sentido, entrada, entrada_otra_cuenta):
+        cuenta = getattr(traspaso, f"cta_{sentido}")
+        importe = getattr(traspaso, f"importe_cta_{sentido}")
+        saldo_diario = SaldoDiario.tomar(cuenta=cuenta, dia=traspaso.dia)
+        importe_sd = saldo_diario.importe
+
+        traspaso.importe += 50
+        traspaso.clean_save()
+
+        saldo_diario.refresh_from_db()
+        assert saldo_diario.importe == importe_sd - importe + getattr(traspaso, f"importe_cta_{sentido}")
+
+    def test_en_mov_de_traspaso_sin_mas_movs_de_ninguna_de_sus_cuentas_en_el_dia_elimina_saldos_diarios_de_ambas_cuentas(
+            self, sentido, traspaso, mocker):
+        cuenta = getattr(traspaso, f"cta_{sentido}")
+        saldo_diario = SaldoDiario.tomar(cuenta=cuenta, dia=traspaso.dia)
+        mock_delete = mocker.patch("diario.models.movimiento.SaldoDiario.delete", autospec=True)
+
+        traspaso.importe += 50
+        traspaso.clean_save()
+
+        assert call(saldo_diario) in mock_delete.call_args_list
+
+    def test_en_mov_de_traspaso_sin_mas_movs_de_ninguna_de_sus_cuentas_en_el_dia_creaa_nuevos_saldos_diarios_de_ambas_cuentas(
+            self, sentido, traspaso, mocker):
+        cuenta = getattr(traspaso, f"cta_{sentido}")
+        mock_crear = mocker.patch("diario.models.movimiento.SaldoDiario.crear")
+
+        traspaso.importe += 50
+        traspaso.clean_save()
+
+        assert call(
+            cuenta=cuenta,
+            dia=traspaso.dia,
+            importe=getattr(traspaso, f"importe_cta_{sentido}")
+        ) in mock_crear.call_args_list
+
+    @pytest.mark.parametrize("otros_movs", [[], ["traspaso"]])
+    def test_actualiza_saldos_diarios_posteriores_de_cuenta(self, sentido, otros_movs, salida_posterior, request):
+        for otro_mov in otros_movs:
+            request.getfixturevalue(otro_mov)
+        mov = request.getfixturevalue(sentido)
+        importe = getattr(mov, f"importe_cta_{sentido}")
+        cuenta = getattr(mov, f"cta_{sentido}")
+        saldo_diario_posterior = SaldoDiario.tomar(cuenta=cuenta, dia=salida_posterior.dia)
+        importe_sdp = saldo_diario_posterior.importe
+
+        mov.importe += 50
+        mov.clean_save()
+
+        saldo_diario_posterior.refresh_from_db()
+        assert saldo_diario_posterior.importe == importe_sdp - importe + getattr(mov, f"importe_cta_{sentido}")
+
+    def test_en_movimiento_de_credito_sin_otro_movimiento_de_las_cuentas_de_credito_elimina_saldo_diario_de_las_cuentas_de_contramovimiento(
+            self, credito, sentido, mocker):
+        """ Tener en cuenta que si no hay más movimientos *de las cuentas crédito* se elimina y se recrea
+            el saldo de la cuenta crédito. Para que se modifique el saldo sin eliminar/crear debería haber
+            más movimientos de crédito entre los mismos titulares en esa fecha."""
+        contramov = Movimiento.tomar(id=credito.id_contramov)
+        cuenta_contramov = getattr(contramov, f"cta_{sentido}")
+        saldo_diario_contramov = SaldoDiario.tomar(cuenta=cuenta_contramov, dia=contramov.dia)
+        mock_delete = mocker.patch("diario.models.movimiento.SaldoDiario.delete", autospec=True)
+
+        credito.importe += 50
+        credito.clean_save()
+
+        assert call(saldo_diario_contramov) in mock_delete.call_args_list
+
+    def test_en_movimiento_de_credito_sin_otro_movimiento_de_las_cuentas_de_credito_en_el_dia_crea_saldo_diario_de_las_cuentas_de_contramovimiento_con_nuevo_importe(
+            self, credito, sentido, mocker):
+        """ Tener en cuenta que si no hay más movimientos *de las cuentas crédito* se elimina y se recrea
+            el saldo de la cuenta crédito. Para que se modifique el saldo sin eliminar/crear debería haber
+            más movimientos de crédito entre los mismos titulares en esa fecha."""
+        contramov = Movimiento.tomar(id=credito.id_contramov)
+        cuenta_contramov = getattr(contramov, f"cta_{sentido}")
+        importe_contramov = getattr(contramov, f"importe_cta_{sentido}")
+        saldo_diario_contramov = SaldoDiario.tomar(cuenta=cuenta_contramov, dia=contramov.dia)
+        importe_sdc = saldo_diario_contramov.importe
+        mock_crear = mocker.patch("diario.models.movimiento.SaldoDiario.crear")
+
+        credito.importe += 50
+        credito.clean_save()
+
+        assert call(
+            cuenta=cuenta_contramov,
+            dia=credito.dia,
+            importe=getattr(credito, f"importe_cta_{sentido}")
+        ) in mock_crear.call_args_list
+
+    def test_en_movimiento_de_credito_con_mas_movimientos_de_las_cuentas_de_credito_en_el_dia_resta_importe_viejo_y_suma_el_nuevo_a_saldo_diario_de_cuentas_contramov(
+            self, credito, sentido):
+        cr2=Movimiento.crear(
+            concepto="Otro movimiento de crédito en el mismo día",
+            importe=120,
+            cta_entrada=credito.cta_entrada,
+            cta_salida=credito.cta_salida,
+            dia=credito.dia
+        )
+        contramov = Movimiento.tomar(id=credito.id_contramov)
+        cuenta_contramov = getattr(contramov, f"cta_{sentido}")
+        importe_contramov = getattr(contramov, f"importe_cta_{sentido}")
+        saldo_diario_contramov = SaldoDiario.tomar(cuenta=cuenta_contramov, dia=contramov.dia)
+        importe_sdc = saldo_diario_contramov.importe
+
+        credito.importe += 50
+        credito.clean_save()
+
+        contramov = Movimiento.tomar(id=credito.id_contramov)
+        saldo_diario_contramov.refresh_from_db()
+        assert \
+            saldo_diario_contramov.importe == \
+            importe_sdc - importe_contramov + getattr(contramov, f"importe_cta_{sentido}")
+
+
 class TestSaveModificaImporte:
 
     @pytest.mark.parametrize('sentido', ['entrada', 'salida'])

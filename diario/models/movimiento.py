@@ -492,7 +492,7 @@ class Movimiento(MiModel):
 
             # Cálculo de saldo diario ante modificación de movimiento
             for campo_cuenta in campos_cuenta:
-                if self.cambia_campo(campo_cuenta, "dia"):
+                if self.cambia_campo(campo_cuenta, "dia", "_importe"):
                     campo_opuesto = el_que_no_es(campo_cuenta, *campos_cuenta)
                     cta_vieja = getattr(self.viejo, campo_cuenta)
                     cta_nueva_opuesta = getattr(self, campo_opuesto)
