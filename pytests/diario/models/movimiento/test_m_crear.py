@@ -162,6 +162,38 @@ def test_integrativo_calcula_saldo_diario_si_no_existe(cuenta, dia, sentido):
 
 
 @pytest.mark.parametrize("sentido", ["entrada", "salida"])
+def test_importe_de_saldo_diario_generado_es_igual_a_importe_de_saldo_diario_anterior_mas_importe_del_movimiento(
+        cuenta, dia, sentido, entrada_anterior):
+    importe_sda = SaldoDiario.tomar(cuenta=cuenta, dia=entrada_anterior.dia).importe
+
+    mov = Movimiento.crear("Nuevo mov único en el día", 20, dia=dia, **{f"cta_{sentido}": cuenta})
+
+    saldo_diario = SaldoDiario.tomar(cuenta=cuenta, dia=mov.dia)
+
+    assert saldo_diario.importe == importe_sda + getattr(mov, f"importe_cta_{sentido}")
+
+
+@pytest.mark.parametrize("sentido", ["entrada", "salida"])
+def test_importe_de_saldo_diario_existente_es_igual_a_importe_de_saldo_diario_anterior_mas_suma_de_los_movimientos_del_dia(
+        cuenta, dia, sentido, entrada_anterior, traspaso):
+    importe_sda = SaldoDiario.tomar(cuenta=cuenta, dia=entrada_anterior.dia).importe
+
+    mov = Movimiento.crear("Nuevo mov único en el día", 20, dia=dia, **{f"cta_{sentido}": cuenta})
+    movs_dia_cuenta = cuenta.movs().filter(dia=dia)
+    importe_mdc = 0
+    for mov in movs_dia_cuenta:
+        if cuenta == mov.cta_entrada:
+            importe_mdc += mov.importe
+        elif cuenta == mov.cta_salida:
+            importe_mdc -= mov.importe
+        else:
+            raise ValueError("cuenta no interviene en movimiento")
+
+    saldo_diario = SaldoDiario.tomar(cuenta=cuenta, dia=mov.dia)
+
+    assert saldo_diario.importe == importe_sda + importe_mdc
+
+@pytest.mark.parametrize("sentido", ["entrada", "salida"])
 def test_integrativo_modifica_saldo_diario_si_ya_existe(saldo_diario, sentido):
     importe_saldo_diario = saldo_diario.importe
     cuenta = saldo_diario.cuenta

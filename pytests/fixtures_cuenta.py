@@ -217,9 +217,9 @@ def cuenta_credito_deudor(cuentas_credito: Tuple[CuentaInteractiva]) -> CuentaIn
 
 
 @pytest.fixture
-def cuenta_en_dolares(titular: Titular, fecha: date, dolar: Moneda) -> CuentaInteractiva:
+def cuenta_en_dolares(titular: Titular, fecha_temprana: date, dolar: Moneda) -> CuentaInteractiva:
     return Cuenta.crear(
-        nombre='cuenta en dolares', sk='cd', titular=titular, fecha_creacion=fecha, moneda=dolar)
+        nombre='cuenta en dolares', sk='cd', titular=titular, fecha_creacion=fecha_temprana, moneda=dolar)
 
 
 @pytest.fixture
@@ -229,25 +229,25 @@ def cuenta_en_euros(titular: Titular, fecha: date, euro: Moneda) -> CuentaIntera
 
 
 @pytest.fixture
-def cuenta_con_saldo_en_dolares(titular: Titular, fecha: date, dolar: Moneda) -> CuentaInteractiva:
+def cuenta_con_saldo_en_dolares(titular: Titular, fecha_temprana: date, dolar: Moneda) -> CuentaInteractiva:
     return Cuenta.crear(
         nombre='cuenta con saldo en dólares',
         sk='ccsd',
         saldo=100,
         titular=titular,
-        fecha_creacion=fecha,
+        fecha_creacion=fecha_temprana,
         moneda=dolar,
     )
 
 
 @pytest.fixture
-def cuenta_con_saldo_en_euros(titular: Titular, fecha: date, euro: Moneda) -> CuentaInteractiva:
+def cuenta_con_saldo_en_euros(titular: Titular, fecha_temprana: date, euro: Moneda) -> CuentaInteractiva:
     return Cuenta.crear(
         nombre='cuenta con saldo en euros',
         sk='ccse',
         saldo=100,
         titular=titular,
-        fecha_creacion=fecha,
+        fecha_creacion=fecha_temprana,
         moneda=euro,
     )
 
