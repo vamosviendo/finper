@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Self
 
 from django.db import models
 
@@ -109,6 +109,9 @@ class SaldoDiario(MiModel):
             sentido = "entrada" if mov.cta_entrada == self.cuenta else "salida"
             movs.append(getattr(mov, f"importe_cta_{sentido}"))
         return sum(movs)
+
+    def tomar_de_bd(self) -> Self:
+        return self.get_class().tomar_o_nada(cuenta=self.cuenta, dia=self.dia)
 
     # Métodos protegidos
     def _actualizar_posteriores(self, importe):
