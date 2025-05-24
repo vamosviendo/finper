@@ -2695,6 +2695,50 @@ class TestSaveCambiaEsGratis:
 
 
 @pytest.mark.parametrize("sentido", ["entrada", "salida"])
+class TestSaveCambiaMonedaSaldoDiario:
+    def test_si_cambia_moneda_en_traspaso_entre_cuentas_en_distinta_moneda_no_modifica_saldos_diarios_de_cuentas(
+            self, sentido, euro, request):
+        mov = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
+        cuenta = getattr(mov, f"cta_{sentido}")
+        contracuenta = getattr(mov, f"cta_{el_que_no_es(sentido, 'entrada', 'salida')}")
+        saldo_diario_cuenta = SaldoDiario.tomar(cuenta=cuenta, dia=mov.dia)
+        saldo_diario_contracuenta = SaldoDiario.tomar(cuenta=contracuenta, dia=mov.dia)
+        importe_sdc = saldo_diario_cuenta.importe
+        importe_sdcc = saldo_diario_contracuenta.importe
+        print(mov.cotizacion, mov.importe, importe_sdc, importe_sdcc)
+
+        mov.moneda = euro
+        mov.clean_save()
+        print(
+            mov.cotizacion,
+            mov.importe,
+            saldo_diario_cuenta.tomar_de_bd().importe,
+            saldo_diario_contracuenta.tomar_de_bd().importe
+        )
+
+        assert saldo_diario_cuenta.tomar_de_bd().importe == importe_sdc
+        assert saldo_diario_contracuenta.tomar_de_bd().importe == importe_sdcc
+
+    def test_si_cambia_cotizacion_en_traspaso_entre_cuentas_en_distinta_moneda_cambia_importe_de_saldo_diario_de_cuenta_en_moneda_distinta_de_la_del_movimiento(
+            self, sentido, request):
+        mov = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
+        opuesto = el_que_no_es(sentido, 'entrada', 'salida')
+        cuenta = getattr(mov, f"cta_{sentido}")
+        contracuenta = getattr(mov, f"cta_{opuesto}")
+        importe_cc = getattr(mov, f"importe_cta_{opuesto}")
+        saldo_diario = SaldoDiario.tomar(cuenta=cuenta, dia=mov.dia)
+        importe_sd = saldo_diario.importe
+        saldo_diario_cc = SaldoDiario.tomar(cuenta=contracuenta, dia=mov.dia)
+        importe_sdcc = saldo_diario_cc.importe
+
+        mov.cotizacion = 4
+        mov.clean_save()
+
+        assert saldo_diario.tomar_de_bd().importe == importe_sd
+        assert saldo_diario_cc.tomar_de_bd().importe == importe_sdcc - importe_cc + getattr(mov, f"importe_cta_{opuesto}")
+
+
+@pytest.mark.parametrize("sentido", ["entrada", "salida"])
 class TestSaveCambiaMoneda:
 
     def test_si_cambia_moneda_en_traspaso_entre_cuentas_en_distinta_moneda_no_modifica_saldos_de_cuentas(
