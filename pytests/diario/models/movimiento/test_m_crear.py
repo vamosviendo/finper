@@ -4,7 +4,6 @@ import pytest
 
 from diario.models import Movimiento, Saldo, Cuenta, CuentaInteractiva, Moneda, SaldoDiario
 from utils import errors
-from utils.helpers_tests import cambiar_fecha_creacion
 
 
 @pytest.fixture
@@ -207,7 +206,6 @@ def test_integrativo_modifica_saldo_diario_si_ya_existe(saldo_diario, sentido):
 
 def test_integrativo_crear_movimiento_en_fecha_antigua_modifica_saldos_de_fechas_posteriores(
         cuenta, entrada, fecha_anterior):
-    cambiar_fecha_creacion(cuenta, fecha_anterior)
     importe_saldo = Saldo.tomar(cuenta=cuenta, movimiento=entrada).importe
     mov_anterior = Movimiento.crear('Movimiento anterior', 30, cuenta, fecha=fecha_anterior)
     assert Saldo.tomar(cuenta=cuenta, movimiento=entrada).importe == importe_saldo + mov_anterior.importe
@@ -215,7 +213,6 @@ def test_integrativo_crear_movimiento_en_fecha_antigua_modifica_saldos_de_fechas
 
 def test_integrativo_crear_movimiento_en_fecha_antigua_modifica_saldos_diarios_posteriores(
         cuenta, entrada, dia_anterior):
-    cambiar_fecha_creacion(cuenta, dia_anterior.fecha)
     importe_saldo = SaldoDiario.tomar(cuenta=cuenta, dia=entrada.dia).importe
     mov_anterior = Movimiento.crear("Movimiento anterior", 30, cuenta, dia=dia_anterior)
     assert SaldoDiario.tomar(cuenta=cuenta, dia=entrada.dia).importe == importe_saldo + mov_anterior.importe

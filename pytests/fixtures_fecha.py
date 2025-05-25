@@ -5,6 +5,11 @@ import pytest
 
 
 @pytest.fixture
+def fecha_inicial() -> date:
+    return date(2001, 1, 2)
+
+
+@pytest.fixture
 def fecha_temprana() -> date:
     return date(2008, 4, 27)
 

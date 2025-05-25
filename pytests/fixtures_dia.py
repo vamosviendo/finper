@@ -5,13 +5,15 @@ from django.core.exceptions import ValidationError
 from django.db.models import QuerySet
 
 from diario.models import Dia, Movimiento, Titular, CuentaInteractiva
-from utils.helpers_tests import cambiar_fecha_creacion
 from utils.varios import el_que_no_es
 
 
 @pytest.fixture
 def dia_temprano(fecha_temprana: date) -> Dia:
-    return Dia.crear(fecha=fecha_temprana)
+    try:
+        return Dia.crear(fecha=fecha_temprana)
+    except ValidationError:
+        return Dia.tomar(fecha=fecha_temprana)
 
 
 @pytest.fixture
@@ -78,10 +80,8 @@ def mas_de_7_dias(
         dia_posterior_con_movs: Dia,
         dia_anterior_con_movs: Dia,
         dia_tardio_plus: Dia,
-        dia_hoy: Dia) -> QuerySet[Dia]:
-    fecha_inicial = date(2001, 1, 2)
-    cambiar_fecha_creacion(cuenta, fecha_inicial)
-    cambiar_fecha_creacion(cuenta_2, fecha_inicial)
+        dia_hoy: Dia,
+        fecha_inicial: date) -> QuerySet[Dia]:
     Movimiento.crear(fecha=dia_temprano.fecha, concepto="mov", cta_entrada=cuenta, importe=100)
     Movimiento.crear(fecha=dia_tardio_plus.fecha, concepto="mov", cta_entrada=cuenta_2, importe=100)
     Movimiento.crear(fecha=dia_hoy.fecha, concepto="mov", cta_entrada=cuenta, importe=100)
@@ -109,7 +109,6 @@ def muchos_dias(
 
 @pytest.fixture
 def muchos_dias_distintos_titulares(cuenta, cuenta_2, cuenta_ajena, otro_titular, muchos_dias):
-    cambiar_fecha_creacion(cuenta_ajena, date(2001, 1, 2))
     c = cuenta_2
     for mov in cuenta_2.movs():
         c = el_que_no_es(c, cuenta_2, cuenta_ajena)

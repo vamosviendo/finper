@@ -1,4 +1,5 @@
 import datetime
+import re
 
 import pytest
 from django.core.exceptions import ValidationError
@@ -54,16 +55,15 @@ def test_no_puede_tener_fecha_de_creacion_posterior_a_la_fecha_de_conversion(cue
 
 
 def test_no_puede_tener_fecha_de_creacion_anterior_a_fecha_de_alta_de_ninguno_de_sus_titulares(
-        cuenta_de_dos_titulares, fecha_anterior):
+        cuenta_de_dos_titulares):
     titular, otro_titular = cuenta_de_dos_titulares.titulares
-    titular.fecha_creacion = fecha_anterior
-    titular.save()
     cuenta_de_dos_titulares.fecha_creacion = otro_titular.fecha_alta - datetime.timedelta(1)
+
     with pytest.raises(
             errors.ErrorFechaAnteriorAAltaTitular,
             match=f"[Fecha de creación de la cuenta {cuenta_de_dos_titulares.nombre} "
-                f"({cuenta_de_dos_titulares.fecha_creacion}) posterior a la "
+                f"({re.escape(str(cuenta_de_dos_titulares.fecha_creacion))}) posterior a la "
                 f"fecha de alta de uno de sus titulares "
-                f"({otro_titular} - {otro_titular.fecha_alta})]"
+                f"({otro_titular} - {re.escape(str(otro_titular.fecha_alta))})]"
     ):
         cuenta_de_dos_titulares.clean()

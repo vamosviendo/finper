@@ -5,12 +5,11 @@ import pytest
 from django.db.models import QuerySet
 
 from diario.models import CuentaInteractiva, Dia, Movimiento, Moneda, CuentaAcumulativa
-from utils.helpers_tests import cambiar_fecha_creacion, dividir_en_dos_subcuentas
+from utils.helpers_tests import dividir_en_dos_subcuentas
 
 
 @pytest.fixture
 def entrada_temprana(cuenta: CuentaInteractiva, dia_temprano: Dia) -> Movimiento:
-    cambiar_fecha_creacion(cuenta, dia_temprano.fecha)
     return Movimiento.crear(
         concepto='Entrada temprana', importe=47,
         cta_entrada=cuenta, dia=dia_temprano
@@ -19,7 +18,6 @@ def entrada_temprana(cuenta: CuentaInteractiva, dia_temprano: Dia) -> Movimiento
 
 @pytest.fixture
 def entrada_anterior(cuenta: CuentaInteractiva, dia_anterior: Dia) -> Movimiento:
-    cambiar_fecha_creacion(cuenta, dia_anterior.fecha)
     return Movimiento.crear(
         concepto='Entrada anterior', importe=3,
         cta_entrada=cuenta, dia=dia_anterior

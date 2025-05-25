@@ -65,10 +65,10 @@ def cuenta_temprana_2(titular: Titular, dia_temprano: Dia, peso: Moneda) -> Cuen
 
 
 @pytest.fixture
-def cuenta_temprana_acumulativa(titular: Titular, dia_temprano: Dia, peso: Moneda) -> Cuenta | CuentaAcumulativa:
+def cuenta_temprana_acumulativa(titular: Titular, peso: Moneda) -> Cuenta | CuentaAcumulativa:
     cuenta = Cuenta.crear(
         "cuenta temprana acum", "cta",
-        fecha_creacion=dia_temprano.fecha, titular=titular, moneda=peso
+        fecha_creacion=titular.fecha_alta, titular=titular, moneda=peso
     )
     return cuenta.dividir_y_actualizar(
         ['subcuenta 1 cuenta temprana acum', 'sc1cta', 0],

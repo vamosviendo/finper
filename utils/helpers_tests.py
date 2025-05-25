@@ -11,16 +11,6 @@ def cambiar_fecha(mov: Movimiento, fecha: date):
     mov.clean_save()
 
 
-def cambiar_fecha_creacion(cuenta: CuentaInteractiva | CuentaAcumulativa, fecha: date):
-    cuenta.fecha_creacion = fecha
-    try:
-        cuenta.clean_save()
-    except ValidationError:     # Fecha de alta del titular de la cuenta es posterior a fecha
-        cuenta.titular.fecha_alta = fecha
-        cuenta.titular.clean_save()
-        cuenta.clean_save()
-
-
 def dividir_en_dos_subcuentas(cuenta: CuentaInteractiva, saldo: float = 0, fecha: date = None) -> CuentaAcumulativa:
     return cuenta.dividir_y_actualizar(
         ['subcuenta 1', 'sc1', saldo],
