@@ -678,7 +678,7 @@ class CuentaAcumulativa(Cuenta):
             if self.fecha_creacion < titular.fecha_alta:
                 raise errors.ErrorFechaAnteriorAAltaTitular(
                     f"Fecha de creación de la cuenta {self.nombre} "
-                    f"({self.fecha_creacion}) posterior a la "
+                    f"({self.fecha_creacion}) anterior a la "
                     f"fecha de alta de uno de sus titulares "
                     f"({titular} - {titular.fecha_alta})"
                 )
