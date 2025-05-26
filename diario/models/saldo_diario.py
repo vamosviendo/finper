@@ -29,6 +29,10 @@ class SaldoDiario(MiModel):
     def importe(self, value: float):
         self._importe = round(value, 2)
 
+    @property
+    def sk(self) -> str:
+        return f"{self.dia.sk}{self.cuenta.sk}"
+
     @classmethod
     def anterior_a(cls, cuenta: Cuenta, dia: Dia):
         return cls.filtro(cuenta=cuenta, dia__fecha__lt=dia.fecha).last()
