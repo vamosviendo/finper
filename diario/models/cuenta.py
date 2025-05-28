@@ -122,6 +122,9 @@ class Cuenta(PolymorphModel):
     def es_cuenta_credito(self) -> bool:
         return self.has_not_none_attr('contracuenta')
 
+    def sentido_en_mov(self, movimiento: Movimiento) -> str | None:
+        return "entrada" if movimiento.cta_entrada == self else "salida" if movimiento.cta_salida == self else None
+
     def saldo_en_mov(self, movimiento: Movimiento) -> float:
         movs_dia = movimiento.dia.movimientos_filtrados(self)
         movs_posteriores = movs_dia.filter(orden_dia__gt=movimiento.orden_dia)
