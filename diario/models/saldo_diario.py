@@ -104,16 +104,6 @@ class SaldoDiario(MiModel):
                 return True
         return False
 
-    def movimientos(self) -> models.QuerySet[Movimiento]:
-        return self.cuenta.movs().filter(dia=self.dia)
-
-    def importe_movs(self) -> float:
-        movs: list[float] = []
-        for mov in self.movimientos():
-            sentido = "entrada" if mov.cta_entrada == self.cuenta else "salida"
-            movs.append(getattr(mov, f"importe_cta_{sentido}"))
-        return sum(movs)
-
     def tomar_de_bd(self) -> Self:
         return self.get_class().tomar_o_nada(cuenta=self.cuenta, dia=self.dia)
 

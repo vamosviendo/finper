@@ -162,16 +162,6 @@ class Cuenta(PolymorphModel):
                 else saldo.movimiento.importe_cta_salida
             saldo.save()
 
-    def recalcular_saldos_diarios_entre(self, fecha_inicial: date, fecha_final: date):
-        for saldo in self.saldodiario_set.filter(dia__fecha__gte=fecha_inicial, dia__fecha__lte=fecha_final):
-            importe = saldo.importe_movs()
-            try:
-                saldo.importe = SaldoDiario.anterior_a(saldo.cuenta, saldo.dia).importe
-            except AttributeError:  # No hay saldo diario anterior
-                saldo.importe = 0
-            saldo.importe += importe
-            saldo.clean_save()
-
     @property
     def ultimo_saldo(self) -> Saldo:
         return self.saldo_set.last()
