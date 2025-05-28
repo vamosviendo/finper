@@ -122,6 +122,17 @@ class Cuenta(PolymorphModel):
     def es_cuenta_credito(self) -> bool:
         return self.has_not_none_attr('contracuenta')
 
+    def saldo_en_mov(self, movimiento: Movimiento) -> float:
+        movs_dia = movimiento.dia.movimientos_filtrados(self)
+        movs_posteriores = movs_dia.filter(orden_dia__gt=movimiento.orden_dia)
+        suma = 0
+        for mov in movs_posteriores:
+            if mov.cta_entrada == self:
+                suma += mov.importe_cta_entrada
+            else:
+                suma += mov.importe_cta_salida
+        return SaldoDiario.tomar(cuenta=self, dia=movimiento.dia).importe - suma
+
     def saldo(
             self,
             movimiento: Movimiento = None,
