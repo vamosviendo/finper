@@ -68,7 +68,7 @@ class SaldoDiario(MiModel):
                 importe = importe_mov
             saldo_diario = cls.crear(cuenta=cuenta, dia=mov.dia, importe=importe)
 
-        return saldo_diario.tomar_de_bd()
+        return saldo_diario
 
     def eliminar(self):
         importe = self.importe
