@@ -128,8 +128,14 @@ class Cuenta(PolymorphModel):
     def saldo_en_mov(self, movimiento: Movimiento) -> float:
         movs_dia = movimiento.dia.movimientos_filtrados(self)
         movs_posteriores = movs_dia.filter(orden_dia__gt=movimiento.orden_dia)
-        suma = sum(getattr(x, f"importe_cta_{self.sentido_en_mov(x)}") for x in movs_posteriores)
-        return SaldoDiario.tomar(cuenta=self, dia=movimiento.dia).importe - suma
+        suma_importes_posteriores = sum(getattr(x, f"importe_cta_{self.sentido_en_mov(x)}") for x in movs_posteriores)
+        saldo_diario = SaldoDiario.filtro(cuenta=self, dia__fecha__lte=movimiento.dia.fecha).last()
+        try:
+            importe_sd = saldo_diario.importe
+        except AttributeError:
+            importe_sd = 0
+
+        return importe_sd - suma_importes_posteriores
 
     def saldo(
             self,
@@ -141,13 +147,13 @@ class Cuenta(PolymorphModel):
         cotizacion = self.moneda.cotizacion_en_al(moneda, fecha, compra) if moneda else 1
 
         try:
-            return round(Saldo.tomar(cuenta=self, movimiento=movimiento).importe * cotizacion, 2)
+            return round(self.saldo_en_mov(movimiento) * cotizacion, 2)
         except AttributeError:  # movimiento is None
             try:
                 return round(self.ultimo_saldo.importe * cotizacion, 2)
             except AttributeError:  # No hay saldos
                 return 0
-        except Saldo.DoesNotExist:  # Se pasó movimiento pero no hay saldos
+        except SaldoDiario.DoesNotExist:  # Se pasó movimiento pero no hay saldos
             return 0
 
     @property
@@ -622,7 +628,7 @@ class CuentaAcumulativa(Cuenta):
                 movimiento.cta_salida.sk if movimiento.cta_salida else None,
             ]
             if self.sk in sks_ctas_mov: # La cuenta participó del movimiento cuando aún era interactiva
-                return round(Saldo.tomar(cuenta=self, movimiento=movimiento).importe * cotizacion, 2)
+                return round(self.saldo_en_mov(movimiento) * cotizacion, 2)
         return round(
             sum([subc.saldo(movimiento=movimiento) for subc in self.subcuentas.all()]) * cotizacion,
             2

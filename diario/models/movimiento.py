@@ -430,6 +430,7 @@ class Movimiento(MiModel):
              esgratis: bool = False,
              **kwargs):
         """
+        TODO: Revisar y actualizar este comentario
         Si el movimiento es nuevo (no existía antes, está siendo creado)
         - Generar saldo para cuentas de entrada y/o salida al momento del
           movimiento.
@@ -493,9 +494,9 @@ class Movimiento(MiModel):
             # Cálculo de saldo diario ante modificación de movimiento
             for campo_cuenta in campos_cuenta:
                 if self.cambia_campo(campo_cuenta, "dia", "_importe", "_cotizacion"):
-                    campo_opuesto = el_que_no_es(campo_cuenta, *campos_cuenta)
                     cta_nueva = getattr(self, campo_cuenta)
                     cta_vieja = getattr(self.viejo, campo_cuenta)
+                    campo_opuesto = el_que_no_es(campo_cuenta, *campos_cuenta)
                     cta_nueva_opuesta = getattr(self, campo_opuesto)
 
                     if cta_vieja is not None:

@@ -7,7 +7,12 @@ from diario.models import Saldo
 
 @pytest.fixture
 def mock_tomar(mocker) -> MagicMock:
-    return mocker.patch('diario.models.cuenta.Saldo.tomar')
+    return mocker.patch('diario.models.cuenta.SaldoDiario.tomar')
+
+
+@pytest.fixture
+def mock_saldo_en_mov(mocker) -> MagicMock:
+    return mocker.patch('diario.models.cuenta.Cuenta.saldo_en_mov', autospec=True)
 
 
 def test_devuelve_el_ultimo_saldo_historico_de_la_cuenta(cuenta, entrada, salida_posterior):
@@ -23,9 +28,9 @@ def test_si_no_encuentra_saldos_en_la_cuenta_devuelve_cero(cuenta):
 
 
 def test_si_recibe_movimiento_recupera_saldo_al_momento_del_movimiento(
-        cuenta, entrada, traspaso_posterior, entrada_tardia, mock_tomar):
+        cuenta, entrada, traspaso_posterior, entrada_tardia, mock_saldo_en_mov):
     cuenta.saldo(movimiento=entrada)
-    mock_tomar.assert_called_once_with(cuenta=cuenta, movimiento=entrada)
+    mock_saldo_en_mov.assert_called_once_with(cuenta, movimiento=entrada)
 
 
 def test_si_no_encuentra_saldo_de_cuenta_en_movimiento_devuelve_saldo_en_movimiento_anterior(

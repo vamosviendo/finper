@@ -2210,6 +2210,18 @@ class TestSaveCambiaFecha:
 
         assert cuenta.saldo(salida_posterior) == saldo_posterior
 
+    def test_mismo_test_sin_parametrizar(
+            self, sentido, entrada, entrada_anterior, salida_posterior, fecha_temprana):
+        cuenta = entrada.cta_entrada
+        saldo_posterior = cuenta.saldo(salida_posterior)
+
+        entrada.fecha = fecha_temprana
+        entrada.clean_save()
+
+        assert cuenta.saldo(salida_posterior) == Saldo.tomar(cuenta=cuenta, movimiento=salida_posterior)
+        assert cuenta.saldo(salida_posterior) == saldo_posterior
+
+
 
 class TestSaveCambiaFechaConCtaAcumulativa:
 
