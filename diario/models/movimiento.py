@@ -496,14 +496,14 @@ class Movimiento(MiModel):
                 if self.cambia_campo(campo_cuenta, "dia", "_importe", "_cotizacion"):
                     cta_nueva = getattr(self, campo_cuenta)
                     cta_vieja = getattr(self.viejo, campo_cuenta)
-                    campo_opuesto = el_que_no_es(campo_cuenta, *campos_cuenta)
-                    cta_nueva_opuesta = getattr(self, campo_opuesto)
 
                     if cta_vieja is not None:
                         saldo_cta_vieja = SaldoDiario.tomar(cuenta=cta_vieja, dia=self.viejo.dia)
                         movs_dia_cta_vieja = cta_vieja.movs().filter(dia=self.viejo.dia)
+                        campo_opuesto = el_que_no_es(campo_cuenta, *campos_cuenta)
+                        cta_nueva_opuesta = getattr(self, campo_opuesto)
 
-                        if movs_dia_cta_vieja.count() < 2 and cta_nueva_opuesta != cta_vieja:
+                        if movs_dia_cta_vieja.count() < 2 and cta_vieja not in (cta_nueva, cta_nueva_opuesta):
                             saldo_cta_vieja.eliminar()
                         else:
                             saldo_cta_vieja.importe -= getattr(self.viejo, f"importe_{campo_cuenta}")

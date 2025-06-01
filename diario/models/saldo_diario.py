@@ -58,7 +58,7 @@ class SaldoDiario(MiModel):
         importe_mov = getattr(mov, f"importe_cta_{sentido}")
 
         try:
-            saldo_diario = SaldoDiario.tomar(cuenta=cuenta, dia=mov.dia)
+            saldo_diario = cls.tomar(cuenta=cuenta, dia=mov.dia)
             saldo_diario.importe += importe_mov
             saldo_diario.clean_save()
         except cls.DoesNotExist:
