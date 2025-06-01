@@ -70,6 +70,9 @@ class SaldoDiario(MiModel):
 
         return saldo_diario
 
+    def anterior(self):
+        return SaldoDiario.anterior_a(cuenta=self.cuenta, dia=self.dia)
+
     def eliminar(self):
         importe = self.importe
         self.delete()

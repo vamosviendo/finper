@@ -14,6 +14,11 @@ def saldo_diario_anterior(cuenta: CuentaInteractiva, entrada_anterior: Movimient
 
 
 @pytest.fixture
+def saldo_diario_temprano(cuenta: CuentaInteractiva, entrada_temprana: Movimiento) -> SaldoDiario:
+    return SaldoDiario.tomar(cuenta=cuenta, dia=entrada_temprana.dia)
+
+
+@pytest.fixture
 def saldo_diario_posterior(cuenta: CuentaInteractiva, salida_posterior: Movimiento) -> SaldoDiario:
     return SaldoDiario.tomar(cuenta=cuenta, dia=salida_posterior.dia)
 
