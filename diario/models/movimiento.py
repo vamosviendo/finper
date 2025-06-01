@@ -491,26 +491,7 @@ class Movimiento(MiModel):
             if self._hay_que_recalcular_importe():
                 self._recalcular_importe()
 
-            # Cálculo de saldo diario ante modificación de movimiento
-            for campo_cuenta in campos_cuenta:
-                if self.cambia_campo(campo_cuenta, "dia", "_importe", "_cotizacion"):
-                    cta_nueva = getattr(self, campo_cuenta)
-                    cta_vieja = getattr(self.viejo, campo_cuenta)
-
-                    if cta_vieja is not None:
-                        saldo_cta_vieja = SaldoDiario.tomar(cuenta=cta_vieja, dia=self.viejo.dia)
-                        movs_dia_cta_vieja = cta_vieja.movs().filter(dia=self.viejo.dia)
-                        campo_opuesto = el_que_no_es(campo_cuenta, *campos_cuenta)
-                        cta_nueva_opuesta = getattr(self, campo_opuesto)
-
-                        if movs_dia_cta_vieja.count() < 2 and cta_vieja not in (cta_nueva, cta_nueva_opuesta):
-                            saldo_cta_vieja.eliminar()
-                        else:
-                            saldo_cta_vieja.importe -= getattr(self.viejo, f"importe_{campo_cuenta}")
-                            saldo_cta_vieja.clean_save()
-
-                    if cta_nueva is not None:
-                        SaldoDiario.calcular(self, campo_cuenta)
+            self._recalcular_saldos_diarios()
 
             super().save(*args, **kwargs)
 
@@ -663,6 +644,27 @@ class Movimiento(MiModel):
             if self.cta_salida else None
         self.cta_entrada = self.cta_entrada.tomar_del_sk() \
             if self.cta_entrada else None
+
+    def _recalcular_saldos_diarios(self):
+        for campo_cuenta in campos_cuenta:
+            if self.cambia_campo(campo_cuenta, "dia", "_importe", "_cotizacion"):
+                cta_nueva = getattr(self, campo_cuenta)
+                cta_vieja = getattr(self.viejo, campo_cuenta)
+
+                if cta_vieja is not None:
+                    saldo_cta_vieja = SaldoDiario.tomar(cuenta=cta_vieja, dia=self.viejo.dia)
+                    movs_dia_cta_vieja = cta_vieja.movs().filter(dia=self.viejo.dia)
+                    campo_opuesto = el_que_no_es(campo_cuenta, *campos_cuenta)
+                    cta_nueva_opuesta = getattr(self, campo_opuesto)
+
+                    if movs_dia_cta_vieja.count() < 2 and cta_vieja not in (cta_nueva, cta_nueva_opuesta):
+                        saldo_cta_vieja.eliminar()
+                    else:
+                        saldo_cta_vieja.importe -= getattr(self.viejo, f"importe_{campo_cuenta}")
+                        saldo_cta_vieja.clean_save()
+
+                if cta_nueva is not None:
+                    SaldoDiario.calcular(self, campo_cuenta)
 
     def _actualizar_saldos_cuenta(self, campo_cuenta: str, mantiene_orden_dia: bool):
         if campo_cuenta not in campos_cuenta:
