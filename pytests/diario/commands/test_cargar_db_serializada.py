@@ -14,7 +14,8 @@ from diario.models import (
     CuentaAcumulativa,
     CuentaInteractiva,
     Dia,
-    Movimiento
+    Movimiento,
+    SaldoDiario,
 )
 from diario.serializers import CuentaSerializada, MovimientoSerializado, TitularSerializado, MonedaSerializada
 from finper import settings
@@ -326,6 +327,28 @@ class TestCargaCuentas:
         for cuenta in subcuentas:
             cuenta_guardada = Cuenta.tomar(sk=cuenta.sk)
             assert cuenta_guardada.cta_madre.sk == cuenta.fields["cta_madre"][0]
+
+
+class TestCargaSaldosDiarios:
+    def test_crea_saldos_diarios_a_partir_de_movimientos(
+            self, cuenta, entrada_anterior, entrada, salida, salida_posterior, db_serializada, vaciar_db):
+        call_command("cargar_db_serializada")
+        cuenta = Cuenta.tomar(sk=cuenta.sk)
+        for m in Movimiento.todes():
+            try:
+                SaldoDiario.tomar(cuenta=cuenta, dia=m.dia)
+            except SaldoDiario.DoesNotExist:
+                raise AssertionError(f"Saldo diario de cuenta del día {m.dia} no se creó")
+
+    def test_importe_del_saldo_diario_creado_es_igual_a_suma_de_los_importes_de_los_movimientos_de_la_cuenta_en_el_dia(
+            self, cuenta, entrada, salida, traspaso, db_serializada, vaciar_db):
+        call_command("cargar_db_serializada")
+        cuenta = Cuenta.tomar(sk=cuenta.sk)
+        dia = Dia.tomar(fecha=entrada.dia.fecha)
+        saldo_diario = SaldoDiario.tomar(cuenta=cuenta, dia=dia)
+        assert \
+            saldo_diario.importe == \
+            entrada.importe_cta_entrada + salida.importe_cta_salida + traspaso.importe_cta_entrada
 
 
 class TestCargaMovimientos:
