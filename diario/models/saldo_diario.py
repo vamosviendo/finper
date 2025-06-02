@@ -81,7 +81,7 @@ class SaldoDiario(MiModel):
     def save(self, *args, **kwargs):
         if self._state.adding:
             try:
-                importe_anterior = self.anterior_a(self.cuenta, self.dia).importe
+                importe_anterior = self.anterior().importe
                 importe = self.importe - importe_anterior
             except AttributeError:  # No hay movimiento anterior.
                 importe = self.importe

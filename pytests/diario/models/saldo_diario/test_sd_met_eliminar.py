@@ -35,11 +35,3 @@ def test_no_modifica_saldos_posteriores_de_otra_cuenta(saldo_diario, entrada_pos
     saldo_posterior_otra_cuenta.refresh_from_db()
 
     assert saldo_posterior_otra_cuenta.importe == importe_saldo_posterior
-
-#
-#
-# def test_llama_a_recalcular_saldos_de_cuenta_de_saldo_eliminado_desde_fecha_de_saldo_en_adelante(
-#         saldo, salida_posterior, mocker):
-#     mock_recalcular = mocker.patch('diario.models.Cuenta.recalcular_saldos_entre', autospec=True)
-#     saldo.eliminar()
-#     mock_recalcular.assert_called_once_with(saldo.cuenta, saldo.posicion)
