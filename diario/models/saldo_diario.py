@@ -75,8 +75,12 @@ class SaldoDiario(MiModel):
 
     def eliminar(self):
         importe = self.importe
+        try:
+            importe_anterior = self.anterior().importe
+        except AttributeError:
+            importe_anterior = 0
         self.delete()
-        self._actualizar_posteriores(-importe)
+        self._actualizar_posteriores(importe_anterior-importe)
 
     def save(self, *args, **kwargs):
         if self._state.adding:

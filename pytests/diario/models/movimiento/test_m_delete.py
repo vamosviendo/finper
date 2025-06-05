@@ -89,7 +89,7 @@ def test_si_se_elimina_traspaso_entre_cuentas_con_mas_movimientos_en_el_dia_no_s
 
 
 def test_si_se_elimina_traspaso_entre_cuentas_con_mas_movimientos_en_el_dia_se_resta_importe_de_saldos_diarios_de_ambas_cuentas(
-        entrada, entrada_otra_cuenta, traspaso, mocker):
+        entrada, entrada_otra_cuenta, traspaso):
     saldo1 = SaldoDiario.tomar(cuenta=traspaso.cta_entrada, dia=traspaso.dia)
     saldo2 = SaldoDiario.tomar(cuenta=traspaso.cta_salida, dia=traspaso.dia)
     importe1 = saldo1.importe
@@ -127,7 +127,11 @@ def test_si_se_elimina_traspaso_entre_cuenta_con_unico_movimiento_en_el_dia_y_cu
 
 
 @pytest.mark.parametrize("sentido", ["entrada", "salida"])
-def test_resta_importe_de_saldos_diarios_posteriores_de_cta_entrada(cuenta, sentido, salida_posterior, request):
+@pytest.mark.parametrize("otros_movs", [[], ["traspaso"], ["entrada_anterior"], ["entrada_anterior", "traspaso"]])
+def test_resta_importe_de_saldos_diarios_posteriores_de_cta_entrada(
+        cuenta, sentido, otros_movs, salida_posterior, request):
+    for otro_mov in otros_movs:
+        request.getfixturevalue(otro_mov)
     mov = request.getfixturevalue(sentido)
     saldo_posterior = SaldoDiario.objects.get(cuenta=cuenta, dia=salida_posterior.dia).importe
     mov.delete()
