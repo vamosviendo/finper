@@ -14,14 +14,12 @@ from diario.fields import CaseInsensitiveCharField
 from diario.models.dia import Dia
 from diario.models.moneda import Moneda
 from diario.models.movimiento import Movimiento
-from diario.models.saldo import Saldo
 from diario.models.saldo_diario import SaldoDiario
 from diario.models.titular import Titular
 from diario.settings_app import MONEDA_BASE, TITULAR_PRINCIPAL
 from diario.utils.utils_moneda import id_moneda_base
 from utils import errors
 from utils.iterables import remove_duplicates
-from utils.tiempo import Posicion
 from vvmodel.managers import PolymorphManager
 from vvmodel.models import PolymorphModel
 
@@ -125,6 +123,12 @@ class Cuenta(PolymorphModel):
     def sentido_en_mov(self, movimiento: Movimiento) -> str | None:
         return "entrada" if movimiento.cta_entrada == self else "salida" if movimiento.cta_salida == self else None
 
+    def saldo_diario(self, dia: Dia) -> SaldoDiario | None:
+        try:
+            return SaldoDiario.tomar(dia=dia)
+        except SaldoDiario.DoesNotExist:
+            return None
+
     def saldo_en_mov(self, movimiento: Movimiento) -> float:
         movs_dia = movimiento.dia.movimientos_filtrados(self)
         movs_posteriores = movs_dia.filter(orden_dia__gt=movimiento.orden_dia)
@@ -160,26 +164,20 @@ class Cuenta(PolymorphModel):
     def cotizacion(self) -> float:
         return self.moneda.cotizacion
 
-    def recalcular_saldos_entre(self,
-                                pos_desde: Posicion = Posicion(orden_dia=0),
-                                pos_hasta: Posicion = Posicion(orden_dia=100000000)):
-        pos_hasta.fecha = pos_hasta.fecha or date.today()
-        pos_hasta.orden_dia = pos_hasta.orden_dia or 100000000
-
-        saldos = Saldo.posteriores_a(self, pos_desde, inclusive_od=True) & \
-                 Saldo.anteriores_a(self, pos_hasta, inclusive_od=True)
+    def recalcular_saldos_diarios(self):
+        saldos = self.saldodiario_set.all()
         for saldo in saldos:
-            try:
-                saldo.importe = saldo.anterior().importe
-            except AttributeError:  # saldo.anterior() is None
-                saldo.importe = 0
-            saldo.importe += saldo.movimiento.importe_cta_entrada if saldo.viene_de_entrada \
-                else saldo.movimiento.importe_cta_salida
-            saldo.save()
+            saldo.delete()
+
+        movimientos = self.movs()
+        for mov in movimientos:
+            campos_cuenta = (x for x in ("cta_entrada", "cta_salida") if getattr(mov, x) is not None)
+            for campo_cuenta in campos_cuenta:
+                SaldoDiario.calcular(mov, campo_cuenta)
 
     @property
-    def ultimo_saldo(self) -> Saldo:
-        return self.saldo_set.last()
+    def ultimo_saldo(self) -> SaldoDiario:
+        return self.saldodiario_set.last()
 
     def clean_fields(self, exclude: Sequence[str] = None):
         self._pasar_sk_a_minuscula()
@@ -349,9 +347,6 @@ class CuentaInteractiva(Cuenta):
         except CuentaInteractiva._cuentacontra.RelatedObjectDoesNotExist:
             # no es cuenta crédito
             return None
-
-    def corregir_saldo(self):
-        self.recalcular_saldos_entre(Posicion(self.fecha_creacion))
 
     def agregar_mov_correctivo(self) -> Optional[Movimiento]:
         if self.saldo_ok():
@@ -627,7 +622,7 @@ class CuentaAcumulativa(Cuenta):
                 movimiento.cta_entrada.sk if movimiento.cta_entrada else None,
                 movimiento.cta_salida.sk if movimiento.cta_salida else None,
             ]
-            if self.sk in sks_ctas_mov: # La cuenta participó del movimiento cuando aún era interactiva
+            if self.sk in sks_ctas_mov:  # La cuenta participó del movimiento cuando aún era interactiva
                 return round(self.saldo_en_mov(movimiento) * cotizacion, 2)
         return round(
             sum([subc.saldo(movimiento=movimiento) for subc in self.subcuentas.all()]) * cotizacion,
@@ -677,6 +672,9 @@ class CuentaAcumulativa(Cuenta):
             fecha_creacion=fecha or date.today(),
             moneda=self.moneda,
         )
+
+    def recalcular_saldos_diarios(self):
+        raise AttributeError("No se permite recalcular saldos de cuenta acumulativa")
 
     def _verificar_fechas(self):
         for titular in self.titulares:

@@ -1,11 +1,9 @@
-from datetime import timedelta
 from typing import Tuple
 from unittest.mock import call
 
 import pytest
-from pytest import approx
 
-from diario.models import Movimiento, Cuenta, CuentaInteractiva, Saldo, Dia, SaldoDiario
+from diario.models import Cuenta, CuentaInteractiva, Dia, Movimiento, SaldoDiario
 from utils.helpers_tests import \
     cambiar_fecha, dividir_en_dos_subcuentas, signo
 from utils.varios import el_que_no_es
@@ -30,7 +28,7 @@ def credito_no_guardado(cuenta: CuentaInteractiva, cuenta_ajena: CuentaInteracti
 class TestSaveGeneral:
     def test_no_modifica_saldo_en_mov_si_no_se_modifica_importe_ni_cuentas_ni_fecha(
             self, traspaso, mocker):
-        mock_saldo_save = mocker.patch('diario.models.movimiento.Saldo.save')
+        mock_saldo_save = mocker.patch('diario.models.movimiento.SaldoDiario.save')
         traspaso.concepto = 'Otro concepto'
         traspaso.clean_save()
         mock_saldo_save.assert_not_called()
@@ -159,7 +157,7 @@ class TestSaveMovimientoEntreCuentasDeDistintosTitulares:
 
 
 @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
-class TestSaveCambiaImporteSaldoDiario:
+class TestSaveCambiaImporte:
     @pytest.mark.parametrize("otros_movs", [[], ["traspaso"]])
     def test_resta_importe_antiguo_y_suma_el_nuevo_a_saldo_diario(self, sentido, otros_movs, request):
         mov = request.getfixturevalue(sentido)
@@ -240,78 +238,8 @@ class TestSaveCambiaImporteSaldoDiario:
             importe_sdc - importe_contramov + getattr(contramov, f"importe_cta_{sentido}")
 
 
-class TestSaveModificaImporte:
-
-    @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
-    def test_resta_importe_antiguo_y_suma_el_nuevo_a_saldo_de_cuenta_en_movimiento(
-            self, sentido, importe_aleatorio, request):
-        mov, s, cuenta = inferir_fixtures(sentido, request)
-        importe_mov = mov.importe
-        saldo_cuenta = cuenta.saldo(mov)
-
-        mov.importe = importe_aleatorio
-        mov.clean_save()
-
-        assert \
-            cuenta.saldo(mov) == \
-            approx(saldo_cuenta - importe_mov * s + importe_aleatorio * s)
-
-    def test_en_mov_de_traspaso_modifica_saldo_de_ambas_cuentas(
-            self, traspaso, importe_aleatorio):
-        saldo_ce = traspaso.saldo_ce()
-        saldo_cs = traspaso.saldo_cs()
-        importe_saldo_ce = saldo_ce.importe
-        importe_saldo_cs = saldo_cs.importe
-        importe_mov = traspaso.importe
-
-        traspaso.importe = importe_aleatorio
-        traspaso.clean_save()
-        saldo_ce.refresh_from_db(fields=['_importe'])
-        saldo_cs.refresh_from_db(fields=['_importe'])
-
-        assert saldo_ce.importe == approx(
-            importe_saldo_ce - importe_mov + importe_aleatorio
-        )
-        assert saldo_cs.importe == approx(
-            importe_saldo_cs + importe_mov - importe_aleatorio
-        )
-
-    @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
-    def test_actualiza_saldos_posteriores_de_cta_entrada(
-            self, sentido, salida_posterior, importe_aleatorio, request):
-        mov, s, cuenta = inferir_fixtures(sentido, request)
-        importe_mov = mov.importe
-        saldo_posterior_cuenta = cuenta.saldo(salida_posterior)
-
-        mov.importe = importe_aleatorio
-        mov.clean_save()
-
-        assert \
-            cuenta.saldo(salida_posterior) == \
-            approx(saldo_posterior_cuenta - importe_mov * s + importe_aleatorio * s)
-
-    def test_en_mov_traspaso_con_contramov_cambia_saldo_en_las_cuentas_del_contramov(
-            self, credito, importe_aleatorio):
-        importe_mov = credito.importe
-        contramov = Movimiento.tomar(id=credito.id_contramov)
-        cta_deudora = contramov.cta_salida
-        cta_acreedora = contramov.cta_entrada
-        saldo_cd = cta_deudora.saldo()
-        saldo_ca = cta_acreedora.saldo()
-
-        credito.importe = importe_aleatorio
-        credito.clean_save()
-
-        assert cta_deudora.saldo() == approx(
-            saldo_cd + importe_mov - importe_aleatorio
-        )
-        assert cta_acreedora.saldo() == approx(
-            saldo_ca - importe_mov + importe_aleatorio
-        )
-
-
 @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
-class TestSaveCambiaCuentasSaldoDiario:
+class TestSaveCambiaCuentas:
     def test_si_no_hay_mas_movs_de_cuenta_vieja_en_el_dia_elimina_su_saldo_diario(
             self, sentido, cuenta_2, request, mocker):
         mov = request.getfixturevalue(sentido)
@@ -684,207 +612,6 @@ class TestSaveCambiaCuentasSaldoDiario:
         saldo_posterior.refresh_from_db()
         assert saldo_posterior.importe == importe_sp + getattr(mov, f"importe_cta_{sentido}")
 
-
-class TestSaveCambiaCuentas:
-
-    @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
-    def test_genera_saldo_de_cuenta_nueva_y_elimina_el_de_cuenta_vieja_en_movimiento(
-            self, mocker, sentido, cuenta_2, request):
-        campo_cuenta = f'cta_{sentido}'
-        mov, _, cuenta = inferir_fixtures(sentido, request)
-        saldo_en_mov_viejo = Saldo.tomar(cuenta=cuenta, movimiento=mov)
-        mock_generar = mocker.patch('diario.models.movimiento.Saldo.generar')
-        mock_eliminar = mocker.patch('diario.models.movimiento.Saldo.eliminar', autospec=True)
-
-        setattr(mov, campo_cuenta, cuenta_2)
-        mov.clean_save()
-
-        mock_generar.assert_called_once_with(mov, campo_cuenta)
-        mock_eliminar.assert_called_once_with(saldo_en_mov_viejo)
-
-    @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
-    def test_actualiza_importe_de_saldos_posteriores_de_cuenta_original_y_nueva(
-            self, sentido, entrada_otra_cuenta, salida_posterior, request):
-        campo_cuenta = f'cta_{sentido}'
-        mov, s, cuenta = inferir_fixtures(sentido, request)
-        cuenta_2 = entrada_otra_cuenta.cta_entrada
-        saldo_posterior_cuenta = cuenta.saldo(salida_posterior)
-        saldo_posterior_cuenta_2 = cuenta_2.saldo(salida_posterior)
-
-        setattr(mov, campo_cuenta, cuenta_2)
-        mov.clean_save()
-
-        assert \
-            cuenta.saldo(salida_posterior) == \
-            saldo_posterior_cuenta - mov.importe * s
-        assert \
-            cuenta_2.saldo(salida_posterior) == \
-            saldo_posterior_cuenta_2 + mov.importe * s
-
-    @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
-    def test_funciona_en_movimientos_de_traspaso(self, sentido, traspaso, cuenta_3):
-        campo_cuenta = f'cta_{sentido}'
-        cuenta = getattr(traspaso, campo_cuenta)
-
-        setattr(traspaso, campo_cuenta, cuenta_3)
-        traspaso.clean_save()
-
-        with pytest.raises(Saldo.DoesNotExist):
-            Saldo.objects.get(cuenta=cuenta, movimiento=traspaso)
-
-        assert cuenta_3.saldo_set.count() == 1
-        assert \
-            cuenta_3.saldo(traspaso) == \
-            traspaso.importe * signo(sentido == 'entrada')
-
-    def test_modificar_ambas_cuentas_funciona_en_movimientos_de_traspaso(
-            self, traspaso, cuenta_3, cuenta_4):
-        cuenta_1 = traspaso.cta_entrada
-        cuenta_2 = traspaso.cta_salida
-
-        traspaso.cta_entrada = cuenta_3
-        traspaso.cta_salida = cuenta_4
-        traspaso.clean_save()
-
-        with pytest.raises(Saldo.DoesNotExist):
-            Saldo.objects.get(cuenta=cuenta_1, movimiento=traspaso)
-        with pytest.raises(Saldo.DoesNotExist):
-            Saldo.objects.get(cuenta=cuenta_2, movimiento=traspaso)
-
-        assert cuenta_3.saldo_set.count() == 1
-        assert cuenta_3.saldo(traspaso) == traspaso.importe
-        assert cuenta_4.saldo_set.count() == 1
-        assert cuenta_4.saldo(traspaso) == -traspaso.importe
-
-    def test_modificar_ambas_cuentas_en_movimientos_de_traspaso_actualiza_importes_de_saldos_posteriores_de_las_cuatro_cuentas(
-            self, traspaso, salida_posterior, cuenta_3, cuenta_4):
-        cuenta_1 = traspaso.cta_entrada
-        cuenta_2 = traspaso.cta_salida
-
-        # Generar saldos para cuentas que aún no lo tienen o van a perderlo
-        Movimiento.crear('mov cta2', 15, cuenta_2, fecha=traspaso.fecha)
-        Movimiento.crear('mov cta3', 15, cuenta_3, fecha=traspaso.fecha)
-        Movimiento.crear('mov cta4', 18, cuenta_4, fecha=traspaso.fecha)
-
-        saldo_posterior_cuenta_2 = cuenta_2.saldo(salida_posterior)
-        saldo_posterior_cuenta_1 = cuenta_1.saldo(salida_posterior)
-        saldo_posterior_cuenta_3 = cuenta_3.saldo(salida_posterior)
-        saldo_posterior_cuenta_4 = cuenta_4.saldo(salida_posterior)
-
-        traspaso.cta_entrada = cuenta_3
-        traspaso.cta_salida = cuenta_4
-        traspaso.clean_save()
-
-        assert \
-            cuenta_1.saldo(salida_posterior) == \
-            saldo_posterior_cuenta_1 - traspaso.importe
-        assert \
-            cuenta_2.saldo(salida_posterior) == \
-            saldo_posterior_cuenta_2 + traspaso.importe
-        assert \
-            cuenta_3.saldo(salida_posterior) == \
-            saldo_posterior_cuenta_3 + traspaso.importe
-        assert \
-            cuenta_4.saldo(salida_posterior) == \
-            saldo_posterior_cuenta_4 - traspaso.importe
-
-    def test_intercambiar_cuentas_resta_importe_x2_de_saldo_en_movimiento_de_cta_entrada_y_lo_suma_a_saldo_en_movimiento_de_cta_salida(
-            self, traspaso):
-        c1 = traspaso.cta_entrada
-        c2 = traspaso.cta_salida
-        saldo_c1 = c1.saldo(traspaso)
-        saldo_c2 = c2.saldo(traspaso)
-        traspaso.cta_salida = c1
-        traspaso.cta_entrada = c2
-        traspaso.clean_save()
-
-        assert c1.saldo(traspaso) == saldo_c1 - traspaso.importe * 2
-        assert c2.saldo(traspaso) == saldo_c2 + traspaso.importe * 2
-
-    def test_intercambiar_cuentas_actualiza_importes_de_saldos_posteriores_de_cuentas_intercambiadas(
-            self, traspaso, salida_posterior):
-        c1 = traspaso.cta_entrada
-        c2 = traspaso.cta_salida
-        saldo_posterior_c1 = c1.saldo(salida_posterior)
-        saldo_posterior_c2 = c2.saldo(salida_posterior)
-        traspaso.cta_salida = c1
-        traspaso.cta_entrada = c2
-        traspaso.clean_save()
-
-        assert c1.saldo(salida_posterior) == saldo_posterior_c1 - traspaso.importe * 2
-        assert c2.saldo(salida_posterior) == saldo_posterior_c2 + traspaso.importe * 2
-
-    @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
-    def test_si_cuenta_pasa_al_lugar_opuesto_suma_o_resta_dos_veces_el_importe_al_saldo_de_la_cuenta_y_posteriores(
-            self, sentido, salida_posterior, request):
-        campo_cuenta = f'cta_{sentido}'
-        mov, s, cuenta = inferir_fixtures(sentido, request)
-        contracampo = 'cta_salida' if campo_cuenta == 'cta_entrada' else 'cta_entrada'
-        saldo_cuenta = cuenta.saldo(mov)
-        saldo_posterior_cuenta = cuenta.saldo(salida_posterior)
-        diferencia = -s * mov.importe * 2
-
-        setattr(mov, contracampo, cuenta)
-        setattr(mov, campo_cuenta, None)
-        mov.clean_save()
-
-        assert cuenta.saldo(mov) == saldo_cuenta + diferencia
-        assert cuenta.saldo(salida_posterior) == saldo_posterior_cuenta + diferencia
-
-    @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
-    def test_si_cuenta_pasa_al_lugar_opuesto_y_se_cambia_por_cuenta_nueva_en_traspaso_se_suma_importe_duplicado_a_saldo_en_mov_y_posteriores_y_desaparece_saldo_de_cuenta_reemplazada(
-            self, traspaso, salida_posterior, sentido, cuenta_3):
-        campo_cuenta = f'cta_{sentido}'
-        s = signo(sentido == 'entrada')
-        contracampo = 'cta_salida' if campo_cuenta == 'cta_entrada' else 'cta_entrada'
-        cuenta = getattr(traspaso, campo_cuenta)
-        contracuenta = getattr(traspaso, contracampo)
-        saldo_contracuenta = contracuenta.saldo(traspaso)
-        saldo_posterior_contracuenta = contracuenta.saldo(salida_posterior)
-
-        setattr(traspaso, campo_cuenta, contracuenta)
-        setattr(traspaso, contracampo, cuenta_3)
-        traspaso.clean_save()
-
-        with pytest.raises(Saldo.DoesNotExist):
-            Saldo.objects.get(cuenta=cuenta, movimiento=traspaso)
-
-        assert contracuenta.saldo(traspaso) == saldo_contracuenta + traspaso.importe * s * 2
-        assert contracuenta.saldo(salida_posterior) == saldo_posterior_contracuenta + traspaso.importe * s * 2
-        assert cuenta_3.saldo_set.count() == 1
-        assert cuenta_3.saldo(traspaso) == -traspaso.importe * s
-        assert cuenta_3.saldo(salida_posterior) == -traspaso.importe * s
-
-    @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
-    def test_si_desaparece_cuenta_en_mov_traspaso_se_elimina_saldo_de_cuenta_en_movimiento_y_se_actualizan_saldos_posteriores(
-            self, traspaso, salida_posterior, sentido):
-        campo_cuenta = f'cta_{sentido}'
-        cuenta = getattr(traspaso, campo_cuenta)
-        saldo_posterior = cuenta.saldo(salida_posterior)
-
-        setattr(traspaso, campo_cuenta, None)
-        traspaso.clean_save()
-
-        with pytest.raises(Saldo.DoesNotExist):
-            Saldo.objects.get(cuenta=cuenta, movimiento=traspaso)
-
-        assert cuenta.saldo(salida_posterior) == saldo_posterior - traspaso.importe * signo(sentido == 'entrada')
-
-    @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
-    def test_si_aparece_cuenta_en_movimiento_donde_no_la_habia_aparece_saldo_en_movimiento_en_cuenta_nueva(
-            self, sentido, cuenta_2, request):
-        mov, s, _ = inferir_fixtures(sentido, request)
-        campo_cuenta_vacio = 'cta_salida' if sentido == 'entrada' else 'cta_entrada'
-
-        with pytest.raises(Saldo.DoesNotExist):
-            Saldo.objects.get(cuenta=cuenta_2, movimiento=mov)
-
-        setattr(mov, campo_cuenta_vacio, cuenta_2)
-        mov.clean_save()
-
-        assert cuenta_2.saldo(mov) == -s * mov.importe
-
-    @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
     def test_si_aparece_cuenta_de_otro_titular_en_movimiento_de_entrada_o_salida_se_genera_contramovimiento(
             self, sentido, cuenta_ajena, request):
         mov, s, _ = inferir_fixtures(sentido, request)
@@ -894,7 +621,6 @@ class TestSaveCambiaCuentas:
         mov.clean_save()
         assert mov.es_prestamo_o_devolucion()
 
-    @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
     def test_cambiar_cuenta_por_cuenta_de_otro_titular_en_movimientos_con_contramovimiento_regenera_contramovimiento(
             self, sentido, credito, cuenta_gorda, mocker):
         mock_regenerar_contramovimiento = mocker.patch(
@@ -906,7 +632,6 @@ class TestSaveCambiaCuentas:
 
         mock_regenerar_contramovimiento.assert_called_once_with(credito)
 
-    @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
     def test_cambiar_cuenta_por_cuenta_de_otro_titular_en_movimiento_de_traspaso_con_contramovimiento_modifica_contramovimiento(
             self, sentido, credito, cuenta_gorda):
         contramov = Movimiento.tomar(id=credito.id_contramov)
@@ -920,7 +645,6 @@ class TestSaveCambiaCuentas:
         assert getattr(contramov, f'cta_{contrasentido}').id != cuenta_contramov
         assert cuenta_gorda.titular.sk in getattr(contramov, f'cta_{contrasentido}').sk
 
-    @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
     def test_cambiar_cuenta_por_cuenta_de_otro_titular_en_movimiento_de_traspaso_sin_contramovimiento_genera_contramovimiento(
             self, sentido, traspaso, cuenta_ajena, mocker):
         mock_crear_movimiento_credito = mocker.patch(
@@ -932,13 +656,9 @@ class TestSaveCambiaCuentas:
 
         mock_crear_movimiento_credito.assert_called_once_with(traspaso)
 
-    @pytest.mark.parametrize('sentido, fixt_cuenta', [
-        ('entrada', 'cuenta_ajena_2'),
-        ('salida', 'cuenta_2'),
-    ])
     def test_cambiar_cuenta_de_otro_titular_por_cuenta_del_mismo_titular_en_movimiento_de_traspaso_con_contramovimiento_destruye_contramovimiento_y_no_lo_regenera(
-            self, sentido, fixt_cuenta, credito, mocker, request):
-        otra_cuenta = request.getfixturevalue(fixt_cuenta)
+            self, sentido, credito, mocker, request):
+        otra_cuenta = request.getfixturevalue("cuenta_ajena_2" if sentido == "entrada" else "cuenta_2")
         mock_eliminar_contramovimiento = mocker.patch(
             'diario.models.Movimiento._eliminar_contramovimiento',
             autospec=True
@@ -953,8 +673,7 @@ class TestSaveCambiaCuentas:
         mock_eliminar_contramovimiento.assert_called_once_with(credito)
         mock_crear_movimiento_credito.assert_not_called()
 
-    @pytest.mark.parametrize("sentido", ["salida", "entrada"])
-    class TestSaveCambiaCuentasOtraMoneda:
+    class TestSaveCambiaCuentasBimonetario:
         # Cambia cuenta en moneda del movimiento no cambia cotización no cambia importe
         def test_si_cambia_cuenta_en_moneda_del_movimiento_por_cuenta_en_una_tercera_moneda_se_recalculan_cotizacion_e_importe(
                 self, sentido, cuenta_con_saldo_en_reales, real, request):
@@ -1704,7 +1423,7 @@ class TestSaveCambiaCuentas:
 
 
 @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
-class TestSaveCambiaImporteYCuentasSaldoDiario:
+class TestSaveCambiaImporteYCuentas:
     def test_si_cambia_cuenta_e_importe_en_dia_sin_mas_movimientos_de_la_cuenta_reemplazada_elimina_su_saldo_diario(
             self, sentido, cuenta_2, request, mocker):
         mov = request.getfixturevalue(sentido)
@@ -1772,50 +1491,7 @@ class TestSaveCambiaImporteYCuentasSaldoDiario:
 
 
 @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
-class TestSaveCambiaImporteYCuentas:
-    def test_si_cambia_cuenta_e_importe_desaparece_saldo_en_movimiento_de_cuenta_anterior_y_aparece_el_de_la_nueva_con_el_nuevo_importe(
-            self, sentido, cuenta_2, importe_aleatorio, request):
-        mov, s, cuenta_anterior = inferir_fixtures(sentido, request)
-        cant_saldos = cuenta_2.saldo_set.count()
-
-        setattr(mov, f'cta_{sentido}', cuenta_2)
-        mov.importe = importe_aleatorio
-        mov.clean_save()
-
-        with pytest.raises(Saldo.DoesNotExist):
-            Saldo.objects.get(cuenta=cuenta_anterior, movimiento=mov)
-        assert cuenta_2.saldo_set.count() == cant_saldos + 1
-        assert cuenta_2.saldo(mov) == s * importe_aleatorio
-
-    def test_si_cambia_cuenta_e_importe_en_mov_de_traspaso_desaparece_saldo_en_movimiento_de_cuenta_anterior_y_aparece_el_de_la_nueva_con_el_nuevo_importe_y_se_actualiza_importe_de_la_cuenta_no_cambiada(
-            self, sentido, traspaso, cuenta_3, importe_aleatorio):
-        s = signo(sentido == 'entrada')
-        contrasentido = 'salida' if sentido == 'entrada' else 'entrada'
-        cuenta_anterior = getattr(traspaso, f'cta_{sentido}')
-        cuenta_no_cambiada = getattr(traspaso, f'cta_{contrasentido}')
-        importe_anterior = traspaso.importe
-        saldo_anterior_cuenta_no_cambiada = cuenta_no_cambiada.saldo(traspaso)
-        cant_saldos = cuenta_3.saldo_set.count()
-
-        setattr(traspaso, f'cta_{sentido}', cuenta_3)
-        traspaso.importe = importe_aleatorio
-        traspaso.clean_save()
-
-        with pytest.raises(Saldo.DoesNotExist):
-            Saldo.objects.get(cuenta=cuenta_anterior, movimiento=traspaso)
-        assert cuenta_3.saldo_set.count() == cant_saldos + 1
-        assert cuenta_3.saldo(traspaso) == s * importe_aleatorio
-        assert \
-            cuenta_no_cambiada.saldo(traspaso) == \
-            approx(
-                saldo_anterior_cuenta_no_cambiada +
-                s * importe_anterior -
-                s * importe_aleatorio
-            )
-
-
-@pytest.mark.parametrize('sentido', ['entrada', 'salida'])
-class TestSaveCambiaFechaSaldoDiario:
+class TestSaveCambiaFecha:
 
     @pytest.mark.parametrize("otros_movs", [[], ["traspaso"]])
     def test_si_cambia_dia_a_dia_posterior_en_mov_unico_de_cuenta_en_el_dia_resta_importe_a_saldo_de_cuenta_en_el_dia(
@@ -1983,10 +1659,6 @@ class TestSaveCambiaFechaSaldoDiario:
         saldo_diario_temprano.refresh_from_db()
         assert saldo_diario_temprano.importe == importe_sdt
 
-
-@pytest.mark.parametrize('sentido', ['entrada', 'salida'])
-class TestSaveCambiaFecha:
-
     def test_si_cambia_fecha_a_fecha_posterior_toma_primer_orden_dia_de_nueva_fecha(
             self, sentido, importe, salida_posterior, fecha_posterior, request):
         mov_ant, _, cuenta = inferir_fixtures(sentido, request)
@@ -1997,12 +1669,35 @@ class TestSaveCambiaFecha:
 
         assert mov.orden_dia == 0
 
+    def test_si_cambia_fecha_a_fecha_posterior_movimientos_existentes_en_nuevo_dia_aumentan_su_orden_dia(
+            self, sentido, importe, salida_posterior, fecha_posterior, request):
+        mov_ant, _, cuenta = inferir_fixtures(sentido, request)
+        mov = Movimiento.crear('segundo del día', importe, cuenta, fecha=mov_ant.fecha)
+        assert salida_posterior.orden_dia == 0
+
+        cambiar_fecha(mov, fecha_posterior)
+
+        salida_posterior.refresh_from_db()
+        assert salida_posterior.orden_dia == 1
+
     def test_si_cambia_fecha_a_fecha_anterior_toma_ultimo_orden_dia_de_nueva_fecha(
             self, sentido, entrada_anterior, fecha_anterior, request):
         mov, _, cuenta = inferir_fixtures(sentido, request)
+        assert mov.orden_dia == 0
+
         cambiar_fecha(mov, fecha_anterior)
 
-        assert mov.orden_dia > entrada_anterior.orden_dia
+        assert mov.orden_dia == 1
+
+    def test_si_cambia_fecha_a_fecha_anterior_no_modifica_orden_dia_de_movimientos_existentes_en_el_nuevo_dia(
+            self, sentido, entrada_anterior, fecha_anterior, request):
+        mov, _, cuenta = inferir_fixtures(sentido, request)
+        orden_dia_otro_mov = entrada_anterior.orden_dia
+
+        cambiar_fecha(mov, fecha_anterior)
+
+        entrada_anterior.refresh_from_db()
+        assert entrada_anterior.orden_dia == orden_dia_otro_mov
 
     def test_si_cambia_fecha_a_fecha_posterior_resta_importe_a_saldos_intermedios_de_cuenta_entre_antigua_y_nueva_posicion_de_movimiento(
             self, sentido, salida_posterior, entrada_tardia, fecha_tardia, request):
@@ -2012,85 +1707,6 @@ class TestSaveCambiaFecha:
         cambiar_fecha(mov, fecha_tardia)
 
         assert cuenta.saldo(salida_posterior) == saldo_intermedio - s * mov.importe
-
-    def test_si_cambia_fecha_a_una_fecha_posterior_saldo_de_cuenta_en_mov_toma_importe_de_ultimo_saldo(
-            self, sentido, salida_posterior, entrada_tardia, fecha_tardia_plus, request):
-        mov, _, cuenta = inferir_fixtures(sentido, request)
-        ultimo_saldo = cuenta.saldo(entrada_tardia)
-
-        cambiar_fecha(mov, fecha_tardia_plus)
-
-        assert cuenta.saldo(mov) == ultimo_saldo
-
-    def test_si_cambia_fecha_a_una_fecha_posterior_pero_anterior_a_todos_los_saldos_posteriores_de_cuenta_no_modifica_importe_de_ningun_saldo(
-            self, sentido, entrada_tardia, fecha_posterior, request):
-        mov, _, cuenta = inferir_fixtures(sentido, request)
-        saldo = cuenta.saldo(mov)
-        saldo_tardio = cuenta.saldo(entrada_tardia)
-
-        cambiar_fecha(mov, fecha_posterior)
-
-        assert cuenta.saldo(mov) == saldo
-        assert cuenta.saldo(entrada_tardia) == saldo_tardio
-
-    def test_si_cambia_fecha_a_una_fecha_posterior_no_modifica_importes_de_saldos_de_cuenta_posteriores_a_nueva_ubicacion_de_movimiento(
-            self, sentido, salida_posterior, fecha_posterior, entrada_tardia, request):
-        mov, _, cuenta = inferir_fixtures(sentido, request)
-        saldo_tardio = cuenta.saldo(entrada_tardia)
-
-        cambiar_fecha(mov, fecha_posterior + timedelta(1))
-
-        assert cuenta.saldo(entrada_tardia) == saldo_tardio
-
-    def test_si_cambia_fecha_a_una_fecha_posterior_no_modifica_importes_de_saldos_de_cuenta_anteriores_a_ubicacion_anterior_de_movimiento(
-            self, sentido, fecha_posterior, entrada_anterior, request):
-        mov, _, cuenta = inferir_fixtures(sentido, request)
-        saldo_anterior = cuenta.saldo(entrada_anterior)
-
-        cambiar_fecha(mov, fecha_posterior)
-
-        assert cuenta.saldo(entrada_anterior) == saldo_anterior
-
-    def test_si_cambia_fecha_a_fecha_anterior_suma_importe_a_saldos_intermedios_de_cuenta_entre_antigua_y_nueva_posicion_de_movimiento(
-            self, sentido, fecha_temprana, entrada_temprana, entrada_anterior, request):
-        mov, s, cuenta = inferir_fixtures(sentido, request)
-        saldo_anterior = cuenta.saldo(entrada_anterior)
-
-        cambiar_fecha(mov, fecha_temprana)
-
-        assert cuenta.saldo(entrada_anterior) == saldo_anterior + s * mov.importe
-
-    def test_si_cambia_fecha_a_una_fecha_anterior_suma_importe_del_movimiento_a_importe_del_nuevo_ultimo_saldo_anterior_de_cuenta(
-            self, sentido, entrada_temprana, entrada_anterior, request):
-        mov, s, cuenta = inferir_fixtures(sentido, request)
-        cambiar_fecha(mov, entrada_temprana.fecha + timedelta(1))
-
-        assert cuenta.saldo(mov) == cuenta.saldo(entrada_temprana) + s * mov.importe
-
-    def test_si_cambia_fecha_a_una_fecha_anterior_y_no_hay_saldo_anterior_de_cuenta_asigna_importe_del_movimiento_a_saldo_de_cuenta_en_nueva_ubicacion_del_movimiento(
-            self, sentido, fecha_temprana, entrada_anterior, request):
-        mov, s, cuenta = inferir_fixtures(sentido, request)
-        cambiar_fecha(mov, fecha_temprana)
-
-        assert cuenta.saldo(mov) == s * mov.importe
-
-    def test_si_cambia_fecha_a_una_fecha_anterior_no_modifica_importes_de_saldos_de_cuenta_anteriores_a_nueva_ubicacion_de_movimiento(
-            self, sentido, entrada_temprana, entrada_anterior, request):
-        mov, _, cuenta = inferir_fixtures(sentido, request)
-        saldo_temprano = cuenta.saldo(entrada_temprana)
-
-        cambiar_fecha(mov, entrada_anterior.fecha)
-
-        assert cuenta.saldo(entrada_temprana) == saldo_temprano
-
-    def test_si_cambia_fecha_a_una_fecha_anterior_no_modifica_importes_de_saldos_de_cta_entrada_posteriores_a_ubicacion_anterior_de_movimiento(
-            self, sentido, entrada_anterior, salida_posterior, fecha_temprana, request):
-        mov, _, cuenta = inferir_fixtures(sentido, request)
-        saldo_posterior = cuenta.saldo(salida_posterior)
-
-        cambiar_fecha(mov, fecha_temprana)
-
-        assert cuenta.saldo(salida_posterior) == saldo_posterior
 
 
 class TestSaveCambiaFechaConCtaAcumulativa:
@@ -2155,129 +1771,8 @@ class TestSaveCambiaFechaConCtaAcumulativa:
         assert mov1.fecha == fecha_posterior
 
 
-def cambiar_orden(mov: Movimiento, orden: int):
-    mov.orden_dia = orden
-    mov.clean_save()
-
-
 @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
-class TestSaveCambiaOrdenDia:
-    def test_si_cambia_orden_dia_a_un_orden_posterior_resta_importe_de_saldos_intermedios_de_cuenta(
-            self, sentido, entrada, salida, traspaso, entrada_otra_cuenta, request):
-        mov, s, cuenta = inferir_fixtures(sentido, request)
-        saldo_traspaso = cuenta.saldo(traspaso)
-
-        cambiar_orden(mov, 3)
-
-        assert cuenta.saldo(traspaso) == saldo_traspaso - s * mov.importe
-
-    def test_si_cambia_orden_dia_a_un_orden_posterior_saldo_de_cuenta_en_mov_cambiado_toma_valor_de_ultimo_saldo_anterior(
-            self, sentido, entrada, salida, traspaso, entrada_otra_cuenta, request):
-        mov, _, cuenta = inferir_fixtures(sentido, request)
-        saldo_entrada_otra_cuenta = cuenta.saldo(entrada_otra_cuenta)
-
-        cambiar_orden(mov, 3)
-
-        assert cuenta.saldo(mov) == saldo_entrada_otra_cuenta
-
-    def test_si_cambia_orden_dia_a_un_orden_posterior_no_modifica_importe_de_saldos_de_cuenta_posteriores_a_nueva_ubicacion_de_movimiento(
-            self, sentido, entrada, salida, traspaso, entrada_otra_cuenta, request):
-        mov, _, cuenta = inferir_fixtures(sentido, request)
-        saldo_entrada_otra_cuenta = cuenta.saldo(entrada_otra_cuenta)
-
-        cambiar_orden(mov, 2)
-
-        assert cuenta.saldo(entrada_otra_cuenta) == saldo_entrada_otra_cuenta
-
-    def test_si_cambia_orden_dia_a_un_orden_posterior_no_modifica_importes_de_saldos_de_cta_entrada_anteriores_a_ubicacion_anterior_de_movimiento(
-            self, sentido, request):
-        contrasentido = 'salida' if sentido == 'entrada' else 'entrada'
-        mov_anterior = request.getfixturevalue(contrasentido)
-        mov, _, cuenta = inferir_fixtures(sentido, request)
-        request.getfixturevalue('traspaso')
-        request.getfixturevalue('entrada_otra_cuenta')
-        saldo_mov_anterior = cuenta.saldo(mov_anterior)
-
-        cambiar_orden(mov, 3)
-
-        assert cuenta.saldo(mov_anterior) == saldo_mov_anterior
-
-    def test_si_cambia_orden_dia_a_un_orden_anterior_suma_importe_a_saldos_intermedios_de_cuenta(
-            self, sentido, traspaso, entrada_otra_cuenta, entrada, salida, request):
-        mov, s, cuenta = inferir_fixtures(sentido, request)
-        saldo_entrada_otra_cuenta = cuenta.saldo(entrada_otra_cuenta)
-
-        cambiar_orden(mov, 0)
-
-        for m in (traspaso, entrada_otra_cuenta, entrada, salida):
-            m.refresh_from_db(fields=['orden_dia'])
-
-        assert cuenta.saldo(entrada_otra_cuenta) == saldo_entrada_otra_cuenta + s * mov.importe
-
-    def test_si_cambia_orden_dia_a_un_orden_anterior_suma_importe_del_movimiento_a_importe_del_nuevo_ultimo_saldo_anterior_de_cuenta(
-            self, sentido, traspaso, entrada_otra_cuenta, entrada, salida, request):
-        mov, s, cuenta = inferir_fixtures(sentido, request)
-
-        cambiar_orden(mov, 1)
-
-        assert cuenta.saldo(mov) == cuenta.saldo(traspaso) + s * mov.importe
-
-    def test_si_cambia_orden_dia_a_un_orden_anterior_y_no_hay_saldo_anterior_de_cta_entrada_asigna_importe_del_movimiento_a_saldo_de_cuenta_en_nueva_ubicacion_del_movimiento(
-            self, sentido, traspaso, entrada_otra_cuenta, entrada, salida, request):
-        mov, s, cuenta = inferir_fixtures(sentido, request)
-
-        cambiar_orden(mov, 0)
-
-        assert cuenta.saldo(mov) == s * mov.importe
-
-    def test_si_cambia_orden_dia_a_un_orden_anterior_no_modifica_importes_de_saldos_de_cuenta_anteriores_a_nueva_ubicacion_de_movimiento(
-            self, sentido, traspaso, entrada_otra_cuenta, entrada, salida, request):
-        mov, _, cuenta = inferir_fixtures(sentido, request)
-        saldo_traspaso = cuenta.saldo(traspaso)
-
-        cambiar_orden(mov, 1)
-
-        assert cuenta.saldo(traspaso) == saldo_traspaso
-
-    def test_si_cambia_orden_dia_a_un_orden_anterior_no_modifica_importes_de_saldos_de_cuenta_posteriores_a_ubicacion_anterior_de_movimiento(
-            self, sentido, traspaso, entrada_otra_cuenta, request):
-        contrasentido = 'salida' if sentido == 'entrada' else 'entrada'
-        mov, _, cuenta = inferir_fixtures(sentido, request)
-        mov_posterior = request.getfixturevalue(contrasentido)
-        saldo_mov_posterior = cuenta.saldo(mov_posterior)
-
-        cambiar_orden(mov, 0)
-        assert cuenta.saldo(mov_posterior) == saldo_mov_posterior
-
-
-@pytest.mark.parametrize('sentido', ['entrada', 'salida'])
-class TestSaveCambiaFechaYOrdenDia:
-
-    @pytest.mark.parametrize('_otro_mov, otro_orden', [
-        ('salida_posterior', 1),
-        ('entrada_anterior', 0),
-    ])
-    def test_si_cambia_fecha_y_orden_dia_a_modifica_saldos_intermedios_de_cuenta(
-            self, sentido, _otro_mov, otro_orden, request):
-        mov, s, cuenta = inferir_fixtures(sentido, request)
-        otro_mov = request.getfixturevalue(_otro_mov)
-        s2 = signo(_otro_mov == 'entrada_anterior')
-
-        saldo_otro_mov = cuenta.saldo(otro_mov)
-
-        mov.fecha = otro_mov.fecha
-        mov.orden_dia = otro_orden
-        mov.clean_save(mantiene_orden_dia=True)
-
-        otro_mov.refresh_from_db(fields=['orden_dia'])
-
-        assert \
-            cuenta.saldo(otro_mov) == \
-            saldo_otro_mov + s * s2 * mov.importe
-
-
-@pytest.mark.parametrize('sentido', ['entrada', 'salida'])
-class TestSaveCambiaImporteYFechaSaldoDiario:
+class TestSaveCambiaImporteYFecha:
     def test_si_cambia_importe_y_fecha_por_fecha_posterior_resta_importe_viejo_a_saldos_diarios_intermedios(
             self, sentido, salida_posterior, dia_tardio, request):
         mov = request.getfixturevalue(sentido)
@@ -2371,173 +1866,6 @@ class TestSaveCambiaImporteYFechaSaldoDiario:
         )
 
 
-@pytest.mark.parametrize('sentido', ['entrada', 'salida'])
-class TestSaveCambiaImporteYFecha:
-
-    @pytest.mark.parametrize('_otro_mov', [
-        'salida_posterior',
-        'entrada_anterior',
-    ])
-    def test_si_cambia_importe_y_fecha_resta_o_suma_importe_viejo_a_saldos_intermedios_de_cuenta_entre_antigua_y_nueva_posicion(
-            self, sentido, _otro_mov, entrada_temprana, importe_aleatorio, request):
-        mov, s, cuenta = inferir_fixtures(sentido, request)
-        otro_mov = request.getfixturevalue(_otro_mov)
-        s2 = signo(_otro_mov == 'entrada_anterior')
-        saldo_otro_mov = cuenta.saldo(otro_mov)
-        # si pasa a fecha posterior, resta/suma importe nuevo
-        # si pasa a fecha anterior, resta/suma importe original
-        importe = mov.importe if _otro_mov == 'salida_posterior' else importe_aleatorio
-
-        mov.fecha = otro_mov.fecha - s2 * timedelta(1)
-        mov.importe = importe_aleatorio
-        mov.clean_save()
-
-        assert cuenta.saldo(otro_mov) == pytest.approx(saldo_otro_mov + s * s2 * importe, 0.02)
-
-    @pytest.mark.parametrize('_otro_mov', [
-        'salida_posterior',
-        'entrada_anterior',
-    ])
-    def test_si_cambia_importe_y_fecha_resta_o_suma_importe_nuevo_del_movimiento_a_importe_del_nuevo_ultimo_saldo_anterior_de_cuenta(
-            self, sentido, _otro_mov, entrada_temprana, importe_aleatorio, request):
-        mov, s, cuenta = inferir_fixtures(sentido, request)
-        otro_mov = request.getfixturevalue(_otro_mov)
-        mov_anterior = otro_mov if _otro_mov == 'salida_posterior' else entrada_temprana
-        s2 = signo(_otro_mov == 'salida_posterior')
-
-        mov.fecha = otro_mov.fecha + s2 * timedelta(1)
-        mov.importe = importe_aleatorio
-        mov.clean_save()
-
-        assert cuenta.saldo(mov) == approx(
-            cuenta.saldo(mov_anterior) + s * importe_aleatorio
-        )
-
-
-@pytest.mark.parametrize('sentido', ['entrada', 'salida'])
-class TestSaveCambiaImporteYOrdenDia:
-
-    def test_si_cambia_importe_y_orden_dia_a_un_orden_posterior_resta_importe_viejo_de_saldos_intermedios_de_cuenta(
-            self, sentido, entrada, salida, traspaso, entrada_otra_cuenta, importe_aleatorio, request):
-        mov, s, cuenta = inferir_fixtures(sentido, request)
-        saldo_traspaso = cuenta.saldo(traspaso)
-        importe = mov.importe
-
-        mov.importe = importe_aleatorio
-        mov.orden_dia = traspaso.orden_dia + 1
-        mov.clean_save()
-
-        assert cuenta.saldo(traspaso) == saldo_traspaso - s * importe
-
-    def test_si_cambia_importe_y_orden_dia_a_un_orden_posterior_suma_importe_nuevo_del_movimiento_a_importe_del_nuevo_ultimo_saldo_anterior_de_cta_entrada(
-            self, sentido, entrada, salida, traspaso, entrada_otra_cuenta, importe_aleatorio, request):
-        mov, s, cuenta = inferir_fixtures(sentido, request)
-
-        mov.importe = importe_aleatorio
-        mov.orden_dia = traspaso.orden_dia + 1
-        mov.clean_save()
-
-        assert \
-            cuenta.saldo(mov), 2 == \
-                                      approx(cuenta.saldo(traspaso) + s * importe_aleatorio)
-
-    def test_si_cambia_orden_dia_a_un_orden_anterior_suma_importe_nuevo_a_saldos_intermedios_de_cuenta(
-            self, sentido, traspaso, entrada_otra_cuenta, entrada, salida, importe_aleatorio, request):
-        mov, s, cuenta = inferir_fixtures(sentido, request)
-        saldo_entrada_otra_cuenta = cuenta.saldo(entrada_otra_cuenta)
-
-        mov.importe = importe_aleatorio
-        mov.orden_dia = entrada_otra_cuenta.orden_dia - 1
-        mov.clean_save()
-        traspaso.refresh_from_db()
-        entrada_otra_cuenta.refresh_from_db()
-
-        assert \
-            cuenta.saldo(entrada_otra_cuenta) == \
-            approx(saldo_entrada_otra_cuenta + s * importe_aleatorio)
-
-    def test_si_cambia_importe_y_orden_dia_a_un_orden_anterior_suma_importe_nuevo_del_movimiento_a_importe_del_nuevo_ultimo_saldo_anterior_de_cta_entrada(
-            self, sentido, traspaso, entrada_otra_cuenta, entrada, salida, importe_aleatorio, request):
-        mov, s, cuenta = inferir_fixtures(sentido, request)
-
-        mov.importe = importe_aleatorio
-        mov.orden_dia = entrada_otra_cuenta.orden_dia
-        mov.clean_save()
-
-        assert cuenta.saldo(mov) == approx(
-            cuenta.saldo(traspaso) + s * importe_aleatorio
-        )
-
-
-@pytest.mark.parametrize('sentido', ['entrada', 'salida'])
-class TestSaveCambiaCuentasYFecha:
-    def test_si_cambia_cuenta_y_fecha_a_posterior_resta_importe_a_saldos_de_vieja_cuenta_posteriores_a_antigua_posicion_de_movimiento(
-            self, sentido, cuenta_2, salida_posterior, entrada_tardia, request):
-        mov, s, cuenta = inferir_fixtures(sentido, request)
-        saldo_posterior = cuenta.saldo(salida_posterior)
-
-        setattr(mov, f'cta_{sentido}', cuenta_2)
-        mov.fecha = salida_posterior.fecha + timedelta(1)
-        mov.clean_save()
-
-        assert cuenta.saldo(salida_posterior) == saldo_posterior - s * mov.importe
-
-    def test_si_cambia_cta_entrada_y_fecha_a_posterior_suma_importe_a_saldos_de_cuenta_nueva_a_partir_de_nueva_ubicacion_del_movimiento(
-            self, sentido, cuenta_2, salida_posterior, entrada_tardia, request):
-        mov, s, cuenta = inferir_fixtures(sentido, request)
-        saldo_tardio = cuenta_2.saldo(entrada_tardia)
-
-        setattr(mov, f'cta_{sentido}', cuenta_2)
-        mov.fecha = salida_posterior.fecha + timedelta(1)
-        mov.clean_save()
-
-        assert cuenta_2.saldo(entrada_tardia) == saldo_tardio + s * mov.importe
-
-    def test_si_cambia_cuenta_y_fecha_a_anterior_saldos_de_vieja_cuenta_posteriores_a_nueva_posicion_del_movimiento_no_cambian(
-            self, sentido, cuenta_2, entrada_anterior, entrada_temprana, request):
-        mov, s, cuenta = inferir_fixtures(sentido, request)
-        saldo_anterior = cuenta.saldo(entrada_anterior)
-
-        setattr(mov, f'cta_{sentido}', cuenta_2)
-        mov.fecha = entrada_anterior.fecha - timedelta(1)
-        mov.clean_save()
-
-        assert cuenta.saldo(entrada_anterior) == saldo_anterior
-
-    def test_si_cambia_cta_entrada_y_fecha_a_anterior_suma_importe_solo_a_saldos_de_cuenta_nueva_a_partir_de_nueva_ubicacion_del_movimiento(
-            self, sentido, cuenta_2, entrada_anterior, entrada_temprana, request):
-        mov, s, cuenta = inferir_fixtures(sentido, request)
-        saldo_anterior = cuenta_2.saldo(entrada_anterior)
-        saldo_temprano = cuenta_2.saldo(entrada_temprana)
-
-        setattr(mov, f'cta_{sentido}', cuenta_2)
-        mov.fecha = entrada_anterior.fecha - timedelta(1)
-        mov.clean_save()
-
-        assert cuenta_2.saldo(entrada_anterior) == saldo_anterior + s * mov.importe
-        assert cuenta_2.saldo(entrada_temprana) == saldo_temprano
-
-    def test_si_se_intercambian_cuentas_y_cambia_fecha_a_fecha_posterior_en_un_movimiento_de_traspaso_se_actualizan_correctamente_importes_de_saldo_modificado_e_intermedios(
-            self, sentido, traspaso, salida_posterior, entrada_tardia, request):
-        cuenta = traspaso.cta_entrada
-        cuenta_2 = traspaso.cta_salida
-        saldo_posterior_cuenta = cuenta.saldo(salida_posterior)
-        saldo_posterior_cuenta_2 = cuenta_2.saldo(salida_posterior)
-        saldo_tardio_cuenta = cuenta.saldo(entrada_tardia)
-        saldo_tardio_cuenta_2 = cuenta_2.saldo(entrada_tardia)
-
-        traspaso.fecha = salida_posterior.fecha + timedelta(1)
-        traspaso.cta_entrada, traspaso.cta_salida = cuenta_2, cuenta
-        traspaso.clean_save()
-
-        assert cuenta.saldo(salida_posterior) == saldo_posterior_cuenta - traspaso.importe
-        assert cuenta.saldo(traspaso) == cuenta.saldo(salida_posterior) - traspaso.importe
-        assert cuenta.saldo(entrada_tardia) == saldo_tardio_cuenta - traspaso.importe * 2
-        assert cuenta_2.saldo(salida_posterior) == saldo_posterior_cuenta_2 + traspaso.importe
-        assert cuenta_2.saldo(traspaso) == cuenta_2.saldo(salida_posterior) + traspaso.importe
-        assert cuenta_2.saldo(entrada_tardia) == saldo_tardio_cuenta_2 + traspaso.importe * 2
-
-
 class TestSaveCambiaEsGratis:
 
     def test_mov_esgratis_true_elimina_contramovimiento(self, credito):
@@ -2558,7 +1886,7 @@ class TestSaveCambiaEsGratis:
 
 
 @pytest.mark.parametrize("sentido", ["entrada", "salida"])
-class TestSaveCambiaMonedaSaldoDiario:
+class TestSaveCambiaMoneda:
     def test_si_cambia_moneda_en_traspaso_entre_cuentas_en_distinta_moneda_no_modifica_saldos_diarios_de_cuentas(
             self, sentido, euro, request):
         mov = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
@@ -2599,45 +1927,6 @@ class TestSaveCambiaMonedaSaldoDiario:
 
         assert saldo_diario.tomar_de_bd().importe == importe_sd
         assert saldo_diario_cc.tomar_de_bd().importe == importe_sdcc - importe_cc + getattr(mov, f"importe_cta_{opuesto}")
-
-
-@pytest.mark.parametrize("sentido", ["entrada", "salida"])
-class TestSaveCambiaMoneda:
-
-    def test_si_cambia_moneda_en_traspaso_entre_cuentas_en_distinta_moneda_no_modifica_saldos_de_cuentas(
-            self, sentido, euro, request):
-        movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
-        sentido_contracuenta = el_que_no_es(sentido, "entrada", "salida")
-        
-        ceu = getattr(movimiento, f"cta_{sentido}")
-        cdl = getattr(movimiento, f"cta_{sentido_contracuenta}")
-        saldo_ceu = ceu.saldo
-        saldo_cdl = cdl.saldo
-
-        movimiento.moneda = euro
-        movimiento.clean_save()
-
-        ceu.refresh_from_db()
-        cdl.refresh_from_db()
-
-        assert ceu.saldo == saldo_ceu
-        assert cdl.saldo == saldo_cdl
-
-    def test_si_cambia_cotizacion_en_traspaso_entre_cuentas_en_distinta_moneda_impacta_en_saldo_de_cuenta_en_moneda_distinta_de_la_del_movimiento(
-            self, sentido, cuenta_con_saldo_en_euros, request):
-        mov_distintas_monedas = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
-        sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-        saldo = getattr(mov_distintas_monedas, f"cta_{sentido_otra_cuenta}").saldo()
-        importe = getattr(mov_distintas_monedas, f"importe_cta_{sentido_otra_cuenta}")
-
-        mov_distintas_monedas.cotizacion = 4
-        mov_distintas_monedas.clean_save()
-
-        nuevo_importe = getattr(mov_distintas_monedas, f"importe_cta_{sentido_otra_cuenta}")
-        assert nuevo_importe != importe
-        assert \
-            getattr(mov_distintas_monedas, f"cta_{sentido_otra_cuenta}").saldo() == \
-            round(saldo - importe + nuevo_importe, 2)
 
     def test_si_cambia_cotizacion_en_traspaso_entre_cuentas_en_distinta_moneda_cambia_importe_de_cuenta_en_otra_moneda(
             self, sentido, request):
@@ -2772,72 +2061,3 @@ class TestSaveCambiaMoneda:
         assert \
             abs(getattr(mov_distintas_monedas, f"importe_cta_{sentido_otra_cuenta}")) == \
             round(25 * mov_distintas_monedas.cotizacion, 2)
-
-    def test_si_cambia_moneda_y_cuenta_desaparece_saldo_en_movimiento_de_cuenta_anterior_y_aparece_el_de_la_nueva_con_el_mismo_importe(
-            self, sentido, titular, fecha, euro, request):
-        """ Si en un movimiento entre cuentas en distinta moneda cambia la moneda
-            y a la vez se reemplaza una de las cuentas por otra en la misma moneda,
-            desaparece el saldo asociado a la cuenta reemplazada y el movimiento
-            y aparece un nuevo saldo en la cuenta reemplazante calculado sobre el mismo importe.
-        """
-        mov_distintas_monedas = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
-        sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-        cuenta_cambiada = getattr(mov_distintas_monedas, f"cta_{sentido}")
-        otra_cuenta = getattr(mov_distintas_monedas, f"cta_{sentido_otra_cuenta}")
-
-        cuenta_en_la_misma_moneda = Cuenta.crear(
-            nombre='cuenta en la misma moneda',
-            sk='cmm',
-            titular=titular,
-            fecha_creacion=fecha,
-            moneda=cuenta_cambiada.moneda,
-        )
-        cantidad_de_saldos_de_cuenta_en_la_misma_moneda = cuenta_en_la_misma_moneda.saldo_set.count()
-        saldo_cuenta_en_la_misma_moneda = cuenta_en_la_misma_moneda.saldo(mov_distintas_monedas)
-        importe = getattr(mov_distintas_monedas, f"importe_cta_{sentido}")
-
-        mov_distintas_monedas.moneda = otra_cuenta.moneda
-        setattr(mov_distintas_monedas, f"cta_{sentido}", cuenta_en_la_misma_moneda)
-        mov_distintas_monedas.clean_save()
-
-        with pytest.raises(Saldo.DoesNotExist):
-            Saldo.objects.get(cuenta=cuenta_cambiada, movimiento=mov_distintas_monedas)
-        assert cuenta_en_la_misma_moneda.saldo_set.count() == cantidad_de_saldos_de_cuenta_en_la_misma_moneda + 1
-        assert \
-            cuenta_en_la_misma_moneda.saldo(mov_distintas_monedas) == saldo_cuenta_en_la_misma_moneda + importe
-
-    def test_si_cambia_moneda_e_importe_impacta_en_saldo_de_ambas_cuentas_segun_cotizacion(
-            self, sentido, euro, request):
-        """ Si en un movimiento entre cuentas en distinta moneda cambia la moneda y el importe (no automáticamente),
-            se reemplaza en el cálculo del saldo el importe anterior por el nuevo en el caso de la cuenta en la
-            nueva moneda del movimiento y por el nuevo cotizado en el caso de la cuenta en la otra moneda
-        """
-        mov_distintas_monedas = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
-        sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-
-        cuenta = getattr(mov_distintas_monedas, f"cta_{sentido}")
-        otra_cuenta = getattr(mov_distintas_monedas, f"cta_{sentido_otra_cuenta}")
-        saldo = cuenta.saldo(mov_distintas_monedas)
-        saldo_otra_cuenta = otra_cuenta.saldo(mov_distintas_monedas)
-        importe_cuenta = getattr(mov_distintas_monedas, f"importe_cta_{sentido}")
-        importe_otra_cuenta = getattr(mov_distintas_monedas, f"importe_cta_{sentido_otra_cuenta}")
-        cotizacion = mov_distintas_monedas.cotizacion
-
-        mov_distintas_monedas.moneda = otra_cuenta.moneda
-        mov_distintas_monedas.importe = 5
-        mov_distintas_monedas.clean_save()
-
-        assert round(mov_distintas_monedas.cotizacion, 2) == round(1 / cotizacion, 2)
-        assert \
-            abs(getattr(mov_distintas_monedas, f"importe_cta_{sentido_otra_cuenta}")) == \
-            mov_distintas_monedas.importe
-        assert \
-            abs(getattr(mov_distintas_monedas, f"importe_cta_{sentido}")) == \
-            round(mov_distintas_monedas.importe * mov_distintas_monedas.cotizacion, 2)
-        assert \
-            cuenta.saldo(mov_distintas_monedas) == \
-            saldo - importe_cuenta + getattr(mov_distintas_monedas, f"importe_cta_{sentido}")
-        assert \
-            otra_cuenta.saldo(mov_distintas_monedas) == \
-            saldo_otra_cuenta - importe_otra_cuenta + \
-            getattr(mov_distintas_monedas, f"importe_cta_{sentido_otra_cuenta}")

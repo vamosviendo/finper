@@ -315,7 +315,7 @@ def verificar_saldos_view(request):
 
 def modificar_saldo_view(request, sk):
     cta_a_corregir = Cuenta.tomar(sk=sk)
-    cta_a_corregir.corregir_saldo()
+    cta_a_corregir.recalcular_saldos_diarios()
     ctas_erroneas = [c.lower() for c in request.GET.get('ctas').split('!')
                                if c != sk.lower()]
     if not ctas_erroneas:

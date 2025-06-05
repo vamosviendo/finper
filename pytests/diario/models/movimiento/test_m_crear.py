@@ -2,13 +2,8 @@ from unittest.mock import call
 
 import pytest
 
-from diario.models import Movimiento, Saldo, Cuenta, CuentaInteractiva, Moneda, SaldoDiario
+from diario.models import Cuenta, CuentaInteractiva, Moneda, Movimiento, SaldoDiario
 from utils import errors
-
-
-@pytest.fixture
-def mock_generar(mocker):
-    return mocker.patch('diario.models.movimiento.Saldo.generar')
 
 
 @pytest.fixture
@@ -76,6 +71,7 @@ def test_movimiento_se_guarda_como_no_automatico_por_defecto(cuenta):
 
 
 def test_suma_importe_a_cta_entrada(cuenta, entrada):
+    assert cuenta.saldo_en_mov(entrada) == entrada.importe
     assert cuenta.saldo() == entrada.importe
 
 
@@ -98,51 +94,16 @@ def test_puede_traspasar_saldo_de_una_cuenta_a_otra(cuenta, cuenta_2):
     assert cuenta_2.saldo() == saldo_cuenta_2 + mov.importe
 
 
-def test_mov_entrada_llama_a_generar_saldo_con_arg_entrada(mock_generar, cuenta):
-    mov = Movimiento.crear('Nuevo mov', 20, cuenta)
-    mock_generar.assert_called_once_with(mov, "entrada")
-
-
-def test_mov_salida_llama_a_generar_saldo_con_arg_salida(mock_generar, cuenta):
-    mov = Movimiento.crear('Nuevo mov', 20, None, cuenta)
-    mock_generar.assert_called_once_with(mov, "salida")
-
-
 @pytest.mark.parametrize("sentido", ["entrada", "salida"])
 def test_llama_a_calcular_saldo_con_arg_correspondiente(mock_calcular, cuenta, sentido):
     mov = Movimiento.crear("Nuevo mov", 20, **{f"cta_{sentido}": cuenta})
     mock_calcular.assert_called_once_with(mov, sentido)
 
 
-def test_mov_traspaso_llama_a_generar_saldo_con_salida_False_para_cta_entrada_y_salida_True_para_cta_salida(
-        mock_generar, cuenta, cuenta_2):
-    mov = Movimiento.crear('Nuevo mov', 20, cuenta, cuenta_2)
-    assert mock_generar.call_args_list == [call(mov, "entrada"), call(mov, "salida")]
-
-
 def test_mov_traspaso_llama_a_calcular_saldo_diario_con_salida_False_para_cta_entrada_y_salida_True_para_cta_salida(
         mock_calcular, cuenta, cuenta_2):
     mov = Movimiento.crear("Traspaso", 20, cuenta, cuenta_2)
     assert mock_calcular.call_args_list == [call(mov, "entrada"), call(mov, "salida")]
-
-
-def test_integrativo_genera_saldo_para_cta_entrada(cuenta):
-    saldo_anterior_cuenta = cuenta.saldo()
-    mov = Movimiento.crear('Nuevo mov', 20, cuenta)
-
-    saldo = Saldo.objects.get(cuenta=cuenta, movimiento=mov)
-    assert saldo.cuenta.pk == cuenta.pk
-    assert saldo.importe == saldo_anterior_cuenta + mov.importe
-    assert saldo.movimiento == mov
-
-
-def test_integrativo_genera_saldo_para_cta_salida(cuenta):
-    saldo_anterior_cuenta = cuenta.saldo()
-    mov = Movimiento.crear('Nuevo mov', 20, None, cuenta)
-    saldo = Saldo.objects.get(cuenta=cuenta, movimiento=mov)
-    assert saldo.cuenta.pk == cuenta.pk
-    assert saldo.importe == saldo_anterior_cuenta - mov.importe
-    assert saldo.movimiento == mov
 
 
 @pytest.mark.parametrize("sentido", ["entrada", "salida"])
@@ -192,6 +153,7 @@ def test_importe_de_saldo_diario_existente_es_igual_a_importe_de_saldo_diario_an
 
     assert saldo_diario.importe == importe_sda + importe_mdc
 
+
 @pytest.mark.parametrize("sentido", ["entrada", "salida"])
 def test_integrativo_modifica_saldo_diario_si_ya_existe(saldo_diario, sentido):
     importe_saldo_diario = saldo_diario.importe
@@ -202,13 +164,6 @@ def test_integrativo_modifica_saldo_diario_si_ya_existe(saldo_diario, sentido):
     saldo_diario.refresh_from_db()
 
     assert saldo_diario.importe == importe_saldo_diario + getattr(mov, f"importe_cta_{sentido}")
-
-
-def test_integrativo_crear_movimiento_en_fecha_antigua_modifica_saldos_de_fechas_posteriores(
-        cuenta, entrada, fecha_anterior):
-    importe_saldo = Saldo.tomar(cuenta=cuenta, movimiento=entrada).importe
-    mov_anterior = Movimiento.crear('Movimiento anterior', 30, cuenta, fecha=fecha_anterior)
-    assert Saldo.tomar(cuenta=cuenta, movimiento=entrada).importe == importe_saldo + mov_anterior.importe
 
 
 def test_integrativo_crear_movimiento_en_fecha_antigua_modifica_saldos_diarios_posteriores(

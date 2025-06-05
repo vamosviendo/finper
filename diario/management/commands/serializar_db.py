@@ -17,7 +17,7 @@ class Command(BaseCommand):
             'diario.cuentainteractiva',
             'diario.dia',
             'diario.movimiento',
-            'diario.saldo',
+            'diario.saldodiario',
             '--natural-foreign',
             indent=2,
             stdout=serialized_db

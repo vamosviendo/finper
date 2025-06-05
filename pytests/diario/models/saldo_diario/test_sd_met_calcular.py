@@ -2,7 +2,7 @@ from unittest.mock import ANY, MagicMock
 
 import pytest
 
-from diario.models import Saldo, Movimiento, SaldoDiario, Dia
+from diario.models import Movimiento, SaldoDiario
 from utils.helpers_tests import signo
 from utils.varios import el_que_no_es
 

@@ -3,7 +3,7 @@ from unittest.mock import call
 import pytest
 from django.core.exceptions import ValidationError
 
-from diario.models import Saldo, Movimiento, SaldoDiario
+from diario.models import Movimiento, SaldoDiario
 from utils import errors
 from utils.helpers_tests import signo
 from utils.varios import el_que_no_es
@@ -20,27 +20,6 @@ def test_resta_importe_de_saldo_cta_entrada_y_lo_suma_a_saldo_cta_salida(
     traspaso.delete()
     assert cuenta.saldo() == saldo_cuenta - traspaso.importe
     assert cuenta_2.saldo() == saldo_cuenta_2 + traspaso.importe
-
-
-def test_elimina_saldo_cta_entrada_al_momento_del_movimiento(mocker, cuenta, entrada):
-    mock_eliminar = mocker.patch('diario.models.movimiento.Saldo.eliminar', autospec=True)
-    saldo = Saldo.tomar(cuenta=cuenta, movimiento=entrada)
-    entrada.delete()
-    mock_eliminar.assert_called_once_with(saldo)
-
-
-def test_elimina_saldo_cta_salida_al_momento_del_movimiento(mocker, cuenta, salida):
-    mock_eliminar = mocker.patch('diario.models.movimiento.Saldo.eliminar', autospec=True)
-    saldo = Saldo.tomar(cuenta=cuenta, movimiento=salida)
-    salida.delete()
-    mock_eliminar.assert_called_once_with(saldo)
-
-
-def test_si_se_borra_el_unico_movimiento_del_dia_elimina_saldo_diario_de_la_cuenta(mocker, cuenta, salida):
-    mock_eliminar = mocker.patch('diario.models.movimiento.SaldoDiario.eliminar', autospec=True)
-    saldo = SaldoDiario.tomar(cuenta=cuenta, dia=salida.dia)
-    salida.delete()
-    mock_eliminar.assert_called_once_with(saldo)
 
 
 def test_si_se_borra_el_unico_movimiento_del_dia_de_la_cuenta_elimina_saldo_diario_de_la_cuenta(
@@ -147,30 +126,14 @@ def test_si_se_elimina_traspaso_entre_cuenta_con_unico_movimiento_en_el_dia_y_cu
     assert saldo.importe == importe - s*importe_mov
 
 
-def test_integrativo_elimina_saldo_cuentas_al_momento_del_movimiento(
-        cuenta, cuenta_2, traspaso):
-    deleted_pk = traspaso.pk
-    traspaso.delete()
-    with pytest.raises(Saldo.DoesNotExist):
-        Saldo.objects.get(cuenta=cuenta, movimiento__pk=deleted_pk)
-    with pytest.raises(Saldo.DoesNotExist):
-        Saldo.objects.get(cuenta=cuenta_2, movimiento__pk=deleted_pk)
-
-
-def test_resta_importe_de_saldos_posteriores_de_cta_entrada(cuenta, entrada, salida_posterior):
-    saldo_posterior = Saldo.objects.get(cuenta=cuenta, movimiento=salida_posterior).importe
-    entrada.delete()
+@pytest.mark.parametrize("sentido", ["entrada", "salida"])
+def test_resta_importe_de_saldos_diarios_posteriores_de_cta_entrada(cuenta, sentido, salida_posterior, request):
+    mov = request.getfixturevalue(sentido)
+    saldo_posterior = SaldoDiario.objects.get(cuenta=cuenta, dia=salida_posterior.dia).importe
+    mov.delete()
     assert \
-        Saldo.objects.get(cuenta=cuenta, movimiento=salida_posterior).importe == \
-        saldo_posterior - entrada.importe
-
-
-def test_suma_importe_a_saldos_posteriores_de_cta_salida(cuenta, salida, salida_posterior):
-    saldo_posterior = Saldo.objects.get(cuenta=cuenta, movimiento=salida_posterior).importe
-    salida.delete()
-    assert \
-        Saldo.objects.get(cuenta=cuenta, movimiento=salida_posterior).importe == \
-        saldo_posterior + salida.importe
+        SaldoDiario.objects.get(cuenta=cuenta, dia=salida_posterior.dia).importe == \
+        saldo_posterior - getattr(mov, f"importe_cta_{sentido}")
 
 
 def test_en_mov_credito_elimina_contramovimiento(credito):

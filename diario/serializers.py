@@ -104,12 +104,11 @@ class MovimientoSerializado(SerializedObject):
 class SaldoSerializado(SerializedObject):
     @classmethod
     def model_string(cls) -> str:
-        return "diario.saldo"
+        return "diario.saldodiario"
 
     @property
     def sk(self) -> str:
-        return f"{self.fields['movimiento'][0].replace('-', '')}" \
-               f"{self.fields['movimiento'][1]:02d}" \
+        return f"{self.fields['dia'][0].replace('-', '')}" \
                f"{self.fields['cuenta'][0]}"
 
 

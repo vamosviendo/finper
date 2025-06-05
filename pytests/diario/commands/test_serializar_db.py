@@ -110,9 +110,9 @@ def test_serializa_todas_las_cuentas_interactivas_y_acumulativas(modelo, varias_
     "elementos, modelo, tipo", [
         ("varios_movimientos", "movimiento", MovimientoSerializado),
         ("varios_dias", "dia", DiaSerializado),
-        ("varios_movimientos", "saldo", SaldoSerializado),
+        ("varios_movimientos", "saldodiario", SaldoSerializado),
     ])
-def test_serializa_todos_los_movimientos_dias_y_saldos_de_la_base_de_datos(
+def test_serializa_todos_los_movimientos_dias_y_saldos_diarios_de_la_base_de_datos(
         elementos, modelo, tipo, request):
     request.getfixturevalue(elementos)
     db_serializada = request.getfixturevalue("db_serializada")
@@ -157,14 +157,14 @@ def test_serializa_movimientos_con_natural_key_dia(entrada, db_serializada):
     mov = db_serializada.primere("diario.movimiento", concepto="Entrada")
     assert mov.fields["dia"] == [str(entrada.dia)]
 
-def test_serializa_saldos_con_natural_key_cuenta(saldo, db_serializada):
-    sdo = db_serializada.primere(
-        "diario.saldo",
-        movimiento=[str(saldo.movimiento.dia), saldo.movimiento.orden_dia]
+def test_serializa_saldos_diarios_con_natural_key_cuenta(saldo_diario, db_serializada):
+    sd = db_serializada.primere(
+        "diario.saldodiario",
+        dia=[str(saldo_diario.dia)]
     )
-    assert sdo.fields["cuenta"] == [saldo.cuenta.sk]
+    assert sd.fields["cuenta"] == [saldo_diario.cuenta.sk]
 
-def test_serializa_saldos_con_natural_key_movimiento(saldo, db_serializada):
-    sdo = db_serializada.primere("diario.saldo", cuenta=[saldo.cuenta.sk])
+def test_serializa_saldos_con_natural_key_dia(saldo_diario, db_serializada):
+    sd = db_serializada.primere("diario.saldodiario", cuenta=[saldo_diario.cuenta.sk])
     assert \
-        sdo.fields["movimiento"] == [str(saldo.movimiento.dia), saldo.movimiento.orden_dia]
+        sd.fields["dia"] == [str(saldo_diario.dia)]

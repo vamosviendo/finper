@@ -15,7 +15,6 @@ from utils.varios import el_que_no_es
 
 from diario.consts import *
 from diario.models.dia import Dia
-from diario.models.saldo import Saldo
 from diario.models.saldo_diario import SaldoDiario
 
 if TYPE_CHECKING:
@@ -401,7 +400,6 @@ class Movimiento(MiModel):
         for sentido in ("entrada", "salida"):
             cuenta = getattr(self, f"cta_{sentido}")
             if cuenta is not None:
-                cuenta.saldo_set.get(movimiento=self).eliminar()
                 saldo_diario = cuenta.saldodiario_set.get(dia=self.dia)
                 if cuenta.movs_en_fecha(self.dia).count() == 1:
                     saldo_diario.eliminar()
@@ -432,7 +430,7 @@ class Movimiento(MiModel):
         """
         TODO: Revisar y actualizar este comentario
         Si el movimiento es nuevo (no existía antes, está siendo creado)
-        - Generar saldo para cuentas de entrada y/o salida al momento del
+        - Calcular saldo diario para cuentas de entrada y/o salida al momento del
           movimiento.
         - Gestionar movimiento entre cuentas de distintos titulares (
           generar, ampliar o cancelar crédito)
@@ -440,7 +438,7 @@ class Movimiento(MiModel):
         Si el movimiento existía (está siendo modificado)
         - Chequear si cambió alguno de los "campos sensibles" (fecha, importe,
           cta_entrada, cta_salida, moneda, cotización).
-        - Si cambió alguno de estos campos, actualizar saldos:
+        - Si cambió alguno de estos campos, actualizar saldos diarios:
         """
         if self._state.adding:   # Movimiento nuevo
 
@@ -455,10 +453,8 @@ class Movimiento(MiModel):
 
             super().save(*args, **kwargs)
             if self.cta_entrada:
-                Saldo.generar(self, "entrada")
                 SaldoDiario.calcular(self, "entrada")
             if self.cta_salida:
-                Saldo.generar(self, "salida")
                 SaldoDiario.calcular(self, "salida")
 
         else:  # Movimiento existente
@@ -493,14 +489,19 @@ class Movimiento(MiModel):
 
             self._recalcular_saldos_diarios()
 
+            # TODO extraer
+            if self.cambia_campo('dia'):
+                if self.dia.fecha > self.viejo.dia.fecha:
+                    self.orden_dia = 0
+                else:
+                    self.orden_dia = self.dia.movimientos.count()
+
             super().save(*args, **kwargs)
 
             if self.cambia_campo(
                     '_importe', '_cotizacion', CTA_ENTRADA, CTA_SALIDA, 'dia', 'orden_dia',
                     contraparte=self.viejo
             ):
-                for campo_cuenta in campos_cuenta:
-                    self._actualizar_saldos_cuenta(campo_cuenta, mantiene_orden_dia)
                 self._actualizar_fechas_conversion()
 
     def refresh_from_db(self, using: str = None, fields: List[str] = None):
@@ -509,20 +510,6 @@ class Movimiento(MiModel):
             cuenta = getattr(self, campo_cuenta)
             if cuenta:
                 setattr(self, campo_cuenta, cuenta.como_subclase())
-
-    def saldo_ce(self) -> Saldo:
-        try:
-            return self.cta_entrada.saldo_set.get(movimiento=self)
-        except AttributeError:
-            raise AttributeError(
-                f'Movimiento "{self.concepto}" no tiene cuenta de entrada')
-
-    def saldo_cs(self) -> Saldo:
-        try:
-            return self.cta_salida.saldo_set.get(movimiento=self)
-        except AttributeError:
-            raise AttributeError(
-                f'Movimiento "{self.concepto}" no tiene cuenta de salida')
 
     def importe_en(self, otra_moneda: Moneda, compra: bool = False) -> float:
         return round(self.importe * self.moneda.cotizacion_en(otra_moneda, compra), 2)
@@ -655,54 +642,6 @@ class Movimiento(MiModel):
 
                 if cta_nueva is not None:
                     SaldoDiario.calcular(self, campo_cuenta)
-
-    def _actualizar_saldos_cuenta(self, campo_cuenta: str, mantiene_orden_dia: bool):
-        if campo_cuenta not in campos_cuenta:
-            raise ValueError(
-                'Argumento incorrecto. Debe ser "cta_entrada"'
-                ' o "cta_salida"'
-            )
-        cuenta = getattr(self, campo_cuenta)
-        cuenta_vieja = getattr(self.viejo, campo_cuenta)
-        pasa_a_opuesto, viene_de_opuesto, saldo = (
-            self._entrada_pasa_a_salida,
-            self._salida_pasa_a_entrada,
-            self.viejo.saldo_ce,
-        ) if campo_cuenta == CTA_ENTRADA else (
-            self._salida_pasa_a_entrada,
-            self._entrada_pasa_a_salida,
-            self.viejo.saldo_cs,
-        )
-
-        def cambia_campo(*args) -> bool:
-            return self.cambia_campo(*args, contraparte=self.viejo)
-
-        if cuenta is not None:
-            if cambia_campo(campo_cuenta):
-                if viene_de_opuesto():
-                    cuenta.recalcular_saldos_entre(self.posicion)
-                else:
-                    Saldo.generar(self, campo_cuenta)
-                self._eliminar_saldo_de_cuenta_vieja_si_existe(cuenta_vieja, pasa_a_opuesto, saldo)
-
-            elif cambia_campo('_importe', '_cotizacion'):
-                cuenta.recalcular_saldos_entre(self.posicion)
-
-            elif getattr(self.viejo, campo_cuenta) is None:
-                Saldo.generar(self, campo_cuenta)
-
-            if cambia_campo('dia', 'orden_dia'):
-                if not mantiene_orden_dia:
-                    self._asignar_orden_dia()
-
-                pos_min, pos_max = sorted([self.posicion, self.viejo.posicion])
-                cuenta.recalcular_saldos_entre(pos_min, pos_max)
-                if cambia_campo(campo_cuenta):
-                    cuenta_vieja.recalcular_saldos_entre(pos_min)
-
-        else:
-            self._eliminar_saldo_de_cuenta_vieja_si_existe(
-                cuenta_vieja, pasa_a_opuesto, saldo)
 
     def _actualizar_fechas_conversion(self):
         if self.cambia_campo('dia', contraparte=self.viejo) and self.convierte_cuenta:

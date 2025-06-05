@@ -2,8 +2,6 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from diario.models import Saldo
-
 
 @pytest.fixture
 def mock_tomar(mocker) -> MagicMock:
@@ -17,8 +15,7 @@ def mock_saldo_en_mov(mocker) -> MagicMock:
 
 def test_devuelve_el_ultimo_saldo_historico_de_la_cuenta(cuenta, entrada, salida_posterior):
     assert (
-        cuenta.saldo() ==
-        Saldo.objects.get(cuenta=cuenta, movimiento=salida_posterior).importe
+        cuenta.saldo() == cuenta.saldodiario_set.last().importe
     )
 
 
@@ -33,6 +30,10 @@ def test_si_recibe_movimiento_recupera_saldo_al_momento_del_movimiento(
     mock_saldo_en_mov.assert_called_once_with(cuenta, movimiento=entrada)
 
 
+def test_si_recibe_movimiento_devuelve_saldo_al_momento_del_movimiento(cuenta, entrada, traspaso_posterior):
+    assert cuenta.saldo(movimiento=entrada) == cuenta.saldo_en_mov(entrada)
+
+
 def test_si_no_encuentra_saldo_de_cuenta_en_movimiento_devuelve_saldo_en_movimiento_anterior(
         cuenta, entrada, entrada_posterior_otra_cuenta):
     assert cuenta.saldo(movimiento=entrada_posterior_otra_cuenta) == cuenta.saldo(movimiento=entrada)
@@ -40,6 +41,7 @@ def test_si_no_encuentra_saldo_de_cuenta_en_movimiento_devuelve_saldo_en_movimie
 
 def test_si_recibe_movimiento_y_cuenta_no_tiene_saldos_devuelve_cero(cuenta, entrada_otra_cuenta):
     assert cuenta.saldo(movimiento=entrada_otra_cuenta) == 0
+
 
 @pytest.mark.parametrize("tipo", ["compra", "venta"])
 def test_si_recibe_moneda_devuelve_saldo_en_moneda_dada_redondeado_en_2_decimales(

@@ -31,7 +31,7 @@ def test_redirige_a_home_si_es_la_unica_cuenta_erronea(client, cuenta_2):
 
 def test_corrige_saldo_de_cuenta_interactiva(client, mocker, full_url, cuenta):
     mock_cta_corregir_saldo = mocker.patch(
-        'diario.views.CuentaInteractiva.corregir_saldo',
+        'diario.views.CuentaInteractiva.recalcular_saldos_diarios',
         autospec=True
     )
     client.get(full_url)
