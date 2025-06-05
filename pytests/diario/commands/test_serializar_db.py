@@ -6,7 +6,7 @@ from django.apps import apps
 from django.core.management import call_command
 
 from diario.models import Cotizacion
-from diario.serializers import MovimientoSerializado, DiaSerializado, SaldoSerializado, get_serializer, \
+from diario.serializers import MovimientoSerializado, DiaSerializado, SaldoDiarioSerializado, get_serializer, \
     CuentaSerializada
 from utils.archivos import es_json_valido
 
@@ -110,7 +110,7 @@ def test_serializa_todas_las_cuentas_interactivas_y_acumulativas(modelo, varias_
     "elementos, modelo, tipo", [
         ("varios_movimientos", "movimiento", MovimientoSerializado),
         ("varios_dias", "dia", DiaSerializado),
-        ("varios_movimientos", "saldodiario", SaldoSerializado),
+        ("varios_movimientos", "saldodiario", SaldoDiarioSerializado),
     ])
 def test_serializa_todos_los_movimientos_dias_y_saldos_diarios_de_la_base_de_datos(
         elementos, modelo, tipo, request):

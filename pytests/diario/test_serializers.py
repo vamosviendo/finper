@@ -4,7 +4,7 @@ from diario.models import CuentaAcumulativa, CuentaInteractiva, Movimiento, Dia,
     Titular, Cotizacion
 from vvmodel.serializers import SerializedDb
 
-from diario.serializers import CuentaSerializada, DiaSerializado, MovimientoSerializado, SaldoSerializado, \
+from diario.serializers import CuentaSerializada, DiaSerializado, MovimientoSerializado, SaldoDiarioSerializado, \
     MonedaSerializada, TitularSerializado, CotizacionSerializada
 
 
@@ -33,8 +33,8 @@ def dia_serializado(dia: Dia, db_serializada: SerializedDb) -> DiaSerializado:
     return DiaSerializado.primere(db_serializada)
 
 @pytest.fixture
-def saldo_serializado(saldo_diario: SaldoDiario, db_serializada: SerializedDb) -> SaldoSerializado:
-    return SaldoSerializado.primere(db_serializada)
+def saldo_serializado(saldo_diario: SaldoDiario, db_serializada: SerializedDb) -> SaldoDiarioSerializado:
+    return SaldoDiarioSerializado.primere(db_serializada)
 
 @pytest.fixture
 def moneda_serializada(dolar: Moneda, db_serializada: SerializedDb) -> MonedaSerializada:
@@ -128,7 +128,7 @@ class TestDiaSerializado:
         assert dia_serializado.sk == dia_serializado.fields["fecha"].replace('-', '')
 
 
-class TestSaldoSerializado:
+class TestSaldoDiarioSerializado:
     def test_prop_sk_devuelve_cadena_con_sk_de_dia_y_sk_de_cuenta(self, saldo_serializado):
         assert saldo_serializado.sk == "20101112c"
 

@@ -101,7 +101,7 @@ class MovimientoSerializado(SerializedObject):
         return self.fields["cta_entrada"] is None or self.fields["cta_salida"] is None
 
 
-class SaldoSerializado(SerializedObject):
+class SaldoDiarioSerializado(SerializedObject):
     @classmethod
     def model_string(cls) -> str:
         return "diario.saldodiario"
