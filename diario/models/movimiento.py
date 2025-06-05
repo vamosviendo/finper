@@ -489,12 +489,8 @@ class Movimiento(MiModel):
 
             self._recalcular_saldos_diarios()
 
-            # TODO extraer
             if self.cambia_campo('dia'):
-                if self.dia.fecha > self.viejo.dia.fecha:
-                    self.orden_dia = 0
-                else:
-                    self.orden_dia = self.dia.movimientos.count()
+                self._actualizar_orden_dia()
 
             super().save(*args, **kwargs)
 
@@ -656,41 +652,11 @@ class Movimiento(MiModel):
             cuenta.save()
             subcuenta.clean_save()
 
-    def _asignar_orden_dia(self):
-        pos_min, pos_max = sorted([self.posicion, self.viejo.posicion])
-        if pos_min.fecha != pos_max.fecha:
-            self.orden_dia = 0 \
-                if pos_min.fecha == self.viejo.fecha \
-                else Movimiento.filtro(fecha=pos_min.fecha).count()
-            super().save()
-
-    def _eliminar_saldo_de_cuenta_vieja_si_existe(self, cuenta_vieja: Cuenta, pasa_a_opuesto: callable, saldo: callable):
-        if cuenta_vieja is not None and not pasa_a_opuesto():
-            saldo().eliminar()
-
-    def _cambia_cta_entrada(self) -> bool:
-        return (
-            self.cta_entrada and self.viejo.cta_entrada
-            and self.cta_entrada != self.viejo.cta_entrada
-        )
-
-    def _cambia_cta_salida(self) -> bool:
-        return (
-            self.cta_salida and self.viejo.cta_salida
-            and self.cta_salida != self.viejo.cta_salida
-        )
-
-    def _salida_pasa_a_entrada(self) -> bool:
-        return (
-            self.cta_entrada and self.viejo.cta_salida
-            and self.cta_entrada == self.viejo.cta_salida
-        )
-
-    def _entrada_pasa_a_salida(self) -> bool:
-        return (
-            self.cta_salida and self.viejo.cta_entrada
-            and self.cta_salida == self.viejo.cta_entrada
-        )
+    def _actualizar_orden_dia(self):
+        if self.dia.fecha > self.viejo.dia.fecha:
+            self.orden_dia = 0
+        else:
+            self.orden_dia = self.dia.movimientos.count()
 
     def _hay_que_recalcular_cotizacion(self) -> bool:
         """ Si cambia la moneda del movimiento, se recalcula la cotización
