@@ -144,8 +144,12 @@ class Cuenta(PolymorphModel):
     def saldo(
             self,
             movimiento: Movimiento = None,
+            dia: Dia = None,
             moneda: Moneda = None,
             compra: bool = False) -> float:
+
+        if dia and movimiento and movimiento.dia != dia:
+            raise ValueError(f"Se recibieron día {dia} y movimiento de otro día ({movimiento.dia})")
 
         fecha = movimiento.fecha if movimiento else date.today()
         cotizacion = self.moneda.cotizacion_en_al(moneda, fecha, compra) if moneda else 1
@@ -154,6 +158,11 @@ class Cuenta(PolymorphModel):
             return round(self.saldo_en_mov(movimiento) * cotizacion, 2)
         except AttributeError:  # movimiento is None
             try:
+                if dia:
+                    try:
+                        return round(self.saldodiario_set.get(dia=dia).importe * cotizacion, 2)
+                    except SaldoDiario.DoesNotExist:
+                        return round(SaldoDiario.anterior_a(cuenta=self, dia=dia).importe * cotizacion, 2)
                 return round(self.ultimo_saldo.importe * cotizacion, 2)
             except AttributeError:  # No hay saldos
                 return 0
