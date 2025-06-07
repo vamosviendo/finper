@@ -51,8 +51,12 @@ class Titular(MiModel):
             kwargs["_sk"] = kwargs.pop("sk")
         return super().tomar(**kwargs)
 
-    def capital(self, movimiento: 'Movimiento' = None) -> float:
-        return sum(c.saldo(movimiento) for c in self.cuentas_interactivas())
+    def capital(self, movimiento: 'Movimiento' = None, dia: Dia = None) -> float:
+        if movimiento:
+            return sum(c.saldo(movimiento=movimiento) for c in self.cuentas_interactivas())
+        if dia:
+            return sum(c.saldo(dia=dia) for c in self.cuentas_interactivas())
+        return sum(c.saldo() for c in self.cuentas_interactivas())
 
     def cuentas_interactivas(self) -> models.QuerySet['CuentaInteractiva']:
         ids = [c.id for c in self.cuentas.all() if c.es_interactiva]
