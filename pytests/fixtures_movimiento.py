@@ -62,6 +62,13 @@ def entrada_otra_cuenta(cuenta_2: CuentaInteractiva, dia: Dia) -> Movimiento:
 
 
 @pytest.fixture
+def entrada_anterior_otra_cuenta(cuenta_2: CuentaInteractiva, dia_anterior: Dia) -> Movimiento:
+    return Movimiento.crear(
+        concepto='Entrada posterior otra cuenta', importe=50,
+        cta_entrada=cuenta_2, dia=dia_anterior
+    )
+
+@pytest.fixture
 def entrada_posterior_otra_cuenta(cuenta_2: CuentaInteractiva, dia_posterior: Dia) -> Movimiento:
     return Movimiento.crear(
         concepto='Entrada posterior otra cuenta', importe=50,
@@ -102,6 +109,16 @@ def entrada_tardia(cuenta: CuentaInteractiva, dia_tardio: Dia) -> Movimiento:
         concepto='Entrada tardía',
         importe=80,
         cta_entrada=cuenta,
+        dia=dia_tardio,
+    )
+
+
+@pytest.fixture
+def salida_tardia_otra_cuenta(cuenta_2: CuentaInteractiva, dia_tardio: Dia) -> Movimiento:
+    return Movimiento.crear(
+        concepto='Salida tardía otra cuenta',
+        importe=4404,
+        cta_salida=cuenta_2,
         dia=dia_tardio,
     )
 

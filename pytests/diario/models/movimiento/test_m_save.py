@@ -4,6 +4,7 @@ from unittest.mock import call
 import pytest
 
 from diario.models import Cuenta, CuentaInteractiva, Dia, Movimiento, SaldoDiario
+from pytests.fixtures_movimiento import entrada_anterior_otra_cuenta
 from utils.helpers_tests import \
     cambiar_fecha, dividir_en_dos_subcuentas, signo
 from utils.varios import el_que_no_es
@@ -1864,6 +1865,133 @@ class TestSaveCambiaImporteYFecha:
             dia=dia_temprano,
             importe=getattr(mov, f"importe_cta_{sentido}")
         )
+
+
+@pytest.mark.parametrize('sentido', ['entrada', 'salida'])
+class TestSaveCambiaCuentasYFecha:
+
+    @pytest.mark.parametrize("fixt_dia", ["dia_temprano", "dia_tardio"])
+    def test_en_movimiento_unico_de_la_cuenta_reemplazada_en_el_dia_reemplazado_elimina_saldo_del_dia_reemplazado(
+            self, cuenta, cuenta_2, sentido, fixt_dia, entrada_anterior, dia_posterior, request, mocker):
+        mov = request.getfixturevalue(sentido)
+        dia = request.getfixturevalue(fixt_dia)
+        saldo_diario = SaldoDiario.tomar(cuenta=cuenta, dia=mov.dia)
+        mock_delete = mocker.patch("diario.models.SaldoDiario.delete", autospec=True)
+
+        setattr(mov, f"cta_{sentido}", cuenta_2)
+        mov.dia = dia
+        mov.clean_save()
+
+        mock_delete.assert_called_once_with(saldo_diario)
+
+    def test_a_dia_posterior_en_movimiento_no_unico_de_la_cuenta_reemplazada_en_el_dia_reemplazado_resta_importe_de_saldo_de_cuenta_en_dia_reemplazado(
+            self, cuenta, cuenta_2, sentido, traspaso, entrada_anterior, dia_posterior, request):
+        mov = request.getfixturevalue(sentido)
+        saldo_diario = SaldoDiario.tomar(cuenta=cuenta, dia=mov.dia)
+        importe_sd = saldo_diario.importe
+
+        setattr(mov, f"cta_{sentido}", cuenta_2)
+        mov.dia = dia_posterior
+        mov.clean_save()
+
+        saldo_diario.refresh_from_db()
+        assert saldo_diario.importe == importe_sd - getattr(mov, f"importe_cta_{sentido}")
+
+    @pytest.mark.parametrize("otros_movs", [[], ["traspaso"]])
+    def test_a_dia_posterior_resta_importe_de_saldos_intermedios_de_cuenta_reemplazada(
+            self, cuenta, cuenta_2, sentido, otros_movs, entrada_anterior, salida_posterior, dia_tardio, request):
+        mov = request.getfixturevalue(sentido)
+        for otro_mov in otros_movs:
+            request.getfixturevalue(otro_mov)
+        saldo_diario_posterior = SaldoDiario.tomar(cuenta=cuenta, dia=salida_posterior.dia)
+        importe_sdp = saldo_diario_posterior.importe
+
+        setattr(mov, f"cta_{sentido}", cuenta_2)
+        mov.dia = dia_tardio
+        mov.clean_save()
+
+        saldo_diario_posterior.refresh_from_db()
+        assert saldo_diario_posterior.importe == importe_sdp - getattr(mov, f"importe_cta_{sentido}")
+
+    @pytest.mark.parametrize("otros_movs", [[], ["traspaso"]])
+    def test_a_dia_posterior_no_modifica_saldos_intermedios_de_cuenta_nueva(
+            self, sentido, otros_movs, entrada_anterior_otra_cuenta, entrada_posterior_otra_cuenta, dia_tardio, cuenta_2, request):
+        mov = request.getfixturevalue(sentido)
+        for otro_mov in otros_movs:
+            request.getfixturevalue(otro_mov)
+        saldo_diario_posterior = SaldoDiario.tomar(cuenta=cuenta_2, dia=entrada_posterior_otra_cuenta.dia)
+        importe_sdp = saldo_diario_posterior.importe
+
+        setattr(mov, f"cta_{sentido}", cuenta_2)
+        mov.dia = dia_tardio
+        mov.clean_save()
+
+        saldo_diario_posterior.refresh_from_db()
+        assert saldo_diario_posterior.importe == importe_sdp
+
+    @pytest.mark.parametrize("otros_movs", [[], ["traspaso"]])
+    def test_a_dia_anterior_no_modifica_saldos_intermedios_de_cuenta_reemplazada(
+            self, sentido, otros_movs, dia_temprano, entrada_anterior, cuenta, cuenta_2, request):
+        mov = request.getfixturevalue(sentido)
+        for otro_mov in otros_movs:
+            request.getfixturevalue(otro_mov)
+        saldo_diario_anterior = SaldoDiario.tomar(cuenta=cuenta, dia=entrada_anterior.dia)
+        importe_sda = saldo_diario_anterior.importe
+
+        setattr(mov, f"cta_{sentido}", cuenta_2)
+        mov.dia = dia_temprano
+        mov.clean_save()
+
+        saldo_diario_anterior.refresh_from_db()
+        assert saldo_diario_anterior.importe == importe_sda
+
+    @pytest.mark.parametrize("fixt_dia", ["dia_temprano", "dia_tardio"])
+    def test_a_dia_sin_movimientos_de_la_cuenta_nueva_crea_saldo_de_cuenta_nueva_en_nuevo_dia(
+            self, sentido, cuenta_2, fixt_dia, request, mocker):
+        mov = request.getfixturevalue(sentido)
+        dia = request.getfixturevalue(fixt_dia)
+        mock_crear = mocker.patch("diario.models.SaldoDiario.crear")
+
+        setattr(mov, f"cta_{sentido}", cuenta_2)
+        mov.dia = dia
+        mov.clean_save()
+
+        mock_crear.assert_called_once_with(
+            cuenta=cuenta_2,
+            dia=dia,
+            importe=getattr(mov, f"importe_cta_{sentido}")
+        )
+
+    @pytest.mark.parametrize("otro_mov", ["entrada_anterior_otra_cuenta", "entrada_posterior_otra_cuenta"])
+    def test_a_dia_con_movimientos_de_la_cuenta_nueva_suma_importe_a_saldo_de_cuenta_nueva_en_nuevo_dia(
+            self, sentido, otro_mov, cuenta_2, entrada_posterior_otra_cuenta, request):
+        mov = request.getfixturevalue(sentido)
+        otro_mov = request.getfixturevalue(otro_mov)
+        saldo_diario = SaldoDiario.tomar(cuenta=cuenta_2, dia=otro_mov.dia)
+        importe_sd = saldo_diario.importe
+
+        setattr(mov, f"cta_{sentido}", cuenta_2)
+        mov.dia = otro_mov.dia
+        mov.clean_save()
+
+        saldo_diario.refresh_from_db()
+        assert saldo_diario.importe == importe_sd + getattr(mov, f"importe_cta_{sentido}")
+
+    @pytest.mark.parametrize("otros_movs", [[], ["salida_tardia_otra_cuenta"]])
+    def test_a_dia_posterior_no_modifica_saldos_diarios_intermedios_de_cuenta_nueva(
+            self, sentido, cuenta_2, otros_movs, entrada_posterior_otra_cuenta, dia_tardio, request):
+        mov = request.getfixturevalue(sentido)
+        for otro_mov in otros_movs:
+            request.getfixturevalue(otro_mov)
+        saldo_diario_posterior = SaldoDiario.tomar(cuenta=cuenta_2, dia=entrada_posterior_otra_cuenta.dia)
+        importe_sdp = saldo_diario_posterior.importe
+
+        setattr(mov, f"cta_{sentido}", cuenta_2)
+        mov.dia = dia_tardio
+        mov.clean_save()
+
+        saldo_diario_posterior.refresh_from_db()
+        assert saldo_diario_posterior.importe == importe_sdp
 
 
 class TestSaveCambiaEsGratis:
