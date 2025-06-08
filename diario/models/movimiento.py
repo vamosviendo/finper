@@ -404,7 +404,7 @@ class Movimiento(MiModel):
                 if cuenta.movs_en_fecha(self.dia).count() == 1:
                     saldo_diario.eliminar()
                 else:
-                    saldo_diario.importe -= getattr(self, f"importe_cta_{sentido}")
+                    saldo_diario.importe -= self.importe_cta(sentido)
                     saldo_diario.clean_save()
 
         super().delete(*args, **kwargs)
@@ -509,6 +509,12 @@ class Movimiento(MiModel):
 
     def importe_en(self, otra_moneda: Moneda, compra: bool = False) -> float:
         return round(self.importe * self.moneda.cotizacion_en(otra_moneda, compra), 2)
+
+    def importe_cta(self, sentido: str) -> float:
+        try:
+            return getattr(self, f"importe_cta_{sentido}")
+        except AttributeError:
+            raise ValueError('Los valores permitidos son "entrada" y "salida"')
 
     def tiene_cuenta_acumulativa(self) -> bool:
         if self.tiene_cta_entrada_acumulativa():

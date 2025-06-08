@@ -166,14 +166,14 @@ class TestSaveCambiaImporte:
             request.getfixturevalue(otro_mov)
         cuenta = getattr(mov, f"cta_{sentido}")
         saldo_diario = SaldoDiario.tomar(cuenta=cuenta, dia=mov.dia)
-        importe_mov = getattr(mov, f"importe_cta_{sentido}")
+        importe_mov = mov.importe_cta(sentido)
         importe_sd = saldo_diario.importe
 
         mov.importe += 50
         mov.clean_save()
 
         saldo_diario.refresh_from_db()
-        assert saldo_diario.importe == importe_sd + getattr(mov, f"importe_cta_{sentido}") - importe_mov
+        assert saldo_diario.importe == importe_sd + mov.importe_cta(sentido) - importe_mov
 
     @pytest.mark.parametrize("otros_movs", [
         [],
@@ -186,7 +186,7 @@ class TestSaveCambiaImporte:
         for otro_mov in otros_movs:
             request.getfixturevalue(otro_mov)
         cuenta = getattr(traspaso, f"cta_{sentido}")
-        importe = getattr(traspaso, f"importe_cta_{sentido}")
+        importe = traspaso.importe_cta(sentido)
         saldo_diario = SaldoDiario.tomar(cuenta=cuenta, dia=traspaso.dia)
         importe_sd = saldo_diario.importe
 
@@ -194,14 +194,14 @@ class TestSaveCambiaImporte:
         traspaso.clean_save()
 
         saldo_diario.refresh_from_db()
-        assert saldo_diario.importe == importe_sd - importe + getattr(traspaso, f"importe_cta_{sentido}")
+        assert saldo_diario.importe == importe_sd - importe + traspaso.importe_cta(sentido)
 
     @pytest.mark.parametrize("otros_movs", [[], ["traspaso"]])
     def test_actualiza_saldos_diarios_posteriores_de_cuenta(self, sentido, otros_movs, salida_posterior, request):
         for otro_mov in otros_movs:
             request.getfixturevalue(otro_mov)
         mov = request.getfixturevalue(sentido)
-        importe = getattr(mov, f"importe_cta_{sentido}")
+        importe = mov.importe_cta(sentido)
         cuenta = getattr(mov, f"cta_{sentido}")
         saldo_diario_posterior = SaldoDiario.tomar(cuenta=cuenta, dia=salida_posterior.dia)
         importe_sdp = saldo_diario_posterior.importe
@@ -210,7 +210,7 @@ class TestSaveCambiaImporte:
         mov.clean_save()
 
         saldo_diario_posterior.refresh_from_db()
-        assert saldo_diario_posterior.importe == importe_sdp - importe + getattr(mov, f"importe_cta_{sentido}")
+        assert saldo_diario_posterior.importe == importe_sdp - importe + mov.importe_cta(sentido)
 
     @pytest.mark.parametrize("otros_movs", [[], ["Otro movimiento de crédito el mismo día"]])
     def test_en_movimiento_de_credito_resta_importe_viejo_y_suma_el_nuevo_a_saldo_diario_de_cuentas_contramov(
@@ -225,7 +225,7 @@ class TestSaveCambiaImporte:
             )
         contramov = Movimiento.tomar(id=credito.id_contramov)
         cuenta_contramov = getattr(contramov, f"cta_{sentido}")
-        importe_contramov = getattr(contramov, f"importe_cta_{sentido}")
+        importe_contramov = contramov.importe_cta(sentido)
         saldo_diario_contramov = SaldoDiario.tomar(cuenta=cuenta_contramov, dia=contramov.dia)
         importe_sdc = saldo_diario_contramov.importe
 
@@ -236,7 +236,7 @@ class TestSaveCambiaImporte:
         saldo_diario_contramov = SaldoDiario.tomar(cuenta=saldo_diario_contramov.cuenta, dia=saldo_diario_contramov.dia)
         assert \
             saldo_diario_contramov.importe == \
-            importe_sdc - importe_contramov + getattr(contramov, f"importe_cta_{sentido}")
+            importe_sdc - importe_contramov + contramov.importe_cta(sentido)
 
 
 @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
@@ -264,7 +264,7 @@ class TestSaveCambiaCuentas:
         mov.clean_save()
 
         saldo_diario.refresh_from_db()
-        assert saldo_diario.importe == importe - getattr(mov, f"importe_cta_{sentido}")
+        assert saldo_diario.importe == importe - mov.importe_cta(sentido)
 
     def test_si_no_hay_movs_de_cuenta_nueva_en_el_dia_crea_saldo_diario(self, sentido, cuenta_2, request, mocker):
         mov = request.getfixturevalue(sentido)
@@ -273,7 +273,7 @@ class TestSaveCambiaCuentas:
         setattr(mov, f"cta_{sentido}", cuenta_2)
         mov.clean_save()
 
-        mock_crear.assert_called_once_with(cuenta=cuenta_2, dia=mov.dia, importe=getattr(mov, f"importe_cta_{sentido}"))
+        mock_crear.assert_called_once_with(cuenta=cuenta_2, dia=mov.dia, importe=mov.importe_cta(sentido))
 
     def test_si_hay_movs_de_cuenta_nueva_en_el_dia_suma_importe_a_su_saldo_diario(
             self, sentido, traspaso, cuenta_2, request):
@@ -285,13 +285,13 @@ class TestSaveCambiaCuentas:
         mov.clean_save()
 
         saldo_diario.refresh_from_db()
-        assert saldo_diario.importe == importe + getattr(mov, f"importe_cta_{sentido}")
+        assert saldo_diario.importe == importe + mov.importe_cta(sentido)
 
     def test_si_cta_cambia_de_sentido_en_dia_sin_mas_movimientos_de_la_cuenta_se_resta_importe_sentido_viejo_y_se_suma_importe_sentido_nuevo(
             self, sentido, request):
         mov = request.getfixturevalue(sentido)
         cuenta = getattr(mov, f"cta_{sentido}")
-        importe_mov = getattr(mov, f"importe_cta_{sentido}")
+        importe_mov = mov.importe_cta(sentido)
         sentido_opuesto = el_que_no_es(sentido, "entrada", "salida")
         saldo_diario = SaldoDiario.tomar(cuenta=cuenta, dia=mov.dia)
         importe_saldo_diario = saldo_diario.importe
@@ -303,13 +303,13 @@ class TestSaveCambiaCuentas:
         saldo_diario.refresh_from_db()
         assert \
             saldo_diario.importe == \
-            importe_saldo_diario - importe_mov + getattr(mov, f"importe_cta_{sentido_opuesto}")
+            importe_saldo_diario - importe_mov + mov.importe_cta(sentido_opuesto)
 
     def test_si_cta_cambia_de_sentido_en_dia_con_mas_movimientos_de_la_cuenta_se_resta_importe_sentido_viejo_y_se_suma_importe_sentido_nuevo(
             self, sentido, traspaso, request):
         mov = request.getfixturevalue(sentido)
         cuenta = getattr(mov, f"cta_{sentido}")
-        importe_mov = getattr(mov, f"importe_cta_{sentido}")
+        importe_mov = mov.importe_cta(sentido)
         sentido_opuesto = el_que_no_es(sentido, "entrada", "salida")
         saldo_diario = SaldoDiario.tomar(cuenta=cuenta, dia=mov.dia)
         importe_saldo_diario = saldo_diario.importe
@@ -321,7 +321,7 @@ class TestSaveCambiaCuentas:
         saldo_diario.refresh_from_db()
         assert \
             saldo_diario.importe == \
-            importe_saldo_diario - importe_mov + getattr(mov, f"importe_cta_{sentido_opuesto}")
+            importe_saldo_diario - importe_mov + mov.importe_cta(sentido_opuesto)
 
     def test_en_traspaso_en_dia_sin_mas_movimientos_de_la_cuenta_reemplazada_se_elimina_su_saldo_diario(
             self, sentido, traspaso, cuenta_3, mocker):
@@ -344,7 +344,7 @@ class TestSaveCambiaCuentas:
         traspaso.clean_save()
 
         saldo_diario.refresh_from_db()
-        assert saldo_diario.importe == importe_sd - getattr(traspaso, f"importe_cta_{sentido}")
+        assert saldo_diario.importe == importe_sd - traspaso.importe_cta(sentido)
 
     def test_si_cambia_cuenta_en_traspaso_en_dia_sin_mas_movimientos_de_la_cuenta_reemplazante_se_crea_saldo_diario(
             self, sentido, traspaso, cuenta_3, mocker):
@@ -352,7 +352,7 @@ class TestSaveCambiaCuentas:
 
         setattr(traspaso, f"cta_{sentido}", cuenta_3)
         traspaso.clean_save()
-        mock_crear.assert_called_once_with(cuenta=cuenta_3, dia=traspaso.dia, importe=getattr(traspaso, f"importe_cta_{sentido}"))
+        mock_crear.assert_called_once_with(cuenta=cuenta_3, dia=traspaso.dia, importe=traspaso.importe_cta(sentido))
 
     def test_si_cambia_cuenta_en_traspaso_en_dia_con_mas_movimientos_de_la_cuenta_reemplazante_se_suma_importe_a_su_saldo_diario(
             self, sentido, traspaso, cuenta_3):
@@ -364,7 +364,7 @@ class TestSaveCambiaCuentas:
         traspaso.clean_save()
 
         saldo_diario.refresh_from_db()
-        assert saldo_diario.importe == importe_sd + getattr(traspaso, f"importe_cta_{sentido}")
+        assert saldo_diario.importe == importe_sd + traspaso.importe_cta(sentido)
 
     def test_si_cambian_ambas_cuentas_en_traspaso_en_dia_sin_mas_movimientos_de_ninguna_de_las_cuentas_reemplazadas_se_eliminan_saldo_de_ambas_cuentas(
             self, sentido, traspaso, cuenta_3, cuenta_4, mocker):
@@ -399,7 +399,7 @@ class TestSaveCambiaCuentas:
 
         mock_delete.assert_called_once_with(saldo_diario_cuenta_opuesta)
         saldo_diario_cuenta.refresh_from_db()
-        assert saldo_diario_cuenta.importe == importe_sdc - getattr(traspaso, f"importe_cta_{sentido}")
+        assert saldo_diario_cuenta.importe == importe_sdc - traspaso.importe_cta(sentido)
 
     def test_si_cambian_ambas_cuentas_en_traspaso_en_dia_con_mas_movimientos_de_ambas_cuentas_reemplazadas_se_resta_importe_de_saldo_diario_de_ambas_cuentas(
             self, sentido, traspaso, entrada, entrada_otra_cuenta, cuenta_3, cuenta_4):
@@ -416,11 +416,11 @@ class TestSaveCambiaCuentas:
         traspaso.clean_save()
 
         saldo_diario_cuenta.refresh_from_db()
-        assert saldo_diario_cuenta.importe == importe_sdc - getattr(traspaso, f"importe_cta_{sentido}")
+        assert saldo_diario_cuenta.importe == importe_sdc - traspaso.importe_cta(sentido)
         saldo_diario_cuenta_opuesta.refresh_from_db()
         assert \
             saldo_diario_cuenta_opuesta.importe == \
-            importe_sdco - getattr(traspaso, f"importe_cta_{sentido_opuesto}")
+            importe_sdco - traspaso.importe_cta(sentido_opuesto)
 
     def test_si_cambian_ambas_cuentas_en_traspaso_en_dia_sin_mas_movimientos_de_ninguna_de_las_cuentas_reemplazantes_se_crean_saldos_diarios_para_ambas_cuentas(
             self, sentido, traspaso, cuenta_3, cuenta_4, mocker):
@@ -434,12 +434,12 @@ class TestSaveCambiaCuentas:
         assert call(
             cuenta=cuenta_3,
             dia=traspaso.dia,
-            importe=getattr(traspaso, f"importe_cta_{sentido}")
+            importe=traspaso.importe_cta(sentido)
         ) in mock_crear.call_args_list
         assert call(
             cuenta=cuenta_4,
             dia=traspaso.dia,
-            importe=getattr(traspaso, f"importe_cta_{sentido_opuesto}")
+            importe=traspaso.importe_cta(sentido_opuesto)
         ) in mock_crear.call_args_list
 
     def test_si_cambian_ambas_cuentas_en_traspaso_en_dia_con_mas_movimientos_de_una_de_las_cuentas_reemplazantes_se_suma_importe_al_saldo_diario_de_la_cuenta_con_otros_movimientos_y_se_crea_el_saldo_diario_de_la_otra(
@@ -457,10 +457,10 @@ class TestSaveCambiaCuentas:
         mock_crear.assert_called_once_with(
             cuenta=cuenta_4,
             dia=traspaso.dia,
-            importe=getattr(traspaso, f"importe_cta_{sentido_opuesto}")
+            importe=traspaso.importe_cta(sentido_opuesto)
         )
         saldo_diario.refresh_from_db()
-        assert saldo_diario.importe == importe_saldo_diario + getattr(traspaso, f"importe_cta_{sentido}")
+        assert saldo_diario.importe == importe_saldo_diario + traspaso.importe_cta(sentido)
 
     def test_si_cambian_ambas_cuentas_en_traspaso_en_dia_con_mas_movimientos_de_ambas_cuentas_reemplazantes_se_suma_importe_a_saldo_diario_de_ambas_cuentas(
             self, sentido, traspaso, cuenta_3, cuenta_4):
@@ -477,9 +477,9 @@ class TestSaveCambiaCuentas:
         traspaso.clean_save()
 
         saldo_diario_cta_3.refresh_from_db()
-        assert saldo_diario_cta_3.importe == importe_sdc3 + getattr(traspaso, f"importe_cta_{sentido}")
+        assert saldo_diario_cta_3.importe == importe_sdc3 + traspaso.importe_cta(sentido)
         saldo_diario_cta_4.refresh_from_db()
-        assert saldo_diario_cta_4.importe == importe_sdc4 + getattr(traspaso, f"importe_cta_{sentido_opuesto}")
+        assert saldo_diario_cta_4.importe == importe_sdc4 + traspaso.importe_cta(sentido_opuesto)
 
     def test_si_cambian_ambas_cuentas_en_traspaso_en_dia_sin_mas_movimientos_de_cuentas_reemplazadas_ni_reemplazantes_se_eliminan_saldos_diarios_de_cuentas_reemplazadas_y_se_crean_saldos_diarios_de_cuentas_reemplazantes(
             self, sentido, traspaso, cuenta_3, cuenta_4, mocker):
@@ -503,12 +503,12 @@ class TestSaveCambiaCuentas:
         assert call(
             cuenta=cuenta_3,
             dia=traspaso.dia,
-            importe=getattr(traspaso, f"importe_cta_{sentido}")
+            importe=traspaso.importe_cta(sentido)
         ) in mock_crear.call_args_list
         assert call(
             cuenta=cuenta_4,
             dia=traspaso.dia,
-            importe=getattr(traspaso, f"importe_cta_{sentido_opuesto}")
+            importe=traspaso.importe_cta(sentido_opuesto)
         ) in mock_crear.call_args_list
         assert call(saldo_diario_cuenta) in mock_delete.call_args_list
         assert call(saldo_diario_cuenta_opuesta) in mock_delete.call_args_list
@@ -539,13 +539,13 @@ class TestSaveCambiaCuentas:
         traspaso.clean_save()
 
         saldo_diario_cuenta.refresh_from_db()
-        assert saldo_diario_cuenta.importe == importe_sdc - getattr(traspaso, f"importe_cta_{sentido}")
+        assert saldo_diario_cuenta.importe == importe_sdc - traspaso.importe_cta(sentido)
         saldo_diario_cuenta_opuesta.refresh_from_db()
-        assert saldo_diario_cuenta_opuesta.importe == importe_sdco - getattr(traspaso, f"importe_cta_{sentido_opuesto}")
+        assert saldo_diario_cuenta_opuesta.importe == importe_sdco - traspaso.importe_cta(sentido_opuesto)
         saldo_diario_cta_3.refresh_from_db()
-        assert saldo_diario_cta_3.importe == importe_sdc3 + getattr(traspaso, f"importe_cta_{sentido}")
+        assert saldo_diario_cta_3.importe == importe_sdc3 + traspaso.importe_cta(sentido)
         saldo_diario_cta_4.refresh_from_db()
-        assert saldo_diario_cta_4.importe == importe_sdc4 + getattr(traspaso, f"importe_cta_{sentido_opuesto}")
+        assert saldo_diario_cta_4.importe == importe_sdc4 + traspaso.importe_cta(sentido_opuesto)
 
     @pytest.mark.parametrize("otros_movs", [
         [],
@@ -574,15 +574,15 @@ class TestSaveCambiaCuentas:
         assert \
             saldo_diario.importe == \
             importe_sd \
-                - getattr(traspaso, f"importe_cta_{sentido}") \
-                + getattr(traspaso, f"importe_cta_{sentido_opuesto}")
+                - traspaso.importe_cta(sentido) \
+                + traspaso.importe_cta(sentido_opuesto)
 
         saldo_diario_opuesto.refresh_from_db()
         assert \
             saldo_diario_opuesto.importe == \
             importe_sdo - \
-                getattr(traspaso, f"importe_cta_{sentido_opuesto}") + \
-                getattr(traspaso, f"importe_cta_{sentido}")
+                traspaso.importe_cta(sentido_opuesto) + \
+                traspaso.importe_cta(sentido)
 
     @pytest.mark.parametrize("otros_movs", [[], ["traspaso"]])
     def test_resta_importe_de_saldos_diarios_posteriores_de_cuenta_vieja(
@@ -598,7 +598,7 @@ class TestSaveCambiaCuentas:
         mov.clean_save()
 
         saldo_posterior.refresh_from_db()
-        assert saldo_posterior.importe == importe_sp - getattr(mov, f"importe_cta_{sentido}")
+        assert saldo_posterior.importe == importe_sp - mov.importe_cta(sentido)
 
     @pytest.mark.parametrize("otros_movs", [[], ["traspaso"]])
     def test_suma_importe_a_saldos_diarios_posteriores_de_cuenta_nueva(
@@ -611,7 +611,7 @@ class TestSaveCambiaCuentas:
         mov.clean_save()
 
         saldo_posterior.refresh_from_db()
-        assert saldo_posterior.importe == importe_sp + getattr(mov, f"importe_cta_{sentido}")
+        assert saldo_posterior.importe == importe_sp + mov.importe_cta(sentido)
 
     def test_si_aparece_cuenta_de_otro_titular_en_movimiento_de_entrada_o_salida_se_genera_contramovimiento(
             self, sentido, cuenta_ajena, request):
@@ -694,8 +694,8 @@ class TestSaveCambiaCuentas:
                 movimiento.cotizacion == \
                 real.cotizacion_en_al(moneda_otra_cuenta, fecha=movimiento.fecha, compra=compra)
             assert movimiento.importe == round(importe * cotizacion / movimiento.cotizacion, 2)
-            assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == movimiento.importe
-            assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == round(movimiento.importe * movimiento.cotizacion, 2)
+            assert abs(movimiento.importe_cta(sentido)) == movimiento.importe
+            assert abs(movimiento.importe_cta(sentido_otra_cuenta)) == round(movimiento.importe * movimiento.cotizacion, 2)
 
         # Cambia cuenta en moneda del movimiento cambia cotización no cambia importe
         def test_si_cambia_cuenta_en_moneda_del_movimiento_por_cuenta_en_una_tercera_moneda_y_cotizacion_se_guarda_cotizacion_ingresada_y_se_recalcula_importe(
@@ -713,8 +713,8 @@ class TestSaveCambiaCuentas:
 
             assert movimiento.cotizacion == 8
             assert movimiento.importe == round(importe * cotizacion / 8, 2)
-            assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == movimiento.importe * 8
-            assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == movimiento.importe
+            assert abs(movimiento.importe_cta(sentido_otra_cuenta)) == movimiento.importe * 8
+            assert abs(movimiento.importe_cta(sentido)) == movimiento.importe
 
         # Cambia cuenta en moneda del movimiento cambia cotización cambia importe
         def test_si_cambia_cuenta_en_moneda_del_movimiento_por_cuenta_en_tercera_moneda_cotizacion_e_importe_se_guardan_valores_ingresados(
@@ -730,8 +730,8 @@ class TestSaveCambiaCuentas:
 
             assert movimiento.cotizacion == 8
             assert movimiento.importe == 5
-            assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == 5 * 8
-            assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == 5
+            assert abs(movimiento.importe_cta(sentido_otra_cuenta)) == 5 * 8
+            assert abs(movimiento.importe_cta(sentido)) == 5
 
         # Cambia cuenta en moneda del movimiento no cambia cotización cambia importe
         def test_si_cambia_cuenta_en_moneda_del_movimiento_por_cuenta_en_tercera_moneda_e_importe_se_recalcula_cotizacion_y_se_guarda_importe_ingresado(
@@ -748,8 +748,8 @@ class TestSaveCambiaCuentas:
             assert \
                 movimiento.cotizacion == real.cotizacion_en_al(euro, fecha=movimiento.fecha, compra=compra)
             assert movimiento.importe == 5
-            assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == round(5 * movimiento.cotizacion, 2)
-            assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == 5
+            assert abs(movimiento.importe_cta(sentido_otra_cuenta)) == round(5 * movimiento.cotizacion, 2)
+            assert abs(movimiento.importe_cta(sentido)) == 5
 
         # Cambia cuenta en otra moneda no cambia cotización no cambia importe
         def test_si_cambia_cuenta_en_moneda_no_del_movimiento_por_cuenta_en_una_tercera_moneda_se_recalculan_cotizacion_e_importe(
@@ -759,7 +759,7 @@ class TestSaveCambiaCuentas:
             compra = sentido == "entrada"
 
             importe = movimiento.importe
-            importe_cta_en_moneda_mov = getattr(movimiento, f"importe_cta_{sentido}")
+            importe_cta_en_moneda_mov = movimiento.importe_cta(sentido)
 
             setattr(movimiento, f"cta_{sentido_otra_cuenta}", cuenta_con_saldo_en_reales)
 
@@ -771,8 +771,8 @@ class TestSaveCambiaCuentas:
                 movimiento.cotizacion == \
                 movimiento.moneda.cotizacion_en_al(real, fecha=movimiento.fecha, compra=compra)
             assert movimiento.importe == importe
-            assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == round(importe * movimiento.cotizacion, 2)
-            assert getattr(movimiento, f"importe_cta_{sentido}") == importe_cta_en_moneda_mov
+            assert abs(movimiento.importe_cta(sentido_otra_cuenta)) == round(importe * movimiento.cotizacion, 2)
+            assert movimiento.importe_cta(sentido) == importe_cta_en_moneda_mov
 
         # Cambia cuenta en otra moneda cambia cotización no cambia importe
         def test_si_cambia_cuenta_en_moneda_no_del_movimiento_por_cuenta_en_una_tercera_moneda_y_cotizacion_se_guarda_cotizacion_ingresada_y_se_recalcula_importe(
@@ -781,7 +781,7 @@ class TestSaveCambiaCuentas:
             sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
 
             importe = movimiento.importe
-            importe_cuenta_en_mon_mov = getattr(movimiento, f"importe_cta_{sentido}")
+            importe_cuenta_en_mon_mov = movimiento.importe_cta(sentido)
 
             setattr(movimiento, f"cta_{sentido_otra_cuenta}", cuenta_con_saldo_en_reales)
             movimiento.cotizacion = 0.2
@@ -789,8 +789,8 @@ class TestSaveCambiaCuentas:
 
             assert movimiento.cotizacion == 0.2
             assert movimiento.importe == importe
-            assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == importe * 0.2
-            assert getattr(movimiento, f"importe_cta_{sentido}") == importe_cuenta_en_mon_mov
+            assert abs(movimiento.importe_cta(sentido_otra_cuenta)) == importe * 0.2
+            assert movimiento.importe_cta(sentido) == importe_cuenta_en_mon_mov
 
         # Cambia cuenta en otra moneda cambia cotización cambia importe
         def test_si_cambia_cuenta_en_moneda_no_del_movimiento_por_cuenta_en_una_tercera_moneda_cotizacion_e_importe_se_guardan_los_valores_ingresados(
@@ -805,8 +805,8 @@ class TestSaveCambiaCuentas:
 
             assert movimiento.cotizacion == 0.2
             assert movimiento.importe == 5
-            assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == 5 * 0.2
-            assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == 5
+            assert abs(movimiento.importe_cta(sentido_otra_cuenta)) == 5 * 0.2
+            assert abs(movimiento.importe_cta(sentido)) == 5
 
         # Cambia cuenta en otra moneda no cambia cotización cambia importe
         def test_si_cambia_cuenta_en_moneda_no_del_movimiento_por_cuenta_en_una_tercera_moneda_e_importe_se_recalcula_cotizacion_y_se_guarda_importe_ingresado(
@@ -824,9 +824,9 @@ class TestSaveCambiaCuentas:
                 dolar.cotizacion_en_al(real, fecha=movimiento.fecha, compra=compra)
             assert movimiento.importe == 5
             assert \
-                abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == \
+                abs(movimiento.importe_cta(sentido_otra_cuenta)) == \
                 round(5 * movimiento.cotizacion, 2)
-            assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == 5
+            assert abs(movimiento.importe_cta(sentido)) == 5
 
         # Cambia cuenta en moneda del movimiento cambia cuenta en otra moneda no cambia cotización no cambia importe
         # Cambia moneda por moneda de cuenta que reemplaza a cuenta en moneda del movimiento
@@ -848,9 +848,9 @@ class TestSaveCambiaCuentas:
                 yen.cotizacion_en_al(real, fecha=movimiento.fecha, compra=compra)
             assert movimiento.importe == importe
             assert \
-                abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == \
+                abs(movimiento.importe_cta(sentido_otra_cuenta)) == \
                 round(movimiento.importe * movimiento.cotizacion, 2)
-            assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == movimiento.importe
+            assert abs(movimiento.importe_cta(sentido)) == movimiento.importe
 
         # Cambia cuenta en moneda del movimiento cambia cuenta en otra moneda no cambia cotización no cambia importe
         # Cambia moneda por moneda de cuenta que reemplaza a cuenta en otra moneda
@@ -869,9 +869,9 @@ class TestSaveCambiaCuentas:
 
             assert movimiento.cotizacion == real.cotizacion_en_al(yen, fecha=movimiento.fecha, compra=compra)
             assert movimiento.importe == importe
-            assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == movimiento.importe
+            assert abs(movimiento.importe_cta(sentido_otra_cuenta)) == movimiento.importe
             assert \
-                abs(getattr(movimiento, f"importe_cta_{sentido}")) == \
+                abs(movimiento.importe_cta(sentido)) == \
                 round(movimiento.importe * movimiento.cotizacion, 2)
 
         # Cambia cuenta en moneda del movimiento cambia cuenta en otra moneda no cambia cotización cambia importe
@@ -891,9 +891,9 @@ class TestSaveCambiaCuentas:
             assert movimiento.cotizacion == yen.cotizacion_en_al(real, fecha=movimiento.fecha, compra=compra)
             assert movimiento.importe == 8
             assert \
-                abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == \
+                abs(movimiento.importe_cta(sentido_otra_cuenta)) == \
                 round(movimiento.importe * movimiento.cotizacion, 2)
-            assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == 8
+            assert abs(movimiento.importe_cta(sentido)) == 8
 
         # Cambia cuenta en moneda del movimiento cambia cuenta en otra moneda no cambia cotización cambia importe
         # Cambia moneda por moneda de cuenta que reemplaza a cuenta en otra moneda
@@ -912,9 +912,9 @@ class TestSaveCambiaCuentas:
             assert movimiento.cotizacion == real.cotizacion_en_al(yen, fecha=movimiento.fecha, compra=compra)
             assert movimiento.importe == 8
             assert \
-                abs(getattr(movimiento, f"importe_cta_{sentido}")) == \
+                abs(movimiento.importe_cta(sentido)) == \
                 round(movimiento.importe * movimiento.cotizacion, 2)
-            assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == 8
+            assert abs(movimiento.importe_cta(sentido_otra_cuenta)) == 8
 
         # Cambia cuenta en moneda del movimiento cambia cuenta en otra moneda cambia cotización no cambia importe
         # Cambia moneda por moneda de cuenta que reemplaza a cuenta en moneda del movimiento
@@ -934,9 +934,9 @@ class TestSaveCambiaCuentas:
             assert movimiento.cotizacion == 3
             assert movimiento.importe == importe
             assert \
-                abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == \
+                abs(movimiento.importe_cta(sentido_otra_cuenta)) == \
                 movimiento.importe * 3
-            assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == movimiento.importe
+            assert abs(movimiento.importe_cta(sentido)) == movimiento.importe
 
         # Cambia cuenta en moneda del movimiento cambia cuenta en otra moneda cambia cotización no cambia importe
         # Cambia moneda por moneda que reemplaza a cuenta en otra moneda
@@ -956,9 +956,9 @@ class TestSaveCambiaCuentas:
             assert movimiento.cotizacion == 3
             assert movimiento.importe == importe
             assert \
-                abs(getattr(movimiento, f"importe_cta_{sentido}")) == \
+                abs(movimiento.importe_cta(sentido)) == \
                 movimiento.importe * 3
-            assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == movimiento.importe
+            assert abs(movimiento.importe_cta(sentido_otra_cuenta)) == movimiento.importe
 
         # Cambia cuenta en moneda del movimiento cambia cuenta en otra moneda cambia cotización cambia importe
         # Cambia moneda por moneda que reemplaza a cuenta en moneda del movimiento
@@ -977,9 +977,9 @@ class TestSaveCambiaCuentas:
             assert movimiento.cotizacion == 3
             assert movimiento.importe == 8
             assert \
-                abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == \
+                abs(movimiento.importe_cta(sentido_otra_cuenta)) == \
                 movimiento.importe * 3
-            assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == movimiento.importe
+            assert abs(movimiento.importe_cta(sentido)) == movimiento.importe
 
         # Cambia cuenta en moneda del movimiento cambia cuenta en otra moneda cambia cotización cambia importe
         # Cambia moneda por moneda que reemplaza a cuenta en otra moneda
@@ -997,8 +997,8 @@ class TestSaveCambiaCuentas:
 
             assert movimiento.cotizacion == 3
             assert movimiento.importe == 8
-            assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == movimiento.importe * 3
-            assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == movimiento.importe
+            assert abs(movimiento.importe_cta(sentido)) == movimiento.importe * 3
+            assert abs(movimiento.importe_cta(sentido_otra_cuenta)) == movimiento.importe
 
         def test_si_cambian_ambas_cuentas_cotizacion_e_importe_se_guardan_valores_ingresados(
                 self, sentido, cuenta_con_saldo_en_yenes, cuenta_con_saldo_en_reales, real, request):
@@ -1014,8 +1014,8 @@ class TestSaveCambiaCuentas:
 
             assert movimiento.cotizacion == 3
             assert movimiento.importe == 8
-            assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == 8 * 3
-            assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == 8
+            assert abs(movimiento.importe_cta(sentido_otra_cuenta)) == 8 * 3
+            assert abs(movimiento.importe_cta(sentido)) == 8
 
         # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
         # no cambia moneda, no cambia cotización, no cambia importe
@@ -1033,10 +1033,10 @@ class TestSaveCambiaCuentas:
                 dolar.cotizacion_en_al(euro, fecha=traspaso_en_dolares.fecha, compra=compra)
             assert traspaso_en_dolares.importe == importe
             assert \
-                abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido_otra_cuenta}")) == \
+                abs(traspaso_en_dolares.importe_cta(sentido_otra_cuenta)) == \
                 traspaso_en_dolares.importe
             assert \
-                abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido}")) == \
+                abs(traspaso_en_dolares.importe_cta(sentido)) == \
                 round(traspaso_en_dolares.importe * traspaso_en_dolares.cotizacion, 2)
 
         # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
@@ -1052,9 +1052,9 @@ class TestSaveCambiaCuentas:
 
             assert traspaso_en_dolares.cotizacion == 2
             assert traspaso_en_dolares.importe == importe
-            assert abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido_otra_cuenta}")) == traspaso_en_dolares.importe
+            assert abs(traspaso_en_dolares.importe_cta(sentido_otra_cuenta)) == traspaso_en_dolares.importe
             assert \
-                abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido}")) == \
+                abs(traspaso_en_dolares.importe_cta(sentido)) == \
                 traspaso_en_dolares.importe * 2
 
         # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
@@ -1073,8 +1073,8 @@ class TestSaveCambiaCuentas:
                 traspaso_en_dolares.cotizacion == \
                 euro.cotizacion_en_al(dolar, fecha=traspaso_en_dolares.fecha, compra=compra)
             assert traspaso_en_dolares.importe == round(importe / traspaso_en_dolares.cotizacion, 2)
-            assert abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido}")) == traspaso_en_dolares.importe
-            assert abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido_otra_cuenta}")) == importe
+            assert abs(traspaso_en_dolares.importe_cta(sentido)) == traspaso_en_dolares.importe
+            assert abs(traspaso_en_dolares.importe_cta(sentido_otra_cuenta)) == importe
 
         # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
         # no cambia moneda, no cambia cotización, cambia importe
@@ -1092,9 +1092,9 @@ class TestSaveCambiaCuentas:
                 dolar.cotizacion_en_al(euro, fecha=traspaso_en_dolares.fecha, compra=compra)
             assert traspaso_en_dolares.importe == 6
             assert \
-                abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido}")) == \
+                abs(traspaso_en_dolares.importe_cta(sentido)) == \
                 round(6 * traspaso_en_dolares.cotizacion, 2)
-            assert abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido_otra_cuenta}")) == 6
+            assert abs(traspaso_en_dolares.importe_cta(sentido_otra_cuenta)) == 6
 
         # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
         # cambia moneda, cambia cotización, no cambia importe
@@ -1111,8 +1111,8 @@ class TestSaveCambiaCuentas:
             assert traspaso_en_dolares.cotizacion == 2
             assert traspaso_en_dolares.importe == importe / 2
             assert \
-                abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido}")) == traspaso_en_dolares.importe
-            assert abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido_otra_cuenta}")) == importe
+                abs(traspaso_en_dolares.importe_cta(sentido)) == traspaso_en_dolares.importe
+            assert abs(traspaso_en_dolares.importe_cta(sentido_otra_cuenta)) == importe
 
         # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
         # cambia moneda, no cambia cotización, cambia importe
@@ -1131,9 +1131,9 @@ class TestSaveCambiaCuentas:
                 euro.cotizacion_en_al(dolar, fecha=traspaso_en_dolares.fecha, compra=compra)
             assert traspaso_en_dolares.importe == 6
             assert \
-                abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido}")) == 6
+                abs(traspaso_en_dolares.importe_cta(sentido)) == 6
             assert \
-                abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido_otra_cuenta}")) == \
+                abs(traspaso_en_dolares.importe_cta(sentido_otra_cuenta)) == \
                 round(6 * traspaso_en_dolares.cotizacion, 2)
 
         # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
@@ -1150,8 +1150,8 @@ class TestSaveCambiaCuentas:
             assert traspaso_en_dolares.cotizacion == 0.6
             assert traspaso_en_dolares.importe == 6
             assert \
-                abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido}")) == round(6 * 0.6, 2)
-            assert abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido_otra_cuenta}")) == 6
+                abs(traspaso_en_dolares.importe_cta(sentido)) == round(6 * 0.6, 2)
+            assert abs(traspaso_en_dolares.importe_cta(sentido_otra_cuenta)) == 6
 
         # Entre cuentas en la misma moneda, cambia cuenta por cuenta en otra moneda,
         # cambia moneda, cambia cotización, cambia importe
@@ -1168,8 +1168,8 @@ class TestSaveCambiaCuentas:
             assert traspaso_en_dolares.cotizacion == 0.6
             assert traspaso_en_dolares.importe == 6
             assert \
-                abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido}")) == 6
-            assert abs(getattr(traspaso_en_dolares, f"importe_cta_{sentido_otra_cuenta}")) == round(6 * 0.6, 2)
+                abs(traspaso_en_dolares.importe_cta(sentido)) == 6
+            assert abs(traspaso_en_dolares.importe_cta(sentido_otra_cuenta)) == round(6 * 0.6, 2)
 
         # Entre cuentas en distinta moneda, cambia cuenta en otra moneda por cuenta en moneda del movimiento,
         # no cambia importe
@@ -1253,9 +1253,9 @@ class TestSaveCambiaCuentas:
                 movimiento.cotizacion == \
                 dolar.cotizacion_en_al(euro, fecha=movimiento.fecha, compra=compra)
             assert movimiento.importe == importe
-            assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == importe
+            assert abs(movimiento.importe_cta(sentido)) == importe
             assert \
-                abs(getattr(movimiento, f"importe_cta_{sentido_contracuenta}")) == \
+                abs(movimiento.importe_cta(sentido_contracuenta)) == \
                 round(importe * movimiento.cotizacion, 2)
 
         # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda,
@@ -1273,8 +1273,8 @@ class TestSaveCambiaCuentas:
 
             assert movimiento.cotizacion == 1.5
             assert movimiento.importe == importe
-            assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == importe
-            assert abs(getattr(movimiento, f"importe_cta_{sentido_contracuenta}")) == round(importe * 1.5, 2)
+            assert abs(movimiento.importe_cta(sentido)) == importe
+            assert abs(movimiento.importe_cta(sentido_contracuenta)) == round(importe * 1.5, 2)
 
         # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda,
         # no cambia moneda, no cambia cotización, cambia importe.
@@ -1292,8 +1292,8 @@ class TestSaveCambiaCuentas:
                 movimiento.cotizacion == \
                 dolar.cotizacion_en_al(euro, fecha=movimiento.fecha, compra=compra)
             assert movimiento.importe == 20
-            assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == 20
-            assert abs(getattr(movimiento, f"importe_cta_{sentido_contracuenta}")) == round(20 * movimiento.cotizacion, 2)
+            assert abs(movimiento.importe_cta(sentido)) == 20
+            assert abs(movimiento.importe_cta(sentido_contracuenta)) == round(20 * movimiento.cotizacion, 2)
 
         # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda,
         # no cambia moneda, cambia cotización, cambia importe.
@@ -1309,8 +1309,8 @@ class TestSaveCambiaCuentas:
 
             assert movimiento.cotizacion == 1.5
             assert movimiento.importe == 20
-            assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == 20
-            assert abs(getattr(movimiento, f"importe_cta_{sentido_contracuenta}")) == 20 * 1.5
+            assert abs(movimiento.importe_cta(sentido)) == 20
+            assert abs(movimiento.importe_cta(sentido_contracuenta)) == 20 * 1.5
 
         # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda,
         # cambia moneda, no cambia cotización, no cambia importe.
@@ -1331,9 +1331,9 @@ class TestSaveCambiaCuentas:
                 euro.cotizacion_en_al(dolar, fecha=movimiento.fecha, compra=compra)
             assert movimiento.importe == round(importe / movimiento.cotizacion, 2)
             assert \
-                abs(getattr(movimiento, f"importe_cta_{sentido}")) == \
+                abs(movimiento.importe_cta(sentido)) == \
                 round(movimiento.importe * movimiento.cotizacion, 2)
-            assert abs(getattr(movimiento, f"importe_cta_{sentido_contracuenta}")) == movimiento.importe
+            assert abs(movimiento.importe_cta(sentido_contracuenta)) == movimiento.importe
 
         # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda,
         # cambia moneda, cambia cotización, no cambia importe.
@@ -1351,8 +1351,8 @@ class TestSaveCambiaCuentas:
 
             assert movimiento.cotizacion == 0.8
             assert movimiento.importe == round(importe / 0.8, 2)
-            assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == importe
-            assert abs(getattr(movimiento, f"importe_cta_{sentido_contracuenta}")) == movimiento.importe
+            assert abs(movimiento.importe_cta(sentido)) == importe
+            assert abs(movimiento.importe_cta(sentido_contracuenta)) == movimiento.importe
 
         # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda,
         # cambia moneda, no cambia cotización, cambia importe.
@@ -1371,8 +1371,8 @@ class TestSaveCambiaCuentas:
                 movimiento.cotizacion == \
                 euro.cotizacion_en_al(dolar, fecha=movimiento.fecha, compra=compra)
             assert movimiento.importe == 20
-            assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == round(20 * movimiento.cotizacion, 2)
-            assert abs(getattr(movimiento, f"importe_cta_{sentido_contracuenta}")) == 20
+            assert abs(movimiento.importe_cta(sentido)) == round(20 * movimiento.cotizacion, 2)
+            assert abs(movimiento.importe_cta(sentido_contracuenta)) == 20
 
         # En movimiento de entrada/salida, se agrega cuenta de salida/entrada en otra moneda,
         # cambia moneda, cambia cotización, cambia importe.
@@ -1389,8 +1389,8 @@ class TestSaveCambiaCuentas:
 
             assert movimiento.cotizacion == 0.8
             assert movimiento.importe == 20
-            assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == round(20 * 0.8, 2)
-            assert abs(getattr(movimiento, f"importe_cta_{sentido_contracuenta}")) == 20
+            assert abs(movimiento.importe_cta(sentido)) == round(20 * 0.8, 2)
+            assert abs(movimiento.importe_cta(sentido_contracuenta)) == 20
 
         def test_puede_agregarse_cuenta_interactiva_a_movimiento_con_cta_acumulativa(
                 self, sentido, cuenta_2, request):
@@ -1431,7 +1431,7 @@ class TestSaveCambiaImporteYCuentas:
         mock_delete = mocker.patch("diario.models.movimiento.SaldoDiario.delete", autospec=True)
 
         cuenta = getattr(mov, f"cta_{sentido}")
-        importe_viejo = getattr(mov, f"importe_cta_{sentido}")
+        importe_viejo = mov.importe_cta(sentido)
         importe_nuevo = importe_viejo + 100
         saldo_diario = SaldoDiario.tomar(cuenta=cuenta, dia=mov.dia)
 
@@ -1446,7 +1446,7 @@ class TestSaveCambiaImporteYCuentas:
         mov = request.getfixturevalue(sentido)
 
         cuenta = getattr(mov, f"cta_{sentido}")
-        importe_viejo = getattr(mov, f"importe_cta_{sentido}")
+        importe_viejo = mov.importe_cta(sentido)
         importe_nuevo = importe_viejo + 100
         saldo_diario = SaldoDiario.tomar(cuenta=cuenta, dia=mov.dia)
         importe_sd = saldo_diario.importe
@@ -1463,7 +1463,7 @@ class TestSaveCambiaImporteYCuentas:
         mov = request.getfixturevalue(sentido)
         mock_crear = mocker.patch("diario.models.movimiento.SaldoDiario.crear")
 
-        importe_viejo = getattr(mov, f"importe_cta_{sentido}")
+        importe_viejo = mov.importe_cta(sentido)
         importe_nuevo = importe_viejo + 100
 
         setattr(mov, f"cta_{sentido}", cuenta_2)
@@ -1473,7 +1473,7 @@ class TestSaveCambiaImporteYCuentas:
         mock_crear.assert_called_once_with(
             cuenta=cuenta_2,
             dia=mov.dia,
-            importe=getattr(mov, f"importe_cta_{sentido}")
+            importe=mov.importe_cta(sentido)
         )
 
     def test_si_cambia_cuenta_e_importe_en_dia_con_movimientos_de_la_cuenta_reemplazante_suma_importe_nuevo_a_su_saldo(
@@ -1488,7 +1488,7 @@ class TestSaveCambiaImporteYCuentas:
         mov.clean_save()
 
         saldo_diario.refresh_from_db()
-        assert saldo_diario.importe == importe_sd + getattr(mov, f"importe_cta_{sentido}")
+        assert saldo_diario.importe == importe_sd + mov.importe_cta(sentido)
 
 
 @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
@@ -1507,7 +1507,7 @@ class TestSaveCambiaFecha:
         mov.clean_save()
 
         saldo_diario.refresh_from_db()
-        assert saldo_diario.importe == importe_sd - getattr(mov, f"importe_cta_{sentido}")
+        assert saldo_diario.importe == importe_sd - mov.importe_cta(sentido)
         if otros_movs == []:
             assert saldo_diario.importe == saldo_diario.anterior().importe
 
@@ -1522,7 +1522,7 @@ class TestSaveCambiaFecha:
         mov.clean_save()
 
         saldo_intermedio.refresh_from_db()
-        assert saldo_intermedio.importe == importe_si - getattr(mov, f"importe_cta_{sentido}")
+        assert saldo_intermedio.importe == importe_si - mov.importe_cta(sentido)
 
     def test_si_cambia_dia_a_dia_posterior_sin_movimientos_de_cuenta_crea_saldo_diario_de_cuenta_en_el_nuevo_dia(
             self, sentido, dia_posterior, request, mocker):
@@ -1536,7 +1536,7 @@ class TestSaveCambiaFecha:
         mock_crear.assert_called_once_with(
             cuenta=cuenta,
             dia=dia_posterior,
-            importe=getattr(mov, f"importe_cta_{sentido}")
+            importe=mov.importe_cta(sentido)
         )
 
     @pytest.mark.parametrize("otros_movs", [[], ["salida_posterior"]])
@@ -1596,7 +1596,7 @@ class TestSaveCambiaFecha:
         mock_crear.assert_called_once_with(
             cuenta=cuenta,
             dia=dia_anterior,
-            importe=getattr(mov, f"importe_cta_{sentido}")
+            importe=mov.importe_cta(sentido)
         )
 
     def test_si_cambia_dia_a_dia_anterior_con_movs_de_la_cuenta_suma_importe_del_movimiento_a_saldo_diario_del_dia_nuevo(
@@ -1610,7 +1610,7 @@ class TestSaveCambiaFecha:
         mov.clean_save()
 
         saldo_diario_anterior.refresh_from_db()
-        assert saldo_diario_anterior.importe == importe_sda + getattr(mov, f"importe_cta_{sentido}")
+        assert saldo_diario_anterior.importe == importe_sda + mov.importe_cta(sentido)
 
     @pytest.mark.parametrize("otros_movs", [[], ["entrada_temprana"]])
     def test_si_cambia_dia_a_dia_anterior_suma_importe_del_movimiento_a_saldos_intermedios_entre_el_dia_nuevo_y_el_viejo(
@@ -1626,7 +1626,7 @@ class TestSaveCambiaFecha:
         mov.clean_save()
 
         saldo_diario_intermedio.refresh_from_db()
-        assert saldo_diario_intermedio.importe == importe_sdi + getattr(mov, f"importe_cta_{sentido}")
+        assert saldo_diario_intermedio.importe == importe_sdi + mov.importe_cta(sentido)
 
     @pytest.mark.parametrize("otros_movs", [[], ["entrada_anterior"]])
     def test_si_cambia_dia_a_dia_anterior_sin_movs_de_la_cuenta_no_modifica_importe_de_saldos_diarios_posteriores_a_dia_viejo(
@@ -1778,7 +1778,7 @@ class TestSaveCambiaImporteYFecha:
             self, sentido, salida_posterior, dia_tardio, request):
         mov = request.getfixturevalue(sentido)
         cuenta = getattr(mov, f"cta_{sentido}")
-        importe_mov = getattr(mov, f"importe_cta_{sentido}")
+        importe_mov = mov.importe_cta(sentido)
         saldo_diario_posterior = SaldoDiario.tomar(cuenta=cuenta, dia=salida_posterior.dia)
         importe_sdp = saldo_diario_posterior.importe
 
@@ -1793,7 +1793,7 @@ class TestSaveCambiaImporteYFecha:
             self, sentido, salida_posterior, entrada_tardia, request):
         mov = request.getfixturevalue(sentido)
         cuenta = getattr(mov, f"cta_{sentido}")
-        importe_mov = getattr(mov, f"importe_cta_{sentido}")
+        importe_mov = mov.importe_cta(sentido)
         saldo_diario_tardio = SaldoDiario.tomar(cuenta=cuenta, dia=entrada_tardia.dia)
         importe_sdt = saldo_diario_tardio.importe
 
@@ -1802,7 +1802,7 @@ class TestSaveCambiaImporteYFecha:
         mov.clean_save()
 
         saldo_diario_tardio.refresh_from_db()
-        assert saldo_diario_tardio.importe == importe_sdt - importe_mov + getattr(mov, f"importe_cta_{sentido}")
+        assert saldo_diario_tardio.importe == importe_sdt - importe_mov + mov.importe_cta(sentido)
 
     def test_si_cambia_importe_y_fecha_por_fecha_posterior_sin_movimientos_de_la_cuenta_crea_saldo_diario_calculando_importe_nuevo(
             self, sentido, salida_posterior, dia_tardio, request, mocker):
@@ -1819,7 +1819,7 @@ class TestSaveCambiaImporteYFecha:
         mock_crear.assert_called_once_with(
             cuenta=cuenta,
             dia=dia_tardio,
-            importe=importe_sp + getattr(mov, f"importe_cta_{sentido}")
+            importe=importe_sp + mov.importe_cta(sentido)
         )
 
     def test_si_cambia_importe_y_fecha_por_fecha_anterior_suma_importe_nuevo_a_movimientos_intermedios(
@@ -1834,7 +1834,7 @@ class TestSaveCambiaImporteYFecha:
         mov.clean_save()
 
         saldo_diario_anterior.refresh_from_db()
-        assert saldo_diario_anterior.importe == importe_sda + getattr(mov, f"importe_cta_{sentido}")
+        assert saldo_diario_anterior.importe == importe_sda + mov.importe_cta(sentido)
 
     def test_si_cambia_importe_y_fecha_por_fecha_anterior_con_movimientos_de_la_cuenta_suma_importe_nuevo_a_saldo_diario_de_la_nueva_fecha(
             self, sentido, entrada_anterior, entrada_temprana, request):
@@ -1848,7 +1848,7 @@ class TestSaveCambiaImporteYFecha:
         mov.clean_save()
 
         saldo_diario_temprano.refresh_from_db()
-        assert saldo_diario_temprano.importe == importe_sdt + getattr(mov, f"importe_cta_{sentido}")
+        assert saldo_diario_temprano.importe == importe_sdt + mov.importe_cta(sentido)
 
     def test_si_cambia_importe_y_fecha_por_fecha_anterior_sin_movimientos_de_la_cuenta_crea_saldo_diario_con_importe_nuevo(
             self, sentido, salida_posterior, dia_temprano, request, mocker):
@@ -1863,7 +1863,7 @@ class TestSaveCambiaImporteYFecha:
         mock_crear.assert_called_once_with(
             cuenta=cuenta,
             dia=dia_temprano,
-            importe=getattr(mov, f"importe_cta_{sentido}")
+            importe=mov.importe_cta(sentido)
         )
 
 
@@ -1895,7 +1895,7 @@ class TestSaveCambiaCuentasYFecha:
         mov.clean_save()
 
         saldo_diario.refresh_from_db()
-        assert saldo_diario.importe == importe_sd - getattr(mov, f"importe_cta_{sentido}")
+        assert saldo_diario.importe == importe_sd - mov.importe_cta(sentido)
 
     @pytest.mark.parametrize("otros_movs", [[], ["traspaso"]])
     def test_a_dia_posterior_resta_importe_de_saldos_intermedios_de_cuenta_reemplazada(
@@ -1911,7 +1911,7 @@ class TestSaveCambiaCuentasYFecha:
         mov.clean_save()
 
         saldo_diario_posterior.refresh_from_db()
-        assert saldo_diario_posterior.importe == importe_sdp - getattr(mov, f"importe_cta_{sentido}")
+        assert saldo_diario_posterior.importe == importe_sdp - mov.importe_cta(sentido)
 
     @pytest.mark.parametrize("otros_movs", [[], ["traspaso"]])
     def test_a_dia_posterior_no_modifica_saldos_intermedios_de_cuenta_nueva(
@@ -1959,7 +1959,7 @@ class TestSaveCambiaCuentasYFecha:
         mock_crear.assert_called_once_with(
             cuenta=cuenta_2,
             dia=dia,
-            importe=getattr(mov, f"importe_cta_{sentido}")
+            importe=mov.importe_cta(sentido)
         )
 
     @pytest.mark.parametrize("otro_mov", ["entrada_anterior_otra_cuenta", "entrada_posterior_otra_cuenta"])
@@ -1975,7 +1975,7 @@ class TestSaveCambiaCuentasYFecha:
         mov.clean_save()
 
         saldo_diario.refresh_from_db()
-        assert saldo_diario.importe == importe_sd + getattr(mov, f"importe_cta_{sentido}")
+        assert saldo_diario.importe == importe_sd + mov.importe_cta(sentido)
 
     @pytest.mark.parametrize("otros_movs", [[], ["salida_tardia_otra_cuenta"]])
     def test_a_dia_posterior_no_modifica_saldos_diarios_intermedios_de_cuenta_nueva(
@@ -2044,7 +2044,7 @@ class TestSaveCambiaMoneda:
         opuesto = el_que_no_es(sentido, 'entrada', 'salida')
         cuenta = getattr(mov, f"cta_{sentido}")
         contracuenta = getattr(mov, f"cta_{opuesto}")
-        importe_cc = getattr(mov, f"importe_cta_{opuesto}")
+        importe_cc =mov.importe_cta(opuesto)
         saldo_diario = SaldoDiario.tomar(cuenta=cuenta, dia=mov.dia)
         importe_sd = saldo_diario.importe
         saldo_diario_cc = SaldoDiario.tomar(cuenta=contracuenta, dia=mov.dia)
@@ -2054,19 +2054,19 @@ class TestSaveCambiaMoneda:
         mov.clean_save()
 
         assert saldo_diario.tomar_de_bd().importe == importe_sd
-        assert saldo_diario_cc.tomar_de_bd().importe == importe_sdcc - importe_cc + getattr(mov, f"importe_cta_{opuesto}")
+        assert saldo_diario_cc.tomar_de_bd().importe == importe_sdcc - importe_cc +mov.importe_cta(opuesto)
 
     def test_si_cambia_cotizacion_en_traspaso_entre_cuentas_en_distinta_moneda_cambia_importe_de_cuenta_en_otra_moneda(
             self, sentido, request):
         movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
         sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-        importe = abs(getattr(movimiento, f"importe_cta_{sentido}"))
+        importe = abs(movimiento.importe_cta(sentido))
 
         movimiento.cotizacion = 4
         movimiento.clean_save()
 
-        assert abs(getattr(movimiento, f"importe_cta_{sentido}")) == importe
-        assert abs(getattr(movimiento, f"importe_cta_{sentido_otra_cuenta}")) == importe * 4
+        assert abs(movimiento.importe_cta(sentido)) == importe
+        assert abs(movimiento.importe_cta(sentido_otra_cuenta)) == importe * 4
 
     # Cambia moneda no cambia cotización no cambia importe
     def test_si_cambia_moneda_en_traspaso_entre_cuentas_en_distinta_moneda_se_recalcula_cotizacion_e_importe(
@@ -2099,8 +2099,8 @@ class TestSaveCambiaMoneda:
 
         assert mov_distintas_monedas.cotizacion == 4
         assert mov_distintas_monedas.importe == importe / mov_distintas_monedas.cotizacion
-        assert abs(getattr(mov_distintas_monedas, f"importe_cta_{sentido}")) == importe
-        assert abs(getattr(mov_distintas_monedas, f"importe_cta_{sentido_otra_cuenta}")) == importe / 4
+        assert abs(mov_distintas_monedas.importe_cta(sentido)) == importe
+        assert abs(mov_distintas_monedas.importe_cta(sentido_otra_cuenta)) == importe / 4
 
     # Cambia moneda cambia cotización cambia importe
     def test_si_cambia_moneda_cotizacion_e_importe_cambian_importes_cta_entrada_y_cta_salida(
@@ -2116,8 +2116,8 @@ class TestSaveCambiaMoneda:
 
         assert mov_distintas_monedas.cotizacion == 4
         assert mov_distintas_monedas.importe == 5
-        assert abs(getattr(mov_distintas_monedas, f"importe_cta_{sentido_otra_cuenta}")) == mov_distintas_monedas.importe
-        assert abs(getattr(mov_distintas_monedas, f"importe_cta_{sentido}")) == (5 * 4)
+        assert abs(mov_distintas_monedas.importe_cta(sentido_otra_cuenta)) == mov_distintas_monedas.importe
+        assert abs(mov_distintas_monedas.importe_cta(sentido)) == (5 * 4)
 
     # Cambia moneda no cambia cotización cambia importe
     def test_si_cambia_moneda_e_importe_se_recalcula_cotizacion(self, sentido, request):
@@ -2133,10 +2133,10 @@ class TestSaveCambiaMoneda:
         assert round(mov_distintas_monedas.cotizacion, 2) == round(1 / cotizacion, 2)
         assert mov_distintas_monedas.importe == 5
         assert \
-            abs(getattr(mov_distintas_monedas, f"importe_cta_{sentido_otra_cuenta}")) == \
+            abs(mov_distintas_monedas.importe_cta(sentido_otra_cuenta)) == \
             mov_distintas_monedas.importe
         assert \
-            abs(getattr(mov_distintas_monedas, f"importe_cta_{sentido}")) == \
+            abs(mov_distintas_monedas.importe_cta(sentido)) == \
             round(5* mov_distintas_monedas.cotizacion, 2)
 
     # No cambia moneda cambia cotización no cambia importe
@@ -2154,9 +2154,9 @@ class TestSaveCambiaMoneda:
         assert mov_distintas_monedas.cotizacion == 2
         assert mov_distintas_monedas.importe == importe
         assert \
-            abs(getattr(mov_distintas_monedas, f"importe_cta_{sentido_otra_cuenta}")) == \
+            abs(mov_distintas_monedas.importe_cta(sentido_otra_cuenta)) == \
             mov_distintas_monedas.importe * 2
-        assert abs(getattr(mov_distintas_monedas, f"importe_cta_{sentido}")) == importe
+        assert abs(mov_distintas_monedas.importe_cta(sentido)) == importe
 
     # No cambia moneda cambia cotización cambia importe
     def test_si_cambia_cotizacion_e_importe_en_traspaso_entre_cuentas_en_distinta_moneda_se_guardan_valores_ingresados(
@@ -2170,8 +2170,8 @@ class TestSaveCambiaMoneda:
 
         assert mov_distintas_monedas.cotizacion == 2
         assert mov_distintas_monedas.importe == 25
-        assert abs(getattr(mov_distintas_monedas, f"importe_cta_{sentido}")) == 25
-        assert abs(getattr(mov_distintas_monedas, f"importe_cta_{sentido_otra_cuenta}")) == 25 * 2
+        assert abs(mov_distintas_monedas.importe_cta(sentido)) == 25
+        assert abs(mov_distintas_monedas.importe_cta(sentido_otra_cuenta)) == 25 * 2
 
     # No cambia moneda no cambia cotización cambia importe
     def test_si_cambia_importe_en_traspaso_entre_cuentas_en_distinta_moneda_se_guarda_importe_y_no_cambia_cotizacion(
@@ -2185,7 +2185,7 @@ class TestSaveCambiaMoneda:
 
         assert mov_distintas_monedas.cotizacion == cotizacion
         assert mov_distintas_monedas.importe == 25
-        assert abs(getattr(mov_distintas_monedas, f"importe_cta_{sentido}")) == 25
+        assert abs(mov_distintas_monedas.importe_cta(sentido)) == 25
         assert \
-            abs(getattr(mov_distintas_monedas, f"importe_cta_{sentido_otra_cuenta}")) == \
+            abs(mov_distintas_monedas.importe_cta(sentido_otra_cuenta)) == \
             round(25 * mov_distintas_monedas.cotizacion, 2)

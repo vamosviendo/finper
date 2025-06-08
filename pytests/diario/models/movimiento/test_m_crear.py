@@ -130,7 +130,7 @@ def test_importe_de_saldo_diario_generado_es_igual_a_importe_de_saldo_diario_ant
 
     saldo_diario = SaldoDiario.tomar(cuenta=cuenta, dia=mov.dia)
 
-    assert saldo_diario.importe == importe_sda + getattr(mov, f"importe_cta_{sentido}")
+    assert saldo_diario.importe == importe_sda + mov.importe_cta(sentido)
 
 
 @pytest.mark.parametrize("sentido", ["entrada", "salida"])
@@ -163,7 +163,7 @@ def test_integrativo_modifica_saldo_diario_si_ya_existe(saldo_diario, sentido):
     mov = Movimiento.crear("Nuevo mov", 20, dia=dia, **{f"cta_{sentido}": cuenta})
     saldo_diario.refresh_from_db()
 
-    assert saldo_diario.importe == importe_saldo_diario + getattr(mov, f"importe_cta_{sentido}")
+    assert saldo_diario.importe == importe_saldo_diario + mov.importe_cta(sentido)
 
 
 def test_integrativo_crear_movimiento_en_fecha_antigua_modifica_saldos_diarios_posteriores(

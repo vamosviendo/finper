@@ -56,7 +56,7 @@ def test_si_hay_mas_movimientos_de_la_cuenta_en_el_dia_resta_importe_del_saldo_d
     mov.delete()
     saldo.refresh_from_db()
 
-    assert saldo.importe == importe - getattr(mov, f"importe_cta_{sentido}")
+    assert saldo.importe == importe - mov.importe_cta(sentido)
 
 
 def test_si_resta_importe_del_saldo_diario_de_la_cuenta_modifica_saldos_posteriores_de_la_cuenta(
@@ -137,7 +137,7 @@ def test_resta_importe_de_saldos_diarios_posteriores_de_cta_entrada(
     mov.delete()
     assert \
         SaldoDiario.objects.get(cuenta=cuenta, dia=salida_posterior.dia).importe == \
-        saldo_posterior - getattr(mov, f"importe_cta_{sentido}")
+        saldo_posterior - mov.importe_cta(sentido)
 
 
 def test_en_mov_credito_elimina_contramovimiento(credito):

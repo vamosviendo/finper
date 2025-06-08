@@ -68,7 +68,7 @@ def test_si_no_recibe_sentido_y_no_es_movimiento_de_traspaso_toma_cuenta_del_mov
     SaldoDiario.calcular(mov)
     mock_saldo_crear.assert_called_once_with(
         dia=ANY,
-        importe=getattr(mov, f"importe_cta_{sentido}"),
+        importe=mov.importe_cta(sentido),
         cuenta=getattr(mov, f"cta_{sentido}")
     )
 
@@ -84,7 +84,7 @@ def test_importe_de_saldo_diario_creado_es_igual_a_importe_de_saldo_diario_anter
         saldo_diario_anterior, sentido, request):
     mov = request.getfixturevalue(f"{sentido}_sin_saldo_diario")
     cuenta = getattr(mov, f"cta_{sentido}")
-    importe_mov = getattr(mov, f"importe_cta_{sentido}")
+    importe_mov = mov.importe_cta(sentido)
     SaldoDiario.calcular(mov)
     saldo_diario = SaldoDiario.tomar(cuenta=cuenta, dia=mov.dia)
     assert saldo_diario.importe == saldo_diario_anterior.importe + importe_mov
@@ -96,7 +96,7 @@ def test_si_ya_existe_saldo_del_dia_del_movimiento_suma_o_resta_a_su_importe_el_
     mov = request.getfixturevalue(sentido)
     saldo_diario = request.getfixturevalue("saldo_diario")
     importe_saldo_diario = saldo_diario.importe
-    importe_mov = getattr(mov, f"importe_cta_{sentido}")
+    importe_mov = mov.importe_cta(sentido)
 
     SaldoDiario.calcular(mov, sentido)
 
@@ -120,7 +120,7 @@ def test_si_moneda_del_movimiento_es_distinta_de_la_de_la_cuenta_suma_importe_de
     mock_saldo_crear.assert_called_once_with(
         cuenta=cuenta,
         dia=dia,
-        importe=saldo_diario_anterior.importe + getattr(mov_distintas_monedas, f"importe_cta_{sentido_opuesto}")
+        importe=saldo_diario_anterior.importe + mov_distintas_monedas.importe_cta(sentido_opuesto)
     )
 
 
@@ -150,7 +150,7 @@ def test_integrativo_actualiza_saldos_posteriores(
     saldo_diario_posterior.refresh_from_db()
     assert \
         saldo_diario_posterior.importe == \
-        importe_saldo_posterior + getattr(mov, f"importe_cta_{sentido}")
+        importe_saldo_posterior + mov.importe_cta(sentido)
 
 
 def test_devuelve_saldo_diario_calculado(entrada_sin_saldo_diario, cuenta):

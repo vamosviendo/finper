@@ -55,7 +55,7 @@ class SaldoDiario(MiModel):
             )
 
         cuenta = getattr(mov, f"cta_{sentido}")
-        importe_mov = getattr(mov, f"importe_cta_{sentido}")
+        importe_mov = mov.importe_cta(sentido)
 
         try:
             saldo_diario = cls.tomar(cuenta=cuenta, dia=mov.dia)

@@ -32,14 +32,4 @@ def test_calcula_importe_a_partir_de_saldo_anterior(cuenta, entrada_temprana, en
     mov.clean_save()
     assert \
         cuenta.saldo_en_mov(mov) == \
-        cuenta.saldo_en_mov(entrada_temprana) + getattr(mov, f"importe_cta_{sentido}")
-
-def test_x(cuenta, entrada, entrada_anterior, salida_posterior, fecha_temprana):
-    print("INICIO TEST")
-    saldo_posterior = cuenta.saldo_en_mov(salida_posterior)
-    entrada.fecha = fecha_temprana
-    print("saldo posterior:", saldo_posterior)
-    print("INICIO ACCIÓN")
-    entrada.clean_save()
-
-    assert cuenta.saldo_en_mov(salida_posterior) == saldo_posterior
+        cuenta.saldo_en_mov(entrada_temprana) + mov.importe_cta(sentido)
