@@ -25,7 +25,7 @@ def test_calcula_saldos_diarios_a_partir_de_movimientos(
 
 
 def test_importe_de_saldos_diarios_calculados_corresponde_a_movimientos(
-        dia, cuenta, cuenta_2, entrada, salida, entrada_otra_cuenta,
+        dia, cuenta, cuenta_2, entrada, salida, traspaso, entrada_otra_cuenta,
         dia_posterior, salida_posterior,
         dia_tardio, cuenta_ajena, entrada_tardia_cuenta_ajena):
     saldo_dia_cuenta = SaldoDiario.tomar(dia=dia, cuenta=cuenta)

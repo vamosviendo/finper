@@ -34,3 +34,14 @@ def test_no_recalcula_saldos_diarios_de_otras_cuentas(cuenta, cuenta_2, dia, ent
 
     saldo_diario_otra_cuenta.refresh_from_db()
     assert saldo_diario_otra_cuenta.importe == 5
+
+
+def test_no_recalcula_saldo_diario_de_otra_cuenta_en_traspasos(cuenta, cuenta_2, dia, traspaso):
+    saldo_diario_otra_cuenta = SaldoDiario.tomar(cuenta=cuenta_2, dia=dia)
+    saldo_diario_otra_cuenta.importe = 5
+    saldo_diario_otra_cuenta.save()
+
+    cuenta.recalcular_saldos_diarios()
+
+    saldo_diario_otra_cuenta.refresh_from_db()
+    assert saldo_diario_otra_cuenta.importe == 5

@@ -181,9 +181,7 @@ class Cuenta(PolymorphModel):
 
         movimientos = self.movs()
         for mov in movimientos:
-            campos_cuenta = (x for x in ("cta_entrada", "cta_salida") if getattr(mov, x) is not None)
-            for campo_cuenta in campos_cuenta:
-                SaldoDiario.calcular(mov, campo_cuenta)
+            SaldoDiario.calcular(mov, "cta_entrada" if self == mov.cta_entrada else "cta_salida")
 
     @property
     def ultimo_saldo(self) -> SaldoDiario:
