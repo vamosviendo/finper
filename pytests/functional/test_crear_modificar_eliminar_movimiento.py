@@ -435,7 +435,7 @@ def test_crear_traspaso_entre_cuentas_en_distinta_moneda_con_una_cotizacion_ante
     assert saldo_base.text == float_format(saldo_base_original_cs - importe_en_dolares)
 
 
-def test_modificar_movimiento(browser, entrada, cuenta_2):
+def test_modificar_movimiento(browser, entrada, salida_posterior, cuenta_2):
     # Las modificaciones hechas mediante el formulario de movimiento se ven
     # reflejadas en el movimiento que se muestra en la página principal
     browser.ir_a_pag(reverse('mov_mod', args=[entrada.pk]))

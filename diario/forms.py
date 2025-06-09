@@ -168,6 +168,7 @@ class FormMovimiento(forms.ModelForm):
         if instance:
             self.fields['importe'].initial = instance.importe
             self.fields['cotizacion'].initial = instance.cotizacion
+            self.fields['fecha'].initial = instance.fecha
         self.fields['moneda'].initial = Moneda.tomar(sk=MONEDA_BASE)
 
         try:

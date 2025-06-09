@@ -78,6 +78,11 @@ def test_toma_fecha_del_ultimo_dia_por_defecto(formmov, dia, dia_posterior):
     assert formmov.fields['fecha'].initial() == dia_posterior.fecha
 
 
+def test_toma_fecha_de_la_instancia_en_modificacion(entrada, salida_posterior):
+    formmov = FormMovimiento(instance=entrada)
+    assert formmov.fields['fecha'].initial == entrada.fecha
+
+
 def test_fecha_usa_widget_DateInput(formmov):
     assert type(formmov.fields['fecha'].widget) is DateInput
 
