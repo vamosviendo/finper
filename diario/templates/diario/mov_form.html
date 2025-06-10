@@ -6,7 +6,9 @@
     {{ form.as_div }}
   </div>
   <button type="submit" id="id_btn_submit" name="submit" class="btn btn-primary">Guardar</button>
+  {% if request.path == "/diario/mov_nuevo" %}
   <button type="submit" id="id_btn_gya" name="gya" class="btn btn-primary">Guardar y agregar</button>
+  {% endif %}
   {% csrf_token %}
 </form>
 {% endblock contenido %}

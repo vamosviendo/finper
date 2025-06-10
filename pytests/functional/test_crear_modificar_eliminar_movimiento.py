@@ -459,6 +459,9 @@ def test_modificar_movimiento(browser, entrada, salida_posterior, cuenta_2):
     esgratis = browser.esperar_elemento("id_esgratis")
     assert esgratis.get_attribute("value") == "on" if entrada.id_contramov is None else "off"
 
+    # En el caso de modificar movimiento, no aparece el botón "Guardar y agregar"
+    browser.esperar_que_no_este("id_btn_gya")
+
     browser.completar_form(
         concepto='Movimiento con concepto modificado',
         cta_entrada='cuenta 2',
@@ -472,6 +475,8 @@ def test_modificar_movimiento(browser, entrada, salida_posterior, cuenta_2):
     assert cuenta_movimiento == cuenta_2.nombre
     importe_movimiento = fila_movimiento.esperar_elemento('class_td_importe', By.CLASS_NAME).text.strip()
     assert importe_movimiento == "124,00"
+
+
 
 
 def test_convertir_entrada_en_traspaso_entre_titulares(browser, entrada, cuenta_ajena):
