@@ -188,7 +188,6 @@ class MovNuevoView(CreateView):
     model = Movimiento
     form_class = FormMovimiento
     template_name = 'diario/mov_form.html'
-    success_url = reverse_lazy('home')
 
     def get(self, request, *args, **kwargs):
         if Cuenta.cantidad() == 0:
@@ -206,6 +205,11 @@ class MovNuevoView(CreateView):
         form.fields['cta_salida'].queryset = CuentaInteractiva.todes()
 
         return form
+
+    def get_success_url(self):
+        if "gya" in self.request.POST:
+            return reverse("mov_nuevo")
+        return reverse("home")
 
 
 class MovElimView(DeleteView):

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import cast, List
+from typing import cast, List, Type
 
 from django.urls import reverse
 from selenium.common.exceptions import NoSuchElementException
@@ -10,6 +10,7 @@ from selenium.webdriver.common.by import By
 from diario.models import Cuenta, CuentaInteractiva, CuentaAcumulativa, Dia, Movimiento, Titular
 from utils.numeros import float_format
 from utils.tiempo import dia_de_la_semana
+from vvmodel.models import MiModel
 from vvsteps.driver import MiFirefox, MiWebElement
 
 
@@ -227,3 +228,10 @@ def texto_en_hijos_respectivos(
 
 def textos_hijos(elemento: MiWebElement, tag_subelem: str) -> List[str]:
     return [x.text for x in elemento.esperar_elementos(tag_subelem, By.TAG_NAME)]
+
+
+def assert_exists(sk: str, cls: Type[MiModel]):
+    try:
+        cls.tomar(sk=sk)
+    except cls.DoesNotExist:
+        raise AssertionError(f"No existe {cls} con sk {sk}")

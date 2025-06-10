@@ -5,13 +5,18 @@ from django.urls import reverse
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 
+from diario.models import Movimiento
+from pytests.functional.helpers import assert_exists
 from utils.numeros import float_format, format_float
 from utils.varios import el_que_no_es
 
 
 def test_crear_movimiento(browser, cuenta, dia, dia_posterior):
     """ Cuando vamos a la página de cuenta nueva y completamos el formulario,
-        aparece un movimiento nuevo al tope de la lista de movimientos. """
+        aparece un movimiento nuevo al tope de la lista de movimientos.
+        Si después de completamos apretamos el botón "Guardar y agregar,
+        se guarda el movimiento y se vuelve a abrir el formulario para cargar
+        otro movimiento. """
     valores = {
         "fecha": "2010-12-05",
         "concepto": "Entrada",
@@ -55,6 +60,15 @@ def test_crear_movimiento(browser, cuenta, dia, dia_posterior):
     assert \
         browser.esperar_elemento('id_importe_saldo_gral').text == \
         importe_localizado
+
+    # Si al cargar un nuevo movimiento pulsamos el botón "Guardar y agregar",
+    # se guarda el movimiento pero en vez de volver a la página anterior, se
+    # vuelve a abrir la página de carga de movimientos.
+    browser.ir_a_pag(reverse("mov_nuevo"))
+    browser.completar_form(boton="id_btn_gya", **valores)
+
+    assert_exists(sk=f"{valores['fecha'].replace('-','')}01", cls=Movimiento)
+    browser.assert_url(reverse("mov_nuevo"))
 
 
 def test_cuentas_acumulativas_no_aparecen_entre_las_opciones_de_cuenta(

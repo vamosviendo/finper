@@ -21,6 +21,22 @@ def response_post(client, dia, importe, cuenta) -> HttpResponse:
             'importe': importe,
             'cta_entrada': cuenta.pk,
             'moneda': cuenta.moneda.pk,
+            'submit': '1',
+        }
+    )
+
+
+@pytest.fixture
+def response_post_gya(client, dia, importe, cuenta) -> HttpResponse:
+    return client.post(
+        reverse('mov_nuevo'),
+        data={
+            'fecha': dia.fecha,
+            'concepto': 'mov nuevo',
+            'importe': importe,
+            'cta_entrada': cuenta.pk,
+            'moneda': cuenta.moneda.pk,
+            'gya': '1',
         }
     )
 
@@ -52,6 +68,10 @@ def test_no_muestra_cuentas_acumulativas_entre_las_opciones(
 
 def test_post_redirige_a_home(response_post):
     asserts.assertRedirects(response_post, reverse('home'))
+
+
+def test_si_se_pulsa_guardar_y_agregar_redirige_a_mov_nuevo(response_post_gya):
+    asserts.assertRedirects(response_post_gya, reverse('mov_nuevo'))
 
 
 def test_post_guarda_movimiento_nuevo(cuenta, dia, importe, request):
