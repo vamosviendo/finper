@@ -498,15 +498,20 @@ def test_convertir_entrada_en_traspaso_entre_titulares(browser, entrada, cuenta_
 
 
 @pytest.mark.parametrize("origen", ["/", "/diario/t/titular/", "/diario/c/c/", "/diario/m/"])
-def test_vuelve_a_la_pagina_desde_la_que_se_lo_invoco(
-        browser, origen, valores, titular, cuenta, entrada, entrada_anterior, entrada_cuenta_ajena):
+@pytest.mark.parametrize("destino", ["#id_link_mov_nuevo", "#id_row_mov_xxx .class_link_mod_mov"])
+def test_crear_o_modificar_movimiento_vuelve_a_la_pagina_desde_la_que_se_lo_invoco(
+        browser, origen, destino, valores, titular, cuenta, entrada, entrada_anterior, entrada_cuenta_ajena):
     if origen == "/diario/m/":
         origen = f"{origen}{entrada_anterior.pk}"
+    if destino == "#id_row_mov_xxx .class_link_mod_mov":
+        destino = destino.replace("xxx", entrada.sk)
+
     browser.ir_a_pag(origen)
-    browser.pulsar("id_link_mov_nuevo")
+    browser.pulsar(destino, By.CSS_SELECTOR)
     browser.completar_form(**valores)
-    print(browser.current_url)
+
     browser.assert_url(origen)
+
 
 def test_eliminar_movimiento(browser, entrada, salida):
     # Cuando se elimina un movimiento desaparece de la página principal

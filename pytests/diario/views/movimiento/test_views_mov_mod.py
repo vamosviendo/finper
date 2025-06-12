@@ -3,21 +3,34 @@ from django.http import HttpResponse
 from django.urls import reverse
 from pytest_django import asserts
 
-from diario.models import Movimiento
+from diario.models import Movimiento, Cuenta
 from utils.helpers_tests import dividir_en_dos_subcuentas
 
 
 @pytest.fixture
-def cambio_concepto(client, entrada: Movimiento) -> HttpResponse:
-    return client.post(
-        reverse('mov_mod', args=[entrada.pk]),
-        {
+def post_data(entrada: Movimiento) -> dict:
+    return {
             'fecha': entrada.fecha,
             'concepto': 'Concepto nuevo',
             'importe': entrada.importe,
             'cta_entrada': entrada.cta_entrada.pk,
             'moneda': entrada.cta_entrada.moneda.pk,
         }
+
+
+@pytest.fixture
+def cambio_concepto(client, entrada: Movimiento, post_data: dict) -> HttpResponse:
+    return client.post(
+        reverse('mov_mod', args=[entrada.pk]),
+        post_data
+    )
+
+
+@pytest.fixture
+def cambio_concepto_redirect(client, entrada: Movimiento, cuenta: Cuenta, post_data: dict) -> HttpResponse:
+    return client.post(
+        reverse('mov_mod', args=[entrada.pk]) + f"?next=/diario/c/{cuenta.sk}/",
+        post_data
     )
 
 
@@ -71,7 +84,11 @@ def test_post_guarda_cambios_en_el_mov(entrada, cambio_concepto):
     assert entrada.concepto == 'Concepto nuevo'
 
 
-def test_post_redirige_a_home(entrada, cambio_concepto):
+def test_post_redirige_a_url_recibida_en_querystring(entrada, cuenta, cambio_concepto_redirect):
+    asserts.assertRedirects(cambio_concepto_redirect, f"/diario/c/{cuenta.sk}/")
+
+
+def test_post_redirige_a_home_si_no_recibe_url_en_querystringq(entrada, cambio_concepto):
     asserts.assertRedirects(cambio_concepto, reverse('home'))
 
 

@@ -222,8 +222,10 @@ class MovModView(UpdateView):
     model = Movimiento
     form_class = FormMovimiento
     template_name = 'diario/mov_form.html'
-    success_url = reverse_lazy('home')
     context_object_name = 'mov'
+
+    def get_success_url(self):
+        return self.request.GET.get("next", reverse("home"))
 
     def get_form(self, *args, **kwargs):
         form = super().get_form(*args, **kwargs)

@@ -318,7 +318,7 @@
                class="class_link_elim_mov">
               B
             </a>
-            <a href="{% url 'mov_mod' mov.pk %}"
+            <a href="{% url 'mov_mod' mov.pk %}?next={{ request.path }}"
                class="class_link_mod_mov">
               E
             </a>

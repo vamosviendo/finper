@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 from typing import cast, List, Type
+from urllib.parse import urlparse
 
 from django.urls import reverse
 from selenium.common.exceptions import NoSuchElementException
@@ -30,6 +31,11 @@ class FinperFirefox(MiFirefox):
         for key, value in kwargs.items():
             self.completar(f"id_{key}", value)
         self.pulsar(boton)
+
+    # TODO: Corregir en MiFirefox
+    def assert_url(self, url: str):
+        url_real = urlparse(self.current_url).path
+        assert url == url_real, f"Url real '{url_real}' no coincide con url propuesta '{url}'"
 
     def cliquear_en_cuenta(self, cuenta):
         self.esperar_elemento(cuenta.nombre, By.LINK_TEXT).click()
