@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django.urls import reverse
 from pytest_django import asserts
 
-from diario.models import Movimiento
+from diario.models import Movimiento, Dia, Cuenta
 
 
 @pytest.fixture
@@ -17,10 +17,8 @@ def response_redirect(client) -> HttpResponse:
 
 
 @pytest.fixture
-def response_post(client, dia, importe, cuenta) -> HttpResponse:
-    return client.post(
-        reverse('mov_nuevo'),
-        data={
+def post_data(dia: Dia, importe: float, cuenta: Cuenta) -> dict:
+    return {
             'fecha': dia.fecha,
             'concepto': 'mov nuevo',
             'importe': importe,
@@ -28,36 +26,31 @@ def response_post(client, dia, importe, cuenta) -> HttpResponse:
             'moneda': cuenta.moneda.pk,
             'submit': '1',
         }
+
+
+@pytest.fixture
+def response_post(client, post_data: dict) -> HttpResponse:
+    return client.post(
+        reverse('mov_nuevo'),
+        data=post_data
     )
 
 
 @pytest.fixture
-def response_post_redirect(client, dia, importe, cuenta) -> HttpResponse:
+def response_post_redirect(client, cuenta: Cuenta, post_data: dict) -> HttpResponse:
     return client.post(
         reverse('mov_nuevo') + f"?next=/diario/c/{cuenta.sk}/",
-        data={
-            'fecha': dia.fecha,
-            'concepto': 'mov nuevo',
-            'importe': importe,
-            'cta_entrada': cuenta.pk,
-            'moneda': cuenta.moneda.pk,
-            'submit': '1',
-        }
+        data=post_data
     )
 
 
 @pytest.fixture
-def response_post_gya(client, dia, importe, cuenta) -> HttpResponse:
+def response_post_gya(client, post_data: dict) -> HttpResponse:
+    post_data.pop('submit')
+    post_data.update({'gya': '1'})
     return client.post(
         reverse('mov_nuevo'),
-        data={
-            'fecha': dia.fecha,
-            'concepto': 'mov nuevo',
-            'importe': importe,
-            'cta_entrada': cuenta.pk,
-            'moneda': cuenta.moneda.pk,
-            'gya': '1',
-        }
+        data=post_data
     )
 
 
