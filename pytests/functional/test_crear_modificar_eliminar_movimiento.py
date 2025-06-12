@@ -11,18 +11,22 @@ from utils.numeros import float_format, format_float
 from utils.varios import el_que_no_es
 
 
-def test_crear_movimiento(browser, cuenta, dia, dia_posterior):
-    """ Cuando vamos a la página de cuenta nueva y completamos el formulario,
-        aparece un movimiento nuevo al tope de la lista de movimientos.
-        Si después de completamos apretamos el botón "Guardar y agregar,
-        se guarda el movimiento y se vuelve a abrir el formulario para cargar
-        otro movimiento. """
-    valores = {
+@pytest.fixture
+def valores() -> dict:
+    return {
         "fecha": "2010-12-05",
         "concepto": "Entrada",
         "cta_entrada": "cuenta",
         "importe": "50.00"
     }
+
+
+def test_crear_movimiento(browser, cuenta, dia, dia_posterior, valores):
+    """ Cuando vamos a la página de cuenta nueva y completamos el formulario,
+        aparece un movimiento nuevo al tope de la lista de movimientos.
+        Si después de completamos apretamos el botón "Guardar y agregar,
+        se guarda el movimiento y se vuelve a abrir el formulario para cargar
+        otro movimiento. """
 
     browser.ir_a_pag(reverse("mov_nuevo"))
 
@@ -477,8 +481,6 @@ def test_modificar_movimiento(browser, entrada, salida_posterior, cuenta_2):
     assert importe_movimiento == "124,00"
 
 
-
-
 def test_convertir_entrada_en_traspaso_entre_titulares(browser, entrada, cuenta_ajena):
     # Cuando se agrega a un movimiento de entrada una cuenta ajena como cuenta
     # de salida, se genera un contramovimiento en el mismo día que el movimiento
@@ -494,6 +496,17 @@ def test_convertir_entrada_en_traspaso_entre_titulares(browser, entrada, cuenta_
     mov_nuevo = dia.esperar_elementos('class_row_mov', By.CLASS_NAME)[1]
     assert mov_nuevo.esperar_elemento('class_td_concepto', By.CLASS_NAME).text == 'Constitución de crédito'
 
+
+@pytest.mark.parametrize("origen", ["/", "/diario/t/titular/", "/diario/c/c/", "/diario/m/"])
+def test_vuelve_a_la_pagina_desde_la_que_se_lo_invoco(
+        browser, origen, valores, titular, cuenta, entrada, entrada_anterior, entrada_cuenta_ajena):
+    if origen == "/diario/m/":
+        origen = f"{origen}{entrada_anterior.pk}"
+    browser.ir_a_pag(origen)
+    browser.pulsar("id_link_mov_nuevo")
+    browser.completar_form(**valores)
+    print(browser.current_url)
+    browser.assert_url(origen)
 
 def test_eliminar_movimiento(browser, entrada, salida):
     # Cuando se elimina un movimiento desaparece de la página principal

@@ -207,9 +207,10 @@ class MovNuevoView(CreateView):
         return form
 
     def get_success_url(self):
+        next_url = self.request.GET.get("next", reverse("home"))
         if "gya" in self.request.POST:
             return reverse("mov_nuevo")
-        return reverse("home")
+        return next_url
 
 
 class MovElimView(DeleteView):
