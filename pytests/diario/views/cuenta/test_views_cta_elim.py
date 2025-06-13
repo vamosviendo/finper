@@ -15,7 +15,12 @@ def test_post_elimina_cuenta(client, cuenta):
     assert Cuenta.cantidad() == cantidad - 1
 
 
-def test_redirige_a_home_despues_de_borrar(client, cuenta):
+def test_post_redirige_a_url_recibida_en_queryset(client, titular, cuenta):
+    response = client.post(reverse('cta_elim', args=[cuenta.sk]) + f"?next=/diario/t/{titular.sk}/")
+    asserts.assertRedirects(response, f"/diario/t/{titular.sk}/")
+
+
+def test_post_redirige_a_home_si_no_recibe_url_en_queryset(client, cuenta):
     response = client.post(reverse('cta_elim', args=[cuenta.sk])
     )
     asserts.assertRedirects(response, reverse('home'))

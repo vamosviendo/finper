@@ -105,12 +105,14 @@ class CtaNuevaView(CreateView):
     model = CuentaInteractiva
     form_class = FormCuenta
     template_name = 'diario/cta_form.html'
-    success_url = reverse_lazy('home')
 
     def get(self, request, *args, **kwargs):
         if Titular.cantidad() == 0:
             return redirect('tit_nuevo')
         return super().get(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return self.request.GET.get("next", reverse("home"))
 
 
 class CtaElimView(DeleteView):
@@ -130,12 +132,11 @@ class CtaElimView(DeleteView):
         return super().get(request, *args, **kwargs)
 
     def get_success_url(self):
-        return reverse('home')
+        return self.request.GET.get("next", reverse("home"))
 
 
 class CtaModView(UpdateView):
     template_name = 'diario/cta_form.html'
-    success_url = reverse_lazy('home')
     context_object_name = 'cta'
     form_class = FormCuenta
     slug_url_kwarg = 'sk'
@@ -155,6 +156,9 @@ class CtaModView(UpdateView):
         formu = super().get_form(*args, **kwargs)
         formu.fields['titular'].disabled = True
         return formu
+
+    def get_success_url(self):
+        return self.request.GET.get("next", reverse("home"))
 
 
 def cta_div_view(request, sk):

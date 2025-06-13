@@ -104,10 +104,10 @@
                   {% if cuenta.es_acumulativa %}
                     href={% url 'cta_agregar_subc' cuenta.sk %}
                   {% else %}
-                    href="{% url 'cta_div' cuenta.sk %}"
+                    href="{% url 'cta_div' cuenta.sk %}?next={{ request.path }}"
                   {% endif %}
                 {% else %}
-                  href="{% url 'cta_nueva' %}"
+                  href="{% url 'cta_nueva' %}?next={{ request.path }}"
                 {% endif %}
                 id="id_link_cuenta_nueva"
               >+</a>

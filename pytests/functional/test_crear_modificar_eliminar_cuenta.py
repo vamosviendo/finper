@@ -18,6 +18,7 @@ def test_crear_cuenta(browser, titular, fecha):
         titular=titular.nombre,
         fecha_creacion=fecha,
     )
+
     browser.assert_url(reverse("home"))
 
     # Vemos que la cuenta creada aparece entre las cuentas de la página de
@@ -25,6 +26,25 @@ def test_crear_cuenta(browser, titular, fecha):
     links_cuenta = browser.esperar_elementos("class_link_cuenta")
     nombres_cuenta = [x.text.strip() for x in links_cuenta]
     assert "cuenta nueva" in nombres_cuenta
+
+
+@pytest.mark.parametrize("origen", ["/", "/diario/t/titular/", "/diario/m/"])
+@pytest.mark.parametrize("destino", ["id_link_cuenta_nueva", "id_link_cta_mod_"])
+def test_crear_o_modificar_cuenta_redirige_a_pagina_desde_donde_se_invoco(
+        browser, origen, destino, titular, cuenta, fecha, entrada, entrada_anterior):
+    if origen == "/diario/m/":
+        origen = f"{origen}{entrada_anterior.pk}"
+    if destino == "id_link_cta_mod_":
+        destino = f"{destino}{cuenta.sk}"
+    browser.ir_a_pag(origen)
+    browser.pulsar(destino)
+    browser.completar_form(
+        nombre="cuenta nueva",
+        sk="cn",
+        titular=titular.nombre,
+        fecha_creacion=fecha,
+    )
+    browser.assert_url(origen)
 
 
 def test_crear_cuenta_en_otra_moneda(browser, titular, fecha, dolar):
@@ -67,3 +87,13 @@ def test_eliminar_cuenta(browser, cuenta, cuenta_2):
     browser.assert_url(reverse('home'))
     nombres_cuenta = [x.text.strip() for x in browser.esperar_elementos('class_link_cuenta')]
     assert nombre_cuenta not in nombres_cuenta
+
+
+@pytest.mark.parametrize("origen", ["/", "/diario/t/titular/", "/diario/m/"])
+def test_eliminar_cuenta_redirige_a_pagina_desde_la_que_se_invoco(browser, origen, cuenta, cuenta_2, entrada):
+    if origen == "/diario/m/":
+        origen = f"{origen}{entrada.pk}"
+    browser.ir_a_pag(origen)
+    browser.pulsar(f"id_link_cta_elim_{cuenta_2.sk}")
+    browser.pulsar("id_btn_confirm")
+    browser.assert_url(origen)

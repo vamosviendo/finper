@@ -35,7 +35,15 @@ def test_post_guarda_cambios_en_cuenta_interactiva_o_acumulativa(client, cta, fe
     assert cuenta.sk == 'slag'
 
 
-def test_post_redirige_a_home(client, cuenta, fecha):
+def test_post_redirige_a_url_recibida_en_queryset(client, cuenta, titular, fecha):
+    response = client.post(
+        reverse("cta_mod", args=[cuenta.sk]) + f"?next=/diario/t/{titular.sk}/",
+        data={'nombre': 'Nombro', 'sk': 'slag', 'fecha_creacion': fecha}
+    )
+    asserts.assertRedirects(response, f"/diario/t/{titular.sk}/")
+
+
+def test_post_redirige_a_home_si_no_recibe_url_en_queryset(client, cuenta, fecha):
     response = client.post(
         reverse('cta_mod', args=[cuenta.sk]),
         data={'nombre': 'Nombro', 'sk': 'slag', 'fecha_creacion': fecha}
