@@ -314,7 +314,7 @@
 
           <td class="class_td_menu">
             {% if not mov.es_automatico %}
-            <a href="{% url 'mov_elim' mov.pk %}"
+            <a href="{% url 'mov_elim' mov.pk %}?next={{ request.path }}"
                class="class_link_elim_mov">
               B
             </a>

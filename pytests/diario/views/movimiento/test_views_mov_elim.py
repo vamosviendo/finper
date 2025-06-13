@@ -18,6 +18,11 @@ def test_post_elimina_movimiento(client, entrada):
     assert Movimiento.cantidad() == cantidad - 1
 
 
-def test_post_redirige_a_home(client, cuenta, entrada):
+def test_post_redirige_a_url_recibida_en_querystring(client, cuenta, entrada):
+    response = client.post(reverse("mov_elim", args=[entrada.pk]) + f"?next=/diario/c/{cuenta.sk}/")
+    asserts.assertRedirects(response, f"/diario/c/{cuenta.sk}/")
+
+
+def test_post_redirige_a_home_si_no_recibe_url_en_querystring(client, cuenta, entrada):
     response = client.post(reverse('mov_elim', args=[entrada.pk]))
     asserts.assertRedirects(response, reverse('home'))

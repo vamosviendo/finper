@@ -521,3 +521,14 @@ def test_eliminar_movimiento(browser, entrada, salida):
     browser.assert_url(reverse('home'))
     conceptos = [x.text.strip() for x in browser.esperar_elementos('class_link_movimiento')]
     assert concepto not in conceptos
+
+
+@pytest.mark.parametrize("origen", ["/", "/diario/t/titular/", "/diario/c/c/", "/diario/m/"])
+def test_eliminar_movimiento_vuelve_a_la_pagina_desde_que_se_lo_invoco(
+        browser, origen, titular, cuenta, entrada, entrada_anterior, entrada_cuenta_ajena):
+    if origen == "/diario/m/":
+        origen = f"{origen}{entrada_anterior.pk}"
+    browser.ir_a_pag(origen)
+    browser.pulsar(f"#id_row_mov_{entrada.sk} .class_link_elim_mov", By.CSS_SELECTOR)
+    browser.pulsar("id_btn_confirm")
+    browser.assert_url(origen)

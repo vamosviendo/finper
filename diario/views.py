@@ -215,7 +215,9 @@ class MovNuevoView(CreateView):
 
 class MovElimView(DeleteView):
     model = Movimiento
-    success_url = reverse_lazy('home')
+
+    def get_success_url(self):
+        return self.request.GET.get("next", reverse("home"))
 
 
 class MovModView(UpdateView):
