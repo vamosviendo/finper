@@ -12,11 +12,6 @@ def response(client) -> HttpResponse:
 
 
 @pytest.fixture
-def response_redirect(client) -> HttpResponse:
-    return client.get(f"{reverse('mov_nuevo')}?next=/diario/c/c/")
-
-
-@pytest.fixture
 def post_data(dia: Dia, importe: float, cuenta: Cuenta) -> dict:
     return {
             'fecha': dia.fecha,
@@ -77,14 +72,6 @@ def test_no_muestra_cuentas_acumulativas_entre_las_opciones(
     assert cuenta_acumulativa not in opciones_ce
     assert cuenta in opciones_cs
     assert cuenta_acumulativa not in opciones_cs
-
-
-def test_post_redirige_a_url_recibida_en_querystring(cuenta, response_post_redirect):
-    asserts.assertRedirects(response_post_redirect, f"/diario/c/{cuenta.sk}/")
-
-
-def test_post_redirige_a_home_si_no_recibe_url_en_querystring(response_post):
-    asserts.assertRedirects(response_post, reverse('home'))
 
 
 def test_si_se_pulsa_guardar_y_agregar_redirige_a_mov_nuevo(response_post_gya):

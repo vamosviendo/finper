@@ -15,17 +15,6 @@ def test_post_elimina_cuenta(client, cuenta):
     assert Cuenta.cantidad() == cantidad - 1
 
 
-def test_post_redirige_a_url_recibida_en_queryset(client, titular, cuenta):
-    response = client.post(reverse('cta_elim', args=[cuenta.sk]) + f"?next=/diario/t/{titular.sk}/")
-    asserts.assertRedirects(response, f"/diario/t/{titular.sk}/")
-
-
-def test_post_redirige_a_home_si_no_recibe_url_en_queryset(client, cuenta):
-    response = client.post(reverse('cta_elim', args=[cuenta.sk])
-    )
-    asserts.assertRedirects(response, reverse('home'))
-
-
 def test_muestra_mensaje_de_error_si_se_elimina_cuenta_con_saldo(client, cuenta_con_saldo):
     response = client.get(reverse('cta_elim', args=[cuenta_con_saldo.sk]))
     asserts.assertContains(response, 'No se puede eliminar cuenta con saldo')

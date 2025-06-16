@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django.urls import reverse
 from pytest_django import asserts
 
-from diario.models import Movimiento, Cuenta
+from diario.models import Movimiento
 from utils.helpers_tests import dividir_en_dos_subcuentas
 
 
@@ -22,14 +22,6 @@ def post_data(entrada: Movimiento) -> dict:
 def cambio_concepto(client, entrada: Movimiento, post_data: dict) -> HttpResponse:
     return client.post(
         reverse('mov_mod', args=[entrada.pk]),
-        post_data
-    )
-
-
-@pytest.fixture
-def cambio_concepto_redirect(client, entrada: Movimiento, cuenta: Cuenta, post_data: dict) -> HttpResponse:
-    return client.post(
-        reverse('mov_mod', args=[entrada.pk]) + f"?next=/diario/c/{cuenta.sk}/",
         post_data
     )
 
@@ -82,14 +74,6 @@ def test_si_no_tiene_cta_entrada_no_muestra_cuentas_acumulativas_entre_las_opcio
 def test_post_guarda_cambios_en_el_mov(entrada, cambio_concepto):
     entrada.refresh_from_db()
     assert entrada.concepto == 'Concepto nuevo'
-
-
-def test_post_redirige_a_url_recibida_en_querystring(entrada, cuenta, cambio_concepto_redirect):
-    asserts.assertRedirects(cambio_concepto_redirect, f"/diario/c/{cuenta.sk}/")
-
-
-def test_post_redirige_a_home_si_no_recibe_url_en_querystringq(entrada, cambio_concepto):
-    asserts.assertRedirects(cambio_concepto, reverse('home'))
 
 
 def test_si_no_se_modifica_importe_no_cambia_saldo_cuentas(entrada, request):

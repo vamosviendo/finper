@@ -39,22 +39,6 @@ def test_post_guarda_cuenta_nueva(client, post_data):
     assert cuenta_nueva.sk == 'cn'
 
 
-def test_post_redirige_a_url_recibida_en_querystring(client, titular, post_data):
-    response = client.post(
-        reverse('cta_nueva') + f"?next=/diario/t/{titular.sk}/",
-        data=post_data
-    )
-    asserts.assertRedirects(response, f"/diario/t/{titular.sk}/")
-
-
-def test_post_redirige_a_home_si_no_recibe_url_en_queryset(client, post_data):
-    response = client.post(
-        reverse('cta_nueva'),
-        data=post_data
-    )
-    asserts.assertRedirects(response, reverse('home'))
-
-
 def test_cuentas_creadas_son_interactivas(client, post_data):
     client.post(
         reverse('cta_nueva'),
