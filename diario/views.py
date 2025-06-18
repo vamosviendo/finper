@@ -255,14 +255,16 @@ class TitularNuevoView(CreateView):
     form_class = FormTitular
 
     def get_success_url(self):
-        return reverse('home')
+        return self.request.GET.get("next", reverse("home"))
 
 
 class TitElimView(DeleteView):
     model = Titular
     slug_url_kwarg = 'sk'
     slug_field = '_sk'
-    success_url = reverse_lazy('home')
+
+    def get_success_url(self):
+        return self.request.GET.get("next", reverse("home"))
 
 
 class TitModView(UpdateView):
@@ -271,8 +273,9 @@ class TitModView(UpdateView):
     form_class = FormTitular
     slug_url_kwarg = 'sk'
     slug_field = '_sk'
-    success_url = reverse_lazy('home')
 
+    def get_success_url(self):
+        return self.request.GET.get("next", reverse("home"))
 
 class MonNuevaView(CreateView):
     model = Moneda

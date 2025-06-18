@@ -47,6 +47,9 @@ def post_data_titular(fecha: date) -> dict:
     ("cta_nueva", None, "post_data_cuenta", "t", "titular"),
     ("cta_mod", "cuenta", "post_data_cuenta", "t", "titular"),
     ("cta_elim", "cuenta", "post_data_cuenta", "t", "titular"),
+    ("tit_nuevo", None, "post_data_titular", "c", "cuenta"),
+    ("tit_mod", "titular", "post_data_titular", "c", "cuenta"),
+    ("tit_elim", "titular", None, "c", "cuenta_ajena"),
 ])
 def test_post_redirige_a_url_recibida_en_querystring(
         client, tipo_origen, fixt_origen, viewname, fixt, post_data, request):
@@ -83,6 +86,9 @@ def test_post_redirige_a_url_recibida_en_querystring(
     ("cta_nueva", None, "post_data_cuenta"),
     ("cta_mod", "cuenta", "post_data_cuenta"),
     ("cta_elim", "cuenta", "post_data_cuenta"),
+    ("tit_nuevo", None, "post_data_titular"),
+    ("tit_mod", "titular", "post_data_titular"),
+    ("tit_elim", "titular", None),
 ])
 def test_post_redirige_a_home_si_no_recibe_url_en_querystring(
     client, viewname, fixt, post_data, request):

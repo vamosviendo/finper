@@ -51,12 +51,12 @@
               </a>
             </div>
             <div class="menu-item-edit">
-              <a id="id_link_tit_mod_{{ tit.sk }}" href="{% url 'tit_mod' tit.sk %}">
+              <a id="id_link_tit_mod_{{ tit.sk }}" href="{% url 'tit_mod' tit.sk %}?next={{ request.path }}">
                 E
               </a>
             </div>
             <div class="menu-item-edit">
-              <a id="id_link_tit_elim_{{ tit.sk }}" href="{% url 'tit_elim' tit.sk%}">
+              <a id="id_link_tit_elim_{{ tit.sk }}" href="{% url 'tit_elim' tit.sk%}?next={{ request.path }}">
                 B
               </a>
             </div>
@@ -69,7 +69,7 @@
         <tr class="menu-row">
           <td class="menu-item class_td_titular">
             <div id="id_div_titular_nuevo">
-              <a id="id_link_titular_nuevo" href="{% url 'tit_nuevo' %}">+</a>
+              <a id="id_link_titular_nuevo" href="{% url 'tit_nuevo' %}?next={{ request.path }}">+</a>
             </div>
           </td>
         </tr>

@@ -1,3 +1,4 @@
+import pytest
 from django.urls import reverse
 
 
@@ -37,6 +38,24 @@ def test_modificar_titular(browser, titular, fecha_anterior):
     assert nombre_titular == "titular con nombre modificado"
 
 
+@pytest.mark.parametrize("origen", ["/", "/diario/c/c/", "/diario/m/"])
+@pytest.mark.parametrize("destino", ["id_link_titular_nuevo", "id_link_tit_mod_"])
+def test_crear_o_modificar_titular_redirige_a_pagina_desde_donde_se_invoco(
+        browser, origen, destino, titular, cuenta, fecha, entrada, entrada_anterior):
+    if origen == "/diario/m/":
+        origen = f"{origen}{entrada_anterior.pk}"
+    if destino == "id_link_tit_mod_":
+        destino = f"{destino}{titular.sk}"
+    browser.ir_a_pag(origen)
+    browser.pulsar(destino)
+    browser.completar_form(
+        nombre="titular nuevo",
+        sk="tn",
+        fecha_alta=fecha,
+    )
+    browser.assert_url(origen)
+
+
 def test_eliminar_titular(browser, titular, otro_titular):
     """ Cuando vamos a la página de eliminar titular y cliqueamos en confirmar,
         el titular es eliminado"""
@@ -46,3 +65,13 @@ def test_eliminar_titular(browser, titular, otro_titular):
     browser.assert_url(reverse('home'))
     nombres_titular = [x.text.strip() for x in browser.esperar_elementos('class_link_titular')]
     assert nombre_titular not in nombres_titular
+
+
+@pytest.mark.parametrize("origen", ["/", "/diario/c/c/", "/diario/m/"])
+def test_eliminar_titular_redirige_a_pagina_desde_la_que_se_invoco(browser, origen, titular, cuenta, cuenta_ajena, entrada):
+    if origen == "/diario/m/":
+        origen = f"{origen}{entrada.pk}"
+    browser.ir_a_pag(origen)
+    browser.pulsar(f"id_link_tit_elim_{titular.sk}")
+    browser.pulsar("id_btn_confirm")
+    browser.assert_url(origen)
