@@ -38,11 +38,12 @@ def test_modificar_titular(browser, titular, fecha_anterior):
     assert nombre_titular == "titular con nombre modificado"
 
 
-@pytest.mark.parametrize("origen", ["/", "/diario/c/c/", "/diario/m/"])
+@pytest.mark.parametrize("origen", ["/", "/diario/c/c/", "/diario/m/",
+                                    "/?page=2", "/diario/c/c/?page=2", "/diario/cm/c/"])
 @pytest.mark.parametrize("destino", ["id_link_titular_nuevo", "id_link_tit_mod_"])
 def test_crear_o_modificar_titular_redirige_a_pagina_desde_donde_se_invoco(
         browser, origen, destino, titular, cuenta, fecha, entrada, entrada_anterior):
-    if origen == "/diario/m/":
+    if "m/" in origen:
         origen = f"{origen}{entrada_anterior.pk}"
     if destino == "id_link_tit_mod_":
         destino = f"{destino}{titular.sk}"
@@ -67,9 +68,10 @@ def test_eliminar_titular(browser, titular, otro_titular):
     assert nombre_titular not in nombres_titular
 
 
-@pytest.mark.parametrize("origen", ["/", "/diario/c/c/", "/diario/m/"])
+@pytest.mark.parametrize("origen", ["/", "/diario/c/c/", "/diario/m/",
+                                    "/?page=2", "/diario/c/c/?page=2", "/diario/cm/c/"])
 def test_eliminar_titular_redirige_a_pagina_desde_la_que_se_invoco(browser, origen, titular, cuenta, cuenta_ajena, entrada):
-    if origen == "/diario/m/":
+    if "m/" in origen:
         origen = f"{origen}{entrada.pk}"
     browser.ir_a_pag(origen)
     browser.pulsar(f"id_link_tit_elim_{titular.sk}")

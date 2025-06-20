@@ -34,7 +34,10 @@ class FinperFirefox(MiFirefox):
 
     # TODO: Corregir en MiFirefox
     def assert_url(self, url: str):
-        url_real = urlparse(self.current_url).path
+        parsed_url = urlparse(self.current_url)
+        url_real = parsed_url.path
+        if len(parsed_url.query) > 0:
+            url_real += f"?{parsed_url.query}"
         assert url == url_real, f"Url real '{url_real}' no coincide con url propuesta '{url}'"
 
     def cliquear_en_cuenta(self, cuenta):

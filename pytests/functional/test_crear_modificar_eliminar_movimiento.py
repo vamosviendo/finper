@@ -497,11 +497,12 @@ def test_convertir_entrada_en_traspaso_entre_titulares(browser, entrada, cuenta_
     assert mov_nuevo.esperar_elemento('class_td_concepto', By.CLASS_NAME).text == 'Constitución de crédito'
 
 
-@pytest.mark.parametrize("origen", ["/", "/diario/t/titular/", "/diario/c/c/", "/diario/m/"])
+@pytest.mark.parametrize("origen", ["/", "/diario/t/titular/", "/diario/c/c/", "/diario/m/",
+                                    "/?page=2", "/diario/t/titular/?page=5", "/diario/cm/c/"])
 @pytest.mark.parametrize("destino", ["#id_link_mov_nuevo", "#id_row_mov_xxx .class_link_mod_mov"])
 def test_crear_o_modificar_movimiento_vuelve_a_la_pagina_desde_la_que_se_lo_invoco(
         browser, origen, destino, valores, titular, cuenta, entrada, entrada_anterior, entrada_cuenta_ajena):
-    if origen == "/diario/m/":
+    if "m/" in origen:
         origen = f"{origen}{entrada_anterior.pk}"
     if destino == "#id_row_mov_xxx .class_link_mod_mov":
         destino = destino.replace("xxx", entrada.sk)
@@ -509,7 +510,6 @@ def test_crear_o_modificar_movimiento_vuelve_a_la_pagina_desde_la_que_se_lo_invo
     browser.ir_a_pag(origen)
     browser.pulsar(destino, By.CSS_SELECTOR)
     browser.completar_form(**valores)
-
     browser.assert_url(origen)
 
 
@@ -523,10 +523,11 @@ def test_eliminar_movimiento(browser, entrada, salida):
     assert concepto not in conceptos
 
 
-@pytest.mark.parametrize("origen", ["/", "/diario/t/titular/", "/diario/c/c/", "/diario/m/"])
+@pytest.mark.parametrize("origen", ["/", "/diario/t/titular/", "/diario/c/c/", "/diario/m/",
+                                    "/?page=2", "/diario/t/titular/?page=5", "/diario/cm/c/"])
 def test_eliminar_movimiento_vuelve_a_la_pagina_desde_que_se_lo_invoco(
         browser, origen, titular, cuenta, entrada, entrada_anterior, entrada_cuenta_ajena):
-    if origen == "/diario/m/":
+    if "m/" in origen:
         origen = f"{origen}{entrada_anterior.pk}"
     browser.ir_a_pag(origen)
     browser.pulsar(f"#id_row_mov_{entrada.sk} .class_link_elim_mov", By.CSS_SELECTOR)

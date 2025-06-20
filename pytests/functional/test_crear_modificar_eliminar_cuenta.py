@@ -28,11 +28,12 @@ def test_crear_cuenta(browser, titular, fecha):
     assert "cuenta nueva" in nombres_cuenta
 
 
-@pytest.mark.parametrize("origen", ["/", "/diario/t/titular/", "/diario/m/"])
+@pytest.mark.parametrize("origen", ["/", "/diario/t/titular/", "/diario/m/",
+                                    "/?page=2", "/diario/t/titular/?page=2", "/diario/tm/titular/"])
 @pytest.mark.parametrize("destino", ["id_link_cuenta_nueva", "id_link_cta_mod_"])
 def test_crear_o_modificar_cuenta_redirige_a_pagina_desde_donde_se_invoco(
         browser, origen, destino, titular, cuenta, fecha, entrada, entrada_anterior):
-    if origen == "/diario/m/":
+    if "m/" in origen:
         origen = f"{origen}{entrada_anterior.pk}"
     if destino == "id_link_cta_mod_":
         destino = f"{destino}{cuenta.sk}"
@@ -89,9 +90,10 @@ def test_eliminar_cuenta(browser, cuenta, cuenta_2):
     assert nombre_cuenta not in nombres_cuenta
 
 
-@pytest.mark.parametrize("origen", ["/", "/diario/t/titular/", "/diario/m/"])
+@pytest.mark.parametrize("origen", ["/", "/diario/t/titular/", "/diario/m/",
+                                    "/?page=2", "/diario/t/titular/?page=2", "/diario/tm/titular/"])
 def test_eliminar_cuenta_redirige_a_pagina_desde_la_que_se_invoco(browser, origen, cuenta, cuenta_2, entrada):
-    if origen == "/diario/m/":
+    if "m/" in origen:
         origen = f"{origen}{entrada.pk}"
     browser.ir_a_pag(origen)
     browser.pulsar(f"id_link_cta_elim_{cuenta_2.sk}")

@@ -51,12 +51,12 @@
               </a>
             </div>
             <div class="menu-item-edit">
-              <a id="id_link_tit_mod_{{ tit.sk }}" href="{% url 'tit_mod' tit.sk %}?next={{ request.path }}">
+              <a id="id_link_tit_mod_{{ tit.sk }}" href="{% url 'tit_mod' tit.sk %}?next={{ request.get_full_path }}">
                 E
               </a>
             </div>
             <div class="menu-item-edit">
-              <a id="id_link_tit_elim_{{ tit.sk }}" href="{% url 'tit_elim' tit.sk%}?next={{ request.path }}">
+              <a id="id_link_tit_elim_{{ tit.sk }}" href="{% url 'tit_elim' tit.sk%}?next={{ request.get_full_path }}">
                 B
               </a>
             </div>
@@ -69,7 +69,7 @@
         <tr class="menu-row">
           <td class="menu-item class_td_titular">
             <div id="id_div_titular_nuevo">
-              <a id="id_link_titular_nuevo" href="{% url 'tit_nuevo' %}?next={{ request.path }}">+</a>
+              <a id="id_link_titular_nuevo" href="{% url 'tit_nuevo' %}?next={{ request.get_full_path }}">+</a>
             </div>
           </td>
         </tr>
@@ -107,7 +107,7 @@
                     href="{% url 'cta_div' cuenta.sk %}?next={{ request.path }}"
                   {% endif %}
                 {% else %}
-                  href="{% url 'cta_nueva' %}?next={{ request.path }}"
+                  href="{% url 'cta_nueva' %}?next={{ request.get_full_path }}"
                 {% endif %}
                 id="id_link_cuenta_nueva"
               >+</a>
@@ -244,7 +244,7 @@
   </div>
 
   <div id="id_div_mov_nuevo" class="menu-item class_div_mov_nuevo">
-    <a href="{% url 'mov_nuevo' %}?next={{ request.path }}" id="id_link_mov_nuevo">
+    <a href="{% url 'mov_nuevo' %}?next={{ request.get_full_path }}" id="id_link_mov_nuevo">
       Movimiento nuevo
     </a>
   </div>
@@ -314,11 +314,11 @@
 
           <td class="class_td_menu">
             {% if not mov.es_automatico %}
-            <a href="{% url 'mov_elim' mov.pk %}?next={{ request.path }}"
+            <a href="{% url 'mov_elim' mov.pk %}?next={{ request.get_full_path }}"
                class="class_link_elim_mov">
               B
             </a>
-            <a href="{% url 'mov_mod' mov.pk %}?next={{ request.path }}"
+            <a href="{% url 'mov_mod' mov.pk %}?next={{ request.get_full_path }}"
                class="class_link_mod_mov">
               E
             </a>
