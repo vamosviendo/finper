@@ -1,4 +1,5 @@
 from datetime import date
+from urllib.parse import urlparse
 
 import pytest
 from django.urls import reverse
@@ -145,9 +146,12 @@ def test_detalle_de_cuenta_interactiva(
     assert set(cuenta.movs()) != set(Movimiento.todes())
 
     # Cuando cliqueamos en el ícono de agregar cuenta, accedemos a la página
-    # de dividir cuenta en subcuentas
+    # de dividir cuenta en subcuentas.
+    # En el url de la página se incluye la información necesaria para regresar
+    # a la página actual luego de agregar la subcuenta
+    path = urlparse(browser.current_url).path
     browser.esperar_elemento("id_link_cuenta_nueva").click()
-    browser.assert_url(reverse('cta_div', args=[cuenta.sk]))
+    browser.assert_url(reverse('cta_div', args=[cuenta.sk]) + f"?next={path}")
 
     # Cuando cliqueamos en un movimiento, sólo se muestran los días con
     # movimientos relacionados con la cuenta, y en esos días se muestran
@@ -409,8 +413,9 @@ def test_busqueda_de_fecha_en_detalle_de_cuenta(browser, cuenta, cuenta_2, mucho
 
     browser.completar_form(boton="id_btn_buscar_dia_init", input_dia_init=dia.fecha)
 
-    # El url de la página de destino corresponde a la cuenta
-    browser.assert_url(reverse("cuenta", args=[cuenta.sk]))
+    # El url de la página de destino corresponde a la cuenta e incluye un querystring
+    # con la fecha ingresada
+    browser.assert_url(reverse("cuenta", args=[cuenta.sk]) + f"?fecha={dia.fecha}")
 
     # En la página se muestran solamente los días con movimientos de la cuenta.
     # No se muestran los demás días.

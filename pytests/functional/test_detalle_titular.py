@@ -174,8 +174,9 @@ def test_busqueda_de_fecha_en_detalle_de_titular(browser, titular, cuenta_ajena,
 
     browser.completar_form(boton="id_btn_buscar_dia_init", input_dia_init=dia.fecha)
 
-    # El url de la página de destino corresponde a la cuenta
-    browser.assert_url(reverse("titular", args=[titular.sk]))
+    # El url de la página de destino corresponde al titular e incluye un querystring
+    # con la fecha ingresada
+    browser.assert_url(reverse("titular", args=[titular.sk]) + f"?fecha={dia.fecha}")
 
     # En la página se muestran solamente los días con movimientos de la cuenta.
     # No se muestran los demás días.

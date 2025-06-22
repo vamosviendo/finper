@@ -207,6 +207,7 @@ class FinperFirefox(MiFirefox):
             nombre: str,
             viewname: str,
             args: list | None = None,
+            querydict: dict | None = None,
             criterio: str = By.ID,
             url_inicial: str = '',
     ):
@@ -215,8 +216,18 @@ class FinperFirefox(MiFirefox):
             tipo = "class"
         else:
             tipo = "id"
+
+        if querydict:
+            print(querydict, type(querydict))
+            querystring = "?"
+            for key, value in querydict.items():
+                querystring += f"{key}={value}&"
+            querystring = querystring[:-1]  # Retiramos el último &. Ya sé que es desprolijo.
+        else:
+            querystring = ""
+
         self.esperar_elemento(f"{tipo}_link_{nombre}", criterio).click()
-        self.assert_url(reverse(viewname, args=args))
+        self.assert_url(reverse(viewname, args=args) + querystring)
 
     def crear_movimiento(self, **kwargs):
         self.ir_a_pag(reverse('mov_nuevo'))

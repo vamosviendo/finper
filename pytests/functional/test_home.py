@@ -223,13 +223,13 @@ class TestHomeLinks:
         browser.assert_url(reverse("titular", args=[titular.sk]))
 
         # cuando cliqueamos en el ícono de agregar titular, accedemos a la página para agregar titular nuevo
-        browser.verificar_link('titular_nuevo', 'tit_nuevo')
+        browser.verificar_link('titular_nuevo', 'tit_nuevo', querydict={"next": "/"})
 
         # cuando cliqueamos en el link de editar titular, accedemos a la página de edición de ese titular
-        browser.verificar_link(f'tit_mod_{titular.sk}', 'tit_mod', [titular.sk])
+        browser.verificar_link(f'tit_mod_{titular.sk}', 'tit_mod', [titular.sk], querydict={"next": "/"})
 
         # cuando cliqueamos en el link de borrar titular, accedemos a la página de confirmación
-        browser.verificar_link(f'tit_elim_{titular.sk}', 'tit_elim', [titular.sk])
+        browser.verificar_link(f'tit_elim_{titular.sk}', 'tit_elim', [titular.sk], querydict={"next": "/"})
 
     def test_seccion_cuentas(self, browser, cuenta, cuenta_2, cuenta_acumulativa):
         subcuenta = cuenta_acumulativa.subcuentas.first()
@@ -245,26 +245,26 @@ class TestHomeLinks:
         browser.assert_url(reverse("cuenta", args=[subcuenta.sk]))
 
         # cuando cliqueamos en el ícono de agregar cuenta, accedemos a la página para agregar cuenta nueva
-        browser.verificar_link('cuenta_nueva', 'cta_nueva')
+        browser.verificar_link('cuenta_nueva', 'cta_nueva', querydict={'next': '/'})
 
         # cuando cliqueamos en el link de editar cuenta, accedemos a la página de edición de esa cuenta
-        browser.verificar_link(f'cta_mod_{cuenta.sk}', 'cta_mod', [cuenta.sk])
-        browser.verificar_link(f'cta_mod_{subcuenta.sk}', 'cta_mod', [subcuenta.sk])
+        browser.verificar_link(f'cta_mod_{cuenta.sk}', 'cta_mod', [cuenta.sk], querydict={'next': '/'})
+        browser.verificar_link(f'cta_mod_{subcuenta.sk}', 'cta_mod', [subcuenta.sk], querydict={'next': '/'})
 
         # cuando cliqueamos en el link de borrar cuenta, accedemos a la página de confirmación
-        browser.verificar_link(f'cta_elim_{cuenta.sk}', 'cta_elim', [cuenta.sk])
-        browser.verificar_link(f'cta_elim_{subcuenta.sk}', 'cta_elim', [subcuenta.sk])
+        browser.verificar_link(f'cta_elim_{cuenta.sk}', 'cta_elim', [cuenta.sk], querydict={'next': '/'})
+        browser.verificar_link(f'cta_elim_{subcuenta.sk}', 'cta_elim', [subcuenta.sk], querydict={'next': '/'})
 
     def test_seccion_movimientos(self, browser, entrada, salida):
 
         # cuando cliqueamos en el link de movimiento nuevo, accedemos a la página para agregar movimiento
-        browser.verificar_link('mov_nuevo', 'mov_nuevo')
+        browser.verificar_link('mov_nuevo', 'mov_nuevo', querydict={'next': '/'})
 
         # cuando cliqueamos en el link de editar movimiento, accedemos a la página de edición de ese movimiento
-        browser.verificar_link('mod_mov', 'mov_mod', [entrada.pk], By.CLASS_NAME)
+        browser.verificar_link('mod_mov', 'mov_mod', [entrada.pk], querydict={'next': '/'}, criterio=By.CLASS_NAME)
 
         # cuando cliqueamos en el link de borrar movimiento, accedemos a la página de confirmación
-        browser.verificar_link('elim_mov', 'mov_elim', [entrada.pk], By.CLASS_NAME)
+        browser.verificar_link('elim_mov', 'mov_elim', [entrada.pk], querydict={'next': '/'}, criterio=By.CLASS_NAME)
 
     def test_seccion_monedas(self, browser, peso):
 
