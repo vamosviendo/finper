@@ -1,3 +1,5 @@
+from urllib.parse import urlparse
+
 import pytest
 
 from django.urls import reverse
@@ -108,3 +110,24 @@ def test_detalle_movimiento_en_cuenta_acumulativa(
     assert saldo_sc1.text == '110,00'
     assert saldo_sc2.text == '88,00'
     assert saldo_c.text == '198,00'
+
+
+@pytest.mark.xfail
+def test_detalle_movimiento_en_paginas_anteriores(browser, muchos_dias):
+    # Cuando estando en una página anterior cliqueamos en un movimiento...
+    browser.ir_a_pag(reverse("home") + "?page=2")
+
+    links_movimiento = browser.esperar_elementos("class_link_movimiento")
+
+    movimientos = browser.esperar_elementos("class_row_mov")
+    assert "mov_selected" not in movimientos[1].get_attribute("class")
+    print(links_movimiento[1].get_attribute("href"))
+    pk = int(urlparse(links_movimiento[1].get_attribute("href")).path.split("/")[-1])
+    links_movimiento[1].click()
+
+    # ...permanecemos en la página en la que estábamos...
+    browser.assert_url(reverse("movimiento", args=[pk]) + "?page=2")
+
+    # ...y el movimiento aparece resaltado.
+    movimientos = browser.esperar_elementos("class_row_mov")
+    assert "mov_selected" in movimientos[1].get_attribute("class")
