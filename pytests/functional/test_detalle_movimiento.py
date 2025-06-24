@@ -112,7 +112,6 @@ def test_detalle_movimiento_en_cuenta_acumulativa(
     assert saldo_c.text == '198,00'
 
 
-@pytest.mark.xfail
 def test_detalle_movimiento_en_paginas_anteriores(browser, muchos_dias):
     # Cuando estando en una página anterior cliqueamos en un movimiento...
     browser.ir_a_pag(reverse("home") + "?page=2")
@@ -131,3 +130,8 @@ def test_detalle_movimiento_en_paginas_anteriores(browser, muchos_dias):
     # ...y el movimiento aparece resaltado.
     movimientos = browser.esperar_elementos("class_row_mov")
     assert "mov_selected" in movimientos[1].get_attribute("class")
+
+    # Cuando pasamos a otra página, se pierde el movimiento seleccionado
+    assert f"m/{pk}" in browser.current_url
+    browser.pulsar("id_link_anterior_init")
+    assert f"m/{pk}" not in browser.current_url
