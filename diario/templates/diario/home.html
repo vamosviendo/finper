@@ -277,14 +277,7 @@
           <td class="class_td_concepto" title="{{ mov.detalle }}">
             <div class="cell_concepto scrollable">
               {% with current_page=request.GET.page %}
-              <a href="
-                  {% if sk %}
-                    {% url 'titular_movimiento' sk mov.pk %}
-                  {% elif sk_cta %}
-                    {% url 'cuenta_movimiento' sk_cta mov.pk %}
-                  {% else %}
-                    {% url 'movimiento' mov.pk %}{% if current_page %}?page={{ current_page }}{% endif %}
-                  {% endif %}"
+              <a href="{% if sk %}{% url 'titular_movimiento' sk mov.pk %}{% elif sk_cta %}{% url 'cuenta_movimiento' sk_cta mov.pk %}{% else %}{% url 'movimiento' mov.pk %}{% endif %}{% if current_page %}?page={{ current_page }}{% endif %}"
                  id="id_link_mov_{{ mov.sk }}"
                  class="class_link_movimiento">
                 {{ mov.concepto }}
