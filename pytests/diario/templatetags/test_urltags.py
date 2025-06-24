@@ -2,8 +2,37 @@ import pytest
 
 from django.test import RequestFactory
 from django.template import Context
+from django.urls import reverse
 
-from diario.templatetags.urltags import pageurl
+from diario.templatetags.urltags import movurl, pageurl
+
+
+class TestMovUrl:
+    def test_si_no_recibe_sk_de_titular_ni_de_cuenta_devuelve_url_de_movimiento(self, entrada):
+        assert movurl(entrada) == reverse("movimiento", args=[entrada.pk])
+
+    def test_si_recibe_sk_de_titular_devuelve_url_de_titular_y_movimiento(self, entrada, titular):
+        assert movurl(entrada, tit_sk=titular.sk) == reverse("titular_movimiento", args=[titular.sk, entrada.pk])
+
+    def test_si_recibe_sk_de_cuenta_devuelve_url_de_cuenta_y_movimiento(self, entrada, cuenta):
+        assert movurl(entrada, cta_sk=cuenta.sk) == reverse("cuenta_movimiento", args=[cuenta.sk, entrada.pk])
+
+    def test_si_recibe_sk_de_titular_y_de_cuenta_devuelve_url_de_cuenta_y_movimiento(self, entrada, titular, cuenta):
+        assert movurl(entrada, tit_sk=titular.sk, cta_sk=cuenta.sk) == reverse("cuenta_movimiento", args=[cuenta.sk, entrada.pk])
+
+    @pytest.mark.parametrize("argname, arg, viewname", [
+        (None, None, "movimiento"),
+        ("tit_sk", "titular", "titular_movimiento"),
+        ("cta_sk", "c", "cuenta_movimiento")])
+    def test_si_recibe_nro_de_pagina_agrega_querystring_con_pagina_al_url_devuelto(
+            self, entrada, argname, arg, viewname):
+        kwargs = dict()
+        if argname and arg:
+            kwargs = {argname: arg}
+            base_url = reverse(viewname, args=[arg, entrada.pk])
+        else:
+            base_url = reverse(viewname, args=[entrada.pk])
+        assert movurl(entrada, page=2, **kwargs) == base_url + "?page=2"
 
 
 class TestPageUrl:

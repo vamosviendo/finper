@@ -1,9 +1,24 @@
 from __future__ import annotations
 
 from django import template
-
+from django.urls import reverse
 
 register = template.Library()
+
+
+@register.simple_tag
+def movurl(mov, tit_sk: str | None = None, cta_sk: str | None = None, page: int | None = None):
+    if cta_sk:
+        base_url = reverse("cuenta_movimiento", args=[cta_sk, mov.pk])
+    elif tit_sk:
+        base_url = reverse("titular_movimiento", args=[tit_sk, mov.pk])
+    else:
+        base_url = reverse("movimiento", args=[mov.pk])
+
+    if page:
+        return base_url + f"?page={page}"
+
+    return base_url
 
 
 @register.simple_tag(takes_context=True)
