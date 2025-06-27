@@ -34,6 +34,24 @@ class TestMovUrl:
             base_url = reverse(viewname, args=[entrada.pk])
         assert movurl(entrada, page=2, **kwargs) == base_url + "?page=2"
 
+    @pytest.mark.parametrize("argname, arg, viewname", [
+        (None, None, "movimiento"),
+        ("tit_sk", "titular", "titular_movimiento"),
+        ("cta_sk", "c", "cuenta_movimiento")])
+    def test_si_recibe_fecha_agrega_querystring_con_fecha_al_url_devuelto(self, entrada, fecha, argname, arg, viewname):
+        kwargs = dict()
+        if argname and arg:
+            kwargs = {argname: arg}
+            base_url = reverse(viewname, args=[arg, entrada.pk])
+        else:
+            base_url = reverse(viewname, args=[entrada.pk])
+        assert movurl(entrada, fecha=fecha, **kwargs) == base_url + f"?fecha={fecha}"
+
+    def test_si_recibe_fecha_y_pagina_prioriza_fecha(self, entrada, fecha):
+        assert \
+            movurl(entrada, fecha=fecha, page=2) == \
+            reverse("movimiento", args=[entrada.pk]) + f"?fecha={fecha}"
+
 
 class TestPageUrl:
     @pytest.mark.parametrize("url_actual", ["/", "/diario/c/c/", "/diario/t/titular/"])

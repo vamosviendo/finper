@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import date
+
 from django import template
 from django.urls import reverse
 
@@ -7,7 +9,11 @@ register = template.Library()
 
 
 @register.simple_tag
-def movurl(mov, tit_sk: str | None = None, cta_sk: str | None = None, page: int | None = None):
+def movurl(mov,
+           tit_sk: str | None = None,
+           cta_sk: str | None = None,
+           page: int | None = None,
+           fecha: date | None = None):
     if cta_sk:
         base_url = reverse("cuenta_movimiento", args=[cta_sk, mov.pk])
     elif tit_sk:
@@ -15,6 +21,8 @@ def movurl(mov, tit_sk: str | None = None, cta_sk: str | None = None, page: int 
     else:
         base_url = reverse("movimiento", args=[mov.pk])
 
+    if fecha:
+        return base_url + f"?fecha={fecha}"
     if page:
         return base_url + f"?page={page}"
 

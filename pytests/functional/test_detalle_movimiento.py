@@ -138,3 +138,27 @@ def test_detalle_movimiento_en_paginas_anteriores(browser, muchos_dias, origen, 
     # Cuando pasamos a otra página, se pierde el movimiento seleccionado
     browser.pulsar("id_link_anterior_init")
     browser.assert_url(f"{origen}?page=1")
+
+
+@pytest.mark.parametrize("origen, destino", [
+    ("/", "/diario/m/"),
+    ("/diario/c/c/", "/diario/cm/c/"),
+    ("/diario/t/titular/", "/diario/tm/titular/")])
+def test_detalle_movimiento_en_fechas_anteriores(browser, muchos_dias, fecha, origen, destino):
+    # Cuando estando en la página de una fecha anterior cliqueamos en un movimiento...
+    browser.ir_a_pag(f"{origen}?fecha={fecha}")
+
+    links_movimiento = browser.esperar_elementos("class_link_movimiento")
+
+    movimientos = browser.esperar_elementos("class_row_mov")
+    assert "mov_selected" not in movimientos[1].get_attribute("class")
+
+    pk = int(urlparse(links_movimiento[1].get_attribute("href")).path.split("/")[-1])
+    links_movimiento[1].click()
+
+    # ...permanecemos en la página en la que estábamos...
+    browser.assert_url(f"{destino}{pk}?fecha={fecha}")
+
+    # ...y el movimiento aparece resaltado...
+    movimientos = browser.esperar_elementos("class_row_mov")
+    assert "mov_selected" in movimientos[1].get_attribute("class")
