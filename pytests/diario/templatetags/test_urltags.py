@@ -1,34 +1,83 @@
+from __future__ import annotations
+
+from datetime import date, timedelta
+
 import pytest
 
 from django.test import RequestFactory
 from django.template import Context
 from django.urls import reverse
 
+from vvmodel.models import MiModel
+
+from diario.models import Movimiento
 from diario.templatetags.urltags import finperurl, movurl, pageurl
 
 
+def get_request_context(viewname: str, page: int | None = None, fecha: date | None = None, **kwargs) -> Context:
+    objetos = [x for x in kwargs.values() if isinstance(x, MiModel)]
+    claves = [x.pk if type(x) == Movimiento else x.sk for x in objetos]
+    if page:
+        querystring = f"?page={page}"
+    elif fecha:
+        querystring = f"?fecha={fecha}"
+    else:
+        querystring = ""
+    factory = RequestFactory()
+    request = factory.get(reverse(viewname, args=claves) + querystring)
+    return Context({"request": request, **kwargs})
+
+
 class TestFinperUrl:
+
     def test_si_recibe_titular_devuelve_url_de_detalle_de_titular(self, titular):
-        assert finperurl(titular=titular) == reverse("titular", args=[titular.sk])
+        context = get_request_context("titular", titular=titular)
+        assert finperurl(context) == reverse("titular", args=[titular.sk])
 
     def test_si_recibe_cuenta_devuelve_url_de_detalle_de_cuenta(self, cuenta):
-        assert finperurl(cuenta=cuenta) == reverse("cuenta", args=[cuenta.sk])
+        context = get_request_context("cuenta", cuenta=cuenta)
+        assert finperurl(context) == reverse("cuenta", args=[cuenta.sk])
 
     def test_si_recibe_movimiento_devuelve_url_de_detalle_de_movimiento(self, entrada):
-        assert finperurl(movimiento=entrada) == reverse("movimiento", args=[entrada.pk])
+        context = get_request_context("movimiento", movimiento=entrada)
+        assert finperurl(context) == reverse("movimiento", args=[entrada.pk])
 
     def test_si_recibe_titular_y_movimiento_devuelve_url_de_detalle_de_titular_en_movimiento(self, titular, entrada):
+        context = get_request_context("titular_movimiento", titular=titular, movimiento=entrada)
         assert \
-            finperurl(titular=titular, movimiento=entrada) == \
+            finperurl(context) == \
             reverse("titular_movimiento", args=[titular.sk, entrada.pk])
 
     def test_si_recibe_cuenta_y_movimiento_devuelve_url_de_detalle_de_cuenta_en_movimiento(self, cuenta, entrada):
+        context = get_request_context("cuenta_movimiento", cuenta=cuenta, movimiento=entrada)
         assert \
-            finperurl(cuenta=cuenta, movimiento=entrada) == \
+            finperurl(context) == \
             reverse("cuenta_movimiento", args=[cuenta.sk, entrada.pk])
 
     def test_si_no_recibe_titular_cuenta_ni_movimiento_devuelve_url_home(self):
-        assert finperurl() == reverse("home")
+        context = get_request_context("home")
+        assert finperurl(context) == reverse("home")
+
+    @pytest.mark.parametrize("fixt", [None, "titular", "cuenta"])
+    def test_si_recibe_movimiento_y_fecha_no_incluida_en_la_pagina_en_querystring_devuelve_url_sin_movimiento(
+            self, fixt, entrada, mas_de_7_dias, request):
+        ente = request.getfixturevalue(fixt) if fixt else None
+        prefijo = f"{fixt}_" if fixt else ""
+        viewname = fixt or "home"
+        args = [ente.sk] if ente else []
+        items = {"movimiento": entrada, "dias": mas_de_7_dias[:6]}
+        if ente:
+            items = {fixt: ente, **items}
+        context = get_request_context(f"{prefijo}movimiento", **items)
+        nuevo_dia = next(x for x in mas_de_7_dias if x not in context["dias"])
+
+        assert finperurl(context, fecha=nuevo_dia.fecha) == reverse(viewname, args=args)
+
+    def test_si_recibe_movimiento_y_fecha_incluida_en_la_pagina_en_querystring_devuelve_url_con_movimiento(
+            self, entrada, salida_posterior):
+        from diario.models import Dia
+        context = get_request_context("movimiento", movimiento=entrada, fecha=salida_posterior.fecha, dias=Dia.todes())
+        assert finperurl(context) == reverse("movimiento", args=[entrada.pk])
 
 
 class TestMovUrl:

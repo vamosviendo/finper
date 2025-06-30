@@ -5,26 +5,45 @@ from datetime import date
 from django import template
 from django.urls import reverse
 
-from diario.models import Titular, Cuenta, Movimiento
-
 register = template.Library()
 
 
-@register.simple_tag
-def finperurl(titular: Titular | None = None,
-              cuenta: Cuenta | None = None,
-              movimiento: Movimiento | None = None) -> str:
+@register.simple_tag(takes_context=True)
+def finperurl(context, dias_pag=None) -> str:
+    titular = context.get("titular")
+    cuenta = context.get("cuenta")
+    movimiento = context.get("movimiento")
+    dias = context.get("dias")
+    fecha = context["request"].GET.get("fecha")
+
     if titular:
         if movimiento:
-            return reverse("titular_movimiento", args=[titular.sk, movimiento.pk])
-        return reverse("titular", args=[titular.sk])
-    if cuenta:
+            base_url = reverse("titular_movimiento", args=[titular.sk, movimiento.pk])
+        else:
+            base_url = reverse("titular", args=[titular.sk])
+    elif cuenta:
         if movimiento:
-            return reverse("cuenta_movimiento", args=[cuenta.sk, movimiento.pk])
-        return reverse("cuenta", args=[cuenta.sk])
-    if movimiento:
-        return reverse("movimiento", args=[movimiento.pk])
-    return reverse("home")
+            base_url = reverse("cuenta_movimiento", args=[cuenta.sk, movimiento.pk])
+        else:
+            base_url = reverse("cuenta", args=[cuenta.sk])
+    elif movimiento:
+        base_url = reverse("movimiento", args=[movimiento.pk])
+    else:
+        base_url = reverse("home")
+
+    if dias:
+        fechas = [x.fecha.strftime("%Y-%m-%d") for x in dias_pag]
+        if fecha not in fechas:
+            # TODO extraer
+            if "cm/" in base_url or "tm/" in base_url:
+                parsed_url = base_url.split("/")
+                parsed_url[2] = parsed_url[2].replace("m", "")
+                parsed_url[-1] = ""
+                base_url = "/".join(parsed_url)
+            elif "m/" in base_url:
+                base_url = "/"
+
+    return base_url
 
 
 @register.simple_tag
