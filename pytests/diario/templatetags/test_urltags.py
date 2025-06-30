@@ -4,7 +4,31 @@ from django.test import RequestFactory
 from django.template import Context
 from django.urls import reverse
 
-from diario.templatetags.urltags import movurl, pageurl
+from diario.templatetags.urltags import finperurl, movurl, pageurl
+
+
+class TestFinperUrl:
+    def test_si_recibe_titular_devuelve_url_de_detalle_de_titular(self, titular):
+        assert finperurl(titular=titular) == reverse("titular", args=[titular.sk])
+
+    def test_si_recibe_cuenta_devuelve_url_de_detalle_de_cuenta(self, cuenta):
+        assert finperurl(cuenta=cuenta) == reverse("cuenta", args=[cuenta.sk])
+
+    def test_si_recibe_movimiento_devuelve_url_de_detalle_de_movimiento(self, entrada):
+        assert finperurl(movimiento=entrada) == reverse("movimiento", args=[entrada.pk])
+
+    def test_si_recibe_titular_y_movimiento_devuelve_url_de_detalle_de_titular_en_movimiento(self, titular, entrada):
+        assert \
+            finperurl(titular=titular, movimiento=entrada) == \
+            reverse("titular_movimiento", args=[titular.sk, entrada.pk])
+
+    def test_si_recibe_cuenta_y_movimiento_devuelve_url_de_detalle_de_cuenta_en_movimiento(self, cuenta, entrada):
+        assert \
+            finperurl(cuenta=cuenta, movimiento=entrada) == \
+            reverse("cuenta_movimiento", args=[cuenta.sk, entrada.pk])
+
+    def test_si_no_recibe_titular_cuenta_ni_movimiento_devuelve_url_home(self):
+        assert finperurl() == reverse("home")
 
 
 class TestMovUrl:

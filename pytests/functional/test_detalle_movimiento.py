@@ -1,3 +1,4 @@
+from datetime import date
 from urllib.parse import urlparse
 
 import pytest
@@ -147,7 +148,6 @@ def test_detalle_movimiento_en_paginas_anteriores(browser, muchos_dias, origen, 
 def test_detalle_movimiento_en_fechas_anteriores(browser, muchos_dias, fecha, origen, destino):
     # Cuando estando en la página de una fecha anterior cliqueamos en un movimiento...
     browser.ir_a_pag(f"{origen}?fecha={fecha}")
-
     links_movimiento = browser.esperar_elementos("class_link_movimiento")
 
     movimientos = browser.esperar_elementos("class_row_mov")
@@ -162,3 +162,13 @@ def test_detalle_movimiento_en_fechas_anteriores(browser, muchos_dias, fecha, or
     # ...y el movimiento aparece resaltado...
     movimientos = browser.esperar_elementos("class_row_mov")
     assert "mov_selected" in movimientos[1].get_attribute("class")
+
+    # Si seleccionamos una fecha que está en la página actual,
+    # el movimiento permanece seleccionado.
+    browser.completar_form(boton="id_btn_buscar_dia_init", input_dia_init=date(2010,11,13))
+    browser.assert_url(f"{destino}{pk}?fecha=2010-11-13")
+
+    # Cuando seleccionamos una fecha que no está en la página actual,
+    # se pierde el movimiento seleccionado.
+    browser.completar_form(boton="id_btn_buscar_dia_init", input_dia_init=date(2010,12,1))
+    browser.assert_url(f"{origen}?fecha=2010-12-1")
