@@ -225,17 +225,15 @@
         </ul>
 
         <!-- Búsqueda por día -->
-        {% with dias as dp %}
         <form id="id_form_buscar_dia_init" class="d-flex mb-0"
               method="get"
-              action="{% finperurl dias_pag=dp %}#id_section_movimientos">
+              action="{% finperurl %}#id_section_movimientos">
           <div class="input-group">
             <input id="id_input_dia_init" type="date" name="fecha"
                    class="form-control" placeholder="YYYY-MM-DD" aria-label="Buscar día">
             <button id="id_btn_buscar_dia_init" class="btn btn-outline-secondary" type="submit">Buscar</button>
           </div>
         </form>
-        {% endwith %}
       </div>
     </nav>
   </div>

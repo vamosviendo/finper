@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import date, timedelta
 
 import pytest
+from django.db.models import QuerySet
 
 from django.test import RequestFactory
 from django.template import Context
@@ -10,7 +11,7 @@ from django.urls import reverse
 
 from vvmodel.models import MiModel
 
-from diario.models import Movimiento
+from diario.models import Movimiento, Dia
 from diario.templatetags.urltags import finperurl, movurl, pageurl
 
 
@@ -28,6 +29,11 @@ def get_request_context(viewname: str, page: int | None = None, fecha: date | No
     return Context({"request": request, **kwargs})
 
 
+@pytest.fixture
+def dias(dia: Dia, dia_anterior: Dia, dia_posterior: Dia) -> QuerySet[Dia]:
+    return Dia.todes()
+
+
 class TestFinperUrl:
 
     def test_si_recibe_titular_devuelve_url_de_detalle_de_titular(self, titular):
@@ -38,18 +44,20 @@ class TestFinperUrl:
         context = get_request_context("cuenta", cuenta=cuenta)
         assert finperurl(context) == reverse("cuenta", args=[cuenta.sk])
 
-    def test_si_recibe_movimiento_devuelve_url_de_detalle_de_movimiento(self, entrada):
-        context = get_request_context("movimiento", movimiento=entrada)
+    def test_si_recibe_movimiento_devuelve_url_de_detalle_de_movimiento(self, entrada, dias):
+        context = get_request_context("movimiento", movimiento=entrada, dias=dias)
         assert finperurl(context) == reverse("movimiento", args=[entrada.pk])
 
-    def test_si_recibe_titular_y_movimiento_devuelve_url_de_detalle_de_titular_en_movimiento(self, titular, entrada):
-        context = get_request_context("titular_movimiento", titular=titular, movimiento=entrada)
+    def test_si_recibe_titular_y_movimiento_devuelve_url_de_detalle_de_titular_en_movimiento(
+            self, titular, entrada, dias):
+        context = get_request_context("titular_movimiento", titular=titular, movimiento=entrada, dias=dias)
         assert \
             finperurl(context) == \
             reverse("titular_movimiento", args=[titular.sk, entrada.pk])
 
-    def test_si_recibe_cuenta_y_movimiento_devuelve_url_de_detalle_de_cuenta_en_movimiento(self, cuenta, entrada):
-        context = get_request_context("cuenta_movimiento", cuenta=cuenta, movimiento=entrada)
+    def test_si_recibe_cuenta_y_movimiento_devuelve_url_de_detalle_de_cuenta_en_movimiento(
+            self, cuenta, entrada, dias):
+        context = get_request_context("cuenta_movimiento", cuenta=cuenta, movimiento=entrada, dias=dias)
         assert \
             finperurl(context) == \
             reverse("cuenta_movimiento", args=[cuenta.sk, entrada.pk])
@@ -58,27 +66,25 @@ class TestFinperUrl:
         context = get_request_context("home")
         assert finperurl(context) == reverse("home")
 
-    @pytest.mark.parametrize("fixt", [None, "titular", "cuenta"])
-    def test_si_recibe_movimiento_y_fecha_no_incluida_en_la_pagina_en_querystring_devuelve_url_sin_movimiento(
-            self, fixt, entrada, mas_de_7_dias, request):
-        ente = request.getfixturevalue(fixt) if fixt else None
-        prefijo = f"{fixt}_" if fixt else ""
-        viewname = fixt or "home"
-        args = [ente.sk] if ente else []
-        items = {"movimiento": entrada, "dias": mas_de_7_dias[:6]}
-        if ente:
-            items = {fixt: ente, **items}
-        context = get_request_context(f"{prefijo}movimiento", **items)
-        nuevo_dia = next(x for x in mas_de_7_dias if x not in context["dias"])
+    def test_si_recibe_movimiento_no_incluido_en_los_dias_de_la_pagina_devuelve_url_sin_movimiento(
+            self, cuenta, mas_de_7_dias):
+        mov = Movimiento.crear(concepto="Movimiento", importe=100, dia=mas_de_7_dias[7], cta_entrada=cuenta)
+        context = get_request_context("movimiento", movimiento=mov, dias=mas_de_7_dias[:6])
+        assert finperurl(context) == reverse("home")
 
-        assert finperurl(context, fecha=nuevo_dia.fecha) == reverse(viewname, args=args)
+    def test_si_recibe_cuenta_y_movimiento_no_incluido_en_los_dias_de_la_pagina_devuelve_url_sin_movimiento(
+            self, cuenta, mas_de_7_dias):
+        mov = Movimiento.crear(concepto="Movimiento", importe=100, dia=mas_de_7_dias[7], cta_entrada=cuenta)
+        context = get_request_context(
+            "cuenta_movimiento", cuenta=cuenta, movimiento=mov, dias=mas_de_7_dias[:6]
+        )
+        assert finperurl(context) == reverse("cuenta", args=[cuenta.sk])
 
-    def test_si_recibe_movimiento_y_fecha_incluida_en_la_pagina_en_querystring_devuelve_url_con_movimiento(
-            self, entrada, salida_posterior):
-        from diario.models import Dia
-        context = get_request_context("movimiento", movimiento=entrada, fecha=salida_posterior.fecha, dias=Dia.todes())
-        assert finperurl(context) == reverse("movimiento", args=[entrada.pk])
-
+    def test_si_recibe_titular_y_movimiento_no_incluido_en_los_dias_de_la_pagina_devuelve_url_sin_movimiento(
+            self, titular, cuenta, mas_de_7_dias):
+        mov = Movimiento.crear(concepto="Movimiento", importe=100, dia=mas_de_7_dias[7], cta_entrada=cuenta)
+        context = get_request_context("titular_movimiento", titular=titular, movimiento=mov, dias=mas_de_7_dias[:6])
+        assert finperurl(context) == reverse("titular", args=[titular.sk])
 
 class TestMovUrl:
     def test_si_no_recibe_sk_de_titular_ni_de_cuenta_devuelve_url_de_movimiento(self, entrada):
