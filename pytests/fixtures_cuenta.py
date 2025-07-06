@@ -25,9 +25,9 @@ def cuenta_2(titular: Titular, fecha_inicial: date) -> CuentaInteractiva:
 
 
 @pytest.fixture
-def cuenta_3(titular: Titular, fecha_temprana: date) -> CuentaInteractiva:
+def cuenta_3(titular: Titular, fecha_inicial: date) -> CuentaInteractiva:
     return Cuenta.crear(
-        nombre='cuenta 3', sk='c3', titular=titular, fecha_creacion=fecha_temprana)
+        nombre='cuenta 3', sk='c3', titular=titular, fecha_creacion=fecha_inicial)
 
 
 @pytest.fixture

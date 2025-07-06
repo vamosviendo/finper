@@ -148,11 +148,17 @@ def test_home(
     nros_pagina[2].click()
     assert urlparse(browser.current_url).query == f"page={nro_pag}"
 
-    # Al final de la barra de navegación hay un campo en el cual podemos seleccionar
-    # un día y seremos dirigidos a la página que contenga ese día.
+    # Al final de la barra de navegación por páginas hay un campo en el cual
+    # podemos seleccionar un día y seremos dirigidos a la página que contenga
+    # ese día. El último movimiento del día de la fecha ingresada aparecerá
+    # seleccionado
+    browser.ir_a_pag()
     browser.completar_form(boton="id_btn_buscar_dia_init", input_dia_init=fecha)
     fechas = [str2date(x.text[-10:]) for x in browser.esperar_elementos("class_span_fecha_dia")]
     assert fecha in fechas
+    dia = Dia.tomar(fecha=fecha)
+    mov = dia.movimientos.last()
+    browser.assert_url(reverse("movimiento", args=[mov.pk]) + f"?fecha={fecha}&redirected=1")
 
     # Si seleccionamos un día inexistente, seremos llevados a la página que contengan
     # los días aledaños al seleccionado.

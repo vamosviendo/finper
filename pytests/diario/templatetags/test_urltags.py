@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import date
 
 import pytest
 from django.db.models import QuerySet
@@ -85,6 +85,9 @@ class TestFinperUrl:
         mov = Movimiento.crear(concepto="Movimiento", importe=100, dia=mas_de_7_dias[7], cta_entrada=cuenta)
         context = get_request_context("titular_movimiento", titular=titular, movimiento=mov, dias=mas_de_7_dias[:6])
         assert finperurl(context) == reverse("titular", args=[titular.sk])
+
+    def test_si_no_recibe_dias_da_valueerror(self):
+        pytest.fail("escribir")
 
 class TestMovUrl:
     def test_si_no_recibe_sk_de_titular_ni_de_cuenta_devuelve_url_de_movimiento(self, entrada):

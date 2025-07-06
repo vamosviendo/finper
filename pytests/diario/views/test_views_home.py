@@ -142,7 +142,7 @@ class TestDetalleCuenta:
     def test_si_recibe_querydict_con_fecha_calcula_la_pagina_en_base_a_los_movimientos_de_la_cuenta(
             self, muchos_dias, cuenta, client):
         dia = cuenta.dias()[6]
-        response = client.get(f"{reverse('cuenta', args=[cuenta.sk])}?fecha={str(dia)}")
+        response = client.get(f"{reverse('cuenta', args=[cuenta.sk])}?fecha={str(dia)}", follow=True)
         assert response.context["dias"].number == 2
 
     def test_si_recibe_querydict_con_fecha_muestra_solo_dias_con_movimientos_de_la_cuenta(
@@ -273,3 +273,12 @@ class TestBusquedaFecha:
         response1 = client.get(f"/?fecha={dia_sin_movs}")
         response2 = client.get(f"/?fecha={Dia.tomar(fecha=fecha_tardia)}")
         assert response1.context["dias"].number == response2.context["dias"].number
+
+    def test_si_recibe_querydict_con_fecha_redirige_a_vista_de_detalle_de_movimiento_con_ultimo_movimiento_de_la_fecha(
+            self, mas_de_7_dias, client):
+        dia = mas_de_7_dias.last()
+        mov = dia.movimientos.last()
+        response = client.get(f"/?fecha={dia.fecha}")
+        asserts.assertRedirects(
+            response, reverse("movimiento", args=[mov.pk]) + f"?fecha={dia.fecha}&redirected=1"
+        )
