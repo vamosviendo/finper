@@ -256,23 +256,10 @@ class TestDetalleMovimiento:
 class TestBusquedaFecha:
     def test_si_recibe_querydict_con_fecha_busca_pagina_con_la_fecha_recibida(
             self, muchos_dias, dia, client):
-        response = client.get(f"/?fecha={str(dia)}")
+        response = client.get(f"/?fecha={str(dia)}", follow=True)
         assert \
             response.context["dias"].number == \
             (Dia.con_movimientos().filter(fecha__gt=dia.fecha).count() // 7) + 1
-
-    def test_si_la_fecha_recibida_en_el_querydict_no_corresponde_a_un_dia_existente_muestra_pagina_con_dias_adyacentes(
-            self, muchos_dias, client):
-        response1 = client.get("/?fecha=2011-04-21")
-        response2 = client.get("/?fecha=2011-05-01")
-        assert response1.context["dias"].number == response2.context["dias"].number
-
-    def test_si_la_fecha_recibida_en_el_querydict_corresponde_a_un_dia_sin_movimientos_muestra_pagina_con_dias_adyacentes(
-            self, muchos_dias, fecha_tardia, client):
-        dia_sin_movs = Dia.tomar(fecha=fecha_tardia - timedelta(1))
-        response1 = client.get(f"/?fecha={dia_sin_movs}")
-        response2 = client.get(f"/?fecha={Dia.tomar(fecha=fecha_tardia)}")
-        assert response1.context["dias"].number == response2.context["dias"].number
 
     def test_si_recibe_querydict_con_fecha_redirige_a_vista_de_detalle_de_movimiento_con_ultimo_movimiento_de_la_fecha(
             self, mas_de_7_dias, client):
@@ -280,5 +267,45 @@ class TestBusquedaFecha:
         mov = dia.movimientos.last()
         response = client.get(f"/?fecha={dia.fecha}")
         asserts.assertRedirects(
-            response, reverse("movimiento", args=[mov.pk]) + f"?fecha={dia.fecha}&redirected=1"
+            response,
+            reverse("movimiento", args=[mov.pk]) + f"?fecha={dia.fecha}&redirected=1"
         )
+
+    def test_si_la_fecha_recibida_en_el_querydict_no_corresponde_a_un_dia_existente_muestra_pagina_con_dias_adyacentes(
+            self, muchos_dias, client):
+        response1 = client.get("/?fecha=2011-04-21", follow=True)
+        response2 = client.get("/?fecha=2011-05-01", follow=True)
+        assert response1.context["dias"].number == response2.context["dias"].number
+
+    def test_si_la_fecha_recibida_en_el_querydict_no_corresponde_a_un_dia_existente_selecciona_movimiento_de_ultimo_dia_anterior(
+            self, mas_de_7_dias, client):
+        dia = mas_de_7_dias.last()
+        mov = dia.movimientos.last()
+        fecha = dia.fecha + timedelta(1)
+        response = client.get(f"/?fecha={fecha}")
+        asserts.assertRedirects(
+            response,
+            reverse("movimiento", args=[mov.pk]) + f"?fecha={fecha}&redirected=1"
+        )
+
+    def test_si_la_fecha_recibida_en_el_qerydict_corresponde_a_un_dia_sin_movimientos_selecciona_ultimo_movimiento_de_dia_anterior_con_movimientos(
+            self, mas_de_7_dias, client):
+        dia_anterior = mas_de_7_dias.last()
+        assert dia_anterior.movimientos.count() > 0
+        mov = dia_anterior.movimientos.last()
+
+        dia_sin_movs = Dia.crear(fecha=dia_anterior.fecha + timedelta(1))
+        fecha = dia_sin_movs.fecha
+        response = client.get(f"/?fecha={fecha}")
+        asserts.assertRedirects(
+            response,
+            reverse("movimiento", args=[mov.pk]) + f"?fecha={fecha}&redirected=1"
+        )
+
+    def test_si_la_fecha_recibida_en_el_querydict_corresponde_a_un_dia_sin_movimientos_muestra_pagina_con_dias_adyacentes(
+            self, muchos_dias, fecha_tardia, client):
+        dia_sin_movs = Dia.tomar(fecha=fecha_tardia - timedelta(1))
+        print(dia_sin_movs)
+        response1 = client.get(f"/?fecha={dia_sin_movs.fecha}", follow=True)
+        response2 = client.get(f"/?fecha={Dia.tomar(fecha=fecha_tardia)}", follow=True)
+        assert response1.context["dias"].number == response2.context["dias"].number

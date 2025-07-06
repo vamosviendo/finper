@@ -33,12 +33,17 @@ class HomeView(TemplateView):
     def get(self, request, *args, **kwargs):
         fecha = request.GET.get("fecha")
         redirected = request.GET.get("redirected") == "1"
+
         if fecha is not None and not redirected:
-            dia = Dia.tomar(fecha=fecha)
+            dia = Dia.filtro(fecha__lte=fecha).last()
             mov = dia.movimientos.last()
+            while mov is None:
+                dia = dia.anterior()
+                mov = dia.movimientos.last()
             return redirect(
                 reverse("movimiento", args=[mov.pk]) + f"?fecha={fecha}&redirected=1",
             )
+
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
