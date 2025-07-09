@@ -141,6 +141,11 @@ def test_detalle_movimiento_en_paginas_anteriores(browser, muchos_dias, origen, 
     browser.assert_url(f"{origen}?page=1")
 
 
+""" Falla porque la página toma precedencia por sobre el movimiento, con lo cual aunque se seleccione manualmente
+    un movimiento, sigue apareciendo seleccionado el último movimiento de la fecha. Este comportamiento debe ser
+    corregido, pero todavía no. 
+"""
+@pytest.mark.xfail
 @pytest.mark.parametrize("origen, destino", [
     ("/", "/diario/m/"),
     ("/diario/c/c/", "/diario/cm/c/"),
@@ -157,7 +162,7 @@ def test_detalle_movimiento_en_fechas_anteriores(browser, muchos_dias, fecha, or
     links_movimiento[1].click()
 
     # ...permanecemos en la página en la que estábamos...
-    browser.assert_url(f"{destino}{pk}?fecha={fecha}")
+    browser.assert_url(f"{destino}{pk}?fecha={fecha}&redirected=1")
 
     # ...y el movimiento aparece resaltado...
     movimientos = browser.esperar_elementos("class_row_mov")

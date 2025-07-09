@@ -404,6 +404,8 @@ def test_busqueda_de_fecha_en_detalle_de_cuenta(browser, cuenta, cuenta_2, mucho
     # Dia adyacente a dia sin movimientos de la cuenta (el día no debería aparecer en la página):
     dias_no_cuenta = [x for x in Dia.todes() if x not in cuenta.dias()]
     dia_no_cuenta = dias_no_cuenta[7]
+    dia_anterior_cuenta = cuenta.dias().filter(fecha__lt=dia_no_cuenta.fecha).last()
+    mov_cuenta_dia_anterior = cuenta.movs().filter(dia=dia_anterior_cuenta).last()
     # Movimiento de dia2 pero de otra cuenta (no debería aparecer en día2)
     mov_cuenta_dia2 = Movimiento.tomar(dia=dia2)
     mov_no_cuenta_dia2 = Movimiento.crear(
@@ -414,8 +416,12 @@ def test_busqueda_de_fecha_en_detalle_de_cuenta(browser, cuenta, cuenta_2, mucho
     browser.completar_form(boton="id_btn_buscar_dia_init", input_dia_init=dia.fecha)
 
     # El url de la página de destino corresponde a la cuenta e incluye un querystring
-    # con la fecha ingresada
-    browser.assert_url(reverse("cuenta", args=[cuenta.sk]) + f"?fecha={dia.fecha}")
+    # con la fecha ingresada. El último movimiento del titular del día de la fecha
+    # aparece seleccionado.
+    mov = dia.movimientos.last()
+    browser.assert_url(
+        reverse("cuenta_movimiento", args=[cuenta.sk, mov.pk]) + f"?fecha={dia.fecha}&redirected=1"
+    )
 
     # En la página se muestran solamente los días con movimientos de la cuenta.
     # No se muestran los demás días.
@@ -436,3 +442,14 @@ def test_busqueda_de_fecha_en_detalle_de_cuenta(browser, cuenta, cuenta_2, mucho
     ]
     assert str(mov_cuenta_dia2.orden_dia) in ordenes_dia_movs_dia
     assert str(mov_no_cuenta_dia2.orden_dia) not in ordenes_dia_movs_dia
+
+    # Si la fecha corresponde a un día sin movimientos del titular, se muestra
+    # la página que incluye al día anterior con movimientos del titular, con
+    # el último movimiento del día seleccionado.
+    browser.ir_a_pag(reverse("cuenta", args=[cuenta.sk]))
+    browser.completar_form(boton="id_btn_buscar_dia_init", input_dia_init=dia_no_cuenta.fecha)
+    browser.assert_url(
+        reverse(
+            "cuenta_movimiento",
+            args=[cuenta.sk, mov_cuenta_dia_anterior.pk]) + f"?fecha={dia_anterior_cuenta.fecha}&redirected=1"
+    )

@@ -165,6 +165,8 @@ def test_busqueda_de_fecha_en_detalle_de_titular(browser, titular, cuenta_ajena,
     # Dia adyacente a dia sin movimientos de cuentas del titular (el día no debería aparecer en la página):
     dias_no_titular = [x for x in Dia.todes() if x not in titular.dias()]
     dia_no_titular = dias_no_titular[7]
+    dia_anterior_titular = titular.dias().filter(fecha__lt=dia_no_titular.fecha).last()
+    mov_titular_dia_anterior = titular.movs().filter(dia=dia_anterior_titular).last()
     # Movimiento de dia2 pero de una cuenta de otro titular (no debería aparecer en día2)
     mov_titular_dia2 = Movimiento.tomar(dia=dia2)
     mov_no_titular_dia2 = Movimiento.crear(
@@ -175,8 +177,12 @@ def test_busqueda_de_fecha_en_detalle_de_titular(browser, titular, cuenta_ajena,
     browser.completar_form(boton="id_btn_buscar_dia_init", input_dia_init=dia.fecha)
 
     # El url de la página de destino corresponde al titular e incluye un querystring
-    # con la fecha ingresada
-    browser.assert_url(reverse("titular", args=[titular.sk]) + f"?fecha={dia.fecha}")
+    # con la fecha ingresada. El último movimiento del titular del día de la fecha
+    # aparece seleccionado.
+    mov = dia.movimientos.last()
+    browser.assert_url(
+        reverse("titular_movimiento", args=[titular.sk, mov.pk]) + f"?fecha={dia.fecha}&redirected=1"
+    )
 
     # En la página se muestran solamente los días con movimientos de la cuenta.
     # No se muestran los demás días.
@@ -197,3 +203,14 @@ def test_busqueda_de_fecha_en_detalle_de_titular(browser, titular, cuenta_ajena,
     ]
     assert str(mov_titular_dia2.orden_dia) in ordenes_dia_movs_dia
     assert str(mov_no_titular_dia2.orden_dia) not in ordenes_dia_movs_dia
+
+    # Si la fecha corresponde a un día sin movimientos del titular, se muestra
+    # la página que incluye al día anterior con movimientos del titular, con
+    # el último movimiento del día seleccionado.
+    browser.ir_a_pag(reverse("titular", args=[titular.sk]))
+    browser.completar_form(boton="id_btn_buscar_dia_init", input_dia_init=dia_no_titular.fecha)
+    browser.assert_url(
+        reverse(
+            "titular_movimiento",
+            args=[titular.sk, mov_titular_dia_anterior.pk]) + f"?fecha={dia_anterior_titular.fecha}&redirected=1"
+    )

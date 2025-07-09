@@ -35,15 +35,41 @@ class HomeView(TemplateView):
         redirected = request.GET.get("redirected") == "1"
 
         if fecha is not None and not redirected:
-            dia = Dia.filtro(fecha__lte=fecha).last()
-            mov = dia.movimientos.last()
+            resolver_match = request.resolver_match
+            viewname = resolver_match.url_name
+
+            if viewname in ["cuenta", "cuenta_movimiento"]:
+                sk = resolver_match.kwargs.get("sk_cta")
+                cuenta = Cuenta.tomar(sk=sk)
+                dias = cuenta.dias()
+                prefijo = "cuenta_"
+                args = [sk]
+                ente = cuenta
+            elif viewname in ["titular", "titular_movimiento"]:
+                sk = resolver_match.kwargs.get("sk")
+                titular = Titular.tomar(sk=sk)
+                dias = titular.dias()
+                prefijo = "titular_"
+                args = [sk]
+                ente = titular
+            else:
+                dias = Dia.con_movimientos()
+                prefijo = ""
+                args = []
+                ente = None
+
+            dia = dias.filter(fecha__lte=fecha).last()
+            movs = ente.movs().filter(dia=dia) if ente else dia.movimientos    # TODO: extraer
+            mov = movs.last()
             while mov is None:
                 dia = dia.anterior()
-                mov = dia.movimientos.last()
-            return redirect(
-                reverse("movimiento", args=[mov.pk]) + f"?fecha={fecha}&redirected=1",
-            )
+                movs = ente.movs().filter(dia=dia) if ente else dia.movimientos     # TODO extraer
+                mov = movs.last()
+            args += [mov.pk]
 
+            return redirect(
+                reverse(f"{prefijo}movimiento", args=args) + f"?fecha={dia.fecha}&redirected=1",
+            )
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
