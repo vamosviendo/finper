@@ -105,5 +105,7 @@ class Dia (MiModel):
         except AttributeError:  # self.anterior() == None
             return 0
 
-    def anterior(self) -> Self:
+    def anterior(self, ente: Cuenta | Titular | None = None) -> Self:
+        if ente:
+            return ente.dias().filter(fecha__lt=self.fecha).last()
         return self.__class__.filtro(fecha__lt=self.fecha).last()
