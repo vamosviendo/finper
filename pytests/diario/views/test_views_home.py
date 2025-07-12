@@ -4,6 +4,7 @@ import pytest
 from django.template.response import TemplateResponse
 from django.urls import reverse
 from pytest_django import asserts
+from pytest_django.asserts import assertRedirects
 
 from diario.models import Dia, Movimiento
 from diario.settings_app import TEMPLATE_HOME
@@ -271,6 +272,17 @@ class TestBusquedaFecha:
             reverse("movimiento", args=[mov.pk]) + f"?fecha={dia.fecha}&redirected=1"
         )
 
+    def test_si_recibe_querydict_con_fecha_en_vista_de_movimiento_distinto_al_ultimo_de_la_fecha_redirige_a_vista_de_movimiento_con_movimiento_recibido(
+            self, mas_de_7_dias, client):
+        dia = mas_de_7_dias.last()
+        mov = dia.movimientos.last()
+        Movimiento.crear("Último movimiento", importe=100, cta_entrada=mov.cta_entrada, dia=dia)
+        response = client.get(f"/diario/m/{mov.pk}?fecha={dia.fecha}")
+        asserts.assertRedirects(
+            response,
+            reverse("movimiento", args=[mov.pk]) + f"?fecha={dia.fecha}&redirected=1"
+        )
+
     @pytest.mark.parametrize("origen", ["titular", "cuenta"])
     def test_si_recibe_querydict_con_fecha_en_vista_de_titular_o_cuenta_redirige_a_vista_de_detalle_de_movimiento_en_titular_o_cuenta(
             self, origen, mas_de_7_dias, client, request):
@@ -284,14 +296,14 @@ class TestBusquedaFecha:
         )
 
     @pytest.mark.parametrize("origen", ["titular", "cuenta"])
-    def test_si_recibe_querydict_con_fecha_en_vista_de_titular_o_cuenta_con_movimiento_seleccionado_redirige_a_vista_de_detalle_de_movimiento_en_titular_o_cuenta(
+    def test_si_recibe_querydict_con_fecha_en_vista_de_titular_o_cuenta_con_movimiento_seleccionado_redirige_a_vista_de_detalle_de_movimiento_en_titular_o_cuenta_con_movimiento_recibido(
             self, origen, mas_de_7_dias, client, request):
         ente = request.getfixturevalue(origen)
-        mov_origen = mas_de_7_dias.first().movimientos.first()
         dia = mas_de_7_dias.last()
         mov = dia.movimientos.last()
+        Movimiento.crear("Último movimiento", importe=100, cta_entrada=mov.cta_entrada, dia=dia)
         response = client.get(
-            reverse(f"{origen}_movimiento", args=[ente.sk, mov_origen.pk]) + f"?fecha={dia.fecha}"
+            reverse(f"{origen}_movimiento", args=[ente.sk, mov.pk]) + f"?fecha={dia.fecha}"
         )
         asserts.assertRedirects(
             response,

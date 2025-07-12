@@ -86,6 +86,7 @@ class TestFinperUrl:
         context = get_request_context("titular_movimiento", titular=titular, movimiento=mov, dias=mas_de_7_dias[:6])
         assert finperurl(context) == reverse("titular", args=[titular.sk])
 
+    @pytest.mark.xfail
     def test_si_no_recibe_dias_da_valueerror(self):
         pytest.fail("escribir")
 

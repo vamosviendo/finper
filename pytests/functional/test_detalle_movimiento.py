@@ -145,7 +145,6 @@ def test_detalle_movimiento_en_paginas_anteriores(browser, muchos_dias, origen, 
     un movimiento, sigue apareciendo seleccionado el último movimiento de la fecha. Este comportamiento debe ser
     corregido, pero todavía no. 
 """
-@pytest.mark.xfail
 @pytest.mark.parametrize("origen, destino", [
     ("/", "/diario/m/"),
     ("/diario/c/c/", "/diario/cm/c/"),

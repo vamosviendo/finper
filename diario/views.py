@@ -16,6 +16,51 @@ from diario.models import Cuenta, CuentaInteractiva, CuentaAcumulativa, Dia, \
 from diario.settings_app import TEMPLATE_HOME
 from diario.utils.utils_saldo import saldo_general_historico, verificar_saldos
 
+"""
+/?fecha                     -> /diario/m/<umf>.pk?fecha         -> /diario/m/<umf>.pk?page=<pag fecha>
+/diario/t/t.sk/?fecha       -> /diario/tm/t.sk/<umf>.pk?fecha   -> /diario/tm/t.sk/<umf>.pk?page=<pag fecha>
+/diario/c/c.sk/?fecha       -> /diario/cm/c.sk/<umf>.pk?fecha   -> /diario/cm/c.sk/<umf>.pk?page=<pag fecha>
+/diario/m/m.pk?fecha        -> /diario/m/m.pk?fecha             -> /diario/m/m.pk?page=<pag fecha>
+/diario/tm/t.sk/m.pk?fecha  -> /diario/tm/t.sk/m.pk?fecha       -> /diario/tm/t.sk/m.pk?page=<pag fecha>
+/diario/cm/c.sk/m.pk?fecha  -> /diario/cm/c.sk/m.pk?fecha       -> ...
+/?page                      -> /diario/m/<ump>.pk?page
+/diario/t/t.sk/?page        -> /diario/tm/t.sk/<ump>.pk?page
+/diario/c/c.sk/?page        -> /diario/cm/c.sk/<ump>.pk?page
+/diario/m/m.pk?page         -> /diario/m/m.pk?page
+/diario/tm/t.sk/m.pk?page   -> /diario/tm/t.sk/m.pk?page
+/diario/cm/c.sk/m.pk?page   -> /diario/cm/c.sk/m.pk?page
+
+Si m no está en la página de la fecha:
+/diario/m/m.pk?fecha        -> /diario/m/<umf>.pk?fecha         -> /diario/m/<umf>.pk?page=<pag fecha>
+/diario/tm/t.sk/m.pḱ?fecha  -> /diario/tm/t.sk/<umf>.pk?fecha   -> /diario/tm/t.sk/<umf>.pk?page=<pag fecha>
+/diario/cm/c.sk/m.pḱ?fecha  -> /diario/cm/c.sk/<umf>.pk?fecha   -> /diario/cm/c.sk/<umf>.pk?page=<pag fecha>
+
+Si m no está en la página señalada en page:
+/diario/m/m.pk?page         -> /diario/m/<ump>.pk?page
+/diario/tm/t.sk/m.pk?page   -> /diario/tm/t.sk/<ump>.pk?page
+/diario/cm/c.sk/m.pk?page   -> /diario/cm/c.sk/<ump>.pk?page
+
+Si m está en la página pero no corresponde a titular o cuenta:
+/diario/tm/t.sk/m.pk?fecha  -> /diario/tm/t.sk/<ma>.pk?fecha    -> /diario/tm/t.sk/<ma>.pk?page=<pag fecha>          
+/diario/cm/c.sk/m.pk?fecha  -> /diario/cm/c.sk/<ma>.pk?fecha    -> /diario/cm/c.sk/<ma>.pk?page=<pag fecha>
+/diario/tm/t.sk/m.pk?page   -> /diario/tm/t.sk/<ma>.pk?page          
+/diario/cm/c.sk/m.pk?page   -> /diario/cm/c.sk/<ma>.pk?page          
+
+Si m está en la página pero no corresponde a titular o cuenta y no hay movimiento anterior del titular o cuenta
+en la página
+/diario/tm/t.sk/m.pk?fecha  -> /diario/t/t.sk/?fecha            -> /diario/t/t.sk/?page=<pag fecha>
+/diario/cm/c.sk/m.pk?fecha  -> /diario/c/c.sk/?fecha            -> /diario/c/c.sk/?page=<pag fecha>
+/diario/tm/t.sk/m.pk?page   -> /diario/t/t.sk/?page
+/diario/cm/c.sk/m.pk?page   -> /diario/c/c.sk/?page
+
+<umf>: último movimiento de la fecha. En caso de que haya un titular o una cuenta, último movimiento de
+    la fecha del titular o la cuenta.
+<ump>: ídem <umf>, pero último movimiento de la página.
+<pag fecha>: página en la que se encuentra la fecha.
+<ma>: Movimiento anterior de la fecha correspondiente al titular o cuenta. Si no hay movimiento anterior en la fecha, 
+    último movimiento de fechas anteriores correspondiente al titular o cuenta.
+"""
+
 
 class HomeView(TemplateView):
     template_name = TEMPLATE_HOME
@@ -38,14 +83,14 @@ class HomeView(TemplateView):
             resolver_match = request.resolver_match
             viewname = resolver_match.url_name
 
-            if viewname in ["cuenta", "cuenta_movimiento"]:
+            if "cuenta" in viewname:
                 sk = resolver_match.kwargs.get("sk_cta")
                 cuenta = Cuenta.tomar(sk=sk)
                 dias = cuenta.dias()
                 prefijo = "cuenta_"
                 args = [sk]
                 ente = cuenta
-            elif viewname in ["titular", "titular_movimiento"]:
+            elif "titular" in viewname:
                 sk = resolver_match.kwargs.get("sk")
                 titular = Titular.tomar(sk=sk)
                 dias = titular.dias()
@@ -59,13 +104,17 @@ class HomeView(TemplateView):
                 ente = None
 
             dia = dias.filter(fecha__lte=fecha).last()
-            movs = ente.movs().filter(dia=dia) if ente else dia.movimientos    # TODO: extraer
-            mov = movs.last()
-            while mov is None:
-                dia = dia.anterior()
-                movs = ente.movs().filter(dia=dia) if ente else dia.movimientos     # TODO extraer
+            if "movimiento" in viewname:
+                pk = resolver_match.kwargs.get("pk")
+                args += [pk]
+            else:
+                movs = ente.movs().filter(dia=dia) if ente else dia.movimientos    # TODO: extraer
                 mov = movs.last()
-            args += [mov.pk]
+                while mov is None:
+                    dia = dia.anterior()
+                    movs = ente.movs().filter(dia=dia) if ente else dia.movimientos     # TODO extraer
+                    mov = movs.last()
+                args += [mov.pk]
 
             return redirect(
                 reverse(f"{prefijo}movimiento", args=args) + f"?fecha={dia.fecha}&redirected=1",
