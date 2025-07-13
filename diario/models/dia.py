@@ -87,8 +87,7 @@ class Dia (MiModel):
         except Dia.DoesNotExist:
             return Dia.crear(fecha=self.fecha+timedelta(cantidad))
 
-    def movimientos_filtrados(
-            self, ente: Cuenta | Titular | None = None) -> models.QuerySet['Movimiento']:
+    def movs(self, ente: Cuenta | Titular | None = None) -> models.QuerySet['Movimiento']:
         if ente:
             return ente.movs().filter(dia=self)
         return self.movimientos

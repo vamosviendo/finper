@@ -10,4 +10,4 @@ register = template.Library()
 
 @register.filter
 def movs_seleccionados(dia: Dia, ente: Cuenta | Titular | None) -> QuerySet[Movimiento]:
-    return dia.movimientos_filtrados(ente)
+    return dia.movs(ente)

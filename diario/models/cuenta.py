@@ -130,7 +130,7 @@ class Cuenta(PolymorphModel):
             return None
 
     def saldo_en_mov(self, movimiento: Movimiento) -> float:
-        movs_dia = movimiento.dia.movimientos_filtrados(self)
+        movs_dia = movimiento.dia.movs(self)
         movs_posteriores = movs_dia.filter(orden_dia__gt=movimiento.orden_dia)
         suma_importes_posteriores = sum(x.importe_cta(self.sentido_en_mov(x)) for x in movs_posteriores)
         saldo_diario = SaldoDiario.filtro(cuenta=self, dia__fecha__lte=movimiento.dia.fecha).last()

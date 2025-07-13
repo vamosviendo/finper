@@ -109,7 +109,7 @@ class FinperFirefox(MiFirefox):
             dia_db: Dia,
             ente: Cuenta | Titular | None = None):
         movs_dia_web = dia_web.esperar_elementos("class_row_mov")
-        movs_dia_db = dia_db.movimientos_filtrados(ente)
+        movs_dia_db = dia_db.movs(ente)
         assert len(movs_dia_web) == movs_dia_db.count()
 
         for j, mov in enumerate(movs_dia_db):

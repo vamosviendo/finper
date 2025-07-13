@@ -108,11 +108,11 @@ class HomeView(TemplateView):
                 pk = resolver_match.kwargs.get("pk")
                 args += [pk]
             else:
-                movs = ente.movs().filter(dia=dia) if ente else dia.movimientos    # TODO: extraer
+                movs = dia.movs(ente=ente)
                 mov = movs.last()
                 while mov is None:
                     dia = dia.anterior()
-                    movs = ente.movs().filter(dia=dia) if ente else dia.movimientos     # TODO extraer
+                    movs = dia.movs(ente=ente)
                     mov = movs.last()
                 args += [mov.pk]
 
