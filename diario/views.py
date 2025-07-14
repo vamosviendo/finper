@@ -85,23 +85,21 @@ class HomeView(TemplateView):
 
             if "cuenta" in viewname:
                 sk = resolver_match.kwargs.get("sk_cta")
-                cuenta = Cuenta.tomar(sk=sk)
-                dias = cuenta.dias()
+                ente = Cuenta.tomar(sk=sk)
+                dias = ente.dias()
                 prefijo = "cuenta_"
                 args = [sk]
-                ente = cuenta
             elif "titular" in viewname:
                 sk = resolver_match.kwargs.get("sk")
-                titular = Titular.tomar(sk=sk)
-                dias = titular.dias()
+                ente = Titular.tomar(sk=sk)
+                dias = ente.dias()
                 prefijo = "titular_"
                 args = [sk]
-                ente = titular
             else:
+                ente = None
                 dias = Dia.con_movimientos()
                 prefijo = ""
                 args = []
-                ente = None
 
             dia = dias.filter(fecha__lte=fecha).last()
             if "movimiento" in viewname:
