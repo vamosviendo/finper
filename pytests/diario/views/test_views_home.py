@@ -355,6 +355,30 @@ class TestBusquedaFecha:
             reverse("movimiento", args=[mov.pk]) + f"?fecha={dia_anterior.fecha}&redirected=1"
         )
 
+    @pytest.mark.parametrize("origen", [None, "titular", "cuenta"])
+    def test_si_la_fecha_recibida_en_el_querydict_es_anterior_a_todos_los_dias_con_movimientos_muestra_pagina_con_el_primer_dia_con_movimientos_con_el_ultimo_movimiento_seleccionado(
+            self, mas_de_7_dias, client, origen, request):
+        if origen:
+            ente = request.getfixturevalue(origen)
+            prefijo = f"{origen}_"
+            args=[ente.sk]
+            url_origen = reverse(origen, args=args)
+        else:
+            ente = None
+            prefijo = ""
+            args = []
+            url_origen = reverse("home")
+
+        dia = mas_de_7_dias.first()
+        assert dia.movs().count() > 0, f"Error en planteo del test. Día {dia} no tiene movimientos"
+        mov = dia.movs(ente=ente).last()
+
+        response = client.get(f"{url_origen}?fecha={dia.fecha - timedelta(1)}")
+        asserts.assertRedirects(
+            response,
+            reverse(f"{prefijo}movimiento", args=args+[mov.pk]) + f"?fecha={dia.fecha}&redirected=1"
+        )
+
     @pytest.mark.parametrize("origen", ["titular", "cuenta"])
     def test_si_la_fecha_recibida_en_el_querydict_en_vista_de_titular_o_cuenta_corresponde_a_un_dia_sin_movimientos_de_titular_o_cuenta_muestra_pagina_con_dia_anterior_con_movimientos_de_titular_o_cuenta(
             self, origen, mas_de_7_dias, cuenta_ajena, client, request):

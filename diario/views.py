@@ -102,6 +102,9 @@ class HomeView(TemplateView):
                 args = []
 
             dia = dias.filter(fecha__lte=fecha).last()
+            if dia is None:     # fecha es anterior a todos los días con movimientos
+                dia = dias.first()
+
             if "movimiento" in viewname:
                 pk = resolver_match.kwargs.get("pk")
                 args += [pk]
