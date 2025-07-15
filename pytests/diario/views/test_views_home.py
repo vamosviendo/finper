@@ -255,8 +255,10 @@ class TestDetalleMovimiento:
 
 
 class TestBusquedaFecha:
+
     def test_si_recibe_querydict_con_fecha_busca_pagina_con_la_fecha_recibida(
-            self, muchos_dias, dia, client):
+            self, mas_de_7_dias, client):
+        dia = mas_de_7_dias.first()
         response = client.get(f"/?fecha={str(dia)}", follow=True)
         assert \
             response.context["dias"].number == \
@@ -264,7 +266,7 @@ class TestBusquedaFecha:
 
     def test_si_recibe_querydict_con_fecha_redirige_a_vista_de_detalle_de_movimiento_con_ultimo_movimiento_de_la_fecha(
             self, mas_de_7_dias, client):
-        dia = mas_de_7_dias.last()
+        dia = mas_de_7_dias.first()
         mov = dia.movimientos.last()
         response = client.get(f"/?fecha={dia.fecha}")
         asserts.assertRedirects(
@@ -274,7 +276,7 @@ class TestBusquedaFecha:
 
     def test_si_recibe_querydict_con_fecha_en_vista_de_movimiento_distinto_al_ultimo_de_la_fecha_redirige_a_vista_de_movimiento_con_movimiento_recibido(
             self, mas_de_7_dias, client):
-        dia = mas_de_7_dias.last()
+        dia = mas_de_7_dias.first()
         mov = dia.movimientos.last()
         Movimiento.crear("Último movimiento", importe=100, cta_entrada=mov.cta_entrada, dia=dia)
         response = client.get(f"/diario/m/{mov.pk}?fecha={dia.fecha}")
@@ -286,8 +288,10 @@ class TestBusquedaFecha:
     @pytest.mark.parametrize("origen", ["titular", "cuenta"])
     def test_si_recibe_querydict_con_fecha_en_vista_de_titular_o_cuenta_redirige_a_vista_de_detalle_de_movimiento_en_titular_o_cuenta(
             self, origen, mas_de_7_dias, client, request):
+        # TODO: Escribir tests para el caso específico en el que se pasa una fecha anterior a todos los
+        #       movimientos de una cuenta, titular o en general.
         ente = request.getfixturevalue(origen)
-        dia = mas_de_7_dias.last()
+        dia = mas_de_7_dias.first()
         mov = dia.movimientos.last()
         response = client.get(reverse(origen, args=[ente.sk]) + f"?fecha={dia.fecha}")
         asserts.assertRedirects(
@@ -299,7 +303,7 @@ class TestBusquedaFecha:
     def test_si_recibe_querydict_con_fecha_en_vista_de_titular_o_cuenta_con_movimiento_seleccionado_redirige_a_vista_de_detalle_de_movimiento_en_titular_o_cuenta_con_movimiento_recibido(
             self, origen, mas_de_7_dias, client, request):
         ente = request.getfixturevalue(origen)
-        dia = mas_de_7_dias.last()
+        dia = mas_de_7_dias.first()
         mov = dia.movimientos.last()
         Movimiento.crear("Último movimiento", importe=100, cta_entrada=mov.cta_entrada, dia=dia)
         response = client.get(
@@ -310,15 +314,17 @@ class TestBusquedaFecha:
             reverse(f"{origen}_movimiento", args=[ente.sk, mov.pk]) + f"?fecha={dia.fecha}&redirected=1"
         )
 
-    def test_si_la_fecha_recibida_en_el_querydict_no_corresponde_a_un_dia_existente_muestra_pagina_con_dias_adyacentes(
-            self, muchos_dias, client):
-        response1 = client.get("/?fecha=2011-04-21", follow=True)
-        response2 = client.get("/?fecha=2011-05-01", follow=True)
+    def test_si_la_fecha_recibida_en_el_querydict_no_corresponde_a_un_dia_existente_muestra_pagina_con_dia_anterior(
+            self, mas_de_7_dias, client):
+        dia = mas_de_7_dias.first()
+        fecha_inexistente = dia.fecha + timedelta(1)
+        response1 = client.get(f"/?fecha={dia.fecha}", follow=True)
+        response2 = client.get(f"/?fecha={fecha_inexistente}", follow=True)
         assert response1.context["dias"].number == response2.context["dias"].number
 
     def test_si_la_fecha_recibida_en_el_querydict_no_corresponde_a_un_dia_existente_selecciona_movimiento_de_ultimo_dia_anterior(
             self, mas_de_7_dias, client):
-        dia = mas_de_7_dias.last()
+        dia = mas_de_7_dias.first()
         mov = dia.movimientos.last()
         fecha = dia.fecha + timedelta(1)
         response = client.get(f"/?fecha={fecha}")
@@ -327,17 +333,17 @@ class TestBusquedaFecha:
             reverse("movimiento", args=[mov.pk]) + f"?fecha={dia.fecha}&redirected=1"
         )
 
-    def test_si_la_fecha_recibida_en_el_querydict_corresponde_a_un_dia_sin_movimientos_muestra_pagina_con_dias_adyacentes(
-            self, muchos_dias, fecha_tardia, client):
-        dia_sin_movs = Dia.tomar(fecha=fecha_tardia - timedelta(1))
-        print(dia_sin_movs)
+    def test_si_la_fecha_recibida_en_el_querydict_corresponde_a_un_dia_sin_movimientos_muestra_pagina_con_dia_con_movimientos_anterior(
+            self, mas_de_7_dias, fecha_tardia, client):
+        dia = mas_de_7_dias.first()
+        dia_sin_movs = Dia.crear(fecha=dia.fecha + timedelta(1))
         response1 = client.get(f"/?fecha={dia_sin_movs.fecha}", follow=True)
-        response2 = client.get(f"/?fecha={Dia.tomar(fecha=fecha_tardia)}", follow=True)
+        response2 = client.get(f"/?fecha={dia.fecha}", follow=True)
         assert response1.context["dias"].number == response2.context["dias"].number
 
     def test_si_la_fecha_recibida_en_el_querydict_corresponde_a_un_dia_sin_movimientos_selecciona_ultimo_movimiento_de_dia_anterior_con_movimientos(
             self, mas_de_7_dias, client):
-        dia_anterior = mas_de_7_dias.last()
+        dia_anterior = mas_de_7_dias.first()
         assert dia_anterior.movimientos.count() > 0
         mov = dia_anterior.movimientos.last()
 
@@ -353,7 +359,7 @@ class TestBusquedaFecha:
     def test_si_la_fecha_recibida_en_el_querydict_en_vista_de_titular_o_cuenta_corresponde_a_un_dia_sin_movimientos_de_titular_o_cuenta_muestra_pagina_con_dia_anterior_con_movimientos_de_titular_o_cuenta(
             self, origen, mas_de_7_dias, cuenta_ajena, client, request):
         ente = request.getfixturevalue(origen)
-        dia_anterior = mas_de_7_dias.last()
+        dia_anterior = mas_de_7_dias.first()
         mov_dia_anterior = dia_anterior.movimientos.last()
 
         fecha_sin_movs_de_ente = dia_anterior.fecha + timedelta(1)

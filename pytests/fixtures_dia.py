@@ -82,11 +82,11 @@ def mas_de_7_dias(
         dia_tardio_plus: Dia,
         dia_hoy: Dia,
         fecha_inicial: date) -> QuerySet[Dia]:
-    Movimiento.crear(fecha=dia_temprano.fecha, concepto="mov", cta_entrada=cuenta, importe=100)
-    Movimiento.crear(fecha=dia_tardio_plus.fecha, concepto="mov", cta_entrada=cuenta_2, importe=100)
-    Movimiento.crear(fecha=dia_hoy.fecha, concepto="mov", cta_entrada=cuenta, importe=100)
+    Movimiento.crear(fecha=dia_temprano.fecha, concepto="mov", cta_entrada=cuenta_2, importe=100)
+    Movimiento.crear(fecha=dia_tardio_plus.fecha, concepto="mov", cta_entrada=cuenta, importe=100)
+    Movimiento.crear(fecha=dia_hoy.fecha, concepto="mov", cta_entrada=cuenta_2, importe=100)
     Movimiento.crear(
-        fecha=date(2001, 1, 2), concepto="mov", cta_entrada=cuenta_2, importe=100)
+        fecha=date(2001, 1, 2), concepto="mov", cta_entrada=cuenta, importe=100)
     return Dia.todes()
 
 
