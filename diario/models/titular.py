@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Self, Optional, Any
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import QuerySet, Q
+from django.urls import reverse
 from django.utils import timezone
 
 from vvmodel.models import MiModel
@@ -33,6 +34,18 @@ class Titular(MiModel):
 
     objects = TitularManager()
     form_fields = ('sk', 'nombre', 'fecha_alta', )
+
+    def get_absolute_url(self) -> str:
+        return reverse("titular", args=[self.sk])
+
+    def get_edit_url(self) -> str:
+        return reverse("tit_mod", args=[self.sk])
+
+    def get_delete_url(self) -> str:
+        return reverse("tit_elim", args=[self.sk])
+
+    def get_url_with_mov(self, mov: Movimiento) -> str:
+        return reverse("titular_movimiento", args=[self.sk, mov.pk])
 
     def natural_key(self) -> tuple[str]:
         return (self.sk, )

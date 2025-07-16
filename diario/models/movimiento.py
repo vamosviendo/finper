@@ -6,6 +6,7 @@ from datetime import date
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import QuerySet
+from django.urls import reverse
 from django_ordered_field import OrderedCollectionField
 
 from vvmodel.models import MiModel
@@ -187,8 +188,6 @@ class Movimiento(MiModel):
     )
     es_automatico = models.BooleanField(default=False)
 
-    movimiento_set: models.Manager["Saldo"]     # related name para Saldo.movimiento
-
     objects = MovimientoManager()
     form_fields = (
         "fecha", "concepto", "detalle", "cotizacion", "importe", "cta_entrada", "cta_salida", "moneda"
@@ -199,6 +198,15 @@ class Movimiento(MiModel):
 
     class Meta:
         ordering = ('dia', 'orden_dia')
+
+    def get_absolute_url(self) -> str:
+        return reverse("movimiento", args=[self.pk])
+
+    def get_edit_url(self) -> str:
+        return reverse("mov_mod", args=[self.pk])
+
+    def get_delete_url(self) -> str:
+        return reverse("mov_elim", args=[self.pk])
 
     def __str__(self):
 

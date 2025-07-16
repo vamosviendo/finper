@@ -5,15 +5,15 @@
   >
     <div class="menu-item-content class_nombre_cuenta">
       <a id="id_link_cta_{{ cta.sk }}" class="class_link_cuenta"
-         href="{% url 'cuenta' cta.sk %}">
+         href="{{ cta.get_absolute_url }}">
         {{ cta.nombre }}
       </a>
     </div>
     <div class="menu-item-edit">
-      <a id="id_link_cta_mod_{{ cta.sk }}" href="{% url 'cta_mod' cta.sk %}?next={{ request.get_full_path }}">E</a>
+      <a id="id_link_cta_mod_{{ cta.sk }}" href="{{ cta.get_edit_url }}?next={{ request.get_full_path }}">E</a>
     </div>
     <div class="menu-item-edit">
-      <a id="id_link_cta_elim_{{ cta.sk }}" href="{% url 'cta_elim' cta.sk %}?next={{ request.get_full_path }}">B</a>
+      <a id="id_link_cta_elim_{{ cta.sk }}" href="{{ cta.get_delete_url }}?next={{ request.get_full_path }}">B</a>
     </div>
   </td>
   {% for mon in monedas %}

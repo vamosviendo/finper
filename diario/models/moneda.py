@@ -5,6 +5,7 @@ from typing import Self, TYPE_CHECKING
 
 from django.core.exceptions import EmptyResultSet
 from django.db import models
+from django.urls import reverse
 
 from diario.models import Cotizacion
 from diario.settings_app import MONEDA_BASE
@@ -32,8 +33,14 @@ class Moneda(MiModel):
     objects = MonedaManager()
     form_fields = ('nombre', 'sk', 'plural', 'cotizacion_compra', 'cotizacion_venta', )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.nombre
+
+    def get_edit_url(self) -> str:
+        return reverse("mon_mod", args=[self.sk])
+
+    def get_delete_url(self) -> str:
+        return reverse("mon_elim", args=[self.sk])
 
     def natural_key(self) -> tuple[str]:
         return (self.sk, )
