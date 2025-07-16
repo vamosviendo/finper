@@ -60,9 +60,9 @@ class Dia (MiModel):
         return cls.hoy().pk
 
     @classmethod
-    def ultima_fecha(cls) -> Optional[date]:
+    def ultima_fecha_con_movimientos(cls) -> Optional[date]:
         try:
-            return cls.ultime().fecha
+            return cls.con_movimientos().last().fecha
         except AttributeError:  # No hay días
             return None
 

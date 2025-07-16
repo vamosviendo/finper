@@ -157,7 +157,7 @@ class FormMovimiento(forms.ModelForm):
     )
     esgratis = forms.BooleanField(required=False, initial=False)
     fecha = forms.DateField(
-        initial=Dia.ultima_fecha,
+        initial=Dia.ultima_fecha_con_movimientos,
         widget=forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
     )
     moneda = forms.ModelChoiceField(queryset=Moneda.todes(), empty_label=None)

@@ -17,27 +17,27 @@ def valores() -> dict:
         "fecha": "2010-12-05",
         "concepto": "Entrada",
         "cta_entrada": "cuenta",
-        "importe": "50.00"
+        "importe": 50.0
     }
 
 
-def test_crear_movimiento(browser, cuenta, dia, dia_posterior, valores):
+def test_crear_movimiento(browser, cuenta, entrada, salida_posterior, dia_tardio, valores):
     """ Cuando vamos a la página de cuenta nueva y completamos el formulario,
         aparece un movimiento nuevo al tope de la lista de movimientos.
         Si después de completamos apretamos el botón "Guardar y agregar,
         se guarda el movimiento y se vuelve a abrir el formulario para cargar
         otro movimiento. """
-
+    saldo_gral = saldo = cuenta.saldo()
     browser.ir_a_pag(reverse("mov_nuevo"))
 
     # Al entrar a la página veo un formulario de movimiento
     form_mov = browser.esperar_elemento("id_form_movimiento")
 
-    # El campo "fecha" del formulario tiene la fecha del último día como valor por
-    # defecto
+    # El campo "fecha" del formulario tiene la fecha del último día con movimientos
+    # como valor por defecto
     assert \
         form_mov.esperar_elemento("id_fecha").get_attribute("value") == \
-        dia_posterior.fecha.strftime('%Y-%m-%d')
+        salida_posterior.dia.fecha.strftime('%Y-%m-%d')
 
     # Cargamos los valores necesarios para generar un movimiento nuevo
     browser.completar_form(**valores)
@@ -60,10 +60,12 @@ def test_crear_movimiento(browser, cuenta, dia, dia_posterior, valores):
 
     # El saldo de la cuenta sobre la que se realizó el movimiento y el saldo
     # general de la página reflejan el cambio provocado por el nuevo movimiento
-    assert browser.esperar_saldo_en_moneda_de_cuenta(cuenta.sk).text == importe_localizado
+    saldo_localizado = float_format(saldo + valores["importe"])
+    saldo_gral_localizado = float_format(saldo_gral + valores["importe"])
+    assert browser.esperar_saldo_en_moneda_de_cuenta(cuenta.sk).text == saldo_localizado
     assert \
         browser.esperar_elemento('id_importe_saldo_gral').text == \
-        importe_localizado
+        saldo_gral_localizado
 
     # Si al cargar un nuevo movimiento pulsamos el botón "Guardar y agregar",
     # se guarda el movimiento pero en vez de volver a la página anterior, se

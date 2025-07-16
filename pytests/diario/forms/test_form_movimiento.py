@@ -73,9 +73,9 @@ def test_si_da_error_mov_sin_cuentas_no_da_error_cuentas_iguales(formmov):
     assert errors.CUENTAS_IGUALES not in formmov.errors[NON_FIELD_ERRORS]
 
 
-def test_toma_fecha_del_ultimo_dia_por_defecto(formmov, dia, dia_posterior):
+def test_toma_fecha_del_ultimo_dia_con_movimientos_por_defecto(formmov, entrada, salida_posterior, dia_tardio):
     formmov.data.pop('fecha')
-    assert formmov.fields['fecha'].initial() == dia_posterior.fecha
+    assert formmov.fields['fecha'].initial() == salida_posterior.dia.fecha
 
 
 def test_toma_fecha_de_la_instancia_en_modificacion(entrada, salida_posterior):
