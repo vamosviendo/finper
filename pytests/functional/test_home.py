@@ -275,7 +275,7 @@ class TestHomeLinks:
     def test_seccion_monedas(self, browser, peso):
 
         # cuando cliqueamos en el link de moneda nueva, accedemos a la página para agregar movimiento
-        browser.verificar_link('moneda_nueva', 'mon_nueva')
+        browser.verificar_link('moneda_nueva', 'mon_nueva', querydict={'next': '/'})
 
         # cuando cliqueamos en el link de editar movimiento, accedemos a la página de edición de ese movimiento
         browser.verificar_link(f'mon_mod_{peso.sk}', 'mon_mod', [peso.sk])

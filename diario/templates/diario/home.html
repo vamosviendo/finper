@@ -157,7 +157,7 @@
         <tr class="menu-row">
           <td class="menu-item class_td_moneda">
             <div id="id_div_moneda_nueva">
-              <a id="id_link_moneda_nueva" href="{% url 'mon_nueva' %}">+</a>
+              <a id="id_link_moneda_nueva" href="{% url 'mon_nueva' %}?next={{ request.get_full_path }}">+</a>
             </div>
           </td>
         </tr>
