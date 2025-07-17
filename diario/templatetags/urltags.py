@@ -18,20 +18,18 @@ def finperurl(context) -> str:
 
     if titular:
         if mov_presente:
-            base_url = reverse("titular_movimiento", args=[titular.sk, movimiento.pk])
-        else:
-            base_url = reverse("titular", args=[titular.sk])
-    elif cuenta:
-        if mov_presente:
-            base_url = reverse("cuenta_movimiento", args=[cuenta.sk, movimiento.pk])
-        else:
-            base_url = reverse("cuenta", args=[cuenta.sk])
-    elif mov_presente:
-        base_url = reverse("movimiento", args=[movimiento.pk])
-    else:
-        base_url = reverse("home")
+            return titular.get_url_with_mov(movimiento)
+        return titular.get_absolute_url()
 
-    return base_url
+    if cuenta:
+        if mov_presente:
+            return cuenta.get_url_with_mov(movimiento)
+        return cuenta.get_absolute_url()
+
+    if mov_presente:
+        return movimiento.get_absolute_url()
+
+    return reverse("home")
 
 
 @register.simple_tag
@@ -61,10 +59,10 @@ def pageurl(context, page: int | None = None) -> str:
     resolver_match = resolve(request.path)
 
     # Al cambiar de página, si hay un movimiento seleccionado se lo deselecciona
-    if resolver_match.url_name == "titular_movimiento":
+    if "titular" in resolver_match.url_name:
         urlname = "titular"
         args = [resolver_match.kwargs["sk"]]
-    elif resolver_match.url_name == "cuenta_movimiento":
+    elif "cuenta" in resolver_match.url_name:
         urlname = "cuenta"
         args = [resolver_match.kwargs["sk_cta"]]
     else:
