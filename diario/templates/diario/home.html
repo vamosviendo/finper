@@ -270,7 +270,7 @@
 
           <td class="class_td_concepto" title="{{ mov.detalle }}">
             <div class="cell_concepto scrollable">
-              <a href="{% movurl mov tit_sk=sk cta_sk=sk_cta page=request.GET.page fecha=request.GET.fecha %}"
+              <a href="{% movurl mov page=request.GET.page fecha=request.GET.fecha %}"
                  id="id_link_mov_{{ mov.sk }}"
                  class="class_link_movimiento">
                 {{ mov.concepto }}

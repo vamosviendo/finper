@@ -32,18 +32,18 @@ def finperurl(context) -> str:
     return reverse("home")
 
 
-@register.simple_tag
-def movurl(mov,
-           tit_sk: str | None = None,
-           cta_sk: str | None = None,
+@register.simple_tag(takes_context=True)
+def movurl(context, mov,
            page: int | None = None,
            fecha: date | None = None) -> str:
-    if cta_sk:
-        base_url = reverse("cuenta_movimiento", args=[cta_sk, mov.pk])
-    elif tit_sk:
-        base_url = reverse("titular_movimiento", args=[tit_sk, mov.pk])
+    cuenta = context.get("cuenta")
+    titular = context.get("titular")
+    if cuenta:
+        base_url = cuenta.get_url_with_mov(mov)
+    elif titular:
+        base_url = titular.get_url_with_mov(mov)
     else:
-        base_url = reverse("movimiento", args=[mov.pk])
+        base_url = mov.get_absolute_url()
 
     if fecha:
         return base_url + f"?fecha={fecha}"

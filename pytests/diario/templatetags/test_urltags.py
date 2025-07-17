@@ -92,47 +92,48 @@ class TestFinperUrl:
 
 class TestMovUrl:
     def test_si_no_recibe_sk_de_titular_ni_de_cuenta_devuelve_url_de_movimiento(self, entrada):
-        assert movurl(entrada) == reverse("movimiento", args=[entrada.pk])
+        context = dict()
+        assert movurl(context, entrada) == reverse("movimiento", args=[entrada.pk])
 
     def test_si_recibe_sk_de_titular_devuelve_url_de_titular_y_movimiento(self, entrada, titular):
-        assert movurl(entrada, tit_sk=titular.sk) == reverse("titular_movimiento", args=[titular.sk, entrada.pk])
+        context = {"titular": titular}
+        assert movurl(context, entrada) == reverse("titular_movimiento", args=[titular.sk, entrada.pk])
 
     def test_si_recibe_sk_de_cuenta_devuelve_url_de_cuenta_y_movimiento(self, entrada, cuenta):
-        assert movurl(entrada, cta_sk=cuenta.sk) == reverse("cuenta_movimiento", args=[cuenta.sk, entrada.pk])
+        context = {"cuenta": cuenta}
+        assert movurl(context, entrada) == reverse("cuenta_movimiento", args=[cuenta.sk, entrada.pk])
 
     def test_si_recibe_sk_de_titular_y_de_cuenta_devuelve_url_de_cuenta_y_movimiento(self, entrada, titular, cuenta):
-        assert movurl(entrada, tit_sk=titular.sk, cta_sk=cuenta.sk) == reverse("cuenta_movimiento", args=[cuenta.sk, entrada.pk])
+        context = {"titular": titular, "cuenta": cuenta}
+        assert movurl(context, entrada) == reverse("cuenta_movimiento", args=[cuenta.sk, entrada.pk])
 
-    @pytest.mark.parametrize("argname, arg, viewname", [
-        (None, None, "movimiento"),
-        ("tit_sk", "titular", "titular_movimiento"),
-        ("cta_sk", "c", "cuenta_movimiento")])
+    @pytest.mark.parametrize("origen", [None, "titular", "cuenta"])
     def test_si_recibe_nro_de_pagina_agrega_querystring_con_pagina_al_url_devuelto(
-            self, entrada, argname, arg, viewname):
-        kwargs = dict()
-        if argname and arg:
-            kwargs = {argname: arg}
-            base_url = reverse(viewname, args=[arg, entrada.pk])
+            self, origen, entrada, request):
+        if origen:
+            ente = request.getfixturevalue(origen)
+            context = {origen: ente}
+            base_url = ente.get_url_with_mov(entrada)
         else:
-            base_url = reverse(viewname, args=[entrada.pk])
-        assert movurl(entrada, page=2, **kwargs) == base_url + "?page=2"
+            context = dict()
+            base_url = entrada.get_absolute_url()
+        assert movurl(context, entrada, page=2) == base_url + "?page=2"
 
-    @pytest.mark.parametrize("argname, arg, viewname", [
-        (None, None, "movimiento"),
-        ("tit_sk", "titular", "titular_movimiento"),
-        ("cta_sk", "c", "cuenta_movimiento")])
-    def test_si_recibe_fecha_agrega_querystring_con_fecha_al_url_devuelto(self, entrada, fecha, argname, arg, viewname):
-        kwargs = dict()
-        if argname and arg:
-            kwargs = {argname: arg}
-            base_url = reverse(viewname, args=[arg, entrada.pk])
+    @pytest.mark.parametrize("origen", [None, "titular", "cuenta"])
+    def test_si_recibe_fecha_agrega_querystring_con_fecha_al_url_devuelto(self, origen, entrada, fecha, request):
+        if origen:
+            ente = request.getfixturevalue(origen)
+            context = {origen: ente}
+            base_url = ente.get_url_with_mov(entrada)
         else:
-            base_url = reverse(viewname, args=[entrada.pk])
-        assert movurl(entrada, fecha=fecha, **kwargs) == base_url + f"?fecha={fecha}"
+            context = dict()
+            base_url = entrada.get_absolute_url()
+        assert movurl(context, entrada, fecha=fecha) == base_url + f"?fecha={fecha}"
 
     def test_si_recibe_fecha_y_pagina_prioriza_fecha(self, entrada, fecha):
+        context = dict()
         assert \
-            movurl(entrada, fecha=fecha, page=2) == \
+            movurl(context, entrada, fecha=fecha, page=2) == \
             reverse("movimiento", args=[entrada.pk]) + f"?fecha={fecha}"
 
 
