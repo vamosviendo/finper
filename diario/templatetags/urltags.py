@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date
 
 from django import template
-from django.urls import reverse
+from django.urls import resolve, reverse
 
 register = template.Library()
 
@@ -58,20 +58,23 @@ def movurl(mov,
 @register.simple_tag(takes_context=True)
 def pageurl(context, page: int | None = None) -> str:
     request = context["request"]
-    current_url = request.path
+    resolver_match = resolve(request.path)
 
     # Al cambiar de página, si hay un movimiento seleccionado se lo deselecciona
-    # (se retira la letra "m" y la pk de movimiento del url)
-    if "cm/" in current_url or "tm/" in current_url:
-        parsed_url = current_url.split("/")
-        parsed_url[2] = parsed_url[2].replace("m", "")
-        parsed_url[-1] = ""
-        current_url = "/".join(parsed_url)
-    elif "m/" in current_url:
-        current_url = "/"
+    if resolver_match.url_name == "titular_movimiento":
+        urlname = "titular"
+        args = [resolver_match.kwargs["sk"]]
+    elif resolver_match.url_name == "cuenta_movimiento":
+        urlname = "cuenta"
+        args = [resolver_match.kwargs["sk_cta"]]
+    else:
+        urlname = "home"
+        args = []
 
     # Si no se pasa página, se permanece en la página actual
     if page:
-        return f"{current_url}?page={page}#id_section_movimientos"
+        querydict = f"?page={page}"
     else:
-        return f"{current_url}#id_section_movimientos"
+        querydict = ""
+
+    return reverse(urlname, args=args) + f"{querydict}#id_section_movimientos"
