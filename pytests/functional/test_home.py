@@ -3,7 +3,6 @@ from __future__ import annotations
 from datetime import date, timedelta
 from urllib.parse import urlparse
 
-from django.urls import reverse
 from selenium.webdriver.common.by import By
 
 from diario.models import Dia
@@ -158,7 +157,7 @@ def test_home(
     assert fecha in fechas
     dia = Dia.tomar(fecha=fecha)
     mov = dia.movimientos.last()
-    browser.assert_url(reverse("movimiento", args=[mov.pk]) + f"?fecha={fecha}&redirected=1")
+    browser.assert_url(mov.get_absolute_url() + f"?fecha={fecha}&redirected=1")
 
     # Si seleccionamos un día inexistente, seremos llevados a la página que contengan
     # los días aledaños al seleccionado.
@@ -226,7 +225,7 @@ class TestHomeLinks:
         # Cuando cliqueamos en un titular, vamos a la página de ese titular
         browser.ir_a_pag()
         browser.cliquear_en_titular(titular)
-        browser.assert_url(reverse("titular", args=[titular.sk]))
+        browser.assert_url(titular.get_absolute_url())
 
         # cuando cliqueamos en el ícono de agregar titular, accedemos a la página para agregar titular nuevo
         browser.verificar_link('titular_nuevo', 'tit_nuevo', querydict={"next": "/"})
@@ -243,12 +242,12 @@ class TestHomeLinks:
         # Cuando cliqueamos en una cuenta, vamos a la página de esa cuenta
         browser.ir_a_pag()
         browser.cliquear_en_cuenta(cuenta_2)
-        browser.assert_url(reverse("cuenta", args=[cuenta_2.sk]))
+        browser.assert_url(cuenta_2.get_absolute_url())
 
         # Cuando cliqueamos en una subcuenta, vamos a la página de esa subcuenta
         browser.ir_a_pag()
         browser.cliquear_en_cuenta(subcuenta)
-        browser.assert_url(reverse("cuenta", args=[subcuenta.sk]))
+        browser.assert_url(subcuenta.get_absolute_url())
 
         # cuando cliqueamos en el ícono de agregar cuenta, accedemos a la página para agregar cuenta nueva
         browser.verificar_link('cuenta_nueva', 'cta_nueva', querydict={'next': '/'})

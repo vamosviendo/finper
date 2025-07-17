@@ -157,7 +157,7 @@ def test_detalle_de_cuenta_interactiva(
     # movimientos relacionados con la cuenta, y en esos días se muestran
     # sólo los movimientos relacionados con la cuenta, con el movimiento
     # cliqueado resaltado.
-    browser.ir_a_pag(reverse('cuenta', args=[cuenta.sk]))
+    browser.ir_a_pag(cuenta.get_absolute_url())
     dias_pag = browser.esperar_elementos("class_div_dia")
 
     fecha_dia = dias_pag[1].esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text[-10:]
@@ -230,9 +230,7 @@ def test_detalle_de_cuenta_acumulativa(
     # Volvemos a la página de la cuenta y cliqueamos en el nombre de la
     # primera subcuenta
     primera_subcuenta = cuenta_de_dos_titulares.subcuentas.first()
-    browser.ir_a_pag(
-        reverse('cuenta', args=[cuenta_de_dos_titulares.sk])
-    )
+    browser.ir_a_pag(cuenta_de_dos_titulares.get_absolute_url())
     browser.cliquear_en_cuenta(primera_subcuenta)
 
     # Vemos el nombre de la cuenta encabezando la página
@@ -269,9 +267,7 @@ def test_detalle_de_cuenta_acumulativa(
 
     # Volvemos a la página de la cuenta acumulativa y cliqueamos en el nombre
     # de la segunda subcuenta
-    browser.ir_a_pag(
-        reverse('cuenta', args=[cuenta_de_dos_titulares.sk])
-    )
+    browser.ir_a_pag(cuenta_de_dos_titulares.get_absolute_url())
     segunda_subcuenta = cuenta_de_dos_titulares.subcuentas.last()
     browser.cliquear_en_cuenta(segunda_subcuenta)
 
@@ -282,9 +278,7 @@ def test_detalle_de_cuenta_acumulativa(
 
     # Volvemos a la página de la cuenta acumulativa y cliqueamos en un
     # movimiento
-    browser.ir_a_pag(
-        reverse('cuenta', args=[cuenta_de_dos_titulares.sk])
-    )
+    browser.ir_a_pag(cuenta_de_dos_titulares.get_absolute_url())
     links_movimiento = browser.esperar_elementos("class_link_movimiento")
     links_movimiento[1].click()
 
@@ -332,7 +326,7 @@ def test_detalle_de_subcuenta(
     # Y algunos movimientos de las tres subcuentas
 
     # Cuando vamos a la página de la primera subcuenta de la subcuenta dividida
-    browser.ir_a_pag(reverse("cuenta", args=[subsubcuenta_1_con_movimientos.sk]))
+    browser.ir_a_pag(subsubcuenta_1_con_movimientos.get_absolute_url())
 
     # Vemos el nombre de la cuenta encabezando la página
     # Y vemos que al lado del nombre aparece el saldo de la sub-subcuenta
@@ -362,7 +356,7 @@ def test_detalle_de_subcuenta(
 
     # Cliqueamos en un movimiento
     movimiento = Movimiento.tomar(fecha=date(2011, 5, 1), orden_dia=0)
-    browser.ir_a_pag(reverse("cuenta_movimiento", args=[subsubcuenta_1_con_movimientos.sk, movimiento.pk]))
+    browser.ir_a_pag(subsubcuenta_1_con_movimientos.get_url_with_mov(movimiento))
 
     # Vemos que en la sección de movimientos aparecen los días en los que hay movimientos
     # de la cuenta, con el movimiento cliqueado resaltado
@@ -393,7 +387,7 @@ def test_detalle_de_subcuenta(
 
 def test_busqueda_de_fecha_en_detalle_de_cuenta(browser, cuenta, cuenta_2, muchos_dias):
     # Vamos a la página de detalle de una cuenta
-    browser.ir_a_pag(reverse("cuenta", args=[cuenta.sk]))
+    browser.ir_a_pag(cuenta.get_absolute_url())
 
     # Si completamos el form de búsqueda con una fecha determinada, somos llevados
     # a la página que contiene esa fecha teniendo en cuenta solamente los días
@@ -419,9 +413,7 @@ def test_busqueda_de_fecha_en_detalle_de_cuenta(browser, cuenta, cuenta_2, mucho
     # con la fecha ingresada. El último movimiento del titular del día de la fecha
     # aparece seleccionado.
     mov = dia.movimientos.last()
-    browser.assert_url(
-        reverse("cuenta_movimiento", args=[cuenta.sk, mov.pk]) + f"?fecha={dia.fecha}&redirected=1"
-    )
+    browser.assert_url(cuenta.get_url_with_mov(mov) + f"?fecha={dia.fecha}&redirected=1")
 
     # En la página se muestran solamente los días con movimientos de la cuenta.
     # No se muestran los demás días.
@@ -446,10 +438,8 @@ def test_busqueda_de_fecha_en_detalle_de_cuenta(browser, cuenta, cuenta_2, mucho
     # Si la fecha corresponde a un día sin movimientos del titular, se muestra
     # la página que incluye al día anterior con movimientos del titular, con
     # el último movimiento del día seleccionado.
-    browser.ir_a_pag(reverse("cuenta", args=[cuenta.sk]))
+    browser.ir_a_pag(cuenta.get_absolute_url())
     browser.completar_form(boton="id_btn_buscar_dia_init", input_dia_init=dia_no_cuenta.fecha)
     browser.assert_url(
-        reverse(
-            "cuenta_movimiento",
-            args=[cuenta.sk, mov_cuenta_dia_anterior.pk]) + f"?fecha={dia_anterior_cuenta.fecha}&redirected=1"
+        cuenta.get_url_with_mov(mov_cuenta_dia_anterior) + f"?fecha={dia_anterior_cuenta.fecha}&redirected=1"
     )

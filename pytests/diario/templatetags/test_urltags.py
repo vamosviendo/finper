@@ -38,29 +38,25 @@ class TestFinperUrl:
 
     def test_si_recibe_titular_devuelve_url_de_detalle_de_titular(self, titular):
         context = get_request_context("titular", titular=titular)
-        assert finperurl(context) == reverse("titular", args=[titular.sk])
+        assert finperurl(context) == titular.get_absolute_url()
 
     def test_si_recibe_cuenta_devuelve_url_de_detalle_de_cuenta(self, cuenta):
         context = get_request_context("cuenta", cuenta=cuenta)
-        assert finperurl(context) == reverse("cuenta", args=[cuenta.sk])
+        assert finperurl(context) == cuenta.get_absolute_url()
 
     def test_si_recibe_movimiento_devuelve_url_de_detalle_de_movimiento(self, entrada, dias):
         context = get_request_context("movimiento", movimiento=entrada, dias=dias)
-        assert finperurl(context) == reverse("movimiento", args=[entrada.pk])
+        assert finperurl(context) == entrada.get_absolute_url()
 
     def test_si_recibe_titular_y_movimiento_devuelve_url_de_detalle_de_titular_en_movimiento(
             self, titular, entrada, dias):
         context = get_request_context("titular_movimiento", titular=titular, movimiento=entrada, dias=dias)
-        assert \
-            finperurl(context) == \
-            reverse("titular_movimiento", args=[titular.sk, entrada.pk])
+        assert finperurl(context) == titular.get_url_with_mov(entrada)
 
     def test_si_recibe_cuenta_y_movimiento_devuelve_url_de_detalle_de_cuenta_en_movimiento(
             self, cuenta, entrada, dias):
         context = get_request_context("cuenta_movimiento", cuenta=cuenta, movimiento=entrada, dias=dias)
-        assert \
-            finperurl(context) == \
-            reverse("cuenta_movimiento", args=[cuenta.sk, entrada.pk])
+        assert finperurl(context) == cuenta.get_url_with_mov(entrada)
 
     def test_si_no_recibe_titular_cuenta_ni_movimiento_devuelve_url_home(self):
         context = get_request_context("home")
@@ -78,13 +74,13 @@ class TestFinperUrl:
         context = get_request_context(
             "cuenta_movimiento", cuenta=cuenta, movimiento=mov, dias=mas_de_7_dias[:6]
         )
-        assert finperurl(context) == reverse("cuenta", args=[cuenta.sk])
+        assert finperurl(context) == cuenta.get_absolute_url()
 
     def test_si_recibe_titular_y_movimiento_no_incluido_en_los_dias_de_la_pagina_devuelve_url_sin_movimiento(
             self, titular, cuenta, mas_de_7_dias):
         mov = Movimiento.crear(concepto="Movimiento", importe=100, dia=mas_de_7_dias[7], cta_entrada=cuenta)
         context = get_request_context("titular_movimiento", titular=titular, movimiento=mov, dias=mas_de_7_dias[:6])
-        assert finperurl(context) == reverse("titular", args=[titular.sk])
+        assert finperurl(context) == titular.get_absolute_url()
 
     @pytest.mark.xfail
     def test_si_no_recibe_dias_da_valueerror(self):
@@ -93,19 +89,19 @@ class TestFinperUrl:
 class TestMovUrl:
     def test_si_no_recibe_sk_de_titular_ni_de_cuenta_devuelve_url_de_movimiento(self, entrada):
         context = dict()
-        assert movurl(context, entrada) == reverse("movimiento", args=[entrada.pk])
+        assert movurl(context, entrada) == entrada.get_absolute_url()
 
     def test_si_recibe_sk_de_titular_devuelve_url_de_titular_y_movimiento(self, entrada, titular):
         context = {"titular": titular}
-        assert movurl(context, entrada) == reverse("titular_movimiento", args=[titular.sk, entrada.pk])
+        assert movurl(context, entrada) == titular.get_url_with_mov(entrada)
 
     def test_si_recibe_sk_de_cuenta_devuelve_url_de_cuenta_y_movimiento(self, entrada, cuenta):
         context = {"cuenta": cuenta}
-        assert movurl(context, entrada) == reverse("cuenta_movimiento", args=[cuenta.sk, entrada.pk])
+        assert movurl(context, entrada) == cuenta.get_url_with_mov(entrada)
 
     def test_si_recibe_sk_de_titular_y_de_cuenta_devuelve_url_de_cuenta_y_movimiento(self, entrada, titular, cuenta):
         context = {"titular": titular, "cuenta": cuenta}
-        assert movurl(context, entrada) == reverse("cuenta_movimiento", args=[cuenta.sk, entrada.pk])
+        assert movurl(context, entrada) == cuenta.get_url_with_mov(entrada)
 
     @pytest.mark.parametrize("origen", [None, "titular", "cuenta"])
     def test_si_recibe_nro_de_pagina_agrega_querystring_con_pagina_al_url_devuelto(
@@ -133,8 +129,7 @@ class TestMovUrl:
     def test_si_recibe_fecha_y_pagina_prioriza_fecha(self, entrada, fecha):
         context = dict()
         assert \
-            movurl(context, entrada, fecha=fecha, page=2) == \
-            reverse("movimiento", args=[entrada.pk]) + f"?fecha={fecha}"
+            movurl(context, entrada, fecha=fecha, page=2) == entrada.get_absolute_url() + f"?fecha={fecha}"
 
 
 class TestPageUrl:

@@ -18,7 +18,7 @@ def test_dividir_cuenta(browser, cuenta, otro_titular):
 
     # Somos dirigidos a la página de la cuenta, donde comprobamos que
     # ahora incluye las dos subcuentas recién creadas
-    browser.assert_url(reverse('cuenta', args=[cuenta.sk]))
+    browser.assert_url(cuenta.get_absolute_url())
     titulo = browser.esperar_elemento('id_titulo_saldo_gral').text
     assert cuenta.nombre in titulo
     subcuentas = [

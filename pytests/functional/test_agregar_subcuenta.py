@@ -13,7 +13,7 @@ def test_agregar_subcuenta(browser, cuenta_acumulativa, fecha_posterior):
     browser.pulsar()
 
     # Somos dirigidos a la página de detalle de la cuenta acumulativa
-    browser.assert_url(reverse('cuenta', args=[cuenta_acumulativa.sk]))
+    browser.assert_url(cuenta_acumulativa.get_absolute_url())
 
     # Vemos que la cuenta agregada aparece entre las subcuentas de la
     # cuenta acumulativa.

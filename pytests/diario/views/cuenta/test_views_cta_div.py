@@ -130,9 +130,8 @@ def test_integrativo_post_divide_cuenta(cuenta_con_saldo, request):
     assert len([x for x in Cuenta.todes() if x.es_acumulativa]) == 1
 
 
-def test_integrativo_redirige_a_pagina_de_cuenta(
-        client, cuenta_con_saldo, int_response):
+def test_integrativo_redirige_a_pagina_de_cuenta(cuenta_con_saldo, int_response):
     asserts.assertRedirects(
         int_response,
-        reverse('cuenta', args=[cuenta_con_saldo.sk]),
+        cuenta_con_saldo.get_absolute_url(),
     )

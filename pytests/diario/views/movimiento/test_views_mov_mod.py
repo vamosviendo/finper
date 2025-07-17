@@ -1,6 +1,5 @@
 import pytest
 from django.http import HttpResponse
-from django.urls import reverse
 from pytest_django import asserts
 
 from diario.models import Movimiento
@@ -21,13 +20,13 @@ def post_data(entrada: Movimiento) -> dict:
 @pytest.fixture
 def cambio_concepto(client, entrada: Movimiento, post_data: dict) -> HttpResponse:
     return client.post(
-        reverse('mov_mod', args=[entrada.pk]),
+        entrada.get_edit_url(),
         post_data
     )
 
 
 def test_usa_template_mov_form(client, entrada):
-    response = client.get(reverse('mov_mod', args=[entrada.pk]))
+    response = client.get(entrada.get_edit_url())
     asserts.assertTemplateUsed(response, 'diario/mov_form.html')
 
 
@@ -36,7 +35,7 @@ def test_si_mov_tiene_cuenta_acumulativa_en_campo_de_cuenta_la_muestra(
         client, sentido, request):
     mov = request.getfixturevalue(sentido)
     cuenta = dividir_en_dos_subcuentas(getattr(mov, f'cta_{sentido}'))
-    response = client.get(reverse('mov_mod', args=[mov.pk]))
+    response = client.get(mov.get_edit_url())
     assert cuenta in response.context['form'].fields[f'cta_{sentido}'].queryset
 
 
@@ -44,7 +43,7 @@ def test_si_mov_tiene_cuenta_acumulativa_en_campo_de_cuenta_la_muestra(
 def test_si_cuenta_es_acumulativa_campo_esta_deshabilitado(client, sentido, request):
     mov = request.getfixturevalue(sentido)
     dividir_en_dos_subcuentas(getattr(mov, f'cta_{sentido}'))
-    response = client.get(reverse('mov_mod', args=[mov.pk]))
+    response = client.get(mov.get_edit_url())
     assert response.context['form'].fields[f'cta_{sentido}'].disabled
 
 
@@ -53,7 +52,7 @@ def test_si_cuenta_es_interactiva_no_muestra_cuentas_acumulativas_entre_las_opci
         client, sentido, cuenta_acumulativa, request):
     mov = request.getfixturevalue(sentido)
 
-    response = client.get(reverse('mov_mod', args=[mov.pk]))
+    response = client.get(mov.get_edit_url())
     assert \
         cuenta_acumulativa not in \
         response.context['form'].fields[f'cta_{sentido}'].queryset
@@ -65,7 +64,7 @@ def test_si_no_tiene_cta_entrada_no_muestra_cuentas_acumulativas_entre_las_opcio
     mov = request.getfixturevalue(sentido)
     contrasentido = 'salida' if sentido == 'entrada' else 'entrada'
 
-    response = client.get(reverse('mov_mod', args=[mov.pk]))
+    response = client.get(mov.get_edit_url())
     assert \
         cuenta_acumulativa not in \
         response.context['form'].fields[f'cta_{contrasentido}'].queryset
@@ -91,7 +90,7 @@ def test_permite_modificar_fecha_de_movimiento_con_cuenta_acumulativa(
     dividir_en_dos_subcuentas(entrada.cta_entrada, fecha=fecha_tardia)
 
     client.post(
-        reverse('mov_mod', args=[entrada.pk]),
+        entrada.get_edit_url(),
         {
             'fecha': fecha_posterior,
             'concepto': entrada.concepto,
@@ -108,7 +107,7 @@ def test_si_se_selecciona_esgratis_en_movimiento_entre_titulares_desaparece_cont
     id_contramov = credito.id_contramov
 
     client.post(
-        reverse('mov_mod', args=[credito.pk]),
+        credito.get_edit_url(),
         {
             'fecha': credito.fecha,
             'concepto': credito.concepto,

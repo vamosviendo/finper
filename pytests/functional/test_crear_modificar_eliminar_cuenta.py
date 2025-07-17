@@ -66,7 +66,7 @@ def test_crear_cuenta_en_otra_moneda(browser, titular, fecha, dolar):
 def test_modificar_cuenta(browser, cuenta_ajena, dolar, fecha_anterior):
     """ Cuando vamos a la página de modificar cuenta y completamos el
         formulario, la cuenta se modifica"""
-    browser.ir_a_pag(reverse('cta_mod', args=[cuenta_ajena.sk]))
+    browser.ir_a_pag(cuenta_ajena.get_edit_url())
     # En todos los campos del formulario aparece el valor del campo correspondiente de la cuenta:
     browser.controlar_modelform(instance=cuenta_ajena)
 
@@ -83,7 +83,7 @@ def test_eliminar_cuenta(browser, cuenta, cuenta_2):
     """ Cuando vamos a la página de eliminar cuenta y cliqueamos en confirmar,
         la cuenta es eliminada"""
     nombre_cuenta = cuenta.nombre
-    browser.ir_a_pag(reverse('cta_elim', args=[cuenta.sk]))
+    browser.ir_a_pag(cuenta.get_delete_url())
     browser.pulsar('id_btn_confirm')
     browser.assert_url(reverse('home'))
     nombres_cuenta = [x.text.strip() for x in browser.esperar_elementos('class_link_cuenta')]

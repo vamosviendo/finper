@@ -223,9 +223,6 @@ class Cuenta(PolymorphModel):
             raise errors.SaldoNoCeroException
         super().delete(*args, **kwargs)
 
-    def get_absolute_url(self) -> str:
-        return reverse('cuenta', args=[self.sk])
-
     def movs_directos(self) -> models.QuerySet[Movimiento]:
         """ Devuelve entradas y salidas de la cuenta sin los de sus subcuentas
         """

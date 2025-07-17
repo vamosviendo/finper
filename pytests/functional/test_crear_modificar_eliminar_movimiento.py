@@ -144,7 +144,7 @@ def test_crear_creditos_o_devoluciones(
     # Si vamos a la página de detalles del titular de la cuenta de salida,
     # vemos entre sus cuentas la cuenta generada automáticamente que lo
     # muestra como acreedor, con saldo igual a {saldo}
-    browser.ir_a_pag(reverse('titular', args=[emisor.sk]))
+    browser.ir_a_pag(emisor.get_absolute_url())
     link_cuenta = browser.esperar_elemento(f"id_link_cta__{emisor.sk}-{receptor.sk}")
     saldo_cuenta = browser.esperar_saldo_en_moneda_de_cuenta(f"_{emisor.sk}-{receptor.sk}")
     assert \
@@ -247,14 +247,10 @@ def test_crear_creditos_o_devoluciones(
 def test_crear_traspaso_entre_titulares_sin_deuda(browser, cuenta, cuenta_ajena, fecha):
     # Antes de empezar, tomamos los valores de los capitales mostrados en las
     # páginas de detalle de los titulares cuyas cuentas usaremos
-    browser.ir_a_pag(
-        reverse("titular", args=[cuenta_ajena.titular.sk]))
-    capital_emisor = browser.esperar_elemento(
-        f"id_capital_{cuenta_ajena.titular.sk}").text
-    browser.ir_a_pag(
-        reverse("titular", args=[cuenta.titular.sk]))
-    capital_receptor = browser.esperar_elemento(
-        f"id_capital_{cuenta.titular.sk}").text
+    browser.ir_a_pag(cuenta_ajena.titular.get_absolute_url())
+    capital_emisor = browser.esperar_elemento(f"id_capital_{cuenta_ajena.titular.sk}").text
+    browser.ir_a_pag(cuenta.titular.get_absolute_url())
+    capital_receptor = browser.esperar_elemento(f"id_capital_{cuenta.titular.sk}").text
 
     # Completamos el form de movimiento nuevo, seleccionando cuentas de
     # titulares distintos en los campos de cuentas. Cliqueamos en la casilla
@@ -277,7 +273,7 @@ def test_crear_traspaso_entre_titulares_sin_deuda(browser, cuenta, cuenta_ajena,
     # Si vamos a la página de detalles del titular de la cuenta de salida
     # (emisor), vemos que entre sus cuentas no hay ninguna generada automáticamente, sólo
     # las cuentas regulares-
-    browser.ir_a_pag(reverse("titular", args=[cuenta_ajena.titular.sk]))
+    browser.ir_a_pag(cuenta_ajena.titular.get_absolute_url())
     cuentas_pag = [
         x.text for x in browser.esperar_elementos("class_link_cuenta")
     ]
@@ -292,7 +288,7 @@ def test_crear_traspaso_entre_titulares_sin_deuda(browser, cuenta, cuenta_ajena,
     assert capital_emisor == float_format(cuenta_ajena.titular.capital() + 30)
 
     # Lo mismo con el titular de la cuenta de entrada.
-    browser.ir_a_pag(reverse("titular", args=[cuenta.titular.sk]))
+    browser.ir_a_pag(cuenta.titular.get_absolute_url())
     cuentas_pag = [
         x.text for x in browser.esperar_elementos("class_link_cuenta")
     ]
@@ -458,7 +454,7 @@ def test_crear_traspaso_entre_cuentas_en_distinta_moneda_con_una_cotizacion_ante
 def test_modificar_movimiento(browser, entrada, salida_posterior, cuenta_2):
     # Las modificaciones hechas mediante el formulario de movimiento se ven
     # reflejadas en el movimiento que se muestra en la página principal
-    browser.ir_a_pag(reverse('mov_mod', args=[entrada.pk]))
+    browser.ir_a_pag(entrada.get_edit_url())
 
     # En todos los campos del formulario aparece el valor del campo correspondiente del movimiento:
     browser.controlar_modelform(instance=entrada)
@@ -490,7 +486,7 @@ def test_convertir_entrada_en_traspaso_entre_titulares(browser, entrada, cuenta_
     dia = browser.esperar_dia(entrada.fecha)
     cantidad_movimientos = len(dia.esperar_elementos('class_row_mov'))
 
-    browser.ir_a_pag(reverse('mov_mod', args=[entrada.pk]))
+    browser.ir_a_pag(entrada.get_edit_url())
     browser.completar_form(cta_salida=cuenta_ajena.nombre, esgratis='False')
 
     dia = browser.esperar_dia(entrada.fecha)
@@ -518,7 +514,7 @@ def test_crear_o_modificar_movimiento_vuelve_a_la_pagina_desde_la_que_se_lo_invo
 def test_eliminar_movimiento(browser, entrada, salida):
     # Cuando se elimina un movimiento desaparece de la página principal
     concepto = entrada.concepto
-    browser.ir_a_pag(reverse('mov_elim', args=[entrada.pk]))
+    browser.ir_a_pag(entrada.get_delete_url())
     browser.pulsar('id_btn_confirm')
     browser.assert_url(reverse('home'))
     conceptos = [x.text.strip() for x in browser.esperar_elementos('class_link_movimiento')]

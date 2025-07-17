@@ -70,7 +70,7 @@ def test_detalle_titular(
     browser.cliquear_en_titular(titular)
 
     # Somos dirigidos a la página de detalle del titular cliqueado
-    browser.assert_url(reverse('titular', args=[titular.sk]))
+    browser.assert_url(titular.get_absolute_url())
 
     # Vemos el nombre del titular encabezando la página
     browser.comparar_titular(titular)
@@ -154,7 +154,7 @@ def test_detalle_titular(
 
 def test_busqueda_de_fecha_en_detalle_de_titular(browser, titular, cuenta_ajena, muchos_dias_distintos_titulares):
     # Vamos a la página de detalle de un titular
-    browser.ir_a_pag(reverse("titular", args=[titular.sk]))
+    browser.ir_a_pag(titular.get_absolute_url())
 
     # Si completamos el form de búsqueda con una fecha determinada, somos llevados
     # a la página que contiene esa fecha teniendo en cuenta solamente los días
@@ -180,9 +180,7 @@ def test_busqueda_de_fecha_en_detalle_de_titular(browser, titular, cuenta_ajena,
     # con la fecha ingresada. El último movimiento del titular del día de la fecha
     # aparece seleccionado.
     mov = dia.movimientos.last()
-    browser.assert_url(
-        reverse("titular_movimiento", args=[titular.sk, mov.pk]) + f"?fecha={dia.fecha}&redirected=1"
-    )
+    browser.assert_url(titular.get_url_with_mov(mov) + f"?fecha={dia.fecha}&redirected=1")
 
     # En la página se muestran solamente los días con movimientos de la cuenta.
     # No se muestran los demás días.
@@ -207,10 +205,8 @@ def test_busqueda_de_fecha_en_detalle_de_titular(browser, titular, cuenta_ajena,
     # Si la fecha corresponde a un día sin movimientos del titular, se muestra
     # la página que incluye al día anterior con movimientos del titular, con
     # el último movimiento del día seleccionado.
-    browser.ir_a_pag(reverse("titular", args=[titular.sk]))
+    browser.ir_a_pag(titular.get_absolute_url())
     browser.completar_form(boton="id_btn_buscar_dia_init", input_dia_init=dia_no_titular.fecha)
     browser.assert_url(
-        reverse(
-            "titular_movimiento",
-            args=[titular.sk, mov_titular_dia_anterior.pk]) + f"?fecha={dia_anterior_titular.fecha}&redirected=1"
+        titular.get_url_with_mov(mov_titular_dia_anterior) + f"?fecha={dia_anterior_titular.fecha}&redirected=1"
     )

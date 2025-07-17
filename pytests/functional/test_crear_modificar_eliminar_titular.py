@@ -22,7 +22,7 @@ def test_crear_titular(browser, fecha):
 def test_modificar_titular(browser, titular, fecha_anterior):
     """ Cuando vamos a la página de modificar titular y completamos el
         formulario, vemos el titular modificado en la página principal """
-    browser.ir_a_pag(reverse('tit_mod', args=[titular.sk]))
+    browser.ir_a_pag(titular.get_edit_url())
 
     # En todos los campos del formulario aparece el valor del campo correspondiente del titular:
     browser.controlar_modelform(instance=titular)
@@ -61,7 +61,7 @@ def test_eliminar_titular(browser, titular, otro_titular):
     """ Cuando vamos a la página de eliminar titular y cliqueamos en confirmar,
         el titular es eliminado"""
     nombre_titular = titular.nombre
-    browser.ir_a_pag(reverse('tit_elim', args=[titular.sk]))
+    browser.ir_a_pag(titular.get_delete_url())
     browser.pulsar('id_btn_confirm')
     browser.assert_url(reverse('home'))
     nombres_titular = [x.text.strip() for x in browser.esperar_elementos('class_link_titular')]
