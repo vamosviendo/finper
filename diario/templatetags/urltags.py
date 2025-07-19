@@ -76,3 +76,13 @@ def pageurl(context, page: int | None = None) -> str:
         querydict = ""
 
     return reverse(urlname, args=args) + f"{querydict}#id_section_movimientos"
+
+@register.simple_tag(takes_context=True)
+def url_cuenta_nueva(context) -> str:
+    cuenta = context.get("cuenta")
+    if cuenta:
+        if cuenta.es_interactiva:
+            return reverse("cta_div", args=[cuenta.sk])
+        else:
+            return reverse("cta_agregar_subc", args=[cuenta.sk])
+    return reverse("cta_nueva")

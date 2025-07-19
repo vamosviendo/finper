@@ -12,7 +12,7 @@ from django.urls import reverse
 from vvmodel.models import MiModel
 
 from diario.models import Movimiento, Dia
-from diario.templatetags.urltags import finperurl, movurl, pageurl
+from diario.templatetags.urltags import finperurl, movurl, pageurl, url_cuenta_nueva
 
 
 def get_request_context(viewname: str, page: int | None = None, fecha: date | None = None, **kwargs) -> Context:
@@ -159,3 +159,18 @@ class TestPageUrl:
         request = factory.get(url_actual)
         context = Context({"request": request})
         assert pageurl(context, 2) == f"{path_devuelto}?page=2#id_section_movimientos"
+
+class TestUrlCuentaNueva:
+    def test_si_no_hay_cuenta_en_el_context_devuelve_url_de_cuenta_nueva(self):
+        context = dict()
+        assert url_cuenta_nueva(context) == reverse("cta_nueva")
+
+    def test_si_hay_cuenta_interactiva_en_el_context_devuelve_url_de_dividir_entre(
+            self, cuenta):
+        context = {"cuenta": cuenta}
+        assert url_cuenta_nueva(context) == reverse("cta_div", args=[cuenta.sk])
+
+    def test_si_hay_cuenta_acumulativa_en_el_context_devuelve_url_de_agregar_cuenta(
+            self, cuenta_acumulativa):
+        context = {"cuenta": cuenta_acumulativa}
+        assert url_cuenta_nueva(context) == reverse("cta_agregar_subc", args=[cuenta_acumulativa.sk])

@@ -100,18 +100,7 @@
         <tr class="menu-row">
           <td class="menu-item class_td_cuenta">
             <div id="id_div_cuenta_nueva">
-              <a
-                {% if cuenta %}
-                  {% if cuenta.es_acumulativa %}
-                    href={% url 'cta_agregar_subc' cuenta.sk %}
-                  {% else %}
-                    href="{% url 'cta_div' cuenta.sk %}?next={{ request.path }}"
-                  {% endif %}
-                {% else %}
-                  href="{% url 'cta_nueva' %}?next={{ request.get_full_path }}"
-                {% endif %}
-                id="id_link_cuenta_nueva"
-              >+</a>
+              <a href="{% url_cuenta_nueva %}?next={{ request.get_full_path }}" id="id_link_cuenta_nueva">+</a>
             </div>
           </td>
           <td></td>
