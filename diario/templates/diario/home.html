@@ -1,7 +1,6 @@
 {% extends 'diario/base.html' %}
 {% load static %}
 {% load historicos %}
-{% load movimientos %}
 {% load urltags %}
 {% block extra-css %}
 <link rel="stylesheet" href="{% static '/diario/css/home.css' %}">
@@ -214,76 +213,7 @@
 
   <div>
     {% for dia in dias %}
-    <div class="class_div_dia">
-      <div class="class_titulo_dia">
-        <strong>
-          <span class="class_span_fecha_dia">{{ dia.str_dia_semana }}</span> - Saldo:
-          <span class="class_span_saldo_dia">{{ dia.saldo|floatformat:2 }}</span>
-        </strong>
-      </div>
-      <table id="id_table_movimientos_dia_{{dia.sk}}" class="class_table_movimientos">
-        <thead id="id_thead_movimientos_dia_{{dia.sk}}" class="class_thead_movimientos"><tr>
-          <th id="id_th_orden_dia_{{dia.sk}}"></th>
-          <th id="id_th_concepto_{{dia.sk}}">Concepto</th>
-          <th id="id_th_detalle_{{dia.sk}}">Detalle</th>
-          <th id="id_th_cta_entrada_{{dia.sk}}">Entra en</th>
-          <th id="id_th_cta_salida_{{dia.sk}}">Sale de</th>
-          <th id="id_th_importe_{{dia.sk}}">Importe</th>
-          <th>Menu</th>
-        </tr></thead>
-        {% for mov in dia|movs_seleccionados:filtro %}
-        <tr id="id_row_mov_{{ mov.sk }}" class="class_row_mov{% if mov.pk == pk %} mov_selected{% endif %}">
-
-          <td class="class_td_orden_dia">{{ mov.orden_dia }}</td>
-
-          <td class="class_td_concepto" title="{{ mov.detalle }}">
-            <div class="cell_concepto scrollable">
-              <a href="{% movurl mov page=request.GET.page fecha=request.GET.fecha %}"
-                 id="id_link_mov_{{ mov.sk }}"
-                 class="class_link_movimiento">
-                {{ mov.concepto }}
-              </a>
-            </div>
-          </td>
-
-          <td class="class_td_detalle">
-            <div class="cell_detalle scrollable">
-              {{ mov.detalle|default_if_none:""|truncatechars:50 }}
-            </div>
-          </td>
-
-          <td class="class_td_cta_entrada">
-            <div class="cell_cuentas scrollable">
-              {{ mov.cta_entrada|default_if_none:"" }}
-            </div>
-          </td>
-
-          <td class="class_td_cta_salida">
-            <div class="cell_cuentas scrollable">
-              {{ mov.cta_salida|default_if_none:"" }}
-            </div>
-          </td>
-
-          <td class="numero class_td_importe" title="{{ mov.str_cuentas }}">
-            {{ mov.importe|floatformat:2 }}
-          </td>
-
-          <td class="class_td_menu">
-            {% if not mov.es_automatico %}
-            <a href="{{ mov.get_delete_url }}?next={{ request.get_full_path }}"
-               class="class_link_elim_mov">
-              B
-            </a>
-            <a href="{{ mov.get_edit_url }}?next={{ request.get_full_path }}"
-               class="class_link_mod_mov">
-              E
-            </a>
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-      </table>
-    </div>
+      {% include "diario/snippets/dia.html" with dia=dia %}
     {% endfor %}
   </div>
 

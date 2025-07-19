@@ -1,0 +1,51 @@
+{% load urltags %}
+
+<tr id="id_row_mov_{{ mov.sk }}" class="class_row_mov{% if mov.pk == pk %} mov_selected{% endif %}">
+
+  <td class="class_td_orden_dia">{{ mov.orden_dia }}</td>
+
+  <td class="class_td_concepto" title="{{ mov.detalle }}">
+    <div class="cell_concepto scrollable">
+      <a href="{% movurl mov page=request.GET.page fecha=request.GET.fecha %}"
+         id="id_link_mov_{{ mov.sk }}"
+         class="class_link_movimiento">
+        {{ mov.concepto }}
+      </a>
+    </div>
+  </td>
+
+  <td class="class_td_detalle">
+    <div class="cell_detalle scrollable">
+      {{ mov.detalle|default_if_none:""|truncatechars:50 }}
+    </div>
+  </td>
+
+  <td class="class_td_cta_entrada">
+    <div class="cell_cuentas scrollable">
+      {{ mov.cta_entrada|default_if_none:"" }}
+    </div>
+  </td>
+
+  <td class="class_td_cta_salida">
+    <div class="cell_cuentas scrollable">
+      {{ mov.cta_salida|default_if_none:"" }}
+    </div>
+  </td>
+
+  <td class="numero class_td_importe" title="{{ mov.str_cuentas }}">
+    {{ mov.importe|floatformat:2 }}
+  </td>
+
+  <td class="class_td_menu">
+    {% if not mov.es_automatico %}
+    <a href="{{ mov.get_delete_url }}?next={{ request.get_full_path }}"
+       class="class_link_elim_mov">
+      B
+    </a>
+    <a href="{{ mov.get_edit_url }}?next={{ request.get_full_path }}"
+       class="class_link_mod_mov">
+      E
+    </a>
+    {% endif %}
+  </td>
+</tr>
