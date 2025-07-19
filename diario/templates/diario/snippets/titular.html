@@ -1,0 +1,24 @@
+{% load historicos %}
+
+<tr class="menu-row class_div_titular">
+  <td class="menu-item class_td_titular{% if tit.nombre == titular.nombre %} selected{% endif %}">
+    <div class="menu-item-content class_div_nombre_titular">
+      <a id="id_link_tit_{{ tit.sk }}" class="class_link_titular" href="{{ tit.get_absolute_url }}">
+        {{ tit.nombre }}
+      </a>
+    </div>
+    <div class="menu-item-edit">
+      <a id="id_link_tit_mod_{{ tit.sk }}" href="{{ tit.get_edit_url }}?next={{ request.get_full_path }}">
+        E
+      </a>
+    </div>
+    <div class="menu-item-edit">
+      <a id="id_link_tit_elim_{{ tit.sk }}" href="{{ tit.get_delete_url }}?next={{ request.get_full_path }}">
+        B
+      </a>
+    </div>
+  </td>
+  <td id="id_capital_{{ tit.sk }}" class="numero chico class_capital_titular">
+    {% cap_historico tit movimiento %}
+  </td>
+</tr>
