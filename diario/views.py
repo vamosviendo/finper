@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import date
 
 from django.core.paginator import Paginator
+from django.db.models import QuerySet
 from django.db.models.functions import Lower
 from django.shortcuts import render, redirect
 from django.urls import reverse, reverse_lazy
@@ -17,13 +18,13 @@ from diario.settings_app import TEMPLATE_HOME
 from diario.utils.utils_saldo import saldo_general_historico, verificar_saldos
 
 """
-/?fecha                     -> /diario/m/<umf>.pk?fecha         -> /diario/m/<umf>.pk?page=<pag fecha>
-/diario/t/t.sk/?fecha       -> /diario/tm/t.sk/<umf>.pk?fecha   -> /diario/tm/t.sk/<umf>.pk?page=<pag fecha>
-/diario/c/c.sk/?fecha       -> /diario/cm/c.sk/<umf>.pk?fecha   -> /diario/cm/c.sk/<umf>.pk?page=<pag fecha>
-/diario/m/m.pk?fecha        -> /diario/m/m.pk?fecha             -> /diario/m/m.pk?page=<pag fecha>
-/diario/tm/t.sk/m.pk?fecha  -> /diario/tm/t.sk/m.pk?fecha       -> /diario/tm/t.sk/m.pk?page=<pag fecha>
-/diario/cm/c.sk/m.pk?fecha  -> /diario/cm/c.sk/m.pk?fecha       -> ...
-/?page                      -> /diario/m/<ump>.pk?page
+/?fecha                     -> /diario/m/<umf>.pk?fecha *         -> /diario/m/<umf>.pk?page=<pag fecha>
+/diario/t/t.sk/?fecha       -> /diario/tm/t.sk/<umf>.pk?fecha *   -> /diario/tm/t.sk/<umf>.pk?page=<pag fecha>
+/diario/c/c.sk/?fecha       -> /diario/cm/c.sk/<umf>.pk?fecha *   -> /diario/cm/c.sk/<umf>.pk?page=<pag fecha>
+/diario/m/m.pk?fecha        -> /diario/m/m.pk?fecha           *  -> /diario/m/m.pk?page=<pag fecha>
+/diario/tm/t.sk/m.pk?fecha  -> /diario/tm/t.sk/m.pk?fecha     *  -> /diario/tm/t.sk/m.pk?page=<pag fecha>
+/diario/cm/c.sk/m.pk?fecha  -> /diario/cm/c.sk/m.pk?fecha     *  -> ...
+/?page                      -> /diario/m/<ump>.pk?page        
 /diario/t/t.sk/?page        -> /diario/tm/t.sk/<ump>.pk?page
 /diario/c/c.sk/?page        -> /diario/cm/c.sk/<ump>.pk?page
 /diario/m/m.pk?page         -> /diario/m/m.pk?page
@@ -60,6 +61,12 @@ en la página
 <ma>: Movimiento anterior de la fecha correspondiente al titular o cuenta. Si no hay movimiento anterior en la fecha, 
     último movimiento de fechas anteriores correspondiente al titular o cuenta.
 """
+
+def pag_de_fecha(fecha: date, ente: Cuenta | Titular | None) -> int:
+    """ Calcula página a partir de fecha """
+    queryset = ente.dias() if ente else Dia.con_movimientos()
+    posicion = queryset.filter(fecha__gt=fecha).count()
+    return (posicion // 7) + 1
 
 
 class HomeView(TemplateView):
@@ -139,9 +146,8 @@ class HomeView(TemplateView):
 
         if "fecha" in querydict and "page" not in querydict:
             fecha = querydict["fecha"]
-            queryset = cuenta.dias() if cuenta else titular.dias() if titular else Dia.con_movimientos()
-            posicion = queryset.filter(fecha__gt=fecha).count()
-            pagina = (posicion // 7) + 1
+            ente = cuenta or titular or None
+            pagina = pag_de_fecha(fecha, ente)
             if pagina > 0:
                 querydict["page"] = str(pagina)
 
