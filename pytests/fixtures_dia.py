@@ -71,6 +71,33 @@ def dia_hoy() -> Dia:
 
 @pytest.fixture
 def mas_de_7_dias(
+        fecha_inicial: date,
+        entrada_temprana,
+        entrada_anterior_otra_cuenta,
+        entrada, salida, traspaso,
+        entrada_posterior_cuenta_ajena,
+        entrada_tardia,
+        fecha_tardia_plus,
+        cuenta, cuenta_2,
+):
+    Movimiento.crear(fecha=fecha_inicial, concepto="mov inicial", cta_entrada=cuenta, importe=140)
+    Movimiento.crear(fecha=fecha_tardia_plus, concepto="mov tardio plus", cta_salida=cuenta, importe=120)
+    Movimiento.crear(
+        fecha=fecha_tardia_plus+timedelta(10), concepto="mov_lejano_otra_cuenta", cta_entrada=cuenta_2, importe=130
+    )
+    Movimiento.crear(
+        fecha=fecha_tardia_plus + timedelta(10), concepto="mov_lejano", cta_entrada=cuenta, importe=150
+    )
+    Movimiento.crear(
+        fecha=fecha_tardia_plus + timedelta(20), concepto="mov_ignoto_otra_cuenta", cta_salida=cuenta_2, importe=160
+    )
+    Movimiento.crear(fecha=fecha_tardia_plus + timedelta(30), concepto="mov_final", cta_entrada=cuenta, importe=170)
+    Movimiento.crear(fecha=fecha_tardia_plus + timedelta(35), concepto="mov_final", cta_entrada=cuenta, importe=175)
+    return Dia.todes()
+
+
+@pytest.fixture
+def mas_de_7_ds(
         dia_con_movs: Dia,
         titular: Titular,
         cuenta: CuentaInteractiva,
@@ -82,17 +109,17 @@ def mas_de_7_dias(
         dia_tardio_plus: Dia,
         dia_hoy: Dia,
         fecha_inicial: date) -> QuerySet[Dia]:
-    Movimiento.crear(fecha=dia_temprano.fecha, concepto="mov", cta_entrada=cuenta_2, importe=100)
-    Movimiento.crear(fecha=dia_tardio_plus.fecha, concepto="mov", cta_entrada=cuenta, importe=100)
-    Movimiento.crear(fecha=dia_hoy.fecha, concepto="mov", cta_entrada=cuenta_2, importe=100)
+    Movimiento.crear(fecha=dia_temprano.fecha, concepto="mov", cta_entrada=cuenta_2, importe=110)
+    Movimiento.crear(fecha=dia_tardio_plus.fecha, concepto="mov", cta_entrada=cuenta, importe=120)
+    Movimiento.crear(fecha=dia_hoy.fecha, concepto="mov", cta_entrada=cuenta_2, importe=130)
     Movimiento.crear(
-        fecha=date(2001, 1, 2), concepto="mov", cta_entrada=cuenta, importe=100)
+        fecha=date(2001, 1, 2), concepto="mov", cta_entrada=cuenta, importe=140)
     return Dia.todes()
 
 
 @pytest.fixture
 def muchos_dias(
-        mas_de_7_dias: QuerySet[Dia],
+        mas_de_7_ds: QuerySet[Dia],
         fecha_tardia: date,
         fecha: date,
         cuenta: CuentaInteractiva,

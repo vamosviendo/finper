@@ -6,6 +6,7 @@ from urllib.parse import urlparse
 from selenium.webdriver.common.by import By
 
 from diario.models import Dia
+from utils.helpers_tests import fecha2page
 from utils.tiempo import str2date
 from .helpers import texto_en_hijos_respectivos
 from utils.numeros import float_format
@@ -157,7 +158,7 @@ def test_home(
     assert fecha in fechas
     dia = Dia.tomar(fecha=fecha)
     mov = dia.movimientos.last()
-    browser.assert_url(mov.get_absolute_url() + f"?fecha={fecha}&redirected=1")
+    browser.assert_url(mov.get_absolute_url() + f"?page={fecha2page(Dia.todes(), fecha)}&redirected=1")
 
     # Si seleccionamos un día inexistente, seremos llevados a la página que contengan
     # los días aledaños al seleccionado.

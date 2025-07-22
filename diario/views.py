@@ -16,6 +16,7 @@ from diario.models import Cuenta, CuentaInteractiva, CuentaAcumulativa, Dia, \
     Movimiento, Titular, Moneda
 from diario.settings_app import TEMPLATE_HOME
 from diario.utils.utils_saldo import saldo_general_historico, verificar_saldos
+from utils.tiempo import str2date
 
 """
 /?fecha                     -> /diario/m/<umf>.pk?fecha *         -> /diario/m/<umf>.pk?page=<pag fecha>
@@ -112,6 +113,8 @@ class HomeView(TemplateView):
             if dia is None:     # fecha es anterior a todos los días con movimientos
                 dia = dias.first()
 
+            page = pag_de_fecha(str2date(fecha), ente)
+
             if "movimiento" in viewname:
                 pk = resolver_match.kwargs.get("pk")
                 args += [pk]
@@ -125,7 +128,7 @@ class HomeView(TemplateView):
                 args += [mov.pk]
 
             return redirect(
-                reverse(f"{prefijo}movimiento", args=args) + f"?fecha={dia.fecha}&redirected=1",
+                reverse(f"{prefijo}movimiento", args=args) + f"?page={page}&redirected=1",
             )
         return super().get(request, *args, **kwargs)
 
@@ -143,13 +146,6 @@ class HomeView(TemplateView):
             f" en movimiento {movimiento.orden_dia} " \
             f"del {movimiento.fecha} ({movimiento.concepto})" \
             if movimiento else ""
-
-        if "fecha" in querydict and "page" not in querydict:
-            fecha = querydict["fecha"]
-            ente = cuenta or titular or None
-            pagina = pag_de_fecha(fecha, ente)
-            if pagina > 0:
-                querydict["page"] = str(pagina)
 
         context.update({
             'movimiento': movimiento or None,

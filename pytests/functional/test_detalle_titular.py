@@ -2,6 +2,7 @@ import pytest
 from django.urls import reverse
 from selenium.webdriver.common.by import By
 
+from utils.helpers_tests import fecha2page
 from utils.numeros import float_format
 from utils.tiempo import str2date
 from .helpers import texto_en_hijos_respectivos
@@ -180,7 +181,9 @@ def test_busqueda_de_fecha_en_detalle_de_titular(browser, titular, cuenta_ajena,
     # con la fecha ingresada. El último movimiento del titular del día de la fecha
     # aparece seleccionado.
     mov = dia.movimientos.last()
-    browser.assert_url(titular.get_url_with_mov(mov) + f"?fecha={dia.fecha}&redirected=1")
+    browser.assert_url(
+        titular.get_url_with_mov(mov) + f"?page={fecha2page(titular.dias(), dia.fecha)}&redirected=1"
+    )
 
     # En la página se muestran solamente los días con movimientos de la cuenta.
     # No se muestran los demás días.
@@ -208,5 +211,6 @@ def test_busqueda_de_fecha_en_detalle_de_titular(browser, titular, cuenta_ajena,
     browser.ir_a_pag(titular.get_absolute_url())
     browser.completar_form(boton="id_btn_buscar_dia_init", input_dia_init=dia_no_titular.fecha)
     browser.assert_url(
-        titular.get_url_with_mov(mov_titular_dia_anterior) + f"?fecha={dia_anterior_titular.fecha}&redirected=1"
+        titular.get_url_with_mov(mov_titular_dia_anterior) +
+        f"?page={fecha2page(titular.dias(), dia_anterior_titular.fecha)}&redirected=1"
     )

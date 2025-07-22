@@ -1,9 +1,9 @@
 from __future__ import annotations
 from datetime import date
 
-from django.core.exceptions import ValidationError
+from django.db.models import QuerySet
 
-from diario.models import CuentaInteractiva, CuentaAcumulativa, Movimiento
+from diario.models import CuentaInteractiva, CuentaAcumulativa, Dia, Movimiento
 
 
 def cambiar_fecha(mov: Movimiento, fecha: date):
@@ -17,6 +17,10 @@ def dividir_en_dos_subcuentas(cuenta: CuentaInteractiva, saldo: float = 0, fecha
         ['subcuenta 2', 'sc2'],
         fecha=fecha
     )
+
+
+def fecha2page(queryset: QuerySet[Dia], fecha):
+    return (queryset.filter(fecha__gt=fecha).count() // 7) + 1
 
 
 def signo(condicion: bool) -> int:

@@ -6,6 +6,7 @@ from django.urls import reverse
 
 from diario.models import Cuenta, Titular, Movimiento
 from diario.utils.utils_saldo import saldo_general_historico
+from utils.helpers_tests import fecha2page
 from utils.numeros import float_format
 
 
@@ -144,23 +145,25 @@ def test_detalle_movimiento_en_paginas_anteriores(browser, muchos_dias, origen, 
     un movimiento, sigue apareciendo seleccionado el último movimiento de la fecha. Este comportamiento debe ser
     corregido, pero todavía no. 
 """
-@pytest.mark.parametrize("origen, destino", [
-    ("/", "/diario/m/"),
-    ("/diario/c/c/", "/diario/cm/c/"),
-    ("/diario/t/titular/", "/diario/tm/titular/")])
-def test_detalle_movimiento_en_fechas_anteriores(browser, muchos_dias, fecha, origen, destino):
+@pytest.mark.parametrize("origen", [None, "cuenta", "titular"])
+def test_detalle_movimiento_en_fechas_anteriores(browser, muchos_dias, fecha, origen, request):
+    ente = request.getfixturevalue(origen) if origen else None
+    dias = ente.dias() if ente else muchos_dias
+    url_origen = ente.get_absolute_url() if ente else reverse("home")
     # Cuando estando en la página de una fecha anterior cliqueamos en un movimiento...
-    browser.ir_a_pag(f"{origen}?fecha={fecha}")
+    browser.ir_a_pag(f"{url_origen}?fecha={fecha}")
     links_movimiento = browser.esperar_elementos("class_link_movimiento")
 
     movimientos = browser.esperar_elementos("class_row_mov")
     assert "mov_selected" not in movimientos[1].get_attribute("class")
 
     pk = int(urlparse(links_movimiento[1].get_attribute("href")).path.split("/")[-1])
+    mov = Movimiento.tomar(pk=pk)
+    url_destino = ente.get_url_with_mov(mov) if ente else mov.get_absolute_url()
     links_movimiento[1].click()
 
     # ...permanecemos en la página en la que estábamos...
-    browser.assert_url(f"{destino}{pk}?fecha={fecha}&redirected=1")
+    browser.assert_url(f"{url_destino}?page={fecha2page(dias, fecha)}")
 
     # ...y el movimiento aparece resaltado...
     movimientos = browser.esperar_elementos("class_row_mov")
