@@ -158,7 +158,7 @@ def test_home(
     assert fecha in fechas
     dia = Dia.tomar(fecha=fecha)
     mov = dia.movimientos.last()
-    browser.assert_url(mov.get_absolute_url() + f"?page={fecha2page(Dia.todes(), fecha)}&redirected=1")
+    browser.assert_url(mov.get_absolute_url() + f"?page={fecha2page(Dia.todes(), fecha)}")
 
     # Si seleccionamos un día inexistente, seremos llevados a la página que contengan
     # los días aledaños al seleccionado.

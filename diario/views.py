@@ -85,9 +85,8 @@ class HomeView(TemplateView):
 
     def get(self, request, *args, **kwargs):
         fecha = request.GET.get("fecha")
-        redirected = request.GET.get("redirected") == "1"
 
-        if fecha is not None and not redirected:
+        if fecha is not None:
             resolver_match = request.resolver_match
             viewname = resolver_match.url_name
 
@@ -128,7 +127,7 @@ class HomeView(TemplateView):
                 args += [mov.pk]
 
             return redirect(
-                reverse(f"{prefijo}movimiento", args=args) + f"?page={page}&redirected=1",
+                reverse(f"{prefijo}movimiento", args=args) + f"?page={page}",
             )
         return super().get(request, *args, **kwargs)
 

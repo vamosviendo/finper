@@ -263,10 +263,7 @@ class TestBusquedaFecha:
         mov = dia.movimientos.last()
         pag = fecha2page(Dia.con_movimientos(), dia.fecha)
         response = client.get(f"{reverse('home')}?fecha={str(dia)}")
-        asserts.assertRedirects(
-            response,
-            mov.get_absolute_url() + f"?page={pag}&redirected=1"
-        )
+        asserts.assertRedirects(response, mov.get_absolute_url() + f"?page={pag}")
 
     def test_si_recibe_querydict_con_fecha_en_vista_de_movimiento_distinto_al_ultimo_de_la_fecha_redirige_a_vista_de_movimiento_con_movimiento_recibido(
             self, mas_de_7_dias, client):
@@ -276,7 +273,7 @@ class TestBusquedaFecha:
         response = client.get(f"{mov.get_absolute_url()}?fecha={dia.fecha}")
         asserts.assertRedirects(
             response,
-            mov.get_absolute_url() + f"?page={fecha2page(Dia.con_movimientos(), dia.fecha)}&redirected=1"
+            mov.get_absolute_url() + f"?page={fecha2page(Dia.con_movimientos(), dia.fecha)}"
         )
 
     @pytest.mark.parametrize("origen", ["titular", "cuenta"])
@@ -289,7 +286,7 @@ class TestBusquedaFecha:
         response = client.get(ente.get_absolute_url() + f"?fecha={dia.fecha}")
         asserts.assertRedirects(
             response,
-            ente.get_url_with_mov(mov) + f"?page={fecha2page(dias, dia.fecha)}&redirected=1"
+            ente.get_url_with_mov(mov) + f"?page={fecha2page(dias, dia.fecha)}"
         )
 
     @pytest.mark.parametrize("origen", ["titular", "cuenta"])
@@ -303,7 +300,7 @@ class TestBusquedaFecha:
         response = client.get(ente.get_url_with_mov(mov) + f"?fecha={dia.fecha}")
         asserts.assertRedirects(
             response,
-            ente.get_url_with_mov(mov) + f"?page={fecha2page(dias, dia.fecha)}&redirected=1"
+            ente.get_url_with_mov(mov) + f"?page={fecha2page(dias, dia.fecha)}"
         )
 
     def test_si_la_fecha_recibida_en_el_querydict_no_corresponde_a_un_dia_existente_muestra_pagina_con_dia_anterior(
@@ -322,7 +319,7 @@ class TestBusquedaFecha:
         response = client.get(f"{reverse('home')}?fecha={fecha}")
         asserts.assertRedirects(
             response,
-            mov.get_absolute_url() + f"?page={fecha2page(mas_de_7_dias, dia.fecha)}&redirected=1"
+            mov.get_absolute_url() + f"?page={fecha2page(mas_de_7_dias, dia.fecha)}"
         )
 
     def test_si_la_fecha_recibida_en_el_querydict_corresponde_a_un_dia_sin_movimientos_muestra_pagina_con_dia_con_movimientos_anterior(
@@ -344,7 +341,7 @@ class TestBusquedaFecha:
         response = client.get(f"{reverse('home')}?fecha={fecha}")
         asserts.assertRedirects(
             response,
-            mov.get_absolute_url() + f"?page={fecha2page(Dia.con_movimientos(), dia_anterior.fecha)}&redirected=1"
+            mov.get_absolute_url() + f"?page={fecha2page(Dia.con_movimientos(), dia_anterior.fecha)}"
         )
 
     @pytest.mark.parametrize("origen", [None, "titular", "cuenta"])
@@ -367,7 +364,7 @@ class TestBusquedaFecha:
         response = client.get(f"{url_origen}?fecha={dia.fecha - timedelta(1)}")
         asserts.assertRedirects(
             response,
-            url_destino + f"?page={fecha2page(dias, dia.fecha)}&redirected=1"
+            url_destino + f"?page={fecha2page(dias, dia.fecha)}"
         )
 
     @pytest.mark.parametrize("origen", ["titular", "cuenta"])
@@ -395,5 +392,5 @@ class TestBusquedaFecha:
         response = client.get(ente.get_absolute_url() + f"?fecha={fecha_sin_movs_de_ente}")
         asserts.assertRedirects(
             response,
-            ente.get_url_with_mov(mov_dia_anterior) + f"?page={fecha2page(dias, dia_anterior.fecha)}&redirected=1"
+            ente.get_url_with_mov(mov_dia_anterior) + f"?page={fecha2page(dias, dia_anterior.fecha)}"
         )
