@@ -82,12 +82,12 @@ def test_navegacion_paginas(browser, muchos_dias):
     assert urlparse(browser.current_url).query == f"page={nro_pag}"
 
 
-@pytest.mark.parametrize("origen, fixt_dias", [
-    ("home", "muchos_dias"),
-    ("titular", "muchos_dias_distintos_titulares", ),
-    ("cuenta", "muchos_dias"),
+@pytest.mark.parametrize("origen, fixt_dias, fecha_en_la_misma_pag", [
+    ("home", "muchos_dias", date(2010, 11, 13)),
+    ("titular", "muchos_dias_distintos_titulares", date(2010, 11, 14)),
+    ("cuenta", "muchos_dias", date(2010, 9, 10))
 ])
-def test_busqueda_fecha(browser, origen, fixt_dias, fecha, fecha_tardia, request):
+def test_busqueda_fecha(browser, origen, fixt_dias, fecha, fecha_tardia, fecha_en_la_misma_pag, request):
     ente = request.getfixturevalue(origen) if origen != "home" else None
     args = [ente.sk] if ente else []
     request.getfixturevalue(fixt_dias)
@@ -100,8 +100,24 @@ def test_busqueda_fecha(browser, origen, fixt_dias, fecha, fecha_tardia, request
     fechas = [str2date(x.text[-10:]) for x in browser.esperar_elementos("class_span_fecha_dia")]
     assert fecha in fechas
 
-    # Si seleccionamos un día inexistente, seremos llevados a la página que contengan
-    # los días aledaños al seleccionado.
+    # El último movimiento del día buscado aparece seleccionado
+    ultimo_mov_dia = browser.esperar_dia(fecha).esperar_elementos("class_row_mov")[-1]
+    assert "mov_selected" in ultimo_mov_dia.get_attribute("class")
+
+    # Si buscamos un día que se encuentre en la misma página que un día seleccionado,
+    # se deselecciona el día que estaba seleccionado y aparece seleccionado el último
+    # movimiento del día buscado
+    # fecha_en_la_misma_pagina = date(2010, 11, 13)
+    print("INICIO ACCIÓN")
+    browser.completar_form(boton="id_btn_buscar_dia_init", input_dia_init=fecha_en_la_misma_pag)
+    # input(f"pausa {fecha} {fecha_en_la_misma_pagina}")
+    ultimo_mov_dia = browser.esperar_dia(fecha).esperar_elementos("class_row_mov")[-1]
+    ultimo_mov_nuevo_dia = browser.esperar_dia(fecha_en_la_misma_pag).esperar_elementos("class_row_mov")[-1]
+    assert "mov_selected" not in ultimo_mov_dia.get_attribute("class")
+    assert "mov_selected" in ultimo_mov_nuevo_dia.get_attribute("class")
+
+    # Si buscamos un día inexistente, seremos llevados a la página que contenga
+    # el día anterior al seleccionado.
     fecha_inexistente = date(2011,4,21)
     browser.completar_form(boton="id_btn_buscar_dia_init", input_dia_init=fecha_inexistente)
     fecha_anterior = Dia.filtro(fecha__lt=fecha_inexistente).last().fecha
@@ -111,7 +127,7 @@ def test_busqueda_fecha(browser, origen, fixt_dias, fecha, fecha_tardia, request
     assert fecha_posterior in fechas
     assert fecha_inexistente not in fechas
 
-    # Lo mismo si seleccionamos un día que no contenga movimientos.
+    # Lo mismo si buscamos un día que no contenga movimientos.
     fecha_sin_movs = fecha_tardia - timedelta(1)
     browser.completar_form(boton="id_btn_buscar_dia_init", input_dia_init=fecha_sin_movs)
     fecha_anterior = Dia.filtro(fecha__lt=fecha_sin_movs).last().fecha

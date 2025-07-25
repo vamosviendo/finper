@@ -114,17 +114,13 @@ class HomeView(TemplateView):
 
             page = pag_de_fecha(str2date(fecha), ente)
 
-            if "movimiento" in viewname:
-                pk = resolver_match.kwargs.get("pk")
-                args += [pk]
-            else:
+            movs = dia.movs(ente=ente)
+            mov = movs.last()
+            while mov is None:
+                dia = dia.anterior()
                 movs = dia.movs(ente=ente)
                 mov = movs.last()
-                while mov is None:
-                    dia = dia.anterior()
-                    movs = dia.movs(ente=ente)
-                    mov = movs.last()
-                args += [mov.pk]
+            args += [mov.pk]
 
             return redirect(
                 reverse(f"{prefijo}movimiento", args=args) + f"?page={page}",
