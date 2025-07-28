@@ -81,6 +81,7 @@ def mas_de_7_dias(
         cuenta, cuenta_2,
 ):
     Movimiento.crear(fecha=fecha_inicial, concepto="mov inicial", cta_entrada=cuenta, importe=140)
+    Movimiento.crear(fecha=fecha_inicial + timedelta(5), concepto="mov siguiente", cta_entrada=cuenta, importe=145)
     Movimiento.crear(fecha=fecha_tardia_plus, concepto="mov tardio plus", cta_salida=cuenta, importe=120)
     Movimiento.crear(
         fecha=fecha_tardia_plus+timedelta(10), concepto="mov_lejano_otra_cuenta", cta_entrada=cuenta_2, importe=130

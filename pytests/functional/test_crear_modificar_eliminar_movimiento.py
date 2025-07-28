@@ -495,8 +495,7 @@ def test_convertir_entrada_en_traspaso_entre_titulares(browser, entrada, cuenta_
     assert mov_nuevo.esperar_elemento('class_td_concepto', By.CLASS_NAME).text == 'Constitución de crédito'
 
 
-@pytest.mark.parametrize("origen", ["/", "/diario/t/titular/", "/diario/c/c/", "/diario/m/",
-                                    "/?page=2", "/diario/t/titular/?page=5", "/diario/cm/c/"])
+@pytest.mark.parametrize("origen", ["/", "/diario/t/titular/", "/diario/c/c/", "/diario/m/", "/diario/cm/c/"])
 @pytest.mark.parametrize("destino", ["#id_link_mov_nuevo", "#id_row_mov_xxx .class_link_mod_mov"])
 def test_crear_o_modificar_movimiento_vuelve_a_la_pagina_desde_la_que_se_lo_invoco(
         browser, origen, destino, valores, titular, cuenta, entrada, entrada_anterior, entrada_cuenta_ajena):
@@ -511,6 +510,30 @@ def test_crear_o_modificar_movimiento_vuelve_a_la_pagina_desde_la_que_se_lo_invo
     browser.assert_url(origen)
 
 
+@pytest.mark.parametrize("origen", [None, "cuenta", "titular"])
+@pytest.mark.parametrize("destino", ["#id_link_mov_nuevo", "#id_row_mov_xxx .class_link_mod_mov"])
+def test_crear_o_modificar_movimiento_desde_pagina_anterior_redirige_a_esa_pagina_con_el_ultimo_movimiento_seleccionado(
+        browser, mas_de_7_dias, entrada_temprana, origen, destino, valores, request):
+    if origen:
+        ente = request.getfixturevalue(origen)
+        url_origen = ente.get_absolute_url()
+        dias = list(ente.dias())
+    else:
+        ente = None
+        url_origen = reverse("home")
+        dias = list(mas_de_7_dias)
+    movimiento = dias[-8].movimientos.last()
+    url_final = ente.get_url_with_mov(movimiento) if ente else movimiento.get_absolute_url()
+    if destino == "#id_row_mov_xxx .class_link_mod_mov":
+        mov = dias[0].movimientos.first()
+        destino = destino.replace("xxx", mov.sk)
+        valores.pop("fecha")
+
+    browser.ir_a_pag(url_origen + "?page=2")
+    browser.pulsar(destino, By.CSS_SELECTOR)
+    browser.completar_form(**valores)
+    browser.assert_url(url_final + "?page=2")
+
 def test_eliminar_movimiento(browser, entrada, salida):
     # Cuando se elimina un movimiento desaparece de la página principal
     concepto = entrada.concepto
@@ -521,8 +544,7 @@ def test_eliminar_movimiento(browser, entrada, salida):
     assert concepto not in conceptos
 
 
-@pytest.mark.parametrize("origen", ["/", "/diario/t/titular/", "/diario/c/c/", "/diario/m/",
-                                    "/?page=2", "/diario/t/titular/?page=5", "/diario/cm/c/"])
+@pytest.mark.parametrize("origen", ["/", "/diario/t/titular/", "/diario/c/c/", "/diario/m/", "/diario/cm/c/"])
 def test_eliminar_movimiento_vuelve_a_la_pagina_desde_que_se_lo_invoco(
         browser, origen, titular, cuenta, entrada, entrada_anterior, entrada_cuenta_ajena):
     if "m/" in origen:
@@ -531,3 +553,25 @@ def test_eliminar_movimiento_vuelve_a_la_pagina_desde_que_se_lo_invoco(
     browser.pulsar(f"#id_row_mov_{entrada.sk} .class_link_elim_mov", By.CSS_SELECTOR)
     browser.pulsar("id_btn_confirm")
     browser.assert_url(origen)
+
+
+@pytest.mark.parametrize("origen", [None, "cuenta", "titular"])
+def test_eliminar_movimiento_desde_pagina_posterior_redirige_a_esa_pagina_con_el_ultimo_movimiento_seleccionado(
+        browser, mas_de_7_dias, fecha_inicial, cuenta, origen, request):
+    if origen:
+        ente = request.getfixturevalue(origen)
+        url_origen = ente.get_absolute_url()
+        dias = list(ente.dias())
+    else:
+        ente = None
+        url_origen = reverse("home")
+        dias = list(mas_de_7_dias)
+    movimiento = dias[-8].movimientos.last()
+    url_destino = ente.get_url_with_mov(movimiento) if ente else movimiento.get_absolute_url()
+    mov_a_eliminar = dias[0].movimientos.first()
+
+    browser.ir_a_pag(url_origen + "?page=2")
+    browser.pulsar(f"#id_row_mov_{mov_a_eliminar.sk} .class_link_elim_mov", By.CSS_SELECTOR)
+    browser.pulsar("id_btn_confirm")
+
+    browser.assert_url(url_destino + "?page=2")

@@ -38,8 +38,7 @@ def test_modificar_titular(browser, titular, fecha_anterior):
     assert nombre_titular == "titular con nombre modificado"
 
 
-@pytest.mark.parametrize("origen", ["/", "/diario/c/c/", "/diario/m/",
-                                    "/?page=2", "/diario/c/c/?page=2", "/diario/cm/c/"])
+@pytest.mark.parametrize("origen", ["/", "/diario/c/c/", "/diario/m/", "/diario/cm/c/"])
 @pytest.mark.parametrize("destino", ["id_link_titular_nuevo", "id_link_tit_mod_"])
 def test_crear_o_modificar_titular_redirige_a_pagina_desde_donde_se_invoco(
         browser, origen, destino, titular, cuenta, fecha, entrada, entrada_anterior):
@@ -56,6 +55,33 @@ def test_crear_o_modificar_titular_redirige_a_pagina_desde_donde_se_invoco(
     )
     browser.assert_url(origen)
 
+@pytest.mark.parametrize("origen", [None, "titular", "cuenta"])
+@pytest.mark.parametrize("destino", ["id_link_titular_nuevo", "id_link_tit_mod_"])
+def test_crear_o_modificar_titular_desde_pagina_posterior_redirige_a_esa_pagina_con_el_ultimo_movimiento_seleccionado(
+        browser, titular, fecha, mas_de_7_dias, origen, destino, request):
+    if origen:
+        ente = request.getfixturevalue(origen)
+        url_origen = ente.get_absolute_url()
+        dias = list(ente.dias())
+    else:
+        ente = None
+        url_origen = reverse("home")
+        dias = list(mas_de_7_dias)
+    movimiento = dias[-8].movimientos.last()
+    url_final = ente.get_url_with_mov(movimiento) if ente else movimiento.get_absolute_url()
+    if destino == "id_link_tit_mod_":
+        destino = f"{destino}{titular.sk}"
+
+    browser.ir_a_pag(url_origen + "?page=2")
+    browser.pulsar(destino)
+    browser.completar_form(
+        nombre="titular nuevo",
+        sk="tn",
+        fecha_alta=fecha,
+    )
+
+    browser.assert_url(url_final + "?page=2")
+
 
 def test_eliminar_titular(browser, titular, otro_titular):
     """ Cuando vamos a la página de eliminar titular y cliqueamos en confirmar,
@@ -68,8 +94,7 @@ def test_eliminar_titular(browser, titular, otro_titular):
     assert nombre_titular not in nombres_titular
 
 
-@pytest.mark.parametrize("origen", ["/", "/diario/c/c/", "/diario/m/",
-                                    "/?page=2", "/diario/c/c/?page=2", "/diario/cm/c/"])
+@pytest.mark.parametrize("origen", ["/", "/diario/c/c/", "/diario/m/", "/diario/cm/c/"])
 def test_eliminar_titular_redirige_a_pagina_desde_la_que_se_invoco(browser, origen, titular, cuenta, cuenta_ajena, entrada):
     if "m/" in origen:
         origen = f"{origen}{entrada.pk}"
@@ -77,3 +102,23 @@ def test_eliminar_titular_redirige_a_pagina_desde_la_que_se_invoco(browser, orig
     browser.pulsar(f"id_link_tit_elim_{titular.sk}")
     browser.pulsar("id_btn_confirm")
     browser.assert_url(origen)
+
+@pytest.mark.parametrize("origen", [None, "titular"])
+def test_eliminar_cuenta_desde_pagina_posterior_redirige_a_esa_pagina_con_el_ultimo_movimiento_seleccionado(
+        browser, origen, mas_de_7_dias, titular, titular_gordo, entrada, request):
+    if origen:
+        ente = request.getfixturevalue(origen)
+        url_origen = ente.get_absolute_url()
+        dias = list(ente.dias())
+    else:
+        ente = None
+        url_origen = reverse("home")
+        dias = list(mas_de_7_dias)
+    movimiento = dias[-8].movimientos.last()
+    url_destino = ente.get_url_with_mov(movimiento) if ente else movimiento.get_absolute_url()
+
+    browser.ir_a_pag(url_origen + "?page=2")
+    browser.pulsar(f"id_link_tit_elim_{titular_gordo.sk}")
+    browser.pulsar("id_btn_confirm")
+
+    browser.assert_url(url_destino + "?page=2")

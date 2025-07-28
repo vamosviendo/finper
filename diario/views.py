@@ -85,28 +85,33 @@ class HomeView(TemplateView):
 
     def get(self, request, *args, **kwargs):
         fecha = request.GET.get("fecha")
+        pag = request.GET.get("page")
+        redirected = request.GET.get("redirected")
+        resolver_match = request.resolver_match
+        pk_mov = resolver_match.kwargs.get("pk")
+        movimiento = Movimiento.tomar_o_nada(pk=pk_mov)
+
+        viewname = resolver_match.url_name
+
+        if "cuenta" in viewname:
+            sk = resolver_match.kwargs.get("sk_cta")
+            ente = Cuenta.tomar(sk=sk)
+            dias = ente.dias()
+            prefijo = "cuenta_"
+            args = [sk]
+        elif "titular" in viewname:
+            sk = resolver_match.kwargs.get("sk")
+            ente = Titular.tomar(sk=sk)
+            dias = ente.dias()
+            prefijo = "titular_"
+            args = [sk]
+        else:
+            ente = None
+            dias = Dia.con_movimientos()
+            prefijo = ""
+            args = []
 
         if fecha is not None:
-            resolver_match = request.resolver_match
-            viewname = resolver_match.url_name
-
-            if "cuenta" in viewname:
-                sk = resolver_match.kwargs.get("sk_cta")
-                ente = Cuenta.tomar(sk=sk)
-                dias = ente.dias()
-                prefijo = "cuenta_"
-                args = [sk]
-            elif "titular" in viewname:
-                sk = resolver_match.kwargs.get("sk")
-                ente = Titular.tomar(sk=sk)
-                dias = ente.dias()
-                prefijo = "titular_"
-                args = [sk]
-            else:
-                ente = None
-                dias = Dia.con_movimientos()
-                prefijo = ""
-                args = []
 
             dia = dias.filter(fecha__lte=fecha).last()
             if dia is None:     # fecha es anterior a todos los días con movimientos
@@ -123,13 +128,21 @@ class HomeView(TemplateView):
             args += [mov.pk]
 
             return redirect(
-                reverse(f"{prefijo}movimiento", args=args) + f"?page={page}",
+                reverse(f"{prefijo}movimiento", args=args) + f"?page={page}&redirected=1",
             )
+
+        dias_pag = Paginator(dias.reverse(), 7).get_page(pag)
+        if ((pag and not movimiento) or (movimiento and movimiento.dia not in dias_pag)) and not redirected:
+            mov = dias_pag[0].movimientos.last()
+            url = ente.get_url_with_mov(mov) if ente else mov.get_absolute_url()
+            return redirect(url + f"?page={pag}")
+
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         querydict = self.request.GET.dict()
+        page = querydict.get("page")
 
         movimiento = Movimiento.tomar(pk=kwargs['pk']) \
             if kwargs.get('pk') else None
@@ -164,7 +177,7 @@ class HomeView(TemplateView):
                     _sk=cuenta.titular.sk
                 ),
                 'cuentas': cuenta.subcuentas.all() if cuenta.es_acumulativa else Cuenta.objects.none(),
-                'dias': Paginator(cuenta.dias().reverse(), 7).get_page(querydict.get('page')),
+                'dias': Paginator(cuenta.dias().reverse(), 7).get_page(page),
             })
         elif titular:
             context.update({
@@ -173,7 +186,7 @@ class HomeView(TemplateView):
                     f"Capital de {titular.nombre}{movimiento_en_titulo}",
                 'titulares': Titular.todes(),
                 'cuentas': titular.cuentas.all(),
-                'dias': Paginator(titular.dias().reverse(), 7).get_page(querydict.get('page')),
+                'dias': Paginator(titular.dias().reverse(), 7).get_page(page),
             })
 
         else:
@@ -184,7 +197,7 @@ class HomeView(TemplateView):
                 'titulo_saldo_gral': f'Saldo general{movimiento_en_titulo}',
                 'titulares': Titular.todes(),
                 'cuentas': Cuenta.todes().order_by(Lower('nombre')),
-                'dias': Paginator(Dia.con_movimientos().reverse(), 7).get_page(querydict.get('page')),
+                'dias': Paginator(Dia.con_movimientos().reverse(), 7).get_page(page),
             })
 
         return context

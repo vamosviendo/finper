@@ -182,7 +182,7 @@ def test_busqueda_de_fecha_en_detalle_de_titular(browser, titular, cuenta_ajena,
     # aparece seleccionado.
     mov = dia.movimientos.last()
     browser.assert_url(
-        titular.get_url_with_mov(mov) + f"?page={fecha2page(titular.dias(), dia.fecha)}"
+        titular.get_url_with_mov(mov) + f"?page={fecha2page(titular.dias(), dia.fecha)}&redirected=1"
     )
 
     # En la página se muestran solamente los días con movimientos de la cuenta.
@@ -212,5 +212,5 @@ def test_busqueda_de_fecha_en_detalle_de_titular(browser, titular, cuenta_ajena,
     browser.completar_form(boton="id_btn_buscar_dia_init", input_dia_init=dia_no_titular.fecha)
     browser.assert_url(
         titular.get_url_with_mov(mov_titular_dia_anterior) +
-        f"?page={fecha2page(titular.dias(), dia_anterior_titular.fecha)}"
+        f"?page={fecha2page(titular.dias(), dia_anterior_titular.fecha)}&redirected=1"
     )

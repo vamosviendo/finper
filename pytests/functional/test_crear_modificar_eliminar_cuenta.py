@@ -28,8 +28,7 @@ def test_crear_cuenta(browser, titular, fecha):
     assert "cuenta nueva" in nombres_cuenta
 
 
-@pytest.mark.parametrize("origen", ["/", "/diario/t/titular/", "/diario/m/",
-                                    "/?page=2", "/diario/t/titular/?page=2", "/diario/tm/titular/"])
+@pytest.mark.parametrize("origen", ["/", "/diario/t/titular/", "/diario/m/", "/diario/tm/titular/"])
 @pytest.mark.parametrize("destino", ["id_link_cuenta_nueva", "id_link_cta_mod_"])
 def test_crear_o_modificar_cuenta_redirige_a_pagina_desde_donde_se_invoco(
         browser, origen, destino, titular, cuenta, fecha, entrada, entrada_anterior):
@@ -46,6 +45,35 @@ def test_crear_o_modificar_cuenta_redirige_a_pagina_desde_donde_se_invoco(
         fecha_creacion=fecha,
     )
     browser.assert_url(origen)
+
+
+@pytest.mark.parametrize("origen", [None, "titular"])
+@pytest.mark.parametrize("destino", ["id_link_cuenta_nueva", "id_link_cta_mod_"])
+def test_crear_o_modificar_cuenta_desde_pagina_posterior_redirige_a_esa_pagina_con_el_ultimo_movimiento_seleccionado(
+        browser, cuenta, titular, fecha, mas_de_7_dias, origen, destino, request):
+    if origen:
+        ente = request.getfixturevalue(origen)
+        url_origen = ente.get_absolute_url()
+        dias = list(ente.dias())
+    else:
+        ente = None
+        url_origen = reverse("home")
+        dias = list(mas_de_7_dias)
+    movimiento = dias[-8].movimientos.last()
+    url_final = ente.get_url_with_mov(movimiento) if ente else movimiento.get_absolute_url()
+    if destino == "id_link_cta_mod_":
+        destino = f"{destino}{cuenta.sk}"
+
+    browser.ir_a_pag(url_origen + "?page=2")
+    browser.pulsar(destino)
+    browser.completar_form(
+        nombre="cuenta nueva",
+        sk="cn",
+        titular=titular.nombre,
+        fecha_creacion=fecha,
+    )
+
+    browser.assert_url(url_final + "?page=2")
 
 
 def test_crear_cuenta_en_otra_moneda(browser, titular, fecha, dolar):
@@ -90,8 +118,7 @@ def test_eliminar_cuenta(browser, cuenta, cuenta_2):
     assert nombre_cuenta not in nombres_cuenta
 
 
-@pytest.mark.parametrize("origen", ["/", "/diario/t/titular/", "/diario/m/",
-                                    "/?page=2", "/diario/t/titular/?page=2", "/diario/tm/titular/"])
+@pytest.mark.parametrize("origen", ["/", "/diario/t/titular/", "/diario/m/", "/diario/tm/titular/"])
 def test_eliminar_cuenta_redirige_a_pagina_desde_la_que_se_invoco(browser, origen, cuenta, cuenta_2, entrada):
     if "m/" in origen:
         origen = f"{origen}{entrada.pk}"
@@ -99,3 +126,23 @@ def test_eliminar_cuenta_redirige_a_pagina_desde_la_que_se_invoco(browser, orige
     browser.pulsar(f"id_link_cta_elim_{cuenta_2.sk}")
     browser.pulsar("id_btn_confirm")
     browser.assert_url(origen)
+
+@pytest.mark.parametrize("origen", [None, "titular"])
+def test_eliminar_cuenta_desde_pagina_posterior_redirige_a_esa_pagina_con_el_ultimo_movimiento_seleccionado(
+        browser, origen, mas_de_7_dias, cuenta, cuenta_3, entrada, request):
+    if origen:
+        ente = request.getfixturevalue(origen)
+        url_origen = ente.get_absolute_url()
+        dias = list(ente.dias())
+    else:
+        ente = None
+        url_origen = reverse("home")
+        dias = list(mas_de_7_dias)
+    movimiento = dias[-8].movimientos.last()
+    url_destino = ente.get_url_with_mov(movimiento) if ente else movimiento.get_absolute_url()
+
+    browser.ir_a_pag(url_origen + "?page=2")
+    browser.pulsar(f"id_link_cta_elim_{cuenta_3.sk}")
+    browser.pulsar("id_btn_confirm")
+
+    browser.assert_url(url_destino + "?page=2")

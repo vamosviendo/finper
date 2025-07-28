@@ -3,6 +3,7 @@ from urllib.parse import urlparse
 import pytest
 
 from django.urls import reverse
+from selenium.webdriver.remote.webelement import WebElement
 
 from diario.models import Cuenta, Titular, Movimiento
 from diario.utils.utils_saldo import saldo_general_historico
@@ -113,6 +114,10 @@ def test_detalle_movimiento_en_cuenta_acumulativa(
     assert saldo_c.text == '198,00'
 
 
+def pkfromlink(href: str) -> int:
+    return int(urlparse(href).path.split("/")[-1])
+
+
 @pytest.mark.parametrize("origen, destino", [
     ("/", "/diario/m/"),
     ("/diario/c/c/", "/diario/cm/c/"),
@@ -126,7 +131,7 @@ def test_detalle_movimiento_en_paginas_anteriores(browser, muchos_dias, origen, 
     movimientos = browser.esperar_elementos("class_row_mov")
     assert "mov_selected" not in movimientos[1].get_attribute("class")
 
-    pk = int(urlparse(links_movimiento[1].get_attribute("href")).path.split("/")[-1])
+    pk = pkfromlink(links_movimiento[1].get_attribute('href'))
     links_movimiento[1].click()
 
     # ...permanecemos en la página en la que estábamos...
@@ -137,14 +142,13 @@ def test_detalle_movimiento_en_paginas_anteriores(browser, muchos_dias, origen, 
     assert "mov_selected" in movimientos[1].get_attribute("class")
 
     # Cuando pasamos a otra página, se pierde el movimiento seleccionado
+    # y se selecciona el último movimiento de la nueva página
     browser.pulsar("id_link_anterior_init")
-    browser.assert_url(f"{origen}?page=1")
+    links_movimiento = browser.esperar_elementos("class_link_movimiento")
+
+    browser.assert_url(f"{destino}{pkfromlink(links_movimiento[0].get_attribute('href'))}?page=1")
 
 
-""" Falla porque la página toma precedencia por sobre el movimiento, con lo cual aunque se seleccione manualmente
-    un movimiento, sigue apareciendo seleccionado el último movimiento de la fecha. Este comportamiento debe ser
-    corregido, pero todavía no. 
-"""
 @pytest.mark.parametrize("origen", [None, "cuenta", "titular"])
 def test_detalle_movimiento_en_fechas_anteriores(browser, muchos_dias, fecha, origen, request):
     ente = request.getfixturevalue(origen) if origen else None

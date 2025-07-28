@@ -108,9 +108,7 @@ def test_busqueda_fecha(browser, origen, fixt_dias, fecha, fecha_tardia, fecha_e
     # se deselecciona el día que estaba seleccionado y aparece seleccionado el último
     # movimiento del día buscado
     # fecha_en_la_misma_pagina = date(2010, 11, 13)
-    print("INICIO ACCIÓN")
     browser.completar_form(boton="id_btn_buscar_dia_init", input_dia_init=fecha_en_la_misma_pag)
-    # input(f"pausa {fecha} {fecha_en_la_misma_pagina}")
     ultimo_mov_dia = browser.esperar_dia(fecha).esperar_elementos("class_row_mov")[-1]
     ultimo_mov_nuevo_dia = browser.esperar_dia(fecha_en_la_misma_pag).esperar_elementos("class_row_mov")[-1]
     assert "mov_selected" not in ultimo_mov_dia.get_attribute("class")
