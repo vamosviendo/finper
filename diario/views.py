@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from datetime import date
+from typing import Any
 
 from django.core.paginator import Paginator
-from django.db.models import QuerySet
 from django.db.models.functions import Lower
 from django.shortcuts import render, redirect
 from django.urls import reverse, reverse_lazy
@@ -18,50 +18,6 @@ from diario.settings_app import TEMPLATE_HOME
 from diario.utils.utils_saldo import saldo_general_historico, verificar_saldos
 from utils.tiempo import str2date
 
-"""
-/?fecha                     -> /diario/m/<umf>.pk?fecha *         -> /diario/m/<umf>.pk?page=<pag fecha>
-/diario/t/t.sk/?fecha       -> /diario/tm/t.sk/<umf>.pk?fecha *   -> /diario/tm/t.sk/<umf>.pk?page=<pag fecha>
-/diario/c/c.sk/?fecha       -> /diario/cm/c.sk/<umf>.pk?fecha *   -> /diario/cm/c.sk/<umf>.pk?page=<pag fecha>
-/diario/m/m.pk?fecha        -> /diario/m/m.pk?fecha           *  -> /diario/m/m.pk?page=<pag fecha>
-/diario/tm/t.sk/m.pk?fecha  -> /diario/tm/t.sk/m.pk?fecha     *  -> /diario/tm/t.sk/m.pk?page=<pag fecha>
-/diario/cm/c.sk/m.pk?fecha  -> /diario/cm/c.sk/m.pk?fecha     *  -> ...
-/?page                      -> /diario/m/<ump>.pk?page        
-/diario/t/t.sk/?page        -> /diario/tm/t.sk/<ump>.pk?page
-/diario/c/c.sk/?page        -> /diario/cm/c.sk/<ump>.pk?page
-/diario/m/m.pk?page         -> /diario/m/m.pk?page
-/diario/tm/t.sk/m.pk?page   -> /diario/tm/t.sk/m.pk?page
-/diario/cm/c.sk/m.pk?page   -> /diario/cm/c.sk/m.pk?page
-
-Si m no está en la página de la fecha:
-/diario/m/m.pk?fecha        -> /diario/m/<umf>.pk?fecha         -> /diario/m/<umf>.pk?page=<pag fecha>
-/diario/tm/t.sk/m.pḱ?fecha  -> /diario/tm/t.sk/<umf>.pk?fecha   -> /diario/tm/t.sk/<umf>.pk?page=<pag fecha>
-/diario/cm/c.sk/m.pḱ?fecha  -> /diario/cm/c.sk/<umf>.pk?fecha   -> /diario/cm/c.sk/<umf>.pk?page=<pag fecha>
-
-Si m no está en la página señalada en page:
-/diario/m/m.pk?page         -> /diario/m/<ump>.pk?page
-/diario/tm/t.sk/m.pk?page   -> /diario/tm/t.sk/<ump>.pk?page
-/diario/cm/c.sk/m.pk?page   -> /diario/cm/c.sk/<ump>.pk?page
-
-Si m está en la página pero no corresponde a titular o cuenta:
-/diario/tm/t.sk/m.pk?fecha  -> /diario/tm/t.sk/<ma>.pk?fecha    -> /diario/tm/t.sk/<ma>.pk?page=<pag fecha>          
-/diario/cm/c.sk/m.pk?fecha  -> /diario/cm/c.sk/<ma>.pk?fecha    -> /diario/cm/c.sk/<ma>.pk?page=<pag fecha>
-/diario/tm/t.sk/m.pk?page   -> /diario/tm/t.sk/<ma>.pk?page          
-/diario/cm/c.sk/m.pk?page   -> /diario/cm/c.sk/<ma>.pk?page          
-
-Si m está en la página pero no corresponde a titular o cuenta y no hay movimiento anterior del titular o cuenta
-en la página
-/diario/tm/t.sk/m.pk?fecha  -> /diario/t/t.sk/?fecha            -> /diario/t/t.sk/?page=<pag fecha>
-/diario/cm/c.sk/m.pk?fecha  -> /diario/c/c.sk/?fecha            -> /diario/c/c.sk/?page=<pag fecha>
-/diario/tm/t.sk/m.pk?page   -> /diario/t/t.sk/?page
-/diario/cm/c.sk/m.pk?page   -> /diario/c/c.sk/?page
-
-<umf>: último movimiento de la fecha. En caso de que haya un titular o una cuenta, último movimiento de
-    la fecha del titular o la cuenta.
-<ump>: ídem <umf>, pero último movimiento de la página.
-<pag fecha>: página en la que se encuentra la fecha.
-<ma>: Movimiento anterior de la fecha correspondiente al titular o cuenta. Si no hay movimiento anterior en la fecha, 
-    último movimiento de fechas anteriores correspondiente al titular o cuenta.
-"""
 
 def pag_de_fecha(fecha: date, ente: Cuenta | Titular | None) -> int:
     """ Calcula página a partir de fecha """
@@ -83,7 +39,12 @@ class HomeView(TemplateView):
     #
     #     return super().get(request, *args, **kwargs)
 
-    def _get_ente_info(self, request):
+    def __init__(self, **kwargs: dict[str, Any]):
+        super().__init__(**kwargs)
+        self.dias_pag = None
+
+    @staticmethod
+    def _get_ente_info(request):
         resolver_match = request.resolver_match
         viewname = resolver_match.url_name
         kwargs = resolver_match.kwargs
@@ -113,7 +74,8 @@ class HomeView(TemplateView):
             "args": [],
         }
 
-    def _redirect_con_fecha(self, fecha, ente_info):
+    @staticmethod
+    def _redirect_con_fecha(fecha, ente_info):
         ente, dias, prefijo, args = tuple(ente_info.values())
 
         dia = dias.filter(fecha__lte=fecha).last() or dias.first()
@@ -140,22 +102,24 @@ class HomeView(TemplateView):
         if fecha:
             return self._redirect_con_fecha(fecha, ente_info)
 
-        dias_pag = Paginator(ente_info["dias"].reverse(), 7).get_page(pag)
+        self.dias_pag = Paginator(ente_info["dias"].reverse(), 7).get_page(pag)
+
         movimiento = Movimiento.tomar_o_nada(pk=kwargs.get("pk"))
         condition = (
             (pag and not movimiento) or
-            (movimiento and movimiento.dia not in dias_pag)
+            (movimiento and movimiento.dia not in self.dias_pag)
         ) and not redirected
 
         if condition:
-            mov = dias_pag[0].movimientos.last()
+            mov = self.dias_pag[0].movimientos.last()
             url = ente_info["ente"].get_url_with_mov(mov) if ente_info["ente"] \
                 else mov.get_absolute_url()
             return redirect(url + f"?page={pag}")
 
         return super().get(request, *args, **kwargs)
 
-    def _get_context_comun(self, **kwargs):
+    @staticmethod
+    def _get_context_comun(**kwargs):
         movimiento = Movimiento.tomar(pk=kwargs["pk"]) if kwargs.get("pk") else None
         cuenta: Cuenta | CuentaInteractiva | CuentaAcumulativa = Cuenta.tomar(sk=kwargs["sk_cta"]) \
             if kwargs.get("sk_cta") else None
@@ -174,8 +138,7 @@ class HomeView(TemplateView):
             "movimiento_en_titulo": movimiento_en_titulo,
         }
 
-    @staticmethod
-    def _get_context_especifico(context, page):
+    def _get_context_especifico(self, context):
         ente: Titular | CuentaInteractiva | CuentaAcumulativa | None = context["filtro"]
         movimiento = context["movimiento"]
         movimiento_en_titulo = context.pop("movimiento_en_titulo")
@@ -211,15 +174,13 @@ class HomeView(TemplateView):
                 "cuentas": Cuenta.todes().order_by(Lower("nombre")),
             }
 
-        dias = ente.dias() if ente else Dia.con_movimientos()
-        context.update({"dias": Paginator(dias.reverse(), 7).get_page(page)})
-
+        context.update({"dias": self.dias_pag})
         return context_esp
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(self._get_context_comun(**kwargs))
-        context.update(self._get_context_especifico(context, self.request.GET.get("page")))
+        context.update(self._get_context_especifico(context))
         return context
 
 
