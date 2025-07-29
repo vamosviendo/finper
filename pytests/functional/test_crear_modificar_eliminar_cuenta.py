@@ -60,7 +60,7 @@ def test_crear_o_modificar_cuenta_desde_pagina_posterior_redirige_a_esa_pagina_c
         url_origen = reverse("home")
         dias = list(mas_de_7_dias)
     movimiento = dias[-8].movimientos.last()
-    url_final = ente.get_url_with_mov(movimiento) if ente else movimiento.get_absolute_url()
+    url_final = movimiento.get_url(ente)
     if destino == "id_link_cta_mod_":
         destino = f"{destino}{cuenta.sk}"
 
@@ -139,7 +139,7 @@ def test_eliminar_cuenta_desde_pagina_posterior_redirige_a_esa_pagina_con_el_ult
         url_origen = reverse("home")
         dias = list(mas_de_7_dias)
     movimiento = dias[-8].movimientos.last()
-    url_destino = ente.get_url_with_mov(movimiento) if ente else movimiento.get_absolute_url()
+    url_destino = movimiento.get_url(ente)
 
     browser.ir_a_pag(url_origen + "?page=2")
     browser.pulsar(f"id_link_cta_elim_{cuenta_3.sk}")

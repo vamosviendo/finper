@@ -208,6 +208,12 @@ class Movimiento(MiModel):
     def get_delete_url(self) -> str:
         return reverse("mov_elim", args=[self.pk])
 
+    def get_url(self, ente: Titular | Cuenta | None = None):
+        try:
+            return ente.get_url_with_mov(self)
+        except AttributeError:  # ente is None
+            return self.get_absolute_url()
+
     def __str__(self):
 
         string = f"{self.fecha.strftime("%Y-%m-%d")} {self.orden_dia} {self.concepto} - " \

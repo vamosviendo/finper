@@ -112,8 +112,7 @@ class HomeView(TemplateView):
 
         if condition:
             mov = self.dias_pag[0].movimientos.last()
-            url = ente_info["ente"].get_url_with_mov(mov) if ente_info["ente"] \
-                else mov.get_absolute_url()
+            url = mov.get_url(ente_info["ente"])
             return redirect(url + f"?page={pag}")
 
         return super().get(request, *args, **kwargs)

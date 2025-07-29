@@ -523,7 +523,7 @@ def test_crear_o_modificar_movimiento_desde_pagina_anterior_redirige_a_esa_pagin
         url_origen = reverse("home")
         dias = list(mas_de_7_dias)
     movimiento = dias[-8].movimientos.last()
-    url_final = ente.get_url_with_mov(movimiento) if ente else movimiento.get_absolute_url()
+    url_final = movimiento.get_url(ente)
     if destino == "#id_row_mov_xxx .class_link_mod_mov":
         mov = dias[0].movimientos.first()
         destino = destino.replace("xxx", mov.sk)
@@ -567,7 +567,7 @@ def test_eliminar_movimiento_desde_pagina_posterior_redirige_a_esa_pagina_con_el
         url_origen = reverse("home")
         dias = list(mas_de_7_dias)
     movimiento = dias[-8].movimientos.last()
-    url_destino = ente.get_url_with_mov(movimiento) if ente else movimiento.get_absolute_url()
+    url_destino = movimiento.get_url(ente)
     mov_a_eliminar = dias[0].movimientos.first()
 
     browser.ir_a_pag(url_origen + "?page=2")

@@ -292,7 +292,7 @@ class TestGet:
 
         dia = dias.first()
         ultimo_mov_dia = dia.movimientos.last()
-        url_destino = ente.get_url_with_mov(ultimo_mov_dia) if ente else ultimo_mov_dia.get_absolute_url()
+        url_destino = ultimo_mov_dia.get_url(ente)
         response = client.get(url_origen + f"?fecha={dia.fecha}")
 
         asserts.assertRedirects(response, url_destino + f"?page={fecha2page(dias, dia.fecha)}&redirected=1")
@@ -339,7 +339,7 @@ class TestGet:
         dia = dias.first()
         assert dia.movs().count() > 0, f"Error en planteo del test. Día {dia} no tiene movimientos"
         mov = dia.movs(ente=ente).last()
-        url_destino = ente.get_url_with_mov(mov) if ente else mov.get_absolute_url()
+        url_destino = mov.get_url(ente)
 
         response = client.get(f"{url_origen}?fecha={dia.fecha - timedelta(1)}")
         asserts.assertRedirects(
@@ -395,7 +395,7 @@ class TestGet:
         ente = request.getfixturevalue(origen) if origen else None
         dias = ente.dias() if ente else mas_de_7_dias
         mov = dias.first().movimientos.last()
-        url_origen = ente.get_url_with_mov(mov) if ente else mov.get_absolute_url()
+        url_origen = mov.get_url(ente)
 
         response = client.get(url_origen + "?page=2")
 
@@ -410,7 +410,7 @@ class TestGet:
         dias = ente.dias() if ente else mas_de_7_dias
         mov = list(dias)[-8].movimientos.last()
         url_origen = ente.get_absolute_url() if ente else reverse("home")
-        url_destino = ente.get_url_with_mov(mov) if ente else mov.get_absolute_url()
+        url_destino = mov.get_url(ente)
         response = client.get(url_origen + "?page=2")
         asserts.assertRedirects(
             response,

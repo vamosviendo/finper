@@ -163,7 +163,7 @@ def test_detalle_movimiento_en_fechas_anteriores(browser, muchos_dias, fecha, or
 
     pk = int(urlparse(links_movimiento[1].get_attribute("href")).path.split("/")[-1])
     mov = Movimiento.tomar(pk=pk)
-    url_destino = ente.get_url_with_mov(mov) if ente else mov.get_absolute_url()
+    url_destino = mov.get_url(ente)
     links_movimiento[1].click()
 
     # ...permanecemos en la página en la que estábamos...
