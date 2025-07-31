@@ -13,8 +13,12 @@ class Command(BaseCommand):
         cuenta_destino = Cuenta.tomar(sk=options["destino"][0])
         movs_origen = cuenta_origen.movs()
         for mov in movs_origen:
+            print(
+                f"Pasando mov {mov.pk}: {mov.orden_dia} del {mov.fecha} - "
+                f"de {cuenta_origen.nombre} a {cuenta_destino.nombre}", end="")
             if mov.cta_entrada == cuenta_origen:
                 mov.cta_entrada = cuenta_destino
             elif mov.cta_salida == cuenta_origen:
                 mov.cta_salida = cuenta_destino
             mov.clean_save()
+            print(" - OK")
