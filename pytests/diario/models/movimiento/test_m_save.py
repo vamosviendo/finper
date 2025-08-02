@@ -2,6 +2,7 @@ from typing import Tuple
 from unittest.mock import call
 
 import pytest
+from django.forms.models import model_to_dict
 
 from diario.models import Cuenta, CuentaInteractiva, Dia, Movimiento, SaldoDiario
 from pytests.fixtures_movimiento import entrada_anterior_otra_cuenta
@@ -155,6 +156,84 @@ class TestSaveMovimientoEntreCuentasDeDistintosTitulares:
         credito.clean_save()
         contramov = Movimiento.tomar(id=credito.id_contramov)
         assert getattr(contramov, campo) == valor
+
+    class TestCambioEnTraspasoDeSaldoEntreDistintosTitulares:
+        def test_permite_modificar_traspaso_de_saldo_de_cuenta_acumulativa_de_mas_de_un_titular(
+                self, cuenta_de_dos_titulares):
+
+            mov = cuenta_de_dos_titulares.movs().last()
+            mov.concepto = "nuevo concepto"
+            mov.clean_save()
+
+            try:
+                mov.clean_save()
+            except AttributeError as e:
+                raise AssertionError(
+                    "No permite guardar modificación de movimiento de traspaso de saldo "
+                    "de cuenta acumulativa con subcuentas de más de un titular. ",
+                ) from e
+
+        pass
+
+        def test_si_se_cambia_subcuenta_por_subcuenta_del_mismo_titular_contramovimiento_es_igual_al_de_antes_del_cambio(
+                self, cuenta_de_dos_titulares, titular_gordo):
+            sc1, sc2 = cuenta_de_dos_titulares.subcuentas.all()
+            sc3 = cuenta_de_dos_titulares.agregar_subcuenta(
+                nombre="subcuenta de titular gordo",
+                sk="sc3",
+                titular=titular_gordo,
+                fecha=cuenta_de_dos_titulares.fecha_conversion
+            )
+            mov = sc2.movs().first()
+            contramov = Movimiento.tomar(pk=mov.id_contramov)
+            data = model_to_dict(contramov, exclude=["id"])
+
+            mov.cta_salida = sc3
+            mov.clean_save()
+            contramov = Movimiento.tomar(pk=mov.id_contramov)
+            new_data = model_to_dict(contramov, exclude=["id"])
+
+            assert new_data == data
+
+        def test_si_se_cambia_subcuenta_por_subcuenta_del_titular_de_la_otra_subcuenta_se_elimina_contramovimiento(
+                self, cuenta_de_dos_titulares, otro_titular):
+            sc1, sc2 = cuenta_de_dos_titulares.subcuentas.all()
+            sc3 = cuenta_de_dos_titulares.agregar_subcuenta(
+                nombre="subcuenta de titular gordo",
+                sk="sc3",
+                titular=otro_titular,
+                fecha=cuenta_de_dos_titulares.fecha_conversion
+            )
+            mov = sc2.movs().first()
+
+            mov.cta_salida = sc3
+            mov.clean_save()
+            assert mov.id_contramov is None
+
+        def test_si_se_cambia_subcuenta_por_subcuenta_de_un_tercer_titular_cambia_contramovimiento_por_otro_con_el_tercer_titular(
+                self, cuenta_de_dos_titulares, titular):
+            sc1, sc2 = cuenta_de_dos_titulares.subcuentas.all()
+            sc3 = cuenta_de_dos_titulares.agregar_subcuenta(
+                nombre="subcuenta de titular",
+                sk="sc3",
+                titular=titular,
+                fecha=cuenta_de_dos_titulares.fecha_conversion
+            )
+            mov = sc2.movs().first()
+            contramov = Movimiento.tomar(pk=mov.id_contramov)
+            data = model_to_dict(contramov, exclude=["id", "detalle", "cta_entrada", "cta_salida"])
+
+            mov.cta_salida = sc3
+            mov.clean_save()
+            contramov = Movimiento.tomar(pk=mov.id_contramov)
+            new_data = model_to_dict(contramov, exclude=["id", "detalle", "cta_entrada", "cta_salida"])
+            t1 = sc3.titular
+            t2 = cuenta_de_dos_titulares.titular_original
+
+            assert new_data == data
+            assert contramov.detalle == f"de {t1.nombre} a {t2.nombre}"
+            assert contramov.cta_entrada == Cuenta.tomar(sk=f"_{t1.sk}-{t2.sk}")
+            assert contramov.cta_salida == Cuenta.tomar(sk=f"_{t2.sk}-{t1.sk}")
 
 
 @pytest.mark.parametrize('sentido', ['entrada', 'salida'])

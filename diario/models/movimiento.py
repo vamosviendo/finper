@@ -289,7 +289,12 @@ class Movimiento(MiModel):
                     return self.cta_salida.titular
                 except AttributeError:
                     return self.cta_salida.como_subclase().titular
-            return self.cta_salida.titular_original
+
+            try:
+                return self.cta_salida.titular_original
+            except AttributeError:
+                return self.cta_salida.como_subclase().titular_original
+
         except AttributeError:
             return None
 
@@ -301,7 +306,12 @@ class Movimiento(MiModel):
                     return self.cta_entrada.titular
                 except AttributeError:
                     return self.cta_entrada.como_subclase().titular
-            return self.cta_entrada.titular_original
+
+            try:
+                return self.cta_entrada.titular_original
+            except AttributeError:
+                return self.cta_entrada.como_subclase().titular_original
+
         except AttributeError:
             return None
 
@@ -549,9 +559,14 @@ class Movimiento(MiModel):
             - las cuentas de entrada y salida pertenecen a distinto titular
             - el movimiento no se creó como "gratis" (es decir, genera deuda)
         """
+        try:
+            esgratis = self.esgratis
+        except AttributeError:
+            esgratis = self.id_contramov is None
+
         return (self.cta_entrada and self.cta_salida and
                 self.receptor != self.emisor and
-                not self.esgratis)
+                not esgratis)
 
     def es_bimonetario(self) -> bool:
         if (self.cta_entrada and self.cta_salida) and (self.cta_entrada.moneda != self.cta_salida.moneda):
@@ -604,14 +619,16 @@ class Movimiento(MiModel):
 
     def recuperar_cuentas_credito(self) -> Tuple:
         cls = self.get_related_class(CTA_ENTRADA)
+        sk_emisor = self.emisor.sk
+        sk_receptor = self.receptor.sk
         try:
             return (
                 cls.tomar(
-                    sk=f'_{self.emisor.sk}'
-                         f'-{self.receptor.sk}'),
+                    sk=f'_{sk_emisor}'
+                         f'-{sk_receptor}'),
                 cls.tomar(
-                    sk=f'_{self.receptor.sk}'
-                         f'-{self.emisor.sk}'))
+                    sk=f'_{sk_receptor}'
+                         f'-{sk_emisor}'))
         except cls.DoesNotExist:
             return self._generar_cuentas_credito()
 
