@@ -116,7 +116,7 @@ class Moneda(MiModel):
     def base(cls):
         return cls.tomar(sk=MONEDA_BASE)
 
-    def cotizacion_al(self, fecha: date, compra: bool):
+    def cotizacion_al(self, fecha: date, compra: bool) -> float:
         cotizacion = Cotizacion.tomar(moneda=self, fecha=fecha)
         return cotizacion.importe_compra if compra else cotizacion.importe_venta
 

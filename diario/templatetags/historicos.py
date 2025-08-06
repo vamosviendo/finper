@@ -26,23 +26,17 @@ def saldo(
         cuenta: Cuenta | None = None,
         titular: Titular | None = None,
         moneda: Moneda | None = None,
-) -> float:
+) -> str:
     dia = dia or Dia.ultime()
     cotizacion = moneda.cotizacion_al(dia.fecha, compra=False) if moneda else 1
 
-    if cuenta:
-        if movimiento:
-            result = cuenta.saldo(movimiento=movimiento)
-        else:
-            result = cuenta.saldo(dia=dia)
-    elif titular:
-        if movimiento:
-            result = titular.capital(movimiento=movimiento)
-        else:
-            result = titular.capital(dia=dia)
-    elif movimiento:
-        result = saldo_general_historico(movimiento)
+    if movimiento:
+        result = cuenta.saldo(movimiento=movimiento) if cuenta else \
+            titular.capital(movimiento=movimiento) if titular else \
+            saldo_general_historico(movimiento)
     else:
-        result = dia.saldo()
+        result = cuenta.saldo(dia=dia) if cuenta else \
+            titular.capital(dia=dia) if titular else \
+            dia.saldo()
 
-    return round(result / cotizacion, 2)
+    return float_format(result / cotizacion)

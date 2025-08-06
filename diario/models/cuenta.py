@@ -627,11 +627,12 @@ class CuentaAcumulativa(Cuenta):
 
     def saldo(
             self,
-            movimiento: Movimiento = None,
-            moneda: Moneda = None,
+            movimiento: Movimiento | None = None,
+            dia: Dia | None = None,
+            moneda: Moneda | None = None,
             compra: bool = False,) -> float:
 
-        fecha = movimiento.fecha if movimiento else date.today()
+        fecha = movimiento.fecha if movimiento else dia.fecha if dia else date.today()
         cotizacion = self.moneda.cotizacion_en_al(moneda, fecha, compra) if moneda else 1
 
         if movimiento:
@@ -642,7 +643,7 @@ class CuentaAcumulativa(Cuenta):
             if self.sk in sks_ctas_mov:  # La cuenta participó del movimiento cuando aún era interactiva
                 return round(self.saldo_en_mov(movimiento) * cotizacion, 2)
         return round(
-            sum([subc.saldo(movimiento=movimiento) for subc in self.subcuentas.all()]) * cotizacion,
+            sum([subc.saldo(movimiento=movimiento, dia=dia) for subc in self.subcuentas.all()]) * cotizacion,
             2
         )
 

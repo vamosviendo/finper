@@ -40,6 +40,12 @@ def test_si_recibe_movimiento_devuelve_saldo_al_momento_del_movimiento(
     assert saldo_en_mov == saldo_en_mov1
 
 
+def test_si_recibe_dia_devuelve_saldo_diario_del_dia(cuenta_acumulativa, dia, dia_posterior):
+    sc1, sc2 = cuenta_acumulativa.subcuentas.all()
+    Movimiento.crear("movimiento posterior", 150, sc1, dia=dia_posterior)
+    assert cuenta_acumulativa.saldo(dia=dia) == sum(x.saldo(dia=dia) for x in cuenta_acumulativa.subcuentas.all())
+
+
 def test_saldo_de_cuenta_acumulativa_en_mov_en_el_que_era_interactiva_devuelve_saldo_historico_distinto_de_cero(
         cuenta, entrada):
     cuenta = cuenta.dividir_y_actualizar(
@@ -88,14 +94,14 @@ def test_si_recibe_moneda_y_movimiento_devuelve_saldo_en_movimiento_dado_en_mone
 
     compra = tipo == "compra"
     assert \
-        cuenta.saldo(mov, dolar, compra) == \
+        cuenta.saldo(movimiento=mov, moneda=dolar, compra=compra) == \
         round(
             cuenta.saldo(movimiento=mov) * cuenta.moneda.cotizacion_en_al(
                 dolar, fecha=mov.fecha, compra=compra
             ),
             2
         )
-    assert cuenta.saldo(mov, peso, compra) == cuenta.saldo(movimiento=mov)
+    assert cuenta.saldo(movimiento=mov, moneda=peso, compra=compra) == cuenta.saldo(movimiento=mov)
 
 
 @pytest.mark.parametrize("tipo", ["compra", "venta"])

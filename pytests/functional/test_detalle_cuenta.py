@@ -130,11 +130,10 @@ def test_detalle_de_cuenta_interactiva(
     # creación y su saldo
     browser.comparar_cuenta(cuenta)
 
-    # Y vemos que en la sección de titulares aparece el titular de la cuenta
+    # Y vemos que en la sección de titulares aparece solamente el titular de la cuenta
     divs_titular = browser.esperar_elementos("class_div_titular")
-    assert len(divs_titular) == 1
     nombres = texto_en_hijos_respectivos("class_div_nombre_titular", divs_titular)
-    assert nombres[0] == cuenta.titular.nombre
+    assert nombres == [cuenta.titular.nombre]
 
     # Y vemos que no aparecen cuentas en la sección de cuentas
     assert browser.esperar_elementos('class_link_cuenta', fail=False) == []
@@ -142,9 +141,8 @@ def test_detalle_de_cuenta_interactiva(
     # Y vemos que sólo los días en los que hay movimientos en los que interviene
     # la cuenta aparecen en la sección de movimientos, mostrando sólo los movimientos
     # en los que interviene la cuenta.
-    browser.comparar_dias_de(cuenta)
-
     assert set(cuenta.movs()) != set(Movimiento.todes())
+    browser.comparar_dias_de(cuenta)
 
     # Cuando cliqueamos en el ícono de agregar cuenta, accedemos a la página
     # de dividir cuenta en subcuentas.
@@ -154,15 +152,27 @@ def test_detalle_de_cuenta_interactiva(
     browser.esperar_elemento("id_link_cuenta_nueva").click()
     browser.assert_url(reverse('cta_div', args=[cuenta.sk]) + f"?next={path}")
 
-    # Cuando cliqueamos en un movimiento, sólo se muestran los días con
-    # movimientos relacionados con la cuenta, y en esos días se muestran
-    # sólo los movimientos relacionados con la cuenta, con el movimiento
-    # cliqueado resaltado.
+    # En el encabezado de cada día, no se muestra el saldo diario general sino
+    # el saldo diario de la cuenta.
     browser.ir_a_pag(cuenta.get_absolute_url())
     dias_pag = browser.esperar_elementos("class_div_dia")
 
-    fecha_dia = dias_pag[1].esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text[-10:]
-    dias_pag[1].esperar_elementos("class_row_mov")[0].esperar_elemento("class_link_movimiento", By.CLASS_NAME).click()
+    for dia in dias_pag:
+        saldo_dia = dia.esperar_elemento("class_span_saldo_dia", By.CLASS_NAME)
+        fecha_dia = dia.esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text[-10:]
+        assert saldo_dia.text == float_format(cuenta.saldo(dia=Dia.tomar(fecha=fecha_dia)))
+
+    """ Verificar a partir de acá.
+        Después de esto, sería lindo que al pararnos arriba de una cuenta aparezca
+        una ventanita de ayuda con el saldo de la cuenta al momento del movimiento.|
+    """
+    dia = dias_pag[1]
+    fecha_dia = dia.esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text[-10:]
+
+    # Cuando cliqueamos en un movimiento, éste aparece resaltado
+    dia.esperar_elementos("class_row_mov")[0]\
+        .esperar_elemento("class_link_movimiento", By.CLASS_NAME)\
+        .click()
 
     dias_pag_nueva = browser.comparar_dias_de(cuenta)
     assert "mov_selected" in dias_pag_nueva[1].esperar_elementos("class_row_mov")[0].get_attribute("class")
