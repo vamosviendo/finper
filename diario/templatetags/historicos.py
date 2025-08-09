@@ -19,14 +19,9 @@ def saldo_en_moneda(cuenta: Cuenta, moneda: Moneda, mov: Movimiento | None) -> s
     return float_format(cuenta.saldo(movimiento=mov, moneda=moneda, compra=False))
 
 
-@register.simple_tag
-def saldo(
-        dia: Dia | None = None,
-        movimiento: Movimiento | None = None,
-        cuenta: Cuenta | None = None,
-        titular: Titular | None = None,
-        moneda: Moneda | None = None,
-) -> str:
+@register.simple_tag(takes_context=True)
+def saldo(context, moneda: Moneda | None = None) -> str:
+    dia, cuenta, titular, movimiento = (context.get(x) for x in ("dia", "cuenta", "titular", "movimiento"))
     dia = dia or Dia.ultime()
     cotizacion = moneda.cotizacion_al(dia.fecha, compra=False) if moneda else 1
 

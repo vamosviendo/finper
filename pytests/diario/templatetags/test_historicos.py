@@ -29,59 +29,74 @@ class TestSaldoHistoricoEnMoneda:
 
 class TestSaldo:
     def test_devuelve_saldo_general(self, entrada, salida, salida_posterior):
-        assert saldo() == float_format(salida_posterior.dia.saldo())
+        context = dict()
+        assert saldo(context) == float_format(salida_posterior.dia.saldo())
 
     def test_si_recibe_dia_devuelve_saldo_general_al_dia_recibido(self, dia, entrada, salida, salida_posterior):
-        assert saldo(dia=dia) == float_format(dia.saldo())
+        context = {"dia": dia}
+        assert saldo(context) == float_format(dia.saldo())
 
     def test_si_recibe_movimiento_devuelve_saldo_general_al_momento_del_movimiento(
             self, entrada, salida, salida_posterior):
-        assert saldo(movimiento=entrada) == float_format(saldo_general_historico(entrada))
+        context = {"movimiento": entrada}
+        assert saldo(context) == float_format(saldo_general_historico(entrada))
 
     def test_si_recibe_dia_y_movimiento_prioriza_movimiento(self, entrada, salida, salida_posterior):
-        assert saldo(dia=salida_posterior.dia, movimiento=entrada) == float_format(saldo_general_historico(entrada))
+        context = {"dia": salida_posterior.dia, "movimiento": entrada}
+        assert saldo(context) == float_format(saldo_general_historico(entrada))
 
     def test_si_recibe_moneda_devuelve_saldo_general_en_moneda_recibida(
             self, entrada, salida, salida_posterior, dolar):
+        context = dict()
         hoy = salida_posterior.dia
-        assert saldo(moneda=dolar) == float_format(hoy.saldo() / dolar.cotizacion_al(hoy.fecha, compra=False))
+        assert saldo(context, moneda=dolar) == float_format(hoy.saldo() / dolar.cotizacion_al(hoy.fecha, compra=False))
 
     def test_si_recibe_cuenta_devuelve_saldo_de_la_cuenta(
             self, cuenta, entrada, entrada_otra_cuenta, salida_posterior):
-        assert saldo(cuenta=cuenta) == float_format(cuenta.saldo())
+        context = {"cuenta": cuenta}
+        assert saldo(context) == float_format(cuenta.saldo())
 
     def test_si_recibe_cuenta_y_dia_devuelve_saldo_de_la_cuenta_al_dia_recibido(
             self, cuenta, dia, entrada, entrada_otra_cuenta, salida_posterior):
-        assert saldo(cuenta=cuenta, dia=dia) == float_format(cuenta.saldo(dia=dia))
+        context = {"cuenta": cuenta, "dia": dia}
+        assert saldo(context) == float_format(cuenta.saldo(dia=dia))
 
     def test_si_recibe_cuenta_y_movimiento_devuelve_saldo_de_la_cuenta_al_momento_del_movimiento(
             self, cuenta, entrada, salida, entrada_otra_cuenta, salida_posterior):
-        assert saldo(cuenta=cuenta, movimiento=entrada) == float_format(cuenta.saldo(movimiento=entrada))
+        context = {"cuenta": cuenta, "movimiento": entrada}
+        assert saldo(context) == float_format(cuenta.saldo(movimiento=entrada))
 
     def test_si_recibe_cuenta_y_moneda_devuelve_saldo_de_cuenta_en_moneda_recibida(
             self, cuenta, entrada, entrada_otra_cuenta, salida_posterior, dolar):
-        assert saldo(cuenta=cuenta, moneda=dolar) == float_format(cuenta.saldo(moneda=dolar))
+        context = {"cuenta": cuenta}
+        assert saldo(context, moneda=dolar) == float_format(cuenta.saldo(moneda=dolar))
 
     def test_si_recibe_cuenta_y_no_moneda_devuelve_saldo_en_moneda_de_la_cuenta(
             self, dolar, cuenta_en_dolares, entrada_en_dolares, salida_en_dolares):
-        assert saldo(cuenta=cuenta_en_dolares) == float_format(cuenta_en_dolares.saldo(moneda=dolar))
+        context = {"cuenta": cuenta_en_dolares}
+        assert saldo(context) == float_format(cuenta_en_dolares.saldo(moneda=dolar))
 
     def test_si_recibe_titular_devuelve_capital_del_titular(
             self, titular, entrada, entrada_cuenta_ajena, salida_posterior):
-        assert saldo(titular=titular) == float_format(titular.capital())
+        context = {"titular": titular}
+        assert saldo(context) == float_format(titular.capital())
 
     def test_si_recibe_titular_y_dia_devuelve_capital_del_titular_al_dia_recibido(
             self, dia, titular, entrada, entrada_cuenta_ajena, salida_posterior):
-        assert saldo(titular=titular, dia=dia) == float_format(titular.capital(dia=dia))
+        context = {"titular": titular, "dia": dia}
+        assert saldo(context) == float_format(titular.capital(dia=dia))
 
     def test_si_recibe_titular_y_movimiento_devuelve_capital_del_titular_al_momento_del_movimiento(
             self, titular, entrada, salida, entrada_cuenta_ajena, salida_posterior):
-        assert saldo(titular=titular, movimiento=entrada) == float_format(titular.capital(movimiento=entrada))
+        context = {"titular": titular, "movimiento": entrada}
+        assert saldo(context) == float_format(titular.capital(movimiento=entrada))
 
     def test_si_recibe_titular_y_cuenta_prioriza_cuenta(
             self, titular, cuenta_ajena, entrada, salida, entrada_cuenta_ajena, entrada_posterior_cuenta_ajena):
-        assert saldo(titular=titular, cuenta=cuenta_ajena) == float_format(cuenta_ajena.saldo())
+        context = {"titular": titular, "cuenta": cuenta_ajena}
+        assert saldo(context) == float_format(cuenta_ajena.saldo())
 
     def test_si_recibe_titular_y_moneda_devuelve_capital_en_moneda_recibida(
             self, titular, entrada, salida, salida_posterior, dolar):
-        assert saldo(titular=titular, moneda=dolar) == float_format(titular.capital() / dolar.cotizacion)
+        context = {"titular": titular}
+        assert saldo(context, moneda=dolar) == float_format(titular.capital() / dolar.cotizacion)
