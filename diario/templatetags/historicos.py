@@ -30,8 +30,11 @@ def saldo(context, moneda: Moneda | None = None) -> str:
             titular.capital(movimiento=movimiento) if titular else \
             saldo_general_historico(movimiento)
     else:
-        result = cuenta.saldo(dia=dia) if cuenta else \
-            titular.capital(dia=dia) if titular else \
-            dia.saldo()
+        try:
+            result = cuenta.saldo(dia=dia) if cuenta else \
+                titular.capital(dia=dia) if titular else \
+                dia.saldo()
+        except AttributeError:  # dia is None. No hay días ni movimientos
+            result = 0
 
     return float_format(result / cotizacion)

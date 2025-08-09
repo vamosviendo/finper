@@ -100,3 +100,7 @@ class TestSaldo:
             self, titular, entrada, salida, salida_posterior, dolar):
         context = {"titular": titular}
         assert saldo(context, moneda=dolar) == float_format(titular.capital() / dolar.cotizacion)
+
+    def test_si_no_hay_dias_ni_movimientos_devuelve_cero(self):
+        context = dict()
+        assert saldo(context) == "0,00"
