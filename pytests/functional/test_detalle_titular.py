@@ -107,6 +107,16 @@ def test_detalle_titular(
     # titular dentro de ellos.
     browser.comparar_dias_de(titular)
 
+    # En el encabezado de cada día, no se muestra el saldo diario general sino
+    # el capital diario del titular.
+    browser.ir_a_pag(titular.get_absolute_url())
+    dias_pag = browser.esperar_elementos("class_div_dia")
+
+    for dia in dias_pag:
+        saldo_dia = dia.esperar_elemento("class_span_saldo_dia", By.CLASS_NAME)
+        fecha_dia = dia.esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text[-10:]
+        assert saldo_dia.text == float_format(titular.capital(dia=Dia.tomar(fecha=fecha_dia)))
+
     # Si cliqueamos en un movimiento, solo aparecen los movimientos del
     # titular en la sección de movimientos, con el movimiento cliqueado
     # resaltado
