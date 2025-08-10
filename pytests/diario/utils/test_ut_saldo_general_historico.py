@@ -1,5 +1,7 @@
 from datetime import timedelta
 
+import pytest
+
 from diario.models import Movimiento
 from diario.utils.utils_saldo import saldo_general_historico
 from utils.helpers_tests import dividir_en_dos_subcuentas
@@ -37,3 +39,11 @@ def test_suma_una_sola_vez_saldo_de_cuentas_acumulativas(
             salida_tardia_tercera_cuenta.cta_salida,
         )
     ])
+
+
+@pytest.mark.parametrize("compra", [True, False])
+def test_devuelve_importe_en_moneda_dada(
+        cuenta, entrada, dolar, compra):
+    assert \
+        saldo_general_historico(entrada, moneda=dolar, compra=compra) == \
+        saldo_general_historico(entrada) / dolar.cotizacion_al(entrada.dia.fecha, compra=compra)
