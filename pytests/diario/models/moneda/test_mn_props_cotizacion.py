@@ -35,7 +35,13 @@ def test_atributo__cotizacion_creado_por_setters_es_de_clase_Cotizacion(tipo, do
 
 
 @pytest.mark.parametrize("tipo", ["compra", "venta"])
-def test_atributo__cotizacion_creado_por_setters_tiene_fecha_actual(tipo, dolar, mock_today):
+def test_atributo__cotizacion_creado_por_setters_tiene_fecha_del_ultimo_dia(tipo, dolar, dia, dia_posterior):
+    setattr(dolar, f"cotizacion_{tipo}", 5)
+    assert dolar._cotizacion.fecha == dia_posterior.fecha
+
+
+@pytest.mark.parametrize("tipo", ["compra", "venta"])
+def test_si_no_hay_dias_atributo__cotizacion_creado_por_setters_tiene_fecha_actual(tipo, dolar, mock_today):
     setattr(dolar, f"cotizacion_{tipo}", 5)
     assert dolar._cotizacion.fecha == mock_today.return_value
 

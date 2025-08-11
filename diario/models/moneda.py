@@ -8,6 +8,7 @@ from django.db import models
 from django.urls import reverse
 
 from diario.models import Cotizacion
+from diario.models.dia import Dia
 from diario.settings_app import MONEDA_BASE
 from vvmodel.models import MiModel
 
@@ -70,7 +71,9 @@ class Moneda(MiModel):
         try:
             self._cotizacion.importe_compra = value
         except AttributeError:
-            self._cotizacion = Cotizacion(fecha=date.today(), importe_compra=value)
+            ultimo_dia = Dia.ultime()
+            fecha = ultimo_dia.fecha if ultimo_dia else date.today()
+            self._cotizacion = Cotizacion(fecha=fecha, importe_compra=value)
 
     @property
     def cotizacion_venta(self) -> float:
@@ -89,7 +92,9 @@ class Moneda(MiModel):
         try:
             self._cotizacion.importe_venta = value
         except AttributeError:
-            self._cotizacion = Cotizacion(fecha=date.today(), importe_venta=value)
+            ultimo_dia = Dia.ultime()
+            fecha = ultimo_dia.fecha if ultimo_dia else date.today()
+            self._cotizacion = Cotizacion(fecha=fecha, importe_venta=value)
 
     @property
     def cotizacion(self) -> float:
