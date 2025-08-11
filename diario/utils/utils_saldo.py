@@ -18,6 +18,6 @@ def verificar_saldos() -> List['Cuenta']:
 
 def saldo_general_historico(mov: 'Movimiento', moneda: Moneda | None = None, compra: bool = False) -> float:
     cotizacion = moneda.cotizacion_al(fecha=mov.fecha, compra=compra) if moneda else 1
-    return sum([
+    return round(sum(
         cuenta.saldo(mov) for cuenta in Cuenta.filtro(cta_madre=None)
-    ]) / cotizacion
+    ) / cotizacion, 2)

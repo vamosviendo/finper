@@ -46,4 +46,4 @@ def test_devuelve_importe_en_moneda_dada(
         cuenta, entrada, dolar, compra):
     assert \
         saldo_general_historico(entrada, moneda=dolar, compra=compra) == \
-        saldo_general_historico(entrada) / dolar.cotizacion_al(entrada.dia.fecha, compra=compra)
+        round(saldo_general_historico(entrada) / dolar.cotizacion_al(entrada.dia.fecha, compra=compra), 2)
