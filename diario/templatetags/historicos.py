@@ -20,21 +20,31 @@ def saldo_en_moneda(cuenta: Cuenta, moneda: Moneda, mov: Movimiento | None) -> s
 
 
 @register.simple_tag(takes_context=True)
-def saldo(context, moneda: Moneda | None = None) -> str:
-    dia, cuenta, titular, movimiento = (context.get(x) for x in ("dia", "cuenta", "titular", "movimiento"))
+def saldo(
+        context,
+        titular: Titular | None = None,
+        cuenta: Cuenta | None = None,
+        moneda: Moneda | None = None
+) -> str:
+    titular_como_argumento = titular is not None
+    titular = titular or context.get("titular")
+    cuenta = cuenta or context.get("cuenta")
+    dia, movimiento = (context.get(x) for x in ("dia", "movimiento"))
+    if titular_como_argumento:
+        cuenta = None
+
     dia = dia or Dia.ultime()
-    cotizacion = moneda.cotizacion_al(dia.fecha, compra=False) if moneda else 1
 
     if movimiento:
-        result = cuenta.saldo(movimiento=movimiento) if cuenta else \
-            titular.capital(movimiento=movimiento) if titular else \
-            saldo_general_historico(movimiento)
+        result = cuenta.saldo(movimiento=movimiento, moneda=moneda) if cuenta else \
+            titular.capital(movimiento=movimiento, moneda=moneda) if titular else \
+            saldo_general_historico(movimiento, moneda=moneda)
     else:
         try:
-            result = cuenta.saldo(dia=dia) if cuenta else \
-                titular.capital(dia=dia) if titular else \
-                dia.saldo()
+            result = cuenta.saldo(dia=dia, moneda=moneda) if cuenta else \
+                titular.capital(dia=dia, moneda=moneda) if titular else \
+                dia.saldo(moneda=moneda)
         except AttributeError:  # dia is None. No hay días ni movimientos
             result = 0
 
-    return float_format(result / cotizacion)
+    return float_format(result)

@@ -21,7 +21,7 @@
   <div id = "id_div_saldo_gral" class="Titulo">
     <h1>
       <span id="id_titulo_saldo_gral">{{ titulo_saldo_gral }}:</span>
-      <span id="id_importe_saldo_gral">{{ saldo_gral|floatformat:2 }}</span>
+      <span id="id_importe_saldo_gral">{% saldo %}</span>
     </h1>
   </div>
   {% if hermanas %}
