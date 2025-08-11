@@ -10,11 +10,6 @@ register = template.Library()
 
 
 @register.simple_tag
-def cap_historico(titular: Titular, mov: Movimiento | None) -> str:
-    return float_format(titular.capital(movimiento=mov))
-
-
-@register.simple_tag
 def saldo_en_moneda(cuenta: Cuenta, moneda: Moneda, mov: Movimiento | None) -> str:
     return float_format(cuenta.saldo(movimiento=mov, moneda=moneda, compra=False))
 

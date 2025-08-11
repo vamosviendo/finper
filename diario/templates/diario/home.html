@@ -13,7 +13,7 @@
     <div id="id_div_saldos_madre">
       {% for ancestro in ancestros %}
         <div class="class_div_saldo_ancestro">
-          Saldo de cuenta madre {{ ancestro.nombre }}: {% saldo_en_moneda ancestro ancestro.moneda movimiento %}
+          Saldo de cuenta madre {{ ancestro.nombre }}: {% saldo cuenta=ancestro moneda=ancestro.moneda %}
         </div>
       {% endfor %}
     </div>
@@ -28,7 +28,7 @@
     <div id="id_div_saldos_hermana">
       {% for hermana in hermanas %}
         <div class="class_div_saldo_hermana">
-          Saldo de cuenta hermana {{ hermana.nombre }}: {% saldo_en_moneda hermana hermana.moneda movimiento %}
+          Saldo de cuenta hermana {{ hermana.nombre }}: {% saldo cuenta=hermana moneda=hermana.moneda %}
         </div>
       {% endfor %}
     </div>
