@@ -1,3 +1,5 @@
+import pytest
+
 from diario.utils.utils_saldo import saldo_general_historico
 
 
@@ -16,3 +18,10 @@ def test_si_no_hay_dia_anterior_devuelve_0(dia):
 
 def test_si_ningun_dia_anterior_tiene_movimientos_devuelve_0(dia, dia_anterior, dia_temprano):
     assert dia.saldo() == 0
+
+
+@pytest.mark.parametrize("compra", [False, True])
+def test_devuelve_importe_en_moneda_dada(dia, entrada, salida, dolar, compra):
+    assert \
+        dia.saldo(moneda=dolar, compra=compra) == \
+        round(dia.saldo() / dolar.cotizacion_al(dia.fecha, compra=compra), 2)

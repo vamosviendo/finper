@@ -9,7 +9,7 @@ from django.db.models import Count, QuerySet
 from vvmodel.models import MiModel
 
 if TYPE_CHECKING:
-    from diario.models import Cuenta, Movimiento, Titular
+    from diario.models import Cuenta, Movimiento, Titular, Moneda
     from diario.models.movimiento import MovimientoManager
 
 
@@ -92,15 +92,15 @@ class Dia (MiModel):
             return ente.movs().filter(dia=self)
         return self.movimientos
 
-    def saldo(self) -> float:
+    def saldo(self, moneda: Optional[Moneda] = None, compra: bool = False) -> float:
         from diario.utils.utils_saldo import saldo_general_historico
         ult_mov = self.movimientos.last()
 
         if ult_mov is not None:
-            return saldo_general_historico(ult_mov)
+            return saldo_general_historico(ult_mov, moneda, compra)
 
         try:
-            return self.anterior().saldo()
+            return self.anterior().saldo(moneda, compra)
         except AttributeError:  # self.anterior() == None
             return 0
 
