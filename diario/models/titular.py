@@ -82,6 +82,15 @@ class Titular(MiModel):
 
         return round(result, 2)
 
+    def saldo(
+            self,
+            movimiento: Movimiento = None,
+            dia: Dia = None,
+            moneda: Moneda = None,
+            compra: bool = False) -> float:
+        """ Wrapper de self.capital """
+        return self.capital(movimiento, dia, moneda, compra)
+
     def cuentas_interactivas(self) -> models.QuerySet['CuentaInteractiva']:
         ids = [c.id for c in self.cuentas.all() if c.es_interactiva]
         return self.cuentas.filter(id__in=ids)

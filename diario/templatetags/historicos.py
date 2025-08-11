@@ -34,15 +34,14 @@ def saldo(
         cuenta = None
 
     dia = dia or Dia.ultime()
+    ente = cuenta or titular
 
     if movimiento:
-        result = cuenta.saldo(movimiento=movimiento, moneda=moneda) if cuenta else \
-            titular.capital(movimiento=movimiento, moneda=moneda) if titular else \
+        result = ente.saldo(movimiento=movimiento, moneda=moneda) if ente else \
             saldo_general_historico(movimiento, moneda=moneda)
     else:
         try:
-            result = cuenta.saldo(dia=dia, moneda=moneda) if cuenta else \
-                titular.capital(dia=dia, moneda=moneda) if titular else \
+            result = ente.saldo(dia=dia, moneda=moneda) if ente else \
                 dia.saldo(moneda=moneda)
         except AttributeError:  # dia is None. No hay días ni movimientos
             result = 0
