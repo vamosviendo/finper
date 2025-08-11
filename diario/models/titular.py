@@ -14,7 +14,7 @@ from vvutils.text import mi_slugify
 from diario.models.dia import Dia
 
 if TYPE_CHECKING:
-    from diario.models import CuentaAcumulativa, CuentaInteractiva, Movimiento
+    from diario.models import CuentaAcumulativa, CuentaInteractiva, Movimiento, Moneda
     from diario.models.cuenta import CuentaManager
 
 
@@ -64,12 +64,23 @@ class Titular(MiModel):
             kwargs["_sk"] = kwargs.pop("sk")
         return super().tomar(**kwargs)
 
-    def capital(self, movimiento: 'Movimiento' = None, dia: Dia = None) -> float:
+    def capital(
+            self,
+            movimiento: Optional['Movimiento'] = None,
+            dia: Optional[Dia] = None,
+            moneda: Optional[Moneda] = None,
+            compra: bool = False) -> float:
         if movimiento:
-            return sum(c.saldo(movimiento=movimiento) for c in self.cuentas_interactivas())
-        if dia:
-            return sum(c.saldo(dia=dia) for c in self.cuentas_interactivas())
-        return sum(c.saldo() for c in self.cuentas_interactivas())
+            result = sum(
+                c.saldo(movimiento=movimiento, moneda=moneda, compra=compra)
+                for c in self.cuentas_interactivas()
+            )
+        elif dia:
+            result = sum(c.saldo(dia=dia, moneda=moneda, compra=compra) for c in self.cuentas_interactivas())
+        else:
+            result = sum(c.saldo(moneda=moneda, compra=compra) for c in self.cuentas_interactivas())
+
+        return round(result, 2)
 
     def cuentas_interactivas(self) -> models.QuerySet['CuentaInteractiva']:
         ids = [c.id for c in self.cuentas.all() if c.es_interactiva]

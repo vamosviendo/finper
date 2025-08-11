@@ -1,3 +1,5 @@
+import pytest
+
 from diario.models import CuentaInteractiva
 
 
@@ -26,3 +28,15 @@ def test_si_recibe_dia_devuelve_suma_de_saldos_de_cuentas_de_titular_el_dia_dado
         entrada, entrada_otra_cuenta, salida_posterior, entrada_posterior_cuenta_ajena, entrada_tardia,
         dia_posterior):
     assert titular.capital(dia=dia_posterior) == cuenta.saldo(dia=dia_posterior) + cuenta_2.saldo(dia=dia_posterior)
+
+
+@pytest.mark.parametrize("compra", [False, True])
+def test_devuelve_capital_cotizado_en_la_moneda_dada_a_la_fecha_dada(
+        titular, cuenta, cuenta_2, entrada, entrada_otra_cuenta, salida_posterior, entrada_tardia, dolar, compra):
+    print(compra, titular.capital(), dolar.cotizacion_al(fecha=salida_posterior.fecha, compra=compra))
+    assert \
+        titular.capital(dia=salida_posterior.dia, moneda=dolar, compra=compra) == \
+        round(sum(
+            c.saldo(dia=salida_posterior.dia, moneda=dolar, compra=compra)
+            for c in titular.cuentas_interactivas()
+        ), 2)
