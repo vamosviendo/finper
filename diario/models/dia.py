@@ -94,15 +94,7 @@ class Dia (MiModel):
 
     def saldo(self, moneda: Optional[Moneda] = None, compra: bool = False) -> float:
         from diario.utils.utils_saldo import saldo_general_historico
-        ult_mov = self.movimientos.last()
-
-        if ult_mov is not None:
-            return saldo_general_historico(ult_mov, moneda, compra)
-
-        try:
-            return self.anterior().saldo(moneda, compra)
-        except AttributeError:  # self.anterior() == None
-            return 0
+        return saldo_general_historico(dia=self, moneda=moneda, compra=compra)
 
     def anterior(self, ente: Cuenta | Titular | None = None) -> Self:
         if ente:

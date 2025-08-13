@@ -7,8 +7,8 @@ from diario.utils.utils_saldo import saldo_general_historico
 from utils.helpers_tests import dividir_en_dos_subcuentas
 
 
-def test_devuelve_suma_de_saldos_historicos_de_cuentas_al_momento_del_movimiento(
-        entrada, entrada_posterior_otra_cuenta, salida_tardia_tercera_cuenta):
+def test_si_recibe_movimiento_devuelve_suma_de_saldos_historicos_de_cuentas_al_momento_del_movimiento(
+        entrada, salida, entrada_posterior_otra_cuenta, salida_tardia_tercera_cuenta):
     assert \
         saldo_general_historico(entrada) == \
         entrada.cta_entrada.saldo(movimiento=entrada)
@@ -20,6 +20,12 @@ def test_devuelve_suma_de_saldos_historicos_de_cuentas_al_momento_del_movimiento
         saldo_general_historico(salida_tardia_tercera_cuenta) == \
             saldo_general_historico(entrada_posterior_otra_cuenta) + \
         salida_tardia_tercera_cuenta.cta_salida.saldo(movimiento=salida_tardia_tercera_cuenta)
+
+
+def test_si_recibe_dia_devuelve_suma_de_saldos_diarios_de_cuentas(
+        cuenta, cuenta_2, entrada, salida, salida_posterior, entrada_posterior_otra_cuenta, salida_tardia_tercera_cuenta):
+    dia = salida_posterior.dia
+    assert saldo_general_historico(dia=dia) == cuenta.saldo(dia=dia) + cuenta_2.saldo(dia=dia)
 
 
 def test_suma_una_sola_vez_saldo_de_cuentas_acumulativas(

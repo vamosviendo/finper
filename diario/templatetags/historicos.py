@@ -37,8 +37,8 @@ def saldo(
     else:
         try:
             result = ente.saldo(dia=dia, moneda=moneda) if ente else \
-                dia.saldo(moneda=moneda)
-        except AttributeError:  # dia is None. No hay días ni movimientos
+                saldo_general_historico(dia=dia, moneda=moneda)
+        except ValueError:  # dia is None. No hay días ni movimientos
             result = 0
 
     return float_format(result)

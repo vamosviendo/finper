@@ -166,16 +166,15 @@ class Cuenta(PolymorphModel):
         fecha = movimiento.fecha if movimiento else dia.fecha if dia else date.today()
         cotizacion = self.moneda.cotizacion_en_al(moneda, fecha, compra) if moneda else 1
 
-        try:
+        if movimiento:
             return round(self.saldo_en_mov(movimiento) * cotizacion, 2)
-        except AttributeError:  # movimiento is None
-            if dia:
-                try:
-                    saldo = self.saldodiario_set.get(dia=dia)
-                except SaldoDiario.DoesNotExist:
-                    saldo = SaldoDiario.anterior_a(cuenta=self, dia=dia)
-            else:
-                saldo = self.ultimo_saldo
+        if dia:
+            try:
+                saldo = self.saldodiario_set.get(dia=dia)
+            except SaldoDiario.DoesNotExist:
+                saldo = SaldoDiario.anterior_a(cuenta=self, dia=dia)
+        else:
+            saldo = self.ultimo_saldo
 
         try:
             return round(saldo.importe * cotizacion, 2)
