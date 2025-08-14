@@ -6,6 +6,8 @@ from django.urls import reverse
 from selenium.webdriver.common.by import By
 
 from diario.models import Dia
+from diario.utils.utils_saldo import saldo_general_historico
+from utils.numeros import float_format
 from utils.tiempo import str2date
 
 
@@ -140,3 +142,17 @@ def test_busqueda_fecha(browser, origen, fixt_dias, fecha, fecha_tardia, fecha_e
 
     # Lo mismo si lo hacemos con un titular seleccionado.
 
+
+@pytest.mark.parametrize("page", ["", "?page=2"])
+def test_saldo_diario_en_paginas(browser, mas_de_7_dias, page):
+    # Si vamos a una página posterior a la primera, cada día muestra el saldo
+    # general diario
+    browser.ir_a_pag(reverse("home") + page)
+    dias_pag = browser.esperar_elementos("class_titulo_dia")
+    for dia_pag in dias_pag:
+        fecha = str2date(dia_pag.esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text[-10:])
+        dia = Dia.tomar(fecha=fecha)
+        saldo_mostrado = dia_pag.esperar_elemento("class_span_saldo_dia", By.CLASS_NAME).text
+        saldo_real = saldo_general_historico(dia=dia)
+        assert saldo_mostrado == float_format(saldo_real)
+        print(fecha, saldo_mostrado, "=", saldo_real)

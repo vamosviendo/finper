@@ -36,6 +36,13 @@ class TestSaldo:
         context = {"dia": salida_posterior.dia, "movimiento": entrada}
         assert saldo(context) == float_format(saldo_general_historico(entrada))
 
+    def test_si_recibe_dia_como_argumento_y_movimiento_en_context_prioriza_dia(
+            self, entrada, salida, salida_posterior):
+        context = {"movimiento": entrada}
+        assert \
+            saldo(context, dia=salida_posterior.dia) == \
+            float_format(saldo_general_historico(dia=salida_posterior.dia))
+
     def test_si_recibe_moneda_devuelve_saldo_general_en_moneda_recibida(
             self, entrada, salida, salida_posterior, dolar):
         context = dict()

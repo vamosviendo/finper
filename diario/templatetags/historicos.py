@@ -19,16 +19,16 @@ def saldo(
         context,
         titular: Titular | None = None,
         cuenta: Cuenta | None = None,
+        dia: Dia | None = None,
         moneda: Moneda | None = None
 ) -> str:
-    titular_como_argumento = titular is not None
-    titular = titular or context.get("titular")
-    cuenta = cuenta or context.get("cuenta")
-    dia, movimiento = (context.get(x) for x in ("dia", "movimiento"))
-    if titular_como_argumento:
-        cuenta = None
+    dia_explicito = dia is not None
+    dia = dia or context.get("dia") or Dia.ultime()
+    movimiento = None if dia_explicito else context.get("movimiento")
 
-    dia = dia or Dia.ultime()
+    titular_explicito = titular is not None
+    titular =  titular or context.get("titular")
+    cuenta = None if titular_explicito else cuenta or context.get("cuenta")
     ente = cuenta or titular
 
     if movimiento:
