@@ -82,7 +82,19 @@ class SaldoDiario(MiModel):
         self.delete()
         self._actualizar_posteriores(importe_anterior-importe)
 
-    def save(self, *args, **kwargs):
+    def clean_save(
+            self, exclude=None, validate_unique=True, validate_constraints=True,
+            force_insert=False, force_update=False, using=None, update_fields=None,
+            actualizar_posteriores=True
+    ):
+        super().full_clean(exclude, validate_unique, validate_constraints)
+        self.save(force_insert, force_update, using, update_fields,
+                  actualizar_posteriores=actualizar_posteriores)
+
+    def save(
+            self, force_insert=False, force_update=False, using=None, update_fields=None,
+            actualizar_posteriores=True
+    ):
         if self._state.adding:
             try:
                 importe_anterior = self.anterior().importe
@@ -95,9 +107,10 @@ class SaldoDiario(MiModel):
             if self.cambia_campo("_importe"):
                 importe_guardado = self.tomar_de_bd().importe
                 importe = self.importe - importe_guardado
-                self._actualizar_posteriores(importe)
+                if actualizar_posteriores:
+                    self._actualizar_posteriores(importe)
 
-        return super().save(*args, **kwargs)
+        return super().save(force_insert, force_update, using, update_fields)
 
     def cambia_campo(self, *args, contraparte: Movimiento = None) -> bool:
         mov_guardado = contraparte or self.tomar_de_bd()
@@ -118,4 +131,6 @@ class SaldoDiario(MiModel):
     def _actualizar_posteriores(self, importe):
         for sd in SaldoDiario.filtro(cuenta=self.cuenta, dia__fecha__gt=self.dia.fecha):
             sd.importe += importe
-            sd.clean_save()
+
+            sd.clean_save(actualizar_posteriores=False)
+            print(f"Actualizado saldo de {sd.cuenta.nombre} del día {sd.dia}")

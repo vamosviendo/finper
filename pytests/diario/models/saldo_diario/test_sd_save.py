@@ -61,3 +61,20 @@ def test_si_cambia_el_importe_se_modifican_importes_de_saldos_diarios_posteriore
     saldo_diario.save()
     saldo_diario_posterior.refresh_from_db()
     assert saldo_diario_posterior.importe == importe_posterior + cantidad
+
+
+def test_recorre_una_sola_vez_saldos_posteriores_de_la_cuenta(
+        saldo_diario_anterior, entrada, salida_posterior, entrada_tardia, mocker, monkeypatch):
+    calls = 0
+    original = SaldoDiario._actualizar_posteriores
+
+    def wrapper(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(SaldoDiario, "_actualizar_posteriores", wrapper)
+
+    saldo_diario_anterior.eliminar()
+
+    assert calls == 1
