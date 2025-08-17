@@ -38,11 +38,11 @@ class Cotizacion(MiModel):
             return super().tomar(**kwargs)
         except cls.DoesNotExist:
             cotizaciones_anteriores = cls.filtro(moneda=kwargs["moneda"], fecha__lt=kwargs["fecha"])
-            if cotizaciones_anteriores.count() == 0:
-                raise EmptyResultSet(
-                    f"No hay cotizaciones de {kwargs['moneda']} anteriores al {kwargs['fecha']}"
-                )
-            return cotizaciones_anteriores.last()
+            if cotizaciones_anteriores.exists():
+                return cotizaciones_anteriores.last()
+            raise EmptyResultSet(
+                f"No hay cotizaciones de {kwargs['moneda']} anteriores al {kwargs['fecha']}"
+            )
 
     def clean(self):
         super().clean()

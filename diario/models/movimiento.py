@@ -441,7 +441,7 @@ class Movimiento(MiModel):
             force_insert=False, force_update=False, using=None, update_fields=None,
             mantiene_orden_dia: bool = False, esgratis: bool = False
     ):
-        super().full_clean()
+        super().full_clean(exclude, validate_unique, validate_constraints)
         self.save(
             force_insert, force_update, using, update_fields,
             mantiene_orden_dia=mantiene_orden_dia, esgratis=esgratis)

@@ -133,4 +133,3 @@ class SaldoDiario(MiModel):
             sd.importe += importe
 
             sd.clean_save(actualizar_posteriores=False)
-            print(f"Actualizado saldo de {sd.cuenta.nombre} del día {sd.dia}")

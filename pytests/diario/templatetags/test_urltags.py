@@ -82,9 +82,6 @@ class TestFinperUrl:
         context = get_request_context("titular_movimiento", titular=titular, movimiento=mov, dias=mas_de_7_dias[:6])
         assert finperurl(context) == titular.get_absolute_url()
 
-    @pytest.mark.xfail
-    def test_si_no_recibe_dias_da_valueerror(self):
-        pytest.fail("escribir")
 
 class TestMovUrl:
     def test_si_no_recibe_sk_de_titular_ni_de_cuenta_devuelve_url_de_movimiento(self, entrada):

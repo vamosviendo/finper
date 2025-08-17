@@ -1,4 +1,4 @@
-from diario.templatetags.historicos import saldo_en_moneda, saldo
+from diario.templatetags.saldos import saldo_en_moneda, saldo
 from diario.utils.utils_saldo import saldo_general_historico
 from pytests.fixtures_movimiento import entrada_cuenta_ajena
 from utils.numeros import float_format
