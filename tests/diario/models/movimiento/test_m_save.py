@@ -5,7 +5,6 @@ import pytest
 from django.forms.models import model_to_dict
 
 from diario.models import Cuenta, CuentaInteractiva, Dia, Movimiento, SaldoDiario
-from pytests.fixtures_movimiento import entrada_anterior_otra_cuenta
 from utils.helpers_tests import \
     cambiar_fecha, dividir_en_dos_subcuentas, signo
 from utils.varios import el_que_no_es

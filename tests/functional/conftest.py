@@ -5,7 +5,7 @@ import pytest
 from pytest_django.live_server_helper import LiveServer
 from selenium.webdriver.firefox.options import Options
 
-from pytests.functional.helpers import FinperFirefox
+from tests.functional.helpers import FinperFirefox
 
 @pytest.fixture(autouse=True, scope='session')
 def base_url(live_server: LiveServer) -> str:

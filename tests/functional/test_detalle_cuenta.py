@@ -6,7 +6,7 @@ from django.urls import reverse
 from selenium.webdriver.common.by import By
 
 from diario.models import CuentaAcumulativa, CuentaInteractiva, Dia, Movimiento
-from pytests.functional.helpers import texto_en_hijos_respectivos
+from tests.functional.helpers import texto_en_hijos_respectivos
 from utils.helpers_tests import fecha2page
 from utils.numeros import float_format
 from utils.tiempo import str2date

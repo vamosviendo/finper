@@ -6,7 +6,7 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 
 from diario.models import Movimiento
-from pytests.functional.helpers import assert_exists
+from tests.functional.helpers import assert_exists
 from utils.numeros import float_format, format_float
 from utils.varios import el_que_no_es
 
