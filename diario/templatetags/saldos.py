@@ -10,8 +10,15 @@ register = template.Library()
 
 
 @register.simple_tag
-def saldo_en_moneda(cuenta: Cuenta, moneda: Moneda, mov: Movimiento | None) -> str:
-    return float_format(cuenta.saldo(movimiento=mov, moneda=moneda, compra=False))
+def saldo_en_moneda(cuenta: Cuenta, moneda: Moneda, mov: Movimiento | None = None) -> str:
+    if mov is None:
+        kwargs = {"dia": Dia.ultime()}
+    elif mov == mov.dia.movimientos.last():
+        kwargs = {"dia": mov.dia}
+    else:
+        kwargs = {"movimiento": mov}
+
+    return float_format(cuenta.saldo(**kwargs, moneda=moneda, compra=False))
 
 
 @register.simple_tag(takes_context=True)

@@ -15,13 +15,13 @@ def test_se_relaciona_con_una_moneda(dolar, fecha_posterior):
     assert cotizacion_dolar == cotizacion
 
 
-def test_se_ordena_por_fecha(dolar, peso, fecha, cotizacion_tardia, cotizacion, cotizacion_posterior):
-    cotizacion_en_fecha = dolar.cotizaciones.get(fecha=fecha)
-    cotizacion_peso = Cotizacion.tomar(moneda=peso, fecha=fecha)
+def test_se_ordena_por_fecha(dolar, peso, fecha_temprana, cotizacion_tardia, cotizacion, cotizacion_posterior):
+    cotizacion_dolar = dolar.cotizaciones.get(fecha=fecha_temprana)
+    cotizacion_peso = peso.cotizaciones.get(fecha=fecha_temprana)
     assert list(Cotizacion.todes()) == [
-        cotizacion,
         cotizacion_peso,
-        cotizacion_en_fecha,
+        cotizacion_dolar,
+        cotizacion,
         cotizacion_posterior,
         cotizacion_tardia
     ]

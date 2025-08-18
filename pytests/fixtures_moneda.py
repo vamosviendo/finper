@@ -8,55 +8,55 @@ from diario.models import Moneda, Cotizacion
 
 
 @pytest.fixture
-def peso(fecha: date) -> Moneda:
+def peso(fecha_temprana: date) -> Moneda:
     mon = Moneda.crear(
         nombre='Peso',
         sk='p',
     )
-    Cotizacion.crear(moneda=mon, fecha=fecha, importe_compra=1, importe_venta=1)
+    Cotizacion.crear(moneda=mon, fecha=fecha_temprana, importe_compra=1, importe_venta=1)
     return mon
 
 
 @pytest.fixture
-def dolar(fecha: date) -> Moneda:
+def dolar(fecha_temprana: date) -> Moneda:
     mon = Moneda.crear(
         nombre='Dolar',
         plural='dólares',
         sk='uss',
     )
-    Cotizacion.crear(moneda=mon, fecha=fecha, importe_compra=805.0, importe_venta=816.0)
+    Cotizacion.crear(moneda=mon, fecha=fecha_temprana, importe_compra=805.0, importe_venta=816.0)
     return mon
 
 
 @pytest.fixture
-def euro(fecha: date) -> Moneda:
+def euro(fecha_temprana: date) -> Moneda:
     mon = Moneda.crear(
         nombre='Euro',
         sk='eu',
     )
-    Cotizacion.crear(moneda=mon, fecha=fecha, importe_compra=1100, importe_venta=1300)
+    Cotizacion.crear(moneda=mon, fecha=fecha_temprana, importe_compra=1100, importe_venta=1300)
     return mon
 
 
 @pytest.fixture
-def real(fecha: date) -> Moneda:
+def real(fecha_temprana: date) -> Moneda:
     mon = Moneda.crear(
         nombre='Real',
         plural='Reales',
         sk='r',
     )
-    Cotizacion.crear(moneda=mon, fecha=fecha, importe_compra=300, importe_venta=312)
+    Cotizacion.crear(moneda=mon, fecha=fecha_temprana, importe_compra=300, importe_venta=312)
     return mon
 
 
 @pytest.fixture
-def yen(fecha: date) -> Moneda:
+def yen(fecha_temprana: date) -> Moneda:
     mon = Moneda.crear(
         nombre='Yen',
         plural='Yenes',
         sk='y',
     )
-    Cotizacion.crear(moneda=mon, fecha=fecha, importe_compra=3200, importe_venta=3500)
+    Cotizacion.crear(moneda=mon, fecha=fecha_temprana, importe_compra=3200, importe_venta=3500)
     return mon
 
 
