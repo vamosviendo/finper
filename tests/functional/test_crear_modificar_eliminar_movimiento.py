@@ -412,7 +412,7 @@ def test_crear_traspaso_entre_cuentas_en_distinta_moneda(
 
 def test_crear_traspaso_entre_cuentas_en_distinta_moneda_con_una_cotizacion_anterior_a_la_actual(
         browser, cuenta_con_saldo_en_euros, cuenta_con_saldo_en_dolares, dolar, euro,
-        fecha, cotizacion, cotizacion_posterior, cotizacion_posterior_euro
+        fecha, cotizacion_dolar, cotizacion_posterior_dolar, cotizacion_posterior_euro
 ):
     browser.ir_a_pag()
 

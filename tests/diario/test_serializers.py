@@ -45,7 +45,7 @@ def titular_serializado(titular: Titular, db_serializada: SerializedDb) -> Titul
     return TitularSerializado.primere(db_serializada)
 
 @pytest.fixture
-def cotizacion_serializada(cotizacion: Cotizacion, db_serializada: SerializedDb) -> CotizacionSerializada:
+def cotizacion_serializada(cotizacion_dolar: Cotizacion, db_serializada: SerializedDb) -> CotizacionSerializada:
     return CotizacionSerializada.primere(db_serializada)
 
 

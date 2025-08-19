@@ -1,4 +1,5 @@
-def test_devuelve_sk_basada_en_fecha_y_sk_de_moneda(cotizacion):
+def test_devuelve_sk_basada_en_fecha_y_sk_de_moneda(cotizacion_dolar):
     assert \
-        cotizacion.sk == \
-        f"{cotizacion.fecha.year}{cotizacion.fecha.month}{cotizacion.fecha.day}{cotizacion.moneda.sk}"
+        cotizacion_dolar.sk == \
+        f"{cotizacion_dolar.fecha.year}{cotizacion_dolar.fecha.month}" \
+        f"{cotizacion_dolar.fecha.day}{cotizacion_dolar.moneda.sk}"

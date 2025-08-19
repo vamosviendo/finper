@@ -201,7 +201,8 @@ class TestCargaMonedas:
 
 class TestCargaCotizaciones:
     def test_carga_todas_las_cotizaciones_en_la_base_de_datos(
-            self, peso, dolar, euro, yen, cotizacion_posterior, cotizacion_tardia, db_serializada, vaciar_db):
+            self, peso, dolar, euro, yen, cotizacion_posterior_dolar, cotizacion_tardia_dolar,
+            db_serializada, vaciar_db):
         cotizaciones = db_serializada.filter_by_model("diario.cotizacion")
         call_command("cargar_db_serializada")
         assert Cotizacion.cantidad() == len(cotizaciones)

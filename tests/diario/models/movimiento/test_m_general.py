@@ -126,7 +126,7 @@ def test_en_movimientos_entre_cuentas_en_la_misma_moneda_cotizacion_es_siempre_u
 @pytest.mark.parametrize("sentido", ["entrada", "salida"])
 def test_entre_cuentas_en_distinta_moneda_se_calcula_cotizacion_a_partir_de_la_cotizacion_de_ambas_monedas_a_la_fecha_del_movimiento(
         sentido, cuenta_con_saldo_en_dolares, cuenta_con_saldo_en_euros, dolar, euro,
-        cotizacion, cotizacion_posterior, cotizacion_euro, cotizacion_posterior_euro, fecha):
+        cotizacion_dolar, cotizacion_posterior_dolar, cotizacion_euro, cotizacion_posterior_euro, fecha):
     compra = sentido == "salida"
     sentido_opuesto = el_que_no_es(sentido, "entrada", "salida")
 
@@ -144,7 +144,7 @@ def test_entre_cuentas_en_distinta_moneda_se_calcula_cotizacion_a_partir_de_la_c
 
 def test_entre_cuentas_en_distinta_moneda_permite_especificar_cotizacion(
         cuenta_con_saldo_en_dolares, cuenta_con_saldo_en_euros, dolar, euro,
-        cotizacion, cotizacion_posterior, cotizacion_euro, cotizacion_posterior_euro, fecha):
+        cotizacion_dolar, cotizacion_posterior_dolar, cotizacion_euro, cotizacion_posterior_euro, fecha):
     mov = Movimiento(
         fecha=fecha, concepto="Compra de dólares con euros", importe=100,
         cta_entrada=cuenta_con_saldo_en_dolares, cta_salida=cuenta_con_saldo_en_euros,

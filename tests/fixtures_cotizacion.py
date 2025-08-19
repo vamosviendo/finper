@@ -6,18 +6,23 @@ from diario.models import Moneda, Cotizacion
 
 
 @pytest.fixture
-def cotizacion(dolar: Moneda, fecha_anterior: date) -> Cotizacion:
+def cotizacion_dolar(dolar: Moneda, fecha_anterior: date) -> Cotizacion:
     return Cotizacion.crear(moneda=dolar, fecha=fecha_anterior, importe_compra=335, importe_venta=350)
 
 
 @pytest.fixture
-def cotizacion_posterior(dolar: Moneda, fecha_posterior: date) -> Cotizacion:
+def cotizacion_posterior_dolar(dolar: Moneda, fecha_posterior: date) -> Cotizacion:
     return Cotizacion.crear(moneda=dolar, fecha=fecha_posterior, importe_compra=414, importe_venta=430)
 
 
 @pytest.fixture
-def cotizacion_tardia(dolar: Moneda, fecha_tardia: date) -> Cotizacion:
+def cotizacion_tardia_dolar(dolar: Moneda, fecha_tardia: date) -> Cotizacion:
     return Cotizacion.crear(moneda=dolar, fecha=fecha_tardia, importe_compra=837, importe_venta=862)
+
+
+@pytest.fixture
+def cotizacion_anterior_euro(euro: Moneda, fecha_anterior: date) -> Cotizacion:
+    return Cotizacion.crear(moneda=euro, fecha=fecha_anterior, importe_compra=350, importe_venta=363)
 
 
 @pytest.fixture

@@ -85,7 +85,7 @@ def test_serializa_todos_los_titulares_monedas_y_cuentas_de_la_base_de_datos_en_
 
 
 def test_serializa_todas_las_cotizaciones_de_la_base_de_datos_en_json(
-        varias_monedas, cotizacion_posterior, cotizacion_tardia, db_serializada):
+        varias_monedas, cotizacion_posterior_dolar, cotizacion_tardia_dolar, db_serializada):
     cotizaciones = db_serializada.filter_by_model("diario.cotizacion")
     assert len(cotizaciones) == Cotizacion.cantidad()
     for cotizacion in Cotizacion.todes():

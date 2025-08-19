@@ -6,9 +6,9 @@ from utils.varios import el_que_no_es
 
 @pytest.mark.parametrize("tipo", ["compra", "venta"])
 def test_devuelve_importe_de_la_cotizacion_de_fecha_mas_reciente(
-        tipo, dolar, cotizacion_posterior, cotizacion_tardia):
+        tipo, dolar, cotizacion_posterior_dolar, cotizacion_tardia_dolar):
     cotizacion = getattr(dolar, f"cotizacion_{tipo}")
-    importe = getattr(cotizacion_tardia, f"importe_{tipo}")
+    importe = getattr(cotizacion_tardia_dolar, f"importe_{tipo}")
     assert cotizacion == importe
 
 

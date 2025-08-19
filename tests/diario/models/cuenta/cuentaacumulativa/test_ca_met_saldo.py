@@ -86,7 +86,7 @@ def test_si_recibe_moneda_devuelve_saldo_en_moneda_dada_redondeado_en_2_decimale
 
 @pytest.mark.parametrize("tipo", ["compra", "venta"])
 def test_si_recibe_moneda_y_movimiento_devuelve_saldo_en_movimiento_dado_en_moneda_dada_a_la_fecha_del_movimiento_redondeado_en_2_decimales(
-        tipo, cuenta_acumulativa_saldo_0, peso, dolar, fecha, fecha_posterior, cotizacion_posterior):
+        tipo, cuenta_acumulativa_saldo_0, peso, dolar, fecha, fecha_posterior, cotizacion_posterior_dolar):
     cuenta = cuenta_acumulativa_saldo_0
     sc1, sc2 = cuenta.subcuentas.all()
     mov = Movimiento.crear('saldo sc1', 100, sc1, fecha=fecha)
