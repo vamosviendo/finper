@@ -27,8 +27,3 @@ def test_si_no_hay_cotizacion_el_dia_del_movimiento_en_el_context_devuelve_ultim
     attr_importe = "importe_compra" if compra else "importe_venta"
     context = {"movimiento": entrada}
     assert cotizacion(context, moneda=dolar, compra=compra) == float_format(getattr(cotizacion_dolar, attr_importe))
-
-
-@pytest.mark.parametrize("compra", (True, False))
-def test_si_no_hay_cotizaciones_anteriores_al_dia_del_movimiento_devuelve_1():
-    pass

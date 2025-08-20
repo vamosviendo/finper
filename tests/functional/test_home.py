@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import date, timedelta
 from urllib.parse import urlparse
 
+from django.urls import reverse
 from selenium.webdriver.common.by import By
 
 from diario.models import Dia
@@ -189,11 +190,25 @@ def test_home(
 
 def test_home_monedas(
         browser, cuenta_con_saldo, cuenta_con_saldo_en_dolares, cuenta_con_saldo_en_euros,
-        peso, dolar, euro, request):
+        entrada_anterior, salida, salida_posterior,
+        peso, dolar, euro,
+        cotizacion_dolar, cotizacion_posterior_dolar, cotizacion_anterior_euro, cotizacion_posterior_euro, request):
+    browser.ir_a_pag()
+    # En una sección aparte, aparecen todas las monedas
+    for moneda, cot in ((peso, None), (dolar, cotizacion_posterior_dolar), (euro, cotizacion_posterior_euro)):
+        mon_pag = browser.esperar_elemento(f"id_link_mon_{moneda.sk}")
+        assert mon_pag.text == moneda.nombre
+
+        # Al lado de cada una de las monedas, aparece su última cotización para la compra y para la venta
+        if cot:
+            cot_pag_c = browser.esperar_elemento(f"id_cotizacion_c_{moneda.sk}")
+            cot_pag_v = browser.esperar_elemento(f"id_cotizacion_v_{moneda.sk}")
+            assert cot_pag_c.text == float_format(cot.importe_compra)
+            assert cot_pag_v.text == float_format(cot.importe_venta)
+
     # Vemos que al lado de cada cuenta aparece una columna por cada moneda, con
     # su saldo expresado en esa moneda. Si la moneda de la columna coincide con
     # la de la cuenta, aparece resaltada.
-    browser.ir_a_pag()
     for cuenta in (cuenta_con_saldo, cuenta_con_saldo_en_dolares, cuenta_con_saldo_en_euros):
         for moneda in (peso, dolar, euro):
             saldo_mon = browser.esperar_elemento(f"id_saldo_cta_{cuenta.sk}_{moneda.sk}")
@@ -203,11 +218,11 @@ def test_home_monedas(
                 assert "mon_cuenta" in classname
             else:
                 assert "mon_cuenta" not in classname
+
+    # Esto también se aplica a las subcuentas de una cuenta acumulativa
     cuenta_acumulativa = request.getfixturevalue('cuenta_acumulativa')
     cuenta_acumulativa_en_dolares = request.getfixturevalue('cuenta_acumulativa_en_dolares')
     browser.ir_a_pag()
-
-    # Esto también se aplica a las subcuentas de una cuenta acumulativa
     subcuentas = list(cuenta_acumulativa.subcuentas.all() | cuenta_acumulativa_en_dolares.subcuentas.all())
     for cuenta in subcuentas:
         for moneda in (peso, dolar, euro):
@@ -219,6 +234,27 @@ def test_home_monedas(
             else:
                 assert "mon_cuenta" not in classname
 
+    # Si seleccionamos un movimiento, la cotización cambia para mostrar la del día del movimiento seleccionado.
+    browser.ir_a_pag(reverse("movimiento", args=[entrada_anterior.pk]))
+    for moneda, cot in ((dolar, cotizacion_dolar), (euro, cotizacion_anterior_euro)):
+        cot_pag_c = browser.esperar_elemento(f"id_cotizacion_c_{moneda.sk}")
+        cot_pag_v = browser.esperar_elemento(f"id_cotizacion_v_{moneda.sk}")
+        assert cot_pag_c.text == float_format(cot.importe_compra)
+        assert cot_pag_v.text == float_format(cot.importe_venta)
+
+    # Y los saldos de cuenta en distintas monedas aparecen cotizados a la fecha del movimiento seleccionado
+
+    # Si seleccionamos un movimiento de un día en el que no hay cotización, se muestra la última
+    # cotización anterior a la fecha del movimiento
+    browser.ir_a_pag(reverse("movimiento", args=[salida.pk]))
+    for moneda, cot in ((dolar, cotizacion_dolar), (euro, cotizacion_anterior_euro)):
+        cot_pag_c = browser.esperar_elemento(f"id_cotizacion_c_{moneda.sk}")
+        cot_pag_v = browser.esperar_elemento(f"id_cotizacion_v_{moneda.sk}")
+        assert cot_pag_c.text == float_format(cot.importe_compra)
+        assert cot_pag_v.text == float_format(cot.importe_venta)
+
+    # Y los saldos de cuenta en distintas monedas aparecen cotizados a la fecha de la última cotización anterior
+    # a la del movimiento.
 
 class TestHomeLinks:
     def test_seccion_titulares(self, browser, titular, otro_titular):
@@ -274,7 +310,7 @@ class TestHomeLinks:
 
     def test_seccion_monedas(self, browser, peso):
 
-        # cuando cliqueamos en el link de moneda nueva, accedemos a la página para agregar movimiento
+        # cuando cliqueamos en el link de moneda nueva, accedemos a la página para agregar moneda
         browser.verificar_link('moneda_nueva', 'mon_nueva', querydict={'next': '/'})
 
         # cuando cliqueamos en el link de editar movimiento, accedemos a la página de edición de ese movimiento
@@ -282,3 +318,6 @@ class TestHomeLinks:
 
         # cuando cliqueamos en el link de borrar movimiento, accedemos a la página de confirmación
         browser.verificar_link(f'mon_elim_{peso.sk}', 'mon_elim', [peso.sk])
+
+        # cuando cliqueamos en el link de agregar cotización, accedemos a la página para agregar cotización
+        assert False, "Escribir"

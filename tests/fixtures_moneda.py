@@ -8,12 +8,12 @@ from diario.models import Moneda, Cotizacion
 
 
 @pytest.fixture
-def peso(fecha_temprana: date) -> Moneda:
+def peso(fecha_inicial: date) -> Moneda:
     mon = Moneda.crear(
         nombre='Peso',
         sk='p',
     )
-    Cotizacion.crear(moneda=mon, fecha=fecha_temprana, importe_compra=1, importe_venta=1)
+    Cotizacion.crear(moneda=mon, fecha=fecha_inicial, importe_compra=1, importe_venta=1)
     return mon
 
 

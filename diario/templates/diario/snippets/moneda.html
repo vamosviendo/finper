@@ -1,3 +1,5 @@
+{% load cotizaciones %}
+
 <tr class="menu-row class_div_moneda">
   <td class="menu-item class_td_moneda">
     <div class="menu-item-content class_div_nombre_moneda">
@@ -16,7 +18,10 @@
       </a>
     </div>
   </td>
-  <td id="id_cotizacion_{{ mon.sk }}" class="numero chico class_cotizacion_moneda">
-    {{ mon.cotizacion|floatformat:2 }}
+  <td id="id_cotizacion_c_{{ mon.sk }}" class="numero chico class_cotizacion_moneda">
+    {% cotizacion moneda=mon compra=True %}
+  </td>
+  <td id="id_cotizacion_v_{{ mon.sk }}" class="numero chico class_cotizacion_moneda">
+    {% cotizacion moneda=mon compra=False %}
   </td>
 </tr>
