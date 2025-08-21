@@ -4,7 +4,7 @@ from datetime import date
 from typing import Optional, Self, List, Sequence, Set, TYPE_CHECKING
 
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ValidationError
+from django.core.exceptions import EmptyResultSet, ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
 from django.urls import reverse
@@ -164,7 +164,10 @@ class Cuenta(PolymorphModel):
             raise ValueError(f"Se recibieron día {dia} y movimiento de otro día ({movimiento.dia})")
 
         fecha = movimiento.fecha if movimiento else dia.fecha if dia else date.today()
-        cotizacion = self.moneda.cotizacion_en_al(moneda, fecha, compra) if moneda else 1
+        try:
+            cotizacion = self.moneda.cotizacion_en_al(moneda, fecha, compra) if moneda else 1
+        except EmptyResultSet:
+            cotizacion = 1
 
         if movimiento:
             return round(self.saldo_en_mov(movimiento) * cotizacion, 2)
@@ -632,7 +635,10 @@ class CuentaAcumulativa(Cuenta):
             compra: bool = False,) -> float:
 
         fecha = movimiento.fecha if movimiento else dia.fecha if dia else date.today()
-        cotizacion = self.moneda.cotizacion_en_al(moneda, fecha, compra) if moneda else 1
+        try:
+            cotizacion = self.moneda.cotizacion_en_al(moneda, fecha, compra) if moneda else 1
+        except EmptyResultSet:
+            cotizacion = 1
 
         if movimiento:
             sks_ctas_mov = [

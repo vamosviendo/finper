@@ -71,6 +71,13 @@ def test_si_recibe_moneda_devuelve_saldo_en_moneda_dada_redondeado_en_2_decimale
         round(cuenta_con_saldo.saldo() * cuenta_con_saldo.moneda.cotizacion_en(dolar, compra=compra), 2)
     assert cuenta_con_saldo.saldo(moneda=peso, compra=compra) == cuenta_con_saldo.saldo()
 
+
+def test_si_moneda_recibida_no_tiene_cotizaciones_asociadas_devuelve_saldo_en_moneda_de_la_cuenta(
+        cuenta_con_saldo, peso, dolar):
+    dolar.cotizaciones.all().delete()
+    assert cuenta_con_saldo.saldo(moneda=dolar) == cuenta_con_saldo.saldo()
+
+
 @pytest.mark.parametrize("fixture_mov", ["entrada", "salida"])
 @pytest.mark.parametrize("tipo", ["compra", "venta"])
 def test_si_recibe_moneda_y_movimiento_devuelve_saldo_en_movimiento_dado_en_moneda_dada_a_la_fecha_del_movimiento_redondeado_en_2_decimales(

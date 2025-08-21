@@ -84,6 +84,11 @@ def test_si_recibe_moneda_devuelve_saldo_en_moneda_dada_redondeado_en_2_decimale
         cuenta_acumulativa_saldo_0.saldo(moneda=peso, compra=compra) == \
         cuenta_acumulativa_saldo_0.saldo()
 
+def test_si_moneda_recibida_no_tiene_cotizaciones_asociadas_devuelve_saldo_en_moneda_de_la_cuenta(
+        cuenta_acumulativa, dolar):
+    dolar.cotizaciones.all().delete()
+    assert cuenta_acumulativa.saldo(moneda=dolar) == cuenta_acumulativa.saldo()
+
 @pytest.mark.parametrize("tipo", ["compra", "venta"])
 def test_si_recibe_moneda_y_movimiento_devuelve_saldo_en_movimiento_dado_en_moneda_dada_a_la_fecha_del_movimiento_redondeado_en_2_decimales(
         tipo, cuenta_acumulativa_saldo_0, peso, dolar, fecha, fecha_posterior, cotizacion_posterior_dolar):
