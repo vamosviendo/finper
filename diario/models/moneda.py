@@ -32,7 +32,7 @@ class Moneda(MiModel):
     movimientos: MovimientoManager["Movimiento"]    # related name para Movimiento.moneda
 
     objects = MonedaManager()
-    form_fields = ('nombre', 'sk', 'plural', 'cotizacion_compra', 'cotizacion_venta', )
+    form_fields = ('nombre', 'sk', 'plural', )
 
     def __str__(self) -> str:
         return self.nombre
