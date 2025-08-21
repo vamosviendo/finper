@@ -13,9 +13,11 @@ def cotizacion(context, moneda: Moneda, compra: bool) -> str:
 
     if movimiento:
         fecha = movimiento.fecha
-        print(moneda, fecha)
         cot = Cotizacion.tomar(moneda=moneda, fecha=fecha)
     else:
         cot = moneda.cotizaciones.last()
 
-    return float_format(getattr(cot, f"importe_{tipo}"))
+    try:
+        return float_format(getattr(cot, f"importe_{tipo}"))
+    except AttributeError:  # cot is None
+        return float_format(1)
