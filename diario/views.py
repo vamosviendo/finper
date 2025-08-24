@@ -5,15 +5,15 @@ from typing import Any
 
 from django.core.paginator import Paginator
 from django.db.models.functions import Lower
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, DeleteView, TemplateView, \
     UpdateView
 
-from diario.forms import FormCuenta, FormMovimiento, FormDividirCuenta, \
-    FormCrearSubcuenta, FormTitular, FormMoneda
+from diario.forms import FormCotizacion, FormCuenta, FormMovimiento, \
+    FormDividirCuenta, FormCrearSubcuenta, FormTitular, FormMoneda
 from diario.models import Cuenta, CuentaInteractiva, CuentaAcumulativa, Dia, \
-    Movimiento, Titular, Moneda
+    Movimiento, Titular, Moneda, Cotizacion
 from diario.settings_app import TEMPLATE_HOME
 from diario.utils.utils_saldo import saldo_general_historico, verificar_saldos
 from utils.tiempo import str2date
@@ -329,6 +329,27 @@ class MovModView(UpdateView):
             form.fields['cta_salida'].queryset = CuentaInteractiva.todes()
 
         return form
+
+
+class MonCotNuevaView(CreateView):
+    model = Cotizacion
+    form_class = FormCotizacion
+
+    def dispatch(self, request, *args, **kwargs):
+        self.moneda = get_object_or_404(Moneda, _sk=self.kwargs["sk"])
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["moneda"] = self.moneda
+        return context
+
+    def form_valid(self, form):
+        form.instance.moneda = self.moneda
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return self.request.GET.get("next", reverse("home"))
 
 
 class TitularNuevoView(CreateView):

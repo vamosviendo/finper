@@ -43,6 +43,9 @@ class Moneda(MiModel):
     def get_delete_url(self) -> str:
         return reverse("mon_elim", args=[self.sk])
 
+    def get_cot_nueva(self) -> str:
+        return reverse("mon_cot_nueva", args=[self.sk])
+
     def natural_key(self) -> tuple[str]:
         return (self.sk, )
 

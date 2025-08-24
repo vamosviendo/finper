@@ -5,7 +5,8 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
-from diario.models import CuentaAcumulativa, CuentaInteractiva, Movimiento, Titular, Moneda, Dia
+from diario.models import Cotizacion, CuentaAcumulativa, CuentaInteractiva, \
+    Dia, Moneda, Movimiento, Titular
 from diario.settings_app import TITULAR_PRINCIPAL, MONEDA_BASE
 
 from utils.iterables import hay_mas_de_un_none_en
@@ -250,3 +251,9 @@ class FormMoneda(forms.ModelForm):
         self.instance.plural = self.cleaned_data['plural']
 
         return super().save(*args, **kwargs)
+
+
+class FormCotizacion(forms.ModelForm):
+    class Meta:
+        model = Cotizacion
+        fields = Cotizacion.form_fields

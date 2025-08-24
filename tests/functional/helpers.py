@@ -27,7 +27,7 @@ class FinperFirefox(MiFirefox):
     _web_element_cls = FinperWebElement
 
     # TODO: Corregir en MiFirefox
-    def completar_form(self, boton="id_btn_submit", **kwargs: str | date):
+    def completar_form(self, boton="id_btn_submit", **kwargs: str | int | float | bool | date):
         for key, value in kwargs.items():
             self.completar(f"id_{key}", value)
         self.pulsar(boton)

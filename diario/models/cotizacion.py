@@ -13,6 +13,8 @@ class Cotizacion(MiModel):
     fecha = models.DateField()
     moneda = models.ForeignKey("diario.Moneda", related_name="cotizaciones", on_delete=models.CASCADE)
 
+    form_fields = ['fecha', 'importe_compra', 'importe_venta']
+
     class Meta:
         ordering = ("fecha", )
         unique_together = ("fecha", "moneda", )

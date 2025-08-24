@@ -4,7 +4,7 @@ from pytest_django import asserts
 from diario.forms import FormMoneda
 
 
-def test_get_usa_template_mon_form(client):
+def test_get_usa_template_moneda_form(client):
     response = client.get(reverse('mon_nueva'))
     asserts.assertTemplateUsed(response, 'diario/moneda_form.html')
 

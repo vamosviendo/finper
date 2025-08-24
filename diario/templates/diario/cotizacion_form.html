@@ -1,0 +1,11 @@
+{% extends 'diario/base.html' %}
+{% block contenido %}
+<h4>Cotización {{ moneda.nombre }}</h4>
+<form id="id_form_cotizacion" method="post">
+  <div class="form-group">
+    {{ form.as_div }}
+  </div>
+  <button type="submit" id="id_btn_submit" class="btn btn-primary">OK</button>
+  {% csrf_token %}
+</form>
+{% endblock contenido %}

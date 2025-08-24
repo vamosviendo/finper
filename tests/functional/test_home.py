@@ -308,7 +308,7 @@ class TestHomeLinks:
         # cuando cliqueamos en el link de borrar movimiento, accedemos a la página de confirmación
         browser.verificar_link('elim_mov', 'mov_elim', [entrada.pk], querydict={'next': '/'}, criterio=By.CLASS_NAME)
 
-    def test_seccion_monedas(self, browser, peso):
+    def test_seccion_monedas(self, browser, peso, dolar):
 
         # cuando cliqueamos en el link de moneda nueva, accedemos a la página para agregar moneda
         browser.verificar_link('moneda_nueva', 'mon_nueva', querydict={'next': '/'})
@@ -320,4 +320,4 @@ class TestHomeLinks:
         browser.verificar_link(f'mon_elim_{peso.sk}', 'mon_elim', [peso.sk])
 
         # cuando cliqueamos en el link de agregar cotización, accedemos a la página para agregar cotización
-        assert False, "Escribir"
+        browser.verificar_link(f"mon_{peso.sk}_cotizacion_nueva", "mon_cot_nueva", [peso.sk])
