@@ -257,7 +257,6 @@ def cta_div_view(request, sk):
 
 
 def cta_agregar_subc_view(request, sk):
-    global form
     if request.method == 'GET':
         form = FormCrearSubcuenta(cuenta=sk)
 
