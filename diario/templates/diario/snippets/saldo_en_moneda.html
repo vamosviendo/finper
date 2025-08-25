@@ -4,5 +4,5 @@
     class="numero chico class_saldo_cuenta div-detalles-subcuenta
           {% if mon.sk == cta.moneda.sk %} mon_cuenta{% endif %}"
 >
-  {% saldo_en_moneda cta mon movimiento %}
+  {% saldo cuenta=cta moneda=mon %}
 </td>

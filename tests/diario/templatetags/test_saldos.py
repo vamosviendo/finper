@@ -1,20 +1,6 @@
-from diario.templatetags.saldos import saldo_en_moneda, saldo
+from diario.templatetags.saldos import saldo
 from diario.utils.utils_saldo import saldo_general_historico
 from utils.numeros import float_format
-
-
-class TestSaldoEnMoneda:
-    def test_devuelve_string_con_saldo_de_cuenta_en_movimiento_en_moneda_dada(
-            self, cuenta, entrada, salida, dolar):
-        assert \
-            saldo_en_moneda(cuenta, dolar, entrada) == \
-            float_format(cuenta.saldo(movimiento=entrada, moneda=dolar, compra=False))
-
-    def test_si_recibe_movimiento_None_devuelve_saldo_actual_en_moneda_dada(
-            self, cuenta_con_saldo, dolar):
-        assert \
-            saldo_en_moneda(cuenta_con_saldo, dolar, None) == \
-            float_format(cuenta_con_saldo.saldo(moneda=dolar, compra=False))
 
 
 class TestSaldo:
