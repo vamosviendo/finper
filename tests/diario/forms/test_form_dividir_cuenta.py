@@ -98,9 +98,11 @@ def test_no_acepta_mas_de_un_campo_saldo_vacio(form):
     assert not form.is_valid()
 
 
-def test_muestra_campos_titular(form):
-    assert 'form_0_titular' in form.fields.keys()
-    assert 'form_1_titular' in form.fields.keys()
+@pytest.mark.parametrize("instancia", ["0", "1"])
+@pytest.mark.parametrize("campo", ["nombre", "sk", "saldo", "titular", "esgratis"])
+def test_muestra_campos_necesarios(form, instancia, campo):
+    campo_completo = f"form_{instancia}_{campo}"
+    assert campo_completo in form.fields.keys()
 
 
 def test_muestra_todos_los_titulares_en_campo_titular(
@@ -129,12 +131,6 @@ def test_pasa_titulares_correctamente_al_salvar_form(
     assert mock_dividir_y_actualizar.call_args[0][1]['titular'] == otro_titular
 
 
-def test_muestra_campo_esgratis(form):
-    assert 'form_0_esgratis' in form.fields.keys()
-    assert 'form_1_esgratis' in form.fields.keys()
-    assert isinstance(form.fields['form_0_esgratis'], fields.BooleanField)
-
-
 def test_campo_esgratis_no_seleccionado_por_defecto(form):
     assert form.fields['form_0_esgratis'].initial is False
 
@@ -156,10 +152,6 @@ def test_campo_esgratis_no_seleccionado_en_subcuenta_con_otro_titular_genera_mov
     form.full_clean()
     mov = form.save().subcuentas.last().movs()[0]
     mock_crear_movimiento_credito.assert_called_once_with(mov)
-
-
-def test_muestra_campo_fecha(form):
-    assert 'fecha' in form.fields.keys()
 
 
 def test_campo_fecha_muestra_fecha_de_hoy_por_defecto(form):

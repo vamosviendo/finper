@@ -43,8 +43,9 @@ def test_devuelve_cuenta_madre(formsubcuenta, cuenta_acumulativa):
     assert cuenta == cuenta_acumulativa
 
 
-def test_muestra_campo_fecha(formsubcuenta):
-    assert 'fecha' in formsubcuenta.fields.keys()
+@pytest.mark.parametrize("campo", ["fecha", "nombre", "sk", "titular", ])
+def test_muestra_campos_necesarios(formsubcuenta, campo):
+    assert campo in formsubcuenta.fields.keys()
 
 
 def test_campo_fecha_usa_widget_DateInput(formsubcuenta):
@@ -55,10 +56,6 @@ def test_campo_fecha_usa_widget_DateInput(formsubcuenta):
 
 def test_campo_fecha_muestra_fecha_de_hoy_por_defecto(formsubcuenta):
     assert formsubcuenta.fields['fecha'].initial == date.today()
-
-
-def test_muestra_campo_titular(formsubcuenta):
-    assert 'titular' in formsubcuenta.fields.keys()
 
 
 def test_muestra_todos_los_titulares_en_campo_titular(formsubcuenta, otro_titular, titular_gordo):

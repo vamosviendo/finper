@@ -4,7 +4,7 @@ from django import forms
 from django.utils import timezone
 
 from diario.forms import FormCuenta
-from diario.models import Titular, Moneda, Cuenta
+from diario.models import Titular, Moneda, Cuenta, CuentaInteractiva
 
 
 @pytest.fixture(autouse=True)
@@ -12,9 +12,10 @@ def mock_titular_principal(mocker, titular):
     return mocker.patch('diario.forms.TITULAR_PRINCIPAL', titular.sk)
 
 
-def test_muestra_campo_sk():
+@pytest.mark.parametrize("campo", CuentaInteractiva.form_fields)
+def test_muestra_campos_necesarios(campo):
     f = FormCuenta()
-    assert "sk" in f.fields.keys()
+    assert campo in f.fields.keys()
 
 
 def test_no_acepta_cuentas_sin_sk():
@@ -25,11 +26,6 @@ def test_no_acepta_cuentas_sin_sk():
 def test_no_acepta_guion_bajo_inicial_en_sk():
     formcta = FormCuenta(data={'nombre': '_Efectivo', 'sk': '_efe'})
     assert not formcta.is_valid()
-
-
-def test_muestra_campo_fecha_creacion():
-    formcta = FormCuenta()
-    assert 'fecha_creacion' in formcta.fields.keys()
 
 
 def test_campo_fecha_creacion_usa_widget_DateInput():
@@ -47,11 +43,6 @@ def test_campo_fecha_creacion_muestra_fecha_actual_como_valor_por_defecto():
 def test_campo_titular_muestra_titular_principal_como_valor_por_defecto(mock_titular_principal):
     formcta = FormCuenta()
     assert formcta.fields['titular'].initial == Titular.tomar(sk=mock_titular_principal)
-
-
-def test_muestra_campo_moneda():
-    formcta = FormCuenta()
-    assert 'moneda' in formcta.fields.keys()
 
 
 def test_campo_moneda_muestra_moneda_base_como_valor_por_defecto(mock_moneda_base):

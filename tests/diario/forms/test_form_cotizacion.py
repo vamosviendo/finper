@@ -1,6 +1,7 @@
 import pytest
 
 from diario.forms import FormCotizacion
+from diario.models import Cotizacion
 
 
 @pytest.fixture
@@ -17,7 +18,7 @@ def formcot_data(fecha) -> dict:
     }
 
 
-@pytest.mark.parametrize("campo", ["fecha", "importe_compra", "importe_venta"])
+@pytest.mark.parametrize("campo", Cotizacion.form_fields)
 def test_muestra_campos_necesarios(formcot, campo):
     assert campo in formcot.fields.keys()
 

@@ -24,16 +24,9 @@ def formmon_full(formmon_data) -> FormMoneda:
     return FormMoneda(data=formmon_data)
 
 
-def test_muestra_campo_nombre(formmon):
-    assert 'nombre' in formmon.fields.keys()
-
-
-def test_muestra_campo_sk(formmon):
-    assert 'sk' in formmon.fields.keys()
-
-
-def test_muestra_campo_plural(formmon):
-    assert 'plural' in formmon.fields.keys()
+@pytest.mark.parametrize("campo", Moneda.form_fields)
+def test_muestra_campos_necesarios(formmon, campo):
+    assert campo in formmon.fields.keys()
 
 
 def test_guarda_campo_plural(formmon_full):

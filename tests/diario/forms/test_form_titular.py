@@ -24,17 +24,9 @@ def formtit_full(formtit_data):
     return FormTitular(data=formtit_data)
 
 
-
-def test_muestra_campo_nombre(formtit):
-    assert 'nombre' in formtit.fields.keys()
-
-
-def test_muestra_campo_sk(formtit):
-    assert 'sk' in formtit.fields.keys()
-
-
-def test_muestra_campo_fecha_alta(formtit):
-    assert 'fecha_alta' in formtit.fields.keys()
+@pytest.mark.parametrize("campo", Titular.form_fields)
+def test_muestra_campos_necesarios(formtit, campo):
+    assert campo in formtit.fields.keys()
 
 
 def test_campo_fecha_alta_usa_widget_DateInput(formtit):

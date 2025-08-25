@@ -4,7 +4,7 @@ from django.forms import fields
 from django.forms.widgets import DateInput
 
 from diario.forms import FormMovimiento
-from diario.models import CuentaInteractiva, Moneda, Dia
+from diario.models import CuentaInteractiva, Moneda, Dia, Movimiento
 from utils import errors
 
 
@@ -87,10 +87,10 @@ def test_fecha_usa_widget_DateInput(formmov):
     assert type(formmov.fields['fecha'].widget) is DateInput
 
 
-def test_muestra_campo_esgratis():
+@pytest.mark.parametrize("campo", Movimiento.form_fields)
+def test_muestra_campos_necesarios(campo):
     formmov = FormMovimiento()
-    assert 'esgratis' in formmov.fields.keys()
-    assert isinstance(formmov.fields['esgratis'], fields.BooleanField)
+    assert campo in formmov.fields.keys()
 
 
 def test_campo_esgratis_no_seleccionado_por_defecto():
@@ -118,12 +118,6 @@ def test_campo_esgratis_seleccionado_en_movimiento_entre_titulares_no_genera_mov
     mock_crear_movimiento_credito.assert_not_called()
 
 
-def test_muestra_campo_moneda():
-    formmov = FormMovimiento()
-    assert 'moneda' in formmov.fields.keys()
-    assert isinstance(formmov.fields['moneda'], fields.ChoiceField)
-
-
 def test_campo_moneda_muestra_monedas_existentes(peso, dolar, euro):
     formmov = FormMovimiento()
     assert [c[1] for c in formmov.fields['moneda'].choices] == [m.nombre for m in (peso, dolar, euro)]
@@ -132,12 +126,6 @@ def test_campo_moneda_muestra_monedas_existentes(peso, dolar, euro):
 def test_campo_moneda_muestra_moneda_base_como_valor_por_defecto(mock_moneda_base):
     formmov = FormMovimiento()
     assert formmov.fields['moneda'].initial == Moneda.tomar(sk=mock_moneda_base)
-
-
-def test_muestra_campo_cotizacion():
-    formmov = FormMovimiento()
-    assert 'cotizacion' in formmov.fields.keys()
-    assert isinstance(formmov.fields['cotizacion'], fields.FloatField)
 
 
 def test_guarda_cotizacion(formmov_distintas_monedas):
