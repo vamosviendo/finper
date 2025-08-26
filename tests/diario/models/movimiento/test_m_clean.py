@@ -274,16 +274,6 @@ def none():
     return None
 
 
-def test_si_moneda_es_none_completa_con_moneda_de_cuenta(cuenta_en_dolares):
-    mov = Movimiento(
-        concepto='Movimiento sin moneda',
-        importe=10,
-        cta_entrada=cuenta_en_dolares,
-    )
-    mov.clean()
-    assert mov.moneda == cuenta_en_dolares.moneda
-
-
 @pytest.mark.parametrize('cta_entrada, cta_salida, mensaje', [
     ('cuenta_en_euros', 'none', 'euros'),
     ('none', 'cuenta_en_dolares', 'dólares'),
@@ -305,3 +295,26 @@ def test_no_admite_moneda_que_no_sea_la_de_alguna_de_las_cuentas_intervinientes(
             match=f'El movimiento debe ser expresado en {mensaje}',
     ):
         mov.clean()
+
+
+def test_si_moneda_es_none_completa_con_moneda_de_cuenta(cuenta_en_dolares):
+    mov = Movimiento(
+        concepto='Movimiento sin moneda',
+        importe=10,
+        cta_entrada=cuenta_en_dolares,
+    )
+    mov.clean()
+    assert mov.moneda == cuenta_en_dolares.moneda
+
+
+def test_no_admite_cotizaciones_negativas(cuenta_en_dolares, cuenta_en_euros):
+    mov = Movimiento(
+        concepto="Movimiento incorrecto",
+        importe=100,
+        cta_entrada=cuenta_en_dolares,
+        cta_salida=cuenta_en_euros,
+        moneda=cuenta_en_euros.moneda,
+    )
+    mov.cotizacion = -1
+    with pytest.raises(ValidationError):
+        mov.clean_fields()

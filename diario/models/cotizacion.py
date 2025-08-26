@@ -1,6 +1,7 @@
 from datetime import date
 
 from django.core.exceptions import EmptyResultSet, ValidationError
+from django.core.validators import MinValueValidator
 from django.db import models
 
 from utils.varios import el_que_no_es
@@ -8,8 +9,8 @@ from vvmodel.models import MiModel
 
 
 class Cotizacion(MiModel):
-    importe_compra = models.FloatField(null=True, blank=True)
-    importe_venta = models.FloatField(null=True, blank=True)
+    importe_compra = models.FloatField(null=True, blank=True, validators=[MinValueValidator(0)])
+    importe_venta = models.FloatField(null=True, blank=True, validators=[MinValueValidator(0)])
     fecha = models.DateField()
     moneda = models.ForeignKey("diario.Moneda", related_name="cotizaciones", on_delete=models.CASCADE)
 

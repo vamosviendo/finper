@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, List, Tuple, Optional, Self
 from datetime import date
 
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import QuerySet
 from django.urls import reverse
@@ -172,7 +173,7 @@ class Movimiento(MiModel):
         'diario.Moneda', related_name='movimientos', null=True, blank=True,
         on_delete=models.CASCADE
     )
-    _cotizacion = models.FloatField(default=0.0)
+    _cotizacion = models.FloatField(default=0.0, validators=[MinValueValidator(0)])
     cta_entrada = models.ForeignKey(
         'diario.Cuenta', related_name='entradas', null=True, blank=True,
         on_delete=models.CASCADE
