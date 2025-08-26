@@ -43,6 +43,9 @@ class FinperFirefox(MiFirefox):
     def cliquear_en_cuenta(self, cuenta):
         self.esperar_elemento(cuenta.nombre, By.LINK_TEXT).click()
 
+    def cliquear_en_moneda(self, moneda):
+        self.esperar_elemento(moneda.nombre, By.LINK_TEXT).click()
+
     def cliquear_en_titular(self, titular):
         self.esperar_elemento(titular.nombre, By.LINK_TEXT).click()
 

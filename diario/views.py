@@ -379,6 +379,11 @@ class TitModView(UpdateView):
     def get_success_url(self):
         return self.request.GET.get("next", reverse("home"))
 
+from django.views import View
+class MonedaView(View):
+    ...
+
+
 class MonNuevaView(CreateView):
     model = Moneda
     form_class = FormMoneda

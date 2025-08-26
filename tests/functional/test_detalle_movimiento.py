@@ -3,7 +3,6 @@ from urllib.parse import urlparse
 import pytest
 
 from django.urls import reverse
-from selenium.webdriver.remote.webelement import WebElement
 
 from diario.models import Cuenta, Titular, Movimiento
 from diario.utils.utils_saldo import saldo_general_historico

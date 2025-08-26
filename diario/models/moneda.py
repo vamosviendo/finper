@@ -37,6 +37,9 @@ class Moneda(MiModel):
     def __str__(self) -> str:
         return self.nombre
 
+    def get_absolute_url(self) -> str:
+        return reverse("moneda", args=[self.sk])
+
     def get_edit_url(self) -> str:
         return reverse("mon_mod", args=[self.sk])
 
