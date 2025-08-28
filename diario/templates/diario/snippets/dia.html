@@ -19,7 +19,7 @@
       <th>Menu</th>
     </tr></thead>
     {% for mov in dia|movs_seleccionados:filtro %}
-      {% include "diario/snippets/movimiento.html" with mov=mov %}
+      {% include "diario/snippets/movimiento.html" %}
     {% endfor %}
   </table>
 </div>

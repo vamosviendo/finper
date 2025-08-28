@@ -1,0 +1,27 @@
+{% load urltags %}
+
+<section id="id_section_cuentas">
+  <div id="id_div_menu_cuentas">
+    <table class="menu">
+      <colgroup>
+        <col class="div-menu div-cuentas"/>
+        <col span="3" class="div-menu div-detalles-cuenta"/>
+      </colgroup>
+      <tbody>
+        {% for cta in cuentas %}
+          {% include "diario/snippets/cuenta.html" with subc=False %}
+        {% endfor %}
+        <tr class="menu-row">
+          <td class="menu-item class_td_cuenta">
+            <div id="id_div_cuenta_nueva">
+              <a href="{% url_cuenta_nueva %}?next={{ request.get_full_path }}" id="id_link_cuenta_nueva">+</a>
+            </div>
+          </td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>

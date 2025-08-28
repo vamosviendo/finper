@@ -17,9 +17,9 @@
     </div>
   </td>
   {% for mon in monedas %}
-    {% include "diario/snippets/saldo_en_moneda.html" with cta=cta mon=mon movimiento=movimiento %}
+    {% include "diario/snippets/saldo_en_moneda.html" %}
   {% endfor %}
 </tr>
 {% for subcuenta in cta.cuentas %}
-  {% include "diario/snippets/cuenta.html" with cta=subcuenta monedas=monedas subc=True %}
+  {% include "diario/snippets/cuenta.html" with cta=subcuenta subc=True %}
 {% endfor %}

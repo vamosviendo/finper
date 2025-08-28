@@ -1,0 +1,28 @@
+<section id="id_section_titulares">
+  <div id="id_div_menu_titulares">
+    <table class="menu">
+      <colgroup>
+        <col class="div-menu div-titulares"/>
+      </colgroup>
+      <tbody>
+        {% for tit in titulares %}
+          {% include "diario/snippets/titular.html" %}
+        {% endfor %}
+        <tr class="menu-row">
+          <td class="menu-item class_td_titular">
+            <div id="id_div_titular_nuevo">
+              <a id="id_link_titular_nuevo" href="{% url 'tit_nuevo' %}?next={{ request.get_full_path }}">+</a>
+            </div>
+          </td>
+        </tr>
+        <tr class="menu-row">
+          <td class="menu-item class_td_titular">
+            <div id="id_div_home">
+              <a id="id_link_home" href="{% url 'home' %}">Home</a>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>

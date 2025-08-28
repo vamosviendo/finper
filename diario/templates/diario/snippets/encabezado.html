@@ -1,0 +1,28 @@
+{% load saldos %}
+
+<section id="id_section_saldos">
+  {% if ancestros %}
+    <div id="id_div_saldos_madre">
+      {% for ancestro in ancestros %}
+        <div class="class_div_saldo_ancestro">
+          Saldo de cuenta madre {{ ancestro.nombre }}: {% saldo cuenta=ancestro moneda=ancestro.moneda %}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+  <div id = "id_div_saldo_gral" class="Titulo">
+    <h1>
+      <span id="id_titulo_saldo_gral">{{ titulo_saldo_gral }}:</span>
+      <span id="id_importe_saldo_gral">{% saldo %}</span>
+    </h1>
+  </div>
+  {% if hermanas %}
+    <div id="id_div_saldos_hermana">
+      {% for hermana in hermanas %}
+        <div class="class_div_saldo_hermana">
+          Saldo de cuenta hermana {{ hermana.nombre }}: {% saldo cuenta=hermana moneda=hermana.moneda %}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+</section>

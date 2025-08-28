@@ -1,0 +1,23 @@
+{% load urltags %}
+
+<section id="id_section_monedas">
+  <div id="id_div_menu_monedas">
+    <table class="menu">
+      <colgroup>
+        <col class="div-menu div-monedas"/>
+      </colgroup>
+      <tbody>
+        {% for mon in monedas %}
+          {% include "diario/snippets/moneda.html" %}
+        {% endfor %}
+        <tr class="menu-row">
+          <td class="menu-item class_td_moneda">
+            <div id="id_div_moneda_nueva">
+              <a id="id_link_moneda_nueva" href="{% url 'mon_nueva' %}?next={{ request.get_full_path }}">+</a>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
