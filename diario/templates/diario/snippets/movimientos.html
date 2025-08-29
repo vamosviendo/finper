@@ -1,74 +1,7 @@
 {% load urltags %}
 
 <section id="id_section_movimientos" style="clear: both;">
-  <div id="id_div_navigator_init" class="pagination-nav mb-4">
-    <nav id="id_nav_navigator_init" aria-label="Page navigation">
-      <div class="d-flex flex-wrap justify-content-between align-items-center">
-        <!-- Botones de navegación -->
-        <ul class="pagination mb-0 d-flex flex-wrap">
-          <li class="class_li_pagina page-item">
-            <a id="id_link_primera_init" class="class_link_pagina page-link"
-               href = "{% pageurl 1 %}"
-               title="Últimos días"
-            >
-              Últimos días
-            </a>
-          <li class="class_li_pagina page-item {% if not dias.has_previous %}disabled{% endif %}">
-            <a id="id_link_anterior_init" class="class_link_pagina page-link"
-               href="{% if dias.has_previous %}{% pageurl dias.previous_page_number %}{% else %}{% pageurl %}{% endif %}"
-               title="Días posteriores"
-               tabindex="{% if dias.has_previous %}0{% else %}-1{% endif %}"
-               aria-disabled="{% if dias.has_previous %}false{% else %}true{% endif %}"
-            >
-              Días posteriores
-            </a>
-          </li>
-
-          <!-- Navegación por número de página -->
-          {% for nro_pag in dias.paginator.page_range %}
-          <li class="class_li_pagina_nro page-item {% if nro_pag == dias.number %}active{% endif %}">
-            <a class="class_link_pagina page-link"
-               href="{% pageurl nro_pag %}"
-               aria-disabled="{% if nro_pag == dias.number %}true{% else %}false{% endif %}"
-            >
-               {{ nro_pag }}
-            </a>
-          </li>
-          {% endfor %}
-
-          <li class="class_li_pagina page-item {% if not dias.has_next %}disabled{% endif %}">
-            <a id="id_link_siguiente_init" class="class_link_pagina page-link"
-               href="{% if dias.has_next %}{% pageurl dias.next_page_number %}{% else %}{% pageurl %}{% endif %}"
-               title="Días anteriores"
-               tabindex="{% if dias.has_next %}0{% else %}-1{% endif %}"
-               aria-disabled="{% if dias.has_next %}false{% else %}true{% endif %}"
-            >
-              Días anteriores
-            </a>
-          </li>
-          <li class="class_li_pagina page-item">
-            <a id="id_link_ultima_init" class="class_link_pagina page-link"
-               href="{% pageurl dias.paginator.num_pages %}"
-               title="Primeros días"
-            >
-              Primeros días
-            </a>
-          </li>
-        </ul>
-
-        <!-- Búsqueda por día -->
-        <form id="id_form_buscar_dia_init" class="d-flex mb-0"
-              method="get"
-              action="{% finperurl %}#id_section_movimientos">
-          <div class="input-group">
-            <input id="id_input_dia_init" type="date" name="fecha"
-                   class="form-control" placeholder="YYYY-MM-DD" aria-label="Buscar día">
-            <button id="id_btn_buscar_dia_init" class="btn btn-outline-secondary" type="submit">Buscar</button>
-          </div>
-        </form>
-      </div>
-    </nav>
-  </div>
+  {% include "diario/snippets/navigator.html" with pos="init" %}
 
   <div id="id_div_mov_nuevo" class="menu-item class_div_mov_nuevo">
     <a href="{% url 'mov_nuevo' %}?next={{ request.get_full_path }}" id="id_link_mov_nuevo">
@@ -82,36 +15,6 @@
     {% endfor %}
   </div>
 
-  <div id="id_div_navigator_end" class="pagination-nav mb-4">
-    <nav id="id_nav_navigator_end" aria-label="Page navigation">
-      <div class="d-flex flex-wrap justify-content-between align-items-center">
-        <!-- Botones de navegación -->
-        <ul class="pagination mb-0 d-flex flex-wrap">
-          <li class="page-item disabled">
-            <a id="id_div_boton_anterior_end" class="class_link_pagina page-link" href="#"
-               tabindex="-1" aria-disabled="true"
-            >
-              Anterior
-            </a>
-          </li>
-          <li class="class_li_pagina page-item active"><a class="class_link_pagina page-link" href="#">1</a></li>
-          <li class="class_li_pagina page-item"><a class="class_link_pagina page-link" href="#">2</a></li>
-          <li class="class_li_pagina page-item"><a class="class_link_pagina page-link" href="#">3</a></li>
-          <li id="id_div_boton_siguiente_end" class="class_li_pagina page-item">
-            <a class="class_link_pagina page-link" href="#">Siguiente</a>
-          </li>
-        </ul>
-
-        <!-- Búsqueda por día -->
-        <form id="id_form_buscar_dia_end" class="d-flex mb-0">
-          <div class="input-group">
-            <input id="id_input_dia_end" type="date"
-                   class="form-control" placeholder="YYYY-MM-DD" aria-label="Buscar día">
-            <button id="id_btn_buscar_dia_end" class="btn btn-outline-secondary" type="submit">Buscar</button>
-          </div>
-        </form>
-      </div>
-    </nav>
-  </div>
+  {% include "diario/snippets/navigator.html" with pos="end" %}
 
 </section>

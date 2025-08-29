@@ -17,39 +17,42 @@ def test_navegacion_paginas(browser, muchos_dias):
     # Al comienzo y al final de la sección de movimientos hay una barra de navegación
     # que nos permite ver días anteriores o posteriores.
     # El link correspondiente a "Días posteriores" está desactivado
+    navigator = browser.esperar_elemento("id_div_navigator_init")
     divs_dia = browser.esperar_elementos("class_div_dia")
-    link_posteriores = browser.esperar_elemento("id_link_anterior_init")
+    link_posteriores = navigator.esperar_elemento("id_link_anterior_init")
     assert link_posteriores.get_attribute("aria-disabled") == "true"
 
     # Si cliqueamos en el link que dice "Días anteriores", podemos ver la página con los 7
     # días anteriores.
     primer_dia_pag = divs_dia[-1].esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text[-10:]
-    browser.esperar_elemento("id_link_siguiente_init").click()
+    navigator.esperar_elemento("id_link_siguiente_init").click()
     divs_dia = browser.esperar_elementos("class_div_dia")
     assert len(divs_dia) == 7
     ultimo_dia_pag = divs_dia[0].esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text[-10:]
     assert ultimo_dia_pag < primer_dia_pag
 
     # Y vemos que en esta página el link correspondiente a "Días posteriores" está activado
-    link_posteriores = browser.esperar_elemento("id_link_anterior_init")
+    navigator = browser.esperar_elemento("id_div_navigator_init")
+    link_posteriores = navigator.esperar_elemento("id_link_anterior_init")
     assert link_posteriores.get_attribute("aria-disabled") == "false"
 
     # Si cliqueamos en el link que dice "Primeros días", veremos solamente los días anteriores restantes,
     # que pueden ser menos de 7, y el último día de la página será el primer día con movimientos.
-    browser.esperar_elemento("id_link_ultima_init").click()
+    navigator.esperar_elemento("id_link_ultima_init").click()
     divs_dia = browser.esperar_elementos("class_div_dia")
     assert len(divs_dia) == Dia.con_movimientos().count() % 7
     primer_dia_pag = divs_dia[-1].esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text[-10:]
     assert str2date(primer_dia_pag) == Dia.con_movimientos().first().fecha
 
     # Y en esta página, el link correspondiente a "Días anteriores" está desactivado
-    link_anteriores = browser.esperar_elemento("id_link_siguiente_init")
+    navigator = browser.esperar_elemento("id_div_navigator_init")
+    link_anteriores = navigator.esperar_elemento("id_link_siguiente_init")
     assert link_anteriores.get_attribute("aria-disabled") == "true"
 
     # Si desde esta última página cliqueamos en el link que dice "Días posteriores",
     # podemos ver la página con los 7 días posteriores.
     ultimo_dia_pag = divs_dia[0].esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text[-10:]
-    browser.esperar_elemento("id_link_anterior_init").click()
+    navigator.esperar_elemento("id_link_anterior_init").click()
     divs_dia = browser.esperar_elementos("class_div_dia")
     primer_dia_pag = divs_dia[-1].esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text[-10:]
     assert primer_dia_pag > ultimo_dia_pag
@@ -57,13 +60,15 @@ def test_navegacion_paginas(browser, muchos_dias):
 
     # Si cliqueamos en el link que dice "Últimos días", volveremos a la primera página, que muestra
     # los últimos días con movimientos
-    browser.esperar_elemento("id_link_primera_init").click()
+    navigator = browser.esperar_elemento("id_div_navigator_init")
+    navigator.esperar_elemento("id_link_primera_init").click()
     divs_dia = browser.esperar_elementos("class_div_dia")
     ultimo_dia_pag = divs_dia[0].esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text[-10:]
     assert str2date(ultimo_dia_pag) == Dia.con_movimientos().last().fecha
 
     # La barra de navegación incluye un número por cada página de 7 días.
-    nros_pagina = browser.esperar_elementos("class_li_pagina_nro")
+    navigator = browser.esperar_elemento("id_div_navigator_init")
+    nros_pagina = navigator.esperar_elementos("class_li_pagina_nro")
     assert len(nros_pagina) == (Dia.con_movimientos().count() // 7) + 1
 
     # El número de página que coincide con la página activa se muestra destacado
