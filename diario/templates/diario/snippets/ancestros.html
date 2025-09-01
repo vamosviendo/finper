@@ -1,0 +1,9 @@
+{% load saldos %}
+
+<div id="id_div_saldos_madre">
+  {% for ancestro in ancestros %}
+    <div class="class_div_saldo_ancestro">
+      Saldo de cuenta madre {{ ancestro.nombre }}: {% saldo cuenta=ancestro moneda=ancestro.moneda %}
+    </div>
+  {% endfor %}
+</div>

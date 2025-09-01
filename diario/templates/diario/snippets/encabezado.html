@@ -2,13 +2,7 @@
 
 <section id="id_section_saldos">
   {% if ancestros %}
-    <div id="id_div_saldos_madre">
-      {% for ancestro in ancestros %}
-        <div class="class_div_saldo_ancestro">
-          Saldo de cuenta madre {{ ancestro.nombre }}: {% saldo cuenta=ancestro moneda=ancestro.moneda %}
-        </div>
-      {% endfor %}
-    </div>
+    {% include "diario/snippets/ancestros.html" %}
   {% endif %}
   <div id = "id_div_saldo_gral" class="Titulo">
     <h1>
@@ -17,12 +11,6 @@
     </h1>
   </div>
   {% if hermanas %}
-    <div id="id_div_saldos_hermana">
-      {% for hermana in hermanas %}
-        <div class="class_div_saldo_hermana">
-          Saldo de cuenta hermana {{ hermana.nombre }}: {% saldo cuenta=hermana moneda=hermana.moneda %}
-        </div>
-      {% endfor %}
-    </div>
+    {% include "diario/snippets/hermanas.html" %}
   {% endif %}
 </section>
