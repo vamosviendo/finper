@@ -379,9 +379,13 @@ class TitModView(UpdateView):
     def get_success_url(self):
         return self.request.GET.get("next", reverse("home"))
 
-from django.views import View
-class MonedaView(View):
-    ...
+class MonedaView(TemplateView):
+    template_name = 'diario/moneda.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["moneda"] = Moneda.tomar(sk=kwargs["sk"])
+        return context
 
 
 class MonNuevaView(CreateView):

@@ -1,0 +1,14 @@
+{% extends 'diario/base.html' %}
+{% load cotizaciones %}
+
+{% block contenido %}
+
+<section id="id_section_encabezado">
+  <div id="id_div_titulo">
+    <span id="id_nombre">Moneda: {{ moneda }}</span> -
+    <span id="id_cotizacion_compra">{% cotizacion moneda compra=True %}</span>
+    <span id="id_cotizacion_venta">{% cotizacion moneda compra=False %}</span>
+  </div>
+</section>
+
+{% endblock contenido %}
