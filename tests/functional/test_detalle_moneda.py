@@ -11,31 +11,38 @@ def test_detalle_moneda(browser, dolar, cotizacion_dolar, cotizacion_posterior_d
     # Somos dirigidos a la página de detalle de la moneda cliqueada
     browser.assert_url(dolar.get_absolute_url())
 
-    # Vemos el nombre de la moneda encabezando la página
+    # El nombre de la moneda encabeza la página
     titulo = browser.esperar_elemento("id_nombre")
     assert titulo.text == f"Moneda: {dolar.nombre}"
 
-    # Y vemos que al lado del nombre de la moneda aparece la última cotización de la misma
+    # Al lado del nombre de la moneda aparece la última cotización de la misma
+    cotizacion_fecha = browser.esperar_elemento("id_cotizacion_fecha")
     cotizacion_compra = browser.esperar_elemento("id_cotizacion_compra")
     cotizacion_venta = browser.esperar_elemento("id_cotizacion_venta")
     cotizacion_moneda = dolar.cotizaciones.last()
+    assert cotizacion_fecha.text == f"Cotización al {cotizacion_moneda.fecha}: "
     assert cotizacion_compra.text == float_format(cotizacion_moneda.importe_compra)
     assert cotizacion_venta.text == float_format(cotizacion_moneda.importe_venta)
 
-    # Y vemos que debajo del nombre aparece una lista con las cotizaciones anteriores
-    cotizaciones_historicas = browser.esperar_elementos("class_cotizacion_historica")
+    # Debajo del nombre aparece una lista con las cotizaciones anteriores
+    cotizaciones_historicas = browser.esperar_elementos("class_row_cot")
     cotizaciones_bd = dolar.cotizaciones.reverse()
     for index, cot in enumerate(cotizaciones_bd):
         cot_mostrada = cotizaciones_historicas[index]
-        assert cot_mostrada.esperar_elemento("class_cot_hist_fecha", By.CLASS_NAME).text == cot.fecha
+        assert cot_mostrada.esperar_elemento("class_td_fecha", By.CLASS_NAME).text == str(cot.fecha)
         assert \
-            cot_mostrada.esperar_elemento("class_cot_hist_compra", By.CLASS_NAME).text == \
+            cot_mostrada.esperar_elemento("class_td_cot_compra", By.CLASS_NAME).text == \
             float_format(cot.importe_compra)
         assert \
-            cot_mostrada.esperar_elemento("class_cot_hist_venta", By.CLASS_NAME).text == \
+            cot_mostrada.esperar_elemento("class_td_cot_venta", By.CLASS_NAME).text == \
             float_format(cot.importe_venta)
 
-    # Y vemos que al final de la lista aparece un link que, al cliquear en él, nos lleva a la página principal
+        # En cada cotización hay un menú que nos permite editarla o eliminarla
+
+    # Al inicio de la lista hay un botón que, al cliquear en él, nos lleva al form de cotización para cargar una
+    # cotización nueva
+
+    # Al final de la lista aparece un link que, al cliquear en él, nos lleva a la página principal
 
     # Si vamos a la página de detalle de moneda desde una página que no sea la principal, al cliquear en el link
     # regresamos a esa página.

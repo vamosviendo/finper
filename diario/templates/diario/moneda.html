@@ -4,11 +4,32 @@
 {% block contenido %}
 
 <section id="id_section_encabezado">
-  <div id="id_div_titulo">
-    <span id="id_nombre">Moneda: {{ moneda }}</span> -
-    <span id="id_cotizacion_compra">{% cotizacion moneda compra=True %}</span>
-    <span id="id_cotizacion_venta">{% cotizacion moneda compra=False %}</span>
+  <div id="id_div_titulo" class="Titulo">
+    <h1>
+      <span id="id_nombre">Moneda: {{ moneda }}</span> -
+      <span id="id_cotizacion_fecha">Cotización al {{ moneda.cotizaciones.last.fecha|date:"Y-m-d" }}:&nbsp;</span>
+      <span id="id_cotizacion_compra">{% cotizacion moneda compra=True %}</span> /
+      <span id="id_cotizacion_venta">{% cotizacion moneda compra=False %}</span>
+    </h1>
   </div>
 </section>
 
+<section id="id_section_cotizaciones">
+  <table id="id_table_cotizaciones">
+    <thead id="id_thead_cotizaciones"><tr>
+      <th id="id_th_fecha">Fecha</th>
+      <th id="id_th_cotizacion_compra">Cot. compra</th>
+      <th id="id_th_cotizacion_venta">Cot. venta</th>
+      <th>Menu</th>
+    </tr></thead>
+    {% for cot in moneda.cotizaciones.all reversed %}
+    <tr id="id_row_cot_{{ cot.sk }}" class="class_row_cot">
+      <td class="class_td_fecha">{{ cot.fecha|date:"Y-m-d" }}</td>
+      <td class="class_td_cot_compra">{{ cot.importe_compra|floatformat:2 }}</td>
+      <td class="class_td_cot_venta">{{ cot.importe_venta|floatformat:2 }}</td>
+      <td class="class_td_menu"></td>
+    </tr>
+    {% endfor %}
+  </table>
+</section>
 {% endblock contenido %}
