@@ -1,5 +1,10 @@
 {% extends 'diario/base.html' %}
+{% load static %}
 {% load cotizaciones %}
+
+{% block extra-css %}
+<link rel="stylesheet" href="{% static '/diario/css/home.css' %}">
+{% endblock extra-css %}
 
 {% block contenido %}
 
@@ -15,7 +20,7 @@
 </section>
 
 <section id="id_section_cotizaciones">
-  <table id="id_table_cotizaciones">
+  <table id="id_table_cotizaciones" class="lista">
     <thead id="id_thead_cotizaciones"><tr>
       <th id="id_th_fecha">Fecha</th>
       <th id="id_th_cotizacion_compra">Cot. compra</th>

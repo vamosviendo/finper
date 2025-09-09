@@ -107,22 +107,22 @@ td.class_cotizacion_moneda {
 }
 
 
-table.class_table_movimientos {
+table.lista {
     text-align: left;
     margin-left: 10px;
 }
 
-table.class_table_movimientos thead {
+table.lista thead {
     background-color: darkkhaki;
 }
 
-table.class_table_movimientos th {
+table.lista th {
     padding-left: 5px;
     padding-right: 5px;
     padding-bottom: 5px;
 }
 
-table.class_table_movimientos td {
+table.lista td {
     padding-left: 5px;
     padding-right: 5px;
 }
