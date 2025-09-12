@@ -3,6 +3,7 @@ from datetime import date
 from django.core.exceptions import EmptyResultSet, ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.urls import reverse
 
 from utils.varios import el_que_no_es
 from vvmodel.models import MiModel
@@ -26,6 +27,12 @@ class Cotizacion(MiModel):
     @property
     def sk(self) -> str:
         return f"{self.fecha.year}{self.fecha.month}{self.fecha.day}{self.moneda.sk}"
+
+    def get_delete_url(self) -> str:
+        return reverse("cot_elim", args=[self.sk])
+
+    def get_edit_url(self) -> str:
+        return reverse("cot_mod", args=[self.sk])
 
     @classmethod
     def tomar(cls, **kwargs):

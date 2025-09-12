@@ -20,6 +20,13 @@
 </section>
 
 <section id="id_section_cotizaciones">
+
+  <div id="id_div_cot_nueva" class="menu-item class_div_cot_nueva">
+    <a href="{% url 'mon_cot_nueva' moneda %}?next={{ request.get_full_path }}" id="id_link_cot_nueva">
+      Cotización nueva
+    </a>
+  </div>
+
   <table id="id_table_cotizaciones" class="lista">
     <thead id="id_thead_cotizaciones"><tr>
       <th id="id_th_fecha">Fecha</th>
@@ -32,7 +39,16 @@
       <td class="class_td_fecha">{{ cot.fecha|date:"Y-m-d" }}</td>
       <td class="class_td_cot_compra">{{ cot.importe_compra|floatformat:2 }}</td>
       <td class="class_td_cot_venta">{{ cot.importe_venta|floatformat:2 }}</td>
-      <td class="class_td_menu"></td>
+      <td class="class_td_menu">
+        <a href="{{ cot.get_delete_url }}?next={{ request.get_full_path }}"
+           class="class_link_elim_cot">
+          B
+        </a>
+        <a href="{{ cot.get_edit_url }}?next={{ request.get_full_path }}"
+           class="class_link_mod_cot">
+          E
+        </a>
+      </td>
     </tr>
     {% endfor %}
   </table>

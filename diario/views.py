@@ -351,6 +351,14 @@ class MonCotNuevaView(CreateView):
         return self.request.GET.get("next", reverse("home"))
 
 
+class CotElimView(DeleteView):
+    model = Cotizacion
+
+
+class CotModView(UpdateView):
+    model = Cotizacion
+
+
 class TitularNuevoView(CreateView):
     model = Titular
     template_name = 'diario/tit_form.html'

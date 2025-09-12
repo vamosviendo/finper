@@ -1,3 +1,6 @@
+from urllib.parse import urlparse
+
+from django.urls import reverse
 from selenium.webdriver.common.by import By
 
 from utils.numeros import float_format
@@ -37,10 +40,35 @@ def test_detalle_moneda(browser, dolar, cotizacion_dolar, cotizacion_posterior_d
             cot_mostrada.esperar_elemento("class_td_cot_venta", By.CLASS_NAME).text == \
             float_format(cot.importe_venta)
 
-        # En cada cotización hay un menú que nos permite editarla o eliminarla
+    # En cada cotización hay un menú que nos permite editarla o eliminarla
+    current_url = urlparse(browser.current_url).path
+    cot_muestra = cotizaciones_bd[0]
+    browser.verificar_link(
+        nombre="mod_cot",
+        viewname="cot_mod",
+        args=[cot_muestra.sk],
+        querydict={"next": current_url},
+        criterio=By.CLASS_NAME,
+        url_inicial=current_url,
+    )
+    browser.verificar_link(
+        nombre="elim_cot",
+        viewname="cot_elim",
+        args=[cot_muestra.sk],
+        querydict={"next": current_url},
+        criterio=By.CLASS_NAME,
+        url_inicial=current_url,
+    )
 
     # Al inicio de la lista hay un botón que, al cliquear en él, nos lleva al form de cotización para cargar una
     # cotización nueva
+    browser.verificar_link(
+        nombre="cot_nueva",
+        viewname="mon_cot_nueva",
+        args=[dolar],
+        querydict={"next": current_url},
+        url_inicial=current_url
+    )
 
     # Al final de la lista aparece un link que, al cliquear en él, nos lleva a la página principal
 
