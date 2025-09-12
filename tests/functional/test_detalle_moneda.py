@@ -71,6 +71,8 @@ def test_detalle_moneda(browser, dolar, cotizacion_dolar, cotizacion_posterior_d
     )
 
     # Al final de la lista aparece un link que, al cliquear en él, nos lleva a la página principal
-
-    # Si vamos a la página de detalle de moneda desde una página que no sea la principal, al cliquear en el link
-    # regresamos a esa página.
+    browser.verificar_link(
+        nombre="home",
+        viewname="home",
+        url_inicial=current_url
+    )
