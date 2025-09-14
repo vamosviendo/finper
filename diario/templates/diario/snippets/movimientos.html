@@ -1,7 +1,7 @@
 {% load urltags %}
 
 <section id="id_section_movimientos" style="clear: both;">
-  {% include "diario/snippets/navigator.html" with pos="init" %}
+  {% include "diario/snippets/navigator.html" with pos="init" pag=dias elem="dias" %}
 
   <div id="id_div_mov_nuevo" class="menu-item class_div_mov_nuevo">
     <a href="{% url 'mov_nuevo' %}?next={{ request.get_full_path }}" id="id_link_mov_nuevo">
@@ -15,6 +15,6 @@
     {% endfor %}
   </div>
 
-  {% include "diario/snippets/navigator.html" with pos="end" %}
+  {% include "diario/snippets/navigator.html" with pos="end" pag=dias elem="dias" %}
 
 </section>

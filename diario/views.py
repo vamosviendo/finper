@@ -390,9 +390,16 @@ class TitModView(UpdateView):
 class MonedaView(TemplateView):
     template_name = 'diario/moneda.html'
 
+    def get(self, request, *args, **kwargs):
+        self.page = request.GET.get("page")
+        return super().get(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["moneda"] = Moneda.tomar(sk=kwargs["sk"])
+        context["cotizaciones"] = Paginator(
+            context["moneda"].cotizaciones.reverse(), 20
+        ).get_page(self.page)
         return context
 
 

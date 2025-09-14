@@ -1,70 +1,72 @@
 {% load urltags %}
 
 <div id="id_div_navigator_{{pos}}" class="pagination-nav mb-4">
-<nav id="id_nav_navigator_{{pos}}" aria-label="Page navigation">
-  <div class="d-flex flex-wrap justify-content-between align-items-center">
-    <!-- Botones de navegación -->
-    <ul class="pagination mb-0 d-flex flex-wrap">
-      <li class="class_li_pagina page-item">
-        <a id="id_link_primera_{{pos}}" class="class_link_pagina page-link"
-           href = "{% pageurl 1 %}"
-           title="Últimos días"
-        >
-          Últimos días
-        </a>
-      <li class="class_li_pagina page-item {% if not dias.has_previous %}disabled{% endif %}">
-        <a id="id_link_anterior_{{pos}}" class="class_link_pagina page-link"
-           href="{% if dias.has_previous %}{% pageurl dias.previous_page_number %}{% else %}{% pageurl %}{% endif %}"
-           title="Días posteriores"
-           tabindex="{% if dias.has_previous %}0{% else %}-1{% endif %}"
-           aria-disabled="{% if dias.has_previous %}false{% else %}true{% endif %}"
-        >
-          Días posteriores
-        </a>
-      </li>
+  <nav id="id_nav_navigator_{{pos}}" aria-label="Page navigation">
+    <div class="d-flex flex-wrap justify-content-between align-items-center">
+      <!-- Botones de navegación -->
+      <ul class="pagination mb-0 d-flex flex-wrap">
+        <li class="class_li_pagina page-item">
+          <a id="id_link_primera_{{pos}}" class="class_link_pagina page-link"
+             href = "{% pageurl 1 %}"
+             title="Primera página"
+          >
+            Primera página
+          </a>
+        <li class="class_li_pagina page-item {% if not dias.has_previous %}disabled{% endif %}">
+          <a id="id_link_anterior_{{pos}}" class="class_link_pagina page-link"
+             href="{% if pag.has_previous %}{% pageurl pag.previous_page_number %}{% else %}{% pageurl %}{% endif %}"
+             title="{{ elem }} posteriores"
+             tabindex="{% if pag.has_previous %}0{% else %}-1{% endif %}"
+             aria-disabled="{% if pag.has_previous %}false{% else %}true{% endif %}"
+          >
+            {{ elem }} posteriores
+          </a>
+        </li>
 
-      <!-- Navegación por número de página -->
-      {% for nro_pag in dias.paginator.page_range %}
-      <li class="class_li_pagina_nro page-item {% if nro_pag == dias.number %}active{% endif %}">
-        <a class="class_link_pagina page-link"
-           href="{% pageurl nro_pag %}"
-           aria-disabled="{% if nro_pag == dias.number %}true{% else %}false{% endif %}"
-        >
-           {{ nro_pag }}
-        </a>
-      </li>
-      {% endfor %}
+        <!-- Navegación por número de página -->
+        {% for nro_pag in pag.paginator.page_range %}
+        <li class="class_li_pagina_nro page-item {% if nro_pag == pag.number %}active{% endif %}">
+          <a class="class_link_pagina page-link"
+             href="{% pageurl nro_pag %}"
+             aria-disabled="{% if nro_pag == pag.number %}true{% else %}false{% endif %}"
+          >
+             {{ nro_pag }}
+          </a>
+        </li>
+        {% endfor %}
 
-      <li class="class_li_pagina page-item {% if not dias.has_next %}disabled{% endif %}">
-        <a id="id_link_siguiente_{{pos}}" class="class_link_pagina page-link"
-           href="{% if dias.has_next %}{% pageurl dias.next_page_number %}{% else %}{% pageurl %}{% endif %}"
-           title="Días anteriores"
-           tabindex="{% if dias.has_next %}0{% else %}-1{% endif %}"
-           aria-disabled="{% if dias.has_next %}false{% else %}true{% endif %}"
-        >
-          Días anteriores
-        </a>
-      </li>
-      <li class="class_li_pagina page-item">
-        <a id="id_link_ultima_{{pos}}" class="class_link_pagina page-link"
-           href="{% pageurl dias.paginator.num_pages %}"
-           title="Primeros días"
-        >
-          Primeros días
-        </a>
-      </li>
-    </ul>
+        <li class="class_li_pagina page-item {% if not pag.has_next %}disabled{% endif %}">
+          <a id="id_link_siguiente_{{pos}}" class="class_link_pagina page-link"
+             href="{% if pag.has_next %}{% pageurl pag.next_page_number %}{% else %}{% pageurl %}{% endif %}"
+             title="{{ elem }} anteriores"
+             tabindex="{% if pag.has_next %}0{% else %}-1{% endif %}"
+             aria-disabled="{% if pag.has_next %}false{% else %}true{% endif %}"
+          >
+            {{ elem }} anteriores
+          </a>
+        </li>
+        <li class="class_li_pagina page-item">
+          <a id="id_link_ultima_{{pos}}" class="class_link_pagina page-link"
+             href="{% pageurl pag.paginator.num_pages %}"
+             title="Última página"
+          >
+            Última página
+          </a>
+        </li>
+      </ul>
 
-    <!-- Búsqueda por día -->
-    <form id="id_form_buscar_dia_{{pos}}" class="d-flex mb-0"
-          method="get"
-          action="{% finperurl %}#id_section_movimientos">
-      <div class="input-group">
-        <input id="id_input_dia_{{pos}}" type="date" name="fecha"
-               class="form-control" placeholder="YYYY-MM-DD" aria-label="Buscar día">
-        <button id="id_btn_buscar_dia_{{pos}}" class="btn btn-outline-secondary" type="submit">Buscar</button>
-      </div>
-    </form>
-  </div>
-</nav>
+      {% if elem == "dias" %}
+      <!-- Búsqueda por día -->
+      <form id="id_form_buscar_dia_{{pos}}" class="d-flex mb-0"
+            method="get"
+            action="{% finperurl %}#id_section_movimientos">
+        <div class="input-group">
+          <input id="id_input_dia_{{pos}}" type="date" name="fecha"
+                 class="form-control" placeholder="YYYY-MM-DD" aria-label="Buscar día">
+          <button id="id_btn_buscar_dia_{{pos}}" class="btn btn-outline-secondary" type="submit">Buscar</button>
+        </div>
+      </form>
+      {% endif %}
+    </div>
+  </nav>
 </div>

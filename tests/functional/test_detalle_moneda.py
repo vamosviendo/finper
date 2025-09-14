@@ -76,3 +76,31 @@ def test_detalle_moneda(browser, dolar, cotizacion_dolar, cotizacion_posterior_d
         viewname="home",
         url_inicial=current_url
     )
+
+def test_detalle_moneda_paginacion(browser, dolar, mas_de_20_cotizaciones_dolar):
+    # Si hay más de 20 cotizaciones, se muestran sólo las últimas 20
+    browser.ir_a_pag(dolar.get_absolute_url())
+    cotizaciones = browser.esperar_elementos("class_row_cot")
+    assert len(cotizaciones) == 20
+
+    # Al comienzo de la sección de cotizaciones hay una barra de navegación
+    # que nos permite ver cotizaciones anteriores
+    navigator = browser.esperar_elemento("id_div_navigator_init")
+
+    # Al mostrar las últimas cotizaciones, el link correspondiente a "cotizaciones posteriores"
+    # está desactivado
+    link_posteriores = navigator.esperar_elemento("id_link_anterior_init")
+    assert link_posteriores.get_attribute("aria-disabled") == "true"
+
+    # Si cliqueamos en el link que dice "Cotizaciones anteriores", podemos ver
+    # las cotizaciones inmediatamente anteriores a las últimas 20
+    navigator.esperar_elemento("id_link_siguiente_init").click()
+    fechas_cotizacion = [x.text for x in browser.esperar_elementos("class_td_fecha")]
+    assert mas_de_20_cotizaciones_dolar.first().fecha.strftime("%Y-%m-%d") in fechas_cotizacion
+
+    # Y vemos que el link correspondiente a "Cotizaciones posteriores" está activado
+    navigator = browser.esperar_elemento("id_div_navigator_init")
+    link_posteriores = navigator.esperar_elemento("id_link_anterior_init")
+    assert link_posteriores.get_attribute("aria-disabled") == "false"
+
+    # Por ahora eso nada más. Vamos a hacerla sencillita.

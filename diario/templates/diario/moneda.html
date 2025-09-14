@@ -27,6 +27,8 @@
     </a>
   </div>
 
+  {% include "diario/snippets/navigator.html" with pos="init" pag=cotizaciones elem="cotizaciones" %}
+
   <table id="id_table_cotizaciones" class="lista">
     <thead id="id_thead_cotizaciones"><tr>
       <th id="id_th_fecha">Fecha</th>
@@ -34,7 +36,7 @@
       <th id="id_th_cotizacion_venta">Cot. venta</th>
       <th>Menu</th>
     </tr></thead>
-    {% for cot in moneda.cotizaciones.all reversed %}
+    {% for cot in cotizaciones %}
     <tr id="id_row_cot_{{ cot.sk }}" class="class_row_cot">
       <td class="class_td_fecha">{{ cot.fecha|date:"Y-m-d" }}</td>
       <td class="class_td_cot_compra">{{ cot.importe_compra|floatformat:2 }}</td>

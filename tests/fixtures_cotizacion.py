@@ -1,6 +1,8 @@
-from datetime import date
+from datetime import date, timedelta
+from random import randint
 
 import pytest
+from django.db.models import QuerySet
 
 from diario.models import Moneda, Cotizacion
 
@@ -38,3 +40,17 @@ def cotizacion_posterior_euro(euro: Moneda, fecha_posterior: date) -> Cotizacion
 @pytest.fixture
 def cotizacion_tardia_euro(euro: Moneda, fecha_tardia: date) -> Cotizacion:
     return Cotizacion.crear(moneda=euro, fecha=fecha_tardia, importe_compra=969, importe_venta=1010)
+
+
+@pytest.fixture
+def mas_de_20_cotizaciones_dolar(dolar: Moneda, fecha: date) -> QuerySet[Cotizacion]:
+    for index in range(0,21):
+        importe_compra = randint(900, 999)
+        Cotizacion.crear(
+            moneda=dolar,
+            fecha=fecha-timedelta(index),
+            importe_compra=importe_compra,
+            importe_venta=importe_compra + 10,
+        )
+    assert dolar.cotizaciones.count() > 20
+    return dolar.cotizaciones.all()

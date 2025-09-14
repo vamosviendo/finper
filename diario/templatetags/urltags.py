@@ -58,18 +58,19 @@ def pageurl(context, page: int | None = None) -> str:
     request = context["request"]
     resolver_match = resolve(request.path)
 
-    # Al cambiar de página, si hay un movimiento seleccionado se lo deselecciona
     if "titular" in resolver_match.url_name:
         urlname = "titular"
         args = [resolver_match.kwargs["sk"]]
     elif "cuenta" in resolver_match.url_name:
         urlname = "cuenta"
         args = [resolver_match.kwargs["sk_cta"]]
+    elif "moneda" in resolver_match.url_name:
+        urlname = "moneda"
+        args = [resolver_match.kwargs["sk"]]
     else:
         urlname = "home"
         args = []
 
-    # Si no se pasa página, se permanece en la página actual
     if page:
         querydict = f"?page={page}"
     else:
