@@ -348,7 +348,7 @@ class MonCotNuevaView(CreateView):
         return super().form_valid(form)
 
     def get_success_url(self):
-        return self.request.GET.get("next", reverse("home"))
+        return self.request.GET.get("next", self.moneda.get_absolute_url())
 
 
 class CotElimView(DeleteView):

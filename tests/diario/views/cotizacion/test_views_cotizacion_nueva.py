@@ -39,9 +39,9 @@ def test_crea_cotizacion_con_moneda_del_argumento_y_fecha_ingresada(client, dola
         raise AssertionError(f"No se creó cotización de moneda {dolar} en fecha {fecha_inicial}")
 
 
-def test_post_redirige_a_home(client, dolar, fecha):
+def test_post_redirige_a_detalle_de_moneda(client, dolar, fecha):
     response = client.post(
         reverse('mon_cot_nueva', args=[dolar.sk]),
         data={'fecha': fecha, 'importe_compra': 105, 'importe_venta': 108}
     )
-    asserts.assertRedirects(response, reverse('home'))
+    asserts.assertRedirects(response, dolar.get_absolute_url())

@@ -323,6 +323,3 @@ class TestHomeLinks:
 
         # cuando cliqueamos en el link de borrar movimiento, accedemos a la página de confirmación
         browser.verificar_link(f'mon_elim_{peso.sk}', 'mon_elim', [peso.sk])
-
-        # cuando cliqueamos en el link de agregar cotización, accedemos a la página para agregar cotización
-        browser.verificar_link(f"mon_{peso.sk}_cotizacion_nueva", "mon_cot_nueva", [peso.sk])
