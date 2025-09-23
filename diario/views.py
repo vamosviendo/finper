@@ -338,6 +338,11 @@ class MonCotNuevaView(CreateView):
         self.moneda = get_object_or_404(Moneda, _sk=self.kwargs["sk"])
         return super().dispatch(request, *args, **kwargs)
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["moneda"] = self.moneda
+        return kwargs
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["moneda"] = self.moneda

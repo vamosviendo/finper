@@ -254,6 +254,24 @@ class FormMoneda(forms.ModelForm):
 
 
 class FormCotizacion(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        self.moneda = kwargs.pop("moneda", None)
+        super().__init__(*args, **kwargs)
+
     class Meta:
         model = Cotizacion
         fields = Cotizacion.form_fields
+
+    def clean(self) -> dict:
+        cleaned_data = super().clean()
+        fecha = cleaned_data["fecha"]
+
+        if self.moneda is None:
+            raise forms.ValidationError("Debe especificarse una moneda para la cotización")
+
+        if Cotizacion.filtro(moneda=self.moneda, fecha=fecha).exists():
+            raise forms.ValidationError(
+                "Ya existe una cotización para esta moneda en la fecha seleccionada"
+            )
+
+        return cleaned_data

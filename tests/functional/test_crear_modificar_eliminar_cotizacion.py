@@ -1,4 +1,5 @@
 from django.urls import reverse
+from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
 
 from utils.numeros import float_format
@@ -75,6 +76,17 @@ def test_crear_cotizacion(browser, dolar, fecha, fecha_anterior):
     cotizacion_v_nueva = browser.esperar_elemento(f"id_cotizacion_v_{dolar.sk}").text
     assert cotizacion_c_nueva == cotizacion_c
     assert cotizacion_v_nueva == cotizacion_v
+
+    # Si intentamos crear una cotización con una fecha ya existente, recibimos
+    # un mensaje de error.
+    browser.ir_a_pag(reverse("mon_cot_nueva", args=[dolar.sk]))
+    browser.completar_form(
+        fecha=fecha_anterior,
+        importe_compra=20010,
+        importe_venta=20020
+    )
+    errors = browser.esperar_elemento("id_form_cotizacion").esperar_elemento("errorlist", By.CLASS_NAME)
+    assert "Ya existe una cotización para esta moneda en la fecha seleccionada" in errors.text
 
 
 def test_modificar_cotizacion():
