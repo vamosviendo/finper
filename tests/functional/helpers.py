@@ -84,6 +84,17 @@ class FinperFirefox(MiFirefox):
             .esperar_elemento(f'id_row_cta_{sk}')\
             .esperar_elemento(f'.class_saldo_cuenta.mon_cuenta', By.CSS_SELECTOR)
 
+    def esperar_cotizacion(self, fecha: date) -> MiWebElement:
+        cotizaciones = self.esperar_elementos("class_row_cot")
+        fecha_formateada = fecha.strftime("%Y-%m-%d")
+
+        for cotizacion in cotizaciones:
+            fecha_cot = cotizacion.esperar_elemento("class_td_fecha", By.CLASS_NAME).text
+            if fecha_cot == fecha_formateada:
+                return cotizacion
+        raise NoSuchElementException(f"No se encontró cotización con fecha {fecha_cot_antigua}")
+
+
     def comparar_dias_de(self, ente: Cuenta | Titular) -> list[MiWebElement]:
         """ Dada una cuenta o un titular, comparar sus últimos 7 días con los que
             aparecen en la página.

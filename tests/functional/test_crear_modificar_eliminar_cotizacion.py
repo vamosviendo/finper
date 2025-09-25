@@ -89,9 +89,52 @@ def test_crear_cotizacion(browser, dolar, fecha, fecha_anterior):
     assert "Ya existe una cotización para esta moneda en la fecha seleccionada" in errors.text
 
 
-def test_modificar_cotizacion():
-    ...
+def test_modificar_cotizacion(browser, dolar, cotizacion_dolar, cotizacion_posterior_dolar, cotizacion_tardia_dolar):
+    """ Dada una moneda con más de una cotización
+        Si modificamos el importe de la última cotización, este cambio se ve
+        reflejado en la lista de cotizaciones y en el encabezado de la página.
+        Si cambiamos la fecha de una cotización antigua por una fecha anterior
+        a la de la última cotización, vemos ese cambio reflejado en la lista
+        de cotizaciones.
+        Si cambiamos la fecha de una cotización antigua por una fecha posterior
+        a la de la última cotización, vemos reflejado el cambio en la lista
+        de cotizaciones y los importes de la cotización modificada aparecen
+        en el encabezado.
+        Si cambiamos la fecha de la última cotización por una fecha anterior
+        a la de la cotización anterior, los importes en el encabezado son
+        reemplazados por los de la cotización anterior a la última
+        Si intentamos cambiar la fecha de una cotización por una fecha que
+        ya tenga otra cotización, recibimos un mensaje de error.
+    """
+    # Dada una moneda con más de una cotización
 
+    # Si modificamos el importe de una cotización antigua, este cambio se ve
+    # reflejado en la lista de cotizaciones.
+    browser.ir_a_pag(dolar.get_absolute_url())
+    cotizacion = browser.esperar_cotizacion(cotizacion_dolar.fecha)
+    importe_compra = cotizacion.esperar_elemento("class_td_cot_compra", By.CLASS_NAME).text
+    importe_venta = cotizacion.esperar_elemento("class_td_cot_venta", By.CLASS_NAME).text
+    assert importe_compra != float_format(400)
+    assert importe_venta != float_format(450)
+
+    browser.ir_a_pag(reverse("cot_mod", args=[cotizacion_dolar.pk]))
+    browser.completar("id_importe_compra", 400)
+    browser.completar("id_importe_venta", 450)
+    browser.pulsar()
+    cotizacion = browser.esperar_cotizacion(cotizacion_dolar.fecha)
+    importe_compra = cotizacion.esperar_elemento("class_td_cot_compra", By.CLASS_NAME).text
+    importe_venta = cotizacion.esperar_elemento("class_td_cot_venta", By.CLASS_NAME).text
+    assert importe_compra == float_format(400)
+    assert importe_venta == float_format(450)
 
 def test_eliminar_cotizacion():
+    """ Dada una moneda con más de una cotización
+        Si eliminamos una cotización antigua, ésta desaparece de la lista
+        Si eliminamos la última cotización, ésta desaparece de la lista y
+        los importes en el encabezado son reeemplazados por los de la cotización
+        anterior a la última
+
+        Dada una moneda con una única cotización
+        Si eliminamos la cotización, recibimos un mensaje de error.
+    """
     ...

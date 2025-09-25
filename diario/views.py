@@ -362,6 +362,10 @@ class CotElimView(DeleteView):
 
 class CotModView(UpdateView):
     model = Cotizacion
+    form_class = FormCotizacion
+
+    def get_success_url(self):
+        return self.object.moneda.get_absolute_url()
 
 
 class TitularNuevoView(CreateView):
