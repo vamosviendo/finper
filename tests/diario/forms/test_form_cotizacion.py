@@ -52,3 +52,8 @@ def test_no_admite_fecha_existente(dolar, cotizacion_dolar, formcot_data):
     formcot_data["fecha"] = cotizacion_dolar.fecha
     formcot = FormCotizacion(data=formcot_data, moneda=dolar)
     assert not formcot.is_valid()
+
+
+def test_si_esta_atado_a_instancia_toma_moneda_de_la_instancia(cotizacion_dolar):
+    formcot = FormCotizacion(instance=cotizacion_dolar)
+    assert formcot.moneda == cotizacion_dolar.moneda

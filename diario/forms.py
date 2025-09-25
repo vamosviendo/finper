@@ -257,6 +257,13 @@ class FormCotizacion(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.moneda = kwargs.pop("moneda", None)
         super().__init__(*args, **kwargs)
+        if self.moneda is None and self.instance:
+            # TODO: revisar esta lógica. Con el try/except medo que me lo estoy sacando de encima
+            #       en vez de averiguar por qué falla.
+            try:
+                self.moneda = Moneda.tomar(id=self.instance.moneda_id)
+            except Moneda.DoesNotExist:
+                pass
 
     class Meta:
         model = Cotizacion
@@ -264,12 +271,13 @@ class FormCotizacion(forms.ModelForm):
 
     def clean(self) -> dict:
         cleaned_data = super().clean()
-        fecha = cleaned_data["fecha"]
+        fecha = cleaned_data.get("fecha")
 
         if self.moneda is None:
             raise forms.ValidationError("Debe especificarse una moneda para la cotización")
 
-        if Cotizacion.filtro(moneda=self.moneda, fecha=fecha).exists():
+        queryset = Cotizacion.filtro(moneda=self.moneda, fecha=fecha)
+        if queryset.exists() and self.instance not in queryset:
             raise forms.ValidationError(
                 "Ya existe una cotización para esta moneda en la fecha seleccionada"
             )
