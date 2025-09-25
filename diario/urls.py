@@ -39,8 +39,8 @@ urlpatterns = [
     path('mon_elim/<slug:sk>', views.MonElimView.as_view(), name='mon_elim'),
     path('mon_mod/<slug:sk>', views.MonModView.as_view(), name='mon_mod'),
     path('mon_cot_nueva/<slug:sk>', views.MonCotNuevaView.as_view(), name='mon_cot_nueva'),
-    path('cot_mod/<slug:sk>', views.CotModView.as_view(), name='cot_mod'),
-    path("cot_elim/<slug:sk>", views.CotElimView.as_view(), name='cot_elim'),
+    path('cot_mod/<int:pk>', views.CotModView.as_view(), name='cot_mod'),
+    path("cot_elim/<int:pk>", views.CotElimView.as_view(), name='cot_elim'),
     # URLs de verificación / corrección de saldos
     path('verificar_saldos', views.verificar_saldos_view, name='verificar_saldos'),
     path('corregir_saldo', views.CorregirSaldo.as_view(), name='corregir_saldo'),

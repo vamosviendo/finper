@@ -29,10 +29,10 @@ class Cotizacion(MiModel):
         return f"{self.fecha.year}{self.fecha.month}{self.fecha.day}{self.moneda.sk}"
 
     def get_delete_url(self) -> str:
-        return reverse("cot_elim", args=[self.sk])
+        return reverse("cot_elim", args=[self.pk])
 
     def get_edit_url(self) -> str:
-        return reverse("cot_mod", args=[self.sk])
+        return reverse("cot_mod", args=[self.pk])
 
     @classmethod
     def tomar(cls, **kwargs):
