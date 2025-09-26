@@ -1,3 +1,4 @@
+import warnings
 from datetime import date
 from typing import List
 
@@ -258,12 +259,10 @@ class FormCotizacion(forms.ModelForm):
         self.moneda = kwargs.pop("moneda", None)
         super().__init__(*args, **kwargs)
         if self.moneda is None and self.instance:
-            # TODO: revisar esta lógica. Con el try/except medo que me lo estoy sacando de encima
-            #       en vez de averiguar por qué falla.
             try:
                 self.moneda = Moneda.tomar(id=self.instance.moneda_id)
             except Moneda.DoesNotExist:
-                pass
+                warnings.warn("Cuidado. Form no ligado a instancia ni a moneda. Se declarará no válido")
 
     class Meta:
         model = Cotizacion
@@ -276,8 +275,8 @@ class FormCotizacion(forms.ModelForm):
         if self.moneda is None:
             raise forms.ValidationError("Debe especificarse una moneda para la cotización")
 
-        queryset = Cotizacion.filtro(moneda=self.moneda, fecha=fecha)
-        if queryset.exists() and self.instance not in queryset:
+        cotizacion_existente = Cotizacion.filtro(moneda=self.moneda, fecha=fecha).first()
+        if cotizacion_existente and self.instance != cotizacion_existente:
             raise forms.ValidationError(
                 "Ya existe una cotización para esta moneda en la fecha seleccionada"
             )

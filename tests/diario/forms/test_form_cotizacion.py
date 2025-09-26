@@ -1,3 +1,5 @@
+import warnings
+
 import pytest
 
 from diario.forms import FormCotizacion
@@ -5,8 +7,8 @@ from diario.models import Cotizacion
 
 
 @pytest.fixture
-def formcot() -> FormCotizacion:
-    return FormCotizacion()
+def formcot(dolar) -> FormCotizacion:
+    return FormCotizacion(moneda=dolar)
 
 
 @pytest.fixture
@@ -24,8 +26,9 @@ def test_muestra_campos_necesarios(formcot, campo):
 
 
 def test_debe_recibir_moneda(formcot_data):
-    formcot = FormCotizacion(data=formcot_data)
-    assert not formcot.is_valid()
+    with pytest.warns(UserWarning):
+        formcot = FormCotizacion(data=formcot_data)
+        assert not formcot.is_valid()
 
 
 def test_es_valido_con_datos_correctos(dolar, formcot_data):
