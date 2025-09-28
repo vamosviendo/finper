@@ -1,0 +1,11 @@
+{% extends 'diario/base.html' %}
+{% block contenido %}
+{% if error %}
+<div id="id_errores">{{ error }}</div>
+{% else %}
+<form method="post">{% csrf_token %}
+    <p>Eliminar cotización "{{ object }}"?</p>
+    <input type="submit" value="Confirm" id="id_btn_confirm">
+</form>
+{% endif %}
+{% endblock contenido %}

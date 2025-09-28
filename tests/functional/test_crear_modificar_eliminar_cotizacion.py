@@ -198,14 +198,38 @@ class TestModificarCotizacion:
         assert "Ya existe una cotización para esta moneda en la fecha seleccionada" in errors.text
 
 
-def test_eliminar_cotizacion():
-    """ Dada una moneda con más de una cotización
-        Si eliminamos una cotización antigua, ésta desaparece de la lista
-        Si eliminamos la última cotización, ésta desaparece de la lista y
-        los importes en el encabezado son reeemplazados por los de la cotización
-        anterior a la última
+class TestEliminarCotizacion:
+    def test_eliminar_cotizacion(self):
+        """ Dada una moneda con más de una cotización
+            Si eliminamos una cotización antigua, ésta desaparece de la lista
+            Si eliminamos la última cotización, ésta desaparece de la lista y
+            los importes en el encabezado son reeemplazados por los de la cotización
+            anterior a la última
 
-        Dada una moneda con una única cotización
-        Si eliminamos la cotización, recibimos un mensaje de error.
-    """
-    ...
+            Dada una moneda con una única cotización
+            Si eliminamos la cotización, recibimos un mensaje de error.
+        """
+        ...
+
+    def test_si_eliminamos_una_cotizacion_antigua_desaparece_de_la_lista_y_no_cambian_importes_en_encabezado(
+            self, browser, dolar, cotizacion_dolar, cotizacion_posterior_dolar):
+        browser.ir_a_pag(dolar.get_absolute_url())
+        importe_compra_encabezado = browser.esperar_elemento("id_cotizacion_compra").text
+        importe_venta_encabezado = browser.esperar_elemento("id_cotizacion_venta").text
+        cotizaciones = [x.text.split(" ")[:3] for x in browser.esperar_elementos("class_row_cot")]
+        cotizacion_a_eliminar = [
+            cotizacion_dolar.fecha.strftime("%Y-%m-%d"),
+            float_format(cotizacion_dolar.importe_compra),
+            float_format(cotizacion_dolar.importe_venta),
+        ]
+        assert cotizacion_a_eliminar in cotizaciones
+
+        browser.ir_a_pag(reverse("cot_elim", args=[cotizacion_dolar.pk]))
+        browser.pulsar("id_btn_confirm")
+        cotizaciones = [x.text.split(" ")[:3] for x in browser.esperar_elementos("class_row_cot")]
+        assert cotizacion_a_eliminar not in cotizaciones
+        importe_compra_nuevoo = browser.esperar_elemento("id_cotizacion_compra").text
+        importe_venta_nuevo = browser.esperar_elemento("id_cotizacion_venta").text
+        assert importe_compra_nuevoo == importe_compra_encabezado
+        assert importe_venta_nuevo == importe_venta_encabezado
+
