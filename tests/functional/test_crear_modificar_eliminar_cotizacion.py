@@ -201,7 +201,6 @@ class TestModificarCotizacion:
 class TestEliminarCotizacion:
     def test_eliminar_cotizacion(self):
         """ Dada una moneda con más de una cotización
-            Si eliminamos una cotización antigua, ésta desaparece de la lista
             Si eliminamos la última cotización, ésta desaparece de la lista y
             los importes en el encabezado son reeemplazados por los de la cotización
             anterior a la última
@@ -211,7 +210,7 @@ class TestEliminarCotizacion:
         """
         ...
 
-    def test_si_eliminamos_una_cotizacion_antigua_desaparece_de_la_lista_y_no_cambian_importes_en_encabezado(
+    def test_si_se_elimina_cotizacion_antigua_desaparece_de_la_lista_y_no_cambian_importes_en_encabezado(
             self, browser, dolar, cotizacion_dolar, cotizacion_posterior_dolar):
         browser.ir_a_pag(dolar.get_absolute_url())
         importe_compra_encabezado = browser.esperar_elemento("id_cotizacion_compra").text
@@ -228,8 +227,25 @@ class TestEliminarCotizacion:
         browser.pulsar("id_btn_confirm")
         cotizaciones = [x.text.split(" ")[:3] for x in browser.esperar_elementos("class_row_cot")]
         assert cotizacion_a_eliminar not in cotizaciones
-        importe_compra_nuevoo = browser.esperar_elemento("id_cotizacion_compra").text
+        importe_compra_nuevo = browser.esperar_elemento("id_cotizacion_compra").text
         importe_venta_nuevo = browser.esperar_elemento("id_cotizacion_venta").text
-        assert importe_compra_nuevoo == importe_compra_encabezado
+        assert importe_compra_nuevo == importe_compra_encabezado
         assert importe_venta_nuevo == importe_venta_encabezado
 
+    def test_si_se_elimina_ultima_cotizacion_importes_del_encabezado_son_reemplazados_por_los_de_cotizacion_anterior(
+            self, browser, dolar, cotizacion_dolar, cotizacion_posterior_dolar):
+        assert cotizacion_dolar.importe_compra != cotizacion_posterior_dolar.importe_compra
+        assert cotizacion_dolar.importe_venta != cotizacion_posterior_dolar.importe_venta
+
+        browser.ir_a_pag(dolar.get_absolute_url())
+        importe_compra_encabezado = browser.esperar_elemento("id_cotizacion_compra").text
+        importe_venta_encabezado = browser.esperar_elemento("id_cotizacion_venta").text
+        assert importe_compra_encabezado == float_format(cotizacion_posterior_dolar.importe_compra)
+        assert importe_venta_encabezado == float_format(cotizacion_posterior_dolar.importe_venta)
+
+        browser.ir_a_pag(reverse("cot_elim", args=[cotizacion_posterior_dolar.pk]))
+        browser.pulsar("id_btn_confirm")
+        importe_compra_nuevo = browser.esperar_elemento("id_cotizacion_compra").text
+        importe_venta_nuevo = browser.esperar_elemento("id_cotizacion_venta").text
+        assert importe_compra_nuevo == float_format(cotizacion_dolar.importe_compra)
+        assert importe_venta_nuevo == float_format(cotizacion_dolar.importe_venta)
