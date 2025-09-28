@@ -1,18 +1,12 @@
+from datetime import timedelta
+
 from django.urls import reverse
-from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
 
 from utils.numeros import float_format
 
 
 def test_crear_cotizacion(browser, dolar, fecha, fecha_anterior):
-    """ Cuando vamos a la página de cotización nueva y completamos el formulario,
-        si la nueva cotización es de fecha posterior a la última cotización anterior,
-        aparece la nueva cotización como cotización de la moneda.
-        Si es de fecha anterior a la última cotización anterior, se muestra la
-        cotización que ya se mostraba. La nueva cotización aparece en la lista de
-        cotizaciones anteriores.
-    """
     browser.ir_a_pag(dolar.get_absolute_url())
     ultima_fecha = browser.esperar_elemento("class_td_fecha", By.CLASS_NAME).text
     assert ultima_fecha != fecha.strftime("%Y-%m-%d")
@@ -89,43 +83,120 @@ def test_crear_cotizacion(browser, dolar, fecha, fecha_anterior):
     assert "Ya existe una cotización para esta moneda en la fecha seleccionada" in errors.text
 
 
-def test_modificar_cotizacion(browser, dolar, cotizacion_dolar, cotizacion_posterior_dolar, cotizacion_tardia_dolar):
-    """ Dada una moneda con más de una cotización
-        Si modificamos el importe de la última cotización, este cambio se ve
-        reflejado en la lista de cotizaciones y en el encabezado de la página.
-        Si cambiamos la fecha de una cotización antigua por una fecha anterior
-        a la de la última cotización, vemos ese cambio reflejado en la lista
-        de cotizaciones.
-        Si cambiamos la fecha de una cotización antigua por una fecha posterior
-        a la de la última cotización, vemos reflejado el cambio en la lista
-        de cotizaciones y los importes de la cotización modificada aparecen
-        en el encabezado.
-        Si cambiamos la fecha de la última cotización por una fecha anterior
-        a la de la cotización anterior, los importes en el encabezado son
-        reemplazados por los de la cotización anterior a la última
-        Si intentamos cambiar la fecha de una cotización por una fecha que
-        ya tenga otra cotización, recibimos un mensaje de error.
-    """
-    # Dada una moneda con más de una cotización
+class TestModificarCotizacion:
 
-    # Si modificamos el importe de una cotización antigua, este cambio se ve
-    # reflejado en la lista de cotizaciones.
-    browser.ir_a_pag(dolar.get_absolute_url())
-    cotizacion = browser.esperar_cotizacion(cotizacion_dolar.fecha)
-    importe_compra = cotizacion.esperar_elemento("class_td_cot_compra", By.CLASS_NAME).text
-    importe_venta = cotizacion.esperar_elemento("class_td_cot_venta", By.CLASS_NAME).text
-    assert importe_compra != float_format(400)
-    assert importe_venta != float_format(450)
+    def test_si_cambian_importes_de_cotizacion_anterior_cambian_importes_en_lista_no_en_encabezado(
+            self, browser, dolar, cotizacion_dolar):
+        # Si modificamos el importe de una cotización antigua, este cambio se ve
+        # reflejado en la lista de cotizaciones.
+        browser.ir_a_pag(dolar.get_absolute_url())
+        cotizacion = browser.esperar_cotizacion(cotizacion_dolar.fecha)
+        importe_compra = cotizacion.esperar_elemento("class_td_cot_compra", By.CLASS_NAME).text
+        importe_venta = cotizacion.esperar_elemento("class_td_cot_venta", By.CLASS_NAME).text
+        assert importe_compra != float_format(400)
+        assert importe_venta != float_format(450)
 
-    browser.ir_a_pag(reverse("cot_mod", args=[cotizacion_dolar.pk]))
-    browser.completar("id_importe_compra", 400)
-    browser.completar("id_importe_venta", 450)
-    browser.pulsar()
-    cotizacion = browser.esperar_cotizacion(cotizacion_dolar.fecha)
-    importe_compra = cotizacion.esperar_elemento("class_td_cot_compra", By.CLASS_NAME).text
-    importe_venta = cotizacion.esperar_elemento("class_td_cot_venta", By.CLASS_NAME).text
-    assert importe_compra == float_format(400)
-    assert importe_venta == float_format(450)
+        browser.ir_a_pag(reverse("cot_mod", args=[cotizacion_dolar.pk]))
+        browser.completar("id_importe_compra", 400)
+        browser.completar("id_importe_venta", 450)
+        browser.pulsar()
+        cotizacion = browser.esperar_cotizacion(cotizacion_dolar.fecha)
+        importe_compra = cotizacion.esperar_elemento("class_td_cot_compra", By.CLASS_NAME).text
+        importe_venta = cotizacion.esperar_elemento("class_td_cot_venta", By.CLASS_NAME).text
+        assert importe_compra == float_format(400)
+        assert importe_venta == float_format(450)
+
+    def test_si_cambian_importes_de_ultima_cotizacion_cambian_importes_en_encabezado(
+            self, browser, dolar, cotizacion_tardia_dolar):
+        # Si modificamos el importe de la última cotización, este cambio se ve
+        # reflejado en la lista de cotizaciones y en el encabezado de la página.
+        browser.ir_a_pag(dolar.get_absolute_url())
+        importe_compra_encabezado = browser.esperar_elemento("id_cotizacion_compra").text
+        importe_venta_encabezado = browser.esperar_elemento("id_cotizacion_venta").text
+        assert importe_compra_encabezado == float_format(cotizacion_tardia_dolar.importe_compra)
+        assert importe_venta_encabezado == float_format(cotizacion_tardia_dolar.importe_venta)
+        importe_compra = browser.esperar_elemento("class_td_cot_compra", By.CLASS_NAME).text
+        importe_venta = browser.esperar_elemento("class_td_cot_venta", By.CLASS_NAME).text
+        assert importe_compra != float_format(1800)
+        assert importe_venta != float_format(1850)
+
+        browser.ir_a_pag(reverse("cot_mod", args=[cotizacion_tardia_dolar.pk]))
+        browser.completar("id_importe_compra", 1800)
+        browser.completar("id_importe_venta", 1850)
+        browser.pulsar()
+        importe_compra_encabezado = browser.esperar_elemento("id_cotizacion_compra").text
+        importe_venta_encabezado = browser.esperar_elemento("id_cotizacion_venta").text
+        assert importe_compra_encabezado == float_format(1800)
+        assert importe_venta_encabezado == float_format(1850)
+        importe_compra = browser.esperar_elemento("class_td_cot_compra", By.CLASS_NAME).text
+        importe_venta = browser.esperar_elemento("class_td_cot_venta", By.CLASS_NAME).text
+        assert importe_compra == float_format(1800)
+        assert importe_venta == float_format(1850)
+
+    def test_si_cambia_fecha_de_una_cotizacion_anterior_por_fecha_anterior_a_la_ultima_no_cambian_importes_en_encabezado(
+            self, browser, dolar, cotizacion_dolar, cotizacion_posterior_dolar, cotizacion_tardia_dolar):
+        # Si cambiamos la fecha de una cotización antigua por una fecha anterior
+        # a la de la última cotización, vemos ese cambio reflejado en la lista
+        # de cotizaciones. Los importes del encabezado no cambian.
+        browser.ir_a_pag(dolar.get_absolute_url())
+        importe_compra_encabezado = browser.esperar_elemento("id_cotizacion_compra").text
+        importe_venta_encabezado = browser.esperar_elemento("id_cotizacion_venta").text
+        fechas_pag = [x.text for x in browser.esperar_elementos("class_td_fecha")]
+        fecha_nueva = cotizacion_tardia_dolar.fecha - timedelta(2)
+        assert fecha_nueva.strftime("%Y-%m-%d") not in fechas_pag
+
+        browser.ir_a_pag(reverse("cot_mod", args=[cotizacion_dolar.pk]))
+        browser.completar("id_fecha", fecha_nueva)
+        browser.pulsar()
+        importe_compra_enc_nuevo = browser.esperar_elemento("id_cotizacion_compra").text
+        importe_venta_enc_nuevo = browser.esperar_elemento("id_cotizacion_venta").text
+        fechas_pag = [x.text for x in browser.esperar_elementos("class_td_fecha")]
+        assert importe_compra_enc_nuevo == importe_compra_encabezado
+        assert importe_venta_enc_nuevo == importe_venta_encabezado
+        assert fecha_nueva.strftime("%Y-%m-%d") in fechas_pag
+
+    def test_si_cambia_fecha_de_cotizacion_anterior_por_fecha_posterior_a_la_ultima_cambian_importes_en_encabezado(
+            self, browser, dolar, cotizacion_posterior_dolar, cotizacion_tardia_dolar):
+        # Si cambiamos la fecha de una cotización antigua por una fecha posterior
+        # a la de la última cotización, los importes de la cotización modificada
+        # aparecen en el encabezado.
+        browser.ir_a_pag(dolar.get_absolute_url())
+        importe_compra_encabezado = browser.esperar_elemento("id_cotizacion_compra").text
+        importe_venta_encabezado = browser.esperar_elemento("id_cotizacion_venta").text
+        assert importe_compra_encabezado != float_format(cotizacion_posterior_dolar.importe_compra)
+        assert importe_venta_encabezado != float_format(cotizacion_posterior_dolar.importe_venta)
+
+        browser.ir_a_pag(reverse("cot_mod", args=[cotizacion_posterior_dolar.pk]))
+        browser.completar("id_fecha", cotizacion_tardia_dolar.fecha + timedelta(2))
+        browser.pulsar()
+        importe_compra_encabezado = browser.esperar_elemento("id_cotizacion_compra").text
+        importe_venta_encabezado = browser.esperar_elemento("id_cotizacion_venta").text
+        assert importe_compra_encabezado == float_format(cotizacion_posterior_dolar.importe_compra)
+        assert importe_venta_encabezado == float_format(cotizacion_posterior_dolar.importe_venta)
+
+    def test_si_cambia_fecha_de_ultima_cotizacion_por_fecha_anterior_a_cotizacion_anterior_cambian_importes_en_encabezado(
+            self, browser, dolar, cotizacion_posterior_dolar, cotizacion_tardia_dolar):
+        # Si cambiamos la fecha de la última cotización por una fecha anterior
+        # a la de la cotización anterior, los importes en el encabezado son
+        # reemplazados por los de la cotización anterior a la última
+        browser.ir_a_pag(reverse("cot_mod", args=[cotizacion_posterior_dolar.pk]))
+        browser.completar("id_fecha", cotizacion_tardia_dolar.fecha - timedelta(1))
+        browser.pulsar()
+        importe_compra_encabezado = browser.esperar_elemento("id_cotizacion_compra").text
+        importe_venta_encabezado = browser.esperar_elemento("id_cotizacion_venta").text
+        assert importe_compra_encabezado == float_format(cotizacion_tardia_dolar.importe_compra)
+        assert importe_venta_encabezado == float_format(cotizacion_tardia_dolar.importe_venta)
+
+    def test_no_permite_cambiar_fecha_de_cotizacion_por_fecha_de_cotizacion_existente(
+            self, browser, dolar, cotizacion_posterior_dolar, cotizacion_tardia_dolar):
+        # Si intentamos cambiar la fecha de una cotización por una fecha que
+        # ya tenga otra cotización, recibimos un mensaje de error.
+        browser.ir_a_pag(reverse("cot_mod", args=[cotizacion_posterior_dolar.pk]))
+        browser.completar("id_fecha", cotizacion_tardia_dolar.fecha)
+        browser.pulsar()
+        errors = browser.esperar_elemento("id_form_cotizacion").esperar_elemento("errorlist", By.CLASS_NAME)
+        assert "Ya existe una cotización para esta moneda en la fecha seleccionada" in errors.text
+
 
 def test_eliminar_cotizacion():
     """ Dada una moneda con más de una cotización

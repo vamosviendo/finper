@@ -92,8 +92,7 @@ class FinperFirefox(MiFirefox):
             fecha_cot = cotizacion.esperar_elemento("class_td_fecha", By.CLASS_NAME).text
             if fecha_cot == fecha_formateada:
                 return cotizacion
-        raise NoSuchElementException(f"No se encontró cotización con fecha {fecha_cot_antigua}")
-
+        raise NoSuchElementException(f"No se encontró cotización con fecha {fecha_formateada}")
 
     def comparar_dias_de(self, ente: Cuenta | Titular) -> list[MiWebElement]:
         """ Dada una cuenta o un titular, comparar sus últimos 7 días con los que
