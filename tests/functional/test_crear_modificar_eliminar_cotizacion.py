@@ -96,7 +96,7 @@ class TestModificarCotizacion:
         assert importe_compra != float_format(400)
         assert importe_venta != float_format(450)
 
-        browser.ir_a_pag(reverse("cot_mod", args=[cotizacion_dolar.pk]))
+        browser.ir_a_pag(cotizacion_dolar.get_edit_url())
         browser.completar("id_importe_compra", 400)
         browser.completar("id_importe_venta", 450)
         browser.pulsar()
@@ -120,7 +120,7 @@ class TestModificarCotizacion:
         assert importe_compra != float_format(1800)
         assert importe_venta != float_format(1850)
 
-        browser.ir_a_pag(reverse("cot_mod", args=[cotizacion_tardia_dolar.pk]))
+        browser.ir_a_pag(cotizacion_tardia_dolar.get_edit_url())
         browser.completar("id_importe_compra", 1800)
         browser.completar("id_importe_venta", 1850)
         browser.pulsar()
@@ -145,7 +145,7 @@ class TestModificarCotizacion:
         fecha_nueva = cotizacion_tardia_dolar.fecha - timedelta(2)
         assert fecha_nueva.strftime("%Y-%m-%d") not in fechas_pag
 
-        browser.ir_a_pag(reverse("cot_mod", args=[cotizacion_dolar.pk]))
+        browser.ir_a_pag(cotizacion_dolar.get_edit_url())
         browser.completar("id_fecha", fecha_nueva)
         browser.pulsar()
         importe_compra_enc_nuevo = browser.esperar_elemento("id_cotizacion_compra").text
@@ -166,7 +166,7 @@ class TestModificarCotizacion:
         assert importe_compra_encabezado != float_format(cotizacion_posterior_dolar.importe_compra)
         assert importe_venta_encabezado != float_format(cotizacion_posterior_dolar.importe_venta)
 
-        browser.ir_a_pag(reverse("cot_mod", args=[cotizacion_posterior_dolar.pk]))
+        browser.ir_a_pag(cotizacion_posterior_dolar.get_edit_url())
         browser.completar("id_fecha", cotizacion_tardia_dolar.fecha + timedelta(2))
         browser.pulsar()
         importe_compra_encabezado = browser.esperar_elemento("id_cotizacion_compra").text
@@ -179,7 +179,7 @@ class TestModificarCotizacion:
         # Si cambiamos la fecha de la última cotización por una fecha anterior
         # a la de la cotización anterior, los importes en el encabezado son
         # reemplazados por los de la cotización anterior a la última
-        browser.ir_a_pag(reverse("cot_mod", args=[cotizacion_posterior_dolar.pk]))
+        browser.ir_a_pag(cotizacion_posterior_dolar.get_edit_url())
         browser.completar("id_fecha", cotizacion_tardia_dolar.fecha - timedelta(1))
         browser.pulsar()
         importe_compra_encabezado = browser.esperar_elemento("id_cotizacion_compra").text
@@ -191,7 +191,7 @@ class TestModificarCotizacion:
             self, browser, dolar, cotizacion_posterior_dolar, cotizacion_tardia_dolar):
         # Si intentamos cambiar la fecha de una cotización por una fecha que
         # ya tenga otra cotización, recibimos un mensaje de error.
-        browser.ir_a_pag(reverse("cot_mod", args=[cotizacion_posterior_dolar.pk]))
+        browser.ir_a_pag(cotizacion_posterior_dolar.get_edit_url())
         browser.completar("id_fecha", cotizacion_tardia_dolar.fecha)
         browser.pulsar()
         errors = browser.esperar_elemento("id_form_cotizacion").esperar_elemento("errorlist", By.CLASS_NAME)
@@ -223,7 +223,7 @@ class TestEliminarCotizacion:
         ]
         assert cotizacion_a_eliminar in cotizaciones
 
-        browser.ir_a_pag(reverse("cot_elim", args=[cotizacion_dolar.pk]))
+        browser.ir_a_pag(cotizacion_dolar.get_delete_url())
         browser.pulsar("id_btn_confirm")
         cotizaciones = [x.text.split(" ")[:3] for x in browser.esperar_elementos("class_row_cot")]
         assert cotizacion_a_eliminar not in cotizaciones
@@ -243,7 +243,7 @@ class TestEliminarCotizacion:
         assert importe_compra_encabezado == float_format(cotizacion_posterior_dolar.importe_compra)
         assert importe_venta_encabezado == float_format(cotizacion_posterior_dolar.importe_venta)
 
-        browser.ir_a_pag(reverse("cot_elim", args=[cotizacion_posterior_dolar.pk]))
+        browser.ir_a_pag(cotizacion_posterior_dolar.get_delete_url())
         browser.pulsar("id_btn_confirm")
         importe_compra_nuevo = browser.esperar_elemento("id_cotizacion_compra").text
         importe_venta_nuevo = browser.esperar_elemento("id_cotizacion_venta").text
