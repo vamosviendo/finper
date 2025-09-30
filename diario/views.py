@@ -335,7 +335,7 @@ class MonCotNuevaView(CreateView):
     form_class = FormCotizacion
 
     def dispatch(self, request, *args, **kwargs):
-        self.moneda = get_object_or_404(Moneda, _sk=self.kwargs["sk"])
+        self.moneda = get_object_or_404(Moneda, sk=self.kwargs["sk"])
         return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):
@@ -427,14 +427,14 @@ class MonModView(UpdateView):
     form_class = FormMoneda
     template_name = 'diario/moneda_form.html'
     slug_url_kwarg = 'sk'
-    slug_field = '_sk'
+    slug_field = 'sk'
     success_url = reverse_lazy('home')
 
 
 class MonElimView(DeleteView):
     model = Moneda
     slug_url_kwarg = 'sk'
-    slug_field = '_sk'
+    slug_field = 'sk'
     success_url = reverse_lazy('home')
 
 

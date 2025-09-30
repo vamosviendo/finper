@@ -145,7 +145,7 @@ class TestSkSimpleMixin:
     def test_prop_sk_devuelve_contenido_del_campo_sk(self, fixt_obj, request):
         obj = request.getfixturevalue(fixt_obj)
         # provisorio if / else
-        if "titular" in fixt_obj:
+        if "titular" in fixt_obj or "moneda" in fixt_obj:
             assert obj.sk == obj.fields["sk"]
         else:
             assert obj.sk == obj.fields["_sk"]
@@ -154,7 +154,7 @@ class TestSkSimpleMixin:
         obj = request.getfixturevalue(fixt_obj)
         obj.sk = "ccc"
         # provisorio if / else
-        if "titular" in fixt_obj:
+        if "titular" in fixt_obj or "moneda" in fixt_obj:
             assert obj.fields["sk"] == "ccc"
         else:
             assert obj.fields["_sk"] == "ccc"
