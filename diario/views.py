@@ -149,9 +149,9 @@ class HomeView(TemplateView):
                 "ancestros": reversed(ente.ancestros()),
                 "hermanas": ente.hermanas(),
                 "titulares": Titular.filtro(
-                    _sk__in=[x.sk for x in ente.titulares]
+                    sk__in=[x.sk for x in ente.titulares]
                 ) if ente.es_acumulativa else Titular.filtro(
-                    _sk=ente.titular.sk
+                    sk=ente.titular.sk
                 ),
                 "cuentas": ente.subcuentas.all() if ente.es_acumulativa else Cuenta.objects.none(),
             }
@@ -383,7 +383,7 @@ class TitularNuevoView(CreateView):
 class TitElimView(DeleteView):
     model = Titular
     slug_url_kwarg = 'sk'
-    slug_field = '_sk'
+    slug_field = 'sk'
 
     def get_success_url(self):
         return self.request.GET.get("next", reverse("home"))
@@ -394,7 +394,7 @@ class TitModView(UpdateView):
     template_name = 'diario/tit_form.html'
     form_class = FormTitular
     slug_url_kwarg = 'sk'
-    slug_field = '_sk'
+    slug_field = 'sk'
 
     def get_success_url(self):
         return self.request.GET.get("next", reverse("home"))

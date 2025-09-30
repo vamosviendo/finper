@@ -38,7 +38,7 @@ def db_serializada_legacy(db_serializada: SerializedDb) -> SerializedDb:
    # A los efectos del testeo, cambiar campo sk por antiguo campo titname
     for titular in db_serializada.filter_by_model("diario.titular"):
         titular.fields.update({
-            "titname": titular.fields.pop("_sk")
+            "titname": titular.fields.pop("sk")
         })
 
     # Reescribir el archivo json

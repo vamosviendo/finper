@@ -23,7 +23,7 @@ class TitularManager(models.Manager):
         return self.get(_sk=sk)
 
 class Titular(MiModel):
-    _sk = models.CharField(max_length=20, unique=True)
+    sk = models.CharField(max_length=20, unique=True)
     nombre = models.CharField(max_length=100, blank=True)
     fecha_alta = models.DateField(default=timezone.now)
     deudores = models.ManyToManyField('Titular', related_name='acreedores')
@@ -49,20 +49,6 @@ class Titular(MiModel):
 
     def natural_key(self) -> tuple[str]:
         return (self.sk, )
-
-    @property
-    def sk(self) -> str:
-        return self._sk
-
-    @sk.setter
-    def sk(self, value: str):
-        self._sk = value
-
-    @classmethod
-    def tomar(self, **kwargs):
-        if "sk" in kwargs.keys():
-            kwargs["_sk"] = kwargs.pop("sk")
-        return super().tomar(**kwargs)
 
     def capital(
             self,

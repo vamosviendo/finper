@@ -21,11 +21,20 @@ class SkSimpleMixin:
 
     @property
     def sk(self) -> str:
-        return self.fields["_sk"]
+        # try / except provisorio (hasta que todos los campos _sk hayan sido rebautizados)
+        try:
+            return self.fields["sk"]
+        except KeyError:
+            return self.fields["_sk"]
 
     @sk.setter
     def sk(self, value: str):
-        self.fields["_sk"] = value
+        # try / except provisorio (hasta que todos los campos _sk hayan sido rebautizados)
+        try:
+            _ = self.fields["sk"]
+            self.fields["sk"] = value
+        except KeyError:
+            self.fields["_sk"] = value
 
 
 class CuentaSerializada(SerializedObject, SkSimpleMixin):

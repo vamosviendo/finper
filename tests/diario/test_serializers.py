@@ -142,11 +142,19 @@ class TestCotizacionSerializada:
 
 @pytest.mark.parametrize("fixt_obj", ["cuenta_int_serializada", "moneda_serializada", "titular_serializado"])
 class TestSkSimpleMixin:
-    def test_prop_sk_devuelve_contenido_del_campo__sk(self, fixt_obj, request):
+    def test_prop_sk_devuelve_contenido_del_campo_sk(self, fixt_obj, request):
         obj = request.getfixturevalue(fixt_obj)
-        assert obj.sk == obj.fields["_sk"]
+        # provisorio if / else
+        if "titular" in fixt_obj:
+            assert obj.sk == obj.fields["sk"]
+        else:
+            assert obj.sk == obj.fields["_sk"]
 
-    def test_prop_sk_permite_fijar_contenido_del_campo__sk(self, fixt_obj, request):
+    def test_prop_sk_permite_fijar_contenido_del_campo_sk(self, fixt_obj, request):
         obj = request.getfixturevalue(fixt_obj)
         obj.sk = "ccc"
-        assert obj.fields["_sk"] == "ccc"
+        # provisorio if / else
+        if "titular" in fixt_obj:
+            assert obj.fields["sk"] == "ccc"
+        else:
+            assert obj.fields["_sk"] == "ccc"
