@@ -21,7 +21,7 @@ class DiaManager(models.Manager):
 class Dia (MiModel):
     fecha = models.DateField(unique=True)
 
-    movimiento_set: MovimientoManager["Movimiento"]  # related name para Movimiento.dia
+    movimiento_set: MovimientoManager   # related name para Movimiento.dia
 
     objects = DiaManager()
 

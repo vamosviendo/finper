@@ -28,8 +28,8 @@ class Moneda(MiModel):
     _plural = models.CharField(max_length=100, null=True, blank=True)
 
     cotizaciones: models.Manager["Cotizacion"]      # related name para Cotizacion.moneda
-    cuenta_set: CuentaManager["Cuenta"]             # related name para Cuenta.moneda
-    movimientos: MovimientoManager["Movimiento"]    # related name para Movimiento.moneda
+    cuenta_set: CuentaManager                       # related name para Cuenta.moneda
+    movimientos: MovimientoManager                  # related name para Movimiento.moneda
 
     objects = MonedaManager()
     form_fields = ('nombre', 'sk', 'plural', )

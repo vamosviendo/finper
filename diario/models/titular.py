@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self, Optional, Any
+from typing import TYPE_CHECKING, Self, Optional
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -14,7 +14,7 @@ from vvutils.text import mi_slugify
 from diario.models.dia import Dia
 
 if TYPE_CHECKING:
-    from diario.models import CuentaAcumulativa, CuentaInteractiva, Movimiento, Moneda
+    from diario.models import CuentaInteractiva, Movimiento, Moneda
     from diario.models.cuenta import CuentaManager
 
 
@@ -28,9 +28,9 @@ class Titular(MiModel):
     fecha_alta = models.DateField(default=timezone.now)
     deudores = models.ManyToManyField('Titular', related_name='acreedores')
 
-    acreedores: TitularManager["Titular"]           # related name para campo deudores
-    cuentas: CuentaManager["CuentaInteractiva"]     # related name para CuentaInteractiva.titular
-    ex_cuentas: CuentaManager["CuentaAcumulativa"]  # related name para CuentaAcumulativa.titular_original
+    acreedores: TitularManager  # related name para campo deudores
+    cuentas: CuentaManager      # related name para CuentaInteractiva.titular
+    ex_cuentas: CuentaManager   # related name para CuentaAcumulativa.titular_original
 
     objects = TitularManager()
     form_fields = ('sk', 'nombre', 'fecha_alta', )

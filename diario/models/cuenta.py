@@ -53,9 +53,8 @@ class Cuenta(PolymorphModel):
     fecha_creacion = models.DateField(default=date.today)
     moneda = models.ForeignKey(Moneda, on_delete=models.CASCADE, null=True, blank=True)
 
-    entradas: MovimientoManager["Movimiento"]   # related name para Movimiento.cta_entrada
-    salidas: MovimientoManager["Movimiento"]    # related name para Movimiento.cta_salida
-    saldo_set: models.Manager["Saldo"]          # related name para Saldo.cuenta
+    entradas: MovimientoManager   # related name para Movimiento.cta_entrada
+    salidas: MovimientoManager    # related name para Movimiento.cta_salida
     saldodiario_set: models.Manager["SaldoDiario"]  # related name para SaldoDiario.cuenta
 
     objects = CuentaManager()
