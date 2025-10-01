@@ -42,7 +42,7 @@ class CuentaManager(PolymorphManager):
 
 class Cuenta(PolymorphModel):
     nombre = CaseInsensitiveCharField(max_length=100, unique=True)
-    _sk = models.CharField(
+    sk = models.CharField(
         max_length=20, unique=True, validators=[alfaminusculas])
     cta_madre = models.ForeignKey(
         'CuentaAcumulativa',
@@ -90,31 +90,11 @@ class Cuenta(PolymorphModel):
                                                    **kwargs)
         return cuenta_nueva
 
-    @classmethod
-    def tomar(cls, **kwargs):
-        if "sk" in kwargs.keys():
-            kwargs["_sk"] = kwargs.pop("sk")
-        return super().tomar(**kwargs)
-
-    @classmethod
-    def filtro(cls, *args, **kwargs):
-        if "sk" in kwargs.keys():
-            kwargs["_sk"] = kwargs.pop("sk")
-        return super().filtro(*args, **kwargs)
-
     def __str__(self):
         return self.nombre
 
     def natural_key(self):
         return (self.sk, )
-
-    @property
-    def sk(self) -> str:
-        return self._sk
-
-    @sk.setter
-    def sk(self, value: str):
-        self._sk = value
 
     @property
     def sk_cta(self):

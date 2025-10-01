@@ -58,7 +58,6 @@ def _cuenta_mov(
         container_cuentas: SerializedDb[CuentaSerializada]) -> CuentaInteractiva | None:
     if posicion not in ["entrada", "salida", "cta_entrada", "cta_salida"]:
         raise ValueError('Los valores aceptados para posicion son "entrada", "salida", "cta_entrada" o "cta_salida"')
-    cta = movimiento.fields[posicion] if posicion.startswith("cta_") else f"cta_{posicion}"
     sk = movimiento.fields[posicion][0] if movimiento.fields[posicion] else None
     if sk:
         if sk not in [x.sk for x in container_cuentas.filter_by_model("diario.cuenta")]:
@@ -105,7 +104,7 @@ def _tomar_cuenta_ser(
     """ Toma y devuelve una cuenta serializada de un contenedor a partir del sk """
     if sk is None or container is None:
         return None
-    return CuentaSerializada(container.tomar(model="diario.cuenta", _sk=sk))
+    return CuentaSerializada(container.tomar(model="diario.cuenta", sk=sk))
 
 
 def _mov_es_traspaso_a_subcuenta(

@@ -143,7 +143,7 @@ def test_serializa_cuentas_acumulativas_con_natural_key_titular_original(cuenta_
 
 
 def test_serializa_cuentas_con_natural_key_cta_madre(cuenta_acumulativa, db_serializada):
-    cta = db_serializada.primere("diario.cuenta", _sk="scs1")
+    cta = db_serializada.primere("diario.cuenta", sk="scs1")
     assert cta.fields["cta_madre"] == [cuenta_acumulativa.sk]
 
 

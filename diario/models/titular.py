@@ -110,7 +110,7 @@ class Titular(MiModel):
 
     def cuenta_credito_con(self, otro: Self) -> Optional['CuentaInteractiva']:
         try:
-            return self.cuentas.get(_sk=f'_{self.sk}-{otro.sk}')
+            return self.cuentas.get(sk=f'_{self.sk}-{otro.sk}')
         except self.get_related_class('cuentas').DoesNotExist:
             return None
 

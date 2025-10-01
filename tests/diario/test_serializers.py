@@ -82,14 +82,14 @@ class TestCuentaSerializada:
         cuentas = CuentaSerializada.todes(db_serializada)
         for cta in cuentas:
             print(cta)
-        cuenta_credito = CuentaSerializada(cuentas.tomar(_sk="_otro-titular"))
-        cuenta_credito_2 = CuentaSerializada(cuentas.tomar(_sk="_titular-otro"))
+        cuenta_credito = CuentaSerializada(cuentas.tomar(sk="_otro-titular"))
+        cuenta_credito_2 = CuentaSerializada(cuentas.tomar(sk="_titular-otro"))
         assert cuenta_credito.es_cuenta_credito() is True
         assert cuenta_credito_2.es_cuenta_credito() is True
 
     def test_es_cuenta_credito_devuelve_False_si_la_cuenta_no_es_cuenta_credito(self, credito, db_serializada):
         cuentas = CuentaSerializada.todes(db_serializada)
-        cuenta_credito = CuentaSerializada(cuentas.tomar(_sk="caj"))
+        cuenta_credito = CuentaSerializada(cuentas.tomar(sk="caj"))
         assert cuenta_credito.es_cuenta_credito() is False
 
     def test_es_subcuenta_de_devuelve_True_si_la_cuenta_es_subcuenta_de_otra_cuenta(
@@ -144,17 +144,9 @@ class TestCotizacionSerializada:
 class TestSkSimpleMixin:
     def test_prop_sk_devuelve_contenido_del_campo_sk(self, fixt_obj, request):
         obj = request.getfixturevalue(fixt_obj)
-        # provisorio if / else
-        if "titular" in fixt_obj or "moneda" in fixt_obj:
-            assert obj.sk == obj.fields["sk"]
-        else:
-            assert obj.sk == obj.fields["_sk"]
+        assert obj.sk == obj.fields["sk"]
 
     def test_prop_sk_permite_fijar_contenido_del_campo_sk(self, fixt_obj, request):
         obj = request.getfixturevalue(fixt_obj)
         obj.sk = "ccc"
-        # provisorio if / else
-        if "titular" in fixt_obj or "moneda" in fixt_obj:
-            assert obj.fields["sk"] == "ccc"
-        else:
-            assert obj.fields["_sk"] == "ccc"
+        assert obj.fields["sk"] == "ccc"

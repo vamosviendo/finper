@@ -272,7 +272,7 @@ class TestCargaCuentas:
 
     def test_si_al_cargar_movimientos_anteriores_de_cuenta_acumulativa_se_intenta_usar_una_cuenta_que_no_existe_da_error(
             self, movimiento_1, movimiento_2, cuenta_2_acumulativa, db_serializada, vaciar_db):
-        db_sin_cta_1 = [x.data for x in db_serializada if x.fields.get("_sk") != "ct1"]
+        db_sin_cta_1 = [x.data for x in db_serializada if x.fields.get("sk") != "ct1"]
         with open("db_full.json", "w") as f:
             json.dump(db_sin_cta_1, f)
 
@@ -470,7 +470,7 @@ class TestCargaMovimientos:
 
     def test_si_al_cargar_movimientos_generales_se_intenta_usar_una_cuenta_que_no_existe_da_error(
             self, movimiento_1, db_serializada, vaciar_db):
-        db_sin_cta_2 = [x.data for x in db_serializada if x.fields.get("_sk") != "ct2"]
+        db_sin_cta_2 = [x.data for x in db_serializada if x.fields.get("sk") != "ct2"]
         with open("db_full.json", "w") as f:
             json.dump(db_sin_cta_2, f)
 
