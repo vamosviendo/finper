@@ -14,6 +14,7 @@ class Cotizacion(MiModel):
     importe_venta = models.FloatField(null=True, blank=True, validators=[MinValueValidator(0)])
     fecha = models.DateField()
     moneda = models.ForeignKey("diario.Moneda", related_name="cotizaciones", on_delete=models.CASCADE)
+    sk = models.CharField(max_length=20, null=True, blank=True, unique=True)
 
     form_fields = ['fecha', 'importe_compra', 'importe_venta']
 
@@ -23,10 +24,6 @@ class Cotizacion(MiModel):
 
     def __str__(self):
         return f"Cotización {self.moneda} al {self.fecha}: {self.importe_compra} / {self.importe_venta}"
-
-    @property
-    def sk(self) -> str:
-        return f"{self.fecha.year}{self.fecha.month}{self.fecha.day}{self.moneda.sk}"
 
     def get_delete_url(self) -> str:
         return reverse("cot_elim", args=[self.pk])
@@ -60,6 +57,11 @@ class Cotizacion(MiModel):
             raise ValidationError("Debe ingresar al menos un importe")
 
     def save(self, *args, **kwargs):
+        # Generar clave secundaria
+        if self.sk is None:
+            self.sk = f"{self.fecha.strftime('%Y%m%d')}{self.moneda.sk}"
+
+        # Si hay algún importe vacío, completar con importe existente
         for tipo in "importe_compra", "importe_venta":
             tipo_opuesto = el_que_no_es(tipo, "importe_compra", "importe_venta")
             importe = getattr(self, tipo)

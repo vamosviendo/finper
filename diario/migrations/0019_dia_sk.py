@@ -2,6 +2,7 @@
 
 from django.db import migrations, models
 
+
 def populate_sk_from_fecha(apps, schema_editor):
     Dia = apps.get_model('diario', 'Dia')
     for dia in Dia.objects.all():
