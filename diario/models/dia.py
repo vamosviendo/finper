@@ -20,6 +20,7 @@ class DiaManager(models.Manager):
 
 class Dia (MiModel):
     fecha = models.DateField(unique=True)
+    sk = models.CharField(max_length=15, unique=True, null=True, blank=True)
 
     movimiento_set: MovimientoManager   # related name para Movimiento.dia
 
@@ -44,9 +45,10 @@ class Dia (MiModel):
     def natural_key(self) -> tuple[str]:
         return (self.fecha, )
 
-    @property
-    def sk(self) -> str:
-        return self.fecha.strftime('%Y%m%d')
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        if self.sk is None:
+            self.sk = self.fecha.strftime("%Y%m%d")
+        super().save(force_insert, force_update, using, update_fields)
 
     @classmethod
     def hoy(cls) -> Self:
