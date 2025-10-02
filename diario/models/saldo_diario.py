@@ -13,6 +13,7 @@ class SaldoDiario(MiModel):
     cuenta = models.ForeignKey('diario.Cuenta', on_delete=models.CASCADE)
     dia = models.ForeignKey('diario.Dia', on_delete=models.CASCADE)
     _importe = models.FloatField()
+    sk = models.CharField(max_length=25, null=True, blank=True, unique=True)
 
     class Meta:
         unique_together = ['cuenta', 'dia']
@@ -28,10 +29,6 @@ class SaldoDiario(MiModel):
     @importe.setter
     def importe(self, value: float):
         self._importe = round(value, 2)
-
-    @property
-    def sk(self) -> str:
-        return f"{self.dia.sk}{self.cuenta.sk}"
 
     @classmethod
     def anterior_a(cls, cuenta: Cuenta, dia: Dia):
@@ -95,6 +92,10 @@ class SaldoDiario(MiModel):
             self, force_insert=False, force_update=False, using=None, update_fields=None,
             actualizar_posteriores=True
     ):
+        # Generar sk si no existe
+        if self.sk is None:
+            self.sk = f"{self.dia.fecha.strftime('%Y%m%d')}{self.cuenta.sk}"
+
         if self._state.adding:
             try:
                 importe_anterior = self.anterior().importe
