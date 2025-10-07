@@ -182,6 +182,7 @@ class Movimiento(MiModel):
         'diario.Cuenta', related_name='salidas', null=True, blank=True,
         on_delete=models.CASCADE
     )
+    sk = models.CharField(max_length=15, null=True, blank=True, unique=True)
     id_contramov = models.IntegerField(null=True, blank=True)
     convierte_cuenta = models.CharField(
         null=True, blank=True, max_length=11,
@@ -319,10 +320,6 @@ class Movimiento(MiModel):
     @property
     def posicion(self) -> Posicion:
         return Posicion(fecha=self.fecha, orden_dia=self.orden_dia)
-
-    @property
-    def sk(self) -> str:
-        return f"{self.dia.sk}{self.orden_dia:02d}"
 
     @property
     def cotizacion(self) -> float:
@@ -524,6 +521,13 @@ class Movimiento(MiModel):
                     contraparte=self.viejo
             ):
                 self._actualizar_fechas_conversion()
+
+        # Si no existe sk, generarla
+        if self.sk is None:
+            self.sk = f"{self.dia.sk}{self.orden_dia:02d}"
+            while Movimiento.filtro(sk=self.sk).exists():
+                self.sk = str(int(self.sk) + 1)
+            Movimiento.filtro(pk=self.pk).update(sk=self.sk)
 
     def refresh_from_db(self, using: str = None, fields: List[str] = None):
         super().refresh_from_db()

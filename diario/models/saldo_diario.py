@@ -94,7 +94,7 @@ class SaldoDiario(MiModel):
     ):
         # Generar sk si no existe
         if self.sk is None:
-            self.sk = f"{self.dia.fecha.strftime('%Y%m%d')}{self.cuenta.sk}"
+            self.sk = f"{self.dia.sk}{self.cuenta.sk}"
 
         if self._state.adding:
             try:

@@ -1,6 +1,7 @@
 import pytest
+from django.core.exceptions import ValidationError
 
-from diario.models import Movimiento, Moneda, Cotizacion
+from diario.models import Movimiento, Moneda
 from utils.varios import el_que_no_es
 
 
@@ -15,6 +16,7 @@ def test_guarda_y_recupera_movimientos(fecha, dia, cuenta, cuenta_2):
     mov.detalle = "Detalle del movimiento"
     mov.moneda = cuenta.moneda
     mov.cotizacion = 1.0
+    mov.sk = "movsk"
     mov.save()
 
     assert Movimiento.cantidad() == cantidad_movimientos + 1
@@ -30,6 +32,7 @@ def test_guarda_y_recupera_movimientos(fecha, dia, cuenta, cuenta_2):
     assert mov_guardado.detalle == "Detalle del movimiento"
     assert mov_guardado.moneda == cuenta.moneda
     assert mov_guardado.cotizacion == 1.0
+    assert mov_guardado.sk == "movsk"
 
 
 def test_cta_entrada_se_relaciona_con_cuenta(cuenta, fecha):
@@ -154,5 +157,39 @@ def test_entre_cuentas_en_distinta_moneda_permite_especificar_cotizacion(
     mov.clean_save()
     assert mov.cotizacion == 555
 
-def test_natural_key_devuelve_fecha_y_orden_dia(entrada):
+
+def test_natural_key_devuelve_fecha_y_orden_dia(entrada, dia):
     assert entrada.natural_key() == (entrada.dia.fecha, entrada.orden_dia, )
+
+
+def test_no_permite_clave_secundaria_duplicada(entrada, dia, cuenta):
+    entrada.sk = "entradask"
+    entrada.clean_save()
+
+    mov = Movimiento(dia=dia, concepto="otro movimiento", importe=981, cta_entrada=cuenta)
+    mov.sk = "entradask"
+
+    with pytest.raises(ValidationError):
+        mov.full_clean()
+
+
+def test_genera_sk_a_partir_de_dia_y_orden_dia(dia, cuenta):
+    mov = Movimiento(dia=dia, concepto="otro movimiento", importe=981, cta_entrada=cuenta)
+    mov.clean_save()
+
+    assert mov.sk == f"{mov.dia.sk}{mov.orden_dia:02d}"
+
+
+def test_si_sk_generada_ya_existe_suma_1(entrada, salida, cuenta):
+    entrada.delete()
+    mov = Movimiento(dia=salida.dia, concepto="mov nuevo", importe=1, cta_entrada=cuenta)
+    mov.clean_save()
+    assert int(mov.sk) == int(salida.sk) + 1
+
+
+def test_si_sk_generada_ya_existe_y_siguiente_tambien_sigue_sumando_hasta_encontrar_sk_libre(
+        entrada, salida, traspaso, entrada_otra_cuenta, cuenta):
+    entrada.delete()
+    mov = Movimiento(dia=traspaso.dia, concepto="mov nuevo", importe=1, cta_entrada=cuenta, orden_dia=1)
+    mov.clean_save()
+    assert int(mov.sk) == int(entrada_otra_cuenta.sk) + 1
