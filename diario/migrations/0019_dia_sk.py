@@ -7,9 +7,7 @@ def populate_sk_from_fecha(apps, schema_editor):
     Dia = apps.get_model('diario', 'Dia')
     for dia in Dia.objects.all():
         if dia.sk is None:
-            dia.sk = dia.fecha.strftime("%Y%m%d")
-            dia.full_clean()
-            dia.save()
+            Dia.objects.filter(pk=dia.pk).update(sk=dia.fecha.strftime("%Y%m%d"))
 
 
 class Migration(migrations.Migration):

@@ -10,8 +10,7 @@ def populate_sk_from_dia_and_orden_dia(apps, schema_editor):
             mov.sk = f"{mov.dia.sk}{mov.orden_dia:02d}"
             while Movimiento.objects.filter(sk=mov.sk).exists():
                 mov.sk = str(int(mov.sk) + 1)
-            mov.full_clean()
-            mov.save()
+            Movimiento.objects.filter(pk=mov.pk).update(sk=mov.sk)
 
 
 class Migration(migrations.Migration):

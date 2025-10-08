@@ -7,9 +7,7 @@ def populate_sk_from_fecha_and_moneda(apps, schema_editor):
     Cotizacion = apps.get_model('diario', 'Cotizacion')
     for cot in Cotizacion.objects.all():
         if cot.sk is None:
-            cot.sk = f"{cot.fecha.strftime('%Y%m%d')}{cot.moneda.sk}"
-            cot.full_clean()
-            cot.save()
+            Cotizacion.objects.filter(pk=cot.pk).update(sk=f"{cot.fecha.strftime('%Y%m%d')}{cot.moneda.sk}")
 
 
 class Migration(migrations.Migration):

@@ -7,9 +7,7 @@ def populate_sk_from_fecha_and_cuenta(apps, schema_editor):
     SaldoDiario = apps.get_model('diario', 'saldodiario')
     for sd in SaldoDiario.objects.all():
         if sd.sk is None:
-            sd.sk = f"{sd.dia.fecha.strftime('%Y%m%d')}{sd.cuenta.sk}"
-            sd.full_clean()
-            sd.save()
+            SaldoDiario.objects.filter(pk=sd.pk).update(sk=f"{sd.dia.sk}{sd.cuenta.sk}")
 
 
 class Migration(migrations.Migration):
