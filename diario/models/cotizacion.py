@@ -26,10 +26,10 @@ class Cotizacion(MiModel):
         return f"Cotización {self.moneda} al {self.fecha}: {self.importe_compra} / {self.importe_venta}"
 
     def get_delete_url(self) -> str:
-        return reverse("cot_elim", args=[self.pk])
+        return reverse("cot_elim", args=[self.sk])
 
     def get_edit_url(self) -> str:
-        return reverse("cot_mod", args=[self.pk])
+        return reverse("cot_mod", args=[self.sk])
 
     @classmethod
     def tomar(cls, **kwargs):

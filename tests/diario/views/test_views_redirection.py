@@ -57,19 +57,7 @@ def test_post_redirige_a_url_recibida_en_querystring(
     objeto_origen = request.getfixturevalue(fixt_origen)
     data = request.getfixturevalue(post_data) if post_data else None
     origen = f"/diario/{tipo_origen}/{objeto_origen.sk}/"
-
-    # TODO: Reemplazar después de corregir en urls.py modo de selección de movimientos
-    #       Eliminar este párrafo y descomentar texto siguiente.
-    if fixt:
-        objeto = request.getfixturevalue(fixt)
-        if isinstance(objeto, Movimiento):
-            args = [objeto.pk]
-        else:
-            args = [objeto.sk]
-    else:
-        args = []
-
-    # args = [request.getfixturevalue(fixt).sk] if fixt else []
+    args = [request.getfixturevalue(fixt).sk] if fixt else []
 
     response = client.post(
         reverse(viewname, args=args) + f"?next={origen}",
@@ -93,17 +81,7 @@ def test_post_redirige_a_url_recibida_en_querystring(
 def test_post_redirige_a_home_si_no_recibe_url_en_querystring(
     client, viewname, fixt, post_data, request):
     data = request.getfixturevalue(post_data) if post_data else None
-
-    # TODO: Reemplazar después de corregir en urls.py modo de selección de movimientos
-    #       Eliminar este párrafo y descomentar texto siguiente.
-    if fixt:
-        objeto = request.getfixturevalue(fixt)
-        if isinstance(objeto, Movimiento):
-            args = [objeto.pk]
-        else:
-            args = [objeto.sk]
-    else:
-        args = []
+    args = [request.getfixturevalue(fixt).sk] if fixt else []
 
     response = client.post(
         reverse(viewname, args=args),

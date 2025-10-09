@@ -300,6 +300,8 @@ class MovNuevoView(CreateView):
 
 class MovElimView(DeleteView):
     model = Movimiento
+    slug_url_kwarg = 'sk'
+    slug_field = 'sk'
 
     def get_success_url(self):
         return self.request.GET.get("next", reverse("home"))
@@ -310,6 +312,8 @@ class MovModView(UpdateView):
     form_class = FormMovimiento
     template_name = 'diario/mov_form.html'
     context_object_name = 'mov'
+    slug_url_kwarg = 'sk'
+    slug_field = 'sk'
 
     def get_success_url(self):
         return self.request.GET.get("next", reverse("home"))
@@ -358,6 +362,8 @@ class MonCotNuevaView(CreateView):
 
 class CotElimView(DeleteView):
     model = Cotizacion
+    slug_url_kwarg = 'sk'
+    slug_field = 'sk'
 
     def get_success_url(self):
         return self.object.moneda.get_absolute_url()
@@ -366,6 +372,8 @@ class CotElimView(DeleteView):
 class CotModView(UpdateView):
     model = Cotizacion
     form_class = FormCotizacion
+    slug_url_kwarg = 'sk'
+    slug_field = 'sk'
 
     def get_success_url(self):
         return self.object.moneda.get_absolute_url()

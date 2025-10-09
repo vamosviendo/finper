@@ -205,10 +205,10 @@ class Movimiento(MiModel):
         return reverse("movimiento", args=[self.pk])
 
     def get_edit_url(self) -> str:
-        return reverse("mov_mod", args=[self.pk])
+        return reverse("mov_mod", args=[self.sk])
 
     def get_delete_url(self) -> str:
-        return reverse("mov_elim", args=[self.pk])
+        return reverse("mov_elim", args=[self.sk])
 
     def get_url(self, ente: Titular | Cuenta | None = None):
         try:

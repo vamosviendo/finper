@@ -308,10 +308,10 @@ class TestHomeLinks:
         browser.verificar_link('mov_nuevo', 'mov_nuevo', querydict={'next': '/'})
 
         # cuando cliqueamos en el link de editar movimiento, accedemos a la página de edición de ese movimiento
-        browser.verificar_link('mod_mov', 'mov_mod', [entrada.pk], querydict={'next': '/'}, criterio=By.CLASS_NAME)
+        browser.verificar_link('mod_mov', 'mov_mod', [entrada.sk], querydict={'next': '/'}, criterio=By.CLASS_NAME)
 
         # cuando cliqueamos en el link de borrar movimiento, accedemos a la página de confirmación
-        browser.verificar_link('elim_mov', 'mov_elim', [entrada.pk], querydict={'next': '/'}, criterio=By.CLASS_NAME)
+        browser.verificar_link('elim_mov', 'mov_elim', [entrada.sk], querydict={'next': '/'}, criterio=By.CLASS_NAME)
 
     def test_seccion_monedas(self, browser, peso, dolar):
 

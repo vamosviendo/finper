@@ -46,7 +46,7 @@ def test_detalle_moneda(browser, dolar, cotizacion_dolar, cotizacion_posterior_d
     browser.verificar_link(
         nombre="mod_cot",
         viewname="cot_mod",
-        args=[cot_muestra.pk],
+        args=[cot_muestra.sk],
         querydict={"next": current_url},
         criterio=By.CLASS_NAME,
         url_inicial=current_url,
@@ -54,7 +54,7 @@ def test_detalle_moneda(browser, dolar, cotizacion_dolar, cotizacion_posterior_d
     browser.verificar_link(
         nombre="elim_cot",
         viewname="cot_elim",
-        args=[cot_muestra.pk],
+        args=[cot_muestra.sk],
         querydict={"next": current_url},
         criterio=By.CLASS_NAME,
         url_inicial=current_url,
