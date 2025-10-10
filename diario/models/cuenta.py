@@ -72,7 +72,7 @@ class Cuenta(PolymorphModel):
         return reverse("cta_elim", args=[self.sk])
 
     def get_url_with_mov(self, mov: Movimiento) -> str:
-        return reverse("cuenta_movimiento", args=[self.sk, mov.pk])
+        return reverse("cuenta_movimiento", args=[self.sk, mov.sk])
 
     @classmethod
     def crear(cls, nombre: str, sk: str, cta_madre: 'CuentaAcumulativa' = None, finalizar=False, **kwargs) -> CuentaInteractiva:

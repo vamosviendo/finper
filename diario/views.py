@@ -86,7 +86,7 @@ class HomeView(TemplateView):
             movs = dia.movs(ente=ente)
 
         page = pag_de_fecha(str2date(fecha), ente)
-        args += [movs.last().pk]
+        args += [movs.last().sk]
 
         return redirect(
             reverse(f"{prefijo}movimiento", args=args) + f"?page={page}&redirected=1",
@@ -104,7 +104,7 @@ class HomeView(TemplateView):
 
         self.dias_pag = Paginator(ente_info["dias"].reverse(), 7).get_page(pag)
 
-        movimiento = Movimiento.tomar_o_nada(pk=kwargs.get("pk"))
+        movimiento = Movimiento.tomar_o_nada(sk=kwargs.get("sk_mov"))
         condition = (
             (pag and not movimiento) or
             (movimiento and movimiento.dia not in self.dias_pag)
@@ -119,7 +119,7 @@ class HomeView(TemplateView):
 
     @staticmethod
     def _get_context_comun(**kwargs):
-        movimiento = Movimiento.tomar(pk=kwargs["pk"]) if kwargs.get("pk") else None
+        movimiento = Movimiento.tomar_o_nada(sk=kwargs.get("sk_mov"))
         cuenta: Cuenta | CuentaInteractiva | CuentaAcumulativa = Cuenta.tomar(sk=kwargs["sk_cta"]) \
             if kwargs.get("sk_cta") else None
         titular = Titular.tomar(sk=kwargs["sk"]) if kwargs.get("sk") else None

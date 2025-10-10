@@ -20,10 +20,10 @@ from diario import views
 urlpatterns = [
     path('c/<slug:sk_cta>/', views.HomeView.as_view(), name='cuenta'),
     path('t/<slug:sk>/', views.HomeView.as_view(), name='titular'),
-    path('m/<int:pk>', views.HomeView.as_view(), name='movimiento'),
+    path('m/<slug:sk_mov>', views.HomeView.as_view(), name='movimiento'),
     path('mn/<slug:sk>/', views.MonedaView.as_view(), name='moneda'),
-    path('cm/<slug:sk_cta>/<int:pk>', views.HomeView.as_view(), name='cuenta_movimiento'),
-    path('tm/<slug:sk>/<int:pk>', views.HomeView.as_view(), name='titular_movimiento'),
+    path('cm/<slug:sk_cta>/<slug:sk_mov>', views.HomeView.as_view(), name='cuenta_movimiento'),
+    path('tm/<slug:sk>/<slug:sk_mov>', views.HomeView.as_view(), name='titular_movimiento'),
     path('cta_nueva', views.CtaNuevaView.as_view(), name='cta_nueva'),
     path('cta_elim/<slug:sk>', views.CtaElimView.as_view(), name='cta_elim'),
     path('cta_mod/<slug:sk>', views.CtaModView.as_view(), name='cta_mod'),

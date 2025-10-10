@@ -43,7 +43,7 @@ def test_modificar_titular(browser, titular, fecha_anterior):
 def test_crear_o_modificar_titular_redirige_a_pagina_desde_donde_se_invoco(
         browser, origen, destino, titular, cuenta, fecha, entrada, entrada_anterior):
     if "m/" in origen:
-        origen = f"{origen}{entrada_anterior.pk}"
+        origen = f"{origen}{entrada_anterior.sk}"
     if destino == "id_link_tit_mod_":
         destino = f"{destino}{titular.sk}"
     browser.ir_a_pag(origen)
@@ -97,7 +97,7 @@ def test_eliminar_titular(browser, titular, otro_titular):
 @pytest.mark.parametrize("origen", ["/", "/diario/c/c/", "/diario/m/", "/diario/cm/c/"])
 def test_eliminar_titular_redirige_a_pagina_desde_la_que_se_invoco(browser, origen, titular, cuenta, cuenta_ajena, entrada):
     if "m/" in origen:
-        origen = f"{origen}{entrada.pk}"
+        origen = f"{origen}{entrada.sk}"
     browser.ir_a_pag(origen)
     browser.pulsar(f"id_link_tit_elim_{titular.sk}")
     browser.pulsar("id_btn_confirm")

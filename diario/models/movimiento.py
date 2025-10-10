@@ -202,7 +202,7 @@ class Movimiento(MiModel):
         ordering = ('dia', 'orden_dia')
 
     def get_absolute_url(self) -> str:
-        return reverse("movimiento", args=[self.pk])
+        return reverse("movimiento", args=[self.sk])
 
     def get_edit_url(self) -> str:
         return reverse("mov_mod", args=[self.sk])
@@ -366,10 +366,6 @@ class Movimiento(MiModel):
 
     @classmethod
     def tomar(cls, **kwargs) -> Movimiento:
-        if "sk" in kwargs.keys():
-            kwargs["fecha"] = str2date(kwargs["sk"][:8])
-            kwargs["orden_dia"] = kwargs["sk"][8:]
-            kwargs.pop("sk")
         if "fecha" in kwargs.keys():
             kwargs["dia"] = Dia.tomar(fecha=kwargs.pop("fecha"))
 

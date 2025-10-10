@@ -160,8 +160,8 @@ def test_detalle_movimiento_en_fechas_anteriores(browser, muchos_dias, fecha, or
     movimientos = browser.esperar_elementos("class_row_mov")
     assert "mov_selected" not in movimientos[1].get_attribute("class")
 
-    pk = int(urlparse(links_movimiento[1].get_attribute("href")).path.split("/")[-1])
-    mov = Movimiento.tomar(pk=pk)
+    sk_mov = int(urlparse(links_movimiento[1].get_attribute("href")).path.split("/")[-1])
+    mov = Movimiento.tomar(sk=sk_mov)
     url_destino = mov.get_url(ente)
     links_movimiento[1].click()
 

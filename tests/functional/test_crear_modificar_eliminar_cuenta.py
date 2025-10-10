@@ -33,7 +33,7 @@ def test_crear_cuenta(browser, titular, fecha):
 def test_crear_o_modificar_cuenta_redirige_a_pagina_desde_donde_se_invoco(
         browser, origen, destino, titular, cuenta, fecha, entrada, entrada_anterior):
     if "m/" in origen:
-        origen = f"{origen}{entrada_anterior.pk}"
+        origen = f"{origen}{entrada_anterior.sk}"
     if destino == "id_link_cta_mod_":
         destino = f"{destino}{cuenta.sk}"
     browser.ir_a_pag(origen)
@@ -121,7 +121,7 @@ def test_eliminar_cuenta(browser, cuenta, cuenta_2):
 @pytest.mark.parametrize("origen", ["/", "/diario/t/titular/", "/diario/m/", "/diario/tm/titular/"])
 def test_eliminar_cuenta_redirige_a_pagina_desde_la_que_se_invoco(browser, origen, cuenta, cuenta_2, entrada):
     if "m/" in origen:
-        origen = f"{origen}{entrada.pk}"
+        origen = f"{origen}{entrada.sk}"
     browser.ir_a_pag(origen)
     browser.pulsar(f"id_link_cta_elim_{cuenta_2.sk}")
     browser.pulsar("id_btn_confirm")

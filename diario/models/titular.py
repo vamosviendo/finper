@@ -45,7 +45,7 @@ class Titular(MiModel):
         return reverse("tit_elim", args=[self.sk])
 
     def get_url_with_mov(self, mov: Movimiento) -> str:
-        return reverse("titular_movimiento", args=[self.sk, mov.pk])
+        return reverse("titular_movimiento", args=[self.sk, mov.sk])
 
     def natural_key(self) -> tuple[str]:
         return (self.sk, )

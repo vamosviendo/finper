@@ -240,7 +240,7 @@ def test_home_monedas(
                 assert "mon_cuenta" not in classname
 
     # Si seleccionamos un movimiento, la cotización cambia para mostrar la del día del movimiento seleccionado.
-    browser.ir_a_pag(reverse("movimiento", args=[entrada_anterior.pk]))
+    browser.ir_a_pag(reverse("movimiento", args=[entrada_anterior.sk]))
     for moneda, cot in ((dolar, cotizacion_dolar), (euro, cotizacion_anterior_euro)):
         cot_pag_c = browser.esperar_elemento(f"id_cotizacion_c_{moneda.sk}")
         cot_pag_v = browser.esperar_elemento(f"id_cotizacion_v_{moneda.sk}")
@@ -251,7 +251,7 @@ def test_home_monedas(
 
     # Si seleccionamos un movimiento de un día en el que no hay cotización, se muestra la última
     # cotización anterior a la fecha del movimiento
-    browser.ir_a_pag(reverse("movimiento", args=[salida.pk]))
+    browser.ir_a_pag(reverse("movimiento", args=[salida.sk]))
     for moneda, cot in ((dolar, cotizacion_dolar), (euro, cotizacion_anterior_euro)):
         cot_pag_c = browser.esperar_elemento(f"id_cotizacion_c_{moneda.sk}")
         cot_pag_v = browser.esperar_elemento(f"id_cotizacion_v_{moneda.sk}")

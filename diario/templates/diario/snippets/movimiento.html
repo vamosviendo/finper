@@ -1,6 +1,6 @@
 {% load urltags %}
 
-<tr id="id_row_mov_{{ mov.sk }}" class="class_row_mov{% if mov.pk == pk %} mov_selected{% endif %}">
+<tr id="id_row_mov_{{ mov.sk }}" class="class_row_mov{% if mov.sk == sk_mov %} mov_selected{% endif %}">
 
   <td class="class_td_orden_dia">{{ mov.orden_dia }}</td>
 

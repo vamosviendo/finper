@@ -500,7 +500,7 @@ def test_convertir_entrada_en_traspaso_entre_titulares(browser, entrada, cuenta_
 def test_crear_o_modificar_movimiento_vuelve_a_la_pagina_desde_la_que_se_lo_invoco(
         browser, origen, destino, valores, titular, cuenta, entrada, entrada_anterior, entrada_cuenta_ajena):
     if "m/" in origen:
-        origen = f"{origen}{entrada_anterior.pk}"
+        origen = f"{origen}{entrada_anterior.sk}"
     if destino == "#id_row_mov_xxx .class_link_mod_mov":
         destino = destino.replace("xxx", entrada.sk)
 
@@ -548,7 +548,7 @@ def test_eliminar_movimiento(browser, entrada, salida):
 def test_eliminar_movimiento_vuelve_a_la_pagina_desde_que_se_lo_invoco(
         browser, origen, titular, cuenta, entrada, entrada_anterior, entrada_cuenta_ajena):
     if "m/" in origen:
-        origen = f"{origen}{entrada_anterior.pk}"
+        origen = f"{origen}{entrada_anterior.sk}"
     browser.ir_a_pag(origen)
     browser.pulsar(f"#id_row_mov_{entrada.sk} .class_link_elim_mov", By.CSS_SELECTOR)
     browser.pulsar("id_btn_confirm")
