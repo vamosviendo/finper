@@ -17,12 +17,12 @@ def test_crear_moneda(browser, cuenta_con_saldo, cuenta_con_saldo_negativo, cuen
 
     # Vemos que la moneda creada aparece entre las monedas de la página de
     # inicio, con su cotización para la compra y para la venta al lado
-    links_moneda = browser.esperar_elementos("class_link_moneda")
+    links_moneda = browser.encontrar_elementos("class_link_moneda")
     nombres_moneda = [x.text.strip() for x in links_moneda]
     assert "moneda nueva" in nombres_moneda
-    cot_moneda = browser.esperar_elemento("id_cotizacion_c_mn")
+    cot_moneda = browser.encontrar_elemento("id_cotizacion_c_mn")
     assert cot_moneda.text == float_format(1)
-    cot_moneda = browser.esperar_elemento("id_cotizacion_v_mn")
+    cot_moneda = browser.encontrar_elemento("id_cotizacion_v_mn")
     assert cot_moneda.text == float_format(1)
 
 
@@ -42,7 +42,7 @@ def test_modificar_moneda(browser, dolar):
     # Somos dirigidos a la página principal donde verificamos que el nombre
     # de la moneda cambió de acuerdo a lo que ingresamos
     browser.assert_url(reverse('home'))
-    nombre_moneda = browser.esperar_elemento("id_link_mon_dc").text
+    nombre_moneda = browser.encontrar_elemento("id_link_mon_dc").text
     assert nombre_moneda == "dolar canadiense"
 
 
@@ -51,7 +51,7 @@ def test_eliminar_moneda(browser, dolar, euro):
     # Verificamos que antes de la eliminación la moneda aparece entre las de
     # la página
     browser.ir_a_pag(reverse('home'))
-    links_moneda = browser.esperar_elementos("class_link_moneda")
+    links_moneda = browser.encontrar_elementos("class_link_moneda")
     nombres_moneda = [x.text.strip() for x in links_moneda]
     assert nombre_moneda in nombres_moneda
 
@@ -62,7 +62,7 @@ def test_eliminar_moneda(browser, dolar, euro):
     # Somos dirigidos a la página principal donde verificamos que el nombre
     # de la moneda ya no aparece entre las de la página
     browser.assert_url(reverse("home"))
-    links_moneda = browser.esperar_elementos("class_link_moneda")
+    links_moneda = browser.encontrar_elementos("class_link_moneda")
     nombres_moneda = [x.text.strip() for x in links_moneda]
     assert nombre_moneda not in nombres_moneda
 

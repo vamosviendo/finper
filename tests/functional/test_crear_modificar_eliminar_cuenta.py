@@ -23,7 +23,7 @@ def test_crear_cuenta(browser, titular, fecha):
 
     # Vemos que la cuenta creada aparece entre las cuentas de la página de
     # inicio
-    links_cuenta = browser.esperar_elementos("class_link_cuenta")
+    links_cuenta = browser.encontrar_elementos("class_link_cuenta")
     nombres_cuenta = [x.text.strip() for x in links_cuenta]
     assert "cuenta nueva" in nombres_cuenta
 
@@ -87,7 +87,7 @@ def test_crear_cuenta_en_otra_moneda(browser, titular, fecha, dolar):
     )
     # Vemos que la cuenta creada tiene resaltado como saldo principal el saldo
     # en dólares
-    saldo_cuenta = browser.esperar_elemento("id_row_cta_cd").esperar_elemento("mon_cuenta", By.CLASS_NAME)
+    saldo_cuenta = browser.encontrar_elemento("id_row_cta_cd").encontrar_elemento("mon_cuenta", By.CLASS_NAME)
     assert saldo_cuenta.get_attribute("id") == f"id_saldo_cta_cd_{dolar.sk}"
 
 
@@ -103,7 +103,7 @@ def test_modificar_cuenta(browser, cuenta_ajena, dolar, fecha_anterior):
         sk="ccnm",
     )
     browser.assert_url(reverse("home"))
-    nombre_cuenta = browser.esperar_elemento("id_link_cta_ccnm").text.strip()
+    nombre_cuenta = browser.encontrar_elemento("id_link_cta_ccnm").text.strip()
     assert nombre_cuenta == "cuenta con nombre modificado"
 
 
@@ -114,7 +114,7 @@ def test_eliminar_cuenta(browser, cuenta, cuenta_2):
     browser.ir_a_pag(cuenta.get_delete_url())
     browser.pulsar('id_btn_confirm')
     browser.assert_url(reverse('home'))
-    nombres_cuenta = [x.text.strip() for x in browser.esperar_elementos('class_link_cuenta')]
+    nombres_cuenta = [x.text.strip() for x in browser.encontrar_elementos('class_link_cuenta')]
     assert nombre_cuenta not in nombres_cuenta
 
 

@@ -19,10 +19,10 @@ def test_dividir_cuenta(browser, cuenta, otro_titular):
     # Somos dirigidos a la página de la cuenta, donde comprobamos que
     # ahora incluye las dos subcuentas recién creadas
     browser.assert_url(cuenta.get_absolute_url())
-    titulo = browser.esperar_elemento('id_titulo_saldo_gral').text
+    titulo = browser.encontrar_elemento('id_titulo_saldo_gral').text
     assert cuenta.nombre in titulo
     subcuentas = [
-        sc.text for sc in browser.esperar_elementos('class_link_cuenta')
+        sc.text for sc in browser.encontrar_elementos('class_link_cuenta')
     ]
     assert subcuentas == ['primera subcuenta', 'segunda subcuenta']
 
@@ -48,12 +48,12 @@ def test_dividir_cuenta_con_saldo_y_fecha(
     # las subcuentas recién creadas y los movimientos de traspaso
     # correspondientes en el día de la fecha ingresada en el formulario
     subcuentas = [
-        sc.text for sc in browser.esperar_elementos('class_link_cuenta')
+        sc.text for sc in browser.encontrar_elementos('class_link_cuenta')
     ]
     assert subcuentas == ['primera subcuenta', 'segunda subcuenta']
 
     div_dia = browser.esperar_dia(fecha_posterior)
     movs_traspaso = [
-        m for m in div_dia.esperar_elementos("class_row_mov")
-        if m.esperar_elemento("class_td_concepto", By.CLASS_NAME).text.strip() == "Traspaso de saldo"]
+        m for m in div_dia.encontrar_elementos("class_row_mov")
+        if m.encontrar_elemento("class_td_concepto", By.CLASS_NAME).text.strip() == "Traspaso de saldo"]
     assert len(movs_traspaso) == 2

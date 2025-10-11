@@ -80,7 +80,7 @@ def test_detalle_titular(
     browser.comparar_capital_de(titular)
 
     # Y vemos que en la sección de titulares aparecen todos los titulares
-    divs_titular = browser.esperar_elementos("class_div_titular")
+    divs_titular = browser.encontrar_elementos("class_div_titular")
     assert len(divs_titular) == Titular.cantidad()
     nombres = texto_en_hijos_respectivos("class_div_nombre_titular", divs_titular)
     assert nombres[0] == Titular.primere().nombre
@@ -88,13 +88,13 @@ def test_detalle_titular(
 
     # Y vemos que el titular seleccionado aparece resaltado entre los demás
     # titulares
-    tds_titular = browser.esperar_elementos("class_td_titular")
+    tds_titular = browser.encontrar_elementos("class_td_titular")
     tds_titular_selected = [
         x for x in tds_titular if "selected" in x.get_attribute("class")
     ]
     assert len(tds_titular_selected) == 1
     div_titular_selected = \
-        tds_titular_selected[0].esperar_elemento(
+        tds_titular_selected[0].encontrar_elemento(
             "class_div_nombre_titular", By.CLASS_NAME
         )
     assert div_titular_selected.text == titular.nombre
@@ -110,28 +110,28 @@ def test_detalle_titular(
     # En el encabezado de cada día, no se muestra el saldo diario general sino
     # el capital diario del titular.
     browser.ir_a_pag(titular.get_absolute_url())
-    dias_pag = browser.esperar_elementos("class_div_dia")
+    dias_pag = browser.encontrar_elementos("class_div_dia")
 
     for dia in dias_pag:
-        saldo_dia = dia.esperar_elemento("class_span_saldo_dia", By.CLASS_NAME)
-        fecha_dia = dia.esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text[-10:]
+        saldo_dia = dia.encontrar_elemento("class_span_saldo_dia", By.CLASS_NAME)
+        fecha_dia = dia.encontrar_elemento("class_span_fecha_dia", By.CLASS_NAME).text[-10:]
         assert saldo_dia.text == float_format(titular.capital(dia=Dia.tomar(fecha=fecha_dia)))
 
     # Si cliqueamos en un movimiento, solo aparecen los movimientos del
     # titular en la sección de movimientos, con el movimiento cliqueado
     # resaltado
-    dias_pag = browser.esperar_elementos("class_div_dia")
-    dias_pag[1].esperar_elementos("class_row_mov")[0].esperar_elemento(
+    dias_pag = browser.encontrar_elementos("class_div_dia")
+    dias_pag[1].encontrar_elementos("class_row_mov")[0].encontrar_elemento(
         "class_link_movimiento", By.CLASS_NAME
     ).click()
 
     browser.comparar_dias_de(titular)
-    movs_pagina = browser.esperar_elementos("class_row_mov")
+    movs_pagina = browser.encontrar_elementos("class_row_mov")
     assert "mov_selected" in movs_pagina[1].get_attribute("class")
 
     # Y vemos que en el saldo de la página aparece el capital histórico del
     # titular al momento del movimiento
-    nombre_titular = browser.esperar_elemento(
+    nombre_titular = browser.encontrar_elemento(
         'id_titulo_saldo_gral'
     ).text.strip()
     movimiento = titular.dias().reverse()[1].movimientos[0]
@@ -146,20 +146,20 @@ def test_detalle_titular(
     # pertenezca al titular
     browser.comparar_cuentas_de(titular)
     saldos_historicos = [
-        x.text for x in browser.esperar_elementos("class_saldo_cuenta")]
+        x.text for x in browser.encontrar_elementos("class_saldo_cuenta")]
     for index, cta in enumerate(titular.cuentas.all()):
         assert saldos_historicos[index] == float_format(cta.saldo(movimiento))
 
     # Y al lado de cada titular aparece el capital histórico del titular al
     # momento del movimiento seleccionado.
     capitales_historicos = [
-        x.text for x in browser.esperar_elementos("class_capital_titular")]
+        x.text for x in browser.encontrar_elementos("class_capital_titular")]
     for index, titular in enumerate(Titular.todes()):
         assert capitales_historicos[index] == float_format(titular.capital(movimiento))
 
     # Y vemos una opción "Home" debajo de todos los titulares
     # Y cuando cliqueamos en la opción "Home" somos dirigidos a la página principal
-    browser.esperar_elemento("id_link_home").click()
+    browser.encontrar_elemento("id_link_home").click()
     browser.assert_url(reverse('home'))
 
 
@@ -197,7 +197,7 @@ def test_busqueda_de_fecha_en_detalle_de_titular(browser, titular, cuenta_ajena,
 
     # En la página se muestran solamente los días con movimientos de la cuenta.
     # No se muestran los demás días.
-    fechas_pag = [str2date(x.text[-10:]) for x in browser.esperar_elementos("class_span_fecha_dia")]
+    fechas_pag = [str2date(x.text[-10:]) for x in browser.encontrar_elementos("class_span_fecha_dia")]
     assert dia.fecha in fechas_pag
     assert dia_no_titular.fecha not in fechas_pag
 
@@ -205,12 +205,12 @@ def test_busqueda_de_fecha_en_detalle_de_titular(browser, titular, cuenta_ajena,
     # a la cuenta, esos movimientos no se muestran.
     assert dia2.fecha in fechas_pag, "Justo ese movimiento no se encuentra entre las fechas de la página. Probar con otro"
     dia_pag = next(
-        x for x in browser.esperar_elementos("class_div_dia")
-        if str2date(x.esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text[-10:]) == dia2.fecha
+        x for x in browser.encontrar_elementos("class_div_dia")
+        if str2date(x.encontrar_elemento("class_span_fecha_dia", By.CLASS_NAME).text[-10:]) == dia2.fecha
     )
     ordenes_dia_movs_dia = [
-        x.esperar_elemento("class_td_orden_dia", By.CLASS_NAME).text
-        for x in dia_pag.esperar_elementos("class_row_mov")
+        x.encontrar_elemento("class_td_orden_dia", By.CLASS_NAME).text
+        for x in dia_pag.encontrar_elementos("class_row_mov")
     ]
     assert str(mov_titular_dia2.orden_dia) in ordenes_dia_movs_dia
     assert str(mov_no_titular_dia2.orden_dia) not in ordenes_dia_movs_dia

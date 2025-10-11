@@ -16,20 +16,20 @@ def test_movimientos_agrupados_por_dia(browser, conjunto_movimientos_varios_dias
     # de los últimos 7 días, ordenados por fecha descendente.
     # Si no hay movimientos en un día determinado, éste no aparece.
     browser.ir_a_pag()
-    dias = browser.esperar_elementos("class_div_dia")
-    fechas = [x.esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text for x in dias]
+    dias = browser.encontrar_elementos("class_div_dia")
+    fechas = [x.encontrar_elemento("class_span_fecha_dia", By.CLASS_NAME).text for x in dias]
     dias_con_movimientos = [x for x in Dia.todes() if x.movimientos.count() > 0]
     assert len(dias) == 7
     assert "13" not in [x.split("-")[-1] for x in fechas]
     for i, dia_bd in enumerate(reversed(dias_con_movimientos[-7:])):
         assert \
-            dias[i].esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text == \
+            dias[i].encontrar_elemento("class_span_fecha_dia", By.CLASS_NAME).text == \
             dia_bd.str_dia_semana()
 
     # Los movimientos aparecen agrupados por día
     for dia in dias:
-        movs_dia = dia.esperar_elementos("class_row_mov")
-        str_fecha = dia.esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text
+        movs_dia = dia.encontrar_elementos("class_row_mov")
+        str_fecha = dia.encontrar_elemento("class_span_fecha_dia", By.CLASS_NAME).text
         fecha = datetime.strptime(str_fecha.split()[1], "%Y-%m-%d")
         obj_dia = Dia.tomar(fecha=fecha)
         ult_mov = movs.filter(dia=obj_dia).last()
@@ -37,7 +37,7 @@ def test_movimientos_agrupados_por_dia(browser, conjunto_movimientos_varios_dias
         assert len(movs_dia) > 0
 
         # y cada día incluye el saldo histórico a esa fecha
-        saldo_dia = dia.esperar_elemento("class_span_saldo_dia", By.CLASS_NAME).text
+        saldo_dia = dia.encontrar_elemento("class_span_saldo_dia", By.CLASS_NAME).text
         assert saldo_dia == float_format(saldo_ult_mov)
 
     # Si un día no tiene movimientos, no aparece

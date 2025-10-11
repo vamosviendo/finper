@@ -20,7 +20,7 @@ class FinperWebElement(MiWebElement):
         """ Devuelve un str con el contenido de texto del elemento hijo
         que coincide con una clase css dada.
         """
-        return self.esperar_elemento(classname, By.CLASS_NAME).text
+        return self.encontrar_elemento(classname, By.CLASS_NAME).text
 
 
 class FinperFirefox(MiFirefox):
@@ -41,13 +41,13 @@ class FinperFirefox(MiFirefox):
         assert url == url_real, f"Url real '{url_real}' no coincide con url propuesta '{url}'"
 
     def cliquear_en_cuenta(self, cuenta):
-        self.esperar_elemento(cuenta.nombre, By.LINK_TEXT).click()
+        self.encontrar_elemento(cuenta.nombre, By.LINK_TEXT).click()
 
     def cliquear_en_moneda(self, moneda):
-        self.esperar_elemento(moneda.nombre, By.LINK_TEXT).click()
+        self.encontrar_elemento(moneda.nombre, By.LINK_TEXT).click()
 
     def cliquear_en_titular(self, titular):
-        self.esperar_elemento(titular.nombre, By.LINK_TEXT).click()
+        self.encontrar_elemento(titular.nombre, By.LINK_TEXT).click()
 
     def esperar_movimiento(self, columna: str, contenido: str) -> MiWebElement:
         try:
@@ -62,34 +62,34 @@ class FinperFirefox(MiFirefox):
             concepto: str,
             ocurrencia: int = 0
     ) -> dict[str, str]:
-        titulos = self.esperar_elemento("class_thead_movimientos", By.CLASS_NAME)
+        titulos = self.encontrar_elemento("class_thead_movimientos", By.CLASS_NAME)
         movimiento = self.esperar_movimientos("concepto", concepto)[ocurrencia]
         return dict(zip(textos_hijos(titulos, "th"), textos_hijos(movimiento, "td")))
 
     def esperar_movimientos(self, columna: str, contenido: str) -> list[MiWebElement]:
         return [
-            x for x in self.esperar_elementos("class_row_mov", By.CLASS_NAME, fail=False)
-            if x.esperar_elemento(f"class_td_{columna}", By.CLASS_NAME).text == contenido
+            x for x in self.encontrar_elementos("class_row_mov", By.CLASS_NAME, fail=False)
+            if x.encontrar_elemento(f"class_td_{columna}", By.CLASS_NAME).text == contenido
         ]
 
     def esperar_dia(self, fecha: date) -> MiWebElement:
         return next(
-            x for x in self.esperar_elementos("class_div_dia")
-            if x.esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text ==
+            x for x in self.encontrar_elementos("class_div_dia")
+            if x.encontrar_elemento("class_span_fecha_dia", By.CLASS_NAME).text ==
             f"{dia_de_la_semana[fecha.weekday()]} {fecha.strftime('%Y-%m-%d')}"
         )
 
     def esperar_saldo_en_moneda_de_cuenta(self, sk: str) -> MiWebElement:
         return self\
-            .esperar_elemento(f'id_row_cta_{sk}')\
-            .esperar_elemento(f'.class_saldo_cuenta.mon_cuenta', By.CSS_SELECTOR)
+            .encontrar_elemento(f'id_row_cta_{sk}')\
+            .encontrar_elemento(f'.class_saldo_cuenta.mon_cuenta', By.CSS_SELECTOR)
 
     def esperar_cotizacion(self, fecha: date) -> MiWebElement:
-        cotizaciones = self.esperar_elementos("class_row_cot")
+        cotizaciones = self.encontrar_elementos("class_row_cot")
         fecha_formateada = fecha.strftime("%Y-%m-%d")
 
         for cotizacion in cotizaciones:
-            fecha_cot = cotizacion.esperar_elemento("class_td_fecha", By.CLASS_NAME).text
+            fecha_cot = cotizacion.encontrar_elemento("class_td_fecha", By.CLASS_NAME).text
             if fecha_cot == fecha_formateada:
                 return cotizacion
         raise NoSuchElementException(f"No se encontró cotización con fecha {fecha_formateada}")
@@ -100,7 +100,7 @@ class FinperFirefox(MiFirefox):
             Si las comparaciones son correctas, devuelve lista de días de la página.
         """
         dias_db = ente.dias().reverse()[:7]
-        dias_pag = self.esperar_elementos("class_div_dia")
+        dias_pag = self.encontrar_elementos("class_div_dia")
 
         assert dias_db.count() == len(dias_pag)
         for index, dia in enumerate(dias_pag):
@@ -121,7 +121,7 @@ class FinperFirefox(MiFirefox):
             dia_web: MiWebElement,
             dia_db: Dia,
             ente: Cuenta | Titular | None = None):
-        movs_dia_web = dia_web.esperar_elementos("class_row_mov")
+        movs_dia_web = dia_web.encontrar_elementos("class_row_mov")
         movs_dia_db = dia_db.movs(ente)
         assert len(movs_dia_web) == movs_dia_db.count()
 
@@ -140,7 +140,7 @@ class FinperFirefox(MiFirefox):
     def comparar_titular(self, titular: Titular):
         """ Dado un titular, comparar su nombre con el que encabeza la
             página. """
-        nombre_titular = self.esperar_elemento(
+        nombre_titular = self.encontrar_elemento(
             'id_titulo_saldo_gral'
         ).text.strip()
         assert nombre_titular == f"Capital de {titular.nombre}:"
@@ -152,7 +152,7 @@ class FinperFirefox(MiFirefox):
         nombres_titular = [cuenta.titular.nombre] if isinstance(cuenta, CuentaInteractiva) \
             else [x.nombre for x in cuenta.titulares]
         textos_titular = [
-            x.text for x in self.esperar_elementos(
+            x.text for x in self.encontrar_elementos(
                 ".menu-item-content.class_div_nombre_titular",
                 By.CSS_SELECTOR
             )
@@ -162,14 +162,14 @@ class FinperFirefox(MiFirefox):
     def comparar_capital_de(self, titular: Titular):
         """ Dado un titular, comparar su capital con el que aparece en la
         página. """
-        cap = self.esperar_elemento('id_importe_saldo_gral').text.strip()
+        cap = self.encontrar_elemento('id_importe_saldo_gral').text.strip()
         assert cap == float_format(titular.capital())
 
     def comparar_capital_historico_de(self, titular: Titular, movimiento: Movimiento):
         """ Dado un titular y un movimiento, comparar el capital histórico del
             titular al momento del movimiento con el que aparece como saldo
             general de la página"""
-        cap = self.esperar_elemento('id_importe_saldo_gral').text.strip()
+        cap = self.encontrar_elemento('id_importe_saldo_gral').text.strip()
         assert cap == float_format(titular.capital(movimiento))
 
     def comparar_cuentas_de(self, titular: Titular):
@@ -177,7 +177,7 @@ class FinperFirefox(MiFirefox):
             la página. """
         divs_cuenta = [
             x.text.strip()
-            for x in self.esperar_elementos('class_link_cuenta')
+            for x in self.encontrar_elementos('class_link_cuenta')
         ]
         nombres_cuenta = [
             x.nombre
@@ -189,7 +189,7 @@ class FinperFirefox(MiFirefox):
     def comparar_cuenta(self, cuenta: Cuenta):
         """ Dada una cuenta, comparar su nombre con el que encabeza la página.
         """
-        titulo = self.esperar_elemento('id_div_saldo_gral').text.strip()
+        titulo = self.encontrar_elemento('id_div_saldo_gral').text.strip()
         assert titulo == \
                f"{cuenta.nombre} (fecha alta: {cuenta.fecha_creacion}): " \
                f"{float_format(cuenta.saldo())}"
@@ -198,7 +198,7 @@ class FinperFirefox(MiFirefox):
         """ Dada una cuenta acumulativa, comparar sus subcuentas con las que
             aparecen en la página. """
         nombres_subcuenta = [
-            x.text for x in self.esperar_elementos('class_link_cuenta')]
+            x.text for x in self.encontrar_elementos('class_link_cuenta')]
         assert nombres_subcuenta == [
             x.nombre for x in cuenta.subcuentas.all()
         ]
@@ -206,13 +206,13 @@ class FinperFirefox(MiFirefox):
     def comparar_saldo_de(self, cuenta: Cuenta):
         """ Dada una cuenta, comparar su saldo con el que aparece en la página.
         """
-        saldo = self.esperar_elemento('id_importe_saldo_gral').text.strip()
+        saldo = self.encontrar_elemento('id_importe_saldo_gral').text.strip()
         assert saldo == float_format(cuenta.saldo())
 
     def comparar_saldo_historico_de(self, cuenta: Cuenta, movimiento: Movimiento):
         """ Dada una cuenta, comparar su saldo con el que aparece en la página.
         """
-        saldo = self.esperar_elemento('id_importe_saldo_gral').text.strip()
+        saldo = self.encontrar_elemento('id_importe_saldo_gral').text.strip()
         assert saldo == float_format(cuenta.saldo(movimiento))
 
     def verificar_link(
@@ -239,7 +239,7 @@ class FinperFirefox(MiFirefox):
         else:
             querystring = ""
 
-        self.esperar_elemento(f"{tipo}_link_{nombre}", criterio).click()
+        self.encontrar_elemento(f"{tipo}_link_{nombre}", criterio).click()
         self.assert_url(reverse(viewname, args=args) + querystring)
 
     def crear_movimiento(self, **kwargs):
@@ -260,7 +260,7 @@ def texto_en_hijos_respectivos(
 
 
 def textos_hijos(elemento: MiWebElement, tag_subelem: str) -> List[str]:
-    return [x.text for x in elemento.esperar_elementos(tag_subelem, By.TAG_NAME)]
+    return [x.text for x in elemento.encontrar_elementos(tag_subelem, By.TAG_NAME)]
 
 
 def assert_exists(sk: str, cls: Type[MiModel]):

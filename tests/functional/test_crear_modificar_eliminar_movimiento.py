@@ -31,12 +31,12 @@ def test_crear_movimiento(browser, cuenta, entrada, salida_posterior, dia_tardio
     browser.ir_a_pag(reverse("mov_nuevo"))
 
     # Al entrar a la página veo un formulario de movimiento
-    form_mov = browser.esperar_elemento("id_form_movimiento")
+    form_mov = browser.encontrar_elemento("id_form_movimiento")
 
     # El campo "fecha" del formulario tiene la fecha del último día con movimientos
     # como valor por defecto
     assert \
-        form_mov.esperar_elemento("id_fecha").get_attribute("value") == \
+        form_mov.encontrar_elemento("id_fecha").get_attribute("value") == \
         salida_posterior.dia.fecha.strftime('%Y-%m-%d')
 
     # Cargamos los valores necesarios para generar un movimiento nuevo
@@ -44,17 +44,17 @@ def test_crear_movimiento(browser, cuenta, entrada, salida_posterior, dia_tardio
 
     # En la lista de movimientos del día, aparece un movimiento nuevo
     dia = browser.esperar_dia(date(2010, 12, 5))
-    movs_dia = dia.esperar_elementos("class_row_mov")
+    movs_dia = dia.encontrar_elementos("class_row_mov")
     assert len(movs_dia) == 1
 
     # Los valores del movimiento aparecido coinciden con los que ingresamos en
     # el formulario de carga
     mov = movs_dia[0]
     importe_localizado = float_format(valores["importe"])
-    cuenta_mov = mov.esperar_elemento("class_td_cta_entrada", By.CLASS_NAME).text
+    cuenta_mov = mov.encontrar_elemento("class_td_cta_entrada", By.CLASS_NAME).text
 
-    assert mov.esperar_elemento("class_td_concepto", By.CLASS_NAME).text == valores["concepto"]
-    assert mov.esperar_elemento(f"class_td_importe", By.CLASS_NAME).text == \
+    assert mov.encontrar_elemento("class_td_concepto", By.CLASS_NAME).text == valores["concepto"]
+    assert mov.encontrar_elemento(f"class_td_importe", By.CLASS_NAME).text == \
         importe_localizado
     assert cuenta_mov == cuenta.nombre
 
@@ -64,7 +64,7 @@ def test_crear_movimiento(browser, cuenta, entrada, salida_posterior, dia_tardio
     saldo_gral_localizado = float_format(saldo_gral + valores["importe"])
     assert browser.esperar_saldo_en_moneda_de_cuenta(cuenta.sk).text == saldo_localizado
     assert \
-        browser.esperar_elemento('id_importe_saldo_gral').text == \
+        browser.encontrar_elemento('id_importe_saldo_gral').text == \
         saldo_gral_localizado
 
     # Si al cargar un nuevo movimiento pulsamos el botón "Guardar y agregar",
@@ -80,8 +80,8 @@ def test_crear_movimiento(browser, cuenta, entrada, salida_posterior, dia_tardio
 def test_cuentas_acumulativas_no_aparecen_entre_las_opciones_de_cuenta(
         browser, cuenta, cuenta_acumulativa):
     browser.ir_a_pag(reverse('mov_nuevo'))
-    opciones_ce = browser.esperar_opciones_de_campo("cta_entrada")
-    opciones_cs = browser.esperar_opciones_de_campo("cta_salida")
+    opciones_ce = browser.opciones_de_campo("cta_entrada")
+    opciones_cs = browser.opciones_de_campo("cta_salida")
     assert cuenta.nombre.lower() in opciones_ce
     assert cuenta.nombre.lower() in opciones_cs
     assert \
@@ -134,18 +134,18 @@ def test_crear_creditos_o_devoluciones(
 
     # - a diferencia del movimiento creado manualmente, no muestra botones
     #   de editar o borrar.
-    assert mov.esperar_elemento("class_link_elim_mov", By.CLASS_NAME).text == "B"
-    assert mov.esperar_elemento("class_link_mod_mov", By.CLASS_NAME).text == "E"
+    assert mov.encontrar_elemento("class_link_elim_mov", By.CLASS_NAME).text == "B"
+    assert mov.encontrar_elemento("class_link_mod_mov", By.CLASS_NAME).text == "E"
     with pytest.raises(NoSuchElementException):
-        contramov.esperar_elemento("class_link_elim_mov", By.CLASS_NAME)
+        contramov.encontrar_elemento("class_link_elim_mov", By.CLASS_NAME)
     with pytest.raises(NoSuchElementException):
-        contramov.esperar_elemento("class_link_mod_mov", By.CLASS_NAME)
+        contramov.encontrar_elemento("class_link_mod_mov", By.CLASS_NAME)
 
     # Si vamos a la página de detalles del titular de la cuenta de salida,
     # vemos entre sus cuentas la cuenta generada automáticamente que lo
     # muestra como acreedor, con saldo igual a {saldo}
     browser.ir_a_pag(emisor.get_absolute_url())
-    link_cuenta = browser.esperar_elemento(f"id_link_cta__{emisor.sk}-{receptor.sk}")
+    link_cuenta = browser.encontrar_elemento(f"id_link_cta__{emisor.sk}-{receptor.sk}")
     saldo_cuenta = browser.esperar_saldo_en_moneda_de_cuenta(f"_{emisor.sk}-{receptor.sk}")
     assert \
         link_cuenta.text == \
@@ -248,9 +248,9 @@ def test_crear_traspaso_entre_titulares_sin_deuda(browser, cuenta, cuenta_ajena,
     # Antes de empezar, tomamos los valores de los capitales mostrados en las
     # páginas de detalle de los titulares cuyas cuentas usaremos
     browser.ir_a_pag(cuenta_ajena.titular.get_absolute_url())
-    capital_emisor = browser.esperar_elemento(f"id_capital_{cuenta_ajena.titular.sk}").text
+    capital_emisor = browser.encontrar_elemento(f"id_capital_{cuenta_ajena.titular.sk}").text
     browser.ir_a_pag(cuenta.titular.get_absolute_url())
-    capital_receptor = browser.esperar_elemento(f"id_capital_{cuenta.titular.sk}").text
+    capital_receptor = browser.encontrar_elemento(f"id_capital_{cuenta.titular.sk}").text
 
     # Completamos el form de movimiento nuevo, seleccionando cuentas de
     # titulares distintos en los campos de cuentas. Cliqueamos en la casilla
@@ -275,7 +275,7 @@ def test_crear_traspaso_entre_titulares_sin_deuda(browser, cuenta, cuenta_ajena,
     # las cuentas regulares-
     browser.ir_a_pag(cuenta_ajena.titular.get_absolute_url())
     cuentas_pag = [
-        x.text for x in browser.esperar_elementos("class_link_cuenta")
+        x.text for x in browser.encontrar_elementos("class_link_cuenta")
     ]
     cuenta_credito = \
         f"_{cuenta_ajena.titular.sk}-{cuenta.titular.sk}".upper()
@@ -290,7 +290,7 @@ def test_crear_traspaso_entre_titulares_sin_deuda(browser, cuenta, cuenta_ajena,
     # Lo mismo con el titular de la cuenta de entrada.
     browser.ir_a_pag(cuenta.titular.get_absolute_url())
     cuentas_pag = [
-        x.text for x in browser.esperar_elementos("class_link_cuenta")
+        x.text for x in browser.encontrar_elementos("class_link_cuenta")
     ]
     cuenta_credito = \
         f"_{cuenta.titular.sk}-{cuenta_ajena.titular.sk}".upper()
@@ -329,7 +329,7 @@ def test_crear_movimiento_con_cuenta_en_moneda_no_base(
 
     # Si seleccionamos para el importe una moneda distinta de la moneda de
     # la cuenta, recibimos un mensaje de error
-    lista_errores = browser.esperar_elemento("ul.errorlist", By.CSS_SELECTOR)
+    lista_errores = browser.encontrar_elemento("ul.errorlist", By.CSS_SELECTOR)
     assert f"El movimiento debe ser expresado en {moneda_correcta.plural}" in lista_errores.text
 
     # Si seleccionamos para el importe la moneda de las cuentas, se nos permite
@@ -391,7 +391,7 @@ def test_crear_traspaso_entre_cuentas_en_distinta_moneda(
 
     # Si seleccionamos para el importe una moneda distinta de la moneda de
     # la cuenta, recibimos un mensaje de error
-    lista_errores = browser.esperar_elemento("ul.errorlist", By.CSS_SELECTOR)
+    lista_errores = browser.encontrar_elemento("ul.errorlist", By.CSS_SELECTOR)
     assert f"El movimiento debe ser expresado en {moneda_mov.plural} o {otra_moneda.plural}" in lista_errores.text
 
     # Si seleccionamos para el importe la moneda de alguna de las cuentas, se nos permite
@@ -458,11 +458,11 @@ def test_modificar_movimiento(browser, entrada, salida_posterior, cuenta_2):
 
     # En todos los campos del formulario aparece el valor del campo correspondiente del movimiento:
     browser.controlar_modelform(instance=entrada)
-    esgratis = browser.esperar_elemento("id_esgratis")
+    esgratis = browser.encontrar_elemento("id_esgratis")
     assert esgratis.get_attribute("value") == "on" if entrada.id_contramov is None else "off"
 
     # En el caso de modificar movimiento, no aparece el botón "Guardar y agregar"
-    browser.esperar_que_no_este("id_btn_gya")
+    browser.no_encontrar_elemento("id_btn_gya")
 
     browser.completar_form(
         concepto='Movimiento con concepto modificado',
@@ -470,12 +470,12 @@ def test_modificar_movimiento(browser, entrada, salida_posterior, cuenta_2):
         importe='124',
     )
     browser.assert_url(reverse('home'))
-    concepto_movimiento = browser.esperar_elemento(f"id_link_mov_{entrada.sk}").text.strip()
+    concepto_movimiento = browser.encontrar_elemento(f"id_link_mov_{entrada.sk}").text.strip()
     assert concepto_movimiento == "Movimiento con concepto modificado"
-    fila_movimiento = browser.esperar_elemento(f"id_row_mov_{entrada.sk}")
-    cuenta_movimiento = fila_movimiento.esperar_elemento('class_td_cta_entrada', By.CLASS_NAME).text.strip()
+    fila_movimiento = browser.encontrar_elemento(f"id_row_mov_{entrada.sk}")
+    cuenta_movimiento = fila_movimiento.encontrar_elemento('class_td_cta_entrada', By.CLASS_NAME).text.strip()
     assert cuenta_movimiento == cuenta_2.nombre
-    importe_movimiento = fila_movimiento.esperar_elemento('class_td_importe', By.CLASS_NAME).text.strip()
+    importe_movimiento = fila_movimiento.encontrar_elemento('class_td_importe', By.CLASS_NAME).text.strip()
     assert importe_movimiento == "124,00"
 
 
@@ -484,15 +484,15 @@ def test_convertir_entrada_en_traspaso_entre_titulares(browser, entrada, cuenta_
     # de salida, se genera un contramovimiento en el mismo día que el movimiento
     browser.ir_a_pag()
     dia = browser.esperar_dia(entrada.fecha)
-    cantidad_movimientos = len(dia.esperar_elementos('class_row_mov'))
+    cantidad_movimientos = len(dia.encontrar_elementos('class_row_mov'))
 
     browser.ir_a_pag(entrada.get_edit_url())
     browser.completar_form(cta_salida=cuenta_ajena.nombre, esgratis='False')
 
     dia = browser.esperar_dia(entrada.fecha)
-    assert len(dia.esperar_elementos('class_row_mov')) == cantidad_movimientos + 1
-    mov_nuevo = dia.esperar_elementos('class_row_mov', By.CLASS_NAME)[1]
-    assert mov_nuevo.esperar_elemento('class_td_concepto', By.CLASS_NAME).text == 'Constitución de crédito'
+    assert len(dia.encontrar_elementos('class_row_mov')) == cantidad_movimientos + 1
+    mov_nuevo = dia.encontrar_elementos('class_row_mov', By.CLASS_NAME)[1]
+    assert mov_nuevo.encontrar_elemento('class_td_concepto', By.CLASS_NAME).text == 'Constitución de crédito'
 
 
 @pytest.mark.parametrize("origen", ["/", "/diario/t/titular/", "/diario/c/c/", "/diario/m/", "/diario/cm/c/"])
@@ -540,7 +540,7 @@ def test_eliminar_movimiento(browser, entrada, salida):
     browser.ir_a_pag(entrada.get_delete_url())
     browser.pulsar('id_btn_confirm')
     browser.assert_url(reverse('home'))
-    conceptos = [x.text.strip() for x in browser.esperar_elementos('class_link_movimiento')]
+    conceptos = [x.text.strip() for x in browser.encontrar_elementos('class_link_movimiento')]
     assert concepto not in conceptos
 
 

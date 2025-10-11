@@ -15,7 +15,7 @@ def test_crear_titular(browser, fecha):
 
     # Vemos que la cuenta creada aparece entre las cuentas de la página de
     # inicio
-    nombre_titular = browser.esperar_elemento('id_link_tit_tn').text.strip()
+    nombre_titular = browser.encontrar_elemento('id_link_tit_tn').text.strip()
     assert nombre_titular == "titular nuevo"
 
 
@@ -34,7 +34,7 @@ def test_modificar_titular(browser, titular, fecha_anterior):
     )
     browser.assert_url(reverse('home'))
 
-    nombre_titular = browser.esperar_elemento('id_link_tit_tcnm').text.strip()
+    nombre_titular = browser.encontrar_elemento('id_link_tit_tcnm').text.strip()
     assert nombre_titular == "titular con nombre modificado"
 
 
@@ -90,7 +90,7 @@ def test_eliminar_titular(browser, titular, otro_titular):
     browser.ir_a_pag(titular.get_delete_url())
     browser.pulsar('id_btn_confirm')
     browser.assert_url(reverse('home'))
-    nombres_titular = [x.text.strip() for x in browser.esperar_elementos('class_link_titular')]
+    nombres_titular = [x.text.strip() for x in browser.encontrar_elementos('class_link_titular')]
     assert nombre_titular not in nombres_titular
 
 

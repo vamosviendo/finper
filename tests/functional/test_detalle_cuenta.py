@@ -131,12 +131,12 @@ def test_detalle_de_cuenta_interactiva(
     browser.comparar_cuenta(cuenta)
 
     # Y vemos que en la sección de titulares aparece solamente el titular de la cuenta
-    divs_titular = browser.esperar_elementos("class_div_titular")
+    divs_titular = browser.encontrar_elementos("class_div_titular")
     nombres = texto_en_hijos_respectivos("class_div_nombre_titular", divs_titular)
     assert nombres == [cuenta.titular.nombre]
 
     # Y vemos que no aparecen cuentas en la sección de cuentas
-    assert browser.esperar_elementos('class_link_cuenta', fail=False) == []
+    assert browser.encontrar_elementos('class_link_cuenta', fail=False) == []
 
     # Y vemos que sólo los días en los que hay movimientos en los que interviene
     # la cuenta aparecen en la sección de movimientos, mostrando sólo los movimientos
@@ -149,17 +149,17 @@ def test_detalle_de_cuenta_interactiva(
     # En el url de la página se incluye la información necesaria para regresar
     # a la página actual luego de agregar la subcuenta
     path = urlparse(browser.current_url).path
-    browser.esperar_elemento("id_link_cuenta_nueva").click()
+    browser.encontrar_elemento("id_link_cuenta_nueva").click()
     browser.assert_url(reverse('cta_div', args=[cuenta.sk]) + f"?next={path}")
 
     # En el encabezado de cada día, no se muestra el saldo diario general sino
     # el saldo diario de la cuenta.
     browser.ir_a_pag(cuenta.get_absolute_url())
-    dias_pag = browser.esperar_elementos("class_div_dia")
+    dias_pag = browser.encontrar_elementos("class_div_dia")
 
     for dia in dias_pag:
-        saldo_dia = dia.esperar_elemento("class_span_saldo_dia", By.CLASS_NAME)
-        fecha_dia = dia.esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text[-10:]
+        saldo_dia = dia.encontrar_elemento("class_span_saldo_dia", By.CLASS_NAME)
+        fecha_dia = dia.encontrar_elemento("class_span_fecha_dia", By.CLASS_NAME).text[-10:]
         assert saldo_dia.text == float_format(cuenta.saldo(dia=Dia.tomar(fecha=fecha_dia)))
 
     """ Verificar a partir de acá.
@@ -167,19 +167,19 @@ def test_detalle_de_cuenta_interactiva(
         una ventanita de ayuda con el saldo de la cuenta al momento del movimiento.|
     """
     dia = dias_pag[1]
-    fecha_dia = dia.esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text[-10:]
+    fecha_dia = dia.encontrar_elemento("class_span_fecha_dia", By.CLASS_NAME).text[-10:]
 
     # Cuando cliqueamos en un movimiento, éste aparece resaltado
-    dia.esperar_elementos("class_row_mov")[0]\
-        .esperar_elemento("class_link_movimiento", By.CLASS_NAME)\
+    dia.encontrar_elementos("class_row_mov")[0]\
+        .encontrar_elemento("class_link_movimiento", By.CLASS_NAME)\
         .click()
 
     dias_pag_nueva = browser.comparar_dias_de(cuenta)
-    assert "mov_selected" in dias_pag_nueva[1].esperar_elementos("class_row_mov")[0].get_attribute("class")
+    assert "mov_selected" in dias_pag_nueva[1].encontrar_elementos("class_row_mov")[0].get_attribute("class")
 
     # Y vemos que en el saldo de la página aparece el saldo histórico
     # de la cuenta al momento del movimiento
-    nombre_cuenta = browser.esperar_elemento(
+    nombre_cuenta = browser.encontrar_elemento(
         'id_titulo_saldo_gral'
     ).text.strip()
     movimiento = cuenta.movs().filter(dia=Dia.tomar(fecha=fecha_dia)).first()
@@ -191,7 +191,7 @@ def test_detalle_de_cuenta_interactiva(
 
     # Y al lado del titular de la cuenta (que es el único que se ve) aparece
     # su capital histórico al momento del movimiento
-    divs_titular = browser.esperar_elementos("class_div_titular")
+    divs_titular = browser.encontrar_elementos("class_div_titular")
     assert len(divs_titular) == 1
     nombres = texto_en_hijos_respectivos("class_div_nombre_titular", divs_titular)
     assert nombres[0] == cuenta.titular.nombre
@@ -232,7 +232,7 @@ def test_detalle_de_cuenta_acumulativa(
 
     # Cuando cliqueamos en el ícono de agregar cuenta, accedemos a la página
     # de agregar subcuenta
-    browser.esperar_elemento("id_link_cuenta_nueva").click()
+    browser.encontrar_elemento("id_link_cuenta_nueva").click()
     browser.assert_url(
         reverse(
             'cta_agregar_subc',
@@ -254,7 +254,7 @@ def test_detalle_de_cuenta_acumulativa(
 
     # Y vemos que antes del nombre y saldo de la cuenta aparece en tipografía
     # menos destacada el nombre y saldo de su cuenta madre
-    saldo_cta_madre = browser.esperar_elemento("class_div_saldo_ancestro", By.CLASS_NAME).text
+    saldo_cta_madre = browser.encontrar_elemento("class_div_saldo_ancestro", By.CLASS_NAME).text
     assert \
         saldo_cta_madre == \
         f"Saldo de cuenta madre {cuenta_de_dos_titulares.nombre}: " \
@@ -263,7 +263,7 @@ def test_detalle_de_cuenta_acumulativa(
     # Y vemos que luego del nombre y saldo de la cuenta aprece en tipografía
     # menos destacada el nombre y saldo de sus hermanas de cuenta
     saldos_ctas_hermanas = [
-        x.text for x in browser.esperar_elementos("class_div_saldo_hermana")
+        x.text for x in browser.encontrar_elementos("class_div_saldo_hermana")
     ]
     assert len(saldos_ctas_hermanas) == primera_subcuenta.hermanas().count()
     for index, hermana in enumerate(primera_subcuenta.hermanas()):
@@ -292,20 +292,20 @@ def test_detalle_de_cuenta_acumulativa(
     # Volvemos a la página de la cuenta acumulativa y cliqueamos en un
     # movimiento
     browser.ir_a_pag(cuenta_de_dos_titulares.get_absolute_url())
-    links_movimiento = browser.esperar_elementos("class_link_movimiento")
+    links_movimiento = browser.encontrar_elementos("class_link_movimiento")
     links_movimiento[1].click()
 
     # Vemos que en la sección de movimientos aparecen los movimientos de la
     # cuenta o sus subcuentas, con el movimiento cliqueado resaltado
     browser.comparar_dias_de(cuenta_de_dos_titulares)
-    movimientos = browser.esperar_elementos("class_row_mov")
+    movimientos = browser.encontrar_elementos("class_row_mov")
     assert "mov_selected" in movimientos[1].get_attribute("class")
 
     # Y vemos que en el saldo general de la página aparece el saldo histórico
     # de la cuenta acumulativa al momento del movimiento
     movimiento = cuenta_de_dos_titulares.movs().order_by(
         '-dia', 'orden_dia')[1]
-    assert movimiento.concepto == movimientos[1].esperar_elemento(
+    assert movimiento.concepto == movimientos[1].encontrar_elemento(
         "class_td_concepto",
         By.CLASS_NAME
     ).text
@@ -313,20 +313,20 @@ def test_detalle_de_cuenta_acumulativa(
         cuenta_de_dos_titulares.saldo() != \
         cuenta_de_dos_titulares.saldo(movimiento)
     assert \
-        browser.esperar_elemento("id_importe_saldo_gral").text == \
+        browser.encontrar_elemento("id_importe_saldo_gral").text == \
         float_format(cuenta_de_dos_titulares.saldo(movimiento))
 
     # Y vemos que al lado de cada una de las subcuentas aparece el saldo
     # histórico de la subcuenta al momento del movimiento
     saldos_historicos = [
-        x.text for x in browser.esperar_elementos("class_saldo_cuenta")]
+        x.text for x in browser.encontrar_elementos("class_saldo_cuenta")]
     for index, cta in enumerate(cuenta_de_dos_titulares.subcuentas.all()):
         assert saldos_historicos[index] == float_format(cta.saldo(movimiento))
 
     # Y vemos que al lado de cada uno de los titulares aparece el capital
     # histórico del titular al momento del movimiento
     capitales_historicos = [
-        x.text for x in browser.esperar_elementos("class_capital_titular")]
+        x.text for x in browser.encontrar_elementos("class_capital_titular")]
     for index, titular in enumerate(cuenta_de_dos_titulares.titulares):
         assert capitales_historicos[index] == float_format(titular.capital(movimiento))
 
@@ -347,7 +347,7 @@ def test_detalle_de_subcuenta(
 
     # Y vemos que antes del nombre y saldo de la cuenta aparece el nombre y saldo de sus cuentas ancestro
     saldos_ancestro = [
-        x.text for x in browser.esperar_elementos("class_div_saldo_ancestro")
+        x.text for x in browser.encontrar_elementos("class_div_saldo_ancestro")
     ]
     assert \
         saldos_ancestro == [
@@ -359,7 +359,7 @@ def test_detalle_de_subcuenta(
 
     # Y vemos que luego del nombre y saldo de la cuenta aparece el nombre y saldo de sus cuentas hermanas
     saldos_hermana = [
-        x.text for x in browser.esperar_elementos("class_div_saldo_hermana")
+        x.text for x in browser.encontrar_elementos("class_div_saldo_hermana")
     ]
     assert \
         saldos_hermana == [
@@ -374,26 +374,26 @@ def test_detalle_de_subcuenta(
     # Vemos que en la sección de movimientos aparecen los días en los que hay movimientos
     # de la cuenta, con el movimiento cliqueado resaltado
     browser.comparar_dias_de(subsubcuenta_1_con_movimientos)
-    row_mov = browser.esperar_elementos("class_div_dia")[1].esperar_elemento("class_row_mov", By.CLASS_NAME)
+    row_mov = browser.encontrar_elementos("class_div_dia")[1].encontrar_elemento("class_row_mov", By.CLASS_NAME)
     assert "mov_selected" in row_mov.get_attribute("class")
 
     # Y vemos que en el saldo general de la página aparece el saldo histórico
     # de la cuenta al momento del movimiento.
     assert \
-        browser.esperar_elemento("id_importe_saldo_gral").text == \
+        browser.encontrar_elemento("id_importe_saldo_gral").text == \
         float_format(subsubcuenta_1_con_movimientos.saldo(movimiento))
 
     # Y vemos que al lado de cada una de las cuentas ancestro aparece el saldo
     # histórico de la cuenta al momento del movimiento
     saldos_historicos = [
-        x.text for x in browser.esperar_elementos("class_div_saldo_ancestro")]
+        x.text for x in browser.encontrar_elementos("class_div_saldo_ancestro")]
     for index, cta in enumerate(reversed(subsubcuenta_1_con_movimientos.ancestros())):
         assert saldos_historicos[index] == f"Saldo de cuenta madre {cta.nombre}: {float_format(cta.saldo(movimiento))}"
 
     # Y vemos que al lado de cada una de las subcuentas hermanas aparece el
     # saldo histórico de la subcuenta al momento del movimiento
     saldos_historicos = [
-        x.text for x in browser.esperar_elementos("class_div_saldo_hermana")]
+        x.text for x in browser.encontrar_elementos("class_div_saldo_hermana")]
     for index, cta in enumerate(subsubcuenta_1_con_movimientos.hermanas()):
         assert saldos_historicos[index] == f"Saldo de cuenta hermana {cta.nombre}: {float_format(cta.saldo(movimiento))}"
 
@@ -430,7 +430,7 @@ def test_busqueda_de_fecha_en_detalle_de_cuenta(browser, cuenta, cuenta_2, mucho
 
     # En la página se muestran solamente los días con movimientos de la cuenta.
     # No se muestran los demás días.
-    fechas_pag = [str2date(x.text[-10:]) for x in browser.esperar_elementos("class_span_fecha_dia")]
+    fechas_pag = [str2date(x.text[-10:]) for x in browser.encontrar_elementos("class_span_fecha_dia")]
     assert dia.fecha in fechas_pag
     assert dia_no_cuenta.fecha not in fechas_pag
 
@@ -438,12 +438,12 @@ def test_busqueda_de_fecha_en_detalle_de_cuenta(browser, cuenta, cuenta_2, mucho
     # a la cuenta, esos movimientos no se muestran.
     assert dia2.fecha in fechas_pag, "Justo ese movimiento no se encuentra entre las fechas de la página. Probar con otro"
     dia_pag = next(
-        x for x in browser.esperar_elementos("class_div_dia")
-        if str2date(x.esperar_elemento("class_span_fecha_dia", By.CLASS_NAME).text[-10:]) == dia2.fecha
+        x for x in browser.encontrar_elementos("class_div_dia")
+        if str2date(x.encontrar_elemento("class_span_fecha_dia", By.CLASS_NAME).text[-10:]) == dia2.fecha
     )
     ordenes_dia_movs_dia = [
-        x.esperar_elemento("class_td_orden_dia", By.CLASS_NAME).text
-        for x in dia_pag.esperar_elementos("class_row_mov")
+        x.encontrar_elemento("class_td_orden_dia", By.CLASS_NAME).text
+        for x in dia_pag.encontrar_elementos("class_row_mov")
     ]
     assert str(mov_cuenta_dia2.orden_dia) in ordenes_dia_movs_dia
     assert str(mov_no_cuenta_dia2.orden_dia) not in ordenes_dia_movs_dia

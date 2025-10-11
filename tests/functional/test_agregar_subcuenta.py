@@ -19,7 +19,7 @@ def test_agregar_subcuenta(browser, cuenta_acumulativa, fecha_posterior):
     # cuenta acumulativa.
     divs_cuenta = [
         x.text.strip()
-        for x in browser.esperar_elementos('class_link_cuenta')
+        for x in browser.encontrar_elementos('class_link_cuenta')
     ]
     assert "subcuenta 3" in divs_cuenta
 
@@ -27,7 +27,7 @@ def test_agregar_subcuenta(browser, cuenta_acumulativa, fecha_posterior):
     # que su fecha de creación coincide con la fecha que ingresamos en
     # el formulario
     browser.ir_a_pag(reverse('cuenta', args=['sc3']))
-    titulo_pag = browser.esperar_elemento("id_titulo_saldo_gral").text.strip()
+    titulo_pag = browser.encontrar_elemento("id_titulo_saldo_gral").text.strip()
     assert fecha_posterior.strftime("%Y-%m-%d") in titulo_pag
 
 
@@ -50,6 +50,6 @@ def test_agregar_subcuenta_otro_titular(
     # Vemos que la cuenta agregada aparece entre las cuentas del titular
     divs_cuenta = [
         x.text.strip()
-        for x in browser.esperar_elementos('class_link_cuenta')
+        for x in browser.encontrar_elementos('class_link_cuenta')
     ]
     assert "subcuenta 3" in divs_cuenta
