@@ -1,0 +1,11 @@
+<table id="id_table_cotizaciones" class="lista">
+  <thead id="id_thead_cotizaciones"><tr>
+    <th id="id_th_fecha">Fecha</th>
+    <th id="id_th_cotizacion_compra">Cot. compra</th>
+    <th id="id_th_cotizacion_venta">Cot. venta</th>
+    <th>Menu</th>
+  </tr></thead>
+  {% for cot in cotizaciones %}
+    {% include "diario/snippets/cotizacion.html" %}
+  {% endfor %}
+</table>

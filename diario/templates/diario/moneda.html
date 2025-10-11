@@ -28,32 +28,8 @@
   </div>
 
   {% include "diario/snippets/navigator.html" with pos="init" pag=cotizaciones elem="cotizaciones" %}
+  {% include "diario/snippets/cotizaciones.html" %}
 
-  <table id="id_table_cotizaciones" class="lista">
-    <thead id="id_thead_cotizaciones"><tr>
-      <th id="id_th_fecha">Fecha</th>
-      <th id="id_th_cotizacion_compra">Cot. compra</th>
-      <th id="id_th_cotizacion_venta">Cot. venta</th>
-      <th>Menu</th>
-    </tr></thead>
-    {% for cot in cotizaciones %}
-    <tr id="id_row_cot_{{ cot.sk }}" class="class_row_cot">
-      <td class="class_td_fecha">{{ cot.fecha|date:"Y-m-d" }}</td>
-      <td class="class_td_cot_compra">{{ cot.importe_compra|floatformat:2 }}</td>
-      <td class="class_td_cot_venta">{{ cot.importe_venta|floatformat:2 }}</td>
-      <td class="class_td_menu">
-        <a href="{{ cot.get_delete_url }}?next={{ request.get_full_path }}"
-           class="class_link_elim_cot">
-          B
-        </a>
-        <a href="{{ cot.get_edit_url }}?next={{ request.get_full_path }}"
-           class="class_link_mod_cot">
-          E
-        </a>
-      </td>
-    </tr>
-    {% endfor %}
-  </table>
   <div id="id_div_home">
     <a id="id_link_home" href="{% url 'home' %}">Home</a>
   </div>
