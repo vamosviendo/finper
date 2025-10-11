@@ -90,7 +90,7 @@ class TestModificarCotizacion:
         # Si modificamos el importe de una cotización antigua, este cambio se ve
         # reflejado en la lista de cotizaciones.
         browser.ir_a_pag(dolar.get_absolute_url())
-        cotizacion = browser.esperar_cotizacion(cotizacion_dolar.fecha)
+        cotizacion = browser.encontrar_cotizacion(cotizacion_dolar.fecha)
         importe_compra = cotizacion.encontrar_elemento("class_td_cot_compra", By.CLASS_NAME).text
         importe_venta = cotizacion.encontrar_elemento("class_td_cot_venta", By.CLASS_NAME).text
         assert importe_compra != float_format(400)
@@ -100,7 +100,7 @@ class TestModificarCotizacion:
         browser.completar("id_importe_compra", 400)
         browser.completar("id_importe_venta", 450)
         browser.pulsar()
-        cotizacion = browser.esperar_cotizacion(cotizacion_dolar.fecha)
+        cotizacion = browser.encontrar_cotizacion(cotizacion_dolar.fecha)
         importe_compra = cotizacion.encontrar_elemento("class_td_cot_compra", By.CLASS_NAME).text
         importe_venta = cotizacion.encontrar_elemento("class_td_cot_venta", By.CLASS_NAME).text
         assert importe_compra == float_format(400)

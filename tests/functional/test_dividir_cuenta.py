@@ -52,7 +52,7 @@ def test_dividir_cuenta_con_saldo_y_fecha(
     ]
     assert subcuentas == ['primera subcuenta', 'segunda subcuenta']
 
-    div_dia = browser.esperar_dia(fecha_posterior)
+    div_dia = browser.encontrar_dia(fecha_posterior)
     movs_traspaso = [
         m for m in div_dia.encontrar_elementos("class_row_mov")
         if m.encontrar_elemento("class_td_concepto", By.CLASS_NAME).text.strip() == "Traspaso de saldo"]

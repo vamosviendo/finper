@@ -108,7 +108,7 @@ def test_busqueda_fecha(browser, origen, fixt_dias, fecha, fecha_tardia, fecha_e
     assert fecha in fechas
 
     # El último movimiento del día buscado aparece seleccionado
-    ultimo_mov_dia = browser.esperar_dia(fecha).encontrar_elementos("class_row_mov")[-1]
+    ultimo_mov_dia = browser.encontrar_dia(fecha).encontrar_elementos("class_row_mov")[-1]
     assert "mov_selected" in ultimo_mov_dia.get_attribute("class")
 
     # Si buscamos un día que se encuentre en la misma página que un día seleccionado,
@@ -116,14 +116,14 @@ def test_busqueda_fecha(browser, origen, fixt_dias, fecha, fecha_tardia, fecha_e
     # movimiento del día buscado
     # fecha_en_la_misma_pagina = date(2010, 11, 13)
     browser.completar_form(boton="id_btn_buscar_dia_init", input_dia_init=fecha_en_la_misma_pag)
-    ultimo_mov_dia = browser.esperar_dia(fecha).encontrar_elementos("class_row_mov")[-1]
-    ultimo_mov_nuevo_dia = browser.esperar_dia(fecha_en_la_misma_pag).encontrar_elementos("class_row_mov")[-1]
+    ultimo_mov_dia = browser.encontrar_dia(fecha).encontrar_elementos("class_row_mov")[-1]
+    ultimo_mov_nuevo_dia = browser.encontrar_dia(fecha_en_la_misma_pag).encontrar_elementos("class_row_mov")[-1]
     assert "mov_selected" not in ultimo_mov_dia.get_attribute("class")
     assert "mov_selected" in ultimo_mov_nuevo_dia.get_attribute("class")
 
     # Si buscamos un día inexistente, seremos llevados a la página que contenga
     # el día anterior al seleccionado.
-    fecha_inexistente = date(2011,4,21)
+    fecha_inexistente = date(2011, 4, 21)
     browser.completar_form(boton="id_btn_buscar_dia_init", input_dia_init=fecha_inexistente)
     fecha_anterior = Dia.filtro(fecha__lt=fecha_inexistente).last().fecha
     fecha_posterior = Dia.filtro(fecha__gt=fecha_inexistente).first().fecha

@@ -24,7 +24,7 @@ def valores() -> dict:
 def test_crear_movimiento(browser, cuenta, entrada, salida_posterior, dia_tardio, valores):
     """ Cuando vamos a la página de cuenta nueva y completamos el formulario,
         aparece un movimiento nuevo al tope de la lista de movimientos.
-        Si después de completamos apretamos el botón "Guardar y agregar,
+        Si después de completar apretamos el botón "Guardar y agregar",
         se guarda el movimiento y se vuelve a abrir el formulario para cargar
         otro movimiento. """
     saldo_gral = saldo = cuenta.saldo()
@@ -43,7 +43,7 @@ def test_crear_movimiento(browser, cuenta, entrada, salida_posterior, dia_tardio
     browser.completar_form(**valores)
 
     # En la lista de movimientos del día, aparece un movimiento nuevo
-    dia = browser.esperar_dia(date(2010, 12, 5))
+    dia = browser.encontrar_dia(date(2010, 12, 5))
     movs_dia = dia.encontrar_elementos("class_row_mov")
     assert len(movs_dia) == 1
 
@@ -62,7 +62,7 @@ def test_crear_movimiento(browser, cuenta, entrada, salida_posterior, dia_tardio
     # general de la página reflejan el cambio provocado por el nuevo movimiento
     saldo_localizado = float_format(saldo + valores["importe"])
     saldo_gral_localizado = float_format(saldo_gral + valores["importe"])
-    assert browser.esperar_saldo_en_moneda_de_cuenta(cuenta.sk).text == saldo_localizado
+    assert browser.encontrar_saldo_en_moneda_de_cuenta(cuenta.sk).text == saldo_localizado
     assert \
         browser.encontrar_elemento('id_importe_saldo_gral').text == \
         saldo_gral_localizado
@@ -73,7 +73,7 @@ def test_crear_movimiento(browser, cuenta, entrada, salida_posterior, dia_tardio
     browser.ir_a_pag(reverse("mov_nuevo"))
     browser.completar_form(boton="id_btn_gya", **valores)
 
-    assert_exists(sk=f"{valores['fecha'].replace('-','')}01", cls=Movimiento)
+    assert_exists(sk=f"{valores['fecha'].replace('-', '')}01", cls=Movimiento)
     browser.assert_url(reverse("mov_nuevo"))
 
 
@@ -113,9 +113,9 @@ def test_crear_creditos_o_devoluciones(
     # Vemos que además del movimiento creado se generó un movimiento automático
     # con las siguientes características:
     # - concepto "{concepto}"
-    mov = browser.esperar_movimiento("concepto", "Préstamo")
+    mov = browser.encontrar_movimiento("concepto", "Préstamo")
     celdas_mov = browser.dict_movimiento("Préstamo")
-    contramov = browser.esperar_movimiento("concepto", "Constitución de crédito")
+    contramov = browser.encontrar_movimiento("concepto", "Constitución de crédito")
     celdas_contramov = browser.dict_movimiento("Constitución de crédito")
 
     # - los nombres de los titulares en el detalle
@@ -146,7 +146,7 @@ def test_crear_creditos_o_devoluciones(
     # muestra como acreedor, con saldo igual a {saldo}
     browser.ir_a_pag(emisor.get_absolute_url())
     link_cuenta = browser.encontrar_elemento(f"id_link_cta__{emisor.sk}-{receptor.sk}")
-    saldo_cuenta = browser.esperar_saldo_en_moneda_de_cuenta(f"_{emisor.sk}-{receptor.sk}")
+    saldo_cuenta = browser.encontrar_saldo_en_moneda_de_cuenta(f"_{emisor.sk}-{receptor.sk}")
     assert \
         link_cuenta.text == \
         f"préstamo de {emisor.nombre} a {receptor.nombre}".lower()
@@ -165,8 +165,8 @@ def test_crear_creditos_o_devoluciones(
     assert celdas_contramov["Importe"] == float_format(10)
     assert celdas_contramov["Entra en"] == f"préstamo de {emisor.nombre} a {receptor.nombre}".lower()
     assert celdas_contramov["Sale de"] == f"deuda de {receptor.nombre} con {emisor.nombre}".lower()
-    saldo_cuenta_acreedora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{emisor.sk}-{receptor.sk}")
-    saldo_cuenta_deudora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{receptor.sk}-{emisor.sk}")
+    saldo_cuenta_acreedora = browser.encontrar_saldo_en_moneda_de_cuenta(f"_{emisor.sk}-{receptor.sk}")
+    saldo_cuenta_deudora = browser.encontrar_saldo_en_moneda_de_cuenta(f"_{receptor.sk}-{emisor.sk}")
     assert saldo_cuenta_acreedora.text == float_format(30+10)
     assert saldo_cuenta_deudora.text == float_format(-30-10)
 
@@ -183,8 +183,8 @@ def test_crear_creditos_o_devoluciones(
     assert celdas_contramov["Importe"] == float_format(15)
     assert celdas_contramov["Entra en"] == f"deuda de {receptor.nombre} con {emisor.nombre}".lower()
     assert celdas_contramov["Sale de"] == f"préstamo de {emisor.nombre} a {receptor.nombre}".lower()
-    saldo_cuenta_acreedora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{emisor.sk}-{receptor.sk}")
-    saldo_cuenta_deudora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{receptor.sk}-{emisor.sk}")
+    saldo_cuenta_acreedora = browser.encontrar_saldo_en_moneda_de_cuenta(f"_{emisor.sk}-{receptor.sk}")
+    saldo_cuenta_deudora = browser.encontrar_saldo_en_moneda_de_cuenta(f"_{receptor.sk}-{emisor.sk}")
     assert saldo_cuenta_acreedora.text == float_format(30+10-15)
     assert saldo_cuenta_deudora.text == float_format(-30-10+15)
 
@@ -200,8 +200,8 @@ def test_crear_creditos_o_devoluciones(
     assert celdas_contramov["Importe"] == float_format(7)
     assert celdas_contramov["Entra en"] == f"deuda de {receptor.nombre} con {emisor.nombre}".lower()
     assert celdas_contramov["Sale de"] == f"préstamo de {emisor.nombre} a {receptor.nombre}".lower()
-    saldo_cuenta_acreedora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{emisor.sk}-{receptor.sk}")
-    saldo_cuenta_deudora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{receptor.sk}-{emisor.sk}")
+    saldo_cuenta_acreedora = browser.encontrar_saldo_en_moneda_de_cuenta(f"_{emisor.sk}-{receptor.sk}")
+    saldo_cuenta_deudora = browser.encontrar_saldo_en_moneda_de_cuenta(f"_{receptor.sk}-{emisor.sk}")
     assert saldo_cuenta_acreedora.text == float_format(30+10-15-7)
     assert saldo_cuenta_deudora.text == float_format(-30-10+15+7)
 
@@ -220,8 +220,8 @@ def test_crear_creditos_o_devoluciones(
     assert celdas_contramov["Importe"] == float_format(20)
     assert celdas_contramov["Entra en"] == f"préstamo de {receptor.nombre} a {emisor.nombre}".lower()
     assert celdas_contramov["Sale de"] == f"deuda de {emisor.nombre} con {receptor.nombre}".lower()
-    saldo_cuenta_acreedora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{receptor.sk}-{emisor.sk}")
-    saldo_cuenta_deudora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{emisor.sk}-{receptor.sk}")
+    saldo_cuenta_acreedora = browser.encontrar_saldo_en_moneda_de_cuenta(f"_{receptor.sk}-{emisor.sk}")
+    saldo_cuenta_deudora = browser.encontrar_saldo_en_moneda_de_cuenta(f"_{emisor.sk}-{receptor.sk}")
     assert saldo_cuenta_acreedora.text == float_format(-30-10+15+7+20)
     assert saldo_cuenta_deudora.text == float_format(30+10-15-7-20)
 
@@ -238,8 +238,8 @@ def test_crear_creditos_o_devoluciones(
     assert celdas_contramov["Importe"] == float_format(2)
     assert celdas_contramov["Entra en"] == f"deuda de {emisor.nombre} con {receptor.nombre}".lower()
     assert celdas_contramov["Sale de"] == f"préstamo de {receptor.nombre} a {emisor.nombre}".lower()
-    saldo_cuenta_acreedora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{emisor.sk}-{receptor.sk}")
-    saldo_cuenta_deudora = browser.esperar_saldo_en_moneda_de_cuenta(f"_{receptor.sk}-{emisor.sk}")
+    saldo_cuenta_acreedora = browser.encontrar_saldo_en_moneda_de_cuenta(f"_{emisor.sk}-{receptor.sk}")
+    saldo_cuenta_deudora = browser.encontrar_saldo_en_moneda_de_cuenta(f"_{receptor.sk}-{emisor.sk}")
     assert saldo_cuenta_acreedora.text == float_format(30+10-15-7-18)
     assert saldo_cuenta_deudora.text == float_format(-30-10+15+7+18)
 
@@ -266,9 +266,9 @@ def test_crear_traspaso_entre_titulares_sin_deuda(browser, cuenta, cuenta_ajena,
 
     # Vemos que sólo se genera el movimiento creado, sin que se genere ningún
     # movimiento automático de deuda.
-    browser.esperar_movimiento("concepto", "Donación")
+    browser.encontrar_movimiento("concepto", "Donación")
     with pytest.raises(NoSuchElementException):
-        browser.esperar_movimiento("concepto", "Constitución de crédito")
+        browser.encontrar_movimiento("concepto", "Constitución de crédito")
 
     # Si vamos a la página de detalles del titular de la cuenta de salida
     # (emisor), vemos que entre sus cuentas no hay ninguna generada automáticamente, sólo
@@ -314,8 +314,8 @@ def test_crear_movimiento_con_cuenta_en_moneda_no_base(
     browser.ir_a_pag()
 
     # Dadas dos cuentas en una misma moneda
-    saldo_base_original_ce = format_float(browser.esperar_saldo_en_moneda_de_cuenta(ce.sk).text) if ce else None
-    saldo_base_original_cs = format_float(browser.esperar_saldo_en_moneda_de_cuenta(cs.sk).text) if cs else None
+    saldo_base_original_ce = format_float(browser.encontrar_saldo_en_moneda_de_cuenta(ce.sk).text) if ce else None
+    saldo_base_original_cs = format_float(browser.encontrar_saldo_en_moneda_de_cuenta(cs.sk).text) if cs else None
 
     # Cuando generamos un movimiento sobre una o ambas cuentas
     browser.crear_movimiento(
@@ -341,10 +341,10 @@ def test_crear_movimiento_con_cuenta_en_moneda_no_base(
     # principal de la o las cuentas cambió en el importe registrado en el movimiento,
     browser.assert_url(reverse('home'))
     if ce:
-        saldo_base = browser.esperar_saldo_en_moneda_de_cuenta(ce.sk)
+        saldo_base = browser.encontrar_saldo_en_moneda_de_cuenta(ce.sk)
         assert saldo_base.text == float_format(saldo_base_original_ce + importe)
     if cs:
-        saldo_base = browser.esperar_saldo_en_moneda_de_cuenta(cs.sk)
+        saldo_base = browser.encontrar_saldo_en_moneda_de_cuenta(cs.sk)
         assert saldo_base.text == float_format(saldo_base_original_cs - importe)
 
 
@@ -368,12 +368,12 @@ def test_crear_traspaso_entre_cuentas_en_distinta_moneda(
 
     # Dadas dos cuentas en monedas distintas
     saldo_base_original_csmm = format_float(
-        browser.esperar_saldo_en_moneda_de_cuenta(
+        browser.encontrar_saldo_en_moneda_de_cuenta(
             cuenta_con_saldo_en_moneda_mov.sk
         ).text
     )
     saldo_base_original_csom = format_float(
-        browser.esperar_saldo_en_moneda_de_cuenta(
+        browser.encontrar_saldo_en_moneda_de_cuenta(
             cuenta_con_saldo_en_otra_moneda.sk
         ).text
     )
@@ -404,9 +404,9 @@ def test_crear_traspaso_entre_cuentas_en_distinta_moneda(
     browser.assert_url(reverse('home'))
     importe_en_moneda_mov = 20
     importe_en_otra_moneda = round(20 * float(cotizacion_mov), 2)
-    saldo_base = browser.esperar_saldo_en_moneda_de_cuenta(cuenta_con_saldo_en_moneda_mov.sk)
+    saldo_base = browser.encontrar_saldo_en_moneda_de_cuenta(cuenta_con_saldo_en_moneda_mov.sk)
     assert saldo_base.text == float_format(saldo_base_original_csmm + importe_en_moneda_mov)
-    saldo_base = browser.esperar_saldo_en_moneda_de_cuenta(cuenta_con_saldo_en_otra_moneda.sk)
+    saldo_base = browser.encontrar_saldo_en_moneda_de_cuenta(cuenta_con_saldo_en_otra_moneda.sk)
     assert saldo_base.text == float_format(saldo_base_original_csom - importe_en_otra_moneda)
 
 
@@ -418,12 +418,12 @@ def test_crear_traspaso_entre_cuentas_en_distinta_moneda_con_una_cotizacion_ante
 
     # Dadas dos cuentas en monedas distintas
     saldo_base_original_ce = format_float(
-        browser.esperar_saldo_en_moneda_de_cuenta(
+        browser.encontrar_saldo_en_moneda_de_cuenta(
             cuenta_con_saldo_en_euros.sk
         ).text
     )
     saldo_base_original_cs = format_float(
-        browser.esperar_saldo_en_moneda_de_cuenta(
+        browser.encontrar_saldo_en_moneda_de_cuenta(
             cuenta_con_saldo_en_dolares.sk
         ).text
     )
@@ -445,9 +445,9 @@ def test_crear_traspaso_entre_cuentas_en_distinta_moneda_con_una_cotizacion_ante
     browser.assert_url(reverse('home'))
     importe_en_euros = round(20 * dolar.cotizacion_en_al(euro, fecha, compra=False), 2)
     importe_en_dolares = 20
-    saldo_base = browser.esperar_saldo_en_moneda_de_cuenta(cuenta_con_saldo_en_euros.sk)
+    saldo_base = browser.encontrar_saldo_en_moneda_de_cuenta(cuenta_con_saldo_en_euros.sk)
     assert saldo_base.text == float_format(saldo_base_original_ce + importe_en_euros)
-    saldo_base = browser.esperar_saldo_en_moneda_de_cuenta(cuenta_con_saldo_en_dolares.sk)
+    saldo_base = browser.encontrar_saldo_en_moneda_de_cuenta(cuenta_con_saldo_en_dolares.sk)
     assert saldo_base.text == float_format(saldo_base_original_cs - importe_en_dolares)
 
 
@@ -483,13 +483,13 @@ def test_convertir_entrada_en_traspaso_entre_titulares(browser, entrada, cuenta_
     # Cuando se agrega a un movimiento de entrada una cuenta ajena como cuenta
     # de salida, se genera un contramovimiento en el mismo día que el movimiento
     browser.ir_a_pag()
-    dia = browser.esperar_dia(entrada.fecha)
+    dia = browser.encontrar_dia(entrada.fecha)
     cantidad_movimientos = len(dia.encontrar_elementos('class_row_mov'))
 
     browser.ir_a_pag(entrada.get_edit_url())
     browser.completar_form(cta_salida=cuenta_ajena.nombre, esgratis='False')
 
-    dia = browser.esperar_dia(entrada.fecha)
+    dia = browser.encontrar_dia(entrada.fecha)
     assert len(dia.encontrar_elementos('class_row_mov')) == cantidad_movimientos + 1
     mov_nuevo = dia.encontrar_elementos('class_row_mov', By.CLASS_NAME)[1]
     assert mov_nuevo.encontrar_elemento('class_td_concepto', By.CLASS_NAME).text == 'Constitución de crédito'

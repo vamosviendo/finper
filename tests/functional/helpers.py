@@ -49,9 +49,9 @@ class FinperFirefox(MiFirefox):
     def cliquear_en_titular(self, titular):
         self.encontrar_elemento(titular.nombre, By.LINK_TEXT).click()
 
-    def esperar_movimiento(self, columna: str, contenido: str) -> MiWebElement:
+    def encontrar_movimiento(self, columna: str, contenido: str) -> MiWebElement:
         try:
-            return self.esperar_movimientos(columna, contenido)[0]
+            return self.encontrar_movimientos(columna, contenido)[0]
         except IndexError:
             raise NoSuchElementException(
                 f'Contenido "{contenido}" no encontrado en columna "{columna}"'
@@ -63,28 +63,28 @@ class FinperFirefox(MiFirefox):
             ocurrencia: int = 0
     ) -> dict[str, str]:
         titulos = self.encontrar_elemento("class_thead_movimientos", By.CLASS_NAME)
-        movimiento = self.esperar_movimientos("concepto", concepto)[ocurrencia]
+        movimiento = self.encontrar_movimientos("concepto", concepto)[ocurrencia]
         return dict(zip(textos_hijos(titulos, "th"), textos_hijos(movimiento, "td")))
 
-    def esperar_movimientos(self, columna: str, contenido: str) -> list[MiWebElement]:
+    def encontrar_movimientos(self, columna: str, contenido: str) -> list[MiWebElement]:
         return [
             x for x in self.encontrar_elementos("class_row_mov", By.CLASS_NAME, fail=False)
             if x.encontrar_elemento(f"class_td_{columna}", By.CLASS_NAME).text == contenido
         ]
 
-    def esperar_dia(self, fecha: date) -> MiWebElement:
+    def encontrar_dia(self, fecha: date) -> MiWebElement:
         return next(
             x for x in self.encontrar_elementos("class_div_dia")
             if x.encontrar_elemento("class_span_fecha_dia", By.CLASS_NAME).text ==
             f"{dia_de_la_semana[fecha.weekday()]} {fecha.strftime('%Y-%m-%d')}"
         )
 
-    def esperar_saldo_en_moneda_de_cuenta(self, sk: str) -> MiWebElement:
+    def encontrar_saldo_en_moneda_de_cuenta(self, sk: str) -> MiWebElement:
         return self\
             .encontrar_elemento(f'id_row_cta_{sk}')\
             .encontrar_elemento(f'.class_saldo_cuenta.mon_cuenta', By.CSS_SELECTOR)
 
-    def esperar_cotizacion(self, fecha: date) -> MiWebElement:
+    def encontrar_cotizacion(self, fecha: date) -> MiWebElement:
         cotizaciones = self.encontrar_elementos("class_row_cot")
         fecha_formateada = fecha.strftime("%Y-%m-%d")
 
