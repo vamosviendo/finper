@@ -37,14 +37,17 @@ def cuenta_4(titular: Titular, fecha_temprana: date) -> CuentaInteractiva:
 
 
 @pytest.fixture
-def cuenta_con_saldo(titular: Titular, fecha_temprana: date) -> CuentaInteractiva:
-    return Cuenta.crear(
+def cuenta_con_saldo(titular: Titular, fecha_temprana: date, fecha_anterior: date) -> CuentaInteractiva:
+    cta = Cuenta.crear(
         nombre='cuenta_con_saldo',
         sk='ccs',
-        saldo=100,
+        # saldo=100,
         titular=titular,
         fecha_creacion=fecha_temprana
     )
+    Movimiento.crear(fecha=fecha_anterior, concepto="Saldo al inicio", cta_entrada=cta, importe=100)
+
+    return cta
 
 
 @pytest.fixture
@@ -89,11 +92,11 @@ def cuenta_gorda(titular_gordo: Titular, fecha_temprana: date) -> CuentaInteract
 
 
 @pytest.fixture
-def cuenta_acumulativa(cuenta_con_saldo: CuentaInteractiva, fecha_temprana: date) -> CuentaAcumulativa:
+def cuenta_acumulativa(cuenta_con_saldo: CuentaInteractiva, fecha: date) -> CuentaAcumulativa:
     return cuenta_con_saldo.dividir_y_actualizar(
         ['subcuenta 1 con saldo', 'scs1', 60],
         ['subcuenta 2 con saldo', 'scs2'],
-        fecha=fecha_temprana
+        fecha=fecha
     )
 
 
@@ -171,7 +174,7 @@ def cuenta_acumulativa_ajena(cuenta_ajena: CuentaInteractiva, fecha_temprana: da
 
 
 @pytest.fixture
-def subsubcuenta(cuenta_acumulativa: CuentaAcumulativa, fecha_temprana: date) -> CuentaInteractiva:
+def subsubcuenta(cuenta_acumulativa: CuentaAcumulativa, fecha: date) -> CuentaInteractiva:
     sc1, sc2 = cuenta_acumulativa.subcuentas.all()
     ssc11, ssc12 = sc1.dividir_entre(
         {
@@ -185,7 +188,7 @@ def subsubcuenta(cuenta_acumulativa: CuentaAcumulativa, fecha_temprana: date) ->
             'sk': 'ssc2',
             'titular': sc1.titular
         },
-        fecha=fecha_temprana,
+        fecha=fecha,
     )
     return ssc11
 

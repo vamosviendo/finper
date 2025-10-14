@@ -18,7 +18,10 @@ def dia_temprano(fecha_temprana: date) -> Dia:
 
 @pytest.fixture
 def dia_anterior(fecha_anterior: date) -> Dia:
-    return Dia.crear(fecha=fecha_anterior)
+    try:
+        return Dia.crear(fecha=fecha_anterior)
+    except ValidationError:     # Por algún motivo ya existe
+        return Dia.tomar(fecha=fecha_anterior)
 
 
 @pytest.fixture

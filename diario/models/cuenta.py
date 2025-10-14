@@ -650,8 +650,7 @@ class CuentaAcumulativa(Cuenta):
         super().save(*args, **kwargs)
 
     def movs(self, order_by: list[str] = None) -> models.QuerySet[Movimiento]:
-        """ Devuelve movimientos propios y de sus subcuentas
-            ordenados por fecha y orden_dia."""
+        """ Devuelve movimientos propios y de sus subcuentas"""
         if order_by is None:
             order_by = ['dia', 'orden_dia']
         result = super().movs(order_by=order_by)
@@ -704,11 +703,14 @@ class CuentaAcumulativa(Cuenta):
                     f"({cuenta.fecha_creacion})"
                 )
 
-        movs_normales = self.movs_no_conversion()
-        fecha_ultimo_mov_normal = max([m.fecha for m in movs_normales]) \
-            if movs_normales.count() > 0 else date(1, 1, 1)
-        if self.fecha_conversion < fecha_ultimo_mov_normal:
+        try:
+            fecha_ultimo_mov_directo = self.movs_directos().last().fecha
+            fecha_conversion_anterior_a_ultimo_mov_directo = self.fecha_conversion < fecha_ultimo_mov_directo
+        except AttributeError:   # self.movs_directos().last() is None. No hay movimientos directos
+            fecha_ultimo_mov_directo = None
+            fecha_conversion_anterior_a_ultimo_mov_directo = False
+        if fecha_conversion_anterior_a_ultimo_mov_directo:
             raise errors.ErrorMovimientoPosteriorAConversion(
                 f'La fecha de conversión no puede ser anterior a la del '
-                f'último movimiento de la cuenta ({fecha_ultimo_mov_normal})'
+                f'último movimiento de la cuenta ({fecha_ultimo_mov_directo})'
             )
