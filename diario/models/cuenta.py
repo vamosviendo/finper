@@ -204,24 +204,10 @@ class Cuenta(PolymorphModel):
             raise errors.SaldoNoCeroException
         super().delete(*args, **kwargs)
 
-    def movs_directos(self) -> models.QuerySet[Movimiento]:
-        """ Devuelve entradas y salidas de la cuenta sin los de sus subcuentas
-        """
-        return self.entradas.all() | self.salidas.all()
-
-    def movs_directos_en_fecha(self, dia: Dia) -> models.QuerySet[Movimiento]:
-        """ Devuelve movimientos directos de la cuenta en una fecha dada"""
-        return self.movs_directos().filter(dia=dia)
-
     def movs(self, order_by: list[str] = None) -> models.QuerySet[Movimiento]:
-        """ Devuelve movimientos propios y de sus subcuentas
-            ordenados por fecha y orden_dia.
-            Antes de protestar que devuelve lo mismo que movs_directos()
-            tener en cuenta que está sobrescrita en CuentaAcumulativa
-            """
-        if order_by is None:
-            order_by = ['dia', 'orden_dia']
-        return self.movs_directos().order_by(*order_by)
+        order_by = order_by or ['dia', 'orden_dia']
+        movs = self.entradas.all() | self.salidas.all()
+        return movs.order_by(*order_by)
 
     def dias(self) -> models.QuerySet[Dia]:
         """ Devuelve días en los que haya movimientos propios y de sus subcuentas
@@ -244,12 +230,6 @@ class Cuenta(PolymorphModel):
         total_salidas = sum([x.importe_cta_salida for x in self.salidas.all()])
 
         return round(total_entradas + total_salidas, 2)
-
-    def fecha_ultimo_mov_directo(self) -> Optional[date]:
-        try:
-            return self.movs_directos().order_by('dia').last().fecha
-        except AttributeError:
-            return None
 
     def tiene_madre(self) -> bool:
         return self.cta_madre is not None
@@ -382,9 +362,9 @@ class CuentaInteractiva(Cuenta):
             raise errors.ErrorFechaCreacionPosteriorAConversion
 
         try:
-            if fecha < self.fecha_ultimo_mov_directo():
+            if fecha < self.movs().last().fecha:
                 raise errors.ErrorMovimientoPosteriorAConversion
-        except TypeError:
+        except AttributeError:
             pass
 
         if not self.saldo_ok():
@@ -651,12 +631,27 @@ class CuentaAcumulativa(Cuenta):
 
     def movs(self, order_by: list[str] = None) -> models.QuerySet[Movimiento]:
         """ Devuelve movimientos propios y de sus subcuentas"""
-        if order_by is None:
-            order_by = ['dia', 'orden_dia']
+        order_by = order_by or ["dia", "orden_dia"]
         result = super().movs(order_by=order_by)
         for sc in self.subcuentas.all():
             result = result | sc.movs(order_by=order_by)
         return result.order_by(*order_by)
+
+    def movs_directos(self, order_by: list[str] = None) -> models.QuerySet[Movimiento]:
+        """ Devuelve entradas y salidas de la cuenta sin los de sus subcuentas
+        """
+        order_by = order_by or ["dia", "orden_dia"]
+        return super().movs(order_by=order_by)
+
+    def movs_directos_en_fecha(self, dia: Dia) -> models.QuerySet[Movimiento]:
+        """ Devuelve movimientos directos de la cuenta en una fecha dada"""
+        return self.movs_directos().filter(dia=dia)
+
+    def fecha_ultimo_mov_directo(self) -> Optional[date]:
+        try:
+            return self.movs_directos().order_by('dia').last().fecha
+        except AttributeError:
+            return None
 
     def movs_conversion(self) -> models.QuerySet[Movimiento]:
         return self.movs().filter(convierte_cuenta__in=campos_cuenta)

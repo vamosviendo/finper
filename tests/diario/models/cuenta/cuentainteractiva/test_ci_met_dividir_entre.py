@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 import pytest
 from django.core.exceptions import ValidationError
 
-from diario.models import Cuenta, Movimiento
+from diario.models import Cuenta, Movimiento, CuentaAcumulativa
 from utils.errors import ErrorFechaCreacionPosteriorAConversion, \
     ErrorMovimientoPosteriorAConversion, ErrorDeSuma
 
@@ -100,12 +100,12 @@ def test_convierte_titular_en_titular_original(cuenta, dicts_subcuentas, otro_ti
 
 
 def test_genera_movimientos_de_salida_en_cta_madre_con_saldo_positivo(cuenta_con_saldo, dicts_subcuentas):
-    movs_cuenta_antes = cuenta_con_saldo.movs_directos().count()
+    movs_cuenta_antes = cuenta_con_saldo.movs().count()
     importe1 = dicts_subcuentas[0]['saldo']
     importe2 = cuenta_con_saldo.saldo() - importe1
 
     cuenta_con_saldo.dividir_entre(*dicts_subcuentas)
-    cuenta = Cuenta.tomar(sk=cuenta_con_saldo.sk, polymorphic=False)
+    cuenta = CuentaAcumulativa.tomar(sk=cuenta_con_saldo.sk)
 
     assert cuenta.movs_directos().count() == movs_cuenta_antes + 2
 
@@ -123,12 +123,12 @@ def test_genera_movimientos_de_salida_en_cta_madre_con_saldo_positivo(cuenta_con
 
 def test_genera_movimientos_de_entrada_en_cta_madre_con_saldo_negativo(
         cuenta_con_saldo_negativo, dicts_subcuentas):
-    movs_cuenta_antes = cuenta_con_saldo_negativo.movs_directos().count()
+    movs_cuenta_antes = cuenta_con_saldo_negativo.movs().count()
     importe1 = dicts_subcuentas[0]['saldo'] = -50
     importe2 = cuenta_con_saldo_negativo.saldo() - importe1
 
     cuenta_con_saldo_negativo.dividir_entre(*dicts_subcuentas)
-    cuenta = Cuenta.tomar(sk=cuenta_con_saldo_negativo.sk, polymorphic=False)
+    cuenta = CuentaAcumulativa.tomar(sk=cuenta_con_saldo_negativo.sk)
 
     assert cuenta.movs_directos().count() == movs_cuenta_antes + 2
 
