@@ -90,9 +90,9 @@ def test_navegacion_paginas(browser, muchos_dias):
 
 
 @pytest.mark.parametrize("origen, fixt_dias, fecha_en_la_misma_pag", [
-    ("home", "muchos_dias", date(2010, 11, 13)),
-    ("titular", "muchos_dias_distintos_titulares", date(2010, 11, 14)),
-    ("cuenta", "muchos_dias", date(2010, 9, 10))
+    ("home", "muchos_dias", date(2004, 4, 5)),
+    ("titular", "muchos_dias_distintos_titulares", date(2004, 4, 6)),
+    ("cuenta", "muchos_dias", date(2003, 3, 3))
 ])
 def test_busqueda_fecha(browser, origen, fixt_dias, fecha, fecha_tardia, fecha_en_la_misma_pag, request):
     ente = request.getfixturevalue(origen) if origen != "home" else None
@@ -123,7 +123,7 @@ def test_busqueda_fecha(browser, origen, fixt_dias, fecha, fecha_tardia, fecha_e
 
     # Si buscamos un día inexistente, seremos llevados a la página que contenga
     # el día anterior al seleccionado.
-    fecha_inexistente = date(2011, 4, 21)
+    fecha_inexistente = date(2005, 4, 21)
     browser.completar_form(boton="id_btn_buscar_dia_init", input_dia_init=fecha_inexistente)
     fecha_anterior = Dia.filtro(fecha__lt=fecha_inexistente).last().fecha
     fecha_posterior = Dia.filtro(fecha__gt=fecha_inexistente).first().fecha

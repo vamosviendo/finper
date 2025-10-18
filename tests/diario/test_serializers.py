@@ -1,7 +1,7 @@
 import pytest
 
 from diario.models import CuentaAcumulativa, CuentaInteractiva, Movimiento, Dia, Moneda, SaldoDiario, \
-    Titular, Cotizacion
+    Titular, Cotizacion, Cuenta
 from vvmodel.serializers import SerializedDb
 
 from diario.serializers import CuentaSerializada, DiaSerializado, MovimientoSerializado, SaldoDiarioSerializado, \
@@ -130,7 +130,9 @@ class TestDiaSerializado:
 
 class TestSaldoDiarioSerializado:
     def test_prop_sk_devuelve_cadena_con_sk_de_dia_y_sk_de_cuenta(self, saldo_serializado):
-        assert saldo_serializado.sk == "20101112c"
+        dia = Dia.tomar(fecha=saldo_serializado.fields["dia"][0])
+        cuenta = Cuenta.tomar(saldo_serializado.fields['cuenta'][0])
+        assert saldo_serializado.sk == f"{dia.sk}{cuenta.sk}"
 
 
 class TestCotizacionSerializada:

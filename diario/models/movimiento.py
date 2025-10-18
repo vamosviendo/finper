@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, List, Tuple, Optional, Self
+from typing import TYPE_CHECKING, List, Tuple, Optional, Self, cast
 
 from datetime import date
 
@@ -619,7 +619,7 @@ class Movimiento(MiModel):
         return False
 
     def recuperar_cuentas_credito(self) -> Tuple:
-        cls = self.get_related_class(CTA_ENTRADA)
+        cls = cast(MiModel, self.get_related_class(CTA_ENTRADA))
         sk_emisor = self.emisor.sk
         sk_receptor = self.receptor.sk
         try:

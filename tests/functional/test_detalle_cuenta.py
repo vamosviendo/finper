@@ -333,7 +333,7 @@ def test_detalle_de_cuenta_acumulativa(
 
 def test_detalle_de_subcuenta(
         browser, cuenta_acumulativa, subsubcuenta_1_con_movimientos, subsubcuenta_2_con_movimientos,
-        subsubcuenta_3_con_movimientos):
+        subsubcuenta_3_con_movimientos, fecha_posterior):
     # Dadas dos subcuentas de una cuenta acumulativa
     # Y una de esas subcuentas a la vez dividida en tres subcuentas
     # Y algunos movimientos de las tres subcuentas
@@ -368,7 +368,7 @@ def test_detalle_de_subcuenta(
         ]
 
     # Cliqueamos en un movimiento
-    movimiento = Movimiento.tomar(fecha=date(2011, 5, 1), orden_dia=0)
+    movimiento = Movimiento.tomar(fecha=fecha_posterior, orden_dia=0)
     browser.ir_a_pag(subsubcuenta_1_con_movimientos.get_url_with_mov(movimiento))
 
     # Vemos que en la sección de movimientos aparecen los días en los que hay movimientos

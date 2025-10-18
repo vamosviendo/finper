@@ -39,7 +39,7 @@ def cuenta_4(titular: Titular, fecha_temprana: date) -> CuentaInteractiva:
 @pytest.fixture
 def cuenta_con_saldo(titular: Titular, fecha_temprana: date, fecha_anterior: date) -> CuentaInteractiva:
     cta = Cuenta.crear(
-        nombre='cuenta_con_saldo',
+        nombre='cuenta con saldo',
         sk='ccs',
         # saldo=100,
         titular=titular,
@@ -53,7 +53,7 @@ def cuenta_con_saldo(titular: Titular, fecha_temprana: date, fecha_anterior: dat
 @pytest.fixture
 def cuenta_con_saldo_negativo(titular: Titular, fecha_temprana: date) -> CuentaInteractiva:
     return Cuenta.crear(
-        nombre='cuenta_con_saldo_negativo',
+        nombre='cuenta con saldo negativo',
         sk='ccsn',
         saldo=-100,
         titular=titular,
@@ -93,6 +93,9 @@ def cuenta_gorda(titular_gordo: Titular, fecha_temprana: date) -> CuentaInteract
 
 @pytest.fixture
 def cuenta_acumulativa(cuenta_con_saldo: CuentaInteractiva, fecha: date) -> CuentaAcumulativa:
+    cuenta_con_saldo.nombre = "cuenta acumulativa"
+    cuenta_con_saldo.sk = "ca"
+    cuenta_con_saldo.clean_save()
     return cuenta_con_saldo.dividir_y_actualizar(
         ['subcuenta 1 con saldo', 'scs1', 60],
         ['subcuenta 2 con saldo', 'scs2'],
@@ -102,6 +105,9 @@ def cuenta_acumulativa(cuenta_con_saldo: CuentaInteractiva, fecha: date) -> Cuen
 
 @pytest.fixture
 def cuenta_acumulativa_saldo_0(cuenta: CuentaInteractiva) -> CuentaAcumulativa:
+    cuenta.nombre = "cuenta acumulativa saldo 0"
+    cuenta.sk = "cas0"
+    cuenta.clean_save()
     return cuenta.dividir_y_actualizar(
         ['subcuenta 1 saldo 0', 'sc1', 0],
         ['subcuenta 2 saldo 0', 'sc2'],
@@ -111,6 +117,9 @@ def cuenta_acumulativa_saldo_0(cuenta: CuentaInteractiva) -> CuentaAcumulativa:
 
 @pytest.fixture
 def cuenta_acumulativa_saldo_negativo(cuenta_con_saldo_negativo: CuentaInteractiva) -> CuentaAcumulativa:
+    cuenta_con_saldo_negativo.nombre = "cuenta acumulativa saldo negativo"
+    cuenta_con_saldo_negativo.sk = "casn"
+    cuenta_con_saldo_negativo.clean_save()
     return cuenta_con_saldo_negativo.dividir_y_actualizar(
         ['subcuenta 1 saldo negativo', 'scsn1', -10],
         ['subcuenta 2 saldo negativo', 'scsn2'],
@@ -124,6 +133,9 @@ def cuenta_de_dos_titulares(
         cuenta_ajena: CuentaInteractiva,
         fecha_temprana: date,
 ) -> CuentaAcumulativa:
+    cuenta_ajena.nombre = "cuenta de dos titulares"
+    cuenta_ajena.sk = "cddt"
+    cuenta_ajena.clean_save()
     return cuenta_ajena.dividir_y_actualizar(
         {
             'nombre': 'Subcuenta otro titular',
@@ -147,6 +159,9 @@ def division_gratuita(
         fecha_temprana: date,
 ) -> CuentaAcumulativa:
     saldo = cuenta_ajena.saldo()
+    cuenta_ajena.nombre = "division gratuita"
+    cuenta_ajena.sk = "dg"
+    cuenta_ajena.clean_save()
     return cuenta_ajena.dividir_y_actualizar(
         {
             'nombre': 'Subcuenta otro titular',
@@ -166,6 +181,9 @@ def division_gratuita(
 
 @pytest.fixture
 def cuenta_acumulativa_ajena(cuenta_ajena: CuentaInteractiva, fecha_temprana: date) -> CuentaAcumulativa:
+    cuenta_ajena.nombre = "cuenta acumulativa ajena"
+    cuenta_ajena.sk = "caa"
+    cuenta_ajena.clean_save()
     return cuenta_ajena.dividir_y_actualizar(
         ['subcuenta 1 ajena', 'sc1', 0],
         ['subcuenta 2 ajena', 'sc2'],
@@ -178,8 +196,8 @@ def subsubcuenta(cuenta_acumulativa: CuentaAcumulativa, fecha: date) -> CuentaIn
     sc1, sc2 = cuenta_acumulativa.subcuentas.all()
     ssc11, ssc12 = sc1.dividir_entre(
         {
-            'nombre': 'subsubcuenta 1',
-            'sk': 'ssc1',
+            'nombre': 'subsubcuenta',
+            'sk': 'ssc',
             'saldo': 10,
             'titular': sc1.titular
         },
@@ -195,15 +213,6 @@ def subsubcuenta(cuenta_acumulativa: CuentaAcumulativa, fecha: date) -> CuentaIn
 @pytest.fixture
 def subsubcuenta_2(subsubcuenta: CuentaInteractiva) -> CuentaInteractiva:
     return subsubcuenta.hermanas()[0]
-
-
-@pytest.fixture
-def cuenta_madre_de_cuenta_2(cuenta_2: CuentaInteractiva, fecha_temprana: date) -> CuentaAcumulativa:
-    return cuenta_2.dividir_y_actualizar(
-        ['subcuenta 1 de cuenta 2', 'sc21', 30],
-        ['subcuenta 2 de cuenta 2', 'sc22'],
-        fecha=fecha_temprana
-    )
 
 
 @pytest.fixture
@@ -284,6 +293,9 @@ def cuenta_con_saldo_en_yenes(titular: Titular, fecha_temprana: date, yen: Moned
 @pytest.fixture
 def cuenta_acumulativa_en_dolares(
         cuenta_con_saldo_en_dolares: CuentaInteractiva, fecha_temprana: date) -> CuentaAcumulativa:
+    cuenta_con_saldo_en_dolares.nombre = "cuenta acumulativa en dolares"
+    cuenta_con_saldo_en_dolares.sk = "cad"
+    cuenta_con_saldo_en_dolares.clean_save()
     return cuenta_con_saldo_en_dolares.dividir_y_actualizar(
         ['subcuenta 1 con saldo en dólares', 'scsd1', 60],
         ['subcuenta 2 con saldo en dólares', 'scsd2'],

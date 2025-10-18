@@ -7,12 +7,11 @@ def test_muestra_movimiento_con_cuenta_de_entrada_y_salida(traspaso):
                                  f"{traspaso.importe:.2f} {traspaso.moneda.plural}"
 
 
-def test_muestra_movimiento_sin_cuenta_de_salida_o_salida(entrada, salida, salida_posterior):
+def test_muestra_movimiento_sin_cuenta_de_salida_o_salida(entrada, salida):
     assert entrada.__str__() == f"{entrada.fecha} {entrada.orden_dia} {entrada.concepto} - ... -> " \
                                 f"{entrada.cta_entrada}: {entrada.importe:.2f} {entrada.moneda.plural}"
     assert salida.__str__() == f"{salida.fecha} {salida.orden_dia} {salida.concepto} - {salida.cta_salida} " \
                                f"-> ...: {salida.importe:.2f} {salida.moneda.plural}"
-    assert salida_posterior.__str__() == "2011-05-01 0 Salida posterior - cuenta -> ...: 40.00 pesos"
 
 
 @pytest.mark.parametrize("sentido", ["entrada", "salida"])

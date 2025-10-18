@@ -57,14 +57,14 @@ def traspaso(cuenta: CuentaInteractiva, cuenta_2: CuentaInteractiva, dia: Dia) -
 @pytest.fixture
 def entrada_otra_cuenta(cuenta_2: CuentaInteractiva, dia: Dia) -> Movimiento:
     return Movimiento.crear(
-        concepto='Entrada', importe=486, cta_entrada=cuenta_2, dia=dia
+        concepto='Entrada otra cuenta', importe=486, cta_entrada=cuenta_2, dia=dia
     )
 
 
 @pytest.fixture
 def entrada_anterior_otra_cuenta(cuenta_2: CuentaInteractiva, dia_anterior: Dia) -> Movimiento:
     return Movimiento.crear(
-        concepto='Entrada posterior otra cuenta', importe=50,
+        concepto='Entrada anterior otra cuenta', importe=50,
         cta_entrada=cuenta_2, dia=dia_anterior
     )
 
@@ -126,7 +126,7 @@ def salida_tardia_otra_cuenta(cuenta_2: CuentaInteractiva, dia_tardio: Dia) -> M
 @pytest.fixture
 def entrada_tardia_cuenta_ajena(cuenta_ajena: CuentaInteractiva, dia_tardio: Dia) -> Movimiento:
     return Movimiento.crear(
-        concepto='Entrada posterior cuenta ajena',
+        concepto='Entrada tardía cuenta ajena',
         importe=90,
         cta_entrada=cuenta_ajena,
         dia=dia_tardio
@@ -147,6 +147,8 @@ def salida_tardia_tercera_cuenta(cuenta_3: CuentaInteractiva, dia_tardio: Dia) -
 def entrada_con_ca(entrada: Movimiento) -> Movimiento:
     dividir_en_dos_subcuentas(entrada.cta_entrada)
     entrada.refresh_from_db()
+    entrada.concepto = "Entrada con ca"
+    entrada.clean_save()
     return entrada
 
 
@@ -154,6 +156,8 @@ def entrada_con_ca(entrada: Movimiento) -> Movimiento:
 def salida_con_ca(salida: Movimiento) -> Movimiento:
     dividir_en_dos_subcuentas(salida.cta_salida)
     salida.refresh_from_db()
+    salida.concepto = "Salida con ca"
+    salida.clean_save()
     return salida
 
 
@@ -161,6 +165,8 @@ def salida_con_ca(salida: Movimiento) -> Movimiento:
 def traspaso_con_cta_entrada_a(traspaso: Movimiento) -> Movimiento:
     dividir_en_dos_subcuentas(traspaso.cta_entrada)
     traspaso.refresh_from_db()
+    traspaso.concepto = "Traspaso con cta entrada a"
+    traspaso.clean_save()
     return traspaso
 
 
@@ -168,6 +174,7 @@ def traspaso_con_cta_entrada_a(traspaso: Movimiento) -> Movimiento:
 def traspaso_con_cta_salida_a(traspaso: Movimiento) -> Movimiento:
     dividir_en_dos_subcuentas(traspaso.cta_salida)
     traspaso.refresh_from_db()
+    traspaso.concepto = "Traspaso con cta salida a"
     return traspaso
 
 
@@ -267,7 +274,7 @@ def venta_dolares(
         cuenta: CuentaInteractiva, cuenta_en_dolares: CuentaInteractiva
 ) -> Movimiento:
     return Movimiento.crear(
-        "Venta u$s",
+        "Venta dólares",
         fecha=fecha,
         cta_entrada=cuenta,
         cta_salida=cuenta_en_dolares,
@@ -283,7 +290,7 @@ def compra_dolares(
         cuenta: CuentaInteractiva, cuenta_en_dolares: CuentaInteractiva
 ) -> Movimiento:
     return Movimiento.crear(
-        "Venta u$s",
+        "Compra dólares",
         fecha=fecha,
         cta_entrada=cuenta_en_dolares,
         cta_salida=cuenta,
@@ -300,7 +307,7 @@ def mov_distintas_monedas_en_moneda_cta_salida(
         dolar: Moneda,
 ) -> Movimiento:
     return Movimiento.crear(
-        concepto='Movimiento en distintas monedas',
+        concepto='Movimiento en distintas monedas en moneda cta salida',
         cta_entrada=cuenta_con_saldo_en_euros,
         cta_salida=cuenta_con_saldo_en_dolares,
         importe=10,
