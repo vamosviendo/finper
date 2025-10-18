@@ -408,7 +408,7 @@ class TitModView(UpdateView):
         return self.request.GET.get("next", reverse("home"))
 
 class MonedaView(TemplateView):
-    template_name = 'diario/moneda.html'
+    template_name = 'diario/moneda_detalle.html'
 
     def get(self, request, *args, **kwargs):
         self.page = request.GET.get("page")

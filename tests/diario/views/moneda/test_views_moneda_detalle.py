@@ -1,9 +1,9 @@
 from pytest_django import asserts
 
 
-def test_usa_template_moneda(client, dolar):
+def test_usa_template_moneda_detalle(client, dolar):
     response = client.get(dolar.get_absolute_url())
-    asserts.assertTemplateUsed(response, "diario/moneda.html")
+    asserts.assertTemplateUsed(response, "diario/moneda_detalle.html")
 
 
 def test_pasa_moneda_a_tempate(client, dolar):
