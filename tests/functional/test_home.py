@@ -270,6 +270,7 @@ class TestHomeLinks:
         browser.assert_url(titular.get_absolute_url())
 
         # cuando cliqueamos en el ícono de agregar titular, accedemos a la página para agregar titular nuevo
+        browser.ir_a_pag()
         browser.verificar_link('titular_nuevo', 'tit_nuevo', querydict={"next": "/"})
 
         # cuando cliqueamos en el link de editar titular, accedemos a la página de edición de ese titular
@@ -292,6 +293,7 @@ class TestHomeLinks:
         browser.assert_url(subcuenta.get_absolute_url())
 
         # cuando cliqueamos en el ícono de agregar cuenta, accedemos a la página para agregar cuenta nueva
+        browser.ir_a_pag()
         browser.verificar_link('cuenta_nueva', 'cta_nueva', querydict={'next': '/'})
 
         # cuando cliqueamos en el link de editar cuenta, accedemos a la página de edición de esa cuenta

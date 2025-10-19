@@ -49,7 +49,6 @@ def test_detalle_moneda(browser, dolar, cotizacion_dolar, cotizacion_posterior_d
         args=[cot_muestra.sk],
         querydict={"next": current_url},
         criterio=By.CLASS_NAME,
-        url_inicial=current_url,
     )
     browser.verificar_link(
         nombre="elim_cot",
@@ -57,7 +56,6 @@ def test_detalle_moneda(browser, dolar, cotizacion_dolar, cotizacion_posterior_d
         args=[cot_muestra.sk],
         querydict={"next": current_url},
         criterio=By.CLASS_NAME,
-        url_inicial=current_url,
     )
 
     # Al inicio de la lista hay un botón que, al cliquear en él, nos lleva al form de cotización para cargar una
@@ -67,15 +65,10 @@ def test_detalle_moneda(browser, dolar, cotizacion_dolar, cotizacion_posterior_d
         viewname="mon_cot_nueva",
         args=[dolar],
         querydict={"next": current_url},
-        url_inicial=current_url
     )
 
     # Al final de la lista aparece un link que, al cliquear en él, nos lleva a la página principal
-    browser.verificar_link(
-        nombre="home",
-        viewname="home",
-        url_inicial=current_url
-    )
+    browser.verificar_link(nombre="home", viewname="home")
 
 def test_detalle_moneda_paginacion(browser, dolar, mas_de_20_cotizaciones_dolar):
     # Si hay más de 20 cotizaciones, se muestran sólo las últimas 20

@@ -215,6 +215,7 @@ class FinperFirefox(MiFirefox):
         saldo = self.encontrar_elemento('id_importe_saldo_gral').text.strip()
         assert saldo == float_format(cuenta.saldo(movimiento))
 
+    # TODO: Pasar a MiFirefox
     def verificar_link(
             self,
             nombre: str,
@@ -222,16 +223,14 @@ class FinperFirefox(MiFirefox):
             args: list | None = None,
             querydict: dict | None = None,
             criterio: str = By.ID,
-            url_inicial: str = '',
     ):
-        self.ir_a_pag(url_inicial)
+        url_inicial = urlparse(self.current_url).path
         if criterio == By.CLASS_NAME:
             tipo = "class"
         else:
             tipo = "id"
 
         if querydict:
-            print(querydict, type(querydict))
             querystring = "?"
             for key, value in querydict.items():
                 querystring += f"{key}={value}&"
@@ -241,6 +240,7 @@ class FinperFirefox(MiFirefox):
 
         self.encontrar_elemento(f"{tipo}_link_{nombre}", criterio).click()
         self.assert_url(reverse(viewname, args=args) + querystring)
+        self.ir_a_pag(url_inicial)
 
     def crear_movimiento(self, **kwargs):
         self.ir_a_pag(reverse('mov_nuevo'))
