@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import date
 from typing import Any, cast
 
+from django import forms
 from django.core.paginator import Paginator
 from django.db.models.functions import Lower
 from django.http import HttpResponseRedirect, HttpRequest, HttpResponse
@@ -29,7 +30,6 @@ def pag_de_fecha(fecha: date, ente: Cuenta | Titular | None) -> int:
 
 class BaseHomeView(TemplateView):
     template_name = TEMPLATE_HOME
-    ente_class = None
     prefijo_url = ""
 
     def __init__(self, **kwargs: dict[str, Any]):
@@ -58,9 +58,8 @@ class BaseHomeView(TemplateView):
         args = self.get_url_args(ente)
         args += [movs.last().sk]
 
-        url_name = f"{self.prefijo_url}movimiento" if self.prefijo_url else "movimiento"
         return redirect(
-            reverse(url_name, args=args) + f"?page={page}&redirected=1",
+            reverse(f"{self.prefijo_url}movimiento", args=args) + f"?page={page}&redirected=1",
         )
 
     def get(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
@@ -89,7 +88,8 @@ class BaseHomeView(TemplateView):
 
         return super().get(request, *args, **kwargs)
 
-    def _get_context_comun(self, ente: Cuenta | Titular | None, movimiento: Movimiento) -> dict[str, Any]:
+    @staticmethod
+    def _get_context_comun(ente: Cuenta | Titular | None, movimiento: Movimiento) -> dict[str, Any]:
         movimiento_en_titulo = \
             f" en movimiento {movimiento.orden_dia} " \
             f"del {movimiento.fecha} ({movimiento.concepto})" \
@@ -218,7 +218,7 @@ class CtaElimView(DeleteView):
 
     def get(self, request, *args, **kwargs):
         self.object = cast(Cuenta, self.get_object())
-        if self.object.saldo() != 0:
+        if cast(Cuenta, self.object).saldo() != 0:
             context = self.get_context_data(
                 object=self.object,
                 error='No se puede eliminar cuenta con saldo',
@@ -258,6 +258,7 @@ class CtaModView(UpdateView):
 
 
 def cta_div_view(request, sk):
+    form = None
     if request.method == 'GET':
         form = FormDividirCuenta(cuenta=sk)
 
@@ -271,6 +272,7 @@ def cta_div_view(request, sk):
 
 
 def cta_agregar_subc_view(request, sk):
+    form = None
     if request.method == 'GET':
         form = FormCrearSubcuenta(cuenta=sk)
 
@@ -300,8 +302,8 @@ class MovNuevoView(CreateView):
     def get_form(self, *args, **kwargs):
         form = super().get_form(*args, **kwargs)
 
-        form.fields['cta_entrada'].queryset = CuentaInteractiva.todes()
-        form.fields['cta_salida'].queryset = CuentaInteractiva.todes()
+        cast(forms.ModelChoiceField, form.fields['cta_entrada']).queryset = CuentaInteractiva.todes()
+        cast(forms.ModelChoiceField, form.fields['cta_salida']).queryset = CuentaInteractiva.todes()
 
         return form
 
@@ -338,12 +340,12 @@ class MovModView(UpdateView):
         if self.object.cta_entrada and self.object.cta_entrada.es_acumulativa:
             form.fields['cta_entrada'].disabled = True
         else:
-            form.fields['cta_entrada'].queryset = CuentaInteractiva.todes()
+            cast(forms.ModelChoiceField, form.fields['cta_entrada']).queryset = CuentaInteractiva.todes()
 
         if self.object.cta_salida and self.object.cta_salida.es_acumulativa:
             form.fields['cta_salida'].disabled = True
         else:
-            form.fields['cta_salida'].queryset = CuentaInteractiva.todes()
+            cast(forms.ModelChoiceField, form.fields['cta_salida']).queryset = CuentaInteractiva.todes()
 
         return form
 
@@ -501,7 +503,7 @@ def modificar_saldo_view(request, sk):
 
 
 def agregar_movimiento_view(request, sk):
-    cta_a_corregir = Cuenta.tomar(sk=sk)
+    cta_a_corregir = CuentaInteractiva.tomar(sk=sk)
     cta_a_corregir.agregar_mov_correctivo()
     ctas_erroneas_restantes = [c.lower() for c in request.GET.get('ctas').split('!')
                                if c != sk.lower()]
