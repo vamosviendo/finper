@@ -18,12 +18,12 @@ from django.urls import path
 from diario import views
 
 urlpatterns = [
-    path('c/<slug:sk_cta>/', views.HomeView.as_view(), name='cuenta'),
-    path('t/<slug:sk>/', views.HomeView.as_view(), name='titular'),
-    path('m/<slug:sk_mov>', views.HomeView.as_view(), name='movimiento'),
+    path('c/<slug:sk_cta>/', views.CuentaHomeView.as_view(), name='cuenta'),
+    path('t/<slug:sk>/', views.TitularHomeView.as_view(), name='titular'),
+    path('m/<slug:sk_mov>', views.MovimientoHomeView.as_view(), name='movimiento'),
+    path('cm/<slug:sk_cta>/<slug:sk_mov>', views.CuentaMovimientoHomeView.as_view(), name='cuenta_movimiento'),
+    path('tm/<slug:sk>/<slug:sk_mov>', views.TitularMovimientoHomeView.as_view(), name='titular_movimiento'),
     path('mn/<slug:sk>/', views.MonedaView.as_view(), name='moneda'),
-    path('cm/<slug:sk_cta>/<slug:sk_mov>', views.HomeView.as_view(), name='cuenta_movimiento'),
-    path('tm/<slug:sk>/<slug:sk_mov>', views.HomeView.as_view(), name='titular_movimiento'),
     path('cta_nueva', views.CtaNuevaView.as_view(), name='cta_nueva'),
     path('cta_elim/<slug:sk>', views.CtaElimView.as_view(), name='cta_elim'),
     path('cta_mod/<slug:sk>', views.CtaModView.as_view(), name='cta_mod'),

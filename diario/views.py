@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import Any
+from typing import Any, cast
 
 from django.core.paginator import Paginator
 from django.db.models.functions import Lower
+from django.http import HttpResponseRedirect, HttpRequest, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, DeleteView, TemplateView, \
@@ -26,59 +27,27 @@ def pag_de_fecha(fecha: date, ente: Cuenta | Titular | None) -> int:
     return (posicion // 7) + 1
 
 
-class HomeView(TemplateView):
+class BaseHomeView(TemplateView):
     template_name = TEMPLATE_HOME
-
-    #
-    # def get(self, request, *args, **kwargs):
-    #     hoy = Path('hoy.mark')
-    #     if (datetime.date.today() >
-    #             datetime.date.fromtimestamp(hoy.stat().st_mtime)):
-    #         hoy.touch()
-    #         return redirect('verificar_saldos')
-    #
-    #     return super().get(request, *args, **kwargs)
+    ente_class = None
+    prefijo_url = ""
 
     def __init__(self, **kwargs: dict[str, Any]):
         super().__init__(**kwargs)
         self.dias_pag = None
 
-    @staticmethod
-    def _get_ente_info(request):
-        resolver_match = request.resolver_match
-        viewname = resolver_match.url_name
-        kwargs = resolver_match.kwargs
+    def get_ente(self, kwargs) -> Cuenta | Titular | None:
+        """ Debe implementarse en las subclases """
+        return None
 
-        if "cuenta" in viewname:
-            sk = kwargs.get("sk_cta")
-            ente = Cuenta.tomar(sk=sk)
-            return {
-                "ente": ente,
-                "dias": ente.dias(),
-                "prefijo": "cuenta_",
-                "args": [sk],
-            }
-        if "titular" in viewname:
-            sk = kwargs.get("sk")
-            ente = Titular.tomar(sk=sk)
-            return {
-                "ente": ente,
-                "dias": ente.dias(),
-                "prefijo": "titular_",
-                "args": [sk],
-            }
-        return {
-            "ente": None,
-            "dias": Dia.con_movimientos(),
-            "prefijo": "",
-            "args": [],
-        }
+    def get_url_args(self, ente) -> list:
+        """ Debe implementarse en las subclases """
+        return []
 
-    @staticmethod
-    def _redirect_con_fecha(fecha, ente_info):
-        ente, dias, prefijo, args = tuple(ente_info.values())
+    def _redirect_con_fecha(self, fecha: str, ente: Cuenta | Titular | None) -> HttpResponseRedirect:
+        dias_query = ente.dias() if ente else Dia.con_movimientos()
 
-        dia = dias.filter(fecha__lte=fecha).last() or dias.first()
+        dia = dias_query.filter(fecha__lte=fecha).last() or dias_query.first()
         movs = dia.movs(ente=ente)
 
         while not movs.exists():
@@ -86,23 +55,26 @@ class HomeView(TemplateView):
             movs = dia.movs(ente=ente)
 
         page = pag_de_fecha(str2date(fecha), ente)
+        args = self.get_url_args(ente)
         args += [movs.last().sk]
 
+        url_name = f"{self.prefijo_url}movimiento" if self.prefijo_url else "movimiento"
         return redirect(
-            reverse(f"{prefijo}movimiento", args=args) + f"?page={page}&redirected=1",
+            reverse(url_name, args=args) + f"?page={page}&redirected=1",
         )
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
         fecha = request.GET.get("fecha")
         pag = request.GET.get("page")
         redirected = request.GET.get("redirected")
 
-        ente_info = self._get_ente_info(request)
+        ente = self.get_ente(kwargs)
+        dias = ente.dias() if ente else Dia.con_movimientos()
 
         if fecha:
-            return self._redirect_con_fecha(fecha, ente_info)
+            return self._redirect_con_fecha(fecha, ente)
 
-        self.dias_pag = Paginator(ente_info["dias"].reverse(), 7).get_page(pag)
+        self.dias_pag = Paginator(dias.reverse(), 7).get_page(pag)
 
         movimiento = Movimiento.tomar_o_nada(sk=kwargs.get("sk_mov"))
         condition = (
@@ -112,17 +84,12 @@ class HomeView(TemplateView):
 
         if condition:
             mov = self.dias_pag[0].movimientos.last()
-            url = mov.get_url(ente_info["ente"])
+            url = mov.get_url(ente)
             return redirect(url + f"?page={pag}")
 
         return super().get(request, *args, **kwargs)
 
-    @staticmethod
-    def _get_context_comun(**kwargs):
-        movimiento = Movimiento.tomar_o_nada(sk=kwargs.get("sk_mov"))
-        cuenta: Cuenta | CuentaInteractiva | CuentaAcumulativa = Cuenta.tomar(sk=kwargs["sk_cta"]) \
-            if kwargs.get("sk_cta") else None
-        titular = Titular.tomar(sk=kwargs["sk"]) if kwargs.get("sk") else None
+    def _get_context_comun(self, ente: Cuenta | Titular | None, movimiento: Movimiento) -> dict[str, Any]:
         movimiento_en_titulo = \
             f" en movimiento {movimiento.orden_dia} " \
             f"del {movimiento.fecha} ({movimiento.concepto})" \
@@ -131,40 +98,15 @@ class HomeView(TemplateView):
         return {
             "movimiento": movimiento,
             "monedas": Moneda.todes(),
-            "cuenta": cuenta,
-            "titular": titular,
-            "filtro": cuenta or titular,
+            "cuenta": ente if isinstance(ente, Cuenta) else None,
+            "titular": ente if isinstance(ente, Titular) else None,
+            "filtro": ente,
             "movimiento_en_titulo": movimiento_en_titulo,
         }
 
-    def _get_context_especifico(self, context):
-        ente: Titular | CuentaInteractiva | CuentaAcumulativa | None = context["filtro"]
-        movimiento = context["movimiento"]
-        movimiento_en_titulo = context.pop("movimiento_en_titulo")
-
-        if isinstance(ente, Cuenta):
-            context_esp = {
-                "saldo_gral": ente.saldo(movimiento),
-                "titulo_saldo_gral": f"{ente.nombre} (fecha alta: {ente.fecha_creacion}){movimiento_en_titulo}",
-                "ancestros": reversed(ente.ancestros()),
-                "hermanas": ente.hermanas(),
-                "titulares": Titular.filtro(
-                    sk__in=[x.sk for x in ente.titulares]
-                ) if ente.es_acumulativa else Titular.filtro(
-                    sk=ente.titular.sk
-                ),
-                "cuentas": ente.subcuentas.all() if ente.es_acumulativa else Cuenta.objects.none(),
-            }
-
-        elif isinstance(ente, Titular):
-            context_esp = {
-                "saldo_gral": ente.capital(movimiento),
-                "titulo_saldo_gral": f"Capital de {ente.nombre}{movimiento_en_titulo}",
-                "titulares": Titular.todes(),
-                "cuentas": ente.cuentas.all(),
-            }
-        else:
-            context_esp = {
+    def get_context_especifico(self, ente: Cuenta | Titular | None, movimiento: Movimiento) -> dict[str, Any]:
+        movimiento_en_titulo = self._get_context_comun(ente, movimiento)["movimiento_en_titulo"]
+        return {
                 "saldo_gral":
                     saldo_general_historico(movimiento) if movimiento
                     else sum(c.saldo() for c in Cuenta.filtro(cta_madre=None)),
@@ -173,14 +115,86 @@ class HomeView(TemplateView):
                 "cuentas": Cuenta.todes().order_by(Lower("nombre")),
             }
 
-        context.update({"dias": self.dias_pag})
-        return context_esp
-
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        context.update(self._get_context_comun(**kwargs))
-        context.update(self._get_context_especifico(context))
+        ente = self.get_ente(kwargs)
+        movimiento = Movimiento.tomar_o_nada(sk=kwargs.get("sk_mov"))
+
+        context.update(self._get_context_comun(ente, movimiento))
+        context.update(self.get_context_especifico(ente, movimiento))
+        context["dias"] = self.dias_pag
         return context
+
+
+class CuentaHomeView(BaseHomeView):
+    prefijo_url = "cuenta_"
+
+    def get_ente(self, kwargs) -> Cuenta:
+        return Cuenta.tomar(sk=kwargs.get("sk_cta"))
+
+    def get_url_args(self, ente: Cuenta) -> list[str]:
+        return [ente.sk]
+
+    def get_context_especifico(
+            self, ente: Cuenta | CuentaInteractiva | CuentaAcumulativa, movimiento: Movimiento) -> dict[str, Any]:
+        movimiento_en_titulo = self._get_context_comun(ente, movimiento)["movimiento_en_titulo"]
+
+        return {
+            "saldo_gral": ente.saldo(movimiento),
+            "titulo_saldo_gral": f"{ente.nombre} (fecha alta: {ente.fecha_creacion}){movimiento_en_titulo}",
+            "ancestros": reversed(ente.ancestros()),
+            "hermanas": ente.hermanas(),
+            "titulares": Titular.filtro(
+                sk__in=[x.sk for x in ente.titulares]
+            ) if ente.es_acumulativa else Titular.filtro(
+                sk=ente.titular.sk
+            ),
+            "cuentas": ente.subcuentas.all() if ente.es_acumulativa else Cuenta.objects.none(),
+        }
+
+
+class TitularHomeView(BaseHomeView):
+    prefijo_url = "titular_"
+
+    def get_ente(self, kwargs) -> Titular:
+        return Titular.tomar(sk=kwargs.get("sk"))
+
+    def get_url_args(self, ente: Titular) -> list[str]:
+        return [ente.sk]
+
+    def get_context_especifico(self, ente: Titular, movimiento: Movimiento) -> dict[str, Any]:
+        movimiento_en_titulo = self._get_context_comun(ente, movimiento)["movimiento_en_titulo"]
+
+        return {
+            "saldo_gral": ente.capital(movimiento),
+            "titulo_saldo_gral": f"Capital de {ente.nombre}{movimiento_en_titulo}",
+            "titulares": Titular.todes(),
+            "cuentas": ente.cuentas.all(),
+        }
+
+
+class MovimientoHomeView(BaseHomeView):
+    def get_ente(self, kwargs) -> None:
+        return None
+
+    def get_context_especifico(self, ente: Cuenta | Titular | None, movimiento: Movimiento) -> dict[str, Any]:
+        movimiento_en_titulo = self._get_context_comun(ente, movimiento)["movimiento_en_titulo"]
+
+        return {
+            "saldo_gral": saldo_general_historico(movimiento) if movimiento
+                else sum(c.saldo() for c in Cuenta.filtro(cta_madre=None)),
+            "titulo_saldo_gral": f"Saldo general{movimiento_en_titulo}",
+            "titulares": Titular.todes(),
+            "cuentas": Cuenta.todes().order_by(Lower("nombre")),
+        }
+
+
+class CuentaMovimientoHomeView(CuentaHomeView):
+    pass
+
+
+class TitularMovimientoHomeView(TitularHomeView):
+    pass
 
 
 class CtaNuevaView(CreateView):
@@ -203,7 +217,7 @@ class CtaElimView(DeleteView):
     slug_field = 'sk'
 
     def get(self, request, *args, **kwargs):
-        self.object = self.get_object()
+        self.object = cast(Cuenta, self.get_object())
         if self.object.saldo() != 0:
             context = self.get_context_data(
                 object=self.object,

@@ -21,7 +21,7 @@ from diario import urls as diario_urls
 from usuarios import urls as usuarios_urls
 
 urlpatterns = [
-    path('', views.HomeView.as_view(), name='home'),
+    path('', views.BaseHomeView.as_view(), name='home'),
     path('diario/', include(diario_urls)),
     path('user/', include(usuarios_urls)),
     path('admin/', admin.site.urls),
