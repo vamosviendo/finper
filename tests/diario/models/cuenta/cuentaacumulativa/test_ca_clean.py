@@ -44,15 +44,6 @@ def test_no_puede_tener_fecha_de_creacion_posterior_a_la_fecha_de_conversion(cue
         cuenta_acumulativa.clean()
 
 
-def test_no_puede_tener_fecha_de_creacion_anterior_a_fecha_de_alta_de_ninguno_de_sus_titulares(
-        cuenta_de_dos_titulares):
-    titular, otro_titular = cuenta_de_dos_titulares.titulares
-    cuenta_de_dos_titulares.fecha_creacion = otro_titular.fecha_alta - datetime.timedelta(1)
-
-    with pytest.raises(errors.ErrorFechaAnteriorAAltaTitular):
-        cuenta_de_dos_titulares.clean()
-
-
 def test_no_puede_tener_fecha_de_conversion_posterior_a_la_fecha_de_creacion_de_sus_subcuentas(
         cuenta_acumulativa):
     sc1, sc2 = cuenta_acumulativa.subcuentas.all()

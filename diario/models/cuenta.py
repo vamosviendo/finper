@@ -673,15 +673,6 @@ class CuentaAcumulativa(Cuenta):
         raise AttributeError("No se permite recalcular saldos de cuenta acumulativa")
 
     def _verificar_fechas(self):
-        for titular in self.titulares:
-            if self.fecha_creacion < titular.fecha_alta:
-                raise errors.ErrorFechaAnteriorAAltaTitular(
-                    f"Fecha de creación de la cuenta {self.nombre} "
-                    f"({self.fecha_creacion}) anterior a la "
-                    f"fecha de alta de uno de sus titulares "
-                    f"({titular} - {titular.fecha_alta})"
-                )
-
         if self.fecha_creacion > self.fecha_conversion:
             raise errors.ErrorFechaCreacionPosteriorAConversion(
                 f"La fecha de creación de la cuenta {self.nombre} "
