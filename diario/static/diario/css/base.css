@@ -46,7 +46,7 @@ tr.menu-row:last-of-type td div {
 }
 
 .menu-item-content {
-  width: 160px;
+  width: 300px;
   overflow: auto;
   float: left;
 }
