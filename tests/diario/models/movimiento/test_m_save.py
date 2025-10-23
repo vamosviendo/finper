@@ -187,7 +187,7 @@ class TestSaveMovimientoEntreCuentasDeDistintosTitulares:
             contramov = Movimiento.tomar(pk=mov.id_contramov)
             data = model_to_dict(contramov, exclude=["id"])
 
-            mov.cta_salida = sc3
+            mov.cta_entrada = sc3
             mov.clean_save()
             contramov = Movimiento.tomar(pk=mov.id_contramov)
             new_data = model_to_dict(contramov, exclude=["id"])
@@ -205,7 +205,7 @@ class TestSaveMovimientoEntreCuentasDeDistintosTitulares:
             )
             mov = sc2.movs().first()
 
-            mov.cta_salida = sc3
+            mov.cta_entrada = sc3
             mov.clean_save()
             assert mov.id_contramov is None
 
@@ -222,7 +222,7 @@ class TestSaveMovimientoEntreCuentasDeDistintosTitulares:
             contramov = Movimiento.tomar(pk=mov.id_contramov)
             data = model_to_dict(contramov, exclude=["id", "detalle", "cta_entrada", "cta_salida"])
 
-            mov.cta_salida = sc3
+            mov.cta_entrada = sc3
             mov.clean_save()
             contramov = Movimiento.tomar(pk=mov.id_contramov)
             new_data = model_to_dict(contramov, exclude=["id", "detalle", "cta_entrada", "cta_salida"])
@@ -230,9 +230,9 @@ class TestSaveMovimientoEntreCuentasDeDistintosTitulares:
             t2 = cuenta_de_dos_titulares.titular_original
 
             assert new_data == data
-            assert contramov.detalle == f"de {t1.nombre} a {t2.nombre}"
-            assert contramov.cta_entrada == Cuenta.tomar(sk=f"_{t1.sk}-{t2.sk}")
-            assert contramov.cta_salida == Cuenta.tomar(sk=f"_{t2.sk}-{t1.sk}")
+            assert contramov.detalle == f"de {t2.nombre} a {t1.nombre}"
+            assert contramov.cta_entrada == Cuenta.tomar(sk=f"_{t2.sk}-{t1.sk}")
+            assert contramov.cta_salida == Cuenta.tomar(sk=f"_{t1.sk}-{t2.sk}")
 
 
 @pytest.mark.parametrize('sentido', ['entrada', 'salida'])

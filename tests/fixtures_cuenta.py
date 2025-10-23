@@ -131,21 +131,28 @@ def cuenta_acumulativa_saldo_negativo(cuenta_con_saldo_negativo: CuentaInteracti
 def cuenta_de_dos_titulares(
         titular_gordo: Titular,
         cuenta_ajena: CuentaInteractiva,
+        fecha_inicial: date,
         fecha_temprana: date,
 ) -> CuentaAcumulativa:
     cuenta_ajena.nombre = "cuenta de dos titulares"
     cuenta_ajena.sk = "cddt"
     cuenta_ajena.clean_save()
+    Movimiento.crear(
+        fecha=fecha_inicial,
+        concepto="Saldo al inicio",
+        importe=110,
+        cta_entrada=cuenta_ajena,
+    )
     return cuenta_ajena.dividir_y_actualizar(
         {
             'nombre': 'Subcuenta otro titular',
             'sk': 'scot',
-            'saldo': cuenta_ajena.saldo() + 10
+            'saldo': cuenta_ajena.saldo() - 10
         },
         {
             'nombre': 'Subcuenta titular gordo',
             'sk': 'sctg',
-            'saldo': -10,
+            'saldo': 10,
             'titular': titular_gordo
         },
         fecha=fecha_temprana,
