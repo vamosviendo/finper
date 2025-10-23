@@ -8,6 +8,7 @@ from django.db.models import QuerySet, Q
 from django.urls import reverse
 from django.utils import timezone
 
+from utils import errors
 from vvmodel.models import MiModel
 from vvutils.text import mi_slugify
 
@@ -98,6 +99,11 @@ class Titular(MiModel):
         super().clean()
         self.nombre = self.nombre or self.sk
         self._validar_sk()
+
+    def delete(self, *args, **kwargs):
+        if self.capital() != 0:
+            raise errors.SaldoNoCeroException
+        super().delete(*args, **kwargs)
 
     def __str__(self) -> str:
         return self.nombre

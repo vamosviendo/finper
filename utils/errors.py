@@ -33,7 +33,7 @@ IMPORTE_CERO = 'Se intentó crear un movimiento con importe cero'
 MODIFICACION_MOVIMIENTO_AUTOMATICO = 'No se puede modificar movimiento automático'
 MOVIMIENTO_CON_CA_ELIMINADO = \
     'Se intentó borrar un movimiento con una o más cuentas acumulativas'
-SALDO_NO_CERO = 'No se puede eliminar cuenta con saldo distinto de cero'
+SALDO_NO_CERO = 'No se puede eliminar cuenta con saldo distinto de cero o titular con capital distinto de cero'
 SALDO_NO_COINCIDE = 'El saldo de la cuenta no coincide con sus movimientos'
 SUBCUENTAS_SIN_SALDO = 'Sólo se permite una subcuenta sin saldo'
 
@@ -58,7 +58,7 @@ class CambioDeMonedaException(ValidationError):
 
 class SaldoNoCeroException(ValueError):
     """ Se eleva cuando se intenta eliminar una cuenta con saldo distinto de
-        cero."""
+        cero, o un titular con capital distinto de cero."""
 
     def __init__(self, message=SALDO_NO_CERO):
         super().__init__(message)
