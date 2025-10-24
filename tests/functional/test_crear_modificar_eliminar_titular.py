@@ -94,10 +94,10 @@ def test_eliminar_titular(browser, titular, otro_titular):
     assert nombre_titular not in nombres_titular
 
 
-@pytest.mark.parametrize("origen", ["/", "/diario/c/c/", "/diario/m/", "/diario/cm/c/"])
-def test_eliminar_titular_redirige_a_pagina_desde_la_que_se_invoco(browser, origen, titular, cuenta, cuenta_ajena, entrada):
+@pytest.mark.parametrize("origen", ["/", "/diario/c/c/", "/diario/m/"])
+def test_eliminar_titular_redirige_a_pagina_desde_la_que_se_invoco(browser, origen, titular, cuenta, cuenta_ajena, entrada_cuenta_ajena):
     if "m/" in origen:
-        origen = f"{origen}{entrada.sk}"
+        origen = f"{origen}{entrada_cuenta_ajena.sk}"
     browser.ir_a_pag(origen)
     browser.pulsar(f"id_link_tit_elim_{titular.sk}")
     browser.pulsar("id_btn_confirm")

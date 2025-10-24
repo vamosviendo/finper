@@ -24,7 +24,7 @@ from vvmodel.managers import PolymorphManager
 from vvmodel.models import PolymorphModel
 
 if TYPE_CHECKING:
-    from diario.models.movimiento import MovimientoManager, Movimiento
+    from diario.models.movimiento import MovimientoManager
 
 
 alfaminusculas = RegexValidator(
@@ -199,9 +199,11 @@ class Cuenta(PolymorphModel):
         self._chequear_incongruencias_de_clase()
         self._verificar_fecha_creacion()
 
-    def delete(self, *args, **kwargs):
+    def delete(self, esta_siendo_convertida=False, *args, **kwargs):
         if self.saldo() != 0:
             raise errors.SaldoNoCeroException
+        if self.movs().exists() and not esta_siendo_convertida:
+            raise errors.ExistenMovimientosException
         super().delete(*args, **kwargs)
 
     def movs(self, order_by: list[str] = None) -> models.QuerySet[Movimiento]:
@@ -465,7 +467,7 @@ class CuentaInteractiva(Cuenta):
         titular = self.titular
         pk_preservado = self.pk
 
-        self.delete(keep_parents=True)
+        self.delete(keep_parents=True, esta_siendo_convertida=True)
         cuenta = Cuenta.objects.get_no_poly(pk=pk_preservado)
         cuenta_acumulativa = CuentaAcumulativa(cuenta_ptr_id=cuenta.pk)
         cuenta_acumulativa.__dict__.update(cuenta.__dict__)

@@ -20,6 +20,8 @@ CUENTA_CREDITO_VS_NORMAL = \
 CUENTA_INEXISTENTE = 'Debe haber una cuenta de entrada, una de salida o ambas'
 CUENTAS_IGUALES = 'Cuentas de entrada y salida no pueden ser la misma'
 ELIMINACION_MOVIMIENTO_AUTOMATICO = 'No se puede eliminar movimiento automático'
+EXISTEN_MOVIMIENTOS = \
+    "No se puede eliminar una cuenta con movimientos existentes ni un titular con cuentas con movimientos existnetes."
 FECHA_ANTERIOR_A_CUENTA_MADRE = 'Fecha de creación anterior a fecha de conversión ' \
                                 'de cuenta madre'
 FECHA_ANTERIOR_A_ALTA_TITULAR = 'Fecha de creación anterior a fecha de alta de titular'
@@ -61,6 +63,13 @@ class SaldoNoCeroException(ValueError):
         cero, o un titular con capital distinto de cero."""
 
     def __init__(self, message=SALDO_NO_CERO):
+        super().__init__(message)
+
+
+class ExistenMovimientosException(ValueError):
+    """ Se eleva cuando se intenta eliminar una cuenta con movimientos o un
+        titular alguna de cuyas cuentas tenga movimientos """
+    def __init__(selfself, message=EXISTEN_MOVIMIENTOS):
         super().__init__(message)
 
 

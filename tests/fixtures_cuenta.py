@@ -41,7 +41,6 @@ def cuenta_con_saldo(titular: Titular, fecha_temprana: date, fecha_anterior: dat
     cta = Cuenta.crear(
         nombre='cuenta con saldo',
         sk='ccs',
-        # saldo=100,
         titular=titular,
         fecha_creacion=fecha_temprana
     )
