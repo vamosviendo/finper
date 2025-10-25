@@ -103,6 +103,8 @@ class Titular(MiModel):
     def delete(self, *args, **kwargs):
         if self.capital() != 0:
             raise errors.SaldoNoCeroException
+        if self.movs().exists():
+            raise errors.ExistenMovimientosException
         super().delete(*args, **kwargs)
 
     def __str__(self) -> str:
