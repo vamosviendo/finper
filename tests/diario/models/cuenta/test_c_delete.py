@@ -34,3 +34,10 @@ def test_permite_eliminar_cuenta_sin_movimientos(cuenta):
     sk = cuenta.sk
     cuenta.delete()
     assert not Cuenta.filtro(sk=sk).exists()
+
+
+def test_permite_eliminar_cuenta_con_movimientos_si_se_eliminan_antes_los_movimientos(cuenta, entrada):
+    sk = cuenta.sk
+    entrada.delete()
+    cuenta.delete()
+    assert not Cuenta.filtro(sk=sk).exists()
