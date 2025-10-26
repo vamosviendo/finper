@@ -261,6 +261,27 @@ def test_home_monedas(
     # Y los saldos de cuenta en distintas monedas aparecen cotizados a la fecha de la última cotización anterior
     # a la del movimiento.
 
+
+class TestHomeCuentas:
+    def test_muestra_subcuentas_con_sangria(self, browser, cuenta, cuenta_acumulativa, subsubcuenta):
+        sc1, sc2 = cuenta_acumulativa.subcuentas.all()
+        ssc11, ssc12 = sc1.subcuentas.all()
+
+        browser.ir_a_pag()
+        nombres_cuenta = [x.text for x in browser.encontrar_elementos("class_nombre_cuenta")]
+        assert nombres_cuenta == [
+            cuenta.nombre,
+            cuenta_acumulativa.nombre,
+            f"  {sc1.nombre}",
+            f"    {ssc11.nombre}",
+            f"    {ssc12.nombre}",
+            f"  {sc2.nombre}",
+        ]
+
+    def test_no_mezcla_cuentas_independientes_con_subcuentas(self):
+        assert False, "escribir"
+
+
 class TestHomeLinks:
     def test_seccion_titulares(self, browser, titular, otro_titular):
 

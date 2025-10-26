@@ -104,6 +104,21 @@ class BaseHomeView(TemplateView):
             "movimiento_en_titulo": movimiento_en_titulo,
         }
 
+    def _get_cuentas(self) -> list[Cuenta]:
+        queryset_cuentas = Cuenta.todes().order_by(Lower("nombre"))
+        cuentas = []
+        for cuenta in queryset_cuentas:
+            if cuenta.cta_madre is None:
+                self._agregar_cuenta(cuentas, cuenta)
+        return cuentas
+
+    def _agregar_cuenta(self, cuentas: list[Cuenta], cuenta: Cuenta):
+        cuentas.append(cuenta)
+        if cuenta.es_acumulativa:
+            cuenta = cast(CuentaAcumulativa, cuenta)
+            for cuenta in cuenta.subcuentas.all():
+                self._agregar_cuenta(cuentas, cuenta)
+
     def get_context_especifico(self, ente: Cuenta | Titular | None, movimiento: Movimiento) -> dict[str, Any]:
         movimiento_en_titulo = self._get_context_comun(ente, movimiento)["movimiento_en_titulo"]
         return {
@@ -112,7 +127,7 @@ class BaseHomeView(TemplateView):
                     else sum(c.saldo() for c in Cuenta.filtro(cta_madre=None)),
                 "titulo_saldo_gral": f"Saldo general{movimiento_en_titulo}",
                 "titulares": Titular.todes(),
-                "cuentas": Cuenta.todes().order_by(Lower("nombre")),
+                "cuentas": self._get_cuentas(),
             }
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:

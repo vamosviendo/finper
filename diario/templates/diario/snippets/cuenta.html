@@ -6,6 +6,9 @@
     <div class="menu-item-content class_nombre_cuenta">
       <a id="id_link_cta_{{ cta.sk }}" class="class_link_cuenta"
          href="{{ cta.get_absolute_url }}">
+        {% for ancestro in cta.ancestros %}
+          &nbsp;
+        {% endfor %}
         {{ cta.nombre }}
       </a>
     </div>
