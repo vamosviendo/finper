@@ -196,6 +196,22 @@ class TestDetalleCuenta:
         assert dia in response.context["dias"]
         assert dia_no_cuenta not in response.context["dias"]
 
+    def test_pasa_subcuentas_de_subcuentas_a_continuacion_de_subcuenta(self, client, cuenta_acumulativa, subsubcuenta):
+        sc1, sc2 = cuenta_acumulativa.subcuentas.all()
+        ssc11, ssc12 = sc1.subcuentas.all()
+        sc1.nombre = "B"
+        sc1.clean_save()
+        sc2.nombre = "E"
+        sc2.clean_save()
+        ssc11.nombre = "A"
+        ssc11.clean_save()
+        ssc12.nombre = "C"
+        ssc12.clean_save()
+
+        response = client.get(cuenta_acumulativa.get_absolute_url())
+        assert response.context["cuentas"] == [sc1, ssc11, ssc12, sc2]
+
+
 
 class TestDetalleTitular:
     def test_actualiza_context_con_titular(

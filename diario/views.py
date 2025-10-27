@@ -5,6 +5,7 @@ from typing import Any, cast
 
 from django import forms
 from django.core.paginator import Paginator
+from django.db.models import QuerySet
 from django.db.models.functions import Lower
 from django.http import HttpResponseRedirect, HttpRequest, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
@@ -104,11 +105,13 @@ class BaseHomeView(TemplateView):
             "movimiento_en_titulo": movimiento_en_titulo,
         }
 
-    def _get_cuentas(self) -> list[Cuenta]:
-        queryset_cuentas = Cuenta.todes().order_by(Lower("nombre"))
+    def _cuentas_ordenadas(
+            self,
+            queryset_cuentas: QuerySet[Cuenta],
+            cta_madre: Cuenta | None = None) -> list[Cuenta]:
         cuentas = []
         for cuenta in queryset_cuentas:
-            if cuenta.cta_madre is None:
+            if cuenta.cta_madre == cta_madre:
                 self._agregar_cuenta(cuentas, cuenta)
         return cuentas
 
@@ -127,7 +130,7 @@ class BaseHomeView(TemplateView):
                     else sum(c.saldo() for c in Cuenta.filtro(cta_madre=None)),
                 "titulo_saldo_gral": f"Saldo general{movimiento_en_titulo}",
                 "titulares": Titular.todes(),
-                "cuentas": self._get_cuentas(),
+                "cuentas": self._cuentas_ordenadas(Cuenta.todes().order_by(Lower("nombre"))),
             }
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
@@ -164,7 +167,9 @@ class CuentaHomeView(BaseHomeView):
             ) if ente.es_acumulativa else Titular.filtro(
                 sk=ente.titular.sk
             ),
-            "cuentas": ente.subcuentas.all() if ente.es_acumulativa else Cuenta.objects.none(),
+            "cuentas": self._cuentas_ordenadas(
+                ente.subcuentas.all(), cta_madre=ente
+            ) if ente.es_acumulativa else [],
         }
 
 
