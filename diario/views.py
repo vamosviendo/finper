@@ -5,7 +5,6 @@ from typing import Any, cast
 
 from django import forms
 from django.core.paginator import Paginator
-from django.db.models import QuerySet
 from django.db.models.functions import Lower
 from django.http import HttpResponseRedirect, HttpRequest, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
@@ -107,7 +106,7 @@ class BaseHomeView(TemplateView):
 
     def _cuentas_ordenadas(
             self,
-            queryset_cuentas: QuerySet[CuentaInteractiva | CuentaAcumulativa],
+            queryset_cuentas: list[Cuenta | CuentaInteractiva | CuentaAcumulativa],
             cta_madre: Cuenta | None = None,
             titular: Titular | None = None) -> list[Cuenta]:
         cuentas = []
@@ -139,7 +138,7 @@ class BaseHomeView(TemplateView):
                     else sum(c.saldo() for c in Cuenta.filtro(cta_madre=None)),
                 "titulo_saldo_gral": f"Saldo general{movimiento_en_titulo}",
                 "titulares": Titular.todes(),
-                "cuentas": self._cuentas_ordenadas(Cuenta.todes().order_by(Lower("nombre"))),
+                "cuentas": self._cuentas_ordenadas(list(Cuenta.todes().order_by(Lower("nombre")))),
             }
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
@@ -177,7 +176,7 @@ class CuentaHomeView(BaseHomeView):
                 sk=ente.titular.sk
             ),
             "cuentas": self._cuentas_ordenadas(
-                ente.subcuentas.all(), cta_madre=ente
+                list(ente.subcuentas.all()), cta_madre=ente
             ) if ente.es_acumulativa else [],
         }
 
@@ -214,7 +213,7 @@ class MovimientoHomeView(BaseHomeView):
                 else sum(c.saldo() for c in Cuenta.filtro(cta_madre=None)),
             "titulo_saldo_gral": f"Saldo general{movimiento_en_titulo}",
             "titulares": Titular.todes(),
-            "cuentas": self._cuentas_ordenadas(Cuenta.todes().order_by(Lower("nombre"))),
+            "cuentas": self._cuentas_ordenadas(list(Cuenta.todes().order_by(Lower("nombre")))),
         }
 
 
