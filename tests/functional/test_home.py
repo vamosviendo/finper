@@ -46,7 +46,7 @@ def test_home(
     # Vemos seis cuentas en el menú de cuentas (4 cuentas y 2 subcuentas)
     cuentas = browser.encontrar_elementos("class_div_cuenta")
     assert len(cuentas) == 6
-    nombres_cuenta = texto_en_hijos_respectivos("class_nombre_cuenta", cuentas)
+    nombres_cuenta = [x.strip() for x in texto_en_hijos_respectivos("class_nombre_cuenta", cuentas)]
     assert nombres_cuenta[0] == cuenta.nombre
     assert nombres_cuenta[1] == cuenta_2.nombre
     assert nombres_cuenta[2] == cuenta_3.nombre

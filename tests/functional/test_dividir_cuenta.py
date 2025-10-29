@@ -22,7 +22,7 @@ def test_dividir_cuenta(browser, cuenta, otro_titular):
     titulo = browser.encontrar_elemento('id_titulo_saldo_gral').text
     assert cuenta.nombre in titulo
     subcuentas = [
-        sc.text for sc in browser.encontrar_elementos('class_link_cuenta')
+        sc.text.strip() for sc in browser.encontrar_elementos('class_link_cuenta')
     ]
     assert subcuentas == ['primera subcuenta', 'segunda subcuenta']
 
@@ -48,7 +48,7 @@ def test_dividir_cuenta_con_saldo_y_fecha(
     # las subcuentas recién creadas y los movimientos de traspaso
     # correspondientes en el día de la fecha ingresada en el formulario
     subcuentas = [
-        sc.text for sc in browser.encontrar_elementos('class_link_cuenta')
+        sc.text.strip() for sc in browser.encontrar_elementos('class_link_cuenta')
     ]
     assert subcuentas == ['primera subcuenta', 'segunda subcuenta']
 

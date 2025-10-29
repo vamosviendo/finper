@@ -198,7 +198,7 @@ class FinperFirefox(MiFirefox):
         """ Dada una cuenta acumulativa, comparar sus subcuentas con las que
             aparecen en la página. """
         nombres_subcuenta = [
-            x.text for x in self.encontrar_elementos('class_link_cuenta')]
+            x.text.strip() for x in self.encontrar_elementos('class_link_cuenta')]
         assert nombres_subcuenta == [
             x.nombre for x in cuenta.subcuentas.all()
         ]
