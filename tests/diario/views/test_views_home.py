@@ -305,6 +305,25 @@ class TestDetalleMovimiento:
             list(response.context["cuentas"]) == \
             [cuenta, otra_cuenta, cuenta_acumulativa] + list(cuenta_acumulativa.subcuentas.all())
 
+    def test_pasa_subcuentas_a_continuacion_de_cuenta_madre(self, client, entrada, cuenta, cuenta_acumulativa, fecha):
+        cuenta.nombre = "A"
+        cuenta.clean_save()
+
+        cuenta_acumulativa.nombre = "D"
+        cuenta_acumulativa.clean_save()
+
+        sc1, sc2 = cuenta_acumulativa.subcuentas.all()
+        sc1.nombre = "B"
+        sc1.clean_save()
+        sc2.nombre = "C"
+        sc2.clean_save()
+
+        sc3 = cuenta_acumulativa.agregar_subcuenta("E", "e", cuenta.titular, fecha)
+
+        response = client.get(entrada.get_absolute_url())
+
+        assert list(response.context.get("cuentas")) == [cuenta, cuenta_acumulativa, sc1, sc2, sc3]
+
     def test_pasa_titulares(
             self, entrada, salida, entrada_cuenta_ajena, client):
         titular = entrada.cta_entrada.titular
