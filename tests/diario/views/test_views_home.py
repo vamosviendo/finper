@@ -5,7 +5,7 @@ from django.template.response import TemplateResponse
 from django.urls import reverse
 from pytest_django import asserts
 
-from diario.models import Dia, Movimiento
+from diario.models import Dia, Movimiento, Cuenta
 from diario.settings_app import TEMPLATE_HOME
 from diario.utils.utils_saldo import saldo_general_historico
 from utils.helpers_tests import fecha2page
@@ -212,7 +212,6 @@ class TestDetalleCuenta:
         assert response.context["cuentas"] == [sc1, ssc11, ssc12, sc2]
 
 
-
 class TestDetalleTitular:
     def test_actualiza_context_con_titular(
             self, titular, cuenta, cuenta_2, entrada, salida, client):
@@ -227,6 +226,23 @@ class TestDetalleTitular:
         response = client.get(titular.get_absolute_url())
         assert \
             list(response.context['titulares']) == [titular, otro_titular]
+
+    def test_pasa_cuentas_del_titular_ordenadas_a_template(
+            self, client, otro_titular, cuenta, cuenta_ajena_2, division_gratuita):
+        sc1, sc2 = division_gratuita.subcuentas.all()
+        cuenta.nombre = "AA",
+        cuenta.clean_save()
+        cuenta_ajena_2.nombre = "B"
+        cuenta_ajena_2.clean_save()
+        division_gratuita.nombre = "C"
+        division_gratuita.clean_save()
+        sc1.nombre = "A"
+        sc1.clean_save()
+        sc2.nombre = "D"
+        sc2.clean_save()
+
+        response = client.get(otro_titular.get_absolute_url())
+        assert response.context["cuentas"] == [cuenta_ajena_2, division_gratuita, sc1]
 
     def test_actualiza_context_con_dias_con_movimientos_del_titular_en_orden_inverso(
             self, titular, entrada, entrada_anterior,

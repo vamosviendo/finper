@@ -146,13 +146,14 @@ def cuenta_de_dos_titulares(
         {
             'nombre': 'Subcuenta otro titular',
             'sk': 'scot',
-            'saldo': cuenta_ajena.saldo() - 10
+            'saldo': cuenta_ajena.saldo() - 10,
         },
         {
             'nombre': 'Subcuenta titular gordo',
             'sk': 'sctg',
             'saldo': 10,
-            'titular': titular_gordo
+            'titular': titular_gordo,
+            # 'esgratis': True,
         },
         fecha=fecha_temprana,
     )

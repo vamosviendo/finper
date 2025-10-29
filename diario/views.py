@@ -107,20 +107,29 @@ class BaseHomeView(TemplateView):
 
     def _cuentas_ordenadas(
             self,
-            queryset_cuentas: QuerySet[Cuenta],
-            cta_madre: Cuenta | None = None) -> list[Cuenta]:
+            queryset_cuentas: QuerySet[CuentaInteractiva | CuentaAcumulativa],
+            cta_madre: Cuenta | None = None,
+            titular: Titular | None = None) -> list[Cuenta]:
         cuentas = []
         for cuenta in queryset_cuentas:
             if cuenta.cta_madre == cta_madre:
-                self._agregar_cuenta(cuentas, cuenta)
+                self._agregar_cuenta(cuentas, cuenta, titular)
+
         return cuentas
 
-    def _agregar_cuenta(self, cuentas: list[Cuenta], cuenta: Cuenta):
-        cuentas.append(cuenta)
+    def _agregar_cuenta(
+            self,
+            cuentas: list[Cuenta],
+            cuenta: CuentaInteractiva | CuentaAcumulativa,
+            titular: Titular | None):
+        if titular is None or (cuenta.es_interactiva and cuenta.titular == titular):
+            cuentas.append(cuenta)
+        elif cuenta.es_acumulativa and titular in cuenta.titulares:
+            cuentas.append(cuenta)
+
         if cuenta.es_acumulativa:
-            cuenta = cast(CuentaAcumulativa, cuenta)
-            for cuenta in cuenta.subcuentas.all():
-                self._agregar_cuenta(cuentas, cuenta)
+            for subcuenta in cuenta.subcuentas.all():
+                self._agregar_cuenta(cuentas, subcuenta, titular)
 
     def get_context_especifico(self, ente: Cuenta | Titular | None, movimiento: Movimiento) -> dict[str, Any]:
         movimiento_en_titulo = self._get_context_comun(ente, movimiento)["movimiento_en_titulo"]
@@ -189,7 +198,7 @@ class TitularHomeView(BaseHomeView):
             "saldo_gral": ente.capital(movimiento),
             "titulo_saldo_gral": f"Capital de {ente.nombre}{movimiento_en_titulo}",
             "titulares": Titular.todes(),
-            "cuentas": ente.cuentas.all(),
+            "cuentas": self._cuentas_ordenadas(ente.cuentas_en_las_que_participa(), titular=ente),
         }
 
 
