@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self, Optional
+from typing import TYPE_CHECKING, Self, Optional, cast
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -15,7 +15,7 @@ from vvutils.text import mi_slugify
 from diario.models.dia import Dia
 
 if TYPE_CHECKING:
-    from diario.models import CuentaInteractiva, Movimiento, Moneda
+    from diario.models import Cuenta, CuentaInteractiva, Movimiento, Moneda
     from diario.models.cuenta import CuentaManager
 
 
@@ -81,6 +81,16 @@ class Titular(MiModel):
     def cuentas_interactivas(self) -> models.QuerySet['CuentaInteractiva']:
         ids = [c.id for c in self.cuentas.all() if c.es_interactiva]
         return self.cuentas.filter(id__in=ids)
+
+    def cuentas_en_las_que_participa(self) -> list['Cuenta']:
+        from diario.models import Cuenta, CuentaAcumulativa
+        cuentas = []
+        for cuenta in Cuenta.todes():
+            if cuenta in self.cuentas.all() or (
+                    cuenta.es_acumulativa and self in cast(CuentaAcumulativa, cuenta).titulares
+            ):
+                cuentas.append(cuenta)
+        return cuentas
 
     def dias(self) -> models.QuerySet['Dia']:
         fechas = [mov.dia.fecha for mov in self.movs()]
