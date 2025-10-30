@@ -535,7 +535,7 @@ class TestDivideCuentas:
         assert traspaso_2.fecha == ca.fecha_conversion
 
     def test_crea_contramovimiento_de_movimiento_de_traspaso_de_saldo_no_gratuito_al_dividir_cuenta_en_subcuentas_de_distinto_titular(
-            self, cuenta_de_dos_titulares, db_serializada, vaciar_db):
+            self, cuenta_acumulativa_con_credito, db_serializada, vaciar_db):
         call_command("cargar_db_serializada")
         cuenta_otro_titular = Cuenta.tomar(sk="sctg")
         traspaso = cuenta_otro_titular.movs().first()
@@ -544,7 +544,7 @@ class TestDivideCuentas:
         assert contramov.importe == traspaso.importe
 
     def test_no_crea_contramovimiento_de_movimiento_de_traspaso_de_saldo_gratuito_al_dividir_cuenta_en_subcuentas_de_distinto_titular(
-            self, division_gratuita, db_serializada, vaciar_db):
+            self, cuenta_de_dos_titulares, db_serializada, vaciar_db):
         call_command("cargar_db_serializada")
         cuenta_otro_titular = Cuenta.tomar(sk="sctg")
         traspaso = cuenta_otro_titular.movs().first()

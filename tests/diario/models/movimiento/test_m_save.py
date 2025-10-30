@@ -175,13 +175,13 @@ class TestSaveMovimientoEntreCuentasDeDistintosTitulares:
         pass
 
         def test_si_se_cambia_subcuenta_por_subcuenta_del_mismo_titular_contramovimiento_es_igual_al_de_antes_del_cambio(
-                self, cuenta_de_dos_titulares, titular_gordo):
-            sc1, sc2 = cuenta_de_dos_titulares.subcuentas.all()
-            sc3 = cuenta_de_dos_titulares.agregar_subcuenta(
+                self, cuenta_acumulativa_con_credito, titular_gordo):
+            sc1, sc2 = cuenta_acumulativa_con_credito.subcuentas.all()
+            sc3 = cuenta_acumulativa_con_credito.agregar_subcuenta(
                 nombre="subcuenta de titular gordo",
                 sk="sc3",
                 titular=titular_gordo,
-                fecha=cuenta_de_dos_titulares.fecha_conversion
+                fecha=cuenta_acumulativa_con_credito.fecha_conversion
             )
             mov = sc2.movs().first()
             contramov = Movimiento.tomar(pk=mov.id_contramov)
@@ -210,13 +210,13 @@ class TestSaveMovimientoEntreCuentasDeDistintosTitulares:
             assert mov.id_contramov is None
 
         def test_si_se_cambia_subcuenta_por_subcuenta_de_un_tercer_titular_cambia_contramovimiento_por_otro_con_el_tercer_titular(
-                self, cuenta_de_dos_titulares, titular):
-            sc1, sc2 = cuenta_de_dos_titulares.subcuentas.all()
-            sc3 = cuenta_de_dos_titulares.agregar_subcuenta(
+                self, cuenta_acumulativa_con_credito, titular):
+            sc1, sc2 = cuenta_acumulativa_con_credito.subcuentas.all()
+            sc3 = cuenta_acumulativa_con_credito.agregar_subcuenta(
                 nombre="subcuenta de titular",
                 sk="sc3",
                 titular=titular,
-                fecha=cuenta_de_dos_titulares.fecha_conversion
+                fecha=cuenta_acumulativa_con_credito.fecha_conversion
             )
             mov = sc2.movs().first()
             contramov = Movimiento.tomar(pk=mov.id_contramov)
@@ -227,7 +227,7 @@ class TestSaveMovimientoEntreCuentasDeDistintosTitulares:
             contramov = Movimiento.tomar(pk=mov.id_contramov)
             new_data = model_to_dict(contramov, exclude=["id", "detalle", "cta_entrada", "cta_salida"])
             t1 = sc3.titular
-            t2 = cuenta_de_dos_titulares.titular_original
+            t2 = cuenta_acumulativa_con_credito.titular_original
 
             assert new_data == data
             assert contramov.detalle == f"de {t2.nombre} a {t1.nombre}"
