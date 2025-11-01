@@ -331,6 +331,22 @@ class TestMovimientoEntreCuentasDeDistintosTitulares:
             cuenta_acreedora.nombre == \
             f'Deuda de {cuenta_acreedora.titular.nombre} con {cuenta_deudora.titular.nombre}'.lower()
 
+    def test_si_se_presta_con_cuentas_credito_existentes_con_saldo_cero_y_nombres_opuestos_al_movimiento_cambia_nombre_de_cuentas_credito(
+            self, credito):
+        cuenta_deudora = credito.cta_entrada.titular.cuenta_credito_con(credito.cta_salida.titular)
+        cuenta_acreedora = credito.cta_salida.titular.cuenta_credito_con(credito.cta_entrada.titular)
+        Movimiento.crear("Devolución exacta", credito.importe, credito.cta_salida, credito.cta_entrada)
+        Movimiento.crear("Préstamo en sentido opuesto al anterior", 100, credito.cta_salida, credito.cta_entrada)
+        cuenta_deudora.refresh_from_db()
+        cuenta_acreedora.refresh_from_db()
+
+        assert \
+            cuenta_deudora.nombre == \
+            f'Préstamo de {cuenta_deudora.titular.nombre} a {cuenta_acreedora.titular.nombre}'.lower()
+        assert \
+            cuenta_acreedora.nombre == \
+            f'Deuda de {cuenta_acreedora.titular.nombre} con {cuenta_deudora.titular.nombre}'.lower()
+
     def test_si_es_un_pago_a_cuenta_no_modifica_relacion_crediticia(self, credito):
         deudores_tit1 = list(credito.cta_entrada.titular.deudores.all())
         deudores_tit2 = list(credito.cta_salida.titular.deudores.all())
