@@ -842,7 +842,9 @@ class Movimiento(MiModel):
     def _regenerar_nombres_de_cuentas_credito(self):
         ce = self.emisor.cuenta_credito_con(self.receptor)
         cs = self.receptor.cuenta_credito_con(self.emisor)
-        if ce.saldo() >= 0:
+        if ce.saldo() == 0:
+            return
+        if ce.saldo() > 0:
             ce.nombre = f'Préstamo de {self.emisor.nombre} a {self.receptor.nombre}'
             cs.nombre = f'Deuda de {self.receptor.nombre} con {self.emisor.nombre}'
         else:

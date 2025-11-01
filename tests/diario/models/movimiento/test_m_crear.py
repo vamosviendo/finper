@@ -299,6 +299,19 @@ class TestMovimientoEntreCuentasDeDistintosTitulares:
             credito.cta_entrada.titular
         )
 
+    def test_si_se_devuelve_el_total_de_lo_adeudado_no_se_modifica_el_nombre_de_las_cuentas_credito(
+            self, credito):
+        nombre_cd = credito.cta_entrada.titular.cuenta_credito_con(credito.cta_salida.titular).nombre
+        nombre_ca = credito.cta_salida.titular.cuenta_credito_con(credito.cta_entrada.titular).nombre
+
+        Movimiento.crear(
+            'Devolución total', credito.importe,
+            credito.cta_salida, credito.cta_entrada
+        )
+
+        assert credito.cta_entrada.titular.cuenta_credito_con(credito.cta_salida.titular).nombre == nombre_cd
+        assert credito.cta_salida.titular.cuenta_credito_con(credito.cta_entrada.titular).nombre == nombre_ca
+
     def test_si_no_se_devuelve_el_total_de_lo_adeudado_no_se_cancela_deuda(self, credito, mocker):
         mock_cancelar_deuda_de = mocker.patch('diario.models.Titular.cancelar_deuda_de')
         Movimiento.crear(
