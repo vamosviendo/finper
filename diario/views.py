@@ -108,11 +108,12 @@ class BaseHomeView(TemplateView):
             self,
             queryset_cuentas: list[Cuenta | CuentaInteractiva | CuentaAcumulativa],
             cta_madre: Cuenta | None = None,
-            titular: Titular | None = None) -> list[Cuenta]:
+            titular: Titular | None = None,
+            activas: bool = True) -> list[Cuenta]:
         cuentas = []
         for cuenta in queryset_cuentas:
             if cuenta.cta_madre == cta_madre:
-                self._agregar_cuenta(cuentas, cuenta, titular)
+                self._agregar_cuenta(cuentas, cuenta, titular, activas)
 
         return cuentas
 
@@ -120,25 +121,32 @@ class BaseHomeView(TemplateView):
             self,
             cuentas: list[Cuenta],
             cuenta: CuentaInteractiva | CuentaAcumulativa,
-            titular: Titular | None):
-        if titular is None or (cuenta.es_interactiva and cuenta.titular == titular):
-            cuentas.append(cuenta)
-        elif cuenta.es_acumulativa and titular in cuenta.titulares:
-            cuentas.append(cuenta)
+            titular: Titular | None,
+            activas: bool):
+        if cuenta.activa is activas:
+            if titular is None or (cuenta.es_interactiva and cuenta.titular == titular):
+                cuentas.append(cuenta)
+            elif cuenta.es_acumulativa and titular in cuenta.titulares:
+                cuentas.append(cuenta)
 
         if cuenta.es_acumulativa:
             for subcuenta in cuenta.subcuentas.all():
-                self._agregar_cuenta(cuentas, subcuenta, titular)
+                self._agregar_cuenta(cuentas, subcuenta, titular, activas)
 
-    def get_context_especifico(self, ente: Cuenta | Titular | None, movimiento: Movimiento) -> dict[str, Any]:
+    def get_context_especifico(
+            self,
+            ente: Cuenta | Titular | None,
+            movimiento: Movimiento,
+            overrided: bool = False) -> dict[str, Any]:
         movimiento_en_titulo = self._get_context_comun(ente, movimiento)["movimiento_en_titulo"]
+        cuentas = self._cuentas_ordenadas(list(Cuenta.todes().order_by(Lower("nombre")))) if not overrided else None
         return {
                 "saldo_gral":
                     saldo_general_historico(movimiento) if movimiento
                     else sum(c.saldo() for c in Cuenta.filtro(cta_madre=None)),
                 "titulo_saldo_gral": f"Saldo general{movimiento_en_titulo}",
                 "titulares": Titular.todes(),
-                "cuentas": self._cuentas_ordenadas(list(Cuenta.todes().order_by(Lower("nombre")))),
+                "cuentas": cuentas,
             }
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
@@ -162,7 +170,10 @@ class CuentaHomeView(BaseHomeView):
         return [ente.sk]
 
     def get_context_especifico(
-            self, ente: Cuenta | CuentaInteractiva | CuentaAcumulativa, movimiento: Movimiento) -> dict[str, Any]:
+            self,
+            ente: Cuenta | CuentaInteractiva | CuentaAcumulativa,
+            movimiento: Movimiento,
+            overrided: bool = False) -> dict[str, Any]:
         movimiento_en_titulo = self._get_context_comun(ente, movimiento)["movimiento_en_titulo"]
 
         return {
@@ -190,7 +201,7 @@ class TitularHomeView(BaseHomeView):
     def get_url_args(self, ente: Titular) -> list[str]:
         return [ente.sk]
 
-    def get_context_especifico(self, ente: Titular, movimiento: Movimiento) -> dict[str, Any]:
+    def get_context_especifico(self, ente: Titular, movimiento: Movimiento, overrided: bool = False) -> dict[str, Any]:
         movimiento_en_titulo = self._get_context_comun(ente, movimiento)["movimiento_en_titulo"]
 
         return {
@@ -201,11 +212,26 @@ class TitularHomeView(BaseHomeView):
         }
 
 
+class CuentasInactivasView(BaseHomeView):
+
+    def get_context_especifico(
+            self,
+            ente: Cuenta | Titular | None,
+            movimiento: Movimiento,
+            overrided: bool = True) -> dict[str, Any]:
+        context = super().get_context_especifico(ente, movimiento, overrided)
+        context["cuentas"] = self._cuentas_ordenadas(list(Cuenta.todes().order_by(Lower("nombre"))), activas=False)
+        return context
+
+
 class MovimientoHomeView(BaseHomeView):
     def get_ente(self, kwargs) -> None:
         return None
 
-    def get_context_especifico(self, ente: Cuenta | Titular | None, movimiento: Movimiento) -> dict[str, Any]:
+    def get_context_especifico(
+            self, ente: Cuenta | Titular | None,
+            movimiento: Movimiento,
+            overrided: bool = False) -> dict[str, Any]:
         movimiento_en_titulo = self._get_context_comun(ente, movimiento)["movimiento_en_titulo"]
 
         return {
@@ -257,6 +283,30 @@ class CtaElimView(DeleteView):
 
     def get_success_url(self):
         return self.request.GET.get("next", reverse("home"))
+
+
+class CtaDesactView(TemplateView):
+    model = Cuenta
+    template_name = "diario/cta_confirm_desact.html"
+    slug_url_kwarg = "sk"
+    slug_field = "sk"
+
+    def get_success_url(self):
+        return self.request.GET.get("next", reverse("home"))
+
+    def get_object(self, sk):
+        return get_object_or_404(self.model, sk=sk)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["object"] = self.get_object(kwargs["sk"])
+        return context
+
+    def post(self, request, *args, **kwargs):
+        cuenta = self.get_object(kwargs["sk"])
+        cuenta.activa = not cuenta.activa
+        cuenta.clean_save()
+        return redirect(self.get_success_url())
 
 
 class CtaModView(UpdateView):

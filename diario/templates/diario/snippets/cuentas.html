@@ -13,8 +13,11 @@
         {% endfor %}
         <tr class="menu-row">
           <td class="menu-item class_td_cuenta">
-            <div id="id_div_cuenta_nueva">
+            <div class="menu-item-edit" id="id_div_cuenta_nueva">
               <a href="{% url_cuenta_nueva %}?next={{ request.get_full_path }}" id="id_link_cuenta_nueva">+</a>
+            </div>
+            <div class="menu-item-edit" id="id_div_ctas_inactivas">
+              <a href="{% url 'ctas_inactivas' %}?next={{ request.get_full_path }}" id="id_link_ctas_inactivas" title="cuentas inactivas">I</a>
             </div>
           </td>
           <td></td>

@@ -313,3 +313,9 @@ def cuenta_acumulativa_en_dolares(
         ['subcuenta 2 con saldo en dólares', 'scsd2'],
         fecha=fecha_temprana
     )
+
+
+@pytest.fixture
+def cuenta_inactiva(titular: Titular, fecha_inicial: date) -> Cuenta:
+    return Cuenta.crear(
+        nombre='cuenta inactiva', sk='cin', titular=titular, fecha_creacion=fecha_inicial, activa=False)

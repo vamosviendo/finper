@@ -16,11 +16,13 @@ def test_guarda_y_recupera_cuentas():
     primera_cuenta = Cuenta()
     primera_cuenta.nombre = 'Primera cuenta'
     primera_cuenta.sk = 'PC'
+    primera_cuenta.activa = 'True'
     primera_cuenta.clean_save()
 
     segunda_cuenta = Cuenta()
     segunda_cuenta.nombre = 'Segunda cuenta'
     segunda_cuenta.sk = 'SC'
+    segunda_cuenta.activa = 'False'
     segunda_cuenta.clean_save()
 
     cuentas_guardadas = Cuenta.todes()
@@ -31,8 +33,10 @@ def test_guarda_y_recupera_cuentas():
 
     assert primera_cuenta_guardada.nombre == 'primera cuenta'
     assert primera_cuenta_guardada.sk == 'pc'
+    assert primera_cuenta_guardada.activa is True
     assert segunda_cuenta_guardada.nombre == 'segunda cuenta'
     assert segunda_cuenta_guardada.sk == 'sc'
+    assert segunda_cuenta_guardada.activa is False
 
 
 def test_guarda_fecha_de_creacion(fecha):
@@ -86,3 +90,10 @@ def test_toma_moneda_base_como_moneda_por_defecto(peso):
 
 def test_natural_key_devuelve_id_basada_en_sk(cuenta):
     assert cuenta.natural_key() == (cuenta.sk, )
+
+
+def test_cuenta_es_activa_por_defecto():
+    cuenta = Cuenta(nombre='Cuenta', sk='c')
+    cuenta.clean_save()
+    cuenta_recuperada = Cuenta.tomar(sk='c')
+    assert cuenta_recuperada.activa is True

@@ -278,9 +278,6 @@ class TestHomeCuentas:
             f"  {sc2.nombre}",
         ]
 
-    def test_no_mezcla_cuentas_independientes_con_subcuentas(self):
-        assert False, "escribir"
-
 
 class TestHomeLinks:
     def test_seccion_titulares(self, browser, titular, otro_titular):
@@ -324,6 +321,13 @@ class TestHomeLinks:
         # cuando cliqueamos en el link de borrar cuenta, accedemos a la página de confirmación
         browser.verificar_link(f'cta_elim_{cuenta.sk}', 'cta_elim', [cuenta.sk], querydict={'next': '/'})
         browser.verificar_link(f'cta_elim_{subcuenta.sk}', 'cta_elim', [subcuenta.sk], querydict={'next': '/'})
+
+        # cuando cliqueamos en el link de desactivar cuenta, accedemos a la página de confirmación
+        browser.verificar_link(f"cta_desact_{cuenta.sk}", "cta_desact", [cuenta.sk], querydict={"next": "/"})
+        browser.verificar_link(f"cta_desact_{subcuenta.sk}", "cta_desact", [subcuenta.sk], querydict={"next": "/"})
+
+        # cuando cliqueamos en el link de cuentas inactivas, accedemos a la página de cuentas inactivas
+        browser.verificar_link(f"ctas_inactivas", "ctas_inactivas", querydict={"next": "/"})
 
     def test_seccion_movimientos(self, browser, entrada, salida):
 

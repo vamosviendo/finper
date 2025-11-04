@@ -29,6 +29,9 @@ class TestBaseHome:
         assert cuenta in response.context.get("cuentas")
         assert cuenta_ajena in response.context.get("cuentas")
 
+    def test_pasa_solo_cuentas_activas_a_template(self, cuenta, cuenta_inactiva, cuenta_ajena, response):
+        assert cuenta_inactiva not in response.context.get("cuentas")
+
     def test_pasa_cuentas_ordenadas_por_nombre(self, client, cuenta, cuenta_2, cuenta_ajena):
         cuenta.nombre = 'J'
         cuenta_2.nombre = 'z'

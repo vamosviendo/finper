@@ -18,6 +18,11 @@
     <div class="menu-item-edit">
       <a id="id_link_cta_elim_{{ cta.sk }}" href="{{ cta.get_delete_url }}?next={{ request.get_full_path }}">B</a>
     </div>
+    <div class="menu-item-edit">
+      <a id="id_link_cta_desact_{{ cta.sk }}" href="{{ cta.get_toggle_url }}?next={{ request.get_full_path }}">
+        {% if cta.activa %}D{% else %}A{% endif %}
+      </a>
+    </div>
   </td>
   {% for mon in monedas %}
     {% include "diario/snippets/saldo_en_moneda.html" %}

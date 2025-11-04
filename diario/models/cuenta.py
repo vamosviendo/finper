@@ -52,6 +52,7 @@ class Cuenta(PolymorphModel):
     )
     fecha_creacion = models.DateField(default=date.today)
     moneda = models.ForeignKey(Moneda, on_delete=models.CASCADE, null=True, blank=True)
+    activa = models.BooleanField(default=True)
 
     entradas: MovimientoManager   # related name para Movimiento.cta_entrada
     salidas: MovimientoManager    # related name para Movimiento.cta_salida
@@ -70,6 +71,9 @@ class Cuenta(PolymorphModel):
 
     def get_delete_url(self) -> str:
         return reverse("cta_elim", args=[self.sk])
+
+    def get_toggle_url(self) -> str:
+        return reverse("cta_desact", args=[self.sk])
 
     def get_url_with_mov(self, mov: Movimiento) -> str:
         return reverse("cuenta_movimiento", args=[self.sk, mov.sk])
