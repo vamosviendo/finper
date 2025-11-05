@@ -40,6 +40,10 @@ class FinperFirefox(MiFirefox):
             url_real += f"?{parsed_url.query}"
         assert url == url_real, f"Url real '{url_real}' no coincide con url propuesta '{url}'"
 
+    def cuenta_esta(self, cuenta: Cuenta) -> bool:
+        nombres_cuenta = [x.text.strip() for x in self.encontrar_elementos('class_link_cuenta', fail=False)]
+        return cuenta.nombre in nombres_cuenta
+
     def cliquear_en_cuenta(self, cuenta):
         self.encontrar_elemento(cuenta.nombre, By.LINK_TEXT).click()
 

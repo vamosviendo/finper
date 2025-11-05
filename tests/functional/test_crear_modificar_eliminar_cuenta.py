@@ -110,12 +110,10 @@ def test_modificar_cuenta(browser, cuenta_ajena, dolar, fecha_anterior):
 def test_eliminar_cuenta(browser, cuenta, cuenta_2):
     """ Cuando vamos a la página de eliminar cuenta y cliqueamos en confirmar,
         la cuenta es eliminada"""
-    nombre_cuenta = cuenta.nombre
     browser.ir_a_pag(cuenta.get_delete_url())
     browser.pulsar('id_btn_confirm')
     browser.assert_url(reverse('home'))
-    nombres_cuenta = [x.text.strip() for x in browser.encontrar_elementos('class_link_cuenta')]
-    assert nombre_cuenta not in nombres_cuenta
+    assert not browser.cuenta_esta(cuenta)
 
 
 @pytest.mark.parametrize("origen", ["/", "/diario/t/titular/", "/diario/m/", "/diario/tm/titular/"])
