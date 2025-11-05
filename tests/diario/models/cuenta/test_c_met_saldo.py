@@ -2,6 +2,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from diario.models import Cuenta
+
 
 @pytest.fixture
 def mock_tomar(mocker) -> MagicMock:
@@ -18,10 +20,13 @@ def test_devuelve_el_ultimo_saldo_historico_de_la_cuenta(cuenta, entrada, salida
         cuenta.saldo() == cuenta.saldodiario_set.last().importe
     )
 
-
 def test_si_no_encuentra_saldos_en_la_cuenta_devuelve_cero(cuenta):
     # No hay movimientos, por lo tanto no hay saldos
     assert cuenta.saldo() == 0.0
+
+
+def test_devuelve_cero_en_cuenta_no_persistida(cuenta_no_persistida):
+    assert cuenta_no_persistida.saldo() == 0
 
 
 def test_si_recibe_movimiento_recupera_saldo_al_momento_del_movimiento(

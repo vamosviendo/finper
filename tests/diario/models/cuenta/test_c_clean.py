@@ -67,3 +67,12 @@ def test_cuenta_no_puede_cambiar_de_moneda(cuenta, dolar):
             match="No se puede cambiar valor del campo 'moneda'"
     ):
         cuenta.clean()
+
+
+def test_no_permite_desactivar_cuenta_con_saldo(cuenta_con_saldo):
+    cuenta_con_saldo.activa = False
+    with pytest.raises(
+        errors.ErrorCuentaInactivaConSaldo,
+        match="No se puede desactivar cuenta con saldo distinto de cero"
+    ):
+        cuenta_con_saldo.clean()

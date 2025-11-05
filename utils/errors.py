@@ -119,6 +119,14 @@ class ErrorCuentaEsAcumulativa(TypeError):
         super().__init__(message)
 
 
+class ErrorCuentaInactivaConSaldo(ValidationError):
+    def __init__(
+            self,
+            message="No se puede desactivar cuenta con saldo distinto de cero"
+    ):
+        super().__init__(message)
+
+
 class ErrorFechaAnteriorAAltaTitular(ValidationError):
     def __init__(self, message=FECHA_ANTERIOR_A_ALTA_TITULAR):
         super().__init__(message)

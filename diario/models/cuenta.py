@@ -160,7 +160,10 @@ class Cuenta(PolymorphModel):
             except SaldoDiario.DoesNotExist:
                 saldo = SaldoDiario.anterior_a(cuenta=self, dia=dia)
         else:
-            saldo = self.ultimo_saldo
+            try:
+                saldo = self.ultimo_saldo
+            except ValueError:  # Cuenta no persistida. No tiene último saldo.
+                saldo = 0
 
         try:
             return round(saldo.importe * cotizacion, 2)
@@ -202,6 +205,7 @@ class Cuenta(PolymorphModel):
         self.impedir_cambio('moneda')
         self._chequear_incongruencias_de_clase()
         self._verificar_fecha_creacion()
+        self._verificar_inactiva_saldo_cero()
 
     def delete(self, esta_siendo_convertida=False, *args, **kwargs):
         if self.saldo() != 0:
@@ -275,6 +279,9 @@ class Cuenta(PolymorphModel):
         if self.tiene_madre() and self.fecha_creacion < self.cta_madre.fecha_conversion:
             raise errors.ErrorFechaAnteriorACuentaMadre
 
+    def _verificar_inactiva_saldo_cero(self):
+        if self.activa is False and self.saldo() != 0:
+            raise errors.ErrorCuentaInactivaConSaldo
 
 class CuentaInteractiva(Cuenta):
 

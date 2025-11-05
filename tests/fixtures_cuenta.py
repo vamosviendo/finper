@@ -13,6 +13,12 @@ from diario.models import (
 
 
 @pytest.fixture
+def cuenta_no_persistida(titular: Titular, fecha_inicial: date) -> CuentaInteractiva:
+    return CuentaInteractiva(
+        nombre="cuenta no persistida", sk="cnp", titular=titular, fecha_creacion=fecha_inicial)
+
+
+@pytest.fixture
 def cuenta(titular: Titular, fecha_inicial: date) -> CuentaInteractiva:
     return Cuenta.crear(
         nombre='cuenta', sk='c', titular=titular, fecha_creacion=fecha_inicial)
