@@ -4,6 +4,7 @@ from datetime import date
 from typing import Any, cast
 
 from django import forms
+from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db.models.functions import Lower
 from django.http import HttpResponseRedirect, HttpRequest, HttpResponse
@@ -304,8 +305,13 @@ class CtaDesactView(TemplateView):
 
     def post(self, request, *args, **kwargs):
         cuenta = self.get_object(kwargs["sk"])
-        cuenta.activa = not cuenta.activa
-        cuenta.clean_save()
+        try:
+            cuenta.activa = not cuenta.activa
+            cuenta.clean_save()
+        except ValidationError as e:
+            context = self.get_context_data(sk=cuenta.sk, error=e.messages)
+            return render(request, self.template_name, context)
+
         return redirect(self.get_success_url())
 
 

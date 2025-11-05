@@ -1,7 +1,9 @@
 {% extends 'diario/base.html' %}
 {% block contenido %}
 {% if error %}
-<div id="id_errores">{{ error }}</div>
+  {% for e in error %}
+    <div id="id_div_errores">{{ e }}</div>
+  {% endfor %}
 {% else %}
 <form method="post">{% csrf_token %}
     <p>{% if object.activa %}Desactivar{% else %}Activar{% endif %} cuenta "{{ object }}"?</p>
