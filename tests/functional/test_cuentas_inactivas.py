@@ -19,3 +19,18 @@ def test_permite_activar_cuentas_inactivas(browser, cuenta_inactiva, cuenta):
     nombres_cuenta = [x.text.strip() for x in browser.encontrar_elementos('class_link_cuenta', fail=False)]
     assert cuenta_inactiva.nombre in nombres_cuenta
 
+
+def test_muestra_cuenta_madre_antes_de_subcuenta_inactiva(browser, cuenta_acumulativa_saldo_0):
+    sc1, sc2 = cuenta_acumulativa_saldo_0.subcuentas.all()
+    sc3 = cuenta_acumulativa_saldo_0.agregar_subcuenta("subcuenta 3", "sc3", sc1.titular)
+    sc1.activa = False
+    sc1.clean_save()
+    sc3.activa = False
+    sc3.clean_save()
+
+    # Si una o más subcuentas de una cuenta acumulativa están en la página
+    # de cuentas inactivas, se muestra encima de ella su cuenta madre.
+    browser.ir_a_pag(reverse("ctas_inactivas"))
+    cuentas = browser.encontrar_elementos("class_link_cuenta")
+    nombres_cuenta = [x.text for x in cuentas]
+    assert nombres_cuenta == [cuenta_acumulativa_saldo_0.nombre, sc1.nombre, sc3.nombre]

@@ -221,7 +221,15 @@ class CuentasInactivasView(BaseHomeView):
             movimiento: Movimiento,
             overrided: bool = True) -> dict[str, Any]:
         context = super().get_context_especifico(ente, movimiento, overrided)
-        context["cuentas"] = self._cuentas_ordenadas(list(Cuenta.todes().order_by(Lower("nombre"))), activas=False)
+
+        cuentas_ordenadas = self._cuentas_ordenadas(list(Cuenta.todes().order_by(Lower("nombre"))), activas=False)
+        cuentas = []
+        for cuenta in cuentas_ordenadas:
+            if cuenta.tiene_madre() and cuenta.cta_madre not in cuentas:
+                cuentas.append(cuenta.cta_madre)
+            cuentas.append(cuenta)
+
+        context["cuentas"] = cuentas
         return context
 
 
