@@ -33,6 +33,10 @@ class TestDetalleTitular:
         response = client.get(otro_titular.get_absolute_url())
         assert response.context["cuentas"] == [cuenta_ajena_2, cuenta_de_dos_titulares, sc1]
 
+    def test_no_pasa_cuentas_inactivas(self, client, titular, cuenta, cuenta_inactiva):
+        response = client.get(titular.get_absolute_url())
+        assert cuenta_inactiva not in response.context.get("cuentas")
+
     def test_actualiza_context_con_dias_con_movimientos_del_titular_en_orden_inverso(
             self, titular, entrada, entrada_anterior,
             entrada_posterior_otra_cuenta, entrada_tardia_cuenta_ajena, client):

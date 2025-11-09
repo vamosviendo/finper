@@ -79,3 +79,11 @@ class TestDetalleCuenta:
 
         response = client.get(cuenta_acumulativa.get_absolute_url())
         assert response.context["cuentas"] == [sc1, ssc11, ssc12, sc2]
+
+    def test_no_pasa_subcuentas_inactivas(self, client, cuenta_acumulativa_saldo_0):
+        sc1, sc2 = cuenta_acumulativa_saldo_0.subcuentas.all()
+        sc2.activa = False
+        sc2.clean_save()
+
+        response = client.get(cuenta_acumulativa_saldo_0.get_absolute_url())
+        assert sc2 not in response.context["cuentas"]

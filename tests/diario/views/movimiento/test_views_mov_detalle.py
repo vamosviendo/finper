@@ -40,6 +40,10 @@ class TestDetalleMovimiento:
 
         assert list(response.context.get("cuentas")) == [cuenta, cuenta_acumulativa, sc1, sc2, sc3]
 
+    def test_no_pasa_cuentas_desactivadas(self, entrada, cuenta, cuenta_inactiva, cuenta_2, client):
+        response = client.get(entrada.get_absolute_url())
+        assert cuenta_inactiva not in response.context.get("cuentas")
+
     def test_pasa_titulares(
             self, entrada, salida, entrada_cuenta_ajena, client):
         titular = entrada.cta_entrada.titular
