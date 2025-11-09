@@ -2,6 +2,8 @@ import pytest
 from django.urls import reverse
 from selenium.webdriver.common.by import By
 
+from diario.models import Movimiento
+
 
 @pytest.fixture(autouse=True)
 def mock_titular_principal(mocker, titular):
@@ -144,3 +146,20 @@ def test_eliminar_cuenta_desde_pagina_posterior_redirige_a_esa_pagina_con_el_ult
     browser.pulsar("id_btn_confirm")
 
     browser.assert_url(url_destino + "?page=2")
+
+def test_eliminar_cuenta_con_movimientos(browser, cuenta_con_saldo):
+    """ Dada una cuenta con saldo cero pero con movimientos,
+        si intentamos eliminarla recibiremos un mensaje de error.
+    """
+    # Preparación. Poner saldo en cero
+    Movimiento.crear("Puesta en cero", importe=cuenta_con_saldo.saldo(), cta_salida=cuenta_con_saldo)
+    assert cuenta_con_saldo.saldo() == 0
+
+    browser.ir_a_pag(cuenta_con_saldo.get_delete_url())
+    browser.pulsar('id_btn_confirm')
+    msj = browser.encontrar_elemento("id_div_errores")
+    assert msj.text == "No se puede eliminar una cuenta con movimientos existentes ni un titular con cuentas con movimientos existentes. " \
+            "Si es una cuenta, intente desactivarla"
+
+    browser.ir_a_pag()
+    assert browser.cuenta_esta(cuenta_con_saldo)

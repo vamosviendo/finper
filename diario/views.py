@@ -271,16 +271,15 @@ class CtaElimView(DeleteView):
     slug_url_kwarg = 'sk'
     slug_field = 'sk'
 
-    def get(self, request, *args, **kwargs):
-        self.object = cast(Cuenta, self.get_object())
-        if cast(Cuenta, self.object).saldo() != 0:
+    def post(self, request, *args, **kwargs):
+        try:
+            return super().post(request, *args, **kwargs)
+        except ValidationError as e:
             context = self.get_context_data(
                 object=self.object,
-                error='No se puede eliminar cuenta con saldo',
+                error=e.messages,
             )
             return self.render_to_response(context)
-
-        return super().get(request, *args, **kwargs)
 
     def get_success_url(self):
         return self.request.GET.get("next", reverse("home"))
@@ -492,6 +491,16 @@ class TitElimView(DeleteView):
     model = Titular
     slug_url_kwarg = 'sk'
     slug_field = 'sk'
+
+    def post(self, request, *args, **kwargs):
+        try:
+            return super().post(request, *args, **kwargs)
+        except ValidationError as e:
+            context = self.get_context_data(
+                object=self.object,
+                error=e.messages,
+            )
+            return self.render_to_response(context)
 
     def get_success_url(self):
         return self.request.GET.get("next", reverse("home"))
