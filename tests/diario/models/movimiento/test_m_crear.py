@@ -364,8 +364,23 @@ class TestMovimientoEntreCuentasDeDistintosTitulares:
         deudores_tit1 = list(credito.cta_entrada.titular.deudores.all())
         deudores_tit2 = list(credito.cta_salida.titular.deudores.all())
         Movimiento.crear(
-            'Pago a cuenta', credito.importe - 1,
+            'Pago a cuenta', credito.importe-1,
             credito.cta_salida, credito.cta_entrada
         )
         assert list(credito.cta_entrada.titular.deudores.all()) == deudores_tit1
         assert list(credito.cta_salida.titular.deudores.all()) == deudores_tit2
+
+    def test_si_es_un_pago_a_cuenta_no_cambia_nombre_de_cuentas_credito(self, credito):
+        nombre_cd = credito.cta_entrada.titular.cuenta_credito_con(credito.cta_salida.titular).nombre
+        sk_cd = credito.cta_entrada.titular.cuenta_credito_con(credito.cta_salida.titular).sk
+        nombre_ca = credito.cta_salida.titular.cuenta_credito_con(credito.cta_entrada.titular).nombre
+        sk_ca = credito.cta_entrada.titular.cuenta_credito_con(credito.cta_salida.titular).sk
+
+        Movimiento.crear(
+            'Pago a cuenta', credito.importe-10,
+            credito.cta_salida, credito.cta_entrada
+        )
+
+        assert credito.cta_entrada.titular.cuenta_credito_con(credito.cta_salida.titular).sk == sk_cd
+        assert credito.cta_entrada.titular.cuenta_credito_con(credito.cta_salida.titular).nombre == nombre_cd
+        assert credito.cta_salida.titular.cuenta_credito_con(credito.cta_entrada.titular).nombre == nombre_ca

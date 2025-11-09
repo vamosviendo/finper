@@ -107,8 +107,8 @@ def test_crear_creditos_o_devoluciones(
         cta_entrada=cuenta.nombre,
         cta_salida=cuenta_ajena.nombre
     )
-    emisor = cuenta_ajena.titular
-    receptor = cuenta.titular
+    otro_titular = cuenta_ajena.titular
+    titular = cuenta.titular
 
     # Vemos que además del movimiento creado se generó un movimiento automático
     # con las siguientes características:
@@ -119,7 +119,7 @@ def test_crear_creditos_o_devoluciones(
     celdas_contramov = browser.dict_movimiento("Constitución de crédito")
 
     # - los nombres de los titulares en el detalle
-    assert celdas_contramov["Detalle"] == f"de {emisor.nombre} a {receptor.nombre}"
+    assert celdas_contramov["Detalle"] == f"de {otro_titular.nombre} a {titular.nombre}"
 
     # - el mismo importe que el movimiento creado
     assert celdas_mov["Importe"] == celdas_contramov["Importe"] == float_format(30)
@@ -129,8 +129,8 @@ def test_crear_creditos_o_devoluciones(
     #   creado como cuenta de salida, y viceversa
     assert celdas_mov["Entra en"] == cuenta.nombre
     assert celdas_mov["Sale de"] == cuenta_ajena.nombre
-    assert celdas_contramov["Entra en"] == f"préstamo de {emisor.nombre} a {receptor.nombre}".lower()
-    assert celdas_contramov["Sale de"] == f"deuda de {receptor.nombre} con {emisor.nombre}".lower()
+    assert celdas_contramov["Entra en"] == f"préstamo de {otro_titular.nombre} a {titular.nombre}".lower()
+    assert celdas_contramov["Sale de"] == f"deuda de {titular.nombre} con {otro_titular.nombre}".lower()
 
     # - a diferencia del movimiento creado manualmente, no muestra botones
     #   de editar o borrar.
@@ -144,12 +144,12 @@ def test_crear_creditos_o_devoluciones(
     # Si vamos a la página de detalles del titular de la cuenta de salida,
     # vemos entre sus cuentas la cuenta generada automáticamente que lo
     # muestra como acreedor, con saldo igual a {saldo}
-    browser.ir_a_pag(emisor.get_absolute_url())
-    link_cuenta = browser.encontrar_elemento(f"id_link_cta__{emisor.sk}-{receptor.sk}")
-    saldo_cuenta = browser.encontrar_saldo_en_moneda_de_cuenta(f"_{emisor.sk}-{receptor.sk}")
+    browser.ir_a_pag(otro_titular.get_absolute_url())
+    link_cuenta = browser.encontrar_elemento(f"id_link_cta__{otro_titular.sk}-{titular.sk}")
+    saldo_cuenta = browser.encontrar_saldo_en_moneda_de_cuenta(f"_{otro_titular.sk}-{titular.sk}")
     assert \
         link_cuenta.text == \
-        f"préstamo de {emisor.nombre} a {receptor.nombre}".lower()
+        f"préstamo de {otro_titular.nombre} a {titular.nombre}".lower()
     assert saldo_cuenta.text == float_format(30)
 
     # Si generamos otro movimiento entre las mismas cuentas, el
@@ -163,10 +163,10 @@ def test_crear_creditos_o_devoluciones(
     )
     celdas_contramov = browser.dict_movimiento("Aumento de crédito")
     assert celdas_contramov["Importe"] == float_format(10)
-    assert celdas_contramov["Entra en"] == f"préstamo de {emisor.nombre} a {receptor.nombre}".lower()
-    assert celdas_contramov["Sale de"] == f"deuda de {receptor.nombre} con {emisor.nombre}".lower()
-    saldo_cuenta_acreedora = browser.encontrar_saldo_en_moneda_de_cuenta(f"_{emisor.sk}-{receptor.sk}")
-    saldo_cuenta_deudora = browser.encontrar_saldo_en_moneda_de_cuenta(f"_{receptor.sk}-{emisor.sk}")
+    assert celdas_contramov["Entra en"] == f"préstamo de {otro_titular.nombre} a {titular.nombre}".lower()
+    assert celdas_contramov["Sale de"] == f"deuda de {titular.nombre} con {otro_titular.nombre}".lower()
+    saldo_cuenta_acreedora = browser.encontrar_saldo_en_moneda_de_cuenta(f"_{otro_titular.sk}-{titular.sk}")
+    saldo_cuenta_deudora = browser.encontrar_saldo_en_moneda_de_cuenta(f"_{titular.sk}-{otro_titular.sk}")
     assert saldo_cuenta_acreedora.text == float_format(30+10)
     assert saldo_cuenta_deudora.text == float_format(-30-10)
 
@@ -181,10 +181,10 @@ def test_crear_creditos_o_devoluciones(
     )
     celdas_contramov = browser.dict_movimiento("Pago a cuenta de crédito")
     assert celdas_contramov["Importe"] == float_format(15)
-    assert celdas_contramov["Entra en"] == f"deuda de {receptor.nombre} con {emisor.nombre}".lower()
-    assert celdas_contramov["Sale de"] == f"préstamo de {emisor.nombre} a {receptor.nombre}".lower()
-    saldo_cuenta_acreedora = browser.encontrar_saldo_en_moneda_de_cuenta(f"_{emisor.sk}-{receptor.sk}")
-    saldo_cuenta_deudora = browser.encontrar_saldo_en_moneda_de_cuenta(f"_{receptor.sk}-{emisor.sk}")
+    assert celdas_contramov["Entra en"] == f"deuda de {titular.nombre} con {otro_titular.nombre}".lower()
+    assert celdas_contramov["Sale de"] == f"préstamo de {otro_titular.nombre} a {titular.nombre}".lower()
+    saldo_cuenta_acreedora = browser.encontrar_saldo_en_moneda_de_cuenta(f"_{otro_titular.sk}-{titular.sk}")
+    saldo_cuenta_deudora = browser.encontrar_saldo_en_moneda_de_cuenta(f"_{titular.sk}-{otro_titular.sk}")
     assert saldo_cuenta_acreedora.text == float_format(30+10-15)
     assert saldo_cuenta_deudora.text == float_format(-30-10+15)
 
@@ -198,16 +198,16 @@ def test_crear_creditos_o_devoluciones(
     )
     celdas_contramov = browser.dict_movimiento("Pago a cuenta de crédito", 1)
     assert celdas_contramov["Importe"] == float_format(7)
-    assert celdas_contramov["Entra en"] == f"deuda de {receptor.nombre} con {emisor.nombre}".lower()
-    assert celdas_contramov["Sale de"] == f"préstamo de {emisor.nombre} a {receptor.nombre}".lower()
-    saldo_cuenta_acreedora = browser.encontrar_saldo_en_moneda_de_cuenta(f"_{emisor.sk}-{receptor.sk}")
-    saldo_cuenta_deudora = browser.encontrar_saldo_en_moneda_de_cuenta(f"_{receptor.sk}-{emisor.sk}")
+    assert celdas_contramov["Entra en"] == f"deuda de {titular.nombre} con {otro_titular.nombre}".lower()
+    assert celdas_contramov["Sale de"] == f"préstamo de {otro_titular.nombre} a {titular.nombre}".lower()
+    saldo_cuenta_acreedora = browser.encontrar_saldo_en_moneda_de_cuenta(f"_{otro_titular.sk}-{titular.sk}")
+    saldo_cuenta_deudora = browser.encontrar_saldo_en_moneda_de_cuenta(f"_{titular.sk}-{otro_titular.sk}")
     assert saldo_cuenta_acreedora.text == float_format(30+10-15-7)
     assert saldo_cuenta_deudora.text == float_format(-30-10+15+7)
 
     # Si generamos un movimiento entre ambos titulares con importe mayor al
     # total de la deuda:
-    # - el contramovimiento se genera con concepto ""
+    # - el contramovimiento se genera con concepto "Pago en exceso de crédito"
     # - las cuentas crédito cambian de nombre y de sk (deuda de receptor con emisor se convierte en
     #   préstamo de receptor a emisor y viceversa)
     browser.crear_movimiento(
@@ -218,10 +218,10 @@ def test_crear_creditos_o_devoluciones(
     )
     celdas_contramov = browser.dict_movimiento("Pago en exceso de crédito")
     assert celdas_contramov["Importe"] == float_format(20)
-    assert celdas_contramov["Entra en"] == f"préstamo de {receptor.nombre} a {emisor.nombre}".lower()
-    assert celdas_contramov["Sale de"] == f"deuda de {emisor.nombre} con {receptor.nombre}".lower()
-    saldo_cuenta_acreedora = browser.encontrar_saldo_en_moneda_de_cuenta(f"_{receptor.sk}-{emisor.sk}")
-    saldo_cuenta_deudora = browser.encontrar_saldo_en_moneda_de_cuenta(f"_{emisor.sk}-{receptor.sk}")
+    assert celdas_contramov["Entra en"] == f"préstamo de {titular.nombre} a {otro_titular.nombre}".lower()
+    assert celdas_contramov["Sale de"] == f"deuda de {otro_titular.nombre} con {titular.nombre}".lower()
+    saldo_cuenta_acreedora = browser.encontrar_saldo_en_moneda_de_cuenta(f"_{titular.sk}-{otro_titular.sk}")
+    saldo_cuenta_deudora = browser.encontrar_saldo_en_moneda_de_cuenta(f"_{otro_titular.sk}-{titular.sk}")
     assert saldo_cuenta_acreedora.text == float_format(-30-10+15+7+20)
     assert saldo_cuenta_deudora.text == float_format(30+10-15-7-20)
 
@@ -236,10 +236,10 @@ def test_crear_creditos_o_devoluciones(
     )
     celdas_contramov = browser.dict_movimiento("Cancelación de crédito")
     assert celdas_contramov["Importe"] == float_format(2)
-    assert celdas_contramov["Entra en"] == f"deuda de {emisor.nombre} con {receptor.nombre}".lower()
-    assert celdas_contramov["Sale de"] == f"préstamo de {receptor.nombre} a {emisor.nombre}".lower()
-    saldo_cuenta_acreedora = browser.encontrar_saldo_en_moneda_de_cuenta(f"_{emisor.sk}-{receptor.sk}")
-    saldo_cuenta_deudora = browser.encontrar_saldo_en_moneda_de_cuenta(f"_{receptor.sk}-{emisor.sk}")
+    assert celdas_contramov["Entra en"] == f"deuda de {otro_titular.nombre} con {titular.nombre}".lower()
+    assert celdas_contramov["Sale de"] == f"préstamo de {titular.nombre} a {otro_titular.nombre}".lower()
+    saldo_cuenta_acreedora = browser.encontrar_saldo_en_moneda_de_cuenta(f"_{otro_titular.sk}-{titular.sk}")
+    saldo_cuenta_deudora = browser.encontrar_saldo_en_moneda_de_cuenta(f"_{titular.sk}-{otro_titular.sk}")
     assert saldo_cuenta_acreedora.text == float_format(30+10-15-7-18)
     assert saldo_cuenta_deudora.text == float_format(-30-10+15+7+18)
 
