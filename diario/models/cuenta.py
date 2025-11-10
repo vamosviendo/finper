@@ -207,6 +207,22 @@ class Cuenta(PolymorphModel):
         self._verificar_fecha_creacion()
         self._verificar_inactiva_saldo_cero()
 
+    def save(self, *args, **kwargs):
+        chequea = kwargs.pop("chequea", True)
+
+        if not self.activa and self.tiene_madre() and chequea:
+            desactiva = True
+            for hermana in self.hermanas():
+                if hermana.activa:
+                    desactiva = False
+                    break
+            if desactiva:
+                self.cta_madre.activa = False
+                self.cta_madre.full_clean()
+                self.cta_madre.save(chequea=False)
+
+        super().save(*args, **kwargs)
+
     def delete(self, esta_siendo_convertida=False, *args, **kwargs):
         if self.saldo() != 0:
             raise errors.SaldoNoCeroException
@@ -639,8 +655,18 @@ class CuentaAcumulativa(Cuenta):
                     mov.save()
 
     def save(self, *args, **kwargs):
+        chequea = kwargs.pop("chequea", True)
         self.manejar_cambios()
-        super().save(*args, **kwargs)
+
+        if not self.activa and chequea:
+            for sc in self.subcuentas.all():
+                from typing import cast
+                sc = cast(Cuenta, sc)
+                sc.activa = False
+                sc.full_clean()
+                sc.save(chequea=False)
+
+        super().save(*args, chequea=False, **kwargs)
 
     def movs(self, order_by: list[str] = None) -> models.QuerySet[Movimiento]:
         """ Devuelve movimientos propios y de sus subcuentas"""
