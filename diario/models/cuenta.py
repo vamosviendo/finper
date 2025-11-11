@@ -210,15 +210,22 @@ class Cuenta(PolymorphModel):
     def save(self, *args, **kwargs):
         chequea = kwargs.pop("chequea", True)
 
-        if not self.activa and self.tiene_madre() and chequea:
-            desactiva = True
-            for hermana in self.hermanas():
-                if hermana.activa:
-                    desactiva = False
-                    break
-            if desactiva:
-                self.cta_madre.activa = False
-                self.cta_madre.full_clean()
+        if not self._state.adding and self.tiene_madre() and chequea:
+            if not self.activa:
+                desactiva = True
+                for hermana in self.hermanas():
+                    if hermana.activa:
+                        desactiva = False
+                        break
+                if desactiva:
+                    self.cta_madre.activa = False
+                    self.cta_madre.full_clean()
+                    self.cta_madre.save(chequea=False)
+            else:
+                self.cta_madre.activa = True
+                # Al igual que en Movimiento._actualizar_fechas_conversion(),
+                # se omite self.cta_madre.full_clean() para evitar error de fecha de
+                # conversión posterior a fecha de creación de subcuentas
                 self.cta_madre.save(chequea=False)
 
         super().save(*args, **kwargs)
