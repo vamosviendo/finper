@@ -104,3 +104,12 @@ def test_puede_tener_fecha_de_conversion_anterior_o_igual_a_la_del_primer_movimi
 def test_si_no_tiene_movimientos_como_cuenta_interactiva_puede_tener_fecha_de_conversion(
         cuenta_acumulativa_saldo_0):
     cuenta_acumulativa_saldo_0.clean()
+
+
+def test_si_sus_subcuentas_tienen_saldo_no_se_la_puede_desactivar_aunque_su_saldo_sea_cero(
+        cuenta_acumulativa):
+    sc1, sc2 = cuenta_acumulativa.subcuentas.all()
+    Movimiento.crear("Puesta en cero de cuenta madre", sc1.saldo() + sc2.saldo(), cta_salida=sc1)
+    cuenta_acumulativa.activa = False
+    with pytest.raises(ValidationError):
+        cuenta_acumulativa.full_clean()

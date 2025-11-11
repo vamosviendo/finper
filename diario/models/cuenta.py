@@ -651,6 +651,10 @@ class CuentaAcumulativa(Cuenta):
         super().clean()
         self._verificar_fechas()
 
+        if not self.activa:
+            if not all(sc.saldo() == 0 for sc in self.subcuentas.all()):
+                raise ValidationError("No se puede desactivar cuenta si sus subcuentas tienen saldo")
+
     def manejar_cambios(self):
         if self._state.adding:
             return
