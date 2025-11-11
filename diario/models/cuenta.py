@@ -210,23 +210,8 @@ class Cuenta(PolymorphModel):
     def save(self, *args, **kwargs):
         chequea = kwargs.pop("chequea", True)
 
-        if not self._state.adding and self.tiene_madre() and chequea:
-            if not self.activa:
-                desactiva = True
-                for hermana in self.hermanas():
-                    if hermana.activa:
-                        desactiva = False
-                        break
-                if desactiva:
-                    self.cta_madre.activa = False
-                    self.cta_madre.full_clean()
-                    self.cta_madre.save(chequea=False)
-            else:
-                self.cta_madre.activa = True
-                # Al igual que en Movimiento._actualizar_fechas_conversion(),
-                # se omite self.cta_madre.full_clean() para evitar error de fecha de
-                # conversión posterior a fecha de creación de subcuentas
-                self.cta_madre.save(chequea=False)
+        if chequea:
+            self._activar_o_desactivar_cuenta_madre()
 
         super().save(*args, **kwargs)
 
@@ -305,6 +290,24 @@ class Cuenta(PolymorphModel):
     def _verificar_inactiva_saldo_cero(self):
         if self.activa is False and self.saldo() != 0:
             raise errors.ErrorCuentaInactivaConSaldo
+
+    def _activar_o_desactivar_cuenta_madre(self):
+        """ Si está inactiva y todas sus hermanas están inactivas, desactivar cuenta madre
+            Si está activa o hay al menos una de sus hermanas activa, activar cuenta madre
+        """
+        if not self._state.adding and self.tiene_madre():
+            if not self.activa:
+                desactiva = all(not hermana.activa for hermana in self.hermanas())
+                if desactiva:
+                    self.cta_madre.activa = False
+                    self.cta_madre.full_clean()
+                    self.cta_madre.save(chequea=False)
+            else:
+                self.cta_madre.activa = True
+                # Al igual que en Movimiento._actualizar_fechas_conversion(),
+                # se omite self.cta_madre.full_clean() para evitar error de fecha de
+                # conversión posterior a fecha de creación de subcuentas
+                self.cta_madre.save(chequea=False)
 
 class CuentaInteractiva(Cuenta):
 
@@ -669,13 +672,8 @@ class CuentaAcumulativa(Cuenta):
         chequea = kwargs.pop("chequea", True)
         self.manejar_cambios()
 
-        if not self.activa and chequea:
-            for sc in self.subcuentas.all():
-                from typing import cast
-                sc = cast(Cuenta, sc)
-                sc.activa = False
-                sc.full_clean()
-                sc.save(chequea=False)
+        if chequea:
+            self._desactivar_subcuentas()
 
         super().save(*args, chequea=False, **kwargs)
 
@@ -750,3 +748,13 @@ class CuentaAcumulativa(Cuenta):
                 f'La fecha de conversión no puede ser anterior a la del '
                 f'último movimiento de la cuenta ({fecha_ultimo_mov_directo})'
             )
+
+    def _desactivar_subcuentas(self):
+        """ Si una cuenta madre está inactiva, todas sus subcuentas están inactivas"""
+        if not self.activa:
+            for sc in self.subcuentas.all():
+                from typing import cast
+                sc = cast(Cuenta, sc)
+                sc.activa = False
+                sc.full_clean()
+                sc.save(chequea=False)
