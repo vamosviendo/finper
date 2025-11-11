@@ -277,8 +277,6 @@ class Cuenta(PolymorphModel):
             self.sk = self.sk.lower()
 
     def _chequear_incongruencias_de_clase(self):
-        if self.es_acumulativa and self.como_subclase().subcuentas.count()== 0:
-            raise errors.ErrorTipo(errors.CUENTA_ACUMULATIVA_SIN_SUBCUENTAS)
         if self.cta_madre and self.cta_madre.es_interactiva:
             raise errors.ErrorTipo(f'Cuenta interactiva "{self.cta_madre }" '
                                    f'no puede ser madre')
@@ -653,10 +651,7 @@ class CuentaAcumulativa(Cuenta):
     def clean(self):
         super().clean()
         self._verificar_fechas()
-
-        if not self.activa:
-            if not all(sc.saldo() == 0 for sc in self.subcuentas.all()):
-                raise ValidationError("No se puede desactivar cuenta si sus subcuentas tienen saldo")
+        self._verificar_saldo_subcuentas()
 
     def manejar_cambios(self):
         if self._state.adding:
@@ -720,6 +715,11 @@ class CuentaAcumulativa(Cuenta):
     def recalcular_saldos_diarios(self):
         raise AttributeError("No se permite recalcular saldos de cuenta acumulativa")
 
+    def _chequear_incongruencias_de_clase(self):
+        if self.es_acumulativa and self.subcuentas.count()== 0:
+            raise errors.ErrorTipo(errors.CUENTA_ACUMULATIVA_SIN_SUBCUENTAS)
+        super()._chequear_incongruencias_de_clase()
+
     def _verificar_fechas(self):
         if self.fecha_creacion > self.fecha_conversion:
             raise errors.ErrorFechaCreacionPosteriorAConversion(
@@ -748,6 +748,13 @@ class CuentaAcumulativa(Cuenta):
                 f'La fecha de conversión no puede ser anterior a la del '
                 f'último movimiento de la cuenta ({fecha_ultimo_mov_directo})'
             )
+
+    def _verificar_saldo_subcuentas(self):
+        if not self.activa:
+            if not all(sc.saldo() == 0 for sc in self.subcuentas.all()):
+                raise errors.SaldoNoCeroException(
+                    "No se puede desactivar cuenta si sus subcuentas tienen saldo"
+                )
 
     def _desactivar_subcuentas(self):
         """ Si una cuenta madre está inactiva, todas sus subcuentas están inactivas"""

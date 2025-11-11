@@ -60,8 +60,9 @@ class CambioDeMonedaException(ValidationError):
 
 
 class SaldoNoCeroException(ValidationError):
-    """ Se eleva cuando se intenta eliminar una cuenta con saldo distinto de
-        cero, o un titular con capital distinto de cero."""
+    """ Se eleva cuando se intenta eliminar o desactivar una cuenta con saldo
+        distinto de cero, o un titular con capital distinto de cero, p una
+        cuenta madre con subcuentas con saldo distinto de cero."""
 
     def __init__(self, message=SALDO_NO_CERO):
         super().__init__(message)
