@@ -128,15 +128,6 @@ def test_campo_moneda_muestra_moneda_base_como_valor_por_defecto(mock_moneda_bas
     assert formmov.fields['moneda'].initial == Moneda.tomar(sk=mock_moneda_base)
 
 
-@pytest.mark.parametrize("sentido", ["entrada", "salida"])
-def test_campos_cuenta_muestran_solo_cuentas_activas(sentido, cuenta, cuenta_2, cuenta_inactiva, cuenta_ajena):
-    formmov = FormMovimiento()
-    queryset_cuentas = formmov.fields[f"cta_{sentido}"].queryset
-    for c in cuenta, cuenta_2, cuenta_ajena:
-        assert c in queryset_cuentas
-    assert cuenta_inactiva not in queryset_cuentas
-
-
 def test_guarda_cotizacion(formmov_distintas_monedas):
     formmov_distintas_monedas.is_valid()
     formmov_distintas_monedas.save()
