@@ -92,6 +92,14 @@ def test_cuentas_acumulativas_no_aparecen_entre_las_opciones_de_cuenta(
         [x.lower() for x in opciones_cs]
 
 
+def test_cuentas_inactivas_no_aparecen_entre_las_opciones_de_cuenta(browser, cuenta, cuenta_inactiva):
+    browser.ir_a_pag(reverse("mov_nuevo"))
+    opciones_ce = browser.opciones_de_campo("cta_entrada")
+    opciones_cs = browser.opciones_de_campo("cta_salida")
+    assert cuenta_inactiva.nombre.lower() not in [x.lower() for x in opciones_ce]
+    assert cuenta_inactiva.nombre.lower() not in [x.lower() for x in opciones_cs]
+
+
 def test_crear_creditos_o_devoluciones(
         browser, cuenta, cuenta_ajena, cuenta_2, cuenta_ajena_2, fecha):
     # Si generamos un movimiento entre cuentas de distintos titulares, se

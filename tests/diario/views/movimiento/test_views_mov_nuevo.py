@@ -74,6 +74,14 @@ def test_no_muestra_cuentas_acumulativas_entre_las_opciones(
     assert cuenta_acumulativa not in opciones_cs
 
 
+def test_no_muestra_cuentas_inactivas_entre_las_opciones(cuenta, cuenta_inactiva, response):
+    opciones_ce = response.context['form'].fields['cta_entrada'].queryset
+    opciones_cs = response.context['form'].fields['cta_salida'].queryset
+
+    assert cuenta_inactiva not in opciones_ce
+    assert cuenta_inactiva not in opciones_cs
+
+
 def test_si_se_pulsa_guardar_y_agregar_redirige_a_mov_nuevo(response_post_gya):
     asserts.assertRedirects(response_post_gya, reverse('mov_nuevo'))
 

@@ -59,6 +59,14 @@ def test_si_cuenta_es_interactiva_no_muestra_cuentas_acumulativas_entre_las_opci
 
 
 @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
+def test_no_muestra_cuentas_inactivas_entre_las_opciones(client, sentido, cuenta_inactiva, request):
+    mov = request.getfixturevalue(sentido)
+
+    response = client.get(mov.get_edit_url())
+    assert cuenta_inactiva not in response.context['form'].fields[f'cta_{sentido}'].queryset
+
+
+@pytest.mark.parametrize('sentido', ['entrada', 'salida'])
 def test_si_no_tiene_cta_entrada_no_muestra_cuentas_acumulativas_entre_las_opciones(
         client, sentido, cuenta_acumulativa, request):
     mov = request.getfixturevalue(sentido)

@@ -393,8 +393,8 @@ class MovNuevoView(CreateView):
     def get_form(self, *args, **kwargs):
         form = super().get_form(*args, **kwargs)
 
-        cast(forms.ModelChoiceField, form.fields['cta_entrada']).queryset = CuentaInteractiva.todes()
-        cast(forms.ModelChoiceField, form.fields['cta_salida']).queryset = CuentaInteractiva.todes()
+        cast(forms.ModelChoiceField, form.fields['cta_entrada']).queryset = CuentaInteractiva.filtro(activa=True)
+        cast(forms.ModelChoiceField, form.fields['cta_salida']).queryset = CuentaInteractiva.filtro(activa=True)
 
         return form
 
@@ -431,12 +431,12 @@ class MovModView(UpdateView):
         if self.object.cta_entrada and self.object.cta_entrada.es_acumulativa:
             form.fields['cta_entrada'].disabled = True
         else:
-            cast(forms.ModelChoiceField, form.fields['cta_entrada']).queryset = CuentaInteractiva.todes()
+            cast(forms.ModelChoiceField, form.fields['cta_entrada']).queryset = CuentaInteractiva.filtro(activa=True)
 
         if self.object.cta_salida and self.object.cta_salida.es_acumulativa:
             form.fields['cta_salida'].disabled = True
         else:
-            cast(forms.ModelChoiceField, form.fields['cta_salida']).queryset = CuentaInteractiva.todes()
+            cast(forms.ModelChoiceField, form.fields['cta_salida']).queryset = CuentaInteractiva.filtro(activa=True)
 
         return form
 
