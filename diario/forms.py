@@ -6,8 +6,8 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
-from diario.models import Cotizacion, CuentaAcumulativa, CuentaInteractiva, \
-    Dia, Moneda, Movimiento, Titular
+from diario.models import Cotizacion, Cuenta, CuentaAcumulativa, \
+    CuentaInteractiva, Dia, Moneda, Movimiento, Titular
 from diario.settings_app import TITULAR_PRINCIPAL, MONEDA_BASE
 
 from utils.iterables import hay_mas_de_un_none_en
@@ -163,6 +163,8 @@ class FormMovimiento(forms.ModelForm):
         widget=forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
     )
     moneda = forms.ModelChoiceField(queryset=Moneda.todes(), empty_label=None)
+    cta_entrada = forms.ModelChoiceField(queryset=Cuenta.filtro(activa=True), required=False)
+    cta_salida = forms.ModelChoiceField(queryset=Cuenta.filtro(activa=True), required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
