@@ -312,6 +312,11 @@ class CtaDesactView(TemplateView):
 
     def post(self, request, *args, **kwargs):
         cuenta = self.get_object(kwargs["sk"])
+
+        # Nos aseguramos de llamar al met. save de la clase correcta.
+        if cuenta.es_acumulativa:
+            cuenta = CuentaAcumulativa.tomar(sk=cuenta.sk)
+
         try:
             cuenta.activa = not cuenta.activa
             cuenta.clean_save()

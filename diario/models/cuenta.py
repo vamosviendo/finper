@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import Optional, Self, List, Sequence, Set, TYPE_CHECKING
+from typing import cast, Optional, Self, List, Sequence, Set, TYPE_CHECKING
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import EmptyResultSet, ValidationError
@@ -666,7 +666,6 @@ class CuentaAcumulativa(Cuenta):
     def save(self, *args, **kwargs):
         chequea = kwargs.pop("chequea", True)
         self.manejar_cambios()
-
         if chequea:
             self._desactivar_subcuentas()
 
@@ -760,7 +759,6 @@ class CuentaAcumulativa(Cuenta):
         """ Si una cuenta madre está inactiva, todas sus subcuentas están inactivas"""
         if not self.activa:
             for sc in self.subcuentas.all():
-                from typing import cast
                 sc = cast(Cuenta, sc)
                 sc.activa = False
                 sc.full_clean()
