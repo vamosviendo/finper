@@ -18,18 +18,6 @@ def test_requiere_al_menos_una_cuenta(fecha):
         mov.full_clean()
 
 
-def test_no_admite_misma_cuenta_de_entrada_y_de_salida(cuenta, fecha):
-    mov = Movimiento(
-        fecha=fecha,
-        concepto='Movimiento con cuentas iguales',
-        importe=100,
-        cta_entrada=cuenta,
-        cta_salida=cuenta
-    )
-    with pytest.raises(ValidationError, match=errors.CUENTAS_IGUALES):
-        mov.full_clean()
-
-
 def test_permite_movimientos_duplicados(fecha, cuenta):
     Movimiento.crear(
         fecha=fecha,
@@ -44,6 +32,29 @@ def test_permite_movimientos_duplicados(fecha, cuenta):
         cta_entrada=cuenta
     )
     mov.full_clean()    # No debe dar error
+
+
+def test_no_admite_misma_cuenta_de_entrada_y_de_salida(cuenta, fecha):
+    mov = Movimiento(
+        fecha=fecha,
+        concepto='Movimiento con cuentas iguales',
+        importe=100,
+        cta_entrada=cuenta,
+        cta_salida=cuenta
+    )
+    with pytest.raises(ValidationError, match=errors.CUENTAS_IGUALES):
+        mov.full_clean()
+
+
+def test_no_admite_cuentas_inactivas(cuenta_inactiva, fecha):
+    mov = Movimiento(
+        fecha=fecha,
+        concepto="Movimiento con cuenta inactiva",
+        importe=100,
+        cta_entrada=cuenta_inactiva
+    )
+    with pytest.raises(ValidationError, match=errors.MOVIMIENTO_CON_CUENTA_INACTIVA):
+        mov.full_clean()
 
 
 def test_movimiento_no_automatico_no_admite_cuenta_credito(

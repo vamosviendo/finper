@@ -63,6 +63,12 @@ class MovimientoCleaner:
                     errors.CUENTA_ACUMULATIVA_EN_MOVIMIENTO
                 )
 
+    def test_no_se_admiten_movimientos_sobre_cuentas_inactivas(self):
+        for cuenta in self.mov.cta_entrada, self.mov.cta_salida:
+            if cuenta and not cuenta.activa:
+                raise errors.ErrorMovimientoConCuentaInactiva()
+
+
     def no_se_permite_modificar_movimientos_automaticos(self):
         if self.mov.es_automatico and self.mov.any_field_changed():
             raise errors.ErrorMovimientoAutomatico(
@@ -394,6 +400,7 @@ class Movimiento(MiModel):
         cleaning.no_se_permite_moneda_distinta_de_las_de_cuentas()
         cleaning.dia_none_se_reemplaza_por_ultimo_dia()
         cleaning.no_se_permite_fecha_anterior_a_creacion_de_cuenta()
+        cleaning.test_no_se_admiten_movimientos_sobre_cuentas_inactivas()
 
         if self._state.adding:
             cleaning.no_se_admiten_movimientos_nuevos_sobre_cuentas_acumulativas()

@@ -36,8 +36,8 @@ FECHA_CREACION_POSTERIOR_A_CONVERSION = 'La fecha de creación de una cuenta acu
 FECHA_POSTERIOR_A_CONVERSION = 'Fecha del movimiento debe ser anterior a '
 IMPORTE_CERO = 'Se intentó crear un movimiento con importe cero'
 MODIFICACION_MOVIMIENTO_AUTOMATICO = 'No se puede modificar movimiento automático'
-MOVIMIENTO_CON_CA_ELIMINADO = \
-    'Se intentó borrar un movimiento con una o más cuentas acumulativas'
+MOVIMIENTO_CON_CA_ELIMINADO = 'Se intentó borrar un movimiento con una o más cuentas acumulativas'
+MOVIMIENTO_CON_CUENTA_INACTIVA = "No se permite movimiento sobre cuenta inactiva"
 SALDO_NO_CERO = 'No se puede eliminar cuenta con saldo distinto de cero o titular con capital distinto de cero'
 SALDO_NO_COINCIDE = 'El saldo de la cuenta no coincide con sus movimientos'
 SUBCUENTAS_SIN_SALDO = 'Sólo se permite una subcuenta sin saldo'
@@ -198,16 +198,22 @@ class ErrorMovimientoAutomatico(ValidationError):
 
 
 class ErrorCuentaNoFiguraEnMovimiento(ValidationError):
-
     def __init__(self, message='Cuenta no figura en movimiento'):
         super().__init__(message)
 
 
 class ErrorMovimientoAnteriorAFechaCreacion(ValidationError):
-
     def __init__(
             self,
             message='Movimiento anterior a la fecha de creación de la cuenta'
+    ):
+        super().__init__(message)
+
+
+class ErrorMovimientoConCuentaInactiva(ValidationError):
+    def __init__(
+            self,
+            message=MOVIMIENTO_CON_CUENTA_INACTIVA
     ):
         super().__init__(message)
 
