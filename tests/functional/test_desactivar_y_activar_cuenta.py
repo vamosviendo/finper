@@ -63,7 +63,6 @@ def test_activar_cuenta(browser, cuenta, cuenta_inactiva, cuenta_3):
 
 def test_si_se_desactiva_cuenta_acumulativa_se_desactivan_todas_sus_subcuentas(
         browser, cuenta_acumulativa_saldo_0, cuenta):
-    print("inicio del test")
     sc1, sc2 = cuenta_acumulativa_saldo_0.subcuentas.all()
     browser.ir_a_pag(cuenta_acumulativa_saldo_0.get_toggle_url())
     browser.pulsar("id_btn_confirm")
@@ -72,3 +71,16 @@ def test_si_se_desactiva_cuenta_acumulativa_se_desactivan_todas_sus_subcuentas(
     assert not browser.cuenta_esta(cuenta_acumulativa_saldo_0)
     assert not browser.cuenta_esta(sc1)
     assert not browser.cuenta_esta(sc2)
+
+
+def test_si_se_desactivan_todas_las_subcuentas_se_desactiva_cuenta_madre(
+        browser, cuenta_acumulativa_saldo_0, cuenta):
+    sc1, sc2 = cuenta_acumulativa_saldo_0.subcuentas.all()
+
+    browser.ir_a_pag(sc1.get_toggle_url())
+    browser.pulsar("id_btn_confirm")
+    browser.ir_a_pag(sc2.get_toggle_url())
+    browser.pulsar("id_btn_confirm")
+
+    browser.assert_url(reverse("home"))
+    assert not browser.cuenta_esta(cuenta_acumulativa_saldo_0)
