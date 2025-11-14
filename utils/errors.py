@@ -13,6 +13,8 @@ CUENTA_ACUMULATIVA_EN_MOVIMIENTO = \
 CUENTA_ACUMULATIVA_RETIRADA = \
     'No puede retirarse cuenta acumulativa en movimiento'
 CUENTA_ACUMULATIVA_SIN_SUBCUENTAS = 'Cuenta acumulativa debe tener subcuentas'
+CUENTA_ACUMULATIVA_ACTIVA_SUBCUENTAS_INACTIVAS = "No se puede activar directamente una cuenta acumulativa inactiva. " \
+    "Intente activar una o más de sus subcuentas"
 CUENTA_CREDITO_EN_MOV_E_S = \
     'No se permite cuenta crédito en movimiento de entrada o salida'
 CUENTA_CREDITO_VS_NORMAL = \

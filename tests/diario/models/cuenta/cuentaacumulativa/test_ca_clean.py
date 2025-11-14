@@ -113,3 +113,17 @@ def test_si_sus_subcuentas_tienen_saldo_no_se_la_puede_desactivar_aunque_su_sald
     cuenta_acumulativa.activa = False
     with pytest.raises(ValidationError):
         cuenta_acumulativa.full_clean()
+
+
+def test_no_se_permite_activar_directamente_una_cuenta_acumulativa_inactiva(cuenta_acumulativa_saldo_0):
+    cuenta_acumulativa_saldo_0.activa = False
+    cuenta_acumulativa_saldo_0.clean_save()
+
+    cuenta_acumulativa_saldo_0.activa = True
+    with pytest.raises(
+            ValidationError,
+            match="No se puede activar directamente una cuenta acumulativa inactiva. "
+                "Intente activar una o más de sus subcuentas"
+    ):
+        cuenta_acumulativa_saldo_0.clean()
+
