@@ -16,6 +16,25 @@ def dia(dia):
     return dia
 
 
+@pytest.fixture
+def cuentas_credito_inactivas(credito: Movimiento) -> list[Cuenta]:
+    contramov = Movimiento.tomar(id=credito.id_contramov)
+    cta_prestamo = contramov.cta_entrada
+    cta_deuda = contramov.cta_salida
+
+    Movimiento.crear(
+        concepto="Cancelación de crédito",
+        importe=cta_prestamo.saldo(),
+        cta_entrada = credito.cta_salida,
+        cta_salida = credito.cta_entrada,
+    )
+
+    for cta in cta_prestamo, cta_deuda:
+        cta.refresh_from_db()
+
+    return [cta_prestamo, cta_deuda]
+
+
 def test_movimiento_entre_titulares_gestiona_trasferencia(mock_gestionar_transferencia, cuenta, cuenta_ajena):
     mov = Movimiento(
         concepto='Préstamo',
@@ -95,3 +114,22 @@ def test_integrativo_no_genera_nada_si_esgratis(cuenta, cuenta_ajena):
     )
     assert Cuenta.cantidad() == 2
     assert Movimiento.cantidad() == 1
+
+
+def test_si_se_cancela_credito_se_desactivan_las_cuentas_credito_correspondientes(credito, cuentas_credito_inactivas):
+    for cta in cuentas_credito_inactivas:
+        assert not cta.activa
+
+
+def test_si_se_genera_credito_entre_titulares_con_credito_anterior_cancelado_se_activan_las_cuentas_credito_correspondientes(
+        credito, cuentas_credito_inactivas):
+    Movimiento.crear(
+        concepto="Nuevo credito",
+        importe=100,
+        cta_entrada=credito.cta_entrada,
+        cta_salida=credito.cta_salida
+    )
+
+    for cta in cuentas_credito_inactivas:
+        cta.refresh_from_db()
+        assert cta.activa

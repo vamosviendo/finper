@@ -246,6 +246,13 @@ def test_crear_creditos_o_devoluciones(
     assert celdas_contramov["Importe"] == float_format(2)
     assert celdas_contramov["Entra en"] == f"deuda de {otro_titular.nombre} con {titular.nombre}".lower()
     assert celdas_contramov["Sale de"] == f"préstamo de {titular.nombre} a {otro_titular.nombre}".lower()
+
+    # Las cuentas crédito quedan con saldo cero, se desactivan y no aparecen en la página
+    browser.no_encontrar_elemento(f"id_row_cta__{otro_titular.sk}-{titular.sk}")
+    browser.no_encontrar_elemento(f"id_row_cta__{titular.sk}-{otro_titular.sk}")
+
+    # Las cuentas desactivadas aparecen en la página de cuentas inactivas
+    browser.ir_a_pag(reverse("ctas_inactivas"))
     saldo_cuenta_acreedora = browser.encontrar_saldo_en_moneda_de_cuenta(f"_{otro_titular.sk}-{titular.sk}")
     saldo_cuenta_deudora = browser.encontrar_saldo_en_moneda_de_cuenta(f"_{titular.sk}-{otro_titular.sk}")
     assert saldo_cuenta_acreedora.text == float_format(30+10-15-7-18)

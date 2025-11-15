@@ -626,11 +626,12 @@ class Movimiento(MiModel):
         return False
 
     def recuperar_cuentas_credito(self) -> Tuple:
-        cls = cast(MiModel, self.get_related_class(CTA_ENTRADA))
+        from diario.models import Cuenta
+        cls = cast(Cuenta, self.get_related_class(CTA_ENTRADA))
         sk_emisor = self.emisor.sk
         sk_receptor = self.receptor.sk
         try:
-            return (
+            cuentas_credito = (
                 cls.tomar(
                     sk=f'_{sk_emisor}'
                          f'-{sk_receptor}'),
@@ -639,6 +640,14 @@ class Movimiento(MiModel):
                          f'-{sk_emisor}'))
         except cls.DoesNotExist:
             return self._generar_cuentas_credito()
+
+        for cuenta in cuentas_credito:
+            if not cuenta.activa:
+                cuenta.activa = True
+                cuenta.clean_save()
+
+        return cuentas_credito
+
 
     # Métodos protegidos
 
@@ -824,6 +833,10 @@ class Movimiento(MiModel):
             esgratis=True
         )
         self.id_contramov = contramov.id
+        for cuenta in cuenta_acreedora, cuenta_deudora:
+            if cuenta.saldo() == 0:
+                cuenta.activa = False
+                cuenta.clean_save()
 
     def _generar_cuentas_credito(self) -> Tuple:
         cls = self.get_related_class(CTA_ENTRADA)
