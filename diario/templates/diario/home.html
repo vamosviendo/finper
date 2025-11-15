@@ -16,7 +16,9 @@
 
 <div class="divisor"></div>
 
-{% include "diario/snippets/movimientos.html" %}
+{% if request.path != "/diario/ctas_inactivas/" %}
+  {% include "diario/snippets/movimientos.html" %}
+{% endif %}
 
 {% endblock contenido %}
 
