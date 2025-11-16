@@ -21,13 +21,13 @@ def test_guarda_y_recupera_monedas(mock_moneda_base):
 
 
 def test_no_se_permiten_nombres_repetidos(peso):
-    mon2 = Moneda(nombre=peso.nombre, sk="otra", cotizacion_compra=2, cotizacion_venta=3)
+    mon2 = Moneda(nombre=peso.nombre, sk="otra")
     with pytest.raises(ValidationError):
         mon2.full_clean()
 
 
 def test_no_se_permiten_sks_repetidos(peso):
-    mon2 = Moneda(nombre='Moneda 2', sk=peso.sk, cotizacion_compra=2, cotizacion_venta=3)
+    mon2 = Moneda(nombre='Moneda 2', sk=peso.sk)
     with pytest.raises(ValidationError):
         mon2.full_clean()
 

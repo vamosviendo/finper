@@ -62,17 +62,6 @@ class Moneda(MiModel):
             except (ValueError, AttributeError):
                 return 1
 
-    @cotizacion_compra.setter
-    def cotizacion_compra(self, value: float):
-        """ Si no existe una cotización para la fecha, la crea.
-            Si existe, actualiza el importe. """
-        try:
-            self._cotizacion.importe_compra = value
-        except AttributeError:
-            ultimo_dia = Dia.ultime()
-            fecha = ultimo_dia.fecha if ultimo_dia else date.today()
-            self._cotizacion = Cotizacion(fecha=fecha, importe_compra=value)
-
     @property
     def cotizacion_venta(self) -> float:
         try:
@@ -82,17 +71,6 @@ class Moneda(MiModel):
                 return self.cotizaciones.last().importe_venta
             except (ValueError, AttributeError):
                 return 1
-
-    @cotizacion_venta.setter
-    def cotizacion_venta(self, value: float):
-        """ Si no existe una cotización para la fecha, la crea.
-            Si existe, actualiza el importe. """
-        try:
-            self._cotizacion.importe_venta = value
-        except AttributeError:
-            ultimo_dia = Dia.ultime()
-            fecha = ultimo_dia.fecha if ultimo_dia else date.today()
-            self._cotizacion = Cotizacion(fecha=fecha, importe_venta=value)
 
     @property
     def cotizacion(self) -> float:

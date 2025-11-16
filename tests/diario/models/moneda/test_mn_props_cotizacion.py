@@ -1,7 +1,8 @@
+from datetime import date
+
 import pytest
 
 from diario.models import Cotizacion, Moneda
-from utils.varios import el_que_no_es
 
 
 @pytest.mark.parametrize("tipo", ["compra", "venta"])
@@ -22,56 +23,11 @@ def test_devuelve_1_si_no_hay_cotizaciones(tipo, dolar):
 
 
 @pytest.mark.parametrize("tipo", ["compra", "venta"])
-def test_setters_generan_atributo__cotizacion_si_no_existe(tipo, dolar):
-    assert not hasattr(dolar, f"_cotizacion")
-    setattr(dolar, f"cotizacion_{tipo}", 235)
-    assert hasattr(dolar, f"_cotizacion")
-
-
-@pytest.mark.parametrize("tipo", ["compra", "venta"])
-def test_atributo__cotizacion_creado_por_setters_es_de_clase_Cotizacion(tipo, dolar):
-    setattr(dolar, f"cotizacion_{tipo}", 236)
-    assert isinstance(dolar._cotizacion, Cotizacion)
-
-
-@pytest.mark.parametrize("tipo", ["compra", "venta"])
-def test_atributo__cotizacion_creado_por_setters_tiene_fecha_del_ultimo_dia(tipo, dolar, dia, dia_posterior):
-    setattr(dolar, f"cotizacion_{tipo}", 5)
-    assert dolar._cotizacion.fecha == dia_posterior.fecha
-
-
-@pytest.mark.parametrize("tipo", ["compra", "venta"])
-def test_si_no_hay_dias_atributo__cotizacion_creado_por_setters_tiene_fecha_actual(tipo, dolar, mock_today):
-    setattr(dolar, f"cotizacion_{tipo}", 5)
-    assert dolar._cotizacion.fecha == mock_today.return_value
-
-
-@pytest.mark.parametrize("tipo", ["compra", "venta"])
-def test_setter_guarda_importe_correspondiente_en_atributo__cotizacion(tipo, dolar):
-    setattr(dolar, f"cotizacion_{tipo}", 5)
-    assert getattr(dolar._cotizacion, f"importe_{tipo}") == 5
-
-
-@pytest.mark.parametrize("tipo", ["compra", "venta"])
-def test_setter_guarda_importe_correspondiente_en_atributo__cotizacion_existente(tipo, dolar):
-    contratipo = el_que_no_es(tipo, "compra", "venta")
-    setattr(dolar, f"cotizacion_{contratipo}", 7)
-    setattr(dolar, f"cotizacion_{tipo}", 10)
-    assert getattr(dolar._cotizacion, f"importe_{tipo}") == 10
-    assert getattr(dolar._cotizacion, f"importe_{contratipo}") == 7
-
-
-@pytest.mark.parametrize("tipo", ["compra", "venta"])
 def test_devuelve_importe_de_la_cotizacion_cargada_si_es_distinta_de_la_existente_de_fecha_mas_reciente(tipo, dolar):
-    setattr(dolar, f"cotizacion_{tipo}", 7.5)
+    cot = Cotizacion(moneda=dolar, fecha=date.today())
+    setattr(cot, f"importe_{tipo}", 7.5)
+    cot.clean_save()
     assert getattr(dolar, f"cotizacion_{tipo}") == 7.5
-
-
-@pytest.mark.parametrize("tipo", ["compra", "venta"])
-def test_devuelve_importe_de_la_cotizacion_cargada_si_la_moneda_no_esta_en_la_base_de_datos(tipo):
-    moneda = Moneda(nombre="Moneda", sk="m")
-    setattr(moneda, f"cotizacion_{tipo}", 7.5)
-    assert getattr(moneda, f"cotizacion_{tipo}") == 7.5
 
 
 @pytest.mark.parametrize("tipo", ["compra", "venta"])
@@ -87,15 +43,3 @@ def test_prop_cotizacion_devuelve_cotizacion_venta(dolar, mocker):
         new_callable=mocker.PropertyMock,
     )
     assert dolar.cotizacion == 2.5
-
-
-def test_prop_cotizacion_de_moneda_no_guardada(dolar):
-    moneda = Moneda(nombre="Moneda", sk="m")
-    moneda.cotizacion_compra = 5
-    assert moneda.cotizacion_compra == 5
-
-    dolar.cotizacion_compra = 89
-    assert dolar.cotizacion_compra == 89
-
-    moneda2 = Moneda(nombre="Moneda2", sk="m2")
-    assert moneda2.cotizacion_compra == 1
