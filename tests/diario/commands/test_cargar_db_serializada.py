@@ -357,7 +357,8 @@ class TestCargaMovimientos:
         call_command("cargar_db_serializada")
         try:
             Movimiento.tomar(
-                concepto="Constitución de crédito",
+                concepto=credito.concepto,
+                detalle="Constitución de crédito",
                 _importe=credito.importe,
                 fecha=credito.fecha
             )

@@ -818,14 +818,10 @@ class Movimiento(MiModel):
     def _crear_movimiento_credito(self):
         cuenta_acreedora, cuenta_deudora = self.recuperar_cuentas_credito()
 
-        concepto = self._concepto_movimiento_credito(
-            cuenta_acreedora, cuenta_deudora)
-
         contramov = Movimiento.crear(
             fecha=self.fecha,
-            concepto=concepto,
-            detalle=f'de {self.emisor.nombre} '
-                    f'a {self.receptor.nombre}',
+            concepto=self.concepto,
+            detalle=self._detalle_movimiento_credito(cuenta_acreedora, cuenta_deudora),
             importe=self.importe,
             cta_entrada=cuenta_acreedora,
             cta_salida=cuenta_deudora,
@@ -888,20 +884,20 @@ class Movimiento(MiModel):
         self._eliminar_contramovimiento()
         self._crear_movimiento_credito()
 
-    def _concepto_movimiento_credito(self,
+    def _detalle_movimiento_credito(self,
                                      cuenta_emisora: CuentaInteractiva,
                                      cuenta_receptora: CuentaInteractiva) -> str:
 
         if cuenta_emisora.saldo() > 0:  # (1)
-            concepto = 'Aumento de crédito'
+            detalle = 'Aumento de crédito'
         elif cuenta_emisora.saldo() < 0:
-            concepto = 'Cancelación de crédito' if self.importe == cuenta_receptora.saldo() \
+            detalle = 'Cancelación de crédito' if self.importe == cuenta_receptora.saldo() \
                 else 'Pago en exceso de crédito' if self.importe > cuenta_receptora.saldo() \
                 else 'Pago a cuenta de crédito'
         else:
-            concepto = 'Constitución de crédito'
+            detalle = 'Constitución de crédito'
 
-        return concepto
+        return detalle
 
 '''
 (1) cuenta_acreedora y cuenta_deudora lo son con respecto al movimiento, no en

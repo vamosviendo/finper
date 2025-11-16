@@ -210,36 +210,41 @@ class TestMovimientoEntreCuentasDeDistintosTitulares:
         cantidad = Movimiento.cantidad()
         mov = Movimiento.crear('Crédito', 100, cuenta, cuenta_ajena)
         assert Movimiento.cantidad() == cantidad + 2
-        assert Movimiento.primere().concepto == 'Constitución de crédito'
+        assert Movimiento.primere().concepto == mov.concepto
+        assert Movimiento.primere().detalle == 'Constitución de crédito'
         assert Movimiento.primere().importe == mov.importe
 
     def test_guarda_id_de_contramovimiento_en_movimiento(self, cuenta, cuenta_ajena):
         mov = Movimiento.crear('Credito', 100, cuenta, cuenta_ajena)
-        contramov = Movimiento.tomar(concepto='Constitución de crédito')
+        contramov = Movimiento.tomar(detalle ='Constitución de crédito')
         assert mov.id_contramov == contramov.id
 
     def test_contramovimiento_generado_se_marca_como_automatico(self, credito):
         contramov = Movimiento.tomar(id=credito.id_contramov)
         assert contramov.es_automatico
 
-    @pytest.mark.parametrize('imp, fixt_ce, fixt_cs, concepto', [
+    def test_concepto_de_contramovimiento_generado_es_igual_al_del_movimiento(self, credito):
+        contramov = Movimiento.tomar(id=credito.id_contramov)
+        assert contramov.concepto == credito.concepto
+
+    @pytest.mark.parametrize('imp, fixt_ce, fixt_cs, detalle', [
         (10, 'cuenta', 'cuenta_ajena', 'Aumento de crédito'),
         (128, 'cuenta_ajena', 'cuenta', 'Cancelación de crédito'),
         (80, 'cuenta_ajena', 'cuenta', 'Pago a cuenta de crédito'),
         (150, 'cuenta_ajena', 'cuenta', 'Pago en exceso de crédito'),
     ])
-    def test_genera_concepto_de_contramovimiento_segun_situacion_de_credito_existente(
-            self, credito, imp, fixt_ce, fixt_cs, concepto, request):
+    def test_genera_detalle_de_contramovimiento_segun_situacion_de_credito_existente(
+            self, credito, imp, fixt_ce, fixt_cs, detalle, request):
         ce = request.getfixturevalue(fixt_ce)
         cs = request.getfixturevalue(fixt_cs)
         mov = Movimiento.crear('Entre titulares', imp, ce, cs)
-        assert Movimiento.tomar(id=mov.id_contramov).concepto == concepto
+        assert Movimiento.tomar(id=mov.id_contramov).detalle == detalle
 
-    def test_si_cuenta_acreedora_tiene_saldo_cero_concepto_contramovimiento_es_constitucion_de_credito(
+    def test_si_cuenta_acreedora_tiene_saldo_cero_detalle_contramovimiento_es_constitucion_de_credito(
             self, credito):
         Movimiento.crear('Devolución', credito.importe, credito.cta_salida, credito.cta_entrada)
         mov = Movimiento.crear('Nuevo crédito', 100, credito.cta_entrada, credito.cta_salida)
-        assert Movimiento.tomar(id=mov.id_contramov).concepto == 'Constitución de crédito'
+        assert Movimiento.tomar(id=mov.id_contramov).detalle == 'Constitución de crédito'
 
     def test_genera_cuentas_credito_si_no_existen(self, cuenta, cuenta_ajena):
         cant_cuentas = Cuenta.cantidad()

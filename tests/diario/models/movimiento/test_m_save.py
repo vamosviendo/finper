@@ -230,7 +230,7 @@ class TestSaveMovimientoEntreCuentasDeDistintosTitulares:
             t2 = cuenta_acumulativa_con_credito.titular_original
 
             assert new_data == data
-            assert contramov.detalle == f"de {t2.nombre} a {t1.nombre}"
+            assert contramov.detalle == "Constitución de crédito"
             assert contramov.cta_entrada == Cuenta.tomar(sk=f"_{t2.sk}-{t1.sk}")
             assert contramov.cta_salida == Cuenta.tomar(sk=f"_{t1.sk}-{t2.sk}")
 
@@ -2087,8 +2087,8 @@ class TestSaveCambiaEsGratis:
         donacion.clean_save()
 
         assert donacion.id_contramov is not None
-        assert Movimiento.tomar(id=donacion.id_contramov).concepto == "Constitución de crédito"
-        assert Movimiento.tomar(id=donacion.id_contramov).detalle == "de Otro Titular a Titular"
+        assert Movimiento.tomar(id=donacion.id_contramov).concepto == donacion.concepto
+        assert Movimiento.tomar(id=donacion.id_contramov).detalle == "Constitución de crédito"
 
 
 @pytest.mark.parametrize("sentido", ["entrada", "salida"])

@@ -120,14 +120,14 @@ def test_crear_creditos_o_devoluciones(
 
     # Vemos que además del movimiento creado se generó un movimiento automático
     # con las siguientes características:
-    # - concepto "{concepto}"
-    mov = browser.encontrar_movimiento("concepto", "Préstamo")
-    celdas_mov = browser.dict_movimiento("Préstamo")
-    contramov = browser.encontrar_movimiento("concepto", "Constitución de crédito")
-    celdas_contramov = browser.dict_movimiento("Constitución de crédito")
+    # - concepto igual al del movimiento creado
+    mov = browser.encontrar_movimientos("concepto", "Préstamo")[1]
+    celdas_mov = browser.dict_movimiento("Préstamo", ocurrencia=1)
+    contramov = browser.encontrar_movimiento("detalle", "Constitución de crédito")
+    celdas_contramov = browser.dict_movimiento(concepto="Préstamo", ocurrencia=0)
 
-    # - los nombres de los titulares en el detalle
-    assert celdas_contramov["Detalle"] == f"de {otro_titular.nombre} a {titular.nombre}"
+    # - la naturaleza y sentido del crédito en el detalle
+    assert celdas_contramov["Detalle"] == "Constitución de crédito"
 
     # - el mismo importe que el movimiento creado
     assert celdas_mov["Importe"] == celdas_contramov["Importe"] == float_format(30)
@@ -161,7 +161,7 @@ def test_crear_creditos_o_devoluciones(
     assert saldo_cuenta.text == float_format(30)
 
     # Si generamos otro movimiento entre las mismas cuentas, el
-    # contramovimiento se genera con concepto "Aumento de crédito" y el
+    # contramovimiento se genera con detalle "Aumento de crédito" y el
     # saldo de las cuentas automáticas suma el importe del movimiento
     browser.crear_movimiento(
         concepto="Otro préstamo",
@@ -169,7 +169,8 @@ def test_crear_creditos_o_devoluciones(
         cta_entrada=cuenta.nombre,
         cta_salida=cuenta_ajena.nombre
     )
-    celdas_contramov = browser.dict_movimiento("Aumento de crédito")
+    celdas_contramov = browser.dict_movimiento("Otro préstamo", ocurrencia=0)
+    assert celdas_contramov["Detalle"] == "Aumento de crédito"
     assert celdas_contramov["Importe"] == float_format(10)
     assert celdas_contramov["Entra en"] == f"préstamo de {otro_titular.nombre} a {titular.nombre}".lower()
     assert celdas_contramov["Sale de"] == f"deuda de {titular.nombre} con {otro_titular.nombre}".lower()
@@ -179,7 +180,7 @@ def test_crear_creditos_o_devoluciones(
     assert saldo_cuenta_deudora.text == float_format(-30-10)
 
     # Si generamos un movimiento entre las mismas cuentas pero invertidas,
-    # el contramovimiento se genera con concepto "Pago a cuenta de crédito" y
+    # el contramovimiento se genera con detalle "Pago a cuenta de crédito" y
     # el importe se resta del saldo de las cuentas automáticas
     browser.crear_movimiento(
         concepto="Devolución parcial",
@@ -187,7 +188,8 @@ def test_crear_creditos_o_devoluciones(
         cta_entrada=cuenta_ajena.nombre,
         cta_salida=cuenta.nombre
     )
-    celdas_contramov = browser.dict_movimiento("Pago a cuenta de crédito")
+    celdas_contramov = browser.dict_movimiento("Devolución parcial", ocurrencia=0)
+    assert celdas_contramov["Detalle"] == "Pago a cuenta de crédito"
     assert celdas_contramov["Importe"] == float_format(15)
     assert celdas_contramov["Entra en"] == f"deuda de {titular.nombre} con {otro_titular.nombre}".lower()
     assert celdas_contramov["Sale de"] == f"préstamo de {otro_titular.nombre} a {titular.nombre}".lower()
@@ -204,7 +206,8 @@ def test_crear_creditos_o_devoluciones(
         cta_entrada=cuenta_ajena_2.nombre,
         cta_salida=cuenta_2.nombre
     )
-    celdas_contramov = browser.dict_movimiento("Pago a cuenta de crédito", 1)
+    celdas_contramov = browser.dict_movimiento("Devolución parcial con otras cuentas", ocurrencia=0)
+    assert celdas_contramov["Detalle"] == "Pago a cuenta de crédito"
     assert celdas_contramov["Importe"] == float_format(7)
     assert celdas_contramov["Entra en"] == f"deuda de {titular.nombre} con {otro_titular.nombre}".lower()
     assert celdas_contramov["Sale de"] == f"préstamo de {otro_titular.nombre} a {titular.nombre}".lower()
@@ -215,8 +218,8 @@ def test_crear_creditos_o_devoluciones(
 
     # Si generamos un movimiento entre ambos titulares con importe mayor al
     # total de la deuda:
-    # - el contramovimiento se genera con concepto "Pago en exceso de crédito"
-    # - las cuentas crédito cambian de nombre y de sk (deuda de receptor con emisor se convierte en
+    # - el contramovimiento se genera con detalle "Pago en exceso de crédito"
+    # - las cuentas crédito cambian de nombre (deuda de receptor con emisor se convierte en
     #   préstamo de receptor a emisor y viceversa)
     browser.crear_movimiento(
         concepto="Devolución con exceso",
@@ -224,7 +227,8 @@ def test_crear_creditos_o_devoluciones(
         cta_entrada=cuenta_ajena.nombre,
         cta_salida=cuenta.nombre
     )
-    celdas_contramov = browser.dict_movimiento("Pago en exceso de crédito")
+    celdas_contramov = browser.dict_movimiento("Devolución con exceso", ocurrencia=0)
+    assert celdas_contramov["Detalle"] == "Pago en exceso de crédito"
     assert celdas_contramov["Importe"] == float_format(20)
     assert celdas_contramov["Entra en"] == f"préstamo de {titular.nombre} a {otro_titular.nombre}".lower()
     assert celdas_contramov["Sale de"] == f"deuda de {otro_titular.nombre} con {titular.nombre}".lower()
@@ -234,7 +238,7 @@ def test_crear_creditos_o_devoluciones(
     assert saldo_cuenta_deudora.text == float_format(30+10-15-7-20)
 
     # Si generamos un movimiento entre ambos titulares con importe igual al
-    # total de la deuda, el contramovimiento se genera con concepto
+    # total de la deuda, el contramovimiento se genera con detalle
     # "Cancelación de crédito"...
     browser.crear_movimiento(
         concepto="Devolución total",
@@ -242,7 +246,8 @@ def test_crear_creditos_o_devoluciones(
         cta_entrada=cuenta.nombre,
         cta_salida=cuenta_ajena.nombre
     )
-    celdas_contramov = browser.dict_movimiento("Cancelación de crédito")
+    celdas_contramov = browser.dict_movimiento("Devolución total", ocurrencia=0)
+    assert celdas_contramov["Detalle"] == "Cancelación de crédito"
     assert celdas_contramov["Importe"] == float_format(2)
     assert celdas_contramov["Entra en"] == f"deuda de {otro_titular.nombre} con {titular.nombre}".lower()
     assert celdas_contramov["Sale de"] == f"préstamo de {titular.nombre} a {otro_titular.nombre}".lower()
@@ -507,7 +512,7 @@ def test_convertir_entrada_en_traspaso_entre_titulares(browser, entrada, cuenta_
     dia = browser.encontrar_dia(entrada.fecha)
     assert len(dia.encontrar_elementos('class_row_mov')) == cantidad_movimientos + 1
     mov_nuevo = dia.encontrar_elementos('class_row_mov', By.CLASS_NAME)[1]
-    assert mov_nuevo.encontrar_elemento('class_td_concepto', By.CLASS_NAME).text == 'Constitución de crédito'
+    assert mov_nuevo.encontrar_elemento('class_td_detalle', By.CLASS_NAME).text == 'Constitución de crédito'
 
 
 @pytest.mark.parametrize("origen", ["/", "/diario/t/titular/", "/diario/c/c/", "/diario/m/", "/diario/cm/c/"])
