@@ -132,6 +132,14 @@ class TestSaveMovimientoEntreCuentasDeDistintosTitulares:
         credito.clean_save()
         assert credito.id_contramov != id_contramov
 
+    def test_contramovimiento_regenerado_se_guarda_con_el_mismo_orden_dia_y_sk_que_tenia(self, credito):
+        contramov = Movimiento.tomar(id=credito.id_contramov)
+        credito.importe = credito.importe + 10
+        credito.clean_save()
+        contramov_regenerado = Movimiento.tomar(id=credito.id_contramov)
+        assert contramov_regenerado.orden_dia == contramov.orden_dia
+        assert contramov_regenerado.sk == contramov.sk
+
     @pytest.mark.parametrize('campo, valor', [
         ('concepto', 'otro concepto'),
         ('detalle', 'otro detalle'),

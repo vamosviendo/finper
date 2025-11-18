@@ -440,18 +440,13 @@ class Movimiento(MiModel):
     def clean_save(
             self, exclude=None, validate_unique=True, validate_constraints=True,
             force_insert=False, force_update=False, using=None, update_fields=None,
-            mantiene_orden_dia: bool = False, esgratis: bool = False
+            esgratis: bool = False
     ):
         super().full_clean(exclude, validate_unique, validate_constraints)
         self.save(
-            force_insert, force_update, using, update_fields,
-            mantiene_orden_dia=mantiene_orden_dia, esgratis=esgratis)
+            force_insert, force_update, using, update_fields, esgratis=esgratis)
 
-    def save(self,
-             *args,
-             mantiene_orden_dia: bool = False,
-             esgratis: bool = False,
-             **kwargs):
+    def save(self, *args, esgratis: bool = False, **kwargs):
         """
         TODO: Revisar y actualizar este comentario
         Si el movimiento es nuevo (no existía antes, está siendo creado)
@@ -815,11 +810,12 @@ class Movimiento(MiModel):
         self._crear_movimiento_credito()
         self._regenerar_nombres_de_cuentas_credito()
 
-    def _crear_movimiento_credito(self):
+    def _crear_movimiento_credito(self, orden_dia=None):
         cuenta_acreedora, cuenta_deudora = self.recuperar_cuentas_credito()
 
         contramov = Movimiento.crear(
             fecha=self.fecha,
+            orden_dia=orden_dia,
             concepto=self.concepto,
             detalle=self._detalle_movimiento_credito(cuenta_acreedora, cuenta_deudora),
             importe=self.importe,
@@ -870,8 +866,8 @@ class Movimiento(MiModel):
         for c in ce, cs:
             c.clean_save()
 
-    def _eliminar_contramovimiento(self):
-        contramov = Movimiento.tomar(id=self.id_contramov)
+    def _eliminar_contramovimiento(self, contramov: Movimiento | None = None):
+        contramov = contramov or Movimiento.tomar(id=self.id_contramov)
         cta1 = contramov.cta_entrada
         tit1 = cta1.titular
         tit2 = contramov.cta_salida.titular
@@ -881,8 +877,9 @@ class Movimiento(MiModel):
             tit2.acreedores.remove(tit1)
 
     def _regenerar_contramovimiento(self):
-        self._eliminar_contramovimiento()
-        self._crear_movimiento_credito()
+        contramov = Movimiento.tomar(id=self.id_contramov)
+        self._eliminar_contramovimiento(contramov)
+        self._crear_movimiento_credito(orden_dia=contramov.orden_dia)
 
     def _detalle_movimiento_credito(self,
                                      cuenta_emisora: CuentaInteractiva,
