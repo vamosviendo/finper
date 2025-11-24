@@ -57,6 +57,19 @@ def test_no_admite_cuentas_inactivas(cuenta_inactiva, fecha):
         mov.full_clean()
 
 
+def test_verifica_cuenta_inactiva_contra_la_base_de_datos(cuenta_inactiva, fecha):
+    cuenta_inactiva.activa = True
+    mov = Movimiento(
+        fecha=fecha,
+        concepto="Movimiento con cuenta inactiva",
+        importe=100,
+        cta_entrada=cuenta_inactiva
+    )
+    with pytest.raises(ValidationError, match=errors.MOVIMIENTO_CON_CUENTA_INACTIVA):
+        mov.full_clean()
+
+
+
 def test_movimiento_no_automatico_no_admite_cuenta_credito(
         cuenta_credito_acreedor, cuenta_credito_deudor):
     mov_no_e = Movimiento(

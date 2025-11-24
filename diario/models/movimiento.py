@@ -65,9 +65,8 @@ class MovimientoCleaner:
 
     def test_no_se_admiten_movimientos_sobre_cuentas_inactivas(self):
         for cuenta in self.mov.cta_entrada, self.mov.cta_salida:
-            if cuenta and not cuenta.activa:
+            if cuenta and not cuenta.tomar_de_bd().activa:
                 raise errors.ErrorMovimientoConCuentaInactiva()
-
 
     def no_se_permite_modificar_movimientos_automaticos(self):
         if self.mov.es_automatico and self.mov.any_field_changed():
