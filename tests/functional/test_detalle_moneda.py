@@ -63,7 +63,7 @@ def test_detalle_moneda(browser, dolar, cotizacion_dolar, cotizacion_posterior_d
     browser.verificar_link(
         nombre="cot_nueva",
         viewname="mon_cot_nueva",
-        args=[dolar],
+        args=[dolar.sk],
         querydict={"next": current_url},
     )
 
