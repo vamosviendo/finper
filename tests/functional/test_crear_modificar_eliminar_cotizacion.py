@@ -13,7 +13,7 @@ def test_crear_cotizacion(browser, dolar, fecha, fecha_anterior):
 
     # Dada una moneda, cargamos una cotización nueva con fecha posterior a todas
     # las otras cotizaciones de la moneda.
-    browser.ir_a_pag(reverse("mon_cot_nueva", args=[dolar.sk]))
+    browser.encontrar_elemento("id_link_cot_nueva").click()
     browser.completar_form(
         fecha=fecha,
         importe_compra=1000000,

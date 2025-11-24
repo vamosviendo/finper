@@ -22,7 +22,7 @@
 <section id="id_section_cotizaciones">
 
   <div id="id_div_cot_nueva" class="menu-item class_div_cot_nueva">
-    <a href="{% url 'mon_cot_nueva' moneda %}?next={{ request.get_full_path }}" id="id_link_cot_nueva">
+    <a href="{% url 'mon_cot_nueva' moneda.sk %}?next={{ request.get_full_path }}" id="id_link_cot_nueva">
       Cotización nueva
     </a>
   </div>
