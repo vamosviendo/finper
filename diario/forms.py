@@ -255,6 +255,11 @@ class FormMoneda(forms.ModelForm):
 
 
 class FormCotizacion(forms.ModelForm):
+    fecha = forms.DateField(
+        initial=date.today(),
+        widget=forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+    )
+
     def __init__(self, *args, **kwargs):
         self.moneda = kwargs.pop("moneda", None)
         super().__init__(*args, **kwargs)

@@ -1,6 +1,5 @@
 import pytest
 from django.core.exceptions import NON_FIELD_ERRORS
-from django.forms import fields
 from django.forms.widgets import DateInput
 
 from diario.forms import FormMovimiento
