@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, List, Tuple, Optional, Self, cast
+from typing import TYPE_CHECKING, List, Tuple, Optional, Self, cast, Iterable
 
 from datetime import date
 
@@ -50,29 +50,45 @@ class MovimientoManager(models.Manager):
         return self.get(dia=dia, orden_dia=orden_dia)
 
 
-class MovimientoCleaner:
+class Cleaner:
+    def __init__(self, exclude: list[str] | None = None):
+        self.exclude = exclude or []
 
-    def __init__(self, mov: Movimiento, viejo: Movimiento):
+    def procesar(self):
+        for nombre_metodo in dir(self):
+            if (callable(getattr(self, nombre_metodo))) and \
+                    not nombre_metodo.startswith("_") and \
+                    nombre_metodo != "procesar" and nombre_metodo not in self.exclude:
+                metodo = getattr(self, nombre_metodo)
+                metodo()
+
+
+class MovimientoCleaner(Cleaner):
+
+    def __init__(self, mov: Movimiento, viejo: Movimiento, exclude: list[str] | None = None):
+        super().__init__(exclude=exclude)
         self.mov = mov
         self.viejo = viejo
 
     def no_se_admiten_movimientos_nuevos_sobre_cuentas_acumulativas(self):
-        for cuenta in self.mov.cta_entrada, self.mov.cta_salida:
-            if cuenta and cuenta.es_acumulativa:
-                raise errors.ErrorCuentaEsAcumulativa(
-                    errors.CUENTA_ACUMULATIVA_EN_MOVIMIENTO
-                )
+        if self.mov._state.adding:
+            for cuenta in self.mov.cta_entrada, self.mov.cta_salida:
+                if cuenta and cuenta.es_acumulativa:
+                    raise errors.ErrorCuentaEsAcumulativa(
+                        errors.CUENTA_ACUMULATIVA_EN_MOVIMIENTO
+                    )
 
-    def test_no_se_admiten_movimientos_sobre_cuentas_inactivas(self):
+    def no_se_admiten_movimientos_sobre_cuentas_inactivas(self):
         for cuenta in self.mov.cta_entrada, self.mov.cta_salida:
             if cuenta and not cuenta.tomar_de_bd().activa:
                 raise errors.ErrorMovimientoConCuentaInactiva()
 
     def no_se_permite_modificar_movimientos_automaticos(self):
-        if self.mov.es_automatico and self.mov.any_field_changed():
-            raise errors.ErrorMovimientoAutomatico(
-                errors.MODIFICACION_MOVIMIENTO_AUTOMATICO
-            )
+        if not self.mov._state.adding:
+            if self.mov.es_automatico and self.mov.any_field_changed():
+                raise errors.ErrorMovimientoAutomatico(
+                    errors.MODIFICACION_MOVIMIENTO_AUTOMATICO
+                )
 
     def no_se_permiten_movimentos_con_importe_cero(self):
         if self.mov.importe == 0:
@@ -83,6 +99,13 @@ class MovimientoCleaner:
             raise ValidationError(message=errors.CUENTA_INEXISTENTE)
         if self.mov.cta_entrada == self.mov.cta_salida:
             raise ValidationError(message=errors.CUENTAS_IGUALES)
+
+    def definir_moneda(self):
+        if self.mov.moneda is None:
+            try:
+                self.mov.moneda = self.mov.cta_entrada.moneda
+            except AttributeError:
+                self.mov.moneda = self.mov.cta_salida.moneda
 
     def no_se_permite_moneda_distinta_de_las_de_cuentas(self):
         monedas_permitidas = set()
@@ -117,39 +140,40 @@ class MovimientoCleaner:
                     f'({self.mov.fecha} < {cuenta.fecha_creacion})')
 
     def restricciones_con_cuenta_acumulativa(self):
-        for campo_cuenta in campos_cuenta:
-            cuenta = getattr(self.mov, campo_cuenta)
-            cuenta_vieja = getattr(self.viejo, campo_cuenta)
-            if cuenta_vieja and cuenta_vieja.es_acumulativa:
-                # No se permite cambiar importe de un movimiento con cuenta acumulativa
-                if self.mov.cambia_campo('_importe'):
-                    raise errors.ErrorCuentaEsAcumulativa(
-                        errors.CAMBIO_IMPORTE_CON_CUENTA_ACUMULATIVA
-                    )
-                # No se permite cambiar una cuenta acumulativa de un movimiento
-                if not cuenta or cuenta.pk != cuenta_vieja.pk:
-                    raise errors.ErrorCuentaEsAcumulativa(
-                        errors.CUENTA_ACUMULATIVA_RETIRADA
-                    )
-                # No se admiten movimientos posteriores a conversión de cuenta en acumulativa
-                if self.mov.fecha > cuenta_vieja.fecha_conversion and not self.mov.convierte_cuenta:
-                    raise errors.ErrorCuentaEsAcumulativa(
-                        f'{errors.FECHA_POSTERIOR_A_CONVERSION}'
-                        f'{cuenta_vieja.fecha_conversion} '
-                        f'(es {self.mov.fecha})'
-                    )
+        if not self.mov._state.adding:
+            for campo_cuenta in campos_cuenta:
+                cuenta = getattr(self.mov, campo_cuenta)
+                cuenta_vieja = getattr(self.viejo, campo_cuenta)
+                if cuenta_vieja and cuenta_vieja.es_acumulativa:
+                    # No se permite cambiar importe de un movimiento con cuenta acumulativa
+                    if self.mov.cambia_campo('_importe'):
+                        raise errors.ErrorCuentaEsAcumulativa(
+                            errors.CAMBIO_IMPORTE_CON_CUENTA_ACUMULATIVA
+                        )
+                    # No se permite cambiar una cuenta acumulativa de un movimiento
+                    if not cuenta or cuenta.pk != cuenta_vieja.pk:
+                        raise errors.ErrorCuentaEsAcumulativa(
+                            errors.CUENTA_ACUMULATIVA_RETIRADA
+                        )
+                    # No se admiten movimientos posteriores a conversión de cuenta en acumulativa
+                    if self.mov.fecha > cuenta_vieja.fecha_conversion and not self.mov.convierte_cuenta:
+                        raise errors.ErrorCuentaEsAcumulativa(
+                            f'{errors.FECHA_POSTERIOR_A_CONVERSION}'
+                            f'{cuenta_vieja.fecha_conversion} '
+                            f'(es {self.mov.fecha})'
+                        )
 
-            if cuenta and cuenta.es_acumulativa:
-                # No se permite cambiar una cuenta del movimiento por una cuenta acumulativa
-                cuenta = cuenta.como_subclase()
-                if cuenta_vieja is None or cuenta.pk != cuenta_vieja.pk:
-                    raise errors.ErrorCuentaEsAcumulativa(
-                        errors.CUENTA_ACUMULATIVA_AGREGADA
-                    )
-                if self.mov.fecha > cuenta.fecha_conversion and not self.mov.convierte_cuenta:
-                    raise ValidationError(
-                        message=errors.CUENTA_ACUMULATIVA_EN_MOVIMIENTO
-                    )
+                if cuenta and cuenta.es_acumulativa:
+                    # No se permite cambiar una cuenta del movimiento por una cuenta acumulativa
+                    cuenta = cuenta.como_subclase()
+                    if cuenta_vieja is None or cuenta.pk != cuenta_vieja.pk:
+                        raise errors.ErrorCuentaEsAcumulativa(
+                            errors.CUENTA_ACUMULATIVA_AGREGADA
+                        )
+                    if self.mov.fecha > cuenta.fecha_conversion and not self.mov.convierte_cuenta:
+                        raise ValidationError(
+                            message=errors.CUENTA_ACUMULATIVA_EN_MOVIMIENTO
+                        )
 
     def restricciones_con_cuenta_credito(self):
         for campo_cuenta in campos_cuenta:
@@ -157,10 +181,14 @@ class MovimientoCleaner:
             campo_contracuenta = [x for x in campos_cuenta if x != campo_cuenta][0]
             contracuenta = getattr(self.mov, campo_contracuenta)
             if cuenta and cuenta.es_cuenta_credito:
+                # No se permite cuenta crédito en movimiento de entrada o salida
                 if not contracuenta:
                     raise ValidationError(errors.CUENTA_CREDITO_EN_MOV_E_S)
+                # No se permite traspaso entre cuenta crédito y cuenta normal
                 if not contracuenta.es_cuenta_credito:
                     raise ValidationError(errors.CUENTA_CREDITO_VS_NORMAL)
+
+                # No se permite traspaso entre cuenta crédito y cuenta que no sea su contrapartida.
                 if contracuenta != cuenta.contracuenta:
                     raise ValidationError(
                         f'"{contracuenta.nombre}" no es la contrapartida '
@@ -382,32 +410,14 @@ class Movimiento(MiModel):
             if mov.cta_salida else None
         return mov
 
-    def clean(self):
-        super().clean()
+    def full_clean(self, exclude=None, validate_unique=True, validate_constraints=True, omitir=None):
+        super().full_clean(exclude, validate_unique, validate_constraints)
+        self.limpiar(omitir)
 
-        cleaning = MovimientoCleaner(self, self.tomar_de_bd())
-
-        cleaning.no_se_permiten_movimentos_con_importe_cero()
-        cleaning.debe_haber_al_menos_una_cuenta_y_deben_ser_distintas()
-
-        if self.moneda is None:
-            try:
-                self.moneda = self.cta_entrada.moneda
-            except AttributeError:
-                self.moneda = self.cta_salida.moneda
-
-        cleaning.no_se_permite_moneda_distinta_de_las_de_cuentas()
-        cleaning.dia_none_se_reemplaza_por_ultimo_dia()
-        cleaning.no_se_permite_fecha_anterior_a_creacion_de_cuenta()
-        cleaning.test_no_se_admiten_movimientos_sobre_cuentas_inactivas()
-
-        if self._state.adding:
-            cleaning.no_se_admiten_movimientos_nuevos_sobre_cuentas_acumulativas()
-        else:
-            cleaning.no_se_permite_modificar_movimientos_automaticos()
-            cleaning.restricciones_con_cuenta_acumulativa()
-
-        cleaning.restricciones_con_cuenta_credito()
+    def limpiar(self, omitir: Iterable[str] | None = None):
+        omitir = omitir or []
+        cleaner = MovimientoCleaner(mov=self, viejo=self.tomar_de_bd(), exclude=omitir)
+        cleaner.procesar()
 
     def delete(self, force: bool = False, *args, **kwargs):
         if self.es_automatico and not force:
@@ -437,13 +447,13 @@ class Movimiento(MiModel):
             self._eliminar_contramovimiento()
 
     def clean_save(
-            self, exclude=None, validate_unique=True, validate_constraints=True,
+            self, exclude=None, validate_unique=True, validate_constraints=True, omitir=None,
             force_insert=False, force_update=False, using=None, update_fields=None,
             esgratis: bool = False
     ):
-        super().full_clean(exclude, validate_unique, validate_constraints)
-        self.save(
-            force_insert, force_update, using, update_fields, esgratis=esgratis)
+        # self.exclude_clean = exclude_clean
+        self.full_clean(exclude, validate_unique, validate_constraints, omitir)
+        self.save(force_insert, force_update, using, update_fields, esgratis=esgratis)
 
     def save(self, *args, esgratis: bool = False, **kwargs):
         """

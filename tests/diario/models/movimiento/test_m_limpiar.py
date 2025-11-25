@@ -15,7 +15,7 @@ def test_requiere_al_menos_una_cuenta(fecha):
         importe=100
     )
     with pytest.raises(ValidationError, match=errors.CUENTA_INEXISTENTE):
-        mov.full_clean()
+        mov.limpiar()
 
 
 def test_permite_movimientos_duplicados(fecha, cuenta):
@@ -31,7 +31,7 @@ def test_permite_movimientos_duplicados(fecha, cuenta):
         importe=100,
         cta_entrada=cuenta
     )
-    mov.full_clean()    # No debe dar error
+    mov.limpiar()    # No debe dar error
 
 
 def test_no_admite_misma_cuenta_de_entrada_y_de_salida(cuenta, fecha):
@@ -43,7 +43,7 @@ def test_no_admite_misma_cuenta_de_entrada_y_de_salida(cuenta, fecha):
         cta_salida=cuenta
     )
     with pytest.raises(ValidationError, match=errors.CUENTAS_IGUALES):
-        mov.full_clean()
+        mov.limpiar()
 
 
 def test_no_admite_cuentas_inactivas(cuenta_inactiva, fecha):
@@ -54,7 +54,7 @@ def test_no_admite_cuentas_inactivas(cuenta_inactiva, fecha):
         cta_entrada=cuenta_inactiva
     )
     with pytest.raises(ValidationError, match=errors.MOVIMIENTO_CON_CUENTA_INACTIVA):
-        mov.full_clean()
+        mov.limpiar()
 
 
 def test_verifica_cuenta_inactiva_contra_la_base_de_datos(cuenta_inactiva, fecha):
@@ -66,7 +66,7 @@ def test_verifica_cuenta_inactiva_contra_la_base_de_datos(cuenta_inactiva, fecha
         cta_entrada=cuenta_inactiva
     )
     with pytest.raises(ValidationError, match=errors.MOVIMIENTO_CON_CUENTA_INACTIVA):
-        mov.full_clean()
+        mov.limpiar()
 
 
 
@@ -86,12 +86,12 @@ def test_movimiento_no_automatico_no_admite_cuenta_credito(
         ValidationError,
         match='No se permite cuenta crédito en movimiento de entrada o salida'
     ):
-        mov_no_e.full_clean()
+        mov_no_e.limpiar()
     with pytest.raises(
         ValidationError,
         match='No se permite cuenta crédito en movimiento de entrada o salida'
     ):
-        mov_no_s.full_clean()
+        mov_no_s.limpiar()
 
 
 def test_cuenta_credito_no_puede_ser_cta_entrada_contra_cta_salida_normal(
@@ -107,7 +107,7 @@ def test_cuenta_credito_no_puede_ser_cta_entrada_contra_cta_salida_normal(
         ValidationError,
         match='No se permite traspaso entre cuenta crédito y cuenta normal'
     ):
-        mov_no.full_clean()
+        mov_no.limpiar()
 
 
 def test_cuenta_credito_no_puede_ser_cta_salida_contra_cta_entrada_normal(
@@ -123,7 +123,7 @@ def test_cuenta_credito_no_puede_ser_cta_salida_contra_cta_entrada_normal(
             ValidationError,
             match='No se permite traspaso entre cuenta crédito y cuenta normal'
     ):
-        mov_no.full_clean()
+        mov_no.limpiar()
 
 
 def test_cuenta_credito_solo_puede_moverse_contra_su_contracuenta(
@@ -147,7 +147,7 @@ def test_cuenta_credito_solo_puede_moverse_contra_su_contracuenta(
         match='"préstamo de titular gordo a otro titular" no es la contrapartida '
         'de "préstamo de otro titular a titular"'
     ):
-        mov_no.full_clean()
+        mov_no.limpiar()
 
 
 def test_no_se_permite_modificar_movimiento_automatico(credito):
@@ -157,7 +157,7 @@ def test_no_se_permite_modificar_movimiento_automatico(credito):
             ValidationError,
             match="No se puede modificar movimiento automático"
     ):
-        contramov.full_clean()
+        contramov.limpiar()
 
 
 @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
@@ -169,7 +169,7 @@ def test_no_puede_modificarse_importe_cuenta_acumulativa(
     with pytest.raises(
             errors.ErrorCuentaEsAcumulativa,
             match=errors.CAMBIO_IMPORTE_CON_CUENTA_ACUMULATIVA):
-        mov.full_clean()
+        mov.limpiar()
 
 
 @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
@@ -181,7 +181,7 @@ def test_no_puede_modificarse_importe_de_mov_de_traspaso_con_una_cuenta_acumulat
     with pytest.raises(
             errors.ErrorCuentaEsAcumulativa,
             match=errors.CAMBIO_IMPORTE_CON_CUENTA_ACUMULATIVA):
-        traspaso.full_clean()
+        traspaso.limpiar()
 
 
 @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
@@ -192,7 +192,7 @@ def test_no_puede_reemplazarse_cuenta_si_es_acumulativa(sentido, cuenta_2, reque
     with pytest.raises(
             errors.ErrorCuentaEsAcumulativa,
             match=errors.CUENTA_ACUMULATIVA_RETIRADA):
-        mov.full_clean()
+        mov.limpiar()
 
 
 @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
@@ -204,7 +204,7 @@ def test_no_puede_retirarse_cuenta_de_traspaso_si_es_acumulativa(sentido, traspa
     with pytest.raises(
             errors.ErrorCuentaEsAcumulativa,
             match=errors.CUENTA_ACUMULATIVA_RETIRADA):
-        traspaso.full_clean()
+        traspaso.limpiar()
 
 
 @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
@@ -217,19 +217,19 @@ def test_no_puede_agregarse_cuenta_acumulativa(sentido, cuenta_acumulativa, requ
     with pytest.raises(
             errors.ErrorCuentaEsAcumulativa,
             match=errors.CUENTA_ACUMULATIVA_AGREGADA):
-        mov.full_clean()
+        mov.limpiar()
 
 
 def test_si_dia_es_none_completa_con_ultimo_dia(cuenta, dia, dia_posterior):
     entrada = Movimiento(concepto='Entrada', importe=10, cta_entrada=cuenta, dia=None)
-    entrada.clean()
+    entrada.limpiar()
     assert entrada.dia == dia_posterior
 
 
 def test_si_dia_es_none_y_no_hay_dias_genera_dia_con_fecha_de_hoy_y_lo_usa(cuenta):
     Dia.todes().delete()
     entrada = Movimiento(concepto='Entrada', importe=10, cta_entrada=cuenta, dia=None)
-    entrada.clean()
+    entrada.limpiar()
     assert Dia.cantidad() == 1
     assert Dia.primere().fecha == date.today()
 
@@ -268,11 +268,11 @@ def test_no_permite_fecha_anterior_a_creacion_de_cuenta(fecha, fecha_anterior, t
     with pytest.raises(
         errors.ErrorMovimientoAnteriorAFechaCreacion,
     ):
-        entrada.clean()
+        entrada.limpiar()
     with pytest.raises(
         errors.ErrorMovimientoAnteriorAFechaCreacion,
     ):
-        salida.clean()
+        salida.limpiar()
 
 
 @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
@@ -290,7 +290,7 @@ def test_no_puede_asignarse_fecha_posterior_a_conversion_en_mov_con_cuenta_acumu
                   f'{cuenta.fecha_conversion} '
                   rf'\(es {cuenta.fecha_conversion + timedelta(1)}\)'
     ):
-        mov.full_clean()
+        mov.limpiar()
 
 
 @pytest.fixture
@@ -318,7 +318,7 @@ def test_no_admite_moneda_que_no_sea_la_de_alguna_de_las_cuentas_intervinientes(
             errors.ErrorMonedaNoPermitida,
             match=f'El movimiento debe ser expresado en {mensaje}',
     ):
-        mov.clean()
+        mov.limpiar()
 
 
 def test_si_moneda_es_none_completa_con_moneda_de_cuenta(cuenta_en_dolares):
@@ -327,7 +327,7 @@ def test_si_moneda_es_none_completa_con_moneda_de_cuenta(cuenta_en_dolares):
         importe=10,
         cta_entrada=cuenta_en_dolares,
     )
-    mov.clean()
+    mov.limpiar()
     assert mov.moneda == cuenta_en_dolares.moneda
 
 
@@ -342,3 +342,12 @@ def test_no_admite_cotizaciones_negativas(cuenta_en_dolares, cuenta_en_euros):
     mov.cotizacion = -1
     with pytest.raises(ValidationError):
         mov.clean_fields()
+
+def test_permite_excluir_comprobacion(cuenta_inactiva, fecha):
+    mov = Movimiento(
+        fecha=fecha,
+        concepto="Movimiento con cuenta inactiva",
+        importe=100,
+        cta_entrada=cuenta_inactiva
+    )
+    mov.limpiar(omitir=["no_se_admiten_movimientos_sobre_cuentas_inactivas"])
