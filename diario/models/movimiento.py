@@ -6,13 +6,13 @@ from datetime import date
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.db.models import QuerySet
 from django.urls import reverse
 from django_ordered_field import OrderedCollectionField
 
+from diario.utils.cleaner import Cleaner
 from vvmodel.models import MiModel
 from utils import errors
-from utils.tiempo import Posicion, str2date
+from utils.tiempo import Posicion
 from utils.varios import el_que_no_es
 
 from diario.consts import *
@@ -48,19 +48,6 @@ class MiDateField(models.DateField):
 class MovimientoManager(models.Manager):
     def get_by_natural_key(self, dia, orden_dia):
         return self.get(dia=dia, orden_dia=orden_dia)
-
-
-class Cleaner:
-    def __init__(self, exclude: list[str] | None = None):
-        self.exclude = exclude or []
-
-    def procesar(self):
-        for nombre_metodo in dir(self):
-            if (callable(getattr(self, nombre_metodo))) and \
-                    not nombre_metodo.startswith("_") and \
-                    nombre_metodo != "procesar" and nombre_metodo not in self.exclude:
-                metodo = getattr(self, nombre_metodo)
-                metodo()
 
 
 class MovimientoCleaner(Cleaner):
@@ -391,7 +378,7 @@ class Movimiento(MiModel):
         return movimiento
 
     @classmethod
-    def filtro(cls, *args, **kwargs) -> QuerySet[Self]:
+    def filtro(cls, *args, **kwargs) -> models.QuerySet[Self]:
         if "fecha" in kwargs.keys():
             kwargs["dia"] = Dia.tomar(fecha=kwargs.pop("fecha"))
 
