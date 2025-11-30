@@ -15,17 +15,19 @@ def test_cuenta_acumulativa_debe_tener_subcuentas(cuenta_acumulativa_saldo_0):
     with pytest.raises(
             ValidationError,
             match='Cuenta acumulativa debe tener subcuentas'):
-        cuenta_acumulativa_saldo_0.full_clean()
+        cuenta_acumulativa_saldo_0.limpiar()
 
 
-def test_no_se_puede_asignar_cta_madre_a_cta_interactiva_existente(cuenta_2, cuenta_acumulativa):
+def test_no_se_puede_asignar_cta_madre_a_cta_interactiva_existente(cuenta_2, cuenta_acumulativa, fecha_posterior):
+    cuenta_2.fecha_creacion = fecha_posterior
+    cuenta_2.save()
     cuenta_2.cta_madre = cuenta_acumulativa
 
     with pytest.raises(
             ErrorCambioEnCampoFijo,
             match="No se puede cambiar valor del campo 'cta_madre'"
     ):
-        cuenta_2.clean()
+        cuenta_2.limpiar()
 
 
 def test_no_se_puede_asignar_cta_madre_a_cta_acumulativa_existente(cuenta_acumulativa, cuenta_acumulativa_saldo_0):
@@ -35,13 +37,13 @@ def test_no_se_puede_asignar_cta_madre_a_cta_acumulativa_existente(cuenta_acumul
             ErrorCambioEnCampoFijo,
             match="No se puede cambiar valor del campo 'cta_madre'"
     ):
-        cuenta_acumulativa.clean()
+        cuenta_acumulativa.limpiar()
 
 
 def test_no_puede_tener_fecha_de_creacion_posterior_a_la_fecha_de_conversion(cuenta_acumulativa):
     cuenta_acumulativa.fecha_creacion = cuenta_acumulativa.fecha_conversion + datetime.timedelta(1)
     with pytest.raises(errors.ErrorFechaCreacionPosteriorAConversion):
-        cuenta_acumulativa.clean()
+        cuenta_acumulativa.limpiar()
 
 
 def test_no_puede_tener_fecha_de_conversion_posterior_a_la_fecha_de_creacion_de_sus_subcuentas(
@@ -51,7 +53,7 @@ def test_no_puede_tener_fecha_de_conversion_posterior_a_la_fecha_de_creacion_de_
     sc1.save()
     cuenta_acumulativa.fecha_conversion = sc2.fecha_creacion + datetime.timedelta(1)
     with pytest.raises(errors.ErrorFechaConversionPosteriorACreacionSubcuenta):
-        cuenta_acumulativa.clean()
+        cuenta_acumulativa.limpiar()
 
 
 def test_no_puede_tener_fecha_de_conversion_anterior_a_la_de_su_ultimo_movimiento_como_cuenta_interactiva(
@@ -59,7 +61,7 @@ def test_no_puede_tener_fecha_de_conversion_anterior_a_la_de_su_ultimo_movimient
     ultimo_mov_directo = cuenta_acumulativa.movs_directos().last()
     cuenta_acumulativa.fecha_conversion = ultimo_mov_directo.fecha - datetime.timedelta(1)
     with pytest.raises(ValidationError):
-        cuenta_acumulativa.clean()
+        cuenta_acumulativa.limpiar()
 
 
 def test_no_puede_tener_fecha_de_conversion_posterior_a_la_del_primer_movimiento_de_cualquiera_de_sus_subcuentas(
@@ -73,7 +75,7 @@ def test_no_puede_tener_fecha_de_conversion_posterior_a_la_del_primer_movimiento
     )
     cuenta_acumulativa.fecha_conversion = mov.fecha + datetime.timedelta(1)
     with pytest.raises(ValidationError):
-        cuenta_acumulativa.clean()
+        cuenta_acumulativa.limpiar()
 
 def test_puede_tener_fecha_de_conversion_igual_o_posterior_a_la_de_su_ultimo_movimiento_como_cuenta_interactiva(
         cuenta, fecha_temprana, fecha_anterior, fecha):
@@ -85,7 +87,7 @@ def test_puede_tener_fecha_de_conversion_igual_o_posterior_a_la_de_su_ultimo_mov
         fecha=fecha
     )
     cuenta.fecha_conversion = ultimo_mov_directo.fecha + datetime.timedelta(1)
-    cuenta.clean()
+    cuenta.limpiar()
 
 
 def test_puede_tener_fecha_de_conversion_anterior_o_igual_a_la_del_primer_movimiento_de_cualquiera_de_sus_subcuentas(
@@ -98,12 +100,12 @@ def test_puede_tener_fecha_de_conversion_anterior_o_igual_a_la_del_primer_movimi
         cta_entrada=sc1,
     )
     cuenta_acumulativa.fecha_conversion = mov.fecha - datetime.timedelta(1)
-    cuenta_acumulativa.clean()
+    cuenta_acumulativa.limpiar()
 
 
 def test_si_no_tiene_movimientos_como_cuenta_interactiva_puede_tener_fecha_de_conversion(
         cuenta_acumulativa_saldo_0):
-    cuenta_acumulativa_saldo_0.clean()
+    cuenta_acumulativa_saldo_0.limpiar()
 
 
 def test_si_sus_subcuentas_tienen_saldo_no_se_la_puede_desactivar_aunque_su_saldo_sea_cero(
@@ -112,7 +114,7 @@ def test_si_sus_subcuentas_tienen_saldo_no_se_la_puede_desactivar_aunque_su_sald
     Movimiento.crear("Puesta en cero de cuenta madre", sc1.saldo() + sc2.saldo(), cta_salida=sc1)
     cuenta_acumulativa.activa = False
     with pytest.raises(ValidationError):
-        cuenta_acumulativa.full_clean()
+        cuenta_acumulativa.limpiar()
 
 
 def test_no_se_permite_activar_directamente_una_cuenta_acumulativa_inactiva(cuenta_acumulativa_saldo_0):
@@ -125,5 +127,4 @@ def test_no_se_permite_activar_directamente_una_cuenta_acumulativa_inactiva(cuen
             match="No se puede activar directamente una cuenta acumulativa inactiva. "
                 "Intente activar una o más de sus subcuentas"
     ):
-        cuenta_acumulativa_saldo_0.clean()
-
+        cuenta_acumulativa_saldo_0.limpiar()

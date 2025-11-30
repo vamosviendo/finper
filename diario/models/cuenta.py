@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import cast, Optional, Self, List, Sequence, Set, TYPE_CHECKING
+from typing import cast, Optional, Self, List, Sequence, Set, TYPE_CHECKING, Iterable
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import EmptyResultSet, ValidationError
@@ -17,6 +17,7 @@ from diario.models.movimiento import Movimiento
 from diario.models.saldo_diario import SaldoDiario
 from diario.models.titular import Titular
 from diario.settings_app import MONEDA_BASE, TITULAR_PRINCIPAL
+from diario.utils.cleaner import Cleaner
 from diario.utils.utils_moneda import id_moneda_base
 from utils import errors
 from utils.iterables import remove_duplicates
@@ -38,6 +39,111 @@ def signo(condicion):
 class CuentaManager(PolymorphManager):
     def get_by_natural_key(self, sk):
         return self.get(sk=sk)
+
+
+class CuentaCleaner(Cleaner):
+    def __init__(self, cta: Cuenta, exclude: Iterable[str] | None = None):
+        super().__init__(exclude=exclude)
+        self.cta = cta
+
+    def no_puede_cambiar_de_cta_madre(self):
+        self.cta.impedir_cambio('cta_madre')
+
+    def no_puede_cambiar_de_moneda(self):
+        self.cta.impedir_cambio('moneda')
+
+    def no_puede_tener_cuenta_interactiva_como_madre(self):
+        if self.cta.cta_madre and self.cta.cta_madre.es_interactiva:
+            raise errors.ErrorTipo(
+                f'Cuenta interactiva "{self.cta.cta_madre }" no puede ser madre'
+            )
+
+    def fecha_de_creacion_no_puede_ser_anterior_a_fecha_de_conversion(self):
+        if self.cta.tiene_madre() and self.cta.fecha_creacion < self.cta.cta_madre.fecha_conversion:
+            raise errors.ErrorFechaAnteriorACuentaMadre
+
+    def no_se_puede_desactivar_si_su_saldo_no_es_cero(self):
+        if self.cta.activa is False and self.cta.saldo() != 0:
+            raise errors.ErrorCuentaInactivaConSaldo
+
+
+class CuentaInteractivaCleaner(Cleaner):
+    def __init__(self, cta: CuentaInteractiva, exclude: Iterable[str] | None = None):
+        super().__init__(exclude=exclude)
+        self.cta = cta
+
+    def corregir_titular_vacio(self):
+        if self.cta.titular is None:
+            try:
+                titular = Titular.tomar(sk=TITULAR_PRINCIPAL)
+            except Titular.DoesNotExist:
+                raise errors.ErrorTitularPorDefectoInexistente
+            self.cta.titular = titular
+
+    def no_puede_cambiar_de_titular(self):
+        self.cta.impedir_cambio('titular')
+
+    def fecha_de_creacion_no_puede_ser_anterior_a_fecha_de_alta_de_titular(self):
+        if self.cta.fecha_creacion < self.cta.titular.fecha_alta:
+            raise errors.ErrorFechaAnteriorAAltaTitular(
+                message=f'Fecha de creación de cuenta "{self.cta.nombre}" ({self.cta.fecha_creacion}) '
+                        f'anterior a fecha de alta de titular "{self.cta.titular.nombre}" '
+                        f'({self.cta.titular.fecha_alta})'
+            )
+
+
+class CuentaAcumulativaCleaner(Cleaner):
+    def __init__(self, cta: CuentaAcumulativa, exclude: Iterable[str] | None = None):
+        super().__init__(exclude=exclude)
+        self.cta = cta
+
+    def debe_tener_subcuentas(self):
+        if self.cta.es_acumulativa and self.cta.subcuentas.count()== 0:
+            raise errors.ErrorTipo(errors.CUENTA_ACUMULATIVA_SIN_SUBCUENTAS)
+        # super()._chequear_incongruencias_de_clase()
+
+    def fecha_creacion_no_puede_ser_posterior_a_fecha_conversion(self):
+        if self.cta.fecha_creacion > self.cta.fecha_conversion:
+            raise errors.ErrorFechaCreacionPosteriorAConversion(
+                f"La fecha de creación de la cuenta {self.cta.nombre} "
+                f"({self.cta.fecha_creacion}) no puede ser posterior a su "
+                f"fecha de conversión ({self.cta.fecha_conversion})"
+            )
+
+    def fecha_de_conversion_no_puede_ser_posterior_a_fecha_de_creacion_de_subcuenta(self):
+        for cuenta in self.cta.subcuentas.all():
+            if self.cta.fecha_conversion > cuenta.fecha_creacion:
+                raise errors.ErrorFechaConversionPosteriorACreacionSubcuenta(
+                    f"La fecha de conversión de la cuenta {self.cta.nombre} "
+                    f"({self.cta.fecha_conversion}) no puede ser posterior a la "
+                    f"fecha de creación de su subcuenta {cuenta.nombre} "
+                    f"({cuenta.fecha_creacion})"
+                )
+
+    def fecha_de_conversion_no_puede_ser_anterior_a_fecha_de_ultimo_movimiento_como_interactiva(self):
+        try:
+            fecha_ultimo_mov_directo = self.cta.movs_directos().last().fecha
+            fecha_conversion_anterior_a_ultimo_mov_directo = self.cta.fecha_conversion < fecha_ultimo_mov_directo
+        except AttributeError:   # self.movs_directos().last() is None. No hay movimientos directos
+            fecha_ultimo_mov_directo = None
+            fecha_conversion_anterior_a_ultimo_mov_directo = False
+        if fecha_conversion_anterior_a_ultimo_mov_directo:
+            raise errors.ErrorMovimientoPosteriorAConversion(
+                f'La fecha de conversión no puede ser anterior a la del '
+                f'último movimiento de la cuenta ({fecha_ultimo_mov_directo})'
+            )
+
+    def no_se_puede_desactivar_si_sus_subcuentas_tienen_saldo(self):
+        if not self.cta.activa:
+            if not all(sc.saldo() == 0 for sc in self.cta.subcuentas.all()):
+                raise errors.SaldoNoCeroException(
+                    "No se puede desactivar cuenta si sus subcuentas tienen saldo"
+                )
+
+    def no_se_puede_activar_si_todas_las_subcuentas_estan_inactivas(self):
+        todas_las_subcuentas_inactivas = all(x.activa == False for x in self.cta.subcuentas.all())
+        if self.cta.activa and todas_las_subcuentas_inactivas:
+            raise ValidationError(errors.CUENTA_ACUMULATIVA_ACTIVA_SUBCUENTAS_INACTIVAS)
 
 
 class Cuenta(PolymorphModel):
@@ -200,12 +306,14 @@ class Cuenta(PolymorphModel):
 
         super().clean_fields(exclude=exclude)
 
-    def clean(self):
-        self.impedir_cambio('cta_madre')
-        self.impedir_cambio('moneda')
-        self._chequear_incongruencias_de_clase()
-        self._verificar_fecha_creacion()
-        self._verificar_inactiva_saldo_cero()
+    def full_clean(self, exclude=None, validate_unique=True, validate_constraints=True, omitir=None):
+        super().full_clean(exclude, validate_unique, validate_constraints)
+        self.limpiar(omitir)
+
+    def limpiar(self, omitir=None):
+        omitir = omitir or []
+        cleaner = CuentaCleaner(cta=self, exclude=omitir)
+        cleaner.procesar()
 
     def save(self, *args, **kwargs):
         chequea = kwargs.pop("chequea", True)
@@ -276,19 +384,6 @@ class Cuenta(PolymorphModel):
         if self.sk:
             self.sk = self.sk.lower()
 
-    def _chequear_incongruencias_de_clase(self):
-        if self.cta_madre and self.cta_madre.es_interactiva:
-            raise errors.ErrorTipo(f'Cuenta interactiva "{self.cta_madre }" '
-                                   f'no puede ser madre')
-
-    def _verificar_fecha_creacion(self):
-        if self.tiene_madre() and self.fecha_creacion < self.cta_madre.fecha_conversion:
-            raise errors.ErrorFechaAnteriorACuentaMadre
-
-    def _verificar_inactiva_saldo_cero(self):
-        if self.activa is False and self.saldo() != 0:
-            raise errors.ErrorCuentaInactivaConSaldo
-
     def _activar_o_desactivar_cuenta_madre(self):
         """ Si está inactiva y todas sus hermanas están inactivas, desactivar cuenta madre
             Si está activa o hay al menos una de sus hermanas activa, activar cuenta madre
@@ -343,11 +438,15 @@ class CuentaInteractiva(Cuenta):
 
         return cuenta_nueva
 
-    def clean(self):
-        super().clean()
-        self._corregir_titular_vacio()
-        self.impedir_cambio('titular')
-        self._verificar_fecha_creacion_interactiva()
+    def full_clean(self, exclude=None, validate_unique=True, validate_constraints=True, omitir=None):
+        super().full_clean(exclude, validate_unique, validate_constraints, omitir)
+        self.limpiar(omitir)
+
+    def limpiar(self, omitir=None):
+        super().limpiar(omitir)
+        omitir = omitir or []
+        cleaner = CuentaInteractivaCleaner(cta=self, exclude=omitir)
+        cleaner.procesar()
 
     @property
     def contracuenta(self) -> Optional[Self]:
@@ -577,22 +676,6 @@ class CuentaInteractiva(Cuenta):
 
         return cuentas_creadas
 
-    def _corregir_titular_vacio(self):
-        if self.titular is None:
-            try:
-                titular = Titular.tomar(sk=TITULAR_PRINCIPAL)
-            except Titular.DoesNotExist:
-                raise errors.ErrorTitularPorDefectoInexistente
-            self.titular = titular
-
-    def _verificar_fecha_creacion_interactiva(self):
-        if self.fecha_creacion < self.titular.fecha_alta:
-            raise errors.ErrorFechaAnteriorAAltaTitular(
-                message=f'Fecha de creación de cuenta "{self.nombre}" ({self.fecha_creacion}) '
-                        f'anterior a fecha de alta de titular "{self.titular.nombre}" '
-                        f'({self.titular.fecha_alta})'
-            )
-
 
 class CuentaAcumulativa(Cuenta):
 
@@ -601,7 +684,7 @@ class CuentaAcumulativa(Cuenta):
                                 related_name='ex_cuentas',
                                 on_delete=models.CASCADE,)
 
-    subcuentas: CuentaManager["Cuenta"]     # related name para Cuenta.cta_madre
+    subcuentas: CuentaManager     # related name para Cuenta.cta_madre
 
     @property
     def titulares(self) -> List[Titular]:
@@ -648,11 +731,15 @@ class CuentaAcumulativa(Cuenta):
             2
         )
 
-    def clean(self):
-        super().clean()
-        self._verificar_fechas()
-        self._verificar_saldo_subcuentas()
-        self._verificar_subcuentas_inactivas()
+    def full_clean(self, exclude=None, validate_unique=True, validate_constraints=True, omitir=None):
+        super().full_clean(exclude, validate_unique, validate_constraints, omitir)
+        self.limpiar(omitir)
+
+    def limpiar(self, omitir=None):
+        super().limpiar(omitir)
+        omitir = omitir or []
+        cleaner = CuentaAcumulativaCleaner(cta=self, exclude=omitir)
+        cleaner.procesar()
 
     def manejar_cambios(self):
         if self._state.adding:
@@ -714,52 +801,6 @@ class CuentaAcumulativa(Cuenta):
 
     def recalcular_saldos_diarios(self):
         raise AttributeError("No se permite recalcular saldos de cuenta acumulativa")
-
-    def _chequear_incongruencias_de_clase(self):
-        if self.es_acumulativa and self.subcuentas.count()== 0:
-            raise errors.ErrorTipo(errors.CUENTA_ACUMULATIVA_SIN_SUBCUENTAS)
-        super()._chequear_incongruencias_de_clase()
-
-    def _verificar_fechas(self):
-        if self.fecha_creacion > self.fecha_conversion:
-            raise errors.ErrorFechaCreacionPosteriorAConversion(
-                f"La fecha de creación de la cuenta {self.nombre} "
-                f"({self.fecha_creacion}) no puede ser posterior a su "
-                f"fecha de conversión ({self.fecha_conversion})"
-            )
-
-        for cuenta in self.subcuentas.all():
-            if self.fecha_conversion > cuenta.fecha_creacion:
-                raise errors.ErrorFechaConversionPosteriorACreacionSubcuenta(
-                    f"La fecha de conversión de la cuenta {self.nombre} "
-                    f"({self.fecha_conversion}) no puede ser posterior a la "
-                    f"fecha de creación de su subcuenta {cuenta.nombre} "
-                    f"({cuenta.fecha_creacion})"
-                )
-
-        try:
-            fecha_ultimo_mov_directo = self.movs_directos().last().fecha
-            fecha_conversion_anterior_a_ultimo_mov_directo = self.fecha_conversion < fecha_ultimo_mov_directo
-        except AttributeError:   # self.movs_directos().last() is None. No hay movimientos directos
-            fecha_ultimo_mov_directo = None
-            fecha_conversion_anterior_a_ultimo_mov_directo = False
-        if fecha_conversion_anterior_a_ultimo_mov_directo:
-            raise errors.ErrorMovimientoPosteriorAConversion(
-                f'La fecha de conversión no puede ser anterior a la del '
-                f'último movimiento de la cuenta ({fecha_ultimo_mov_directo})'
-            )
-
-    def _verificar_saldo_subcuentas(self):
-        if not self.activa:
-            if not all(sc.saldo() == 0 for sc in self.subcuentas.all()):
-                raise errors.SaldoNoCeroException(
-                    "No se puede desactivar cuenta si sus subcuentas tienen saldo"
-                )
-
-    def _verificar_subcuentas_inactivas(self):
-        todas_las_subcuentas_inactivas = all(x.activa == False for x in self.subcuentas.all())
-        if self.activa and todas_las_subcuentas_inactivas:
-            raise ValidationError(errors.CUENTA_ACUMULATIVA_ACTIVA_SUBCUENTAS_INACTIVAS)
 
     def _desactivar_subcuentas(self):
         if not self.activa:

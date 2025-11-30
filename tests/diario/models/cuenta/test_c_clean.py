@@ -41,19 +41,19 @@ def test_subcuenta_no_puede_tener_fecha_de_creacion_anterior_a_la_fecha_de_conve
     sc1, _ = cuenta_acumulativa.subcuentas.all()
     sc1.fecha_creacion = cuenta_acumulativa.fecha_conversion - datetime.timedelta(days=1)
     with pytest.raises(errors.ErrorFechaAnteriorACuentaMadre):
-        sc1.clean()
+        sc1.limpiar()
 
 
 def test_si_moneda_es_none_completa_con_moneda_base():
     cuenta = Cuenta(nombre='cuenta sin moneda', sk='csm')
-    cuenta.clean_fields()
+    cuenta.full_clean()
     assert cuenta.moneda == moneda_base()
 
 
 def test_si_no_existe_moneda_base_la_crea_con_datos_de_settings_app():
     Moneda.todes().delete()
     cuenta = Cuenta(nombre='cuenta sin moneda', sk='csm')
-    cuenta.clean_fields()
+    cuenta.full_clean()
     assert Moneda.cantidad() == 1
     assert Moneda.primere().sk == settings_app.MONEDA_BASE
     assert Moneda.primere().cotizacion == 1
@@ -66,7 +66,7 @@ def test_cuenta_no_puede_cambiar_de_moneda(cuenta, dolar):
             ErrorCambioEnCampoFijo,
             match="No se puede cambiar valor del campo 'moneda'"
     ):
-        cuenta.clean()
+        cuenta.limpiar()
 
 
 def test_no_permite_desactivar_cuenta_con_saldo(cuenta_con_saldo):
@@ -75,4 +75,4 @@ def test_no_permite_desactivar_cuenta_con_saldo(cuenta_con_saldo):
         errors.ErrorCuentaInactivaConSaldo,
         match="No se puede desactivar cuenta con saldo distinto de cero"
     ):
-        cuenta_con_saldo.clean()
+        cuenta_con_saldo.limpiar()
