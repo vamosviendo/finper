@@ -10,9 +10,8 @@ class Cleaner:
         self.exclude = exclude or []
 
     def procesar(self):
-        for nombre_metodo in dir(self):
-            if (callable(getattr(self, nombre_metodo))) and \
-                    not nombre_metodo.startswith("_") and \
-                    nombre_metodo != "procesar" and nombre_metodo not in self.exclude:
-                metodo = getattr(self, nombre_metodo)
-                metodo()
+        for nombre_metodo in self.__class__.__dict__:
+            if not nombre_metodo.startswith("_") and nombre_metodo != "procesar" and nombre_metodo not in self.exclude:
+                metodo = getattr(self, nombre_metodo, None)
+                if callable(metodo):
+                    metodo()
