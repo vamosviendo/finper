@@ -45,6 +45,18 @@ class CuentaCleaner(Cleaner):
     def __init__(self, cta: Cuenta, exclude: Iterable[str] | None = None):
         super().__init__(exclude=exclude)
         self.cta = cta
+        self._moneda_asignada = False
+
+    def toma_moneda_base_por_defecto(self):
+        if not self._moneda_asignada and self.cta.moneda is None:
+            try:
+                self.cta.moneda = Moneda.tomar(pk=id_moneda_base())
+                self._moneda_asignada = True
+            except errors.ErrorMonedaBaseInexistente:
+                self.cta.moneda = Moneda.crear(
+                    sk=MONEDA_BASE, nombre=MONEDA_BASE
+                )
+                self._moneda_asignada = True
 
     def no_puede_cambiar_de_cta_madre(self):
         self.cta.impedir_cambio('cta_madre')
@@ -295,15 +307,6 @@ class Cuenta(PolymorphModel):
 
     def clean_fields(self, exclude: Sequence[str] = None):
         self._pasar_sk_a_minuscula()
-
-        if self.moneda is None:
-            try:
-                self.moneda = Moneda.tomar(pk=id_moneda_base())
-            except errors.ErrorMonedaBaseInexistente:
-                self.moneda = Moneda.crear(
-                    sk=MONEDA_BASE, nombre=MONEDA_BASE
-                )
-
         super().clean_fields(exclude=exclude)
 
     def full_clean(self, exclude=None, validate_unique=True, validate_constraints=True, omitir=None):
