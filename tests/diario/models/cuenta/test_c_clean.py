@@ -76,3 +76,16 @@ def test_no_permite_desactivar_cuenta_con_saldo(cuenta_con_saldo):
         match="No se puede desactivar cuenta con saldo distinto de cero"
     ):
         cuenta_con_saldo.limpiar()
+
+
+@pytest.mark.parametrize("fixt_cuenta, clase", [
+    ["cuenta", "Cuenta"],
+    ["cuenta", "CuentaInteractiva"],
+    ["cuenta_acumulativa", "Cuenta"],
+    ["cuenta_acumulativa", "CuentaAcumulativa"],
+])
+def test_ejecuta_limpiar_solo_una_vez(fixt_cuenta, clase, mocker, request):
+    cuenta = request.getfixturevalue(fixt_cuenta)
+    mock_limpiar = mocker.patch(f"diario.models.cuenta.{clase}.limpiar")
+    cuenta.full_clean()
+    mock_limpiar.assert_called_once()

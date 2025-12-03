@@ -438,10 +438,6 @@ class CuentaInteractiva(Cuenta):
 
         return cuenta_nueva
 
-    def full_clean(self, exclude=None, validate_unique=True, validate_constraints=True, omitir=None):
-        super().full_clean(exclude, validate_unique, validate_constraints, omitir)
-        self.limpiar(omitir)
-
     def limpiar(self, omitir=None):
         super().limpiar(omitir)
         omitir = omitir or []
@@ -730,10 +726,6 @@ class CuentaAcumulativa(Cuenta):
             sum([subc.saldo(movimiento=movimiento, dia=dia) for subc in self.subcuentas.all()]) * cotizacion,
             2
         )
-
-    def full_clean(self, exclude=None, validate_unique=True, validate_constraints=True, omitir=None):
-        super().full_clean(exclude, validate_unique, validate_constraints, omitir)
-        self.limpiar(omitir)
 
     def limpiar(self, omitir=None):
         super().limpiar(omitir)
