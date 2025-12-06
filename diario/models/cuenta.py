@@ -327,9 +327,9 @@ class Cuenta(PolymorphModel):
         cleaner.procesar()
 
     def save(self, *args, **kwargs):
-        chequea = kwargs.pop("chequea", True)
+        adcm = kwargs.pop("altera_ctas_parientes", True)
 
-        if chequea:
+        if adcm:
             self._activar_o_desactivar_cuenta_madre()
 
         super().save(*args, **kwargs)
@@ -405,7 +405,7 @@ class Cuenta(PolymorphModel):
                 if desactiva:
                     self.cta_madre.activa = False
                     self.cta_madre.full_clean()
-                    self.cta_madre.save(chequea=False)
+                    self.cta_madre.save(altera_ctas_parientes=False)
             else:
                 self.cta_madre.activa = True
                 self.cta_madre.clean_save(
@@ -413,7 +413,7 @@ class Cuenta(PolymorphModel):
                         "no_se_puede_activar_si_todas_las_subcuentas_estan_inactivas",
                         "fecha_de_conversion_no_puede_ser_posterior_a_fecha_de_creacion_de_subcuenta",
                     ],
-                    chequea=False,
+                    altera_ctas_parientes=False,
                 )
 
 class CuentaInteractiva(Cuenta):
@@ -758,12 +758,12 @@ class CuentaAcumulativa(Cuenta):
                     mov.save()
 
     def save(self, *args, **kwargs):
-        chequea = kwargs.pop("chequea", True)
+        ds = kwargs.pop("altera_ctas_parientes", True)
         self.manejar_cambios()
-        if chequea:
+        if ds:
             self._desactivar_subcuentas()
 
-        super().save(*args, chequea=False, **kwargs)
+        super().save(*args, altera_ctas_parientes=False, **kwargs)
 
     def movs(self, order_by: list[str] = None) -> models.QuerySet[Movimiento]:
         """ Devuelve movimientos propios y de sus subcuentas"""
@@ -816,4 +816,4 @@ class CuentaAcumulativa(Cuenta):
                 sc = cast(Cuenta, sc)
                 sc.activa = False
                 sc.full_clean()
-                sc.save(chequea=False)
+                sc.save(altera_ctas_parientes=False)
