@@ -305,6 +305,14 @@ class Cuenta(PolymorphModel):
     def ultimo_saldo(self) -> SaldoDiario:
         return self.saldodiario_set.last()
 
+    def clean_save(
+            self, exclude=None, validate_unique=True, validate_constraints=True, omitir=None,
+            force_insert=False, force_update=False, using=None, update_fields=None,
+            **kwargs
+    ):
+        self.full_clean(exclude, validate_unique, validate_constraints, omitir)
+        self.save(force_insert, force_update, using, update_fields, **kwargs)
+
     def clean_fields(self, exclude: Sequence[str] = None):
         self._pasar_sk_a_minuscula()
         super().clean_fields(exclude=exclude)
@@ -400,10 +408,13 @@ class Cuenta(PolymorphModel):
                     self.cta_madre.save(chequea=False)
             else:
                 self.cta_madre.activa = True
-                # Al igual que en Movimiento._actualizar_fechas_conversion(),
-                # se omite self.cta_madre.full_clean() para evitar error de fecha de
-                # conversión posterior a fecha de creación de subcuentas
-                self.cta_madre.save(chequea=False)
+                self.cta_madre.clean_save(
+                    omitir=[
+                        "no_se_puede_activar_si_todas_las_subcuentas_estan_inactivas",
+                        "fecha_de_conversion_no_puede_ser_posterior_a_fecha_de_creacion_de_subcuenta",
+                    ],
+                    chequea=False,
+                )
 
 class CuentaInteractiva(Cuenta):
 
@@ -796,6 +807,8 @@ class CuentaAcumulativa(Cuenta):
 
     def recalcular_saldos_diarios(self):
         raise AttributeError("No se permite recalcular saldos de cuenta acumulativa")
+
+    # Protected
 
     def _desactivar_subcuentas(self):
         if not self.activa:

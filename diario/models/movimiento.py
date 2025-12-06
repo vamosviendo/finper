@@ -438,7 +438,6 @@ class Movimiento(MiModel):
             force_insert=False, force_update=False, using=None, update_fields=None,
             esgratis: bool = False
     ):
-        # self.exclude_clean = exclude_clean
         self.full_clean(exclude, validate_unique, validate_constraints, omitir)
         self.save(force_insert, force_update, using, update_fields, esgratis=esgratis)
 
@@ -692,9 +691,7 @@ class Movimiento(MiModel):
             subcuenta = self.cta_salida if cuenta == self.cta_entrada else self.cta_entrada
 
             cuenta.fecha_conversion = subcuenta.fecha_creacion = self.fecha
-            # Se omite cuenta.full_clean() para evitar error de fecha de
-            # conversión posterior a fecha de creación de subcuentas
-            cuenta.save()
+            cuenta.clean_save(omitir=["fecha_de_conversion_no_puede_ser_posterior_a_fecha_de_creacion_de_subcuenta"])
             subcuenta.clean_save()
 
     def _actualizar_orden_dia(self):

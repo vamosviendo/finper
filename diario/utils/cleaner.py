@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 
-# TODO: Pasar a vvmodel
+# TODO: Pasar a vvmodel. Cuando lo pasemos, agregar argumento "omitir" a MiModel.cleean_save()
 class Cleaner:
     """ Recorre y ejecuta todos los métodos que se agreguen la subclase,
         excepto los indicados en exclude o los marcados como internos con _
