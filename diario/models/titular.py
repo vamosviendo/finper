@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self, Optional, cast
+from typing import TYPE_CHECKING, Self, Optional, cast, Iterable
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -8,6 +8,7 @@ from django.db.models import QuerySet, Q
 from django.urls import reverse
 from django.utils import timezone
 
+from diario.utils.cleaner import Cleaner
 from utils import errors
 from vvmodel.models import MiModel
 from vvutils.text import mi_slugify
@@ -17,6 +18,21 @@ from diario.models.dia import Dia
 if TYPE_CHECKING:
     from diario.models import Cuenta, CuentaInteractiva, Movimiento, Moneda
     from diario.models.cuenta import CuentaManager
+
+
+class TitularCleaner(Cleaner):
+    def __init__(self, tit: Titular, exclude: Iterable[str] | None = None):
+        super().__init__(exclude=exclude)
+        self.tit = tit
+
+    def completar_nombre_vacio(self):
+        self.tit.nombre = self.tit.nombre or self.tit.sk
+
+    def validar_sk(self):
+        self.tit.sk = mi_slugify(
+            self.tit.sk, reemplazo='_')
+        if '-' in self.tit.sk:
+            raise ValidationError('No se admite guión en sk')
 
 
 class TitularManager(models.Manager):
@@ -105,10 +121,14 @@ class Titular(MiModel):
             Q(cta_salida__in=self.ex_cuentas.all())
         )
 
-    def clean(self):
-        super().clean()
-        self.nombre = self.nombre or self.sk
-        self._validar_sk()
+    def full_clean(self, exclude=None, validate_unique=True, validate_constraints=True, omitir=None):
+        super().full_clean(exclude, validate_unique, validate_constraints)
+        self.limpiar(omitir=omitir)
+
+    def limpiar(self, omitir=None):
+        omitir = omitir or []
+        cleaner = TitularCleaner(tit=self, exclude=omitir)
+        cleaner.procesar()
 
     def delete(self, *args, **kwargs):
         if self.capital() != 0:
@@ -143,9 +163,3 @@ class Titular(MiModel):
                 f'{otro} no figura entre los deudores de {self}'
             )
         self.deudores.remove(otro)
-
-    def _validar_sk(self):
-        self.sk = mi_slugify(
-            self.sk, reemplazo='_')
-        if '-' in self.sk:
-            raise ValidationError('No se admite guión en sk')
