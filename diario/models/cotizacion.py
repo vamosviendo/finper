@@ -1,12 +1,26 @@
+from __future__ import annotations
+
 from datetime import date
+from typing import Iterable
 
 from django.core.exceptions import EmptyResultSet, ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.urls import reverse
 
+from diario.utils.cleaner import Cleaner
 from utils.varios import el_que_no_es
 from vvmodel.models import MiModel
+
+
+class CotizacionCleaner(Cleaner):
+    def __init__(self, cot: Cotizacion, exclude: Iterable[str] | None = None):
+        super().__init__(exclude=exclude)
+        self.cot = cot
+
+    def no_admite_importe_vacio(self):
+        if self.cot.importe_compra is None and self.cot.importe_venta is None:
+            raise ValidationError("Debe ingresar al menos un importe")
 
 
 class Cotizacion(MiModel):
@@ -51,10 +65,14 @@ class Cotizacion(MiModel):
                 f"No hay cotizaciones de {kwargs['moneda']} anteriores al {kwargs['fecha']}"
             )
 
-    def clean(self):
-        super().clean()
-        if self.importe_compra is None and self.importe_venta is None:
-            raise ValidationError("Debe ingresar al menos un importe")
+    def full_clean(self, exclude=None, validate_unique=True, validate_constraints=True, omitir=None):
+        super().full_clean(exclude, validate_unique, validate_constraints)
+        self.limpiar(omitir=omitir)
+
+    def limpiar(self, omitir=None):
+        omitir = omitir or []
+        cleaner = CotizacionCleaner(cot=self, exclude=omitir)
+        cleaner.procesar()
 
     def save(self, *args, **kwargs):
         # Generar clave secundaria
