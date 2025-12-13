@@ -8,7 +8,7 @@ from django.db.models import QuerySet, Q
 from django.urls import reverse
 from django.utils import timezone
 
-from diario.utils.cleaner import Cleaner
+from vvmodel.cleaners import Cleaner
 from utils import errors
 from vvmodel.models import MiModel
 from vvutils.text import mi_slugify
@@ -21,17 +21,13 @@ if TYPE_CHECKING:
 
 
 class TitularCleaner(Cleaner):
-    def __init__(self, tit: Titular, exclude: Iterable[str] | None = None):
-        super().__init__(exclude=exclude)
-        self.tit = tit
-
     def completar_nombre_vacio(self):
-        self.tit.nombre = self.tit.nombre or self.tit.sk
+        self.obj.nombre = self.obj.nombre or self.obj.sk
 
     def validar_sk(self):
-        self.tit.sk = mi_slugify(
-            self.tit.sk, reemplazo='_')
-        if '-' in self.tit.sk:
+        self.obj.sk = mi_slugify(
+            self.obj.sk, reemplazo='_')
+        if '-' in self.obj.sk:
             raise ValidationError('No se admite guión en sk')
 
 
@@ -51,6 +47,7 @@ class Titular(MiModel):
 
     objects = TitularManager()
     form_fields = ('sk', 'nombre', 'fecha_alta', )
+    cleaner = TitularCleaner
 
     def get_absolute_url(self) -> str:
         return reverse("titular", args=[self.sk])
@@ -120,15 +117,6 @@ class Titular(MiModel):
             Q(cta_entrada__in=self.ex_cuentas.all()) |
             Q(cta_salida__in=self.ex_cuentas.all())
         )
-
-    def full_clean(self, exclude=None, validate_unique=True, validate_constraints=True, omitir=None):
-        super().full_clean(exclude, validate_unique, validate_constraints)
-        self.limpiar(omitir=omitir)
-
-    def limpiar(self, omitir=None):
-        omitir = omitir or []
-        cleaner = TitularCleaner(tit=self, exclude=omitir)
-        cleaner.procesar()
 
     def delete(self, *args, **kwargs):
         if self.capital() != 0:
