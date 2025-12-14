@@ -564,18 +564,6 @@ class Movimiento(MiModel):
     def es_anterior_a(self, otro: Movimiento) -> bool:
         return self.posicion < otro.posicion
 
-    def cambia_campo(self, *args, contraparte: Movimiento = None) -> bool:
-        mov_guardado = contraparte or self.tomar_de_bd()
-        for campo in args:
-            if campo not in [x.name for x in self._meta.fields]:
-                raise ValueError(f"Campo inexistente: {campo}")
-            try:
-                if getattr(self, campo) != getattr(mov_guardado, campo):
-                    return True
-            except AttributeError:  # mov_guardado == None => El movimiento es nuevo.
-                return True
-        return False
-
     def cambia_cuenta_por_cuenta_en_otra_moneda(self, moneda_del_movimiento: bool = True) -> bool:
         """ Devuelve true si alguna de las cuentas cambia por una cuenta en otra moneda.
             Si moneda_del_movimiento es True, verifica la cuenta en moneda del movimiento.

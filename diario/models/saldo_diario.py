@@ -113,18 +113,6 @@ class SaldoDiario(MiModel):
 
         return super().save(force_insert, force_update, using, update_fields)
 
-    def cambia_campo(self, *args, contraparte: Movimiento = None) -> bool:
-        mov_guardado = contraparte or self.tomar_de_bd()
-        for campo in args:
-            if campo not in [x.name for x in self._meta.fields]:
-                raise ValueError(f"Campo inexistente: {campo}")
-            try:
-                if getattr(self, campo) != getattr(mov_guardado, campo):
-                    return True
-            except AttributeError:  # mov_guardado == None => El movimiento es nuevo.
-                return True
-        return False
-
     def tomar_de_bd(self) -> Self:
         return self.get_class().tomar_o_nada(cuenta=self.cuenta, dia=self.dia)
 
