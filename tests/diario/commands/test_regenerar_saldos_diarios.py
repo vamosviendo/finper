@@ -1,5 +1,3 @@
-from unittest.mock import call
-
 from django.core.management import call_command
 
 from diario.models import SaldoDiario, Movimiento
@@ -11,7 +9,7 @@ def test_borra_saldos_diarios_antes_de_recalcular(
     mock_delete = mocker.patch("diario.models.SaldoDiario.delete", autospec=True)
     call_command("regenerar_saldos_diarios")
     for sd in saldos_diarios:
-        assert call(sd) in mock_delete.call_args_list
+        assert mocker.call(sd) in mock_delete.call_args_list
 
 
 def test_calcula_saldos_diarios_a_partir_de_movimientos(
@@ -21,7 +19,7 @@ def test_calcula_saldos_diarios_a_partir_de_movimientos(
     for mov in Movimiento.todes():
         campos_cuenta = [x for x in ("cta_entrada", "cta_salida") if getattr(mov, x) is not None]
         for cc in campos_cuenta:
-            assert call(mov, cc) in mock_calcular.call_args_list
+            assert mocker.call(mov, cc) in mock_calcular.call_args_list
 
 
 def test_importe_de_saldos_diarios_calculados_corresponde_a_movimientos(

@@ -1,4 +1,4 @@
-from unittest.mock import ANY, MagicMock
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -62,12 +62,12 @@ def test_acepta_cta_entrada_o_cta_salida_para_arg_sentido(sentido, request):
 
 
 @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
-def test_si_no_recibe_sentido_y_no_es_movimiento_de_traspaso_toma_cuenta_del_movimiento(sentido, request):
+def test_si_no_recibe_sentido_y_no_es_movimiento_de_traspaso_toma_cuenta_del_movimiento(sentido, request, mocker):
     mov = request.getfixturevalue(f'{sentido}_sin_saldo_diario')
     mock_saldo_crear = request.getfixturevalue('mock_saldo_crear')
     SaldoDiario.calcular(mov)
     mock_saldo_crear.assert_called_once_with(
-        dia=ANY,
+        dia=mocker.ANY,
         importe=mov.importe_cta(sentido),
         cuenta=getattr(mov, f"cta_{sentido}")
     )
@@ -126,7 +126,7 @@ def test_si_moneda_del_movimiento_es_distinta_de_la_de_la_cuenta_suma_importe_de
 
 @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
 def test_importe_de_saldo_diario_creado_no_suma_importe_de_saldo_correspondiente_a_dia_posterior_preexistente(
-        saldo_diario_posterior, sentido, cuenta, request):
+        saldo_diario_posterior, sentido, cuenta, request, mocker):
     mov = request.getfixturevalue(f'{sentido}_sin_saldo_diario')
     es_entrada = sentido == 'entrada'
     s = signo(es_entrada)
@@ -134,8 +134,8 @@ def test_importe_de_saldo_diario_creado_no_suma_importe_de_saldo_correspondiente
     SaldoDiario.calcular(mov, sentido)
 
     mock_crear.assert_called_once_with(
-        cuenta=ANY,
-        dia=ANY,
+        cuenta=mocker.ANY,
+        dia=mocker.ANY,
         importe=s*mov.importe
     )
 

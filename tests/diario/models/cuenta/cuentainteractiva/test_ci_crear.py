@@ -1,5 +1,3 @@
-from unittest.mock import ANY
-
 import pytest
 
 from diario.models import CuentaInteractiva, Movimiento, Cuenta
@@ -26,6 +24,7 @@ def test_genera_movimiento_inicial_si_se_pasa_argumento_saldo():
 
 def test_pasa_fecha_creacion_a_movimiento_inicial(mocker, fecha):
     mock_crear_mov = mocker.patch('diario.models.cuenta.Movimiento.crear')
+    ANY = mocker.ANY
     CuentaInteractiva.crear(
         nombre='Cuenta Interactiva', sk='ci', saldo=155, fecha_creacion=fecha)
     mock_crear_mov.assert_called_once_with(
@@ -39,6 +38,7 @@ def test_pasa_fecha_creacion_a_movimiento_inicial(mocker, fecha):
 
 def test_pasa_moneda_de_cuenta_creada_a_movimiento_inicial(mocker, fecha):
     mock_crear_mov = mocker.patch('diario.models.cuenta.Movimiento.crear')
+    ANY = mocker.ANY
     ci = CuentaInteractiva.crear(
         nombre='Cuenta Interactiva', sk='ci', saldo=155, fecha_creacion=fecha)
     mock_crear_mov.assert_called_once_with(

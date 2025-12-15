@@ -1,5 +1,3 @@
-from unittest.mock import patch
-
 import pytest
 from django.core.exceptions import ValidationError
 
@@ -11,8 +9,8 @@ def test_crea_cuenta(titular):
     assert Cuenta.cantidad() == 1
 
 
-@patch('diario.models.cuenta.CuentaInteractiva.crear')
-def test_llama_a_metodo_crear_de_clase_CuentaInteractiva(mock_crear):
+def test_llama_a_metodo_crear_de_clase_CuentaInteractiva(mocker):
+    mock_crear = mocker.patch('diario.models.cuenta.CuentaInteractiva.crear')
     Cuenta.crear(nombre='Efectivo', sk='e')
     mock_crear.assert_called_once_with(
         nombre='Efectivo', sk='e', cta_madre=None)

@@ -1,5 +1,3 @@
-from unittest.mock import call
-
 import pytest
 
 from diario.models import Cuenta, CuentaInteractiva, Moneda, Movimiento, SaldoDiario
@@ -101,9 +99,9 @@ def test_llama_a_calcular_saldo_con_arg_correspondiente(mock_calcular, cuenta, s
 
 
 def test_mov_traspaso_llama_a_calcular_saldo_diario_con_salida_False_para_cta_entrada_y_salida_True_para_cta_salida(
-        mock_calcular, cuenta, cuenta_2):
+        mock_calcular, cuenta, cuenta_2, mocker):
     mov = Movimiento.crear("Traspaso", 20, cuenta, cuenta_2)
-    assert mock_calcular.call_args_list == [call(mov, "entrada"), call(mov, "salida")]
+    assert mock_calcular.call_args_list == [mocker.call(mov, "entrada"), mocker.call(mov, "salida")]
 
 
 @pytest.mark.parametrize("sentido", ["entrada", "salida"])

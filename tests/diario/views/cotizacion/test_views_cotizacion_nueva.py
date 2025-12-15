@@ -1,5 +1,3 @@
-from unittest.mock import ANY
-
 import pytest
 from django.core.exceptions import EmptyResultSet
 from django.urls import reverse

@@ -1,5 +1,4 @@
 from typing import Tuple
-from unittest.mock import call
 
 import pytest
 from django.forms.models import model_to_dict
@@ -466,7 +465,7 @@ class TestSaveCambiaCuentas:
         traspaso.clean_save()
 
         for saldo_diario in (saldo_diario_cuenta, saldo_diario_cuenta_opuesta):
-            assert call(saldo_diario) in mock_delete.call_args_list
+            assert mocker.call(saldo_diario) in mock_delete.call_args_list
 
     def test_si_cambian_ambas_cuentas_en_traspaso_en_dia_con_mas_movimientos_de_una_de_las_cuentas_reemplazadas_se_resta_importe_del_saldo_diario_de_la_cuenta_con_otros_movimientos_y_se_elimina_el_saldo_diario_de_la_otra(
             self, sentido, traspaso, cuenta_3, cuenta_4, mocker):
@@ -517,12 +516,12 @@ class TestSaveCambiaCuentas:
         setattr(traspaso, f"cta_{sentido_opuesto}", cuenta_4)
         traspaso.clean_save()
 
-        assert call(
+        assert mocker.call(
             cuenta=cuenta_3,
             dia=traspaso.dia,
             importe=traspaso.importe_cta(sentido)
         ) in mock_crear.call_args_list
-        assert call(
+        assert mocker.call(
             cuenta=cuenta_4,
             dia=traspaso.dia,
             importe=traspaso.importe_cta(sentido_opuesto)
@@ -586,18 +585,18 @@ class TestSaveCambiaCuentas:
         setattr(traspaso, f"cta_{sentido_opuesto}", cuenta_4)
         traspaso.clean_save()
 
-        assert call(
+        assert mocker.call(
             cuenta=cuenta_3,
             dia=traspaso.dia,
             importe=traspaso.importe_cta(sentido)
         ) in mock_crear.call_args_list
-        assert call(
+        assert mocker.call(
             cuenta=cuenta_4,
             dia=traspaso.dia,
             importe=traspaso.importe_cta(sentido_opuesto)
         ) in mock_crear.call_args_list
-        assert call(saldo_diario_cuenta) in mock_delete.call_args_list
-        assert call(saldo_diario_cuenta_opuesta) in mock_delete.call_args_list
+        assert mocker.call(saldo_diario_cuenta) in mock_delete.call_args_list
+        assert mocker.call(saldo_diario_cuenta_opuesta) in mock_delete.call_args_list
 
     def test_si_cambian_ambas_cuentas_en_traspaso_en_dia_con_mas_movimientos_de_cuentas_reempazadas_y_reemplazantes_se_resta_importe_de_saldo_diario_de_cuentas_reemplazadas_y_se_suma_a_saldo_diario_de_cuentas_reemplazantes(
             self, sentido, traspaso, entrada, entrada_otra_cuenta, cuenta_3, cuenta_4):

@@ -1,5 +1,3 @@
-from unittest.mock import call
-
 import pytest
 from django.core.exceptions import ValidationError
 
@@ -35,7 +33,7 @@ def test_si_se_borra_el_unico_movimiento_del_dia_de_la_cuenta_no_se_elimina_sald
     mock_eliminar = mocker.patch('diario.models.movimiento.SaldoDiario.eliminar', autospec=True)
     saldo = SaldoDiario.tomar(cuenta=cuenta_2, dia=salida.dia)
     salida.delete()
-    assert call(saldo) not in mock_eliminar.call_args_list
+    assert mocker.call(saldo) not in mock_eliminar.call_args_list
 
 
 def test_si_hay_mas_movimientos_de_la_cuenta_en_el_dia_no_se_elimina_saldo_diario_de_la_cuenta(
@@ -78,7 +76,7 @@ def test_si_se_elimina_traspaso_entre_cuentas_con_unico_movimiento_en_el_dia_se_
 
     traspaso.delete()
 
-    assert mock_eliminar.call_args_list == [call(saldo1), call(saldo2)]
+    assert mock_eliminar.call_args_list == [mocker.call(saldo1), mocker.call(saldo2)]
 
 
 def test_si_se_elimina_traspaso_entre_cuentas_con_mas_movimientos_en_el_dia_no_se_elimina_ningun_saldo(
