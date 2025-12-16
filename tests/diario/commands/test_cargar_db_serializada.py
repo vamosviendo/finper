@@ -23,6 +23,8 @@ from utils.errors import ElementoSerializadoInexistente
 from vvmodel.serializers import SerializedDb
 
 
+# Funciontes y Fixtures
+
 def _tomar_movimiento(movimiento: MovimientoSerializado) -> Movimiento:
     return Movimiento.tomar(
         fecha=movimiento.fields["dia"][0],
@@ -165,6 +167,8 @@ def movimiento_2(
         cta_entrada=cuenta_temprana_2, cta_salida=cuenta_temprana_1, dia=dia
     )
 
+
+# Tests
 
 def test_vacia_la_base_de_datos_antes_de_cargar_datos_nuevos(mocker, db_serializada_con_datos, vaciar_db):
     mock_unlink = mocker.patch("pathlib.Path.unlink", autospec=True)

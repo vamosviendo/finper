@@ -9,6 +9,8 @@ from utils.helpers_tests import \
 from utils.varios import el_que_no_es
 
 
+# Funciones y fixtures
+
 def inferir_fixtures(sentido: str, request) -> Tuple[Movimiento, int, CuentaInteractiva]:
     mov = request.getfixturevalue(sentido)
     return mov, signo(sentido == 'entrada'), getattr(mov, f'cta_{sentido}')
@@ -24,6 +26,8 @@ def credito_no_guardado(cuenta: CuentaInteractiva, cuenta_ajena: CuentaInteracti
         dia=dia,
     )
 
+
+# Tests
 
 class TestSaveGeneral:
     def test_no_modifica_saldo_en_mov_si_no_se_modifica_importe_ni_cuentas_ni_fecha(

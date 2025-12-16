@@ -2,8 +2,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from diario.models import Cuenta
 
+# Fixtures
 
 @pytest.fixture
 def mock_tomar(mocker) -> MagicMock:
@@ -14,6 +14,8 @@ def mock_tomar(mocker) -> MagicMock:
 def mock_saldo_en_mov(mocker) -> MagicMock:
     return mocker.patch('diario.models.cuenta.Cuenta.saldo_en_mov', autospec=True)
 
+
+# Tests
 
 def test_devuelve_el_ultimo_saldo_historico_de_la_cuenta(cuenta, entrada, salida_posterior):
     assert (

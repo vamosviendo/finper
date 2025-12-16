@@ -1,9 +1,7 @@
-from datetime import date
-
 import pytest
 from django.core.exceptions import ValidationError
 
-from diario.models import Moneda, Cotizacion
+from diario.models import Moneda
 
 
 @pytest.mark.nomonbase

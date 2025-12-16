@@ -7,6 +7,8 @@ from utils.helpers_tests import signo
 from utils.varios import el_que_no_es
 
 
+# Fixtures
+
 @pytest.fixture
 def entrada_sin_saldo_diario(entrada: Movimiento) -> Movimiento:
     SaldoDiario.objects.get(cuenta=entrada.cta_entrada, dia=entrada.dia).delete()
@@ -30,6 +32,8 @@ def traspaso_sin_saldos_diarios(traspaso: Movimiento) -> Movimiento:
 def mock_saldo_crear(mocker) -> MagicMock:
     return mocker.patch('diario.models.SaldoDiario.crear')
 
+
+# Tests
 
 @pytest.mark.parametrize("sentido", ["entrada", "salida"])
 def test_crea_saldo_para_cuenta_indicada_en_sentido(sentido, request):

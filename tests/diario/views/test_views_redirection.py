@@ -5,8 +5,10 @@ import pytest
 from django.urls import reverse
 from pytest_django import asserts
 
-from diario.models import Dia, Cuenta, Titular, Movimiento
+from diario.models import Dia, Cuenta, Titular
 
+
+# Fixtures
 
 @pytest.fixture(autouse=True)
 def titular_principal(mocker, titular: Titular) -> MagicMock:
@@ -39,6 +41,8 @@ def post_data_cuenta(fecha: date, titular: Titular) -> dict:
 def post_data_titular(fecha: date) -> dict:
     return {'sk': 'tito', 'nombre': 'Tito Gómez', 'fecha_alta': fecha}
 
+
+# Fixtures
 
 @pytest.mark.parametrize("viewname, fixt, post_data, tipo_origen, fixt_origen", [
     ("mov_nuevo", None, "post_data_movimiento", "c", "cuenta"),

@@ -9,6 +9,8 @@ from diario.forms import FormCrearSubcuenta
 from utils.iterables import dict2querydict
 
 
+# Fixtures
+
 @pytest.fixture
 def mock_form_crear_subcuenta(mocker, patch_save) -> MagicMock:
     return mocker.patch('diario.views.FormCrearSubcuenta', new_callable=patch_save)
@@ -18,6 +20,8 @@ def mock_form_crear_subcuenta(mocker, patch_save) -> MagicMock:
 def data() -> Dict[str, str]:
     return {'nombre': 'subcuenta 3', 'sk': 'sc3'}
 
+
+# Tests
 
 def test_usa_template_agregar_subcuenta(client, cuenta_acumulativa):
     response = client.get(

@@ -5,10 +5,14 @@ import pytest
 from diario.utils.utils_saldo import verificar_saldos
 
 
+# Fixtures
+
 @pytest.fixture
 def mock_saldo_ok(mocker) -> MagicMock:
     return mocker.patch('diario.models.CuentaInteractiva.saldo_ok')
 
+
+# Tests
 
 def test_devuelve_lista_vacia_si_todos_los_saldos_ok(
         cuenta, cuenta_con_saldo, cuenta_con_saldo_negativo, mock_saldo_ok):

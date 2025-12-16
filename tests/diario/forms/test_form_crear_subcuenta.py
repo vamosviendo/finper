@@ -8,6 +8,8 @@ from diario.forms import FormCrearSubcuenta
 from diario.models import CuentaAcumulativa, CuentaInteractiva, Titular
 
 
+# Fixtures
+
 @pytest.fixture
 def formsubcuenta(cuenta_acumulativa: CuentaAcumulativa) -> FormCrearSubcuenta:
     return FormCrearSubcuenta(
@@ -23,6 +25,8 @@ def formsubcuenta(cuenta_acumulativa: CuentaAcumulativa) -> FormCrearSubcuenta:
 def mock_agregar_subcuenta(mocker) -> MagicMock:
     return mocker.patch('diario.forms.CuentaAcumulativa.agregar_subcuenta')
 
+
+# Tests
 
 def test_llama_a_agregar_subcuenta(mock_agregar_subcuenta, formsubcuenta):
     formsubcuenta.is_valid()

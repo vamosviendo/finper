@@ -5,10 +5,14 @@ from pytest_django import asserts
 from diario.models import Cuenta
 
 
+# Fixtures
+
 @pytest.fixture
 def full_url(cuenta: Cuenta, cuenta_2: Cuenta) -> str:
     return f"{reverse('corregir_saldo')}?ctas={cuenta.sk}!{cuenta_2.sk}"
 
+
+# Tests
 
 def test_usa_template_corregir_saldo(client, full_url):
     response = client.get(full_url)

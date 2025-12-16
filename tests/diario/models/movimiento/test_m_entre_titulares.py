@@ -3,6 +3,8 @@ import pytest
 from diario.models import Movimiento, Cuenta, CuentaInteractiva
 
 
+# Fixtures
+
 @pytest.fixture
 def mock_gestionar_transferencia(mocker):
     return mocker.patch(
@@ -34,6 +36,8 @@ def cuentas_credito_inactivas(credito: Movimiento) -> list[Cuenta]:
 
     return [cta_prestamo, cta_deuda]
 
+
+# Tests
 
 def test_movimiento_entre_titulares_gestiona_trasferencia(mock_gestionar_transferencia, cuenta, cuenta_ajena):
     mov = Movimiento(

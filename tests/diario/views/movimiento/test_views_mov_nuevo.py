@@ -6,6 +6,8 @@ from pytest_django import asserts
 from diario.models import Movimiento, Dia, Cuenta
 
 
+# Fixtures
+
 @pytest.fixture
 def response(client) -> HttpResponse:
     return client.get(reverse('mov_nuevo'))
@@ -53,6 +55,8 @@ def response_post_gya(client, post_data: dict) -> HttpResponse:
 def mock_titular_principal(mocker, titular):
     return mocker.patch('diario.forms.TITULAR_PRINCIPAL', titular.sk)
 
+
+# Tests
 
 def test_usa_template_mov_form(cuenta, response):
     asserts.assertTemplateUsed(response, 'diario/mov_form.html')

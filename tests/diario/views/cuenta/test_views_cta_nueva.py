@@ -7,6 +7,8 @@ from pytest_django import asserts
 from diario.models import Titular, Cuenta, CuentaInteractiva
 
 
+# Fixtures
+
 @pytest.fixture(autouse=True)
 def titular_principal(titular_principal):
     return titular_principal
@@ -16,6 +18,8 @@ def titular_principal(titular_principal):
 def post_data(fecha: date) -> dict:
     return {'nombre': 'Cuenta nueva', 'sk': 'cn', 'fecha_creacion': fecha}
 
+
+# Tests
 
 def test_si_no_hay_titulares_redirige_a_crear_titular_con_get(client):
     Titular.todes().delete()

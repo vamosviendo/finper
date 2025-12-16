@@ -12,6 +12,8 @@ from utils.numeros import float_format
 from utils.tiempo import str2date
 
 
+# Fixtures
+
 @pytest.fixture
 def subcuenta_otro_titular(cuenta_de_dos_titulares: CuentaAcumulativa) -> CuentaInteractiva:
     return cuenta_de_dos_titulares.subcuentas.first()
@@ -113,6 +115,8 @@ def subsubcuenta_3_con_movimientos(
 
     return ssc3
 
+
+# Tests
 
 def test_detalle_de_cuenta_interactiva(
         browser,

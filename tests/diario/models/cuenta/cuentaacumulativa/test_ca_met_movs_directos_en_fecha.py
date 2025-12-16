@@ -1,5 +1,3 @@
-import pytest
-
 from diario.models import Movimiento, Cuenta
 from utils.helpers_tests import dividir_en_dos_subcuentas
 

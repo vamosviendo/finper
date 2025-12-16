@@ -9,6 +9,8 @@ from diario.models import Cuenta, CuentaInteractiva
 from diario.views import cta_div_view
 
 
+# Fixtures
+
 @pytest.fixture
 def mock_form_dividir_cuenta(mocker, patch_save) -> MagicMock:
     return mocker.patch('diario.views.FormDividirCuenta', new_callable=patch_save)
@@ -46,6 +48,8 @@ def int_response(client, cuenta_con_saldo: CuentaInteractiva) -> HttpResponse:
         }
     )
 
+
+# Tests
 
 def test_usa_template_cta_div_form(client, cuenta):
     response = client.get(reverse('cta_div', args=[cuenta.sk]))

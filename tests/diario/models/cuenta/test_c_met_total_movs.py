@@ -1,7 +1,6 @@
 import pytest
 
 from diario.models import Movimiento
-from utils.varios import el_que_no_es
 
 pytestmark = pytest.mark.usefixtures(
         'entrada',

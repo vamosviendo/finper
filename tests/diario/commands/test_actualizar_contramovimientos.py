@@ -4,6 +4,8 @@ from django.core.management import call_command
 from diario.models import Movimiento
 
 
+# Fixtures
+
 @pytest.fixture
 def otro_credito(cuenta, cuenta_ajena, dia_posterior):
     return Movimiento.crear(
@@ -14,6 +16,8 @@ def otro_credito(cuenta, cuenta_ajena, dia_posterior):
         dia=dia_posterior,
     )
 
+
+# Tests
 
 def test_reemplaza_detalle_por_concepto(credito, otro_credito):
     contramov_credito = Movimiento.tomar(id=credito.id_contramov)

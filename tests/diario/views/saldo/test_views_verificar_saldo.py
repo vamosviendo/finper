@@ -5,10 +5,14 @@ from django.urls import reverse
 from pytest_django import asserts
 
 
+# Fixtures
+
 @pytest.fixture
 def mock_verificar_saldos(mocker) -> MagicMock:
     return mocker.patch('diario.views.verificar_saldos')
 
+
+# Tests
 
 def test_verifica_saldo_de_cuentas(client, mock_verificar_saldos):
     client.get(reverse('verificar_saldos'))

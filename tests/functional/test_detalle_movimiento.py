@@ -10,10 +10,14 @@ from utils.helpers_tests import fecha2page
 from utils.numeros import float_format
 
 
+# Fixtures
+
 @pytest.fixture
 def mock_titular_principal(mocker, titular):
     return mocker.patch('diario.forms.TITULAR_PRINCIPAL', titular.sk)
 
+
+# Tests
 
 def test_detalle_movimiento(browser, entrada, salida, traspaso, cuenta_acumulativa):
     browser.ir_a_pag()

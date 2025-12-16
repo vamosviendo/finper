@@ -8,6 +8,8 @@ from utils import errors
 from vvmodel.errors import ErrorCambioEnCampoFijo
 
 
+# Fixtures
+
 @pytest.fixture
 def mock_titular_principal(titular, otro_titular, mocker):
     mock_titular_principal = mocker.patch(
@@ -16,6 +18,8 @@ def mock_titular_principal(titular, otro_titular, mocker):
     )
     return mock_titular_principal
 
+
+# Tests
 
 def test_completa_campo_titular_con_titular_por_defecto(mock_titular_principal, otro_titular):
     cuenta = CuentaInteractiva(nombre='Efectivo', sk='e')

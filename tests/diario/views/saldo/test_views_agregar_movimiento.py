@@ -5,12 +5,16 @@ from pytest_django import asserts
 from diario.models import Cuenta
 
 
+# Fixtures
+
 @pytest.fixture
 def full_url(cuenta: Cuenta, cuenta_2: Cuenta) -> str:
     return \
         f"{reverse('agregar_movimiento', args=[cuenta_2.sk])}" \
         f"?ctas={cuenta.sk}!{cuenta_2.sk}"
 
+
+# Tests
 
 def test_redirige_a_corregir_saldo_con_ctas_erroneas_menos_la_corregida(
         client, full_url, cuenta):

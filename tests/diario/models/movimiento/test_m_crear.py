@@ -4,6 +4,8 @@ from diario.models import Cuenta, CuentaInteractiva, Moneda, Movimiento, SaldoDi
 from utils import errors
 
 
+# Fixtures
+
 @pytest.fixture
 def mock_calcular(mocker):
     return mocker.patch('diario.models.movimiento.SaldoDiario.calcular')
@@ -13,6 +15,8 @@ def mock_calcular(mocker):
 def dia(dia):
     return dia
 
+
+# Tests
 
 def test_no_admite_cuentas_acumulativas(cuenta_acumulativa):
     with pytest.raises(

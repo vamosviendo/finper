@@ -10,10 +10,14 @@ from utils.errors import ErrorFechaCreacionPosteriorAConversion, \
     ErrorMovimientoPosteriorAConversion, ErrorDeSuma
 
 
+# Fixtures
+
 @pytest.fixture
 def mock_saldo_ok(mocker) -> MagicMock:
     return mocker.patch('diario.models.cuenta.CuentaInteractiva.saldo_ok')
 
+
+# Tests
 
 def test_verifica_saldo_cuenta_antes_de_dividirla(mock_saldo_ok, cuenta, dicts_subcuentas):
     cuenta.dividir_entre(*dicts_subcuentas)

@@ -1,5 +1,4 @@
 import pytest
-from django.urls import reverse
 from pytest_django import asserts
 
 from diario.forms import FormCuenta

@@ -1,5 +1,3 @@
-import pytest
-
 from diario.models import CuentaInteractiva, Movimiento, CuentaAcumulativa
 
 

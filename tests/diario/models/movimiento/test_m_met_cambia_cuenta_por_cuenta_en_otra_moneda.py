@@ -1,6 +1,6 @@
 import pytest
 
-from diario.models import Movimiento, Moneda
+from diario.models import Movimiento
 from utils.varios import el_que_no_es
 
 @pytest.mark.parametrize("sentido", ["entrada", "salida"])

@@ -5,10 +5,14 @@ from selenium.webdriver.common.by import By
 from diario.models import Movimiento
 
 
+# Fixtures
+
 @pytest.fixture(autouse=True)
 def mock_titular_principal(mocker, titular):
     return mocker.patch('diario.forms.TITULAR_PRINCIPAL', titular.sk)
 
+
+# Tests
 
 def test_crear_cuenta(browser, titular, fecha):
     """ Cuando vamos a la página de cuenta nueva y completamos el formulario,

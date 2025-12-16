@@ -3,11 +3,13 @@ from typing import Any, Dict, List
 from unittest.mock import MagicMock
 
 import pytest
-from django.forms import fields, DateInput
+from django.forms import DateInput
 
 from diario.forms import FormDividirCuenta
 from diario.models import CuentaInteractiva, Titular
 
+
+# Fixtures
 
 @pytest.fixture
 def form(cuenta_con_saldo: CuentaInteractiva, otro_titular: Titular, fecha: date) -> FormDividirCuenta:
@@ -60,6 +62,8 @@ def mock_dividir_y_actualizar(mocker) -> MagicMock:
         'diario.forms.CuentaInteractiva.dividir_y_actualizar'
     )
 
+
+# Tests
 
 def test_save_divide_cuenta(mocker, form, cuenta_con_saldo, subcuentas, fecha):
     mock_dividir_entre = mocker.patch('diario.forms.CuentaInteractiva.dividir_entre', autospec=True)

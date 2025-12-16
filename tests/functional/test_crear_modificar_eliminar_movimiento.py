@@ -11,6 +11,8 @@ from utils.numeros import float_format, format_float
 from utils.varios import el_que_no_es
 
 
+# Fixtures
+
 @pytest.fixture
 def valores() -> dict:
     return {
@@ -20,6 +22,8 @@ def valores() -> dict:
         "importe": 50.0
     }
 
+
+# Tests
 
 def test_crear_movimiento(browser, cuenta, entrada, salida_posterior, dia_tardio, valores):
     """ Cuando vamos a la página de cuenta nueva y completamos el formulario,

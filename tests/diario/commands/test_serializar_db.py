@@ -11,6 +11,8 @@ from diario.serializers import MovimientoSerializado, DiaSerializado, SaldoDiari
 from utils.archivos import es_json_valido
 
 
+# Utils y fixtures
+
 @pytest.fixture(autouse=True)
 def borrar_db_full():
     yield
@@ -53,6 +55,8 @@ def varios_movimientos(
 def varios_dias(dia_temprano, dia_anterior, dia, dia_posterior, dia_tardio, dia_tardio_plus):
     return [dia_temprano, dia_anterior, dia, dia_posterior, dia_tardio, dia_tardio_plus]
 
+
+# Tests
 
 def test_genera_archivo_db_full_json():
     call_command('serializar_db')

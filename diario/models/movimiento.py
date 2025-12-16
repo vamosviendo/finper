@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, List, Tuple, Optional, Self, cast, Iterable
+from typing import TYPE_CHECKING, List, Tuple, Optional, Self, cast
 
 from datetime import date
 

@@ -6,6 +6,8 @@ from django.core.exceptions import ValidationError
 from diario.models import CuentaAcumulativa
 
 
+# Fixtures
+
 @pytest.fixture
 def nueva_fecha(cuenta_acumulativa: CuentaAcumulativa) -> date:
     return cuenta_acumulativa.fecha_conversion + timedelta(10)
@@ -18,6 +20,8 @@ def subcuentas_posteriores(cuenta_acumulativa: CuentaAcumulativa, nueva_fecha: d
         sc.full_clean()
         sc.save()
 
+
+# Tests
 
 def test_permite_cambiar_fecha_de_conversion_de_cuenta_por_fecha_posterior_si_no_es_posterior_a_fecha_de_creacion_de_sus_subcuentas(
         cuenta_acumulativa, nueva_fecha, subcuentas_posteriores):

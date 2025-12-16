@@ -4,6 +4,8 @@ from diario.forms import FormCotizacion
 from diario.models import Cotizacion
 
 
+# Fixtures
+
 @pytest.fixture
 def formcot(dolar) -> FormCotizacion:
     return FormCotizacion(moneda=dolar)
@@ -17,6 +19,8 @@ def formcot_data(fecha) -> dict:
         "importe_venta": 1050,
     }
 
+
+# Tests
 
 @pytest.mark.parametrize("campo", Cotizacion.form_fields)
 def test_muestra_campos_necesarios(formcot, campo):

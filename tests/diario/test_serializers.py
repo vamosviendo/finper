@@ -8,6 +8,8 @@ from diario.serializers import CuentaSerializada, DiaSerializado, MovimientoSeri
     MonedaSerializada, TitularSerializado, CotizacionSerializada
 
 
+# Fixtures
+
 @pytest.fixture
 def cuenta_int_serializada(cuenta: CuentaInteractiva, db_serializada: SerializedDb) -> CuentaSerializada:
     return CuentaSerializada.primere(db_serializada)
@@ -48,6 +50,8 @@ def titular_serializado(titular: Titular, db_serializada: SerializedDb) -> Titul
 def cotizacion_serializada(cotizacion_dolar: Cotizacion, db_serializada: SerializedDb) -> CotizacionSerializada:
     return CotizacionSerializada.primere(db_serializada)
 
+
+# Tests
 
 class TestCuentaSerializada:
     def test_campos_polimorficos_devuelve_campos_de_cuenta_interactiva_correspondiente_a_cuenta(

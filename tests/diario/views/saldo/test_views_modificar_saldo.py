@@ -6,11 +6,15 @@ from diario.models import Cuenta
 from utils.helpers_tests import dividir_en_dos_subcuentas
 
 
+# Fixtures
+
 @pytest.fixture
 def full_url(cuenta: Cuenta, cuenta_2: Cuenta) -> str:
     return f"{reverse('modificar_saldo', args=[cuenta.sk])}" \
            f"?ctas={cuenta.sk}!{cuenta_2.sk}"
 
+
+# Tests
 
 def test_redirige_a_corregir_saldo_con_ctas_erroneas_menos_la_corregida(
         client, full_url, cuenta_2):

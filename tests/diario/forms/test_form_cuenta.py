@@ -7,10 +7,14 @@ from diario.forms import FormCuenta
 from diario.models import Titular, Moneda, Cuenta, CuentaInteractiva
 
 
+# Fixtures
+
 @pytest.fixture(autouse=True)
 def mock_titular_principal(mocker, titular):
     return mocker.patch('diario.forms.TITULAR_PRINCIPAL', titular.sk)
 
+
+# Tests
 
 @pytest.mark.parametrize("campo", CuentaInteractiva.form_fields)
 def test_muestra_campos_necesarios(campo):

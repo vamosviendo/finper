@@ -9,6 +9,8 @@ from .helpers import texto_en_hijos_respectivos
 from diario.models import CuentaInteractiva, Dia, Movimiento, Titular
 
 
+# Fixtures
+
 @pytest.fixture
 def cuenta_titular(cuenta: CuentaInteractiva, dia: Dia) -> CuentaInteractiva:
     Movimiento.crear('Saldo al inicio', 500, cuenta, dia=dia)
@@ -57,6 +59,8 @@ def salida_otro_titular(cuenta_otro_titular: CuentaInteractiva, dia_tardio: Dia)
         dia=dia_tardio
     )
 
+
+# Tests
 
 def test_detalle_titular(
         browser,

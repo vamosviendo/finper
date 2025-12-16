@@ -7,6 +7,8 @@ from diario.models import CuentaInteractiva, Moneda, Dia, Movimiento
 from utils import errors
 
 
+# Fixtures
+
 @pytest.fixture
 def formmov(cuenta: CuentaInteractiva, dia: Dia) -> FormMovimiento:
     return FormMovimiento(data={
@@ -34,6 +36,8 @@ def formmov_distintas_monedas(
         'moneda': dolar,
     })
 
+
+# Tests
 
 def test_acepta_movimientos_bien_formados(formmov, formmov_distintas_monedas):
     assert formmov.is_valid(), f"Form no válido: {formmov.errors.as_data()}"

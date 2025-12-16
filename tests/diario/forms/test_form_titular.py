@@ -5,6 +5,8 @@ from diario.forms import FormTitular
 from diario.models import Titular
 
 
+# Fixtures
+
 @pytest.fixture
 def formtit() -> FormTitular:
     return FormTitular()
@@ -23,6 +25,8 @@ def formtit_data(fecha) -> dict:
 def formtit_full(formtit_data):
     return FormTitular(data=formtit_data)
 
+
+# Tests
 
 @pytest.mark.parametrize("campo", Titular.form_fields)
 def test_muestra_campos_necesarios(formtit, campo):

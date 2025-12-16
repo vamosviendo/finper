@@ -10,10 +10,14 @@ from diario.settings_app import TEMPLATE_HOME
 from utils.helpers_tests import fecha2page
 
 
+# Fixtures
+
 @pytest.fixture
 def response(client) -> TemplateResponse:
     return client.get(reverse('home'))
 
+
+# Tests
 
 class TestBaseHome:
 

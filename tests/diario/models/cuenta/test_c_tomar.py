@@ -1,5 +1,3 @@
-from django.core.exceptions import FieldError, MultipleObjectsReturned
-
 from diario.models import Cuenta, CuentaInteractiva, CuentaAcumulativa
 from utils.helpers_tests import dividir_en_dos_subcuentas
 

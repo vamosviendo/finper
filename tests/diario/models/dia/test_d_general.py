@@ -11,7 +11,7 @@ def test_guarda_y_recupera_dias(fecha):
     dia.clean_save()
 
     assert Dia.cantidad() == 1
-    dia = Dia.tomar(fecha=fecha)     # No da error
+    Dia.tomar(fecha=fecha)     # No da error
 
 
 def test_no_permite_fechas_duplicadas(dia):

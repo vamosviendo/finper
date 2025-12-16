@@ -5,6 +5,8 @@ from diario.forms import FormMoneda
 from diario.models import Moneda
 
 
+# Fixtures
+
 @pytest.fixture
 def formmon() -> FormMoneda:
     return FormMoneda()
@@ -23,6 +25,8 @@ def formmon_data() -> dict:
 def formmon_full(formmon_data) -> FormMoneda:
     return FormMoneda(data=formmon_data)
 
+
+# Tests
 
 @pytest.mark.parametrize("campo", Moneda.form_fields)
 def test_muestra_campos_necesarios(formmon, campo):

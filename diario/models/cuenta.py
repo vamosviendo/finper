@@ -43,7 +43,6 @@ class CuentaManager(PolymorphManager):
 
 class CuentaCleaner(Cleaner):
     def __init__(self, obj: Cuenta, omitir: Iterable[str] | None = None):
-        print("CuentaCleaner init")
         super().__init__(obj=obj, omitir=omitir)
         self._moneda_asignada = False
 

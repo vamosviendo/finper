@@ -1,6 +1,5 @@
 from urllib.parse import urlparse
 
-from django.urls import reverse
 from selenium.webdriver.common.by import By
 
 from utils.numeros import float_format

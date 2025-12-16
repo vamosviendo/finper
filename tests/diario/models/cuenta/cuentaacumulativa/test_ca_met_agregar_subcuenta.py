@@ -5,10 +5,14 @@ import pytest
 from diario.models import Cuenta
 
 
+# Fixtures
+
 @pytest.fixture
 def subcuenta_agregada(cuenta_acumulativa, titular):
     return cuenta_acumulativa.agregar_subcuenta('subc3', 'sc3', titular)
 
+
+# Tests
 
 def test_crea_nueva_subcuenta(cuenta_acumulativa, titular):
     cant_subcuentas = cuenta_acumulativa.subcuentas.count()

@@ -3,10 +3,14 @@ import pytest
 from diario.models import CuentaInteractiva, Movimiento, Cuenta
 
 
+# Fixtures
+
 @pytest.fixture(autouse=True)
 def titular_principal(titular_principal):
     return titular_principal
 
+
+# Tests
 
 def test_llama_a_metodo_crear_de_clase_cuenta(mocker):
     mock_crear = mocker.patch('diario.models.cuenta.Cuenta.crear')
