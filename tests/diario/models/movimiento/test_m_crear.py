@@ -391,3 +391,56 @@ class TestMovimientoEntreCuentasDeDistintosTitulares:
         assert credito.cta_entrada.titular.cuenta_credito_con(credito.cta_salida.titular).sk == sk_cd
         assert credito.cta_entrada.titular.cuenta_credito_con(credito.cta_salida.titular).nombre == nombre_cd
         assert credito.cta_salida.titular.cuenta_credito_con(credito.cta_entrada.titular).nombre == nombre_ca
+
+    def test_contramovimiento_credito_tiene_orden_dia_distinto_del_movimiento_originante(
+            self, entrada, dia, cuenta, cuenta_ajena):
+        mov = Movimiento.crear(
+            dia=dia, concepto="prestamo", importe=10, cta_entrada=cuenta_ajena, cta_salida=cuenta,
+        )
+
+        contramov = Movimiento.tomar(id=mov.id_contramov)
+        assert contramov.orden_dia != mov.orden_dia
+        assert contramov.orden_dia == mov.orden_dia - 1
+        assert entrada.orden_dia == 0
+
+
+class TestOrdenDia:
+    def genera_automaticamente_orden_dia(self, dia, cuenta):
+        mov = Movimiento.crear(dia=dia, concepto="mov nuevo", importe=10, cta_entrada=cuenta)
+        assert mov.orden_dia is not None
+
+    def test_primer_mov_del_dia_tiene_orden_dia_cero(self, dia, cuenta):
+        mov = Movimiento.crear(dia=dia, concepto="mov nuevo", importe=10, cta_entrada=cuenta)
+        assert mov.orden_dia == 0
+
+    def test_nuevo_movimiento_tiene_orden_dia_siguiente_al_ultimo_del_dia(self, dia, cuenta, entrada, salida):
+        mov = Movimiento.crear(dia=dia, concepto="mov nuevo", importe=10, cta_entrada=cuenta)
+        assert mov.orden_dia == 2
+
+    def test_si_se_crea_movimiento_con_orden_dia_existente_movs_posteriores_suben_de_orden_dia(
+            self, dia, cuenta, entrada, salida, traspaso):
+        Movimiento.crear(
+            dia=dia, concepto="mov nuevo", importe=10, cta_entrada=cuenta,
+            orden_dia=1
+        )
+        salida.refresh_from_db()
+        assert salida.orden_dia == 2
+
+        traspaso.refresh_from_db()
+        assert traspaso.orden_dia == 3
+
+    def test_si_se_crea_movimiento_con_orden_dia_demasiado_alto_se_ajusta_al_ultimo_orden_dia_mas_uno(
+            self, dia, cuenta, entrada, salida):
+        mov = Movimiento.crear(
+            dia=dia, concepto="mov nuevo", importe=10, cta_entrada=cuenta,
+            orden_dia=10
+        )
+        assert mov.orden_dia == salida.orden_dia + 1
+
+    def test_si_se_crea_movimiento_con_orden_dia_demasiado_alto_en_dia_sin_movimientos_se_ajusta_a_cero(
+            self, dia, cuenta):
+        mov = Movimiento.crear(
+            dia=dia, concepto="mov nuevo", importe=10, cta_entrada=cuenta,
+            orden_dia=10
+        )
+        assert mov.orden_dia == 0

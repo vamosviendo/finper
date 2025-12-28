@@ -185,3 +185,13 @@ def test_no_puede_eliminarse_movimiento_con_cuenta_acumulativa(
             match=errors.MOVIMIENTO_CON_CA_ELIMINADO
     ):
         mov.delete()
+
+
+def test_movimientos_posteriores_del_dia_bajan_de_orden(
+        entrada, salida, traspaso):
+    assert traspaso.orden_dia == 2
+
+    salida.delete()
+    traspaso.refresh_from_db()
+
+    assert traspaso.orden_dia == 1

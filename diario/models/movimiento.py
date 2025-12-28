@@ -7,7 +7,6 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.urls import reverse
-from django_ordered_field import OrderedCollectionField
 
 from vvmodel.cleaners import Cleaner
 from vvmodel.models import MiModel
@@ -184,7 +183,7 @@ class MovimientoCleaner(Cleaner):
 
 class Movimiento(MiModel):
     dia = models.ForeignKey(Dia, on_delete=models.CASCADE, null=True, blank=True, related_name="movimiento_set")
-    orden_dia = OrderedCollectionField(collection='dia')
+    orden_dia = models.PositiveIntegerField(null=True, blank=True)
     concepto = models.CharField(max_length=120)
     detalle = models.TextField(blank=True, null=True)
     _importe = models.FloatField()
@@ -420,6 +419,10 @@ class Movimiento(MiModel):
 
         super().delete(*args, **kwargs)
 
+        # Ajustar orden_dia de movimientos posteriores del dia
+        for mov in self.dia.movs().filter(orden_dia__gt=self.orden_dia):
+            Movimiento.filtro(pk=mov.pk).update(orden_dia=mov.orden_dia-1)
+
         if self.id_contramov:
             self._eliminar_contramovimiento()
 
@@ -456,7 +459,22 @@ class Movimiento(MiModel):
             if self.es_prestamo_o_devolucion():
                 self._gestionar_transferencia()
 
+            # Determinar orden_dia
+            try:
+                ultimo_orden_dia = self.dia.movs().last().orden_dia
+                if self.orden_dia is None:
+                    self.orden_dia = ultimo_orden_dia + 1
+                else:
+                    if self.orden_dia <= ultimo_orden_dia:
+                        for mov in self.dia.movs().filter(orden_dia__gte=self.orden_dia):
+                            Movimiento.filtro(pk=mov.pk).update(orden_dia=mov.orden_dia+1)
+                    else:
+                        self.orden_dia = ultimo_orden_dia + 1
+            except AttributeError:  # self.dia.movs().last() is None - No hay movs en el día
+                self.orden_dia = 0
+
             super().save(*args, **kwargs)
+
             if self.cta_entrada:
                 SaldoDiario.calcular(self, "entrada")
             if self.cta_salida:
@@ -494,8 +512,30 @@ class Movimiento(MiModel):
 
             self._recalcular_saldos_diarios()
 
+            # Determinar orden_dia
             if self.cambia_campo('dia'):
-                self._actualizar_orden_dia()
+                if self.dia > self.viejo.dia:
+                    self.orden_dia = 0
+
+                    for mov in self.dia.movs().exclude(pk=self.pk):
+                        Movimiento.filtro(pk=mov.pk).update(orden_dia=mov.orden_dia+1)
+                else:
+                    try:
+                        self.orden_dia = self.dia.movs().last().orden_dia + 1
+                    except AttributeError:  # last() is None. No hay movimientos en el día:
+                        self.orden_dia = 0
+            else:
+                if self.cambia_campo("orden_dia"):
+                    if self.orden_dia < self.viejo.orden_dia:
+                        for mov in self.dia.movs().filter(orden_dia__gte=self.orden_dia, orden_dia__lt=self.viejo.orden_dia):
+                            Movimiento.filtro(pk=mov.pk).update(orden_dia=mov.orden_dia+1)
+                    else:
+                        for mov in self.dia.movs().filter(orden_dia__gt=self.viejo.orden_dia, orden_dia__lte=self.orden_dia):
+                            Movimiento.filtro(pk=mov.pk).update(orden_dia=mov.orden_dia-1)
+                        try:
+                            self.orden_dia = self.dia.movs().exclude(pk=self.pk).last().orden_dia + 1
+                        except AttributeError:  # last() is None. No hay movimientos en el día:
+                            self.orden_dia = 0
 
             super().save(*args, **kwargs)
 
@@ -672,12 +712,6 @@ class Movimiento(MiModel):
             cuenta.clean_save(omitir=["fecha_de_conversion_no_puede_ser_posterior_a_fecha_de_creacion_de_subcuenta"])
             subcuenta.clean_save()
 
-    def _actualizar_orden_dia(self):
-        if self.dia.fecha > self.viejo.dia.fecha:
-            self.orden_dia = 0
-        else:
-            self.orden_dia = self.dia.movimientos.count()
-
     def _hay_que_recalcular_cotizacion(self) -> bool:
         """ Si cambia la moneda del movimiento, se recalcula la cotización
             del movimiento en base a las nuevas monedas.
@@ -796,6 +830,7 @@ class Movimiento(MiModel):
             esgratis=True
         )
         self.id_contramov = contramov.id
+
         for cuenta in cuenta_acreedora, cuenta_deudora:
             if cuenta.saldo() == 0:
                 cuenta.activa = False

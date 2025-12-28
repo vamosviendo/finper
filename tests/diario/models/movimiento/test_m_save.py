@@ -245,6 +245,15 @@ class TestSaveMovimientoEntreCuentasDeDistintosTitulares:
             assert contramov.cta_entrada == Cuenta.tomar(sk=f"_{t2.sk}-{t1.sk}")
             assert contramov.cta_salida == Cuenta.tomar(sk=f"_{t1.sk}-{t2.sk}")
 
+    def test_si_movimiento_normal_se_convierte_en_credito_el_contramovimiento_toma_orden_dia_distinto(
+            self, traspaso, cuenta_ajena):
+        traspaso.cta_entrada = cuenta_ajena
+        traspaso.clean_save()
+
+        contramov = Movimiento.tomar(id=traspaso.id_contramov)
+        assert contramov.orden_dia != traspaso.orden_dia
+        assert contramov.orden_dia == traspaso.orden_dia + 1
+
 
 @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
 class TestSaveCambiaImporte:
@@ -1578,6 +1587,116 @@ class TestSaveCambiaImporteYCuentas:
 
         saldo_diario.refresh_from_db()
         assert saldo_diario.importe == importe_sd + mov.importe_cta(sentido)
+
+
+class TestSaveCambiaOrdenDia:
+    # Fixtures
+
+    @pytest.fixture
+    def otra_entrada(self, cuenta, dia):
+        return Movimiento.crear(
+            concepto='Otra entrada', importe=120, cta_entrada=cuenta, dia=dia
+        )
+
+    @pytest.fixture
+    def otra_salida(self, cuenta, dia):
+        return Movimiento.crear(
+            concepto='Otra salida', importe=12, cta_salida=cuenta, dia=dia
+        )
+
+    # Tests
+    def test_si_se_cambia_orden_dia_a_uno_anterior_movimientos_entre_orden_dia_anterior_y_nuevo_elevan_su_orden_dia(
+            self, entrada, salida, traspaso, otra_salida, otra_entrada):
+        otra_salida.orden_dia = 1
+        otra_salida.clean_save()
+
+        entrada.refresh_from_db()
+        assert entrada.orden_dia == 0
+
+        salida.refresh_from_db()
+        assert salida.orden_dia == 2
+
+        traspaso.refresh_from_db()
+        assert traspaso.orden_dia == 3
+
+        otra_entrada.refresh_from_db()
+        assert otra_entrada.orden_dia == 4
+
+    def test_si_se_cambia_orden_dia_a_uno_posterior_movimientos_entre_orden_dia_anterior_y_nuevo_bajan_su_orden_dia(
+            self, entrada, salida, traspaso, otra_salida, otra_entrada):
+        salida.orden_dia = 3
+        salida.clean_save()
+
+        entrada.refresh_from_db()
+        assert entrada.orden_dia == 0
+
+        traspaso.refresh_from_db()
+        assert traspaso.orden_dia == 1
+
+        otra_salida.refresh_from_db()
+        assert otra_salida.orden_dia == 2
+
+        otra_entrada.refresh_from_db()
+        assert otra_entrada.orden_dia == 4
+
+    def test_si_cambia_orden_dia_a_uno_demasiado_alto_se_ajusta_al_ultimo_mas_uno(self, entrada, salida, traspaso):
+        traspaso.orden_dia = 5
+        traspaso.clean_save()
+        assert traspaso.orden_dia == 2
+    def test_si_cambia_dia_a_uno_posterior_orden_dia_pasa_a_cero_y_se_mueve_orden_dia_de_movimientos_restantes_de_nuevo_dia(
+            self, entrada, salida, dia_posterior, salida_posterior, traspaso_posterior):
+        salida.dia = dia_posterior
+        salida.clean_save()
+
+        assert salida.orden_dia == 0
+
+        salida_posterior.refresh_from_db()
+        assert salida_posterior.orden_dia == 1
+
+        traspaso_posterior.refresh_from_db()
+        assert traspaso_posterior.orden_dia == 2
+
+    def test_si_cambia_dia_a_uno_anterior_orden_dia_pasa_al_ultimo_del_nuevo_dia_mas_uno(
+            self, entrada, salida, dia_anterior, entrada_anterior, entrada_anterior_otra_cuenta):
+        salida.dia = dia_anterior
+        salida.clean_save()
+
+        assert salida.orden_dia == 2
+
+        entrada_anterior.refresh_from_db()
+        assert entrada_anterior.orden_dia == 0
+
+        entrada_anterior_otra_cuenta.refresh_from_db()
+        assert entrada_anterior_otra_cuenta.orden_dia == 1
+
+    def test_si_cambia_dia_a_uno_anterior_y_orden_dia_no_toma_en_cuenta_orden_dia_cambiado(
+            self, traspaso, entrada, salida, dia_anterior, entrada_anterior, entrada_anterior_otra_cuenta):
+        entrada.dia = dia_anterior
+        entrada.orden_dia = 0
+        entrada.clean_save()
+
+        assert entrada.orden_dia == 2
+
+    def test_si_cambia_dia_a_uno_posterior_y_orden_dia_no_toma_en_cuenta_orden_dia_cambiado(
+            self, traspaso, entrada, salida, dia_posterior, salida_posterior, traspaso_posterior):
+        entrada.dia = dia_posterior
+        entrada.orden_dia = 2
+        entrada.clean_save()
+
+        assert entrada.orden_dia == 0
+
+        salida_posterior.refresh_from_db()
+        assert salida_posterior.orden_dia == 1
+
+        traspaso_posterior.refresh_from_db()
+        assert traspaso_posterior.orden_dia == 2
+
+    def test_si_cambia_dia_a_uno_anterior_sin_movimientos_orden_dia_pasa_a_cero(self, entrada, salida, dia_temprano):
+        salida.dia = dia_temprano
+        salida.clean_save()
+
+        assert salida.orden_dia == 0
+
 
 
 @pytest.mark.parametrize('sentido', ['entrada', 'salida'])
