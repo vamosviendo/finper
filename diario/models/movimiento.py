@@ -419,9 +419,7 @@ class Movimiento(MiModel):
 
         super().delete(*args, **kwargs)
 
-        # Ajustar orden_dia de movimientos posteriores del dia
-        for mov in self.dia.movs().filter(orden_dia__gt=self.orden_dia):
-            Movimiento.filtro(pk=mov.pk).update(orden_dia=mov.orden_dia-1)
+        self.desplazar_otros_movs_del_dia(desde=self.orden_dia+1, incremento=-1)
 
         if self.id_contramov:
             self._eliminar_contramovimiento()
@@ -459,19 +457,7 @@ class Movimiento(MiModel):
             if self.es_prestamo_o_devolucion():
                 self._gestionar_transferencia()
 
-            # Determinar orden_dia
-            try:
-                ultimo_orden_dia = self.dia.movs().last().orden_dia
-                if self.orden_dia is None:
-                    self.orden_dia = ultimo_orden_dia + 1
-                else:
-                    if self.orden_dia <= ultimo_orden_dia:
-                        for mov in self.dia.movs().filter(orden_dia__gte=self.orden_dia):
-                            Movimiento.filtro(pk=mov.pk).update(orden_dia=mov.orden_dia+1)
-                    else:
-                        self.orden_dia = ultimo_orden_dia + 1
-            except AttributeError:  # self.dia.movs().last() is None - No hay movs en el día
-                self.orden_dia = 0
+            self._asignar_orden_dia_nuevo()
 
             super().save(*args, **kwargs)
 
@@ -512,30 +498,7 @@ class Movimiento(MiModel):
 
             self._recalcular_saldos_diarios()
 
-            # Determinar orden_dia
-            if self.cambia_campo('dia'):
-                if self.dia > self.viejo.dia:
-                    self.orden_dia = 0
-
-                    for mov in self.dia.movs().exclude(pk=self.pk):
-                        Movimiento.filtro(pk=mov.pk).update(orden_dia=mov.orden_dia+1)
-                else:
-                    try:
-                        self.orden_dia = self.dia.movs().last().orden_dia + 1
-                    except AttributeError:  # last() is None. No hay movimientos en el día:
-                        self.orden_dia = 0
-            else:
-                if self.cambia_campo("orden_dia"):
-                    if self.orden_dia < self.viejo.orden_dia:
-                        for mov in self.dia.movs().filter(orden_dia__gte=self.orden_dia, orden_dia__lt=self.viejo.orden_dia):
-                            Movimiento.filtro(pk=mov.pk).update(orden_dia=mov.orden_dia+1)
-                    else:
-                        for mov in self.dia.movs().filter(orden_dia__gt=self.viejo.orden_dia, orden_dia__lte=self.orden_dia):
-                            Movimiento.filtro(pk=mov.pk).update(orden_dia=mov.orden_dia-1)
-                        try:
-                            self.orden_dia = self.dia.movs().exclude(pk=self.pk).last().orden_dia + 1
-                        except AttributeError:  # last() is None. No hay movimientos en el día:
-                            self.orden_dia = 0
+            self._asignar_orden_dia_existente()
 
             super().save(*args, **kwargs)
 
@@ -603,6 +566,20 @@ class Movimiento(MiModel):
 
     def es_anterior_a(self, otro: Movimiento) -> bool:
         return self.posicion < otro.posicion
+
+    def desplazar_otros_movs_del_dia(
+            self,
+            desde: int,
+            hasta: int | None=None,
+            incremento: int = 1,
+            exclude_self: bool =False):
+        movs = self.dia.movs().filter(orden_dia__gte=desde)
+        if hasta is not None:
+            movs = movs.filter(orden_dia__lt=hasta)
+        if exclude_self:
+            movs = movs.exclude(pk=self.pk)
+        for mov in movs:
+            Movimiento.filtro(pk=mov.pk).update(orden_dia=mov.orden_dia+incremento)
 
     def cambia_cuenta_por_cuenta_en_otra_moneda(self, moneda_del_movimiento: bool = True) -> bool:
         """ Devuelve true si alguna de las cuentas cambia por una cuenta en otra moneda.
@@ -901,6 +878,45 @@ class Movimiento(MiModel):
             detalle = 'Constitución de crédito'
 
         return detalle
+
+    def _asignar_orden_dia_nuevo(self):
+        try:
+            ultimo_orden_dia = self.dia.movs().last().orden_dia
+            if self.orden_dia is None:
+                self.orden_dia = ultimo_orden_dia + 1
+            else:
+                if self.orden_dia > ultimo_orden_dia:
+                    self.orden_dia = ultimo_orden_dia + 1
+                else:
+                    self.desplazar_otros_movs_del_dia(desde=self.orden_dia)
+        except AttributeError:  # self.dia.movs().last() is None - No hay movs en el día
+            self.orden_dia = 0
+
+    def _asignar_orden_dia_existente(self):
+        if self.cambia_campo('dia'):
+            if self.dia > self.viejo.dia:
+                self.orden_dia = 0
+                self.desplazar_otros_movs_del_dia(desde=0, exclude_self=True)
+            else:
+                try:
+                    self.orden_dia = self.dia.movs().last().orden_dia + 1
+                except AttributeError:  # last() is None. No hay movimientos en el día:
+                    self.orden_dia = 0
+        else:
+            if self.cambia_campo("orden_dia"):
+                if self.orden_dia < self.viejo.orden_dia:
+                    self.desplazar_otros_movs_del_dia(desde=self.orden_dia, hasta=self.viejo.orden_dia)
+                else:
+                    self.desplazar_otros_movs_del_dia(
+                        desde=self.viejo.orden_dia+1,
+                        hasta=self.orden_dia+1,
+                        incremento=-1
+                    )
+                    try:
+                        self.orden_dia = self.dia.movs().exclude(pk=self.pk).last().orden_dia + 1
+                    except AttributeError:  # last() is None. No hay movimientos en el día:
+                        self.orden_dia = 0
+
 
 '''
 (1) cuenta_acreedora y cuenta_deudora lo son con respecto al movimiento, no en
