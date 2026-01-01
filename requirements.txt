@@ -1,7 +1,7 @@
 # app
-asgiref==3.6.0
+asgiref==3.11.0
 beautifulsoup4==4.9.3
-Django==4.2.1
+Django < 7.0
 django-case-insensitive-field==1.0.7
 django-ordered-field==1.0.0
 django-stubs==4.2.6

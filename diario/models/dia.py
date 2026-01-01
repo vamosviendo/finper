@@ -48,7 +48,7 @@ class Dia (MiModel):
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         if self.sk is None:
             self.sk = self.fecha.strftime("%Y%m%d")
-        super().save(force_insert, force_update, using, update_fields)
+        super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
     @classmethod
     def hoy(cls) -> Self:

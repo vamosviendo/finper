@@ -85,7 +85,7 @@ class SaldoDiario(MiModel):
             actualizar_posteriores=True
     ):
         super().full_clean(exclude, validate_unique, validate_constraints)
-        self.save(force_insert, force_update, using, update_fields,
+        self.save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields,
                   actualizar_posteriores=actualizar_posteriores)
 
     def save(
@@ -111,7 +111,12 @@ class SaldoDiario(MiModel):
                 if actualizar_posteriores:
                     self._actualizar_posteriores(importe)
 
-        return super().save(force_insert, force_update, using, update_fields)
+        return super().save(
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields
+        )
 
     def tomar_de_bd(self) -> Self:
         return self.get_class().tomar_o_nada(cuenta=self.cuenta, dia=self.dia)

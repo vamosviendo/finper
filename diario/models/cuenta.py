@@ -215,11 +215,11 @@ class Cuenta(PolymorphModel):
 
     @property
     def es_interactiva(self) -> bool:
-        return str(self.content_type) == 'diario | cuenta interactiva'
+        return str(self.content_type) == 'Diario | cuenta interactiva'
 
     @property
     def es_acumulativa(self) -> bool:
-        return str(self.content_type) == 'diario | cuenta acumulativa'
+        return str(self.content_type) == 'Diario | cuenta acumulativa'
 
     @property
     def es_cuenta_credito(self) -> bool:
@@ -303,7 +303,13 @@ class Cuenta(PolymorphModel):
             **kwargs
     ):
         self.full_clean(exclude, validate_unique, validate_constraints, omitir)
-        self.save(force_insert, force_update, using, update_fields, **kwargs)
+        self.save(
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields,
+            **kwargs
+        )
 
     def clean_fields(self, exclude: Sequence[str] = None):
         self._pasar_sk_a_minuscula()
