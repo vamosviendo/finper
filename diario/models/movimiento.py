@@ -49,6 +49,20 @@ class MovimientoManager(models.Manager):
         return self.get(dia=dia, orden_dia=orden_dia)
 
 
+class PositionField(models.PositiveIntegerField):
+    def __init__(self, *args, **kwargs):
+        kwargs["null"] = True
+        kwargs["blank"] = True
+        super().__init__(*args, **kwargs)
+
+    def pre_save(self, model_instance, add):
+        if model_instance._state.adding:
+            model_instance._asignar_orden_dia_nuevo()
+        else:
+            model_instance._asignar_orden_dia_existente()
+        return super().pre_save(model_instance, add)
+
+
 class MovimientoCleaner(Cleaner):
 
     def __init__(self, obj: Movimiento, omitir: list[str] | None = None):
@@ -183,7 +197,7 @@ class MovimientoCleaner(Cleaner):
 
 class Movimiento(MiModel):
     dia = models.ForeignKey(Dia, on_delete=models.CASCADE, null=True, blank=True, related_name="movimiento_set")
-    orden_dia = models.PositiveIntegerField(null=True, blank=True)
+    orden_dia = PositionField()
     concepto = models.CharField(max_length=120)
     detalle = models.TextField(blank=True, null=True)
     _importe = models.FloatField()
@@ -463,7 +477,7 @@ class Movimiento(MiModel):
             if self.es_prestamo_o_devolucion():
                 self._gestionar_transferencia()
 
-            self._asignar_orden_dia_nuevo()
+            # self._asignar_orden_dia_nuevo()
 
             super().save(*args, **kwargs)
 
@@ -504,7 +518,7 @@ class Movimiento(MiModel):
 
             self._recalcular_saldos_diarios()
 
-            self._asignar_orden_dia_existente()
+            # self._asignar_orden_dia_existente()
 
             super().save(*args, **kwargs)
 
