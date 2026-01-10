@@ -56,11 +56,65 @@ class PositionField(models.PositiveIntegerField):
         super().__init__(*args, **kwargs)
 
     def pre_save(self, model_instance, add):
-        if model_instance._state.adding:
-            model_instance._asignar_orden_dia_nuevo()
+        movimiento = cast(Movimiento, model_instance)
+        if movimiento._state.adding:
+
+            # Agregando movimiento nuevo
+            if movimiento.orden_dia is None:
+                try:
+                    valor = movimiento.dia.movs().last().orden_dia + 1  # type: ignore[operator]
+                except AttributeError:  # movimiento.dia.movs().last() is None. No hay movimientos en el día
+                    valor = 0
+            else:
+                valor = self._corregir_orden_dia(movimiento)
+                if add:
+                    movimiento.desplazar_otros_movs_del_dia(desde=movimiento.orden_dia)
         else:
-            model_instance._asignar_orden_dia_existente()
-        return super().pre_save(model_instance, add)
+
+            # Editando movimiento existente
+            mov_original = movimiento.tomar_de_bd()
+            valor = movimiento.orden_dia
+
+            if movimiento.dia > mov_original.dia:
+                valor = 0
+                movimiento.desplazar_otros_movs_del_dia(desde=0, exclude_self=True)
+
+            elif movimiento.dia < mov_original.dia:
+                try:
+                    valor = movimiento.dia.movs().last().orden_dia + 1  # type: ignore[operator]
+                except AttributeError:  # movimiento.dia.movs().last() is None. Día sin movimientos
+                    valor = 0
+
+            else:
+                if valor < mov_original.orden_dia:
+                    movimiento.desplazar_otros_movs_del_dia(
+                        desde=valor,
+                        hasta=mov_original.orden_dia,   # type: ignore[operator]
+                        exclude_self=True
+                    )
+
+                elif valor > mov_original.orden_dia:
+                    valor = self._corregir_orden_dia(movimiento)
+                    movimiento.desplazar_otros_movs_del_dia(
+                        desde=mov_original.orden_dia+1, # type: ignore[operator]
+                        hasta=valor+1,
+                        incremento=-1,
+                        exclude_self=True
+                    )
+
+        setattr(movimiento, self.attname, valor)
+
+        return getattr(movimiento, self.attname)
+
+    @staticmethod
+    def _corregir_orden_dia(movimiento):
+        try:
+            ultimo_orden_dia = movimiento.dia.movs().exclude(pk=movimiento.pk).last().orden_dia
+            if movimiento.orden_dia > ultimo_orden_dia:
+                return ultimo_orden_dia + 1
+            return movimiento.orden_dia
+        except AttributeError:
+            return 0
 
 
 class MovimientoCleaner(Cleaner):
@@ -898,44 +952,6 @@ class Movimiento(MiModel):
             detalle = 'Constitución de crédito'
 
         return detalle
-
-    def _asignar_orden_dia_nuevo(self):
-        try:
-            ultimo_orden_dia = self.dia.movs().last().orden_dia
-            if self.orden_dia is None:
-                self.orden_dia = ultimo_orden_dia + 1
-            else:
-                if self.orden_dia > ultimo_orden_dia:
-                    self.orden_dia = ultimo_orden_dia + 1
-                else:
-                    self.desplazar_otros_movs_del_dia(desde=self.orden_dia)
-        except AttributeError:  # self.dia.movs().last() is None - No hay movs en el día
-            self.orden_dia = 0
-
-    def _asignar_orden_dia_existente(self):
-        if self.cambia_campo('dia'):
-            if self.dia > self.viejo.dia:
-                self.orden_dia = 0
-                self.desplazar_otros_movs_del_dia(desde=0, exclude_self=True)
-            else:
-                try:
-                    self.orden_dia = self.dia.movs().last().orden_dia + 1
-                except AttributeError:  # last() is None. No hay movimientos en el día:
-                    self.orden_dia = 0
-        else:
-            if self.cambia_campo("orden_dia"):
-                if self.orden_dia < self.viejo.orden_dia:
-                    self.desplazar_otros_movs_del_dia(desde=self.orden_dia, hasta=self.viejo.orden_dia)
-                else:
-                    self.desplazar_otros_movs_del_dia(
-                        desde=self.viejo.orden_dia+1,
-                        hasta=self.orden_dia+1,
-                        incremento=-1
-                    )
-                    try:
-                        self.orden_dia = self.dia.movs().exclude(pk=self.pk).last().orden_dia + 1
-                    except AttributeError:  # last() is None. No hay movimientos en el día:
-                        self.orden_dia = 0
 
 
 '''

@@ -301,6 +301,11 @@ class TestCampoOrdenDia:
         traspaso.clean_save()
         assert traspaso.orden_dia == 2
 
+    def test_si_cambia_orden_dia_en_dia_con_un_solo_movimiento_se_acusta_a_cero(self, entrada):
+        entrada.orden_dia = 5
+        entrada.clean_save()
+        assert entrada.orden_dia == 0
+
     def test_si_cambia_dia_a_uno_posterior_orden_dia_pasa_a_cero_y_se_mueve_orden_dia_de_movimientos_restantes_de_nuevo_dia(
             self, entrada, salida, dia_posterior, salida_posterior, traspaso_posterior):
         salida.dia = dia_posterior
