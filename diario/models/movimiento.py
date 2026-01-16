@@ -9,6 +9,7 @@ from django.db import models
 from django.urls import reverse
 
 from vvmodel.cleaners import Cleaner
+from vvmodel.fields import PositionField
 from vvmodel.models import MiModel
 from utils import errors
 from utils.tiempo import Posicion
@@ -47,74 +48,6 @@ class MiDateField(models.DateField):
 class MovimientoManager(models.Manager):
     def get_by_natural_key(self, dia, orden_dia):
         return self.get(dia=dia, orden_dia=orden_dia)
-
-
-class PositionField(models.PositiveIntegerField):
-    def __init__(self, *args, **kwargs):
-        kwargs["null"] = True
-        kwargs["blank"] = True
-        super().__init__(*args, **kwargs)
-
-    def pre_save(self, model_instance, add):
-        movimiento = cast(Movimiento, model_instance)
-        if movimiento._state.adding:
-
-            # Agregando movimiento nuevo
-            if movimiento.orden_dia is None:
-                try:
-                    valor = movimiento.dia.movs().last().orden_dia + 1  # type: ignore[operator]
-                except AttributeError:  # movimiento.dia.movs().last() is None. No hay movimientos en el día
-                    valor = 0
-            else:
-                valor = self._corregir_orden_dia(movimiento)
-                if add:
-                    movimiento.desplazar_otros_movs_del_dia(desde=movimiento.orden_dia)
-        else:
-
-            # Editando movimiento existente
-            mov_original = movimiento.tomar_de_bd()
-            valor = movimiento.orden_dia
-
-            if movimiento.dia > mov_original.dia:
-                valor = 0
-                movimiento.desplazar_otros_movs_del_dia(desde=0, exclude_self=True)
-
-            elif movimiento.dia < mov_original.dia:
-                try:
-                    valor = movimiento.dia.movs().last().orden_dia + 1  # type: ignore[operator]
-                except AttributeError:  # movimiento.dia.movs().last() is None. Día sin movimientos
-                    valor = 0
-
-            else:
-                if valor < mov_original.orden_dia:
-                    movimiento.desplazar_otros_movs_del_dia(
-                        desde=valor,
-                        hasta=mov_original.orden_dia,   # type: ignore[operator]
-                        exclude_self=True
-                    )
-
-                elif valor > mov_original.orden_dia:
-                    valor = self._corregir_orden_dia(movimiento)
-                    movimiento.desplazar_otros_movs_del_dia(
-                        desde=mov_original.orden_dia+1, # type: ignore[operator]
-                        hasta=valor+1,
-                        incremento=-1,
-                        exclude_self=True
-                    )
-
-        setattr(movimiento, self.attname, valor)
-
-        return getattr(movimiento, self.attname)
-
-    @staticmethod
-    def _corregir_orden_dia(movimiento):
-        try:
-            ultimo_orden_dia = movimiento.dia.movs().exclude(pk=movimiento.pk).last().orden_dia
-            if movimiento.orden_dia > ultimo_orden_dia:
-                return ultimo_orden_dia + 1
-            return movimiento.orden_dia
-        except AttributeError:
-            return 0
 
 
 class MovimientoCleaner(Cleaner):
@@ -251,7 +184,7 @@ class MovimientoCleaner(Cleaner):
 
 class Movimiento(MiModel):
     dia = models.ForeignKey(Dia, on_delete=models.CASCADE, null=True, blank=True, related_name="movimiento_set")
-    orden_dia = PositionField()
+    orden_dia = PositionField(campo_colector="dia", colector_ordenado=True)
     concepto = models.CharField(max_length=120)
     detalle = models.TextField(blank=True, null=True)
     _importe = models.FloatField()
@@ -486,8 +419,6 @@ class Movimiento(MiModel):
                     saldo_diario.clean_save()
 
         super().delete(*args, **kwargs)
-
-        self.desplazar_otros_movs_del_dia(desde=self.orden_dia+1, incremento=-1)
 
         if self.id_contramov:
             self._eliminar_contramovimiento()
@@ -935,8 +866,11 @@ class Movimiento(MiModel):
 
     def _regenerar_contramovimiento(self):
         contramov = Movimiento.tomar(id=self.id_contramov)
+        print("Antes de eliminar contramovimiento:", *self.dia.movs(), "", sep="\n")
         self._eliminar_contramovimiento(contramov)
+        print("Después de eliminar contramovimiento:", *self.dia.movs(), "", sep="\n")
         self._crear_movimiento_credito(orden_dia=contramov.orden_dia)
+        print("Después de recrear contramovimiento:", *self.dia.movs(), "", sep="\n")
 
     def _detalle_movimiento_credito(self,
                                      cuenta_emisora: CuentaInteractiva,
