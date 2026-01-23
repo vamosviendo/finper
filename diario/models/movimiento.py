@@ -462,8 +462,6 @@ class Movimiento(MiModel):
             if self.es_prestamo_o_devolucion():
                 self._gestionar_transferencia()
 
-            # self._asignar_orden_dia_nuevo()
-
             super().save(*args, **kwargs)
 
             if self.cta_entrada:
@@ -866,11 +864,8 @@ class Movimiento(MiModel):
 
     def _regenerar_contramovimiento(self):
         contramov = Movimiento.tomar(id=self.id_contramov)
-        print("Antes de eliminar contramovimiento:", *self.dia.movs(), "", sep="\n")
         self._eliminar_contramovimiento(contramov)
-        print("Después de eliminar contramovimiento:", *self.dia.movs(), "", sep="\n")
         self._crear_movimiento_credito(orden_dia=contramov.orden_dia)
-        print("Después de recrear contramovimiento:", *self.dia.movs(), "", sep="\n")
 
     def _detalle_movimiento_credito(self,
                                      cuenta_emisora: CuentaInteractiva,
