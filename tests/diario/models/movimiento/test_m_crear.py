@@ -175,6 +175,18 @@ def test_integrativo_crear_movimiento_en_fecha_antigua_modifica_saldos_diarios_p
     assert SaldoDiario.tomar(cuenta=cuenta, dia=entrada.dia).importe == importe_saldo + mov_anterior.importe
 
 
+def test_toma_por_defecto_cotizacion_compra_de_moneda_no_base_saliente(cuenta, cuenta_en_dolares, dolar):
+    mov = Movimiento.crear(
+        concepto="Venta de dolares",
+        importe=100,
+        cta_entrada=cuenta,
+        cta_salida=cuenta_en_dolares,
+        moneda=dolar,
+    )
+    assert mov.importe_cta_salida == -100
+    assert mov.importe_cta_entrada == 100 * dolar.cotizacion_compra
+
+
 @pytest.mark.parametrize('cta_entrada, cta_salida, moneda, cot', [
     ('cuenta_con_saldo_en_euros', 'cuenta_con_saldo_en_dolares', 'dolar', 1.2),
     ('cuenta_con_saldo_en_euros', 'cuenta_con_saldo_en_dolares', 'euro', 0.8),

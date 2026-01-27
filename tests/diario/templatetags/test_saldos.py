@@ -52,7 +52,7 @@ class TestSaldo:
     def test_si_recibe_cuenta_en_context_y_moneda_devuelve_saldo_de_cuenta_en_moneda_recibida(
             self, cuenta, entrada, entrada_otra_cuenta, salida_posterior, dolar):
         context = {"cuenta": cuenta}
-        assert saldo(context, moneda=dolar) == float_format(cuenta.saldo(moneda=dolar))
+        assert saldo(context, moneda=dolar) == float_format(cuenta.saldo(moneda=dolar, compra=False))
 
     def test_si_recibe_cuenta_en_context_y_no_recibe_moneda_devuelve_saldo_en_moneda_de_la_cuenta(
             self, dolar, cuenta_en_dolares, entrada_en_dolares, salida_en_dolares):
@@ -87,7 +87,11 @@ class TestSaldo:
     def test_si_recibe_titular_en_context_y_moneda_devuelve_capital_en_moneda_recibida(
             self, titular, entrada, salida, salida_posterior, dolar):
         context = {"titular": titular}
-        assert saldo(context, moneda=dolar) == float_format(titular.capital() / dolar.cotizacion)
+        assert \
+            saldo(context, moneda=dolar) == \
+            float_format(
+                titular.capital() / dolar.cotizacion_al(salida_posterior.fecha, compra=False)
+            )
 
     def test_si_recibe_titular_en_context_y_como_argumento_prioriza_argumento(
             self, titular, otro_titular, entrada, entrada_cuenta_ajena):

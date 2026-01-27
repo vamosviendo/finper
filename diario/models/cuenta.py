@@ -252,13 +252,15 @@ class Cuenta(PolymorphModel):
             dia: Dia = None,
             moneda: Moneda = None,
             compra: bool = False) -> float:
+        # El argumento "compra" se refiere a self.moneda, no al argumento moneda.
+        # Por lo tanto, para calcular la cotización, se toma el opuesto de compra (not compra)
 
         if dia and movimiento and movimiento.dia != dia:
             raise ValueError(f"Se recibieron día {dia} y movimiento de otro día ({movimiento.dia})")
 
         fecha = movimiento.fecha if movimiento else dia.fecha if dia else date.today()
         try:
-            cotizacion = self.moneda.cotizacion_en_al(moneda, fecha, compra) if moneda else 1
+            cotizacion = self.moneda.cotizacion_en_al(moneda, fecha, not compra) if moneda else 1
         except EmptyResultSet:
             cotizacion = 1
 
@@ -715,7 +717,7 @@ class CuentaAcumulativa(Cuenta):
 
         fecha = movimiento.fecha if movimiento else dia.fecha if dia else date.today()
         try:
-            cotizacion = self.moneda.cotizacion_en_al(moneda, fecha, compra) if moneda else 1
+            cotizacion = self.moneda.cotizacion_en_al(moneda, fecha, not compra) if moneda else 1
         except EmptyResultSet:
             cotizacion = 1
 

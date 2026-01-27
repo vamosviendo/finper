@@ -33,7 +33,6 @@ def test_si_recibe_dia_devuelve_suma_de_saldos_de_cuentas_de_titular_el_dia_dado
 @pytest.mark.parametrize("compra", [False, True])
 def test_devuelve_capital_cotizado_en_la_moneda_dada_a_la_fecha_dada(
         titular, cuenta, cuenta_2, entrada, entrada_otra_cuenta, salida_posterior, entrada_tardia, dolar, compra):
-    print(compra, titular.capital(), dolar.cotizacion_al(fecha=salida_posterior.fecha, compra=compra))
     assert \
         titular.capital(dia=salida_posterior.dia, moneda=dolar, compra=compra) == \
         round(sum(

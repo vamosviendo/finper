@@ -143,4 +143,4 @@ def test_si_no_se_ingresa_cotizacion_calcula_cotizacion_desde_monedas(formmov_di
     formmov_distintas_monedas.save()
 
     instance = formmov_distintas_monedas.instance
-    assert instance.cotizacion == dolar.cotizacion_en_al(euro, fecha=instance.fecha, compra=False)
+    assert instance.cotizacion == dolar.cotizacion_en_al(euro, fecha=instance.fecha, compra=True)

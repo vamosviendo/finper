@@ -24,7 +24,7 @@ def dolar(fecha_temprana: date) -> Moneda:
         plural='dólares',
         sk='uss',
     )
-    Cotizacion.crear(moneda=mon, fecha=fecha_temprana, importe_compra=805.0, importe_venta=816.0)
+    Cotizacion.crear(moneda=mon, fecha=fecha_temprana, importe_compra=1000, importe_venta=1100)
     return mon
 
 
@@ -34,7 +34,7 @@ def euro(fecha_temprana: date) -> Moneda:
         nombre='Euro',
         sk='eu',
     )
-    Cotizacion.crear(moneda=mon, fecha=fecha_temprana, importe_compra=2000, importe_venta=2050)
+    Cotizacion.crear(moneda=mon, fecha=fecha_temprana, importe_compra=1500, importe_venta=1600)
     return mon
 
 

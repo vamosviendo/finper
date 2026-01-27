@@ -778,7 +778,7 @@ class TestSaveCambiaCuentas:
                 self, sentido, cuenta_con_saldo_en_reales, real, request):
             movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
             sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-            compra = sentido == "entrada"
+            compra = sentido == "salida"
             moneda_otra_cuenta = getattr(movimiento, f"cta_{sentido_otra_cuenta}").moneda
 
             cotizacion = movimiento.cotizacion
@@ -836,7 +836,7 @@ class TestSaveCambiaCuentas:
                 self, sentido, cuenta_con_saldo_en_reales, real, euro, request):
             movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
             sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-            compra = sentido == "entrada"
+            compra = sentido == "salida"
 
             setattr(movimiento, f"cta_{sentido}", cuenta_con_saldo_en_reales)
             movimiento.moneda = real
@@ -854,7 +854,7 @@ class TestSaveCambiaCuentas:
                 self, sentido, cuenta_con_saldo_en_reales, real, request):
             movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
             sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-            compra = sentido == "entrada"
+            compra = sentido == "salida"
 
             importe = movimiento.importe
             importe_cta_en_moneda_mov = movimiento.importe_cta(sentido)
@@ -911,7 +911,7 @@ class TestSaveCambiaCuentas:
                 self, sentido, cuenta_con_saldo_en_reales, real, dolar, request):
             movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
             sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-            compra = sentido == "entrada"
+            compra = sentido == "salida"
 
             setattr(movimiento, f"cta_{sentido_otra_cuenta}", cuenta_con_saldo_en_reales)
             movimiento.importe = 5
@@ -932,7 +932,7 @@ class TestSaveCambiaCuentas:
                 self, sentido, cuenta_con_saldo_en_reales, cuenta_con_saldo_en_yenes, real, yen, request):
             movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
             sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-            compra = sentido == "entrada"
+            compra = sentido == "salida"
 
             importe = movimiento.importe
 
@@ -956,7 +956,7 @@ class TestSaveCambiaCuentas:
                 self, sentido, cuenta_con_saldo_en_reales, cuenta_con_saldo_en_yenes, real, yen, request):
             movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
             sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-            compra = sentido_otra_cuenta == "entrada"
+            compra = sentido_otra_cuenta == "salida"
 
             importe = movimiento.importe
 
@@ -978,7 +978,7 @@ class TestSaveCambiaCuentas:
                 self, sentido, cuenta_con_saldo_en_reales, cuenta_con_saldo_en_yenes, real, yen, request):
             movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
             sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-            compra = sentido == "entrada"
+            compra = sentido == "salida"
 
             setattr(movimiento, f"cta_{sentido_otra_cuenta}", cuenta_con_saldo_en_reales)
             setattr(movimiento, f"cta_{sentido}", cuenta_con_saldo_en_yenes)
@@ -999,7 +999,7 @@ class TestSaveCambiaCuentas:
                 self, sentido, cuenta_con_saldo_en_reales, cuenta_con_saldo_en_yenes, real, yen, request):
             movimiento = request.getfixturevalue(f"mov_distintas_monedas_en_moneda_cta_{sentido}")
             sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-            compra = sentido_otra_cuenta == "entrada"
+            compra = sentido_otra_cuenta == "salida"
 
             setattr(movimiento, f"cta_{sentido_otra_cuenta}", cuenta_con_saldo_en_reales)
             setattr(movimiento, f"cta_{sentido}", cuenta_con_saldo_en_yenes)
@@ -1121,7 +1121,7 @@ class TestSaveCambiaCuentas:
                 self, sentido, traspaso_en_dolares, cuenta_con_saldo_en_euros, euro, dolar):
             sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
             importe = traspaso_en_dolares.importe
-            compra = sentido_otra_cuenta == "entrada"
+            compra = sentido_otra_cuenta == "salida"
 
             setattr(traspaso_en_dolares, f"cta_{sentido}", cuenta_con_saldo_en_euros)
             traspaso_en_dolares.clean_save()
@@ -1160,7 +1160,7 @@ class TestSaveCambiaCuentas:
         def test_si_en_traspaso_entre_cuentas_en_la_misma_moneda_cambia_cuenta_por_cuenta_en_otra_moneda_y_moneda_se_calcula_cotizacion_e_importe(
                 self, sentido, traspaso_en_dolares, cuenta_con_saldo_en_euros, euro, dolar):
             sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-            compra = sentido == "entrada"
+            compra = sentido == "salida"
             importe = traspaso_en_dolares.importe
 
             setattr(traspaso_en_dolares, f"cta_{sentido}", cuenta_con_saldo_en_euros)
@@ -1179,7 +1179,7 @@ class TestSaveCambiaCuentas:
         def test_si_en_traspaso_entre_cuentas_en_la_misma_moneda_cambia_cuenta_por_cuenta_en_otra_moneda_e_importe_se_calcula_cotizacion_y_se_guarda_importe(
                 self, sentido, traspaso_en_dolares, cuenta_con_saldo_en_euros, euro, dolar):
             sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-            compra = sentido_otra_cuenta == "entrada"
+            compra = sentido_otra_cuenta == "salida"
 
             setattr(traspaso_en_dolares, f"cta_{sentido}", cuenta_con_saldo_en_euros)
             traspaso_en_dolares.importe = 6
@@ -1217,7 +1217,7 @@ class TestSaveCambiaCuentas:
         def test_si_en_traspaso_entre_cuentas_en_la_misma_moneda_cambia_cuenta_por_cuenta_en_otra_moneda_moneda_e_importe_se_calcula_cotizacion_y_se_guarda_importe(
                 self, sentido, traspaso_en_dolares, cuenta_con_saldo_en_euros, euro, dolar):
             sentido_otra_cuenta = el_que_no_es(sentido, "entrada", "salida")
-            compra = sentido == "entrada"
+            compra = sentido == "salida"
 
             setattr(traspaso_en_dolares, f"cta_{sentido}", cuenta_con_saldo_en_euros)
             traspaso_en_dolares.importe = 6
@@ -1340,7 +1340,7 @@ class TestSaveCambiaCuentas:
                 self, sentido, cuenta_en_euros, dolar, euro, request):
             movimiento = request.getfixturevalue(f"{sentido}_en_dolares")
             sentido_contracuenta = el_que_no_es(sentido, "entrada", "salida")
-            compra = sentido == "entrada"
+            compra = sentido == "salida"
 
             importe = movimiento.importe
 
@@ -1380,7 +1380,7 @@ class TestSaveCambiaCuentas:
                 self, sentido, cuenta_en_euros, dolar, euro, request):
             movimiento = request.getfixturevalue(f"{sentido}_en_dolares")
             sentido_contracuenta = el_que_no_es(sentido, "entrada", "salida")
-            compra = sentido == "entrada"
+            compra = sentido == "salida"
 
             setattr(movimiento, f"cta_{sentido_contracuenta}", cuenta_en_euros)
             movimiento.importe = 20
@@ -1416,7 +1416,7 @@ class TestSaveCambiaCuentas:
                 self, sentido, cuenta_en_euros, dolar, euro, request):
             movimiento = request.getfixturevalue(f"{sentido}_en_dolares")
             sentido_contracuenta = el_que_no_es(sentido, "entrada", "salida")
-            compra = sentido_contracuenta == "entrada"
+            compra = sentido_contracuenta == "salida"
 
             importe = movimiento.importe
 
@@ -1458,7 +1458,7 @@ class TestSaveCambiaCuentas:
                 self, sentido, cuenta_en_euros, dolar, euro, request):
             movimiento = request.getfixturevalue(f"{sentido}_en_dolares")
             sentido_contracuenta = el_que_no_es(sentido, "entrada", "salida")
-            compra = sentido_contracuenta == "entrada"
+            compra = sentido_contracuenta == "salida"
 
             setattr(movimiento, f"cta_{sentido_contracuenta}", cuenta_en_euros)
             movimiento.moneda = euro

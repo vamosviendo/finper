@@ -457,7 +457,7 @@ def test_crear_traspaso_entre_cuentas_en_distinta_moneda_con_una_cotizacion_ante
     # de las cuentas
     browser.crear_movimiento(
         concepto='Compra de euros con dólares ólares',
-        importe="20",
+        importe="100",
         fecha=fecha,
         cta_entrada=cuenta_con_saldo_en_euros.nombre,
         cta_salida=cuenta_con_saldo_en_dolares.nombre,
@@ -467,8 +467,8 @@ def test_crear_traspaso_entre_cuentas_en_distinta_moneda_con_una_cotizacion_ante
     # Somos dirigidos a la página principal donde podemos ver que el saldo
     # principal de la o las cuentas cambió en el importe registrado en el movimiento,
     browser.assert_url(reverse('home'))
-    importe_en_euros = round(20 * dolar.cotizacion_en_al(euro, fecha, compra=False), 2)
-    importe_en_dolares = 20
+    importe_en_euros = round(100 * dolar.cotizacion_en_al(euro, fecha, compra=True), 2)
+    importe_en_dolares = 100
     saldo_base = browser.encontrar_saldo_en_moneda_de_cuenta(cuenta_con_saldo_en_euros.sk)
     assert saldo_base.text == float_format(saldo_base_original_ce + importe_en_euros)
     saldo_base = browser.encontrar_saldo_en_moneda_de_cuenta(cuenta_con_saldo_en_dolares.sk)

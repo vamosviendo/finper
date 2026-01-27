@@ -75,7 +75,7 @@ def test_si_recibe_moneda_devuelve_saldo_en_moneda_dada_redondeado_en_2_decimale
     compra = tipo == "compra"
     assert \
         cuenta_con_saldo.saldo(moneda=dolar, compra=compra) == \
-        round(cuenta_con_saldo.saldo() * cuenta_con_saldo.moneda.cotizacion_en(dolar, compra=compra), 2)
+        round(cuenta_con_saldo.saldo() * cuenta_con_saldo.moneda.cotizacion_en(dolar, compra=not compra), 2)
     assert cuenta_con_saldo.saldo(moneda=peso, compra=compra) == cuenta_con_saldo.saldo()
 
 
@@ -94,7 +94,11 @@ def test_si_recibe_moneda_y_movimiento_devuelve_saldo_en_movimiento_dado_en_mone
     compra = tipo == "compra"
     assert \
         cuenta.saldo(movimiento=mov, moneda=dolar, compra=compra) == \
-        round(cuenta.saldo(movimiento=mov) * cuenta.moneda.cotizacion_en_al(dolar, fecha=mov.fecha, compra=compra), 2)
+        round(
+            cuenta.saldo(movimiento=mov
+        ) * cuenta.moneda.cotizacion_en_al(
+            dolar, fecha=mov.fecha, compra=not compra), 2
+        )
     assert cuenta.saldo(movimiento=mov, moneda=peso, compra=compra) == cuenta.saldo(movimiento=mov)
 
 @pytest.mark.parametrize("tipo", ["compra", "venta"])

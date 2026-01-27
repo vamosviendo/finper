@@ -43,7 +43,7 @@ def saldo(
             saldo_general_historico(movimiento, moneda=moneda)
     else:
         try:
-            result = ente.saldo(dia=dia, moneda=moneda) if ente else \
+            result = ente.saldo(dia=dia, moneda=moneda, compra=False) if ente else \
                 saldo_general_historico(dia=dia, moneda=moneda)
         except ValueError:  # dia is None. No hay días ni movimientos
             result = 0

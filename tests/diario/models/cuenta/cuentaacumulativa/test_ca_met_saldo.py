@@ -102,7 +102,7 @@ def test_si_recibe_moneda_y_movimiento_devuelve_saldo_en_movimiento_dado_en_mone
         cuenta.saldo(movimiento=mov, moneda=dolar, compra=compra) == \
         round(
             cuenta.saldo(movimiento=mov) * cuenta.moneda.cotizacion_en_al(
-                dolar, fecha=mov.fecha, compra=compra
+                dolar, fecha=mov.fecha, compra=not compra
             ),
             2
         )

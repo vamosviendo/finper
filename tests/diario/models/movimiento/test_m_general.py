@@ -137,13 +137,12 @@ def test_entre_cuentas_en_distinta_moneda_se_calcula_cotizacion_a_partir_de_la_c
         fecha=fecha, concepto="Compra de dólares con euros", importe=100,
         moneda=euro
     )
-    setattr(mov, f"cta_{sentido}", cuenta_con_saldo_en_dolares)
-    setattr(mov, f"cta_{sentido_opuesto}", cuenta_con_saldo_en_euros)
+    setattr(mov, f"cta_{sentido}", cuenta_con_saldo_en_euros)
+    setattr(mov, f"cta_{sentido_opuesto}", cuenta_con_saldo_en_dolares)
 
     mov.clean_save()
 
     assert mov.cotizacion == euro.cotizacion_en_al(dolar, fecha, compra=compra)
-
 
 def test_entre_cuentas_en_distinta_moneda_permite_especificar_cotizacion(
         cuenta_con_saldo_en_dolares, cuenta_con_saldo_en_euros, dolar, euro,
