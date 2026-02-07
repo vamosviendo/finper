@@ -28,6 +28,47 @@ def test_si_se_borra_el_unico_movimiento_del_dia_de_la_cuenta_elimina_saldo_diar
     mock_eliminar.assert_called_once_with(saldo)
 
 
+def test_int_si_se_produce_error_en_el_borrado_de_unico_movimiento_del_dia_no_elimina_saldo_diario_de_la_cuenta(
+        mocker, cuenta, salida):
+    mocker.patch("django.db.models.base.Model.delete", side_effect = Exception)
+
+    with pytest.raises(Exception):
+        salida.delete()
+
+    assert SaldoDiario.filtro(cuenta=cuenta, dia=salida.dia).exists()
+
+
+def test_si_se_produce_error_en_el_borrado_de_movimiento_en_dia_con_mas_de_un_movimiento_no_se_modifica_saldo_diario_de_la_cuenta(
+        mocker, cuenta, entrada, salida, traspaso):
+    mocker.patch("django.db.models.base.Model.delete", side_effect = Exception)
+    importe_saldo_diario = SaldoDiario.tomar(cuenta=cuenta, dia=salida.dia).importe
+
+    with pytest.raises(Exception):
+        salida.delete()
+
+    assert SaldoDiario.tomar(cuenta=cuenta, dia=salida.dia).importe == importe_saldo_diario
+
+
+def test_si_se_produce_error_en_la_eliminacion_de_saldo_diario_en_dia_con_unico_movimiento_no_se_elimina_el_movimiento(
+        mocker, cuenta, salida):
+    mocker.patch("diario.models.saldo_diario.SaldoDiario.eliminar", side_effect=Exception)
+
+    with pytest.raises(Exception):
+        salida.delete()
+
+    assert Movimiento.filtro(sk=salida.sk).exists()
+
+
+def test_si_se_produce_error_en_la_eliminacion_de_saldo_diario_en_dia_con_mas_de_un_movimiento_no_se_elimina_el_movimiento(
+        mocker, cuenta, salida, traspaso, entrada):
+    mock_save = mocker.patch("diario.models.saldo_diario.SaldoDiario.save", side_effect=Exception)
+
+    with pytest.raises(Exception):
+        salida.delete()
+
+    assert Movimiento.filtro(sk=salida.sk).exists()
+
+
 def test_si_se_borra_el_unico_movimiento_del_dia_de_la_cuenta_no_se_elimina_saldo_diario_de_otras_cuentas(
         mocker, cuenta, cuenta_2, salida, entrada_otra_cuenta):
     mock_eliminar = mocker.patch('diario.models.movimiento.SaldoDiario.eliminar', autospec=True)

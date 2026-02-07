@@ -5,7 +5,7 @@ from datetime import date
 
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
-from django.db import models
+from django.db import models, transaction
 from django.urls import reverse
 
 from vvmodel.cleaners import Cleaner
@@ -396,6 +396,7 @@ class Movimiento(MiModel):
             if mov.cta_salida else None
         return mov
 
+    @transaction.atomic
     def delete(self, force: bool = False, *args, **kwargs):
         if self.es_automatico and not force:
             raise errors.ErrorMovimientoAutomatico(
@@ -408,17 +409,17 @@ class Movimiento(MiModel):
             raise errors.ErrorCuentaEsAcumulativa(
                 errors.MOVIMIENTO_CON_CA_ELIMINADO)
 
+        super().delete(*args, **kwargs)
+
         for sentido in ("entrada", "salida"):
             cuenta = getattr(self, f"cta_{sentido}")
             if cuenta is not None:
                 saldo_diario = cuenta.saldodiario_set.get(dia=self.dia)
-                if cuenta.movs_en_fecha(self.dia).count() == 1:
+                if cuenta.movs_en_fecha(self.dia).count() == 0:
                     saldo_diario.eliminar()
                 else:
                     saldo_diario.importe -= self.importe_cta(sentido)
                     saldo_diario.clean_save()
-
-        super().delete(*args, **kwargs)
 
         if self.id_contramov:
             self._eliminar_contramovimiento()
@@ -437,6 +438,7 @@ class Movimiento(MiModel):
             esgratis=esgratis
         )
 
+    @transaction.atomic
     def save(self, *args, esgratis: bool = False, **kwargs):
         """
         TODO: Revisar y actualizar este comentario
@@ -500,8 +502,6 @@ class Movimiento(MiModel):
                 self._recalcular_importe()
 
             self._recalcular_saldos_diarios()
-
-            # self._asignar_orden_dia_existente()
 
             super().save(*args, **kwargs)
 
