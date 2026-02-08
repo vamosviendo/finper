@@ -50,3 +50,68 @@ def test_importe_de_saldos_diarios_calculados_corresponde_a_movimientos(
     assert saldo_dia_cuenta_2.tomar_de_bd().importe == importe_sdc2
     assert saldo_dia_posterior.tomar_de_bd().importe == importe_sdp
     assert saldo_dia_tardio.tomar_de_bd().importe == importe_sdt
+
+
+def test_permite_recalcular_saldos_diarios_de_una_cuenta_dada(
+        dia, cuenta, cuenta_2, entrada, salida, traspaso, entrada_otra_cuenta):
+    saldo_dia_cuenta = SaldoDiario.tomar(dia=dia, cuenta=cuenta)
+    importe_sdc = saldo_dia_cuenta.importe
+    saldo_dia_cuenta_2 = SaldoDiario.tomar(dia=dia, cuenta=cuenta_2)
+    importe_sdc2 = saldo_dia_cuenta_2.importe
+
+    saldo_dia_cuenta.importe += 10
+    saldo_dia_cuenta.clean_save()
+    saldo_dia_cuenta_2.importe += 20
+    saldo_dia_cuenta_2.clean_save()
+
+    call_command("regenerar_saldos_diarios", cuenta=cuenta.sk)
+
+    assert saldo_dia_cuenta.tomar_de_bd().importe == importe_sdc
+    assert saldo_dia_cuenta_2.tomar_de_bd().importe == importe_sdc2 + 20
+
+
+def test_permite_recalcular_saldos_diarios_a_partir_de_una_fecha_dada(
+        mocker, dia_anterior, dia, dia_posterior, cuenta,
+        entrada_anterior, entrada, salida, traspaso, salida_posterior):
+    mock_delete = mocker.patch("diario.models.SaldoDiario.delete", autospec=True)
+    mock_calcular = mocker.patch("diario.models.SaldoDiario.calcular")
+
+    saldo_dia, saldo_otra_cuenta, saldo_dia_posterior = SaldoDiario.filtro(dia__gte=dia)
+
+    call_command("regenerar_saldos_diarios", desde=str(dia))
+
+    assert mock_delete.call_args_list == [
+        mocker.call(saldo_dia),
+        mocker.call(saldo_dia_posterior),
+        mocker.call(saldo_otra_cuenta),
+    ]
+    assert mock_calcular.call_args_list == [
+        mocker.call(entrada, "cta_entrada"),
+        mocker.call(salida, "cta_salida"),
+        mocker.call(traspaso, "cta_entrada"),
+        mocker.call(salida_posterior, "cta_salida"),
+        mocker.call(traspaso, "cta_salida"),
+    ]
+
+
+def test_permite_recalcular_saldos_diarios_de_una_cuenta_a_partir_de_una_fecha_dada(
+        mocker, cuenta, cuenta_2, dia_anterior, dia, dia_posterior,
+        entrada_anterior, entrada_anterior_otra_cuenta, entrada, salida,
+        traspaso, entrada_otra_cuenta, salida_posterior, entrada_posterior_otra_cuenta):
+    mock_delete = mocker.patch("diario.models.SaldoDiario.delete", autospec=True)
+    mock_calcular = mocker.patch("diario.models.SaldoDiario.calcular")
+
+    saldo_dia_cuenta, saldo_dia_posterior_cuenta = SaldoDiario.filtro(dia__gte=dia, cuenta=cuenta)
+
+    call_command("regenerar_saldos_diarios", cuenta=cuenta.sk, desde=str(dia))
+
+    assert mock_delete.call_args_list == [
+        mocker.call(saldo_dia_cuenta),
+        mocker.call(saldo_dia_posterior_cuenta),
+    ]
+    assert mock_calcular.call_args_list == [
+        mocker.call(entrada, "cta_entrada"),
+        mocker.call(salida, "cta_salida"),
+        mocker.call(traspaso, "cta_entrada"),
+        mocker.call(salida_posterior, "cta_salida")
+    ]
