@@ -286,14 +286,20 @@ class Cuenta(PolymorphModel):
     def cotizacion(self) -> float:
         return self.moneda.cotizacion
 
-    def recalcular_saldos_diarios(self):
-        saldos = self.saldodiario_set.all()
+    def recalcular_saldos_diarios(self, desde: Dia | None = None):
+        filtro = {"dia__gte": desde} if desde else None
+        saldos = self.saldodiario_set.filter(**filtro) if filtro \
+            else self.saldodiario_set.all()
+        movimientos = self.movs().filter(**filtro) if filtro else self.movs()
+
         for saldo in saldos:
             saldo.delete()
 
-        movimientos = self.movs()
         for mov in movimientos:
-            SaldoDiario.calcular(mov, "cta_entrada" if self == mov.cta_entrada else "cta_salida")
+            SaldoDiario.calcular(
+                mov,
+                "cta_entrada" if self == mov.cta_entrada else "cta_salida"
+            )
 
     @property
     def ultimo_saldo(self) -> SaldoDiario:

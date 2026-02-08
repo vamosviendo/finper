@@ -45,3 +45,22 @@ def test_no_recalcula_saldo_diario_de_otra_cuenta_en_traspasos(cuenta, cuenta_2,
 
     saldo_diario_otra_cuenta.refresh_from_db()
     assert saldo_diario_otra_cuenta.importe == 5
+
+
+def test_permite_recalcular_desde_una_fecha_especifica(
+        mocker,  cuenta, dia_anterior, dia, dia_posterior, entrada_anterior, entrada, salida, salida_posterior):
+    mock_delete = mocker.patch("diario.models.SaldoDiario.delete", autospec=True)
+    mock_calcular = mocker.patch("diario.models.SaldoDiario.calcular")
+    saldo_dia, saldo_dia_posterior = SaldoDiario.filtro(dia__gte=dia)
+
+    cuenta.recalcular_saldos_diarios(desde=dia)
+
+    assert mock_delete.call_args_list == [
+        mocker.call(saldo_dia),
+        mocker.call(saldo_dia_posterior),
+    ]
+    assert mock_calcular.call_args_list == [
+        mocker.call(entrada, "cta_entrada"),
+        mocker.call(salida, "cta_salida"),
+        mocker.call(salida_posterior, "cta_salida")
+    ]

@@ -84,6 +84,7 @@ class Dia (MiModel):
         return self.movimiento_set.all()
 
     def timedelta(self, cantidad: int) -> Self:
+        """ Devuelve el día que está a <cantidad> días de <self>"""
         try:
             return Dia.tomar(fecha=self.fecha+timedelta(cantidad))
         except Dia.DoesNotExist:
