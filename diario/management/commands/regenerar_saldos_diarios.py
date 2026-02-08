@@ -25,10 +25,18 @@ class Command(BaseCommand):
         cuenta_sk = kwargs.get("cuenta")
         desde_str = kwargs.get("desde")
 
-        cuentas = Cuenta.filtro(sk=cuenta_sk) if cuenta_sk else Cuenta.todes()
-        desde = datetime.strptime(desde_str, "%Y-%m-%d").date() if desde_str else None
-        dia = Dia.tomar(fecha=desde) if desde else None
-        print("cuentas", *[c.sk for c in Cuenta.todes()])
+        if cuenta_sk:
+            cuentas = Cuenta.filtro(sk=cuenta_sk)
+            if not cuentas.exists():
+                raise ValueError(f"SK {cuenta_sk} no existe")
+        else:
+            cuentas = Cuenta.todes()
+
+        try:
+            desde = datetime.strptime(desde_str, "%Y-%m-%d").date() if desde_str else None
+        except ValueError:
+            raise ValueError("Fecha mal formateiada. Debe ser YYYY-MM-DD")
+        dia = Dia.filtro(fecha__gte=desde).first() if desde else None
 
         for cuenta in cuentas:
             cuenta.recalcular_saldos_diarios(desde=dia)

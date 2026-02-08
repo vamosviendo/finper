@@ -1,3 +1,6 @@
+from datetime import timedelta
+
+import pytest
 from django.core.management import call_command
 
 from diario.models import SaldoDiario, Movimiento
@@ -115,3 +118,21 @@ def test_permite_recalcular_saldos_diarios_de_una_cuenta_a_partir_de_una_fecha_d
         mocker.call(traspaso, "cta_entrada"),
         mocker.call(salida_posterior, "cta_salida")
     ]
+
+
+def test_si_se_pasa_sk_de_cuenta_inexistente_sale_con_error():
+    with pytest.raises(ValueError, match="SK ska no existe"):
+        call_command("regenerar_saldos_diarios", cuenta="ska")
+
+
+def test_si_se_pasa_fecha_mal_formateada_da_error():
+    with pytest.raises(ValueError, match="Fecha mal formateiada. Debe ser YYYY-MM-DD"):
+        call_command("regenerar_saldos_diarios", desde="202h-05-r")
+
+
+def test_si_se_pasa_fecha_de_dia_inexistente_sale_con_error(
+        mocker, dia_anterior, dia, dia_posterior, entrada_anterior, entrada, salida_posterior):
+     mock_recalcular = mocker.patch("diario.models.cuenta.Cuenta.recalcular_saldos_diarios")
+     fecha_desde = dia_anterior.fecha + timedelta(1)
+     call_command("regenerar_saldos_diarios", desde=fecha_desde.strftime("%Y-%m-%d"))
+     mock_recalcular.assert_called_with(desde=dia)
