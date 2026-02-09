@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-from datetime import date
+from datetime import date, datetime
 
 from django.db.models import DateField
 
@@ -51,8 +51,9 @@ dia_de_la_semana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sába
 
 def str2date(string: str) -> date:
     if "-" in string:
-        return date(*[int(x) for x in string.split("-")])
-    elif len(string) == 8:
-        return date(int(string[:4]), int(string[4:6]), int(string[6:]))
-    else:
-        raise ValueError("Cadena mal formateada")
+        return datetime.strptime(string, "%Y-%m-%d").date()
+
+    if len(string) == 8 and string.isdigit():
+        return datetime.strptime(string, "%Y%m%d").date()
+
+    raise ValueError("Cadena mal formateada")

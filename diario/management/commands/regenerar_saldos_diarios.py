@@ -3,6 +3,7 @@ from datetime import datetime
 from django.core.management import BaseCommand
 
 from diario.models import Cuenta, Dia
+from utils.tiempo import str2date
 
 
 class Command(BaseCommand):
@@ -33,7 +34,7 @@ class Command(BaseCommand):
             cuentas = Cuenta.todes()
 
         try:
-            desde = datetime.strptime(desde_str, "%Y-%m-%d").date() if desde_str else None
+            desde = str2date(desde_str) if desde_str else None
         except ValueError:
             raise ValueError("Fecha mal formateiada. Debe ser YYYY-MM-DD")
         dia = Dia.filtro(fecha__gte=desde).first() if desde else None
