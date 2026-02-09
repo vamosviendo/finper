@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Self
 
-from django.db import models
+from django.db import models, transaction
 
 from vvmodel.models import MiModel
 
@@ -70,6 +70,7 @@ class SaldoDiario(MiModel):
     def anterior(self):
         return SaldoDiario.anterior_a(cuenta=self.cuenta, dia=self.dia)
 
+    @transaction.atomic
     def eliminar(self):
         importe = self.importe
         try:
@@ -88,6 +89,7 @@ class SaldoDiario(MiModel):
         self.save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields,
                   actualizar_posteriores=actualizar_posteriores)
 
+    @transaction.atomic
     def save(
             self, force_insert=False, force_update=False, using=None, update_fields=None,
             actualizar_posteriores=True

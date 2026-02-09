@@ -6,7 +6,7 @@ from typing import cast, Optional, Self, List, Sequence, Set, TYPE_CHECKING, Ite
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import EmptyResultSet, ValidationError
 from django.core.validators import RegexValidator
-from django.db import models
+from django.db import models, transaction
 from django.urls import reverse
 
 from diario.consts import *
@@ -190,10 +190,6 @@ class Cuenta(PolymorphModel):
 
     @classmethod
     def crear(cls, nombre: str, sk: str, cta_madre: 'CuentaAcumulativa' = None, finalizar=False, **kwargs) -> CuentaInteractiva:
-        """
-
-        @rtype: object
-        """
         if finalizar:
             cuenta_nueva = super().crear(nombre=nombre, sk=sk,
                                          cta_madre=cta_madre, **kwargs)
@@ -286,6 +282,7 @@ class Cuenta(PolymorphModel):
     def cotizacion(self) -> float:
         return self.moneda.cotizacion
 
+    @transaction.atomic
     def recalcular_saldos_diarios(self, desde: Dia | None = None):
         filtro = {"dia__gte": desde} if desde else None
         saldos = self.saldodiario_set.filter(**filtro) if filtro \
@@ -323,6 +320,7 @@ class Cuenta(PolymorphModel):
         self._pasar_sk_a_minuscula()
         super().clean_fields(exclude=exclude)
 
+    @transaction.atomic
     def save(self, *args, **kwargs):
         adcm = kwargs.pop("altera_ctas_parientes", True)
 
@@ -433,6 +431,7 @@ class CuentaInteractiva(Cuenta):
     cleaner = CuentaInteractivaCleaner
 
     @classmethod
+    @transaction.atomic
     def crear(cls, nombre: str, sk: str, cta_madre: Cuenta = None, saldo: float = None, **kwargs) -> Self:
 
         cuenta_nueva = super().crear(nombre=nombre, sk=sk,
@@ -469,6 +468,7 @@ class CuentaInteractiva(Cuenta):
             # no es cuenta crédito
             return None
 
+    @transaction.atomic
     def agregar_mov_correctivo(self) -> Optional[Movimiento]:
         if self.saldo_ok():
             return None
@@ -494,6 +494,7 @@ class CuentaInteractiva(Cuenta):
     def saldo_ok(self) -> bool:
         return self.saldo() == self.total_movs()
 
+    @transaction.atomic
     def dividir_entre(
             self,
             *subcuentas: dict[str, str | float] | Sequence[str | float],
@@ -754,6 +755,7 @@ class CuentaAcumulativa(Cuenta):
                     mov.fecha = self.fecha_conversion
                     mov.save()
 
+    @transaction.atomic
     def save(self, *args, **kwargs):
         ds = kwargs.pop("altera_ctas_parientes", True)
         self.manejar_cambios()
@@ -802,7 +804,7 @@ class CuentaAcumulativa(Cuenta):
             moneda=self.moneda,
         )
 
-    def recalcular_saldos_diarios(self):
+    def recalcular_saldos_diarios(self, desde: dia | None = None):
         raise AttributeError("No se permite recalcular saldos de cuenta acumulativa")
 
     # Protected

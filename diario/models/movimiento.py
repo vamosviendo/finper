@@ -636,7 +636,6 @@ class Movimiento(MiModel):
 
         return cuentas_credito
 
-
     # Métodos protegidos
 
     def _actualizar_cuenta_convertida_en_acumulativa(self):
