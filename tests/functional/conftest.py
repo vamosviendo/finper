@@ -9,6 +9,8 @@ from tests.functional.helpers import FinperFirefox
 
 @pytest.fixture(autouse=True, scope='session')
 def base_url(live_server: LiveServer) -> str:
+    if test_server := os.environ.get("TEST_SERVER"):
+        return f"http://{test_server}"
     return live_server.url
 
 
