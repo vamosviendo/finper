@@ -40,7 +40,6 @@ INSTALLED_APPS = [
     'diario',
     'usuarios',
     'vvmodel',
-    'behave_django',
     'utils',
 ]
 

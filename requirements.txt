@@ -8,8 +8,6 @@ urllib3==2.6.2
 
 
 # test
-behave==1.2.6
-behave-django==1.4.0
 mypy==1.6.1
 pytest==9.0.2
 pytest-django==4.11.1
