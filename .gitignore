@@ -11,7 +11,7 @@ __pycache__
 .idea
 .swp
 .tags
-diario/settings_app.py
+settings_app.py
 notas
 
 .project
