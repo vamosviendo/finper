@@ -24,3 +24,8 @@ def browser(base_url: str) -> Generator[FinperFirefox, Any, None]:
     driver = FinperFirefox(base_url, options=options)
     yield driver
     driver.close()
+
+
+def pytest_collection_modifyitems(items):
+    for item in items:
+        item.add_marker(pytest.mark.django_db)
