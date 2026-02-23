@@ -21,3 +21,4 @@ notas
 .mypy_cache
 .pytest_cache
 Dockerfile_old
+requirements.old

@@ -6,10 +6,12 @@ ENV PATH="/.venv/bin:$PATH"
 ENV TZ=America/Argentina/Buenos_Aires
 
 RUN pip install --upgrade pip
-RUN pip install "django<7" "django-case-insensitive-field==1.0.7"
+
+COPY requirements.txt /tmp/requirements.txt
+RUN pip install -r /tmp/requirements.txt
 
 COPY src /src
 
 WORKDIR /src
 
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8004"]
+CMD ["gunicorn", "--bind", ":8004", "finper.wsgi:application"]

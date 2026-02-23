@@ -1,16 +1,6 @@
-# app
-asgiref==3.11.0
-beautifulsoup4==4.9.3
-Django < 7.0
+Django==6.0.1
 django-case-insensitive-field==1.0.7
 django-stubs==4.2.6
-urllib3==2.6.2
-
-
-# test
-mypy==1.6.1
-pytest==9.0.2
-pytest-django==4.11.1
-pytest-mock==3.15.1
-pytest-mypy==1.0.1
-selenium==4.39.0
+django-stubs-ext==5.2.8
+gunicorn==25.1.0
+whitenoise==6.11.0
