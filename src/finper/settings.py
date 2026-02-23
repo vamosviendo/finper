@@ -20,6 +20,7 @@ if "DJANGO_DEBUG_FALSE" in os.environ:
     DEBUG = False
     SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
     ALLOWED_HOSTS = [os.environ["DJANGO_ALLOWED_HOST"]]
+    db_path = os.environ["DJANGO_DB_PATH"]
 else:
     # Quick-start development settings - unsuitable for production
     # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
@@ -28,6 +29,7 @@ else:
     # SECURITY WARNING: keep the secret key used in production secret!
     SECRET_KEY = 'django-insecure-z%52ep0^%ffhkrax$&754f!hqswn&zqeg56de+he2bl)d0pgvz'
     ALLOWED_HOSTS = []
+    db_path = BASE_DIR / "db.sqlite3"
 
 
 # Application definition
@@ -83,7 +85,7 @@ WSGI_APPLICATION = 'finper.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': db_path,
     }
 }
 
