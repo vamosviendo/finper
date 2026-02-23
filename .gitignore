@@ -22,3 +22,4 @@ notas
 .pytest_cache
 Dockerfile_old
 requirements.old
+src/static

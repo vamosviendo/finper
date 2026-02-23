@@ -14,4 +14,8 @@ COPY src /src
 
 WORKDIR /src
 
+RUN python manage.py collectstatic --noinput
+
+ENV DJANGO_DEBUG_FALSE=1
+
 CMD ["gunicorn", "--bind", ":8004", "finper.wsgi:application"]
