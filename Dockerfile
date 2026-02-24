@@ -1,5 +1,7 @@
 FROM python:3.14-slim
 
+RUN adduser --uid 1234 nando
+
 RUN python -m venv /.venv
 ENV PATH="/.venv/bin:$PATH"
 
@@ -18,7 +20,6 @@ RUN python manage.py collectstatic --noinput
 
 ENV DJANGO_DEBUG_FALSE=1
 
-RUN adduser --uid 1234 nando
 USER nando
 
 CMD ["gunicorn", "--bind", ":8004", "finper.wsgi:application"]
