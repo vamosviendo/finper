@@ -1,10 +1,11 @@
 import pytest
 
-from diario.models import CuentaAcumulativa, CuentaInteractiva, Movimiento, Dia, Moneda, SaldoDiario, \
-    Titular, Cotizacion, Cuenta
+from diario.models import CuentaAcumulativa, CuentaInteractiva, Movimiento, \
+    Dia, Moneda, SaldoDiario, Titular, Cotizacion, Cuenta
 from vvmodel.serializers import SerializedDb
 
-from diario.serializers import CuentaSerializada, DiaSerializado, MovimientoSerializado, SaldoDiarioSerializado, \
+from diario.serializers import CuentaSerializada, DiaSerializado, \
+    MovimientoSerializado, SaldoDiarioSerializado, \
     MonedaSerializada, TitularSerializado, CotizacionSerializada
 
 
@@ -86,8 +87,12 @@ class TestCuentaSerializada:
         cuentas = CuentaSerializada.todes(db_serializada)
         for cta in cuentas:
             print(cta)
-        cuenta_credito = CuentaSerializada(cuentas.tomar(sk="_otro-titular"))
-        cuenta_credito_2 = CuentaSerializada(cuentas.tomar(sk="_titular-otro"))
+        cuenta_credito = CuentaSerializada(cuentas.tomar(
+            sk=f"_{credito.cta_salida.titular.sk}-{credito.cta_entrada.titular.sk}")
+        )
+        cuenta_credito_2 = CuentaSerializada(cuentas.tomar(
+            sk=f"_{credito.cta_entrada.titular.sk}-{credito.cta_salida.titular.sk}")
+        )
         assert cuenta_credito.es_cuenta_credito() is True
         assert cuenta_credito_2.es_cuenta_credito() is True
 

@@ -262,20 +262,22 @@ class TestMovimientoEntreCuentasDeDistintosTitulares:
 
     def test_genera_cuentas_credito_si_no_existen(self, cuenta, cuenta_ajena):
         cant_cuentas = Cuenta.cantidad()
+        sk_tit_c = cuenta.titular.sk
+        sk_tit_caj = cuenta_ajena.titular.sk
         with pytest.raises(Cuenta.DoesNotExist):
-            Cuenta.tomar(sk='_titular-otro')
+            Cuenta.tomar(sk=f'_{sk_tit_c}-{sk_tit_caj}')
         with pytest.raises(Cuenta.DoesNotExist):
-            Cuenta.tomar(sk='_otro-titular')
+            Cuenta.tomar(sk=f'_{sk_tit_caj}-{sk_tit_c}')
         Movimiento.crear('Credito', 100, cuenta, cuenta_ajena)
         assert Cuenta.cantidad() == cant_cuentas + 2
-        Cuenta.tomar(sk='_titular-otro')  # doesn't raise
-        Cuenta.tomar(sk='_otro-titular')  # doesn't raise
+        Cuenta.tomar(sk=f'_{sk_tit_c}-{sk_tit_caj}')  # doesn't raise
+        Cuenta.tomar(sk=f'_{sk_tit_caj}-{sk_tit_c}')  # doesn't raise
 
     def test_asigna_a_cuentas_generadas_fecha_del_movimiento_como_fecha_de_creacion(
             self, cuenta, cuenta_ajena, fecha):
         Movimiento.crear('Credito', 100, cuenta, cuenta_ajena, fecha=fecha)
-        assert Cuenta.tomar(sk='_titular-otro').fecha_creacion == fecha
-        assert Cuenta.tomar(sk='_otro-titular').fecha_creacion == fecha
+        assert Cuenta.tomar(sk=f'_{cuenta.titular.sk}-{cuenta_ajena.titular.sk}').fecha_creacion == fecha
+        assert Cuenta.tomar(sk=f'_{cuenta_ajena.titular.sk}-{cuenta.titular.sk}').fecha_creacion == fecha
 
     def test_no_genera_cuentas_credito_si_ya_existen(self, credito):
         cant_cuentas = Cuenta.cantidad()

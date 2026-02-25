@@ -56,8 +56,10 @@ class TestSaveMovimientoEntreCuentasDeDistintosTitulares:
 
         cc1 = list(Cuenta.todes())[-1]
         cc2 = list(Cuenta.todes())[-2]
-        assert cc1.sk == '_otro-titular'
-        assert cc2.sk == '_titular-otro'
+        assert cc1.sk == f'_{credito_no_guardado.cta_salida.titular.sk}' \
+                         f'-{credito_no_guardado.cta_entrada.titular.sk}'
+        assert cc2.sk == f'_{credito_no_guardado.cta_entrada.titular.sk}' \
+                         f'-{credito_no_guardado.cta_salida.titular.sk}'
 
     def test_si_no_se_pasa_dia_ni_fecha_crea_cuentas_credito_con_fecha_ultimo_dia(self, dia, dia_posterior, credito_no_guardado):
         credito_no_guardado.dia = None
@@ -98,12 +100,23 @@ class TestSaveMovimientoEntreCuentasDeDistintosTitulares:
     ])
     def test_cambiar_cuenta_de_movimiento_entre_titulares_por_cuenta_de_otro_titular_cambia_cuentas_en_contramovimiento(
             self, credito, campo_cuenta, sk_ce, sk_cs, titular_gordo, fecha):
-        cuenta_gorda = Cuenta.crear(nombre="Cuenta gorda", sk="cg", titular=titular_gordo, fecha_creacion=fecha)
+        tit_entrada = credito.cta_entrada.titular
+        tit_salida = credito.cta_salida.titular
+        cuenta_gorda = Cuenta.crear(
+            nombre="Cuenta gorda", sk="cg",
+            titular=titular_gordo,
+            fecha_creacion=fecha
+        )
+
         setattr(credito, campo_cuenta, cuenta_gorda)
         credito.clean_save()
 
-        assert Movimiento.tomar(id=credito.id_contramov).cta_entrada.sk == sk_ce
-        assert Movimiento.tomar(id=credito.id_contramov).cta_salida.sk == sk_cs
+        contramov = Movimiento.tomar(id=credito.id_contramov)
+        tit_entrada_contramov = titular_gordo if campo_cuenta == "cta_salida" else tit_salida
+        tit_salida_contramov = titular_gordo if campo_cuenta == "cta_entrada" else tit_entrada
+
+        assert contramov.cta_entrada.sk == f"_{tit_entrada_contramov.sk}-{tit_salida_contramov.sk}"
+        assert contramov.cta_salida.sk == f"_{tit_salida_contramov.sk}-{tit_entrada_contramov.sk}"
 
     @pytest.mark.parametrize('campo_cuenta, fixt_cuenta', [
         ('cta_entrada', 'cuenta_2'),

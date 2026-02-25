@@ -5,15 +5,6 @@ from selenium.webdriver.common.by import By
 from diario.models import Movimiento
 
 
-# Fixtures
-
-@pytest.fixture(autouse=True)
-def mock_titular_principal(mocker, titular):
-    return mocker.patch('diario.forms.TITULAR_PRINCIPAL', titular.sk)
-
-
-# Tests
-
 def test_crear_cuenta(browser, titular, fecha):
     """ Cuando vamos a la página de cuenta nueva y completamos el formulario,
         aparece una cuenta nueva entre las cuentas del sitio. """
@@ -34,14 +25,20 @@ def test_crear_cuenta(browser, titular, fecha):
     assert "cuenta nueva" in nombres_cuenta
 
 
-@pytest.mark.parametrize("origen", ["/", "/diario/t/titular/", "/diario/m/", "/diario/tm/titular/"])
+@pytest.mark.parametrize("origen_template, fixt_args", [
+    ("home", []),
+    ("titular", ["titular"]),
+    ("movimiento", ["entrada_anterior"]),
+    ("titular_movimiento", ["titular", "entrada_anterior"]),
+])
 @pytest.mark.parametrize("destino", ["id_link_cuenta_nueva", "id_link_cta_mod_"])
 def test_crear_o_modificar_cuenta_redirige_a_pagina_desde_donde_se_invoco(
-        browser, origen, destino, titular, cuenta, fecha, entrada, entrada_anterior):
-    if "m/" in origen:
-        origen = f"{origen}{entrada_anterior.sk}"
+        browser, origen_template, fixt_args, destino, titular, cuenta, fecha, entrada, entrada_anterior, request):
+    origen = reverse(origen_template, args=[request.getfixturevalue(x).sk for x in fixt_args])
+
     if destino == "id_link_cta_mod_":
         destino = f"{destino}{cuenta.sk}"
+
     browser.ir_a_pag(origen)
     browser.pulsar(destino)
     browser.completar_form(
@@ -97,7 +94,7 @@ def test_crear_cuenta_en_otra_moneda(browser, titular, fecha, dolar):
     assert saldo_cuenta.get_attribute("id") == f"id_saldo_cta_cd_{dolar.sk}"
 
 
-def test_modificar_cuenta(browser, cuenta_ajena, dolar, fecha_anterior):
+def test_modificar_cuenta(browser, titular, cuenta_ajena, dolar, fecha_anterior):
     """ Cuando vamos a la página de modificar cuenta y completamos el
         formulario, la cuenta se modifica"""
     browser.ir_a_pag(cuenta_ajena.get_edit_url())
@@ -122,10 +119,13 @@ def test_eliminar_cuenta(browser, cuenta, cuenta_2):
     assert not browser.cuenta_esta(cuenta)
 
 
-@pytest.mark.parametrize("origen", ["/", "/diario/t/titular/", "/diario/m/", "/diario/tm/titular/"])
-def test_eliminar_cuenta_redirige_a_pagina_desde_la_que_se_invoco(browser, origen, cuenta, cuenta_2, entrada):
-    if "m/" in origen:
-        origen = f"{origen}{entrada.sk}"
+@pytest.mark.parametrize("origen_template, fixt_args", [
+    ("home", []),
+    ("titular", ["titular"]),
+    ("movimiento", ["entrada"]), ("titular_movimiento", ["titular", "entrada"])])
+def test_eliminar_cuenta_redirige_a_pagina_desde_la_que_se_invoco(
+        browser, origen_template, fixt_args, cuenta, cuenta_2, entrada, request):
+    origen = reverse(origen_template, args=[request.getfixturevalue(x).sk for x in fixt_args])
     browser.ir_a_pag(origen)
     browser.pulsar(f"id_link_cta_elim_{cuenta_2.sk}")
     browser.pulsar("id_btn_confirm")

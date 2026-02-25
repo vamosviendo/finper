@@ -204,7 +204,7 @@ def test_detalle_de_cuenta_interactiva(
 
 
 def test_detalle_de_cuenta_acumulativa(
-        browser, entrada_otra_cuenta, cuenta_de_dos_titulares,
+        browser, titular, entrada_otra_cuenta, cuenta_de_dos_titulares,
         credito_entre_subcuentas, entrada_subcuenta, entrada_posterior_subcuenta):
     sc1, sc2 = cuenta_de_dos_titulares.subcuentas.all()
 

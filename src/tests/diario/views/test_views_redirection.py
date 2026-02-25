@@ -11,8 +11,8 @@ from diario.models import Dia, Cuenta, Titular
 # Fixtures
 
 @pytest.fixture(autouse=True)
-def titular_principal(mocker, titular: Titular) -> MagicMock:
-    return mocker.patch('diario.forms.TITULAR_PRINCIPAL', titular.sk)
+def titular_principal(titular_principal: MagicMock) -> MagicMock:
+    return titular_principal
 
 
 @pytest.fixture

@@ -10,15 +10,6 @@ from utils.helpers_tests import fecha2page
 from utils.numeros import float_format
 
 
-# Fixtures
-
-@pytest.fixture
-def mock_titular_principal(mocker, titular):
-    return mocker.patch('diario.forms.TITULAR_PRINCIPAL', titular.sk)
-
-
-# Tests
-
 def test_detalle_movimiento(browser, entrada, salida, traspaso, cuenta_acumulativa):
     browser.ir_a_pag()
     links_movimiento = browser.encontrar_elementos("class_link_movimiento")
@@ -53,7 +44,7 @@ def test_detalle_movimiento(browser, entrada, salida, traspaso, cuenta_acumulati
 
 
 def test_detalle_movimiento_en_cuenta_acumulativa(
-        browser, titular, otro_titular, mock_titular_principal, fecha):
+        browser, titular, otro_titular, fecha):
     # Creamos una cuenta
     browser.ir_a_pag(reverse('cta_nueva'))
     browser.completar_form(
@@ -121,24 +112,29 @@ def pkfromlink(href: str) -> int:
     return int(urlparse(href).path.split("/")[-1])
 
 
-@pytest.mark.parametrize("origen, destino", [
-    ("/", "/diario/m/"),
-    ("/diario/c/c/", "/diario/cm/c/"),
-    ("/diario/t/titular/", "/diario/tm/titular/")])
-def test_detalle_movimiento_en_paginas_anteriores(browser, muchos_dias, origen, destino):
+@pytest.mark.parametrize("origen_template, fixt_args, destino_template", [
+    ("home", [], "/diario/m/"),
+    ("cuenta", ["cuenta"], "/diario/cm/c/"),
+    ("titular", ["titular"], "/diario/tm/p/")])
+def test_detalle_movimiento_en_paginas_anteriores(
+        browser, muchos_dias, origen_template, fixt_args, destino_template, request):
+    args = [request.getfixturevalue(x).sk for x in fixt_args]
+    origen = reverse(origen_template, args=args)
     # Cuando estando en una página anterior cliqueamos en un movimiento...
     browser.ir_a_pag(origen + "?page=2")
-
-    links_movimiento = browser.encontrar_elementos("class_link_movimiento")
 
     movimientos = browser.encontrar_elementos("class_row_mov")
     assert "mov_selected" not in movimientos[1].get_attribute("class")
 
+    links_movimiento = browser.encontrar_elementos("class_link_movimiento")
     pk = pkfromlink(links_movimiento[1].get_attribute('href'))
+    viewname = "movimiento" if origen_template == "home" else f"{origen_template}_movimiento"
+    destino = reverse(viewname, args=args + [pk])
+
     links_movimiento[1].click()
 
     # ...permanecemos en la página en la que estábamos...
-    browser.assert_url(f"{destino}{pk}?page=2")
+    browser.assert_url(f"{destino}?page=2")
 
     # ...y el movimiento aparece resaltado.
     movimientos = browser.encontrar_elementos("class_row_mov")
@@ -147,9 +143,13 @@ def test_detalle_movimiento_en_paginas_anteriores(browser, muchos_dias, origen, 
     # Cuando pasamos a otra página, se pierde el movimiento seleccionado
     # y se selecciona el último movimiento de la nueva página
     browser.pulsar("id_link_anterior_init")
-    links_movimiento = browser.encontrar_elementos("class_link_movimiento")
 
-    browser.assert_url(f"{destino}{pkfromlink(links_movimiento[0].get_attribute('href'))}?page=1")
+    links_movimiento = browser.encontrar_elementos("class_link_movimiento")
+    pk = pkfromlink(links_movimiento[0].get_attribute('href'))
+    viewname = "movimiento" if origen_template == "home" else f"{origen_template}_movimiento"
+    destino = reverse(viewname, args=args + [pk])
+
+    browser.assert_url(f"{destino}?page=1")
 
 
 @pytest.mark.parametrize("origen", [None, "cuenta", "titular"])

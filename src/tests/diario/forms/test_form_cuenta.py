@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock
+
 import pytest
 
 from django import forms
@@ -10,8 +12,8 @@ from diario.models import Titular, Moneda, Cuenta, CuentaInteractiva
 # Fixtures
 
 @pytest.fixture(autouse=True)
-def mock_titular_principal(mocker, titular):
-    return mocker.patch('diario.forms.TITULAR_PRINCIPAL', titular.sk)
+def mock_titular_principal(mocker, titular_principal: MagicMock) -> MagicMock:
+    return titular_principal
 
 
 # Tests

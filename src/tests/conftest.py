@@ -19,3 +19,8 @@ pytest_plugins = [
 @pytest.fixture
 def none():
     return None
+
+
+def pytest_collection_modifyitems(items):
+    for item in items:
+        item.add_marker(pytest.mark.django_db(transaction=True))

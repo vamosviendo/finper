@@ -28,4 +28,12 @@ def browser(base_url: str) -> Generator[FinperFirefox, Any, None]:
 
 def pytest_collection_modifyitems(items):
     for item in items:
-        item.add_marker(pytest.mark.django_db)
+        item.add_marker(pytest.mark.django_db(transaction=True))
+
+
+@pytest.fixture(scope="session", autouse=True)
+def django_db_setup(django_test_environment, django_db_blocker):
+    if os.environ.get("TEST_SERVER"):
+        with django_db_blocker.unblock():
+            from django.conf import settings
+            settings.DATABASES['default']['NAME'] = os.environ.get("DJANGO_DB_PATH", "container.db.sqlite3")

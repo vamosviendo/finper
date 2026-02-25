@@ -519,12 +519,20 @@ def test_convertir_entrada_en_traspaso_entre_titulares(browser, entrada, cuenta_
     assert mov_nuevo.encontrar_elemento('class_td_detalle', By.CLASS_NAME).text == 'Constitución de crédito'
 
 
-@pytest.mark.parametrize("origen", ["/", "/diario/t/titular/", "/diario/c/c/", "/diario/m/", "/diario/cm/c/"])
+@pytest.mark.parametrize("origen_template, fixt_args", [
+    ("home", []),
+    ("titular", ["titular"]),
+    ("cuenta", ["cuenta"]),
+    ("movimiento", ["entrada_anterior"]),
+    ("cuenta_movimiento", ["cuenta", "entrada_anterior"])
+])
 @pytest.mark.parametrize("destino", ["#id_link_mov_nuevo", "#id_row_mov_xxx .class_link_mod_mov"])
 def test_crear_o_modificar_movimiento_vuelve_a_la_pagina_desde_la_que_se_lo_invoco(
-        browser, origen, destino, valores, titular, cuenta, entrada, entrada_anterior, entrada_cuenta_ajena):
-    if "m/" in origen:
-        origen = f"{origen}{entrada_anterior.sk}"
+        browser, origen_template, fixt_args, destino, valores, titular, cuenta,
+        entrada, entrada_anterior, entrada_cuenta_ajena, request):
+    args = [request.getfixturevalue(x).sk for x in fixt_args]
+    origen = reverse(origen_template, args=args)
+
     if destino == "#id_row_mov_xxx .class_link_mod_mov":
         destino = destino.replace("xxx", entrada.sk)
 
@@ -568,11 +576,18 @@ def test_eliminar_movimiento(browser, entrada, salida):
     assert concepto not in conceptos
 
 
-@pytest.mark.parametrize("origen", ["/", "/diario/t/titular/", "/diario/c/c/", "/diario/m/", "/diario/cm/c/"])
+@pytest.mark.parametrize("origen_template, fixt_args", [
+    ("home", []),
+    ("titular", ["titular"]),
+    ("cuenta", ["cuenta"]),
+    ("movimiento", ["entrada_anterior"]),
+    ("cuenta_movimiento", ["cuenta", "entrada_anterior"])
+])
 def test_eliminar_movimiento_vuelve_a_la_pagina_desde_que_se_lo_invoco(
-        browser, origen, titular, cuenta, entrada, entrada_anterior, entrada_cuenta_ajena):
-    if "m/" in origen:
-        origen = f"{origen}{entrada_anterior.sk}"
+        browser, origen_template, fixt_args, titular, cuenta,
+        entrada, entrada_anterior, entrada_cuenta_ajena, request):
+    origen = reverse(origen_template, args=[request.getfixturevalue(x).sk for x in fixt_args])
+
     browser.ir_a_pag(origen)
     browser.pulsar(f"#id_row_mov_{entrada.sk} .class_link_elim_mov", By.CSS_SELECTOR)
     browser.pulsar("id_btn_confirm")
