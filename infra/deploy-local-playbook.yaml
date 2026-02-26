@@ -1,0 +1,35 @@
+- hosts: all
+
+  tasks:
+    # Acá debería instalarse docker. Sin embargo, eso hace al playbook
+    # muy dependiente del sistema, por lo cual prefiero dar por hecho
+    # que docker está instalado en el sistema y, en una instancia posterior,
+    # construir un script que se asegure de eso independientemente del
+    # sistema en el cual se va a crear posteriormente el container.
+    # Si no me equivoco, este es el único momento en el que la instalación
+    # no es independiente del sistema.
+
+    - name: Agregar usuario al grupo docker
+      ansible.builtin.user:
+        name: '{{ ansible_user }}'
+        groups: docker
+        append: true
+      become: true
+
+    - name: Construir imagen de container
+      community.docker.docker_image:
+        name: finper
+        source: build
+        state: present
+        build:
+          path: ..
+          platform: linux/amd64
+        force_source: true
+      delegate_to: 127.0.0.1
+
+    - name: Ejecutar container
+      community.docker.docker_container:
+        name: finper
+        image: finper
+        state: started
+        recreate: true
