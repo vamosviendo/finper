@@ -1,5 +1,4 @@
 from __future__ import annotations
-from functools import lru_cache
 
 from django import template
 
@@ -50,3 +49,8 @@ def saldo(
             result = 0
 
     return float_format(result)
+
+
+@register.filter
+def get_item(dictionary, key):
+    return dictionary.get(key)

@@ -18,7 +18,8 @@ from diario.forms import FormCotizacion, FormCuenta, FormMovimiento, \
 from diario.models import Cuenta, CuentaInteractiva, CuentaAcumulativa, Dia, \
     Movimiento, Titular, Moneda, Cotizacion
 from diario.settings_app import TEMPLATE_HOME
-from diario.utils.utils_saldo import saldo_general_historico, verificar_saldos
+from diario.utils.utils_saldo import saldo_general_historico, verificar_saldos, precalcular_saldos_cuentas
+from utils.numeros import float_format
 from utils.tiempo import str2date
 
 
@@ -145,6 +146,7 @@ class BaseHomeView(TemplateView):
                 .select_related("cta_madre", "moneda", "content_type")
                 .order_by(Lower("nombre"))
         )) if not overrided else None
+        cuentas_raiz = list(Cuenta.filtro(cta_madre=None).select_related("moneda"))
         return {
                 "saldo_gral":
                     saldo_general_historico(movimiento) if movimiento
@@ -152,6 +154,13 @@ class BaseHomeView(TemplateView):
                 "titulo_saldo_gral": f"Saldo general{movimiento_en_titulo}",
                 "titulares": Titular.todes(),
                 "cuentas": cuentas,
+                "saldos_por_dia": {
+                    dia.pk: float_format(saldo_general_historico(
+                        dia=dia,
+                        cuentas=cuentas_raiz,
+                    ))
+                    for dia in self.dias_pag
+                }
             }
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
@@ -161,7 +170,18 @@ class BaseHomeView(TemplateView):
 
         context.update(self._get_context_comun(ente, movimiento))
         context.update(self.get_context_especifico(ente, movimiento))
+
         context["dias"] = self.dias_pag
+
+        ultimo_dia = Dia.ultime()
+        monedas = list(Moneda.todes())
+        cuentas_activas = list(
+            Cuenta.filtro(activa=True).select_related("moneda", "content_type")
+        )
+        context["saldos_cuentas"] = precalcular_saldos_cuentas(
+            cuentas_activas, monedas, ultimo_dia
+        )
+
         return context
 
 
@@ -194,6 +214,10 @@ class CuentaHomeView(BaseHomeView):
             "cuentas": self._cuentas_ordenadas(
                 list(ente.subcuentas.all()), cta_madre=ente
             ) if ente.es_acumulativa else [],
+            "saldos_por_dia": {
+                dia.pk: float_format(ente.saldo(dia=dia))
+                        for dia in self.dias_pag
+            }
         }
 
 
@@ -213,7 +237,14 @@ class TitularHomeView(BaseHomeView):
             "saldo_gral": ente.capital(movimiento),
             "titulo_saldo_gral": f"Capital de {ente.nombre}{movimiento_en_titulo}",
             "titulares": Titular.todes(),
-            "cuentas": self._cuentas_ordenadas(ente.cuentas_en_las_que_participa(), titular=ente),
+            "cuentas": self._cuentas_ordenadas(
+                ente.cuentas_en_las_que_participa(),
+                titular=ente
+            ),
+            "saldos_por_dia": {
+                dia.pk: float_format(ente.capital(dia=dia))
+                        for dia in self.dias_pag
+            }
         }
 
 
@@ -238,26 +269,7 @@ class CuentasInactivasView(BaseHomeView):
 
 
 class MovimientoHomeView(BaseHomeView):
-    def get_ente(self, kwargs) -> None:
-        return None
-
-    def get_context_especifico(
-            self, ente: Cuenta | Titular | None,
-            movimiento: Movimiento,
-            overrided: bool = False) -> dict[str, Any]:
-        movimiento_en_titulo = self._get_context_comun(ente, movimiento)["movimiento_en_titulo"]
-
-        return {
-            "saldo_gral": saldo_general_historico(movimiento) if movimiento
-                else sum(c.saldo() for c in Cuenta.filtro(cta_madre=None)),
-            "titulo_saldo_gral": f"Saldo general{movimiento_en_titulo}",
-            "titulares": Titular.todes(),
-            "cuentas": self._cuentas_ordenadas(list(
-                Cuenta.todes()
-                    .select_related("cta_madre", "moneda", "content_type")
-                    .order_by(Lower("nombre"))
-            )),
-        }
+    pass
 
 
 class CuentaMovimientoHomeView(CuentaHomeView):
