@@ -7,3 +7,4 @@ selenium==4.39.0
 ansible==13.3.0
 ansible-core==2.20.2
 docker==7.1.0
+django-debug-toolbar==6.2.0
