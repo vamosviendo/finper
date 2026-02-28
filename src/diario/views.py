@@ -140,7 +140,11 @@ class BaseHomeView(TemplateView):
             movimiento: Movimiento,
             overrided: bool = False) -> dict[str, Any]:
         movimiento_en_titulo = self._get_context_comun(ente, movimiento)["movimiento_en_titulo"]
-        cuentas = self._cuentas_ordenadas(list(Cuenta.todes().order_by(Lower("nombre")))) if not overrided else None
+        cuentas = self._cuentas_ordenadas(list(
+            Cuenta.todes()
+                .select_related("cta_madre", "moneda", "content_type")
+                .order_by(Lower("nombre"))
+        )) if not overrided else None
         return {
                 "saldo_gral":
                     saldo_general_historico(movimiento) if movimiento
@@ -248,7 +252,11 @@ class MovimientoHomeView(BaseHomeView):
                 else sum(c.saldo() for c in Cuenta.filtro(cta_madre=None)),
             "titulo_saldo_gral": f"Saldo general{movimiento_en_titulo}",
             "titulares": Titular.todes(),
-            "cuentas": self._cuentas_ordenadas(list(Cuenta.todes().order_by(Lower("nombre")))),
+            "cuentas": self._cuentas_ordenadas(list(
+                Cuenta.todes()
+                    .select_related("cta_madre", "moneda", "content_type")
+                    .order_by(Lower("nombre"))
+            )),
         }
 
 
