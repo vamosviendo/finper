@@ -11,10 +11,13 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 import os
+import sys
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+TESTING = "test" in sys.argv or "PYTEST_VERSION" in os.environ
 
 if "DJANGO_DEBUG_FALSE" in os.environ:
     DEBUG = False
@@ -29,7 +32,7 @@ else:
     # SECURITY WARNING: keep the secret key used in production secret!
     SECRET_KEY = 'django-insecure-z%52ep0^%ffhkrax$&754f!hqswn&zqeg56de+he2bl)d0pgvz'
     ALLOWED_HOSTS = []
-    db_path = BASE_DIR / "db.sqlite3"
+    db_path = BASE_DIR / "test_db.sqlite3" if TESTING else BASE_DIR / "db.sqlite3"
 
 
 # Application definition
@@ -41,7 +44,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'debug_toolbar',
     'diario',
     'usuarios',
     'vvmodel',
@@ -49,7 +51,6 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -59,6 +60,16 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+if not TESTING:
+    INSTALLED_APPS = [
+        *INSTALLED_APPS,
+        "debug_toolbar",
+    ]
+    MIDDLEWARE = [
+        'debug_toolbar.middleware.DebugToolbarMiddleware',
+        *MIDDLEWARE,
+    ]
 
 ROOT_URLCONF = 'finper.urls'
 
