@@ -211,11 +211,11 @@ class Cuenta(PolymorphModel):
 
     @property
     def es_interactiva(self) -> bool:
-        return str(self.content_type) == 'Diario | cuenta interactiva'
+        return isinstance(self, CuentaInteractiva)
 
     @property
     def es_acumulativa(self) -> bool:
-        return str(self.content_type) == 'Diario | cuenta acumulativa'
+        return isinstance(self, CuentaAcumulativa)
 
     @property
     def es_cuenta_credito(self) -> bool:
@@ -804,7 +804,7 @@ class CuentaAcumulativa(Cuenta):
             moneda=self.moneda,
         )
 
-    def recalcular_saldos_diarios(self, desde: dia | None = None):
+    def recalcular_saldos_diarios(self, desde: Dia | None = None):
         raise AttributeError("No se permite recalcular saldos de cuenta acumulativa")
 
     # Protected

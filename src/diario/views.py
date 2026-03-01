@@ -174,13 +174,16 @@ class BaseHomeView(TemplateView):
         context["dias"] = self.dias_pag
 
         ultimo_dia = Dia.ultime()
-        monedas = list(Moneda.todes())
-        cuentas_activas = list(
-            Cuenta.filtro(activa=True).select_related("moneda", "content_type")
-        )
-        context["saldos_cuentas"] = precalcular_saldos_cuentas(
-            cuentas_activas, monedas, ultimo_dia
-        )
+        if ultimo_dia:
+            monedas = list(Moneda.todes())
+            cuentas_activas = list(
+                Cuenta.filtro(activa=True).select_related("moneda", "content_type")
+            )
+            context["saldos_cuentas"] = precalcular_saldos_cuentas(
+                cuentas_activas, monedas, ultimo_dia
+            )
+        else:
+            context["saldos_cuentas"] = {}
 
         return context
 
@@ -334,7 +337,7 @@ class CtaDesactView(TemplateView):
         cuenta = self.get_object(kwargs["sk"])
 
         # Nos aseguramos de llamar al met. save de la clase correcta.
-        if cuenta.es_acumulativa:
+        if cuenta.como_subclase().es_acumulativa:
             cuenta = CuentaAcumulativa.tomar(sk=cuenta.sk)
 
         try:
@@ -453,12 +456,12 @@ class MovModView(UpdateView):
     def get_form(self, *args, **kwargs):
         form = super().get_form(*args, **kwargs)
 
-        if self.object.cta_entrada and self.object.cta_entrada.es_acumulativa:
+        if self.object.cta_entrada and self.object.cta_entrada.como_subclase().es_acumulativa:
             form.fields['cta_entrada'].disabled = True
         else:
             cast(forms.ModelChoiceField, form.fields['cta_entrada']).queryset = CuentaInteractiva.filtro(activa=True)
 
-        if self.object.cta_salida and self.object.cta_salida.es_acumulativa:
+        if self.object.cta_salida and self.object.cta_salida.como_subclase().es_acumulativa:
             form.fields['cta_salida'].disabled = True
         else:
             cast(forms.ModelChoiceField, form.fields['cta_salida']).queryset = CuentaInteractiva.filtro(activa=True)
