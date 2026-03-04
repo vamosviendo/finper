@@ -38,8 +38,8 @@ def saldo_general_historico(
 
 
 def precalcular_saldos_cuentas(
-        cuentas: list[Cuenta],
-        monedas: list[Moneda],
+        cuentas: Iterable[Cuenta],
+        monedas: Iterable[Moneda],
         dia: Dia | None = None,
         movimiento: Movimiento | None = None):
 
