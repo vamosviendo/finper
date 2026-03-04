@@ -8,6 +8,7 @@ from pytest_django import asserts
 from diario.models import Dia, Movimiento
 from diario.settings_app import TEMPLATE_HOME
 from utils.helpers_tests import fecha2page
+from utils.numeros import float_format
 
 
 # Fixtures
@@ -136,6 +137,26 @@ class TestBaseHome:
 
     def test_si_no_hay_movimientos_pasa_0_a_saldo_general(self, response):
         assert response.context['saldo_gral'] == 0
+
+    def test_pasa_saldos_cuentas_al_ultimo_dia(self, entrada, salida, peso, client):
+        response = client.get(reverse("home"))
+        cuenta = entrada.cta_entrada
+        saldos = response.context["saldos_cuentas"]
+        assert saldos[cuenta.pk][peso.sk] == float_format(cuenta.saldo())
+
+    def test_pasa_saldos_en_distintas_monedas(self, cuenta_con_saldo, peso, dolar, client):
+        response = client.get(reverse("home"))
+        saldos = response.context["saldos_cuentas"]
+        assert \
+            saldos[cuenta_con_saldo.pk][dolar.sk] == \
+            float_format(cuenta_con_saldo.saldo(moneda=dolar, compra=True))
+
+    def test_si_no_hay_movimientos_ni_dias_pasa_saldo_cero_para_todas_las_cuentas_en_todas_las_monedas(
+            self, cuenta, cuenta_en_dolares, peso, dolar, client):
+        response = client.get(reverse("home"))
+        saldos = response.context["saldos_cuentas"]
+        assert saldos[cuenta.pk] == {peso.sk: float_format(0), dolar.sk: float_format(0)}
+        assert saldos[cuenta_en_dolares.pk] == {peso.sk: float_format(0), dolar.sk: float_format(0)}
 
 
 class TestGet:

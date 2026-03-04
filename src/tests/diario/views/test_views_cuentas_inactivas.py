@@ -18,3 +18,8 @@ def test_si_pasa_subcuenta_inactiva_pasa_cuenta_madre_antes_de_la_subcuenta(clie
 
     response = client.get(reverse("ctas_inactivas"))
     assert response.context.get("cuentas") == [cuenta_acumulativa_saldo_0, sc1, sc3]
+
+def test_pasa_saldos_cuentas_inactivas(cuenta_inactiva, entrada, peso, client):
+    response = client.get(reverse("ctas_inactivas"))
+    saldos = response.context["saldos_cuentas"]
+    assert cuenta_inactiva.pk in saldos.keys()

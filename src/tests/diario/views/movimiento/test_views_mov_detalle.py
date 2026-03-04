@@ -1,4 +1,5 @@
 from diario.utils.utils_saldo import saldo_general_historico
+from utils.numeros import float_format
 
 
 def test_pasa_movimiento_a_template(entrada, client):
@@ -61,3 +62,13 @@ def test_pasa_titulo_de_saldo_gral_con_movimiento(entrada, client):
         response.context['titulo_saldo_gral'] ==
         f'Saldo general en movimiento {entrada.orden_dia} '
         f'del {entrada.fecha} ({entrada.concepto})')
+
+def test_pasa_saldos_cuentas_al_momento_del_movimiento(entrada, salida, client, peso):
+    # salida ocurre después de entrada en el mismo día;
+    # al seleccionar entrada el saldo de cuenta no debe incluir salida
+    cuenta = entrada.cta_entrada
+    response = client.get(entrada.get_absolute_url())
+    saldos = response.context['saldos_cuentas']
+    assert saldos[cuenta.pk][peso.sk] == float_format(cuenta.saldo(movimiento=entrada))
+    assert saldos[cuenta.pk][peso.sk] != float_format(cuenta.saldo(dia=entrada.dia))
+

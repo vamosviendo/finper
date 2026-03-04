@@ -217,7 +217,8 @@ def test_home_monedas(
     for cuenta in (cuenta_con_saldo, cuenta_con_saldo_en_dolares, cuenta_con_saldo_en_euros):
         for moneda in (peso, dolar, euro):
             saldo_mon = browser.encontrar_elemento(f"id_saldo_cta_{cuenta.sk}_{moneda.sk}")
-            assert saldo_mon.text == float_format(cuenta.saldo(moneda=moneda, compra=False))
+            assert saldo_mon.text == float_format(cuenta.saldo(moneda=moneda, compra=True)), \
+                f"diferencia en saldo de cuenta <{cuenta}> en {moneda.plural}"
             classname = saldo_mon.get_attribute("class")
             if moneda == cuenta.moneda:
                 assert "mon_cuenta" in classname
@@ -232,7 +233,8 @@ def test_home_monedas(
     for cuenta in subcuentas:
         for moneda in (peso, dolar, euro):
             saldo_mon = browser.encontrar_elemento(f"id_saldo_cta_{cuenta.sk}_{moneda.sk}")
-            assert saldo_mon.text == float_format(cuenta.saldo(moneda=moneda, compra=False))
+            assert saldo_mon.text == float_format(cuenta.saldo(moneda=moneda, compra=True)), \
+                f"diferencia en saldo de cuenta <{cuenta}> en {moneda.plural}"
             classname = saldo_mon.get_attribute("class")
             if moneda == cuenta.moneda:
                 assert "mon_cuenta" in classname

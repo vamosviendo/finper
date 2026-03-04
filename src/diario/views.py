@@ -163,6 +163,11 @@ class BaseHomeView(TemplateView):
                 }
             }
 
+    def get_cuentas_para_saldos(self):
+        return list(
+            Cuenta.filtro(activa=True).select_related("moneda", "content_type")
+        )
+
     def get_context_data(self, **kwargs) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         ente = self.get_ente(kwargs)
@@ -173,17 +178,17 @@ class BaseHomeView(TemplateView):
 
         context["dias"] = self.dias_pag
 
-        ultimo_dia = Dia.ultime()
-        if ultimo_dia:
-            monedas = list(Moneda.todes())
-            cuentas_activas = list(
-                Cuenta.filtro(activa=True).select_related("moneda", "content_type")
-            )
+        monedas = list(Moneda.todes())
+        cuentas = self.get_cuentas_para_saldos()
+        try:
             context["saldos_cuentas"] = precalcular_saldos_cuentas(
-                cuentas_activas, monedas, ultimo_dia
+                cuentas, monedas, dia=Dia.ultime(), movimiento=movimiento
             )
-        else:
-            context["saldos_cuentas"] = {}
+        except ValueError:
+            context["saldos_cuentas"] = {
+                cuenta.pk: {moneda.sk: float_format(0) for moneda in monedas}
+                for cuenta in cuentas
+            }
 
         return context
 
@@ -269,6 +274,11 @@ class CuentasInactivasView(BaseHomeView):
 
         context["cuentas"] = cuentas
         return context
+
+    def get_cuentas_para_saldos(self):
+        return list(
+            Cuenta.filtro(activa=False).select_related("moneda", "content_type")
+        )
 
 
 class MovimientoHomeView(BaseHomeView):
