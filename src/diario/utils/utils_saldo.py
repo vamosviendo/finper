@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, TYPE_CHECKING, Optional
+from typing import List, TYPE_CHECKING, Optional, Iterable
 
 from diario.models import Cuenta, Moneda
 from utils.numeros import float_format
@@ -22,7 +22,7 @@ def saldo_general_historico(
         dia: Optional[Dia] = None,
         moneda: Optional[Moneda] = None,
         compra: bool = False,
-        cuentas: Optional[list] = None) -> float:
+        cuentas: Optional[Iterable] = None) -> float:
     if not mov and not dia:
         raise ValueError("Debe pasarse un movimiento o un día")
     fecha = mov.fecha if mov else dia.fecha

@@ -1,4 +1,5 @@
 from diario.models import Dia
+from utils.numeros import float_format
 
 
 def test_actualiza_context_con_titular(titular, cuenta, cuenta_2, entrada, salida, client):
@@ -54,7 +55,7 @@ def test_pasa_solo_los_ultimos_7_dias_con_movimientos_del_titular(titular, mas_d
     assert mas_de_7_dias.first() not in response.context.get('dias')
 
 
-def test_si_recibe_id_de_movimiento_pasa_titulo_de_saldo_gral_con_titular_y_movimiento(entrada, client):
+def test_si_recibe_movimiento_pasa_titulo_de_saldo_gral_con_titular_y_movimiento(entrada, client):
     titular = entrada.cta_entrada.titular
     response = client.get(titular.get_url_with_mov(entrada))
     assert response.context.get('titulo_saldo_gral') is not None
@@ -62,6 +63,31 @@ def test_si_recibe_id_de_movimiento_pasa_titulo_de_saldo_gral_con_titular_y_movi
         response.context['titulo_saldo_gral'] == \
         f"Capital de {titular.nombre} en movimiento {entrada.orden_dia} " \
         f"del {entrada.fecha} ({entrada.concepto})"
+
+
+def test_si_recibe_movimiento_pasa_saldos_de_cuentas_del_titular_en_monedas_al_momento_del_movimiento(
+        titular, cuenta, cuenta_2, cuenta_ajena, entrada, salida, traspaso, peso, dolar, client):
+    response = client.get(titular.get_url_with_mov(entrada))
+    saldos = response.context["saldos_cuentas"]
+
+    assert cuenta_ajena.pk not in saldos.keys()
+
+    assert cuenta.pk in saldos.keys()
+    assert saldos[cuenta.pk][peso.sk] == float_format(cuenta.saldo(
+        movimiento=entrada)
+    )
+    # assert saldos[cuenta.pk][dolar.sk] == float_format(cuenta.saldo(
+    #     movimiento=entrada, moneda=dolar, compra=True)
+    # )
+
+    assert cuenta_2.pk in saldos.keys()
+    assert saldos[cuenta_2.pk][peso.sk] == float_format(cuenta_2.saldo(
+        movimiento=entrada)
+    )
+    # assert saldos[cuenta_2.pk][dolar.sk] == float_format(cuenta.saldo(
+    #     movimiento=entrada, moneda=dolar, compra=True)
+    # )
+
 
 
 def test_si_recibe_querydict_con_fecha_calcula_la_pagina_en_base_a_los_movimientos_de_cuentas_del_titular(

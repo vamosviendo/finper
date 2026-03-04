@@ -1,4 +1,5 @@
 from datetime import timedelta
+from unittest.mock import call, ANY
 
 import pytest
 from django.template.response import TemplateResponse
@@ -7,6 +8,7 @@ from pytest_django import asserts
 
 from diario.models import Dia, Movimiento
 from diario.settings_app import TEMPLATE_HOME
+from diario.utils.utils_saldo import saldo_general_historico
 from utils.helpers_tests import fecha2page
 from utils.numeros import float_format
 
@@ -157,6 +159,33 @@ class TestBaseHome:
         saldos = response.context["saldos_cuentas"]
         assert saldos[cuenta.pk] == {peso.sk: float_format(0), dolar.sk: float_format(0)}
         assert saldos[cuenta_en_dolares.pk] == {peso.sk: float_format(0), dolar.sk: float_format(0)}
+
+    def test_pasa_saldos_de_los_dias_que_muestra_la_pagina(
+            self, entrada_temprana, entrada_anterior_otra_cuenta, salida,
+            salida_posterior, entrada_tardia, cuenta, client):
+        for n in range(1,4):
+            Movimiento.crear(
+                concepto=f"Movimiento +{n}",
+                importe=n,
+                fecha=entrada_tardia.fecha+timedelta(n),
+                cta_entrada=cuenta,
+            )
+
+        response = client.get(reverse("home"))
+        saldos = response.context["saldos_por_dia"]
+
+        assert entrada_temprana.dia.pk not in saldos.keys()
+
+        assert entrada_tardia.dia.pk in saldos.keys()
+        assert saldos[entrada_tardia.dia.pk] == float_format(
+            saldo_general_historico(dia=entrada_tardia.dia)
+        )
+
+    def test_no_usa_subcuentas_en_calculo_de_saldo_general_historico(
+            self, cuenta_acumulativa, cuenta, client, mocker):
+        mock_sgh = mocker.patch("diario.views.saldo_general_historico")
+        client.get(reverse("home"))
+        mock_sgh.assert_called_with(dia=ANY, cuentas={cuenta, cuenta_acumulativa})
 
 
 class TestGet:

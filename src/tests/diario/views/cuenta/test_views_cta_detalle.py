@@ -1,4 +1,5 @@
 from diario.models import Dia
+from utils.numeros import float_format
 
 
 def test_pasa_cuenta_como_filtro(cuenta, client):
@@ -55,6 +56,22 @@ def test_si_recibe_id_de_movimiento_pasa_titulo_de_saldo_historico_con_cuenta_y_
         response.context['titulo_saldo_gral'] ==
         f'{cuenta.nombre} (fecha alta: {cuenta.fecha_creacion}) en movimiento {entrada.orden_dia} '
         f'del {entrada.fecha} ({entrada.concepto})')
+
+
+def test_si_recibe_movimiento_pasa_saldos_de_subcuentas_en_monedas_al_momento_del_movimiento(
+        cuenta_acumulativa, cuenta, peso, dolar, client):
+    mov = cuenta_acumulativa.movs().first()
+    sc1, sc2 = cuenta_acumulativa.subcuentas.all()
+    response = client.get(cuenta_acumulativa.get_url_with_mov(mov))
+    saldos = response.context["saldos_cuentas"]
+
+    assert cuenta.pk not in saldos.keys()
+
+    assert sc1.pk in saldos.keys()
+    assert saldos[sc1.pk][peso.sk] == float_format(sc1.saldo(movimiento=mov))
+
+    assert sc2.pk in saldos.keys()
+    assert saldos[sc2.pk][peso.sk] == float_format(sc2.saldo(movimiento=mov))
 
 
 def test_si_recibe_querydict_con_fecha_calcula_la_pagina_en_base_a_los_movimientos_de_la_cuenta(

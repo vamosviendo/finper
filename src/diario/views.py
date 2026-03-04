@@ -146,7 +146,23 @@ class BaseHomeView(TemplateView):
                 .select_related("cta_madre", "moneda", "content_type")
                 .order_by(Lower("nombre"))
         )) if not overrided else None
-        cuentas_raiz = list(Cuenta.filtro(cta_madre=None).select_related("moneda"))
+        cuentas_raiz = set(Cuenta.filtro(cta_madre=None, activa=True).select_related("moneda", "content_type"))
+
+        monedas = list(Moneda.todes())
+        # cuentas_raiz = self.get_cuentas_para_saldos()
+        if cuentas:
+            try:
+                saldos_cuentas = precalcular_saldos_cuentas(
+                    cuentas, monedas, dia=None if movimiento else Dia.ultime(), movimiento=movimiento
+                )
+            except ValueError:
+                saldos_cuentas = {
+                    cuenta.pk: {moneda.sk: float_format(0) for moneda in monedas}
+                    for cuenta in cuentas
+                }
+        else:
+            saldos_cuentas = {}
+
         return {
                 "saldo_gral":
                     saldo_general_historico(movimiento) if movimiento
@@ -160,8 +176,9 @@ class BaseHomeView(TemplateView):
                         cuentas=cuentas_raiz,
                     ))
                     for dia in self.dias_pag
+                },
+                "saldos_cuentas": saldos_cuentas,
                 }
-            }
 
     def get_cuentas_para_saldos(self):
         return list(
@@ -177,18 +194,6 @@ class BaseHomeView(TemplateView):
         context.update(self.get_context_especifico(ente, movimiento))
 
         context["dias"] = self.dias_pag
-
-        monedas = list(Moneda.todes())
-        cuentas = self.get_cuentas_para_saldos()
-        try:
-            context["saldos_cuentas"] = precalcular_saldos_cuentas(
-                cuentas, monedas, dia=Dia.ultime(), movimiento=movimiento
-            )
-        except ValueError:
-            context["saldos_cuentas"] = {
-                cuenta.pk: {moneda.sk: float_format(0) for moneda in monedas}
-                for cuenta in cuentas
-            }
 
         return context
 
@@ -209,6 +214,22 @@ class CuentaHomeView(BaseHomeView):
             overrided: bool = False) -> dict[str, Any]:
         movimiento_en_titulo = self._get_context_comun(ente, movimiento)["movimiento_en_titulo"]
 
+        monedas = list(Moneda.todes())
+        cuentas = list(
+            self._cuentas_ordenadas(list(ente.subcuentas.all()), cta_madre=ente)
+            if ente.es_acumulativa else []
+        )
+
+        try:
+            saldos_cuentas = precalcular_saldos_cuentas(
+                cuentas, monedas, dia=None if movimiento else Dia.ultime(), movimiento=movimiento
+            )
+        except ValueError:
+            saldos_cuentas = {
+                cuenta.pk: {moneda.sk: float_format(0) for moneda in monedas}
+                for cuenta in cuentas
+            }
+
         return {
             "saldo_gral": ente.saldo(movimiento),
             "titulo_saldo_gral": f"{ente.nombre} (fecha alta: {ente.fecha_creacion}){movimiento_en_titulo}",
@@ -219,13 +240,12 @@ class CuentaHomeView(BaseHomeView):
             ) if ente.es_acumulativa else Titular.filtro(
                 sk=ente.titular.sk
             ),
-            "cuentas": self._cuentas_ordenadas(
-                list(ente.subcuentas.all()), cta_madre=ente
-            ) if ente.es_acumulativa else [],
+            "cuentas": cuentas,
             "saldos_por_dia": {
                 dia.pk: float_format(ente.saldo(dia=dia))
                         for dia in self.dias_pag
-            }
+            },
+            "saldos_cuentas": saldos_cuentas,
         }
 
 
@@ -241,18 +261,33 @@ class TitularHomeView(BaseHomeView):
     def get_context_especifico(self, ente: Titular, movimiento: Movimiento, overrided: bool = False) -> dict[str, Any]:
         movimiento_en_titulo = self._get_context_comun(ente, movimiento)["movimiento_en_titulo"]
 
+        monedas = list(Moneda.todes())
+        cuentas = list(
+            self._cuentas_ordenadas(
+                ente.cuentas_en_las_que_participa(),
+                titular=ente
+            )
+        )
+        try:
+            saldos_cuentas = precalcular_saldos_cuentas(
+                cuentas, monedas, dia=None if movimiento else Dia.ultime(), movimiento=movimiento
+            )
+        except ValueError:
+            saldos_cuentas = {
+                cuenta.pk: {moneda.sk: float_format(0) for moneda in monedas}
+                for cuenta in cuentas
+            }
+
         return {
             "saldo_gral": ente.capital(movimiento),
             "titulo_saldo_gral": f"Capital de {ente.nombre}{movimiento_en_titulo}",
             "titulares": Titular.todes(),
-            "cuentas": self._cuentas_ordenadas(
-                ente.cuentas_en_las_que_participa(),
-                titular=ente
-            ),
+            "cuentas": cuentas,
             "saldos_por_dia": {
                 dia.pk: float_format(ente.capital(dia=dia))
                         for dia in self.dias_pag
-            }
+            },
+            "saldos_cuentas": saldos_cuentas,
         }
 
 
@@ -265,14 +300,25 @@ class CuentasInactivasView(BaseHomeView):
             overrided: bool = True) -> dict[str, Any]:
         context = super().get_context_especifico(ente, movimiento, overrided)
 
+        monedas = list(Moneda.todes())
         cuentas_ordenadas = self._cuentas_ordenadas(list(Cuenta.todes().order_by(Lower("nombre"))), activas=False)
         cuentas = []
         for cuenta in cuentas_ordenadas:
             if cuenta.tiene_madre() and cuenta.cta_madre not in cuentas:
                 cuentas.append(cuenta.cta_madre)
             cuentas.append(cuenta)
+        try:
+            saldos_cuentas = precalcular_saldos_cuentas(
+                cuentas, monedas, dia=None if movimiento else Dia.ultime(), movimiento=movimiento
+            )
+        except ValueError:
+            saldos_cuentas = {
+                cuenta.pk: {moneda.sk: float_format(0) for moneda in monedas}
+                for cuenta in cuentas
+            }
 
         context["cuentas"] = cuentas
+        context["saldos_cuentas"] = saldos_cuentas
         return context
 
     def get_cuentas_para_saldos(self):
