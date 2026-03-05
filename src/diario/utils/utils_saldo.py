@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from typing import List, TYPE_CHECKING, Optional, Iterable
 
-from diario.models import Cuenta, Moneda
+from django.core.exceptions import EmptyResultSet
+
+from diario.models import Cuenta, Moneda, SaldoDiario, Cotizacion
 from utils.numeros import float_format
 
 if TYPE_CHECKING:
@@ -43,11 +45,30 @@ def precalcular_saldos_cuentas(
         dia: Dia | None = None,
         movimiento: Movimiento | None = None):
 
+    if movimiento:
+        dia = None
+
     if not dia and not movimiento:
         raise ValueError(
             "Debe proporcionarse un día o un movimiento "
             "para el cálculo de los saldos"
         )
+
+    if dia:
+        saldos_diarios = _indexar_saldos_diarios(cuentas, dia)
+        cotizaciones = _indexar_cotizaciones(cuentas, monedas, dia.fecha)
+
+        return {
+            cuenta.pk: {
+                moneda.sk: float_format(
+                    round(
+                        saldos_diarios.get(cuenta.pk, 0) *
+                        cotizaciones.get((cuenta.moneda.pk, moneda.pk)),
+                        2
+                    )
+                ) for moneda in monedas
+            } for cuenta in cuentas
+        }
 
     return {
         cuenta.pk: {
@@ -62,3 +83,58 @@ def precalcular_saldos_cuentas(
         }
         for cuenta in cuentas
     }
+
+
+def _indexar_saldos_diarios(
+        cuentas: Iterable[Cuenta],
+        dia: Dia) -> dict[int, float]:
+    saldos_diarios = {
+        sd.cuenta_id: sd.importe
+        for sd in SaldoDiario.filtro(dia=dia)
+    }
+
+    cuentas_sin_sd = [c for c in cuentas if c.pk not in saldos_diarios]
+    if cuentas_sin_sd:
+        sds_anteriores = SaldoDiario.filtro(
+            cuenta__in=cuentas_sin_sd,
+            dia__fecha__lt=dia.fecha,
+        ).order_by('cuenta_id', '-dia__fecha')
+        vistos = set()
+        for sd in sds_anteriores:
+            if sd.cuenta_id not in vistos:
+                saldos_diarios[sd.cuenta_id] = sd.importe
+                vistos.add(sd.cuenta_id)
+
+    return saldos_diarios
+
+
+def _indexar_cotizaciones(cuentas, monedas, fecha) -> dict[tuple[int, int], float]:
+    ids_monedas_origen = {c.moneda_id for c in cuentas}
+    monedas_todas_ids = list({*ids_monedas_origen, *[m.pk for m in monedas]})
+    cots_raw = Cotizacion.filtro(
+        moneda__in=monedas_todas_ids,
+        fecha__lte=fecha,
+    ).order_by('moneda_id', '-fecha')
+    vistos = set()
+    cots_por_moneda = {}
+    for cot in cots_raw:
+        if cot.moneda_id not in vistos:
+            cots_por_moneda[cot.moneda_id] = cot
+            vistos.add(cot.moneda_id)
+
+    cotizaciones = {}
+    for id_moneda_origen in ids_monedas_origen:
+        for moneda_destino in monedas:
+            if id_moneda_origen == moneda_destino.pk:
+                cotizaciones[(id_moneda_origen, moneda_destino.pk)] = 1.0
+            else:
+                cot_orig = cots_por_moneda.get(id_moneda_origen)
+                cot_dest = cots_por_moneda.get(moneda_destino.pk)
+                if cot_orig and cot_dest:
+                    cotizaciones[(id_moneda_origen, moneda_destino.pk)] = (
+                            cot_orig.importe_venta / cot_dest.importe_compra
+                    )
+                else:
+                    cotizaciones[(id_moneda_origen, moneda_destino.pk)] = 1.0
+
+    return cotizaciones
