@@ -43,45 +43,46 @@ def precalcular_saldos_cuentas(
         dia: Dia | None = None,
         movimiento: Movimiento | None = None):
 
-    if movimiento:
-        dia = None
-
     if not dia and not movimiento:
         raise ValueError(
             "Debe proporcionarse un día o un movimiento "
             "para el cálculo de los saldos"
         )
 
-    cotizaciones = _indexar_cotizaciones(cuentas, monedas, dia.fecha if dia else movimiento.dia.fecha)
+    cotizaciones = _indexar_cotizaciones(
+        cuentas,
+        monedas,
+        dia.fecha if dia else movimiento.dia.fecha
+    )
 
-    if dia:
-        saldos_diarios = _indexar_saldos_diarios(cuentas, dia)
+    if movimiento:
+        saldos = _indexar_saldos_en_movimiento(cuentas, movimiento)
+
         return {
             cuenta.pk: {
                 moneda.sk: float_format(
                     round(
-                        saldos_diarios.get(cuenta.pk, 0) *
-                        cotizaciones.get((cuenta.moneda.pk, moneda.pk)),
+                        saldos.get(cuenta.pk, 0) *
+                        cotizaciones.get((cuenta.moneda_id, moneda.pk), 1.0),
                         2
                     )
-                ) for moneda in monedas
-            } for cuenta in cuentas
+                )
+                for moneda in monedas
+            }
+            for cuenta in cuentas
         }
 
-    saldos = _indexar_saldos_en_movimiento(cuentas, movimiento)
-
+    saldos_diarios = _indexar_saldos_diarios(cuentas, dia)
     return {
         cuenta.pk: {
             moneda.sk: float_format(
                 round(
-                    saldos.get(cuenta.pk, 0) *
-                    cotizaciones.get((cuenta.moneda.id, moneda.pk), 1.0),
+                    saldos_diarios.get(cuenta.pk, 0) *
+                    cotizaciones.get((cuenta.moneda_id, moneda.pk)),
                     2
                 )
-            )
-            for moneda in monedas
-        }
-        for cuenta in cuentas
+            ) for moneda in monedas
+        } for cuenta in cuentas
     }
 
 
