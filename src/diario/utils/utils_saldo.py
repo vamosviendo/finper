@@ -2,13 +2,11 @@ from __future__ import annotations
 
 from typing import List, TYPE_CHECKING, Optional, Iterable
 
-from django.core.exceptions import EmptyResultSet
-
-from diario.models import Cuenta, Moneda, SaldoDiario, Cotizacion
+from diario.models import Cuenta, Moneda, SaldoDiario, Cotizacion, Movimiento
 from utils.numeros import float_format
 
 if TYPE_CHECKING:
-    from diario.models import Movimiento, Dia
+    from diario.models import Dia
 
 
 def verificar_saldos() -> List['Cuenta']:
@@ -54,10 +52,10 @@ def precalcular_saldos_cuentas(
             "para el cálculo de los saldos"
         )
 
+    cotizaciones = _indexar_cotizaciones(cuentas, monedas, dia.fecha if dia else movimiento.dia.fecha)
+
     if dia:
         saldos_diarios = _indexar_saldos_diarios(cuentas, dia)
-        cotizaciones = _indexar_cotizaciones(cuentas, monedas, dia.fecha)
-
         return {
             cuenta.pk: {
                 moneda.sk: float_format(
@@ -70,13 +68,15 @@ def precalcular_saldos_cuentas(
             } for cuenta in cuentas
         }
 
+    saldos = _indexar_saldos_en_movimiento(cuentas, movimiento)
+
     return {
         cuenta.pk: {
             moneda.sk: float_format(
-                cuenta.saldo(
-                    dia=dia,
-                    movimiento=movimiento,
-                    moneda=moneda, compra=True
+                round(
+                    saldos.get(cuenta.pk, 0) *
+                    cotizaciones.get((cuenta.moneda.id, moneda.pk), 1.0),
+                    2
                 )
             )
             for moneda in monedas
@@ -138,3 +138,28 @@ def _indexar_cotizaciones(cuentas, monedas, fecha) -> dict[tuple[int, int], floa
                     cotizaciones[(id_moneda_origen, moneda_destino.pk)] = 1.0
 
     return cotizaciones
+
+def _indexar_saldos_en_movimiento(
+        cuentas: Iterable[Cuenta],
+        movimiento: Movimiento) -> dict[int, float]:
+    saldos_diarios = _indexar_saldos_diarios(cuentas, movimiento.dia)
+
+    movs_posteriores = list(Movimiento.filtro(
+        dia=movimiento.dia,
+        orden_dia__gt=movimiento.orden_dia,
+    ).select_related('cta_entrada', 'cta_salida'))
+
+    ids_cuentas = {c.pk for c in cuentas}
+    ajustes = {c.pk: 0.0 for c in cuentas}
+    for mov in movs_posteriores:
+        if mov.cta_entrada_id in ids_cuentas:
+            ajustes[mov.cta_entrada_id] -= mov.importe_cta_entrada
+        if mov.cta_salida_id in ids_cuentas:
+            ajustes[mov.cta_salida_id] -= mov.importe_cta_salida
+
+    return {
+        cuenta_id: importe + ajustes[cuenta_id]
+        for cuenta_id, importe in {
+            c.pk: saldos_diarios.get(c.pk, 0.0) for c in cuentas
+        }.items()
+    }

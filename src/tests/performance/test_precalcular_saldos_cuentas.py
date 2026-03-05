@@ -63,6 +63,20 @@ class TestPrecalcularSaldosCuentasPorDiaPerformance:
         assert queries_a_tabla(ctx.captured_queries, "diario_saldodiario") == 2
 
 
+class TestPrecalcularSaldosCuentasPorMovimientoPerformance:
+
+    def test_con_una_cuenta_hace_una_sola_query_a_saldo_diario(
+            self, cuenta, entrada, salida, peso):
+        with CaptureQueriesContext(connection) as ctx:
+            precalcular_saldos_cuentas([cuenta], [peso], movimiento=entrada)
+        assert queries_a_tabla(ctx.captured_queries, "diario_saldodiario") == 1
+
+    def test_con_multiples_cuentas_hace_una_sola_query_a_saldo_diario(
+            self, cuenta, cuenta_2, entrada, entrada_otra_cuenta, peso):
+        with CaptureQueriesContext(connection) as ctx:
+            precalcular_saldos_cuentas([cuenta, cuenta_2], [peso], movimiento=entrada)
+        assert queries_a_tabla(ctx.captured_queries, "diario_saldodiario") == 1
+
 class TestPrecalcularSaldosCuentasCotizacionesPerformance:
     def test_con_multiples_cuentas_en_la_misma_moneda_no_repite_query_de_cotizacion(
             self, cuenta_con_saldo_en_dolares, cuenta_con_saldo_en_dolares_2,
