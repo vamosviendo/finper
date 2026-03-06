@@ -71,4 +71,3 @@ def test_pasa_saldos_cuentas_al_momento_del_movimiento(entrada, salida, client, 
     saldos = response.context['saldos_cuentas']
     assert saldos[cuenta.pk][peso.sk] == float_format(cuenta.saldo(movimiento=entrada))
     assert saldos[cuenta.pk][peso.sk] != float_format(cuenta.saldo(dia=entrada.dia))
-

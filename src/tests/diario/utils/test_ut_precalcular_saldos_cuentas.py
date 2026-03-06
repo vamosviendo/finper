@@ -113,4 +113,23 @@ def test_si_recibe_dia_y_movimiento_prefiere_movimiento(cuenta, peso, entrada, s
 
 def test_si_no_recibe_dia_ni_movimiento_eleva_excepcion(cuenta, peso):
     with pytest.raises(ValueError):
-        resultado = precalcular_saldos_cuentas([cuenta], [peso])
+        precalcular_saldos_cuentas([cuenta], [peso])
+
+
+def test_si_cuenta_no_tiene_sd_en_el_dia_del_movimiento_usa_ultimo_sd_anterior(
+        cuenta, cuenta_2, entrada, salida, entrada_anterior_otra_cuenta, peso):
+    resultado = precalcular_saldos_cuentas([cuenta, cuenta_2], [peso], movimiento=entrada)
+    assert \
+        resultado[cuenta_2.pk][peso.sk] == \
+        float_format(cuenta_2.saldo(movimiento=entrada_anterior_otra_cuenta))
+
+
+def test_si_cuenta_acumulativa_no_tiene_sd_en_dia_del_movimiento_usa_ultimo_sd_anterior_o_del_mismo_dia(
+        cuenta, cuenta_acumulativa, entrada, peso):
+    # cuenta_acumulativa no tiene SD en dia de entrada pero puede tener en fecha anterior
+    resultado = precalcular_saldos_cuentas(
+        [cuenta, cuenta_acumulativa], [peso], movimiento=entrada
+    )
+    assert resultado[cuenta_acumulativa.pk][peso.sk] == float_format(
+        cuenta_acumulativa.saldo(movimiento=entrada)
+    )

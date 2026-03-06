@@ -62,6 +62,13 @@ def entrada_otra_cuenta(cuenta_2: CuentaInteractiva, dia: Dia) -> Movimiento:
 
 
 @pytest.fixture
+def entrada_tercera_cuenta(cuenta_3: CuentaInteractiva, dia: Dia) -> Movimiento:
+    return Movimiento.crear(
+        concepto='Entrada tercera cuenta', importe=5, cta_entrada=cuenta_3, dia=dia
+    )
+
+
+@pytest.fixture
 def entrada_anterior_otra_cuenta(cuenta_2: CuentaInteractiva, dia_anterior: Dia) -> Movimiento:
     return Movimiento.crear(
         concepto='Entrada anterior otra cuenta', importe=50,

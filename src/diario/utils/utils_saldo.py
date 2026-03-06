@@ -55,8 +55,13 @@ def precalcular_saldos_cuentas(
         dia.fecha if dia else movimiento.dia.fecha
     )
 
+    cuentas_acumulativas = [c for c in cuentas if c.es_acumulativa]
+    cuentas_interactivas = [c for c in cuentas if c not in cuentas_acumulativas]
+
     if movimiento:
-        saldos = _indexar_saldos_en_movimiento(cuentas, movimiento)
+        saldos = _indexar_saldos_en_movimiento(cuentas_interactivas, movimiento)
+        for cuenta in cuentas_acumulativas:
+            saldos[cuenta.pk] = cuenta.saldo(movimiento=movimiento)
 
         return {
             cuenta.pk: {

@@ -77,6 +77,21 @@ class TestPrecalcularSaldosCuentasPorMovimientoPerformance:
             precalcular_saldos_cuentas([cuenta, cuenta_2], [peso], movimiento=entrada)
         assert queries_a_tabla(ctx.captured_queries, "diario_saldodiario") == 1
 
+    def test_numero_de_queries_no_crece_con_cantidad_de_cuentas(
+            self, cuenta, cuenta_2, cuenta_3, entrada, entrada_otra_cuenta,
+            entrada_tercera_cuenta, peso):
+        with CaptureQueriesContext(connection) as ctx:
+            precalcular_saldos_cuentas([cuenta, cuenta_2, cuenta_3], [peso], movimiento=entrada)
+        assert queries_a_tabla(ctx.captured_queries, "diario_saldodiario") == 1
+
+    def test_con_multiples_cuentas_sin_saldo_en_dia_del_movimiento_hace_dos_queries_a_saldo_diario(
+            self, cuenta, cuenta_2, cuenta_3, entrada, entrada_otra_cuenta,
+            salida_tardia_tercera_cuenta, peso):
+        with CaptureQueriesContext(connection) as ctx:
+            precalcular_saldos_cuentas([cuenta, cuenta_2, cuenta_3], [peso], movimiento=entrada)
+        assert queries_a_tabla(ctx.captured_queries, "diario_saldodiario") == 2
+
+
 class TestPrecalcularSaldosCuentasCotizacionesPerformance:
     def test_con_multiples_cuentas_en_la_misma_moneda_no_repite_query_de_cotizacion(
             self, cuenta_con_saldo_en_dolares, cuenta_con_saldo_en_dolares_2,
@@ -88,13 +103,13 @@ class TestPrecalcularSaldosCuentasCotizacionesPerformance:
             )
 
         assert queries_a_tabla(ctx.captured_queries, "diario_cotizacion") == 1
-    #
-    # def test_numero_de_queries_de_cotizacion_es_igual_al_numero_de_pares_de_monedas_distintas(
-    #         self, cuenta_con_saldo_en_dolares, cuenta_con_saldo_en_euros,
-    #         peso, dolar, euro, dia):
-    #     with CaptureQueriesContext(connection) as ctx:
-    #         precalcular_saldos_cuentas(
-    #             [cuenta_con_saldo_en_dolares, cuenta_con_saldo_en_euros],
-    #             [peso], dia=dia
-    #         )
-    #     assert queries_a_tabla(ctx.captured_queries, "diario_cotizacion") == 2
+
+    def test_numero_de_queries_de_cotizacion_no_crece_con_cantidad_de_cuentas(
+            self, cuenta_con_saldo_en_dolares, cuenta_con_saldo_en_dolares_2,
+            peso, dolar, dia):
+        with CaptureQueriesContext(connection) as ctx:
+            precalcular_saldos_cuentas(
+                [cuenta_con_saldo_en_dolares, cuenta_con_saldo_en_dolares_2],
+                [peso], dia=dia
+            )
+        assert queries_a_tabla(ctx.captured_queries, "diario_cotizacion") == 1
