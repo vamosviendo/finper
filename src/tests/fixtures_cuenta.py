@@ -273,6 +273,21 @@ def cuenta_con_saldo_en_dolares(titular: Titular, fecha_temprana: date, dolar: M
 
 
 @pytest.fixture
+def cuenta_con_saldo_en_dolares_2(
+        titular: Titular,
+        fecha_temprana: date,
+        dolar: Moneda) -> CuentaInteractiva:
+    return Cuenta.crear(
+        nombre='cuenta con saldo en dólares 2',
+        sk='ccsd2',
+        saldo=200,
+        titular=titular,
+        fecha_creacion=fecha_temprana,
+        moneda=dolar,
+    )
+
+
+@pytest.fixture
 def cuenta_con_saldo_en_euros(titular: Titular, fecha_temprana: date, euro: Moneda) -> CuentaInteractiva:
     return Cuenta.crear(
         nombre='cuenta con saldo en euros',

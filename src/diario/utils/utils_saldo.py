@@ -49,7 +49,7 @@ def precalcular_saldos_cuentas(
             "para el cálculo de los saldos"
         )
 
-    cotizaciones = _indexar_cotizaciones(
+    cotizaciones = Cotizacion.indexar(
         cuentas,
         monedas,
         dia.fecha if dia else movimiento.dia.fecha
@@ -89,35 +89,3 @@ def precalcular_saldos_cuentas(
             ) for moneda in monedas
         } for cuenta in cuentas
     }
-
-
-def _indexar_cotizaciones(cuentas, monedas, fecha) -> dict[tuple[int, int], float]:
-    ids_monedas_origen = {c.moneda_id for c in cuentas}
-    monedas_todas_ids = list({*ids_monedas_origen, *[m.pk for m in monedas]})
-    cots_raw = Cotizacion.filtro(
-        moneda__in=monedas_todas_ids,
-        fecha__lte=fecha,
-    ).order_by('moneda_id', '-fecha')
-    vistos = set()
-    cots_por_moneda = {}
-    for cot in cots_raw:
-        if cot.moneda_id not in vistos:
-            cots_por_moneda[cot.moneda_id] = cot
-            vistos.add(cot.moneda_id)
-
-    cotizaciones = {}
-    for id_moneda_origen in ids_monedas_origen:
-        for moneda_destino in monedas:
-            if id_moneda_origen == moneda_destino.pk:
-                cotizaciones[(id_moneda_origen, moneda_destino.pk)] = 1.0
-            else:
-                cot_orig = cots_por_moneda.get(id_moneda_origen)
-                cot_dest = cots_por_moneda.get(moneda_destino.pk)
-                if cot_orig and cot_dest:
-                    cotizaciones[(id_moneda_origen, moneda_destino.pk)] = (
-                            cot_orig.importe_venta / cot_dest.importe_compra
-                    )
-                else:
-                    cotizaciones[(id_moneda_origen, moneda_destino.pk)] = 1.0
-
-    return cotizaciones

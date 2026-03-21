@@ -1,30 +1,11 @@
-from datetime import date
-
-import pytest
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
 
-from diario.models import Cuenta, CuentaInteractiva, Moneda, Titular
 from diario.utils.utils_saldo import precalcular_saldos_cuentas
 
 
 def queries_a_tabla(queries, tabla):
     return sum(1 for q in queries if tabla in q["sql"])
-
-
-@pytest.fixture
-def cuenta_con_saldo_en_dolares_2(
-        titular: Titular,
-        fecha_temprana: date,
-        dolar: Moneda) -> CuentaInteractiva:
-    return Cuenta.crear(
-        nombre='cuenta con saldo en dólares 2',
-        sk='ccsd2',
-        saldo=200,
-        titular=titular,
-        fecha_creacion=fecha_temprana,
-        moneda=dolar,
-    )
 
 
 class TestPrecalcularSaldosCuentasPorDiaPerformance:
