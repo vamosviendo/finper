@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING, Self, Iterable
 
 from django.db import models, transaction
 
@@ -32,7 +32,7 @@ class SaldoDiario(MiModel):
 
     @classmethod
     def anterior_a(cls, cuenta: Cuenta, dia: Dia):
-        return cls.filtro(cuenta=cuenta, dia__fecha__lt=dia.fecha).last()
+        return cls.filtro(cuenta_id=cuenta.pk, dia__fecha__lt=dia.fecha).last()
 
     @classmethod
     def calcular(cls, mov: Movimiento, sentido: str | None = None):
@@ -66,6 +66,56 @@ class SaldoDiario(MiModel):
             saldo_diario = cls.crear(cuenta=cuenta, dia=mov.dia, importe=importe)
 
         return saldo_diario
+
+    @classmethod
+    def indexar_por_dia(cls, cuentas: Iterable[Cuenta], dia: Dia):
+        saldos_diarios = {
+            sd.cuenta_id: sd.importe
+            for sd in SaldoDiario.filtro(cuenta__in=cuentas, dia=dia)
+        }
+
+        cuentas_sin_sd = [c for c in cuentas if c.pk not in saldos_diarios]
+        if cuentas_sin_sd:
+            sds_anteriores = SaldoDiario.filtro(
+                cuenta__in=cuentas_sin_sd,
+                dia__fecha__lt=dia.fecha,
+            ).order_by('cuenta_id', '-dia__fecha')
+            vistos = set()
+            for sd in sds_anteriores:
+                if sd.cuenta_id not in vistos:
+                    saldos_diarios[sd.cuenta_id] = sd.importe
+                    vistos.add(sd.cuenta_id)
+
+        return saldos_diarios
+
+    @classmethod
+    def indexar_en_movimiento(
+            cls,
+            cuentas: Iterable[Cuenta],
+            movimiento: Movimiento) -> dict[int, float]:
+        from diario.models import Movimiento
+
+        saldos_diarios = cls.indexar_por_dia(cuentas, movimiento.dia)
+
+        movs_posteriores = list(Movimiento.filtro(
+            dia=movimiento.dia,
+            orden_dia__gt=movimiento.orden_dia,
+        ).select_related('cta_entrada', 'cta_salida'))
+
+        ids_cuentas = {c.pk for c in cuentas}
+        ajustes = {c.pk: 0.0 for c in cuentas}
+        for mov in movs_posteriores:
+            if mov.cta_entrada_id in ids_cuentas:
+                ajustes[mov.cta_entrada_id] -= mov.importe_cta_entrada
+            if mov.cta_salida_id in ids_cuentas:
+                ajustes[mov.cta_salida_id] -= mov.importe_cta_salida
+
+        return {
+            cuenta_id: importe + ajustes[cuenta_id]
+            for cuenta_id, importe in {
+                c.pk: saldos_diarios.get(c.pk, 0.0) for c in cuentas
+            }.items()
+        }
 
     def anterior(self):
         return SaldoDiario.anterior_a(cuenta=self.cuenta, dia=self.dia)

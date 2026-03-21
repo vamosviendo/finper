@@ -59,7 +59,7 @@ def precalcular_saldos_cuentas(
     cuentas_interactivas = [c for c in cuentas if c not in cuentas_acumulativas]
 
     if movimiento:
-        saldos = _indexar_saldos_en_movimiento(cuentas_interactivas, movimiento)
+        saldos = SaldoDiario.indexar_en_movimiento(cuentas_interactivas, movimiento)
         for cuenta in cuentas_acumulativas:
             saldos[cuenta.pk] = cuenta.saldo(movimiento=movimiento)
 
@@ -77,7 +77,7 @@ def precalcular_saldos_cuentas(
             for cuenta in cuentas
         }
 
-    saldos_diarios = _indexar_saldos_diarios(cuentas, dia)
+    saldos_diarios = SaldoDiario.indexar_por_dia(cuentas, dia)
     return {
         cuenta.pk: {
             moneda.sk: float_format(
@@ -89,29 +89,6 @@ def precalcular_saldos_cuentas(
             ) for moneda in monedas
         } for cuenta in cuentas
     }
-
-
-def _indexar_saldos_diarios(
-        cuentas: Iterable[Cuenta],
-        dia: Dia) -> dict[int, float]:
-    saldos_diarios = {
-        sd.cuenta_id: sd.importe
-        for sd in SaldoDiario.filtro(dia=dia)
-    }
-
-    cuentas_sin_sd = [c for c in cuentas if c.pk not in saldos_diarios]
-    if cuentas_sin_sd:
-        sds_anteriores = SaldoDiario.filtro(
-            cuenta__in=cuentas_sin_sd,
-            dia__fecha__lt=dia.fecha,
-        ).order_by('cuenta_id', '-dia__fecha')
-        vistos = set()
-        for sd in sds_anteriores:
-            if sd.cuenta_id not in vistos:
-                saldos_diarios[sd.cuenta_id] = sd.importe
-                vistos.add(sd.cuenta_id)
-
-    return saldos_diarios
 
 
 def _indexar_cotizaciones(cuentas, monedas, fecha) -> dict[tuple[int, int], float]:
@@ -144,28 +121,3 @@ def _indexar_cotizaciones(cuentas, monedas, fecha) -> dict[tuple[int, int], floa
                     cotizaciones[(id_moneda_origen, moneda_destino.pk)] = 1.0
 
     return cotizaciones
-
-def _indexar_saldos_en_movimiento(
-        cuentas: Iterable[Cuenta],
-        movimiento: Movimiento) -> dict[int, float]:
-    saldos_diarios = _indexar_saldos_diarios(cuentas, movimiento.dia)
-
-    movs_posteriores = list(Movimiento.filtro(
-        dia=movimiento.dia,
-        orden_dia__gt=movimiento.orden_dia,
-    ).select_related('cta_entrada', 'cta_salida'))
-
-    ids_cuentas = {c.pk for c in cuentas}
-    ajustes = {c.pk: 0.0 for c in cuentas}
-    for mov in movs_posteriores:
-        if mov.cta_entrada_id in ids_cuentas:
-            ajustes[mov.cta_entrada_id] -= mov.importe_cta_entrada
-        if mov.cta_salida_id in ids_cuentas:
-            ajustes[mov.cta_salida_id] -= mov.importe_cta_salida
-
-    return {
-        cuenta_id: importe + ajustes[cuenta_id]
-        for cuenta_id, importe in {
-            c.pk: saldos_diarios.get(c.pk, 0.0) for c in cuentas
-        }.items()
-    }
