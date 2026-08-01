@@ -8,7 +8,6 @@ vfinper*
 vfinperprod*
 __pycache__
 *.pyc
-*.json
 .idea
 .swp
 .tags
