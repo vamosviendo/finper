@@ -33,7 +33,7 @@ class TitularCleaner(Cleaner):
 
 class TitularManager(models.Manager):
     def get_by_natural_key(self, sk):
-        return self.get(_sk=sk)
+        return self.get(sk=sk)
 
 class Titular(MiModel):
     sk = models.CharField(max_length=20, unique=True)
