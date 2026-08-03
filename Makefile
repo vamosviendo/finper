@@ -1,5 +1,5 @@
-# deploy:
-#     cd deploy_tools && git push && fab
+test-server-debug-false:
+	DJANGO_DEBUG_FALSE=true DJANGO_SECRET_KEY=secret  DJANGO_ALLOWED_HOST=localhost DJANGO_DB_PATH=src/db.sqlite3 python src/manage.py runserver 8002
 
 migrate:
 	docker-composer run web python manage.py migrate

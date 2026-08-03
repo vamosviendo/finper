@@ -158,3 +158,17 @@ Follow this structure in tests:
 |----------------------------|-------------|
 | `finper/settings.py`       | Main Django settings |
 | `pytest.ini`               | pytest configuration |
+
+
+## Procedimientos particulares. 
+
+La forma correcta de crear una cuenta acumulativa es crearla como cuenta interactiva y luego ejecutar 
+el método CuentaInteractiva.dividir_entre (o bien CuentaInteractiva.dividir_y_actualizar 
+si queremos que devuelva la cuenta transformada) para convertirla en acumulativa con subcuentas.
+
+Ejemplo:
+
+``` python
+def crear_cuenta_acumulativa(cuenta: CuentaInteractiva) -> Cuenta:
+    return cuenta.dividir_y_actualizar([subcuenta1, sc1, 0], [subcuenta2, sc3, 0])
+```

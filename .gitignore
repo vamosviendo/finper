@@ -2,6 +2,7 @@ db.sqlite*
 *.sqlite3
 pruebadb.sqlite3
 src/db.sqlite3
+db*.json
 geckodriver.log
 venv*
 vfinper*
