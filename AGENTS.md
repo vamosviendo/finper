@@ -151,6 +151,9 @@ Follow this structure in tests:
   - en qué casos debe lanzar una excepción
 - Deben organizarse en clases o archivos según el método que estén testeando.
 
+### Presentación de tests en las respuestas:
+- Presentar primero los tests y luego las implementaciones que los satisfacen, de manera que los tests funcionen como presentación de los objetivos a alcanzar.
+
 
 ## Key Files
 
