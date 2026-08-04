@@ -24,11 +24,15 @@ def saldo_general_historico(
         compra: bool = False,
         cuentas: Optional[Iterable] = None) -> float:
     if not mov and not dia:
-        raise ValueError("Debe pasarse un movimiento o un día")
+        return 0
+
     fecha = mov.fecha if mov else dia.fecha
     cotizacion = moneda.cotizacion_al(fecha=fecha, compra=compra) if moneda else 1
 
-    cuentas_a_sumar = cuentas or Cuenta.filtro(cta_madre=None)
+    cuentas_a_sumar = cuentas or list(Cuenta.filtro(cta_madre=None))
+    if not cuentas_a_sumar:
+        return 0
+
     if dia:
         saldo_general = sum(cuenta.saldo(dia=dia) for cuenta in cuentas_a_sumar)
     else:

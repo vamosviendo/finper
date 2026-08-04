@@ -28,6 +28,14 @@ def test_si_recibe_dia_devuelve_suma_de_saldos_diarios_de_cuentas(
     assert saldo_general_historico(dia=dia) == cuenta.saldo(dia=dia) + cuenta_2.saldo(dia=dia)
 
 
+def test_si_no_recibe_dia_ni_movimiento_devuelve_cero(cuenta, cuenta_2):
+    assert saldo_general_historico(cuentas=[cuenta, cuenta_2]) == 0
+
+
+def test_si_no_hay_cuentas_independientes_en_la_base_de_datos_devuelve_cero(dia):
+    assert saldo_general_historico(dia=dia) == 0
+
+
 def test_suma_una_sola_vez_saldo_de_cuentas_acumulativas(
         cuenta, entrada_posterior_otra_cuenta, salida_tardia_tercera_cuenta, fecha_tardia_plus):
     cuenta = dividir_en_dos_subcuentas(
