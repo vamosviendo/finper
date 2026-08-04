@@ -182,10 +182,10 @@ class TestBaseHome:
         )
 
     def test_no_usa_subcuentas_en_calculo_de_saldo_general_historico(
-            self, cuenta_acumulativa, cuenta, client, mocker):
+            self, cuenta, cuenta_acumulativa, client, mocker):
         mock_sgh = mocker.patch("diario.views.saldo_general_historico")
         client.get(reverse("home"))
-        mock_sgh.assert_called_with(dia=ANY, cuentas={cuenta, cuenta_acumulativa})
+        mock_sgh.assert_called_with(dia=ANY, cuentas=[cuenta, cuenta_acumulativa])
 
 
 class TestGet:

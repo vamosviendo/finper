@@ -165,14 +165,14 @@ class BaseHomeView(TemplateView):
                 .order_by(Lower("nombre"))
         ))
 
-        cuentas_raiz = set(
+        cuentas_raiz = list(
             Cuenta.filtro(cta_madre=None, activa=True)
                 .select_related("moneda", "content_type")
         )
         return {
                 "saldo_gral":
                     saldo_general_historico(movimiento) if movimiento
-                    else sum(c.saldo() for c in Cuenta.filtro(cta_madre=None)),
+                    else saldo_general_historico(dia=Dia.ultime(), cuentas=cuentas_raiz),
                 "titulo_saldo_gral": f"Saldo general{movimiento_en_titulo}",
                 "titulares": Titular.todes(),
                 "cuentas": cuentas,
@@ -224,11 +224,7 @@ class CuentaHomeView(BaseHomeView):
             "titulo_saldo_gral": f"{ente.nombre} (fecha alta: {ente.fecha_creacion}){movimiento_en_titulo}",
             "ancestros": reversed(ente.ancestros()),
             "hermanas": ente.hermanas(),
-            "titulares": Titular.filtro(
-                sk__in=[x.sk for x in ente.titulares]
-            ) if ente.es_acumulativa else Titular.filtro(
-                sk=ente.titular.sk
-            ),
+            "titulares": ente.titulares if ente.es_acumulativa else [ente.titular],
             "cuentas": cuentas,
             "saldos_por_dia": {
                 dia.pk: float_format(ente.saldo(dia=dia))
