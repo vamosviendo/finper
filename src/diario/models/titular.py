@@ -92,8 +92,8 @@ class Titular(MiModel):
         return self.capital(movimiento, dia, moneda, compra)
 
     def cuentas_interactivas(self) -> models.QuerySet['CuentaInteractiva']:
-        ids = [c.id for c in self.cuentas.all() if c.es_interactiva]
-        return self.cuentas.filter(id__in=ids)
+        from diario.models import CuentaInteractiva
+        return CuentaInteractiva.filtro(titular=self)
 
     def cuentas_en_las_que_participa(self) -> list['Cuenta']:
         from diario.models import Cuenta, CuentaAcumulativa
