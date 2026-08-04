@@ -8,8 +8,8 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.urls import reverse
 
-from vvmodel.cleaners import Cleaner
 from utils.varios import el_que_no_es
+from vvmodel.cleaners import Cleaner
 from vvmodel.models import MiModel
 
 if TYPE_CHECKING:
@@ -66,24 +66,37 @@ class Cotizacion(MiModel):
             )
 
     @classmethod
+    def precargar(cls, monedas: Iterable[Moneda], fecha: date) -> dict[int, dict[str, float | date]]:
+        """ Devuelve {moneda_id: {"compra": float, "venta": float, 'fecha': date}}
+            con la última cotización de cada moneda igual o anterior a fecha.
+            Una sola query SQL.
+        """
+        ids_monedas = [m.pk for m in monedas]
+        resultado = dict()
+        for cot in cls.filtro(
+            moneda_id__in=ids_monedas, fecha__lte=fecha,
+        ).order_by('moneda_id', '-fecha'):
+            if cot.moneda_id not in resultado:
+                resultado[cot.moneda_id] = {
+                    "compra": cot.importe_compra,
+                    "venta": cot.importe_venta,
+                    "fecha": cot.fecha
+                }
+        return resultado
+
+    @classmethod
     def indexar(
             cls,
             cuentas: Iterable[Cuenta],
             monedas: Iterable[Moneda],
             fecha: date
     ) -> dict[tuple[int, int], float]:
+        from diario.models import Moneda
+
         ids_monedas_origen = {c.moneda_id for c in cuentas}
         monedas_todas_ids = list({*ids_monedas_origen, *[m.pk for m in monedas]})
-        cots_raw = Cotizacion.filtro(
-            moneda__in=monedas_todas_ids,
-            fecha__lte=fecha,
-        ).order_by('moneda_id', '-fecha')
-        vistos = set()
-        cots_por_moneda = {}
-        for cot in cots_raw:
-            if cot.moneda_id not in vistos:
-                cots_por_moneda[cot.moneda_id] = cot
-                vistos.add(cot.moneda_id)
+
+        cots = cls.precargar(Moneda.filtro(pk__in=monedas_todas_ids), fecha)
 
         cotizaciones = {}
         for id_moneda_origen in ids_monedas_origen:
@@ -91,11 +104,11 @@ class Cotizacion(MiModel):
                 if id_moneda_origen == moneda_destino.pk:
                     cotizaciones[(id_moneda_origen, moneda_destino.pk)] = 1.0
                 else:
-                    cot_orig = cots_por_moneda.get(id_moneda_origen)
-                    cot_dest = cots_por_moneda.get(moneda_destino.pk)
+                    cot_orig = cots.get(id_moneda_origen)
+                    cot_dest = cots.get(moneda_destino.pk)
                     if cot_orig and cot_dest:
                         cotizaciones[(id_moneda_origen, moneda_destino.pk)] = (
-                                cot_orig.importe_venta / cot_dest.importe_compra
+                                cot_orig["venta"] / cot_dest["compra"]
                         )
                     else:
                         cotizaciones[(id_moneda_origen, moneda_destino.pk)] = 1.0
