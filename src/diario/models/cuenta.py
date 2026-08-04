@@ -21,7 +21,6 @@ from diario.settings_app import MONEDA_BASE, TITULAR_PRINCIPAL
 from vvmodel.cleaners import Cleaner
 from diario.utils.utils_moneda import id_moneda_base
 from utils import errors
-from utils.iterables import remove_duplicates
 from vvmodel.managers import PolymorphManager
 from vvmodel.models import PolymorphModel
 
@@ -706,16 +705,28 @@ class CuentaAcumulativa(Cuenta):
 
     @property
     def titulares(self) -> List[Titular]:
-        titulares = list()
-        subcuentas = list(self.subcuentas.all())
+        titulares = []
+        vistos = set()
 
-        for subcuenta in subcuentas:
-            if subcuenta.es_interactiva:
-                titulares.append(subcuenta.titular)
-            else:
-                titulares += subcuenta.titulares
+        interactivas = list(
+            CuentaInteractiva.filtro(cta_madre=self).select_related("titular")
+        )
+        for sc in interactivas:
+            t = sc.titular
+            if t.pk not in vistos:
+                titulares.append(t)
+                vistos.add(t.pk)
 
-        return remove_duplicates(titulares)
+        acumulativas = list(
+            CuentaAcumulativa.filtro(cta_madre=self)
+        )
+        for sc in acumulativas:
+            for t in sc.titulares:
+                if t.pk not in vistos:
+                    titulares.append(t)
+                    vistos.add(t.pk)
+
+        return titulares
 
     def arbol_de_subcuentas(self) -> Set[Cuenta]:
         todas_las_subcuentas = set(self.subcuentas.all())
