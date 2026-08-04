@@ -42,7 +42,7 @@ def test_home_bd_completa_smoke(client, bd_completa):
         response = client.get(reverse("home"))
         tiempo = time.perf_counter() - inicio
     assert response.status_code == 200
-    assert tiempo < 4.0, f"Tiempo {tiempo:.0f}ms, baseline 6500-7500ms"
+    assert tiempo < 3.0, f"Tiempo {tiempo:.0f}ms, baseline 6500-7500ms"
     print(f"Tiempo: {tiempo}")
     assert len(ctx.captured_queries) < 1500, (
         f"Queries {len(ctx.captured_queries)}, baseline 3353"
