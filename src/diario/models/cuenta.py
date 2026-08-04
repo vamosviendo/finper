@@ -7,6 +7,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import EmptyResultSet, ValidationError
 from django.core.validators import RegexValidator
 from django.db import models, transaction
+from django.db.models import Q
 from django.urls import reverse
 
 from diario.consts import *
@@ -343,10 +344,18 @@ class Cuenta(PolymorphModel):
 
     def dias(self) -> models.QuerySet[Dia]:
         """ Devuelve días en los que haya movimientos propios y de sus subcuentas
-            ordenados por fecha.
+            ordenados por fecha. Optimizada para usar 2 queries en vez de N+1
         """
-        fechas = [mov.dia.fecha for mov in self.movs()]
-        return Dia.filtro(fecha__in=fechas)
+        if self.es_acumulativa:
+            ids_cuentas = list(self.arbol_de_subcuentas()) + [self]
+        else:
+            ids_cuentas = [self]
+
+        return Dia.filtro(
+            id__in=Movimiento.filtro(
+                Q(cta_entrada__in=ids_cuentas) | Q(cta_salida__in=ids_cuentas)
+            ).values_list("dia_id", flat=True).distinct()
+        ).order_by("fecha")
 
     def movs_en_fecha(self, dia: Dia) -> models.QuerySet[Movimiento]:
         """ Devuelve movimientos propios y de sus subcuentas en una fecha dada.

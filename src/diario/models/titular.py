@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self, Optional, cast, Iterable
+from typing import TYPE_CHECKING, Self, Optional, cast
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -106,8 +106,15 @@ class Titular(MiModel):
         return cuentas
 
     def dias(self) -> models.QuerySet['Dia']:
-        fechas = [mov.dia.fecha for mov in self.movs()]
-        return Dia.filtro(fecha__in=fechas)
+        from diario.models import Movimiento
+        return Dia.filtro(
+            id__in=Movimiento.filtro(
+                Q(cta_entrada__in=self.cuentas.all()) |
+                Q(cta_salida__in=self.cuentas.all()) |
+                Q(cta_entrada__in=self.ex_cuentas.all()) |
+                Q(cta_salida__in=self.ex_cuentas.all())
+            ).values_list("dia_id", flat=True).distinct()
+        ).order_by("fecha")
 
     def movs(self) -> QuerySet['Movimiento']:
         Movim: 'Movimiento' = self.get_related_class('cuentas').get_related_class('entradas')
