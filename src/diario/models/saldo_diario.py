@@ -191,7 +191,7 @@ class SaldoDiario(MiModel):
             return {}
 
         saldos_en_dia = cls.filtro(cuenta__in=cuentas, dia=dia)
-        resultado = {sd.cuenta.id: sd.importe for sd in saldos_en_dia}
+        resultado = {sd.cuenta_id: sd.importe for sd in saldos_en_dia}
 
         cuentas_sin_saldo_en_dia = [c for c in cuentas if c.pk not in resultado]
         if cuentas_sin_saldo_en_dia:
@@ -200,8 +200,8 @@ class SaldoDiario(MiModel):
                 dia__fecha__lt=dia.fecha,
             ).order_by('cuenta_id', '-dia__fecha')
             for sd in saldos_anteriores:
-                if sd.cuenta.id not in resultado:
-                    resultado[sd.cuenta.id] = sd.importe
+                if sd.cuenta_id not in resultado:
+                    resultado[sd.cuenta_id] = sd.importe
 
         for c in cuentas:
             resultado.setdefault(c.pk, 0.0)
