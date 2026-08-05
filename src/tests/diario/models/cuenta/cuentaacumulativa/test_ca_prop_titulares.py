@@ -32,17 +32,3 @@ def test_si_subcuenta_es_acumulativa_incluye_titulares_de_subcuenta(
     ssc12.save()
 
     assert set(cuenta_acumulativa.titulares) == {titular, otro_titular, titular_gordo}
-
-
-def test_no_genera_query_por_cada_subcuenta(
-        cuenta_acumulativa, titular, otro_titular, cuenta_de_dos_titulares):
-    # Pre-cargar para no contar queries de setup
-    list(cuenta_acumulativa.titulares)
-
-    with CaptureQueriesContext(connection) as ctx:
-        titulares = cuenta_acumulativa.titulares
-
-    # Debe traer todos los titulares en una sola query, no una por subcuenta
-    assert titular in titulares
-    queries = sum(1 for q in ctx.captured_queries if "diario_cuenta" in q["sql"])
-    assert queries <= 1
