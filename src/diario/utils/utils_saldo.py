@@ -27,16 +27,19 @@ def saldo_general_historico(
         return 0
 
     fecha = mov.fecha if mov else dia.fecha
+    cuentas_a_sumar = list(cuentas or Cuenta.filtro(cta_madre=None))
     cotizacion = moneda.cotizacion_al(fecha=fecha, compra=compra) if moneda else 1
 
-    cuentas_a_sumar = cuentas or list(Cuenta.filtro(cta_madre=None))
     if not cuentas_a_sumar:
         return 0
 
     if dia:
-        saldo_general = sum(cuenta.saldo(dia=dia) for cuenta in cuentas_a_sumar)
+        saldos = SaldoDiario.saldos_para_cuentas_en_dia(cuentas_a_sumar, dia)
+        saldo_general = sum(saldos.get(c.pk, 0.0) for c in cuentas_a_sumar)
     else:
-        saldo_general = sum(cuenta.saldo(movimiento=mov) for cuenta in cuentas_a_sumar)
+        saldo_general = sum(
+            cuenta.saldo(movimiento=mov) for cuenta in cuentas_a_sumar
+        )
 
     return round(saldo_general / cotizacion, 2)
 
