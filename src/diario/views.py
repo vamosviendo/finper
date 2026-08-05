@@ -16,7 +16,7 @@ from django.views.generic import CreateView, DeleteView, TemplateView, \
 from diario.forms import FormCotizacion, FormCuenta, FormMovimiento, \
     FormDividirCuenta, FormCrearSubcuenta, FormTitular, FormMoneda
 from diario.models import Cuenta, CuentaInteractiva, CuentaAcumulativa, Dia, \
-    Movimiento, Titular, Moneda, Cotizacion
+    Movimiento, Titular, Moneda, Cotizacion, SaldoDiario
 from diario.settings_app import TEMPLATE_HOME
 from diario.utils.utils_saldo import saldo_general_historico, verificar_saldos, precalcular_saldos_cuentas
 from utils.numeros import float_format
@@ -172,7 +172,7 @@ class BaseHomeView(TemplateView):
         return {
                 "saldo_gral":
                     saldo_general_historico(movimiento) if movimiento
-                    else saldo_general_historico(dia=Dia.ultime(), cuentas=cuentas_raiz),
+                    else _saldo_gral_de_cuentas_raiz(cuentas_raiz),
                 "titulo_saldo_gral": f"Saldo general{movimiento_en_titulo}",
                 "titulares": Titular.todes(),
                 "cuentas": cuentas,
@@ -665,3 +665,28 @@ def agregar_movimiento_view(request, sk):
     return redirect(
         f"{reverse('corregir_saldo')}?ctas={'!'.join(ctas_erroneas_restantes)}"
     )
+
+
+def _saldo_gral_de_cuentas_raiz(cuentas_raiz):
+    """Calcula el saldo general sumando:
+    - Para cuentas interactivas: su SaldoDiario directo.
+    - Para cuentas acumulativas: la suma de SaldoDiario de sus subcuentas directas.
+
+    Usa una sola query batch a SaldoDiario."""
+    if not cuentas_raiz:
+        return 0
+
+    cuentas_a_sumar = []
+    for c in cuentas_raiz:
+        if c.es_acumulativa:
+            cuentas_a_sumar.extend(c.subcuentas.all())
+        else:
+            cuentas_a_sumar.append(c)
+
+    if not cuentas_a_sumar:
+        return 0
+
+    saldos = SaldoDiario.saldos_para_cuentas_en_dia(
+        cuentas_a_sumar, Dia.ultime()
+    )
+    return sum(saldos.values())

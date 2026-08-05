@@ -1,5 +1,5 @@
 from datetime import timedelta
-from unittest.mock import call, ANY
+from unittest.mock import ANY
 
 import pytest
 from django.template.response import TemplateResponse
@@ -186,6 +186,22 @@ class TestBaseHome:
         mock_sgh = mocker.patch("diario.views.saldo_general_historico")
         client.get(reverse("home"))
         mock_sgh.assert_called_with(dia=ANY, cuentas=[cuenta, cuenta_acumulativa])
+
+
+    def test_saldo_gral_incluye_saldo_de_cuentas_acumulativas_raiz(
+        self, client, cuenta, cuenta_2, entrada, entrada_otra_cuenta, salida
+    ):
+        """Cuando una cuenta raíz es acumulativa, su saldo (suma de subcuentas)
+        debe incluirse en el saldo general."""
+        cuenta_2.dividir_entre(
+            {'nombre': 'subcuenta 2.1', 'sk': 'sc21', 'saldo': 200},
+            {'nombre': 'subcuenta 2.2', 'sk': 'sc22'},
+        )
+
+        response = client.get(reverse('home'))
+
+        esperado = cuenta.saldo() + cuenta_2.tomar_del_sk().saldo()
+        assert response.context['saldo_gral'] == esperado
 
 
 class TestGet:
