@@ -186,6 +186,9 @@ class SaldoDiario(MiModel):
             cuentas: Iterable['Cuenta'], dia: 'Dia') -> dict[int, float]:
         """ Devuelve {cuenta.pk: importe} para todos los pares cuenta/día.
             Usa 2 queries SQL totales sin importar la cantidad de cuentas o días."""
+        if not dia:
+            return {}
+
         cuentas = list(cuentas)
         if not cuentas:
             return {}

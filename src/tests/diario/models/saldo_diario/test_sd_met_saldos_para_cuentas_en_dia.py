@@ -14,6 +14,10 @@ def test_devuelve_dict_con_importes_para_todas_las_cuentas_en_dia_dado(
     }
 
 
+def test_devuelve_dict_vacio_si_dia_es_none(cuenta):
+    assert SaldoDiario.saldos_para_cuentas_en_dia([cuenta], None) == {}
+
+
 def test_devuelve_cero_para_pares_sin_saldo(cuenta, dia):
     resultado = SaldoDiario.saldos_para_cuentas_en_dia([cuenta], dia)
     assert resultado == {cuenta.pk: 0.0}
