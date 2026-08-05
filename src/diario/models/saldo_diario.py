@@ -6,7 +6,7 @@ from django.db import models, transaction
 from vvmodel.models import MiModel
 
 if TYPE_CHECKING:
-    from diario.models import Movimiento, Cuenta, Dia
+    from diario.models import Movimiento, Cuenta, Dia, cuenta
 
 
 class SaldoDiario(MiModel):
@@ -179,3 +179,26 @@ class SaldoDiario(MiModel):
             sd.importe += importe
 
             sd.clean_save(actualizar_posteriores=False)
+
+    @classmethod
+    def saldos_para_cuentas_en_dia(
+            cls,
+            cuentas: Iterable['Cuenta'], dia: 'Dia') -> dict[int, float]:
+        """ Devuelve {cuenta.pk: importe} para todos los pares cuenta/día.
+            Usa 2 queries SQL totales sin importar la cantidad de cuentas o días."""
+
+        resultado = dict()
+        for cuenta in cuentas:
+            try:
+                importe = SaldoDiario.tomar(cuenta=cuenta, dia=dia).importe
+            except cls.DoesNotExist:
+                try:
+                    importe = SaldoDiario.anterior_a(
+                        cuenta=cuenta, dia=dia
+                    ).importe
+                except AttributeError:
+                    importe = 0
+
+            resultado[cuenta.pk] = importe
+
+        return resultado
