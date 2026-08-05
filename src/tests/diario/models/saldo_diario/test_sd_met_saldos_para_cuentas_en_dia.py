@@ -33,3 +33,41 @@ def test_hace_maximo_2_queries_a_saldodiario(cuenta, cuenta_2, dia):
         1 for q in ctx.captured_queries if " diario_saldodiario" in q['sql']
     )
     assert queries <= 2
+
+
+def test_no_genera_n_plus_1_con_multiples_cuentas(
+        cuenta, cuenta_2, cuenta_3,
+        dia):
+    with CaptureQueriesContext(connection) as ctx:
+        SaldoDiario.saldos_para_cuentas_en_dia([cuenta, cuenta_2, cuenta_3], dia)
+
+    queries = sum(
+        1 for q in ctx.captured_queries if "diario_saldodiario" in q['sql']
+    )
+    assert queries <= 2
+
+
+def test_queries_no_crece_con_cantidad_de_cuentas_sin_saldo_exacto(dia):
+    """Crea muchas cuentas sin SaldoDiario en el día y verifica
+    que el método no genere N queries."""
+    from diario.models import Titular
+
+    titular = Titular.crear(sk='perf_t', nombre='Perf')
+    cuentas = [
+        Cuenta.crear(
+            nombre=f'cta_perf_{i}',
+            sk=f'perf_{i}',
+            titular=titular,
+        )
+        for i in range(10)
+    ]
+
+    with CaptureQueriesContext(connection) as ctx:
+        SaldoDiario.saldos_para_cuentas_en_dia(cuentas, dia)
+
+    queries = sum(
+        1 for q in ctx.captured_queries if "diario_saldodiario" in q['sql']
+    )
+    # Con N+1: 20 queries (10 cuentas × 2 paths)
+    # Con batch: <= 2 queries
+    assert queries <= 2, f"Hizo {queries} queries con 10 cuentas"

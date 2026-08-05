@@ -186,19 +186,24 @@ class SaldoDiario(MiModel):
             cuentas: Iterable['Cuenta'], dia: 'Dia') -> dict[int, float]:
         """ Devuelve {cuenta.pk: importe} para todos los pares cuenta/día.
             Usa 2 queries SQL totales sin importar la cantidad de cuentas o días."""
+        cuentas = list(cuentas)
+        if not cuentas:
+            return {}
 
-        resultado = dict()
-        for cuenta in cuentas:
-            try:
-                importe = SaldoDiario.tomar(cuenta=cuenta, dia=dia).importe
-            except cls.DoesNotExist:
-                try:
-                    importe = SaldoDiario.anterior_a(
-                        cuenta=cuenta, dia=dia
-                    ).importe
-                except AttributeError:
-                    importe = 0
+        saldos_en_dia = cls.filtro(cuenta__in=cuentas, dia=dia)
+        resultado = {sd.cuenta.id: sd.importe for sd in saldos_en_dia}
 
-            resultado[cuenta.pk] = importe
+        cuentas_sin_saldo_en_dia = [c for c in cuentas if c.pk not in resultado]
+        if cuentas_sin_saldo_en_dia:
+            saldos_anteriores = cls.filtro(
+                cuenta__in=cuentas_sin_saldo_en_dia,
+                dia__fecha__lt=dia.fecha,
+            ).order_by('cuenta_id', '-dia__fecha')
+            for sd in saldos_anteriores:
+                if sd.cuenta.id not in resultado:
+                    resultado[sd.cuenta.id] = sd.importe
+
+        for c in cuentas:
+            resultado.setdefault(c.pk, 0.0)
 
         return resultado
