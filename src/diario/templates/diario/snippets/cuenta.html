@@ -28,6 +28,3 @@
     {% include "diario/snippets/saldo_en_moneda.html" %}
   {% endfor %}
 </tr>
-{% for subcuenta in cta.cuentas %}
-  {% include "diario/snippets/cuenta.html" with cta=subcuenta subc=True %}
-{% endfor %}
