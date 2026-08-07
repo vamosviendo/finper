@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import List, TYPE_CHECKING, Optional, Iterable
 
-from diario.models import Cuenta, Moneda, SaldoDiario, Cotizacion, Movimiento
+from diario.models import Cuenta, Moneda, SaldoDiario, Cotizacion, Movimiento, Dia
 from utils.numeros import float_format
 
 if TYPE_CHECKING:
@@ -24,7 +24,9 @@ def saldo_general_historico(
         compra: bool = False,
         cuentas: Optional[Iterable] = None) -> float:
     if not mov and not dia:
-        return 0
+        dia = Dia.ultime()
+        if not dia:
+            return 0
 
     fecha = mov.fecha if mov else dia.fecha
     cuentas_a_sumar = list(cuentas or Cuenta.filtro(cta_madre=None))

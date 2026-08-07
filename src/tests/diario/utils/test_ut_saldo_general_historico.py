@@ -30,7 +30,14 @@ def test_si_recibe_dia_devuelve_suma_de_saldos_diarios_de_cuentas(
     assert saldo_general_historico(dia=dia) == cuenta.saldo(dia=dia) + cuenta_2.saldo(dia=dia)
 
 
-def test_si_no_recibe_dia_ni_movimiento_devuelve_cero(cuenta, cuenta_2):
+def test_si_no_recibe_dia_ni_movimiento_devuelve_saldo_al_ultimo_dia(
+        cuenta, cuenta_2, entrada, salida,
+        salida_posterior, entrada_posterior_otra_cuenta,
+        salida_tardia_tercera_cuenta, dia_tardio):
+    assert saldo_general_historico() == saldo_general_historico(dia=dia_tardio)
+
+
+def test_si_no_recibe_movimiento_y_no_encuentra_dias_devuelve_cero(cuenta, cuenta_2):
     assert saldo_general_historico(cuentas=[cuenta, cuenta_2]) == 0
 
 
