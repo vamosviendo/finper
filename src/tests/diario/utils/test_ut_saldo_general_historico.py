@@ -72,6 +72,16 @@ def test_devuelve_importe_en_moneda_dada(
         round(saldo_general_historico(entrada) / dolar.cotizacion_al(entrada.dia.fecha, compra=compra), 2)
 
 
+def test_incluye_cuentas_acumulativas_en_calculo_de_saldo(cuenta, entrada, salida, cuenta_acumulativa):
+    assert saldo_general_historico() == cuenta.saldo() + cuenta_acumulativa.saldo()
+
+
+# TODO: retirar (redundante)
+def test_incluye_cuentas_acumulativas_anidadas_en_calculo_de_saldo(
+        cuenta, entrada, salida, cuenta_acumulativa, subsubcuenta):
+    assert saldo_general_historico() == cuenta.saldo() + cuenta_acumulativa.saldo()
+
+
 def test_usa_batch_de_saldos_con_dia(cuenta, cuenta_2, dia, entrada, entrada_otra_cuenta):
     with CaptureQueriesContext(connection) as ctx:
         saldo_general_historico(dia=dia, cuentas=[cuenta, cuenta_2])

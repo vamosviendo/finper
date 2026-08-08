@@ -173,7 +173,40 @@ class SaldoDiario(MiModel):
     def tomar_de_bd(self) -> Self:
         return self.get_class().tomar_o_nada(cuenta=self.cuenta, dia=self.dia)
 
+    @classmethod
+    def saldos_para_cuentas_en_dia(
+            cls,
+            cuentas: Iterable['Cuenta'], dia: 'Dia') -> dict[int, float]:
+        """ Devuelve {cuenta.pk: importe} para todos los pares cuenta/día.
+            Usa 2 queries SQL totales sin importar la cantidad de cuentas o días."""
+        if dia is None:
+            return {}
+
+        cuentas = list(cuentas)
+        if not cuentas:
+            return {}
+
+        return cls._expandir_y_sumar(cuentas, dia)
+        # saldos_en_dia = cls.filtro(cuenta__in=cuentas, dia=dia)
+        # resultado = {sd.cuenta_id: sd.importe for sd in saldos_en_dia}
+        #
+        # cuentas_sin_saldo_en_dia = [c for c in cuentas if c.pk not in resultado]
+        # if cuentas_sin_saldo_en_dia:
+        #     saldos_anteriores = cls.filtro(
+        #         cuenta__in=cuentas_sin_saldo_en_dia,
+        #         dia__fecha__lt=dia.fecha,
+        #     ).order_by('cuenta_id', '-dia__fecha')
+        #     for sd in saldos_anteriores:
+        #         if sd.cuenta_id not in resultado:
+        #             resultado[sd.cuenta_id] = sd.importe
+        #
+        # for c in cuentas:
+        #     resultado.setdefault(c.pk, 0.0)
+        #
+        # return resultado
+
     # Métodos protegidos
+
     def _actualizar_posteriores(self, importe):
         for sd in SaldoDiario.filtro(cuenta=self.cuenta, dia__fecha__gt=self.dia.fecha):
             sd.importe += importe
@@ -181,32 +214,65 @@ class SaldoDiario(MiModel):
             sd.clean_save(actualizar_posteriores=False)
 
     @classmethod
-    def saldos_para_cuentas_en_dia(
-            cls,
-            cuentas: Iterable['Cuenta'], dia: 'Dia') -> dict[int, float]:
-        """ Devuelve {cuenta.pk: importe} para todos los pares cuenta/día.
-            Usa 2 queries SQL totales sin importar la cantidad de cuentas o días."""
-        if not dia:
-            return {}
+    def _expandir_y_sumar(cls, cuentas: list[Cuenta], dia: Dia) -> dict[int, float]:
+        """ Recursivamente calcula saldos, expandiendo acumulativas.
 
-        cuentas = list(cuentas)
-        if not cuentas:
-            return {}
+            Args:
+                cuentas: lista de cuentas a procesar
+                dia: día del cálculo
+        """
+        from diario.models import Cuenta
 
-        saldos_en_dia = cls.filtro(cuenta__in=cuentas, dia=dia)
-        resultado = {sd.cuenta_id: sd.importe for sd in saldos_en_dia}
-
-        cuentas_sin_saldo_en_dia = [c for c in cuentas if c.pk not in resultado]
-        if cuentas_sin_saldo_en_dia:
-            saldos_anteriores = cls.filtro(
-                cuenta__in=cuentas_sin_saldo_en_dia,
-                dia__fecha__lt=dia.fecha,
-            ).order_by('cuenta_id', '-dia__fecha')
-            for sd in saldos_anteriores:
-                if sd.cuenta_id not in resultado:
-                    resultado[sd.cuenta_id] = sd.importe
+        interactivas = []
+        acumulativas = []
 
         for c in cuentas:
-            resultado.setdefault(c.pk, 0.0)
+            if c.es_acumulativa:
+                acumulativas.append(c)
+            else:
+                interactivas.append(c)
+
+        resultado = {}
+
+        if interactivas:
+            # 1/3. Cuentas con saldo en el día
+            for sd in cls.filtro(cuenta__in=interactivas, dia=dia):
+                resultado[sd.cuenta_id] = sd.importe
+
+            # 2/3. Último saldo anterior para cuentas sin saldo en el día
+            cuentas_sin_saldo_en_dia = [
+                c for c in interactivas if c.pk not in resultado
+            ]
+            if cuentas_sin_saldo_en_dia:
+                saldos_anteriores = cls.filtro(
+                    cuenta__in=cuentas_sin_saldo_en_dia,
+                    dia__fecha__lt=dia.fecha,
+                ).order_by('cuenta_id', '-dia__fecha')
+                for sd in saldos_anteriores:
+                    if sd.cuenta_id not in resultado:
+                        resultado[sd.cuenta_id] = sd.importe
+
+            # 3/3 Cuentas sin saldo en el día ni en días anteriores.
+            for c in interactivas:
+                resultado.setdefault(c.pk, 0.0)
+
+        if acumulativas:
+            ids_acumulativas = [c.pk for c in acumulativas]
+            subcuentas = list(Cuenta.filtro(cta_madre_id__in=ids_acumulativas))
+
+            subcuentas_por_madre = {}
+            for sc in subcuentas:
+                subcuentas_por_madre.setdefault(sc.cta_madre_id, []).append(sc)
+
+            if subcuentas:
+                saldos_subcuentas = cls._expandir_y_sumar(subcuentas, dia)
+                for c in acumulativas:
+                    subs = subcuentas_por_madre.get(c.pk, [])
+                    resultado[c.pk] = sum(
+                        saldos_subcuentas.get(sc.pk, 0.0) for sc in subs
+                    )
+            else:
+                for c in acumulativas:
+                    resultado[c.pk] = 0.0
 
         return resultado
