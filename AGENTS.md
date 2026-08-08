@@ -68,6 +68,7 @@ python manage.py runserver
 ## General behavior
 - Atenerse al modo Plan a menos que esté seleccionado explicitamente el modo build
 - No aplicar directamente cambios al código, sino presentarlos en pantalla para su revisión. Indicar con un comentario los lugares específicos del código en los que se han hecho cambios.
+- Las modificaciones al código deben ser presentadas, nunca aplicadas. La aplicación de las modificaciones corre por mi cuenta.
 - Cuando falte información, solicitarla. Comprobar en vez de inferir o suponer. Empiria.
 - Ante un error, primero escribir un test que lo reproduzca y luego hacer lo necesario para que el test pase.
 
