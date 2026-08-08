@@ -265,6 +265,16 @@ def test_home_monedas(
 
 
 class TestHomeCuentas:
+    def test_muestra_saldo_de_cuentas_acumulativas(self, browser, cuenta_acumulativa):
+        # Dada una cuenta acumulativa con saldo...
+        assert cuenta_acumulativa.saldo() != 0, "Test mal planteado: la cuenta acumulativa tiene saldo cero."
+
+        browser.ir_a_pag()
+        saldo_mostrado = browser.encontrar_elemento(
+            f"id_saldo_cta_{cuenta_acumulativa.sk}_{cuenta_acumulativa.moneda.sk}"
+        ).text
+        assert saldo_mostrado == float_format(cuenta_acumulativa.saldo())
+
     def test_muestra_subcuentas_con_sangria(self, browser, cuenta, cuenta_acumulativa, subsubcuenta):
         sc1, sc2 = cuenta_acumulativa.subcuentas.all()
         ssc11, ssc12 = sc1.subcuentas.all()

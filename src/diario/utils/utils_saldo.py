@@ -86,7 +86,7 @@ def precalcular_saldos_cuentas(
             for cuenta in cuentas
         }
 
-    saldos_diarios = SaldoDiario.indexar_por_dia(cuentas, dia)
+    saldos_diarios = SaldoDiario.saldos_para_cuentas_en_dia(cuentas, dia)
     return {
         cuenta.pk: {
             moneda.sk: float_format(
