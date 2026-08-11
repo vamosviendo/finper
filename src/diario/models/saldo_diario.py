@@ -67,56 +67,6 @@ class SaldoDiario(MiModel):
 
         return saldo_diario
 
-    @classmethod
-    def indexar_por_dia(cls, cuentas: Iterable[Cuenta], dia: Dia):
-        saldos_diarios = {
-            sd.cuenta_id: sd.importe
-            for sd in SaldoDiario.filtro(cuenta__in=cuentas, dia=dia)
-        }
-
-        cuentas_sin_sd = [c for c in cuentas if c.pk not in saldos_diarios]
-        if cuentas_sin_sd:
-            sds_anteriores = SaldoDiario.filtro(
-                cuenta__in=cuentas_sin_sd,
-                dia__fecha__lt=dia.fecha,
-            ).order_by('cuenta_id', '-dia__fecha')
-            vistos = set()
-            for sd in sds_anteriores:
-                if sd.cuenta_id not in vistos:
-                    saldos_diarios[sd.cuenta_id] = sd.importe
-                    vistos.add(sd.cuenta_id)
-
-        return saldos_diarios
-
-    @classmethod
-    def indexar_en_movimiento(
-            cls,
-            cuentas: Iterable[Cuenta],
-            movimiento: Movimiento) -> dict[int, float]:
-        from diario.models import Movimiento
-
-        saldos_diarios = cls.indexar_por_dia(cuentas, movimiento.dia)
-
-        movs_posteriores = list(Movimiento.filtro(
-            dia=movimiento.dia,
-            orden_dia__gt=movimiento.orden_dia,
-        ).select_related('cta_entrada', 'cta_salida'))
-
-        ids_cuentas = {c.pk for c in cuentas}
-        ajustes = {c.pk: 0.0 for c in cuentas}
-        for mov in movs_posteriores:
-            if mov.cta_entrada_id in ids_cuentas:
-                ajustes[mov.cta_entrada_id] -= mov.importe_cta_entrada
-            if mov.cta_salida_id in ids_cuentas:
-                ajustes[mov.cta_salida_id] -= mov.importe_cta_salida
-
-        return {
-            cuenta_id: importe + ajustes[cuenta_id]
-            for cuenta_id, importe in {
-                c.pk: saldos_diarios.get(c.pk, 0.0) for c in cuentas
-            }.items()
-        }
-
     def anterior(self):
         return SaldoDiario.anterior_a(cuenta=self.cuenta, dia=self.dia)
 
@@ -216,25 +166,51 @@ class SaldoDiario(MiModel):
             dia: Dia | None,
             movimiento: Movimiento | None,
     ) -> dict[int, float]:
+        from diario.models import Cuenta
+
         resultado = {}
 
         acumulativas = [c for c in cuentas if c.es_acumulativa]
-        interactivas = [c for c in cuentas if c not in acumulativas]
+        interactivas = [c for c in cuentas if c.es_interactiva]
 
+        # 1. Batch de subcuentas para acumulativas
+        if acumulativas:
+            todas_las_subcuentas = list(
+                Cuenta.filtro(cta_madre__in=acumulativas)
+            )
+            subcuentas_por_madre = {}
+            for sc in todas_las_subcuentas:
+                subcuentas_por_madre.setdefault(sc.cta_madre_id, []).append(sc)
+        else:
+            todas_las_subcuentas = []
+            subcuentas_por_madre = {}
+
+        # 2. Batch de SaldoDiario
+        cuentas_a_buscar = interactivas + todas_las_subcuentas
+        saldos_dia = cls._obtener_saldos_dia_batch(cuentas_a_buscar, dia)
+
+        # 3. Batch de movimientos
+        if movimiento:
+            ajustes = cls._obtener_ajustes_movimiento_batch(cuentas_a_buscar, movimiento)
+        else:
+            ajustes = {}
+
+        # 4. Asignar saldos a interactivas
         for c in interactivas:
-            resultado[c.pk] = cls._saldo_interactiva_en(c, dia, movimiento)
+            resultado[c.pk] = saldos_dia.get(c.pk, 0.0) - ajustes.get(c.pk, 0.0)
 
+        # 5. Recursión para acumulativas
         for c in acumulativas:
-            subcuentas = list(c.subcuentas.all())
+            subcuentas = subcuentas_por_madre.get(c.pk, [])
             saldos_subcuentas = cls._calcular_saldos(subcuentas, dia, movimiento)
             resultado.update(saldos_subcuentas)
+            pks_directas = {sc.pk for sc in subcuentas}
             # TODO: Esta distinción se hace porque incluimos el árbol de subcuentas
             #       en el resultado pero no debemos incluir más que las subcuentas
             #       directas en el cálculo del saldo de la cuenta acumulativa.
             #       Verificar si realmente es necesario incluir las subcuentas
             #       en el resultado. (Esto para un refactoring posterior una vez
             #       que hayamos comprobado que pasan todos los tests).
-            pks_directas = {sc.pk for sc in subcuentas}
             resultado[c.pk] = sum(
                 imp for pk, imp in saldos_subcuentas.items() if pk in pks_directas
             )
@@ -242,97 +218,39 @@ class SaldoDiario(MiModel):
         return resultado
 
     @classmethod
-    def _saldo_interactiva_en(
-            cls,
-            cuenta: Cuenta,
-            dia: Dia,
-            movimiento: Movimiento | None,
-    ) -> float:
-        from diario.models import Movimiento
+    def _obtener_saldos_dia_batch(cls, cuentas, dia):
+        if not cuentas:
+            return {}
 
-        sd = cls.filtro(cuenta=cuenta, dia__fecha__lte=dia.fecha).last()
-        saldo_dia = sd.importe if sd else 0.0
-
-        if movimiento is None:
-            return saldo_dia
-
-        # TODO: Una vez resuelta performance, probar:
-        # return cuenta.saldo_en_mov(movimiento)
-
-        movs_posteriores = Movimiento.filtro(
-            dia=movimiento.dia,
-            orden_dia__gt=movimiento.orden_dia,
-        ).select_related('cta_entrada', 'cta_salida')
-
-        ajustes = 0.0
-        for mov in movs_posteriores:
-            if mov.cta_entrada_id == cuenta.pk:
-                ajustes += mov.importe_cta_entrada
-            elif mov.cta_salida_id == cuenta.pk:
-                ajustes += mov.importe_cta_salida
-
-        return saldo_dia - ajustes
-
-    @classmethod
-    def _expandir_y_sumar(cls, cuentas: list[Cuenta], dia: Dia) -> dict[int, float]:
-        """ Recursivamente calcula saldos, expandiendo acumulativas.
-
-            Args:
-                cuentas: lista de cuentas a procesar
-                dia: día del cálculo
-        """
-        from diario.models import Cuenta
-
-        interactivas = []
-        acumulativas = []
-
-        for c in cuentas:
-            if c.es_acumulativa:
-                acumulativas.append(c)
-            else:
-                interactivas.append(c)
-
+        saldos = cls.filtro(
+            cuenta__in=cuentas,
+            dia__fecha__lte=dia.fecha,
+        ).order_by('cuenta_id', '-dia__fecha')
         resultado = {}
-
-        if interactivas:
-            # 1/3. Cuentas con saldo en el día
-            for sd in cls.filtro(cuenta__in=interactivas, dia=dia):
-                resultado[sd.cuenta_id] = sd.importe
-
-            # 2/3. Último saldo anterior para cuentas sin saldo en el día
-            cuentas_sin_saldo_en_dia = [
-                c for c in interactivas if c.pk not in resultado
-            ]
-            if cuentas_sin_saldo_en_dia:
-                saldos_anteriores = cls.filtro(
-                    cuenta__in=cuentas_sin_saldo_en_dia,
-                    dia__fecha__lt=dia.fecha,
-                ).order_by('cuenta_id', '-dia__fecha')
-                for sd in saldos_anteriores:
-                    if sd.cuenta_id not in resultado:
-                        resultado[sd.cuenta_id] = sd.importe
-
-            # 3/3 Cuentas sin saldo en el día ni en días anteriores.
-            for c in interactivas:
-                resultado.setdefault(c.pk, 0.0)
-
-        if acumulativas:
-            ids_acumulativas = [c.pk for c in acumulativas]
-            subcuentas = list(Cuenta.filtro(cta_madre_id__in=ids_acumulativas))
-
-            subcuentas_por_madre = {}
-            for sc in subcuentas:
-                subcuentas_por_madre.setdefault(sc.cta_madre_id, []).append(sc)
-
-            if subcuentas:
-                saldos_subcuentas = cls._expandir_y_sumar(subcuentas, dia)
-                for c in acumulativas:
-                    subs = subcuentas_por_madre.get(c.pk, [])
-                    resultado[c.pk] = sum(
-                        saldos_subcuentas.get(sc.pk, 0.0) for sc in subs
-                    )
-            else:
-                for c in acumulativas:
-                    resultado[c.pk] = 0.0
+        vistos = set()
+        for saldo in saldos:
+            if saldo.cuenta_id not in vistos:
+                resultado[saldo.cuenta_id] = saldo.importe
+                vistos.add(saldo.cuenta_id)
 
         return resultado
+
+    @classmethod
+    def _obtener_ajustes_movimiento_batch(cls, cuentas, movimiento):
+        from diario.models import Movimiento
+
+        if not cuentas:
+            return {}
+
+        movs = Movimiento.filtro(
+            dia=movimiento.dia,
+            orden_dia__gt=movimiento.orden_dia
+        ).select_related('cta_entrada', 'cta_salida')
+
+        ajustes = {c.pk: 0.0 for c in cuentas}
+        for mov in movs:
+            if mov.cta_entrada_id in ajustes:
+                ajustes[mov.cta_entrada_id] += mov.importe_cta_entrada
+            if mov.cta_salida_id in ajustes:
+                ajustes[mov.cta_salida_id] += mov.importe_cta_salida
+        return ajustes

@@ -47,7 +47,7 @@ def precalcular_saldos_cuentas(
         cuentas: Iterable[Cuenta],
         monedas: Iterable[Moneda],
         dia: Dia | None = None,
-        movimiento: Movimiento | None = None):
+        movimiento: Movimiento | None = None) -> dict[str, dict[str, str]]:
 
     if not dia and not movimiento:
         raise ValueError(
