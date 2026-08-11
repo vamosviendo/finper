@@ -187,7 +187,6 @@ class TestBaseHome:
         client.get(reverse("home"))
         mock_sgh.assert_called_with(dia=ANY, cuentas=[cuenta, cuenta_acumulativa])
 
-
     def test_saldo_gral_incluye_saldo_de_cuentas_acumulativas_raiz(
         self, client, cuenta, cuenta_2, entrada, entrada_otra_cuenta, salida
     ):

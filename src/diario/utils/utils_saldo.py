@@ -34,14 +34,11 @@ def saldo_general_historico(
 
     if not cuentas_a_sumar:
         return 0
-
-    if dia:
-        saldos = SaldoDiario.saldos_para_cuentas_en_dia(cuentas_a_sumar, dia)
-        saldo_general = sum(saldos.get(c.pk, 0.0) for c in cuentas_a_sumar)
+    if mov:
+        saldos = SaldoDiario.saldos_cuentas(cuentas_a_sumar, movimiento=mov)
     else:
-        saldo_general = sum(
-            cuenta.saldo(movimiento=mov) for cuenta in cuentas_a_sumar
-        )
+        saldos = SaldoDiario.saldos_cuentas(cuentas_a_sumar, dia=dia)
+    saldo_general = sum(saldos.get(c.pk, 0.0) for c in cuentas_a_sumar)
 
     return round(saldo_general / cotizacion, 2)
 
@@ -64,37 +61,16 @@ def precalcular_saldos_cuentas(
         dia.fecha if dia else movimiento.dia.fecha
     )
 
-    cuentas_acumulativas = [c for c in cuentas if c.es_acumulativa]
-    cuentas_interactivas = [c for c in cuentas if c not in cuentas_acumulativas]
-
     if movimiento:
-        saldos = SaldoDiario.indexar_en_movimiento(cuentas_interactivas, movimiento)
-        for cuenta in cuentas_acumulativas:
-            saldos[cuenta.pk] = cuenta.saldo(movimiento=movimiento)
+        saldos = SaldoDiario.saldos_cuentas(cuentas, movimiento=movimiento)
+    else:
+        saldos = SaldoDiario.saldos_cuentas(cuentas, dia=dia)
 
-        return {
-            cuenta.pk: {
-                moneda.sk: float_format(
-                    round(
-                        saldos.get(cuenta.pk, 0) *
-                        cotizaciones.get((cuenta.moneda_id, moneda.pk), 1.0),
-                        2
-                    )
-                )
-                for moneda in monedas
-            }
-            for cuenta in cuentas
-        }
-
-    saldos_diarios = SaldoDiario.saldos_para_cuentas_en_dia(cuentas, dia)
     return {
         cuenta.pk: {
             moneda.sk: float_format(
-                round(
-                    saldos_diarios.get(cuenta.pk, 0) *
-                    cotizaciones.get((cuenta.moneda_id, moneda.pk)),
-                    2
-                )
+                saldos.get(cuenta.pk, 0) *
+                cotizaciones.get((cuenta.moneda_id, moneda.pk), 1.0),
             ) for moneda in monedas
         } for cuenta in cuentas
     }

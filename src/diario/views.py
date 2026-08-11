@@ -686,7 +686,7 @@ def _saldo_gral_de_cuentas_raiz(cuentas_raiz):
     if not cuentas_a_sumar:
         return 0
 
-    saldos = SaldoDiario.saldos_para_cuentas_en_dia(
+    saldos = SaldoDiario.saldos_cuentas(
         cuentas_a_sumar, Dia.ultime()
     )
     return sum(saldos.values())
