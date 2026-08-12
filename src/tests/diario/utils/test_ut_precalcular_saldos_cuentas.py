@@ -1,6 +1,4 @@
 import pytest
-from django.db import connection
-from django.test.utils import CaptureQueriesContext
 
 from diario.models import CuentaAcumulativa
 from diario.utils.utils_saldo import precalcular_saldos_cuentas
@@ -54,23 +52,6 @@ def test_incluye_cuentas_acumulativas_si_recibe_movimiento(
         saldos[cuenta_acumulativa.pk][peso.sk].replace(',', '.')
     )
     assert importe_mostrado == cuenta_acumulativa.saldo(movimiento=entrada)
-
-
-# Tests performance
-def _contar(queries, tabla):
-    return sum(1 for q in queries if tabla in q["sql"])
-
-
-def test_precalcular_con_movimiento_no_genera_n_plus_1_con_acumulativas(
-        cuenta, cuenta_2, cuenta_acumulativa, dia, entrada, salida, peso):
-    with CaptureQueriesContext(connection) as ctx:
-        precalcular_saldos_cuentas(
-            [cuenta, cuenta_acumulativa], [peso], movimiento=salida
-        )
-        queries_saldos = _contar(ctx.captured_queries, "diario_saldodiario")
-        queries_cuenta = _contar(ctx.captured_queries, "diario_cuenta")
-        assert queries_saldos <= 3, f"Hizo {queries_saldos} queries a saldodiario"
-        assert queries_cuenta <= 5, f"Hizo {queries_cuenta} queries a cuenta, posible N+1"
 
 
 def test_precalcular_con_movimiento_no_llama_cuenta_saldo(

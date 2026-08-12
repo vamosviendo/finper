@@ -1,5 +1,6 @@
 vfinper
 vfinper3.13
 db.sqlite3
+db*.json
 src/db.sqlite3
 src/static

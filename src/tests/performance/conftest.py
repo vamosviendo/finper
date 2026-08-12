@@ -109,17 +109,20 @@ def bd_mediana(cuenta, cuenta_2, entrada, salida) -> dict[str, list[Titular | Cu
 
 
 @pytest.fixture(
-    params=[
-        pytest.param((10, 30, 200), id="chico"),
-        pytest.param((30, 100, 1000), id="mediano"),
-        pytest.param((60, 500, 2000), id="grande"),
-    ]
+    params=["chico", "mediano", "grande", ]
 )
 def bd_escalable(request, cuenta, cuenta_2, entrada, salida) -> dict[str, list[int]]:
-    """Fixture parametrizable con 3 volúmenes.
-    Tupla: (cantidad_cuentas, cantidad_dias, cantidad_movimientos).
-    """
-    n_cuentas, n_dias, n_movs = request.param
+    """Fixture parametrizable."""
+    params_map = {
+        "chico":   {"cuentas": 10, "dias": 30, "movs": 200},
+        "mediano": {"cuentas": 30, "dias": 100, "movs": 1000},
+        "grande":  {"cuentas": 60, "dias": 500, "movs": 2000},
+    }
+    config = params_map[request.param]
+    n_cuentas = config["cuentas"]
+    n_dias = config["dias"]
+    n_movs = config["movs"]
+
     titulares = _crear_titulares_adicionales(5)
     cuentas = _crear_cuentas_interactivas(n_cuentas - 3, titulares)
     cuentas += _crear_cuenta_acumulativa_con_subcuentas(
