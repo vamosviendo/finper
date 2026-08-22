@@ -482,6 +482,8 @@ class Movimiento(MiModel):
                     if self.cambia_campo(
                             'dia', '_importe', CTA_ENTRADA, CTA_SALIDA):
                         self._regenerar_contramovimiento()
+                    elif self.cambia_campo('concepto'):
+                        self._actualizar_movimiento_credito(['concepto'])
                 else:
                     # El movimiento no era una transacción no gratuita entre
                     # titulares y ahora lo es
@@ -813,6 +815,15 @@ class Movimiento(MiModel):
             if cuenta.saldo() == 0:
                 cuenta.activa = False
                 cuenta.clean_save()
+
+    def _actualizar_movimiento_credito(self, campos: list[str]):
+        mov = Movimiento.tomar(id=self.id_contramov)
+        for campo in campos:
+            valor = getattr(self, campo)
+            setattr(mov, campo, valor)
+        mov.clean_save(omitir=[
+            "no_se_permite_modificar_movimientos_automaticos"
+        ])
 
     def _generar_cuentas_credito(self) -> Tuple:
         cls = self.get_related_class(CTA_ENTRADA)

@@ -168,6 +168,17 @@ class TestSaveMovimientoEntreCuentasDeDistintosTitulares:
         credito.clean_save()
         assert credito.id_contramov == id_contramov
 
+    def test_cambiar_concepto_de_movimiento_entre_titulares_modifica_concepto_en_contramovimiento(
+            self, credito):
+        contramov = Movimiento.tomar(id=credito.id_contramov)
+        assert contramov.concepto == credito.concepto
+
+        credito.concepto = "otro concepto"
+        credito.clean_save()
+        contramov.refresh_from_db()
+
+        assert contramov.concepto == "otro concepto"
+
     @pytest.mark.parametrize('campo,fixt', [
         ('importe', 'importe_aleatorio'),
         ('fecha', 'fecha_tardia'),
