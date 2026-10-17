@@ -35,6 +35,7 @@ urlpatterns = [
     path('tit_elim/<slug:sk>', views.TitElimView.as_view(), name='tit_elim'),
     path('tit_mod/<slug:sk>', views.TitModView.as_view(), name='tit_mod'),
     path('mov_nuevo', views.MovNuevoView.as_view(), name='mov_nuevo'),
+    path('mov_nuevo/<slug:sk>', views.MovNuevoView.as_view(), name='mov_duplicar'),
     path('mov_elim/<slug:sk>', views.MovElimView.as_view(), name='mov_elim'),
     path('mov_mod/<slug:sk>', views.MovModView.as_view(), name='mov_mod'),
     path('mon_nueva', views.MonNuevaView.as_view(), name='mon_nueva'),

@@ -46,6 +46,10 @@
        class="class_link_mod_mov">
       E
     </a>
+    <a href="{{ mov.get_duplicate_url }}?next={{ request.get_full_path }}"
+       class="class_link_dup_mov">
+      D
+    </a>
     {% endif %}
   </td>
 </tr>

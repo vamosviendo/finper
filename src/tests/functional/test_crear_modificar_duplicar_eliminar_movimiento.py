@@ -503,6 +503,61 @@ def test_modificar_movimiento(browser, entrada, salida_posterior, cuenta_2):
     assert importe_movimiento == "124,00"
 
 
+def test_duplicar_movimiento(browser, entrada, cuenta_2):
+    # La página de duplicar movimiento crea un nuevo movimiento a partir de uno existente.
+    browser.ir_a_pag(reverse("home"))
+    fila_movimiento = browser.encontrar_elemento(f"id_row_mov_{entrada.sk}")
+    campos_movimiento_original = [c.text for c in fila_movimiento.find_elements(By.CSS_SELECTOR, "td")]
+
+    browser.ir_a_pag(entrada.get_duplicate_url())
+
+    # En todos los campos del formulario aparece el valor del campo correspondiente del movimiento:
+    browser.controlar_modelform(instance=entrada)
+
+    # Al guardar el form, el movimiento se duplica.
+    browser.pulsar()
+
+    movimientos = browser.encontrar_elementos("class_row_mov", By.CLASS_NAME)
+    # Hay un movimiento nuevo en la página
+    assert len(movimientos) == 2
+
+    # Los campos del movimiento nuevo son iguales a los del original,
+    # excepto el primero (orden)
+    for i, movimiento in enumerate(movimientos):
+        campos_movimiento = [c.text for c in movimiento.find_elements(By.CSS_SELECTOR, "td")]
+        assert campos_movimiento[0] == str(i)
+        for campo_original, campo_duplicado in zip(campos_movimiento_original[1:], campos_movimiento[1:]):
+            assert campo_original == campo_duplicado
+
+    # Podemos modificar datos del movimiento, en cuyo caso aparece un nuevo movimiento
+    # con los datos modificados, mientras que el movimiento original se mantiene intacto.
+    browser.ir_a_pag(entrada.get_duplicate_url())
+    browser.completar_form(
+        concepto='Movimiento con concepto modificado',
+        cta_entrada='cuenta 2',
+        importe='124',
+    )
+
+    movimientos = browser.encontrar_elementos("class_row_mov", By.CLASS_NAME)
+    assert len(movimientos) == 3
+    movimiento_original = movimientos[0]
+    campos_movimiento_original_duplicado = [
+        c.text for c in movimiento_original.find_elements(By.CSS_SELECTOR, "td")
+    ]
+
+    for campo_original, campo_nuevo in zip(campos_movimiento_original, campos_movimiento_original_duplicado):
+        assert campo_original == campo_nuevo
+
+    movimiento_duplicado = movimientos[-1]
+    concepto_duplicado = movimiento_duplicado.encontrar_elemento("class_td_concepto",  By.CLASS_NAME).text
+    cta_entrada_duplicada = movimiento_duplicado.encontrar_elemento("class_td_cta_entrada", By.CLASS_NAME).text
+    importe_duplicado = movimiento_duplicado.encontrar_elemento("class_td_importe", By.CLASS_NAME).text
+
+    assert concepto_duplicado == "Movimiento con concepto modificado"
+    assert cta_entrada_duplicada == "cuenta 2"
+    assert importe_duplicado == "124,00"
+
+
 def test_convertir_entrada_en_traspaso_entre_titulares(browser, entrada, cuenta_ajena):
     # Cuando se agrega a un movimiento de entrada una cuenta ajena como cuenta
     # de salida, se genera un contramovimiento en el mismo día que el movimiento

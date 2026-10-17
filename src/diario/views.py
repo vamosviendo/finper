@@ -432,6 +432,25 @@ class MovNuevoView(CreateView):
     form_class = FormMovimiento
     template_name = 'diario/mov_form.html'
 
+    def get_initial(self):
+        initial = super().get_initial()
+        mov_sk = self.kwargs.get('sk')
+        print(f"Tomando valores de mov {mov_sk}")
+        if mov_sk:
+            origen = get_object_or_404(Movimiento, sk=mov_sk)
+            print("origen:", origen)
+            initial.update({
+                'fecha':       origen.fecha,
+                'concepto':    origen.concepto,
+                'detalle':     origen.detalle,
+                'importe':     origen.importe,
+                'cotizacion':  origen.cotizacion,
+                'cta_entrada': origen.cta_entrada_id,
+                'cta_salida':  origen.cta_salida_id,
+                'moneda':      origen.moneda_id,
+            })
+        return initial
+
     def get(self, request, *args, **kwargs):
         if Cuenta.cantidad() == 0:
             return redirect('cta_nueva')
@@ -446,6 +465,11 @@ class MovNuevoView(CreateView):
 
         cast(forms.ModelChoiceField, form.fields['cta_entrada']).queryset = CuentaInteractiva.filtro(activa=True)
         cast(forms.ModelChoiceField, form.fields['cta_salida']).queryset = CuentaInteractiva.filtro(activa=True)
+
+        mov_sk = self.kwargs.get("sk")
+        if mov_sk:
+            origen = get_object_or_404(Movimiento, sk=mov_sk)
+            form.fields['moneda'].initial = origen.moneda_id
 
         return form
 

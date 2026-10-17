@@ -114,6 +114,20 @@ def test_no_guarda_movimientos_no_validos(client, fecha, importe):
     assert Movimiento.cantidad() == cantidad
 
 
+def test_si_recibe_sk_de_movimiento_toma_valores_del_movimiento_referenciado(
+        client, entrada, salida_posterior):
+    response = client.get(
+        reverse('mov_duplicar', args=[entrada.sk])
+    )
+    form = response.context["form"]
+    assert form.initial["fecha"] == entrada.fecha
+    assert form.initial["concepto"] == entrada.concepto
+    assert form.initial["importe"] == entrada.importe
+    assert form.initial["cta_entrada"] == entrada.cta_entrada.id
+    assert form.initial["cta_salida"] == None
+    assert form.initial["moneda"] == entrada.moneda.id
+
+
 def test_movimiento_entre_titulares_llama_a_metodo_registrar_credito(
         client, titular, otro_titular, cuenta, cuenta_ajena, dia, importe, mocker):
     mock_gestionar_transferencia = mocker.patch(

@@ -226,6 +226,9 @@ class Movimiento(MiModel):
     def get_edit_url(self) -> str:
         return reverse("mov_mod", args=[self.sk])
 
+    def get_duplicate_url(self) -> str:
+        return reverse("mov_duplicar", args=[self.sk])
+
     def get_delete_url(self) -> str:
         return reverse("mov_elim", args=[self.sk])
 

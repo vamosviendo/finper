@@ -2,13 +2,15 @@ from __future__ import annotations
 
 from datetime import date
 from typing import cast, List, Type
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, unquote, urlencode, urlparse
 
 from django.urls import reverse
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 
-from diario.models import Cuenta, CuentaInteractiva, CuentaAcumulativa, Dia, Movimiento, Titular
+from diario.models import (
+    Cuenta, CuentaInteractiva, CuentaAcumulativa, Dia, Movimiento, Titular
+)
 from utils.numeros import float_format
 from utils.tiempo import dia_de_la_semana
 from vvmodel.models import MiModel
@@ -34,11 +36,18 @@ class FinperFirefox(MiFirefox):
 
     # TODO: Corregir en MiFirefox
     def assert_url(self, url: str):
-        parsed_url = urlparse(self.current_url)
-        url_real = parsed_url.path
-        if len(parsed_url.query) > 0:
-            url_real += f"?{parsed_url.query}"
-        assert url == url_real, f"Url real '{url_real}' no coincide con url propuesta '{url}'"
+        expected_url = urlparse(url)
+        actual_url = urlparse(self.current_url)
+        expected_qs = parse_qs(expected_url.query)
+        actual_qs = parse_qs(actual_url.query)
+
+        assert expected_url.path == actual_url.path, (
+            f"Path real '{actual_url.path} no coincide con el esperado "
+            f"'{expected_url.path}'"
+        )
+        assert expected_qs == actual_qs, (
+            f"Query real {unquote(urlencode(actual_qs))} no coincide con "
+            f"la esperada {unquote(urlencode(expected_qs))}")
 
     def cuenta_esta(self, cuenta: Cuenta) -> bool:
         nombres_cuenta = [x.text.strip() for x in self.encontrar_elementos('class_link_cuenta', fail=False)]
@@ -234,13 +243,7 @@ class FinperFirefox(MiFirefox):
         else:
             tipo = "id"
 
-        if querydict:
-            querystring = "?"
-            for key, value in querydict.items():
-                querystring += f"{key}={value}&"
-            querystring = querystring[:-1]  # Retiramos el último &. Ya sé que es desprolijo.
-        else:
-            querystring = ""
+        querystring = f"?{urlencode(querydict)}" if querydict else ""
 
         self.encontrar_elemento(f"{tipo}_link_{nombre}", criterio).click()
         self.assert_url(reverse(viewname, args=args) + querystring)

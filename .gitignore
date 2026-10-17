@@ -24,3 +24,4 @@ Dockerfile_old
 requirements.old
 src/static
 tmp
+.opencode
