@@ -1,149 +1,107 @@
-.div-menu {
-    padding: 5px;
-    overflow-x: scroll;
+.fp-home {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.div-lista {
-    padding: 5px;
-    overflow-x: scroll;
+.fp-home__menus {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 1rem;
+}
+
+.fp-home > .fp-card + .fp-card,
+.fp-home__menus .fp-card + .fp-card {
+  margin-top: 0;
+}
+
+.fp-section--titulares .fp-card__header {
+  border-left: 4px solid var(--fp-titular);
+  background: var(--fp-titular-soft);
+}
+
+.fp-section--cuentas .fp-card__header {
+  border-left: 4px solid var(--fp-cuenta);
+  background: var(--fp-cuenta-soft);
+}
+
+.fp-section--monedas .fp-card__header {
+  border-left: 4px solid var(--fp-moneda);
+  background: var(--fp-moneda-soft);
+}
+
+.fp-section--movimientos .fp-card__header {
+  border-left: 4px solid var(--fp-mov);
+  background: var(--fp-mov-soft);
 }
 
 .div-titulares {
-    background-color: #488778 !important;
+  background-color: var(--fp-titular-soft) !important;
 }
-
-.menu-item.class_td_titular:hover {
-    background-color: #6b8f86;
-}
-
-.menu-item.class_td_titular.selected {
-    background-color: #28c700;
-}
-
-td.class_capital_titular {
-    padding-left: 10px;
-    padding-right: 10px;
-}
-
-
 
 .div-cuentas {
-    background-color: #EA5D34 !important;
+  background-color: var(--fp-cuenta-soft) !important;
 }
 
-.class_td_subcuenta {
-    background-color: #e08366;
+.div-monedas {
+  background-color: var(--fp-moneda-soft) !important;
 }
 
-.acumulativa {
-    background-color: #b44929;
+.div-menu,
+.div-lista {
+  padding: 0;
 }
 
-.menu-item.class_td_cuenta:hover {
-    background-color: #f3a086;
+.class_td_titular {
+  border-left: 4px solid transparent;
 }
 
-.menu-item.class_td_subcuenta:hover {
-    background-color: #f3a086;
+.class_td_titular.selected {
+  border-left-color: var(--fp-titular);
+  background: var(--fp-titular-soft);
+}
+
+.class_td_cuenta.acumulativa {
+  background: var(--fp-cuenta-soft);
+}
+
+.class_td_cuenta.class_td_subcuenta {
+  background: #fff7f2;
 }
 
 .div-detalles-subcuenta {
-    background-color: #f0e6c7;
+  background: #fffaf5;
 }
 
-td.class_saldo_cuenta {
-    color: #888;
-    padding-left: 10px;
-    padding-right: 10px;
+.class_saldo_cuenta.mon_cuenta {
+  background: #ecfdf5;
+  color: var(--fp-titular);
+  font-weight: 700;
 }
 
-.mon_cuenta {
-    color: #000 !important;
+.class_cotizacion_moneda {
+  background: var(--fp-moneda-soft);
 }
 
-
-
-
-.div-monedas {
-    background-color: #e4c202;
-}
-
-td.class_cotizacion_moneda {
-    padding-left: 10px;
-    padding-right: 10px;
-    background-color: yellow;
-}
-
-.menu-item.class_td_moneda:hover {
-    background-color: #d4c56b;
-}
-
-.menu-item.class_td_titular.selected {
-    background-color: #e48a02;
-}
-
-
-
-
-.class_div_dia {
-    margin-top: 10px;
-    margin-bottom: 20px;
-    background-color: rgb(238, 232, 174);
-    padding-top: 10px;
-    padding-bottom: 10px;
+.class_div_cot_nueva {
+  margin-bottom: 0.75rem;
 }
 
 .class_div_mov_nuevo {
-    background-color: greenyellow;
-    padding-top: 5px;
-    padding-bottom: 5px;
-    width: fit-content;
+  margin-bottom: 0.75rem;
 }
-
-.class_titulo_dia {
-    font-size: larger;
-    margin-left: 10px;
-    margin-bottom: 10px;
-}
-
 
 table.lista {
-    text-align: left;
-    margin-left: 10px;
+  text-align: left;
 }
 
 table.lista thead {
-    background-color: darkkhaki;
+  background: var(--fp-mov-soft);
 }
 
-table.lista th {
-    padding-left: 5px;
-    padding-right: 5px;
-    padding-bottom: 5px;
-}
-
-table.lista td {
-    padding-left: 5px;
-    padding-right: 5px;
-}
-
-tr.mov_selected {
-    background-color: #e4c202;
-}
-
-.cell_concepto {
-    width: 250px;
-}
-
-.cell_detalle {
-    width: 250px;
-}
-
-.cell_cuentas {
-    width: 170px;
-}
-
-.scrollable {
-    white-space: nowrap;
-    overflow-x: scroll;
+@media (max-width: 991.98px) {
+  .fp-home__menus {
+    grid-template-columns: 1fr;
+  }
 }

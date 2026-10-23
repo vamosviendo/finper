@@ -1,21 +1,63 @@
 {% load static %}
 
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Finanzas Personales</title>
-  <link href="{% static 'diario/bootstrap/css/bootstrap.min.css' %}"
-        rel="stylesheet">
+  <title>{% block title %}Finper{% endblock %}</title>
+  <link href="{% static 'diario/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'diario/css/base.css' %}">
-  {% block extra-css %} {% endblock extra-css %}
+  <link rel="stylesheet" href="{% static 'diario/css/forms.css' %}">
+  {% block extra-css %}{% endblock extra-css %}
 </head>
-<body>
-<div id="container" class="container-fluid">
-  {% block contenido %} {% endblock contenido %}
+<body class="app-body">
+<a class="skip-link" href="#contenido">Saltar al contenido</a>
+
+{% block navbar %}
+<header class="app-header">
+  <nav class="navbar navbar-expand-md navbar-dark app-navbar" aria-label="Navegación principal">
+    <div class="container-xl app-navbar__inner">
+      <a class="navbar-brand app-brand" href="{% url 'home' %}">
+        <span class="app-brand__mark" aria-hidden="true">F</span>
+        <span>Finper</span>
+      </a>
+      <div class="app-navbar__actions">
+        <a id="id_link_home" class="btn btn-light btn-sm app-navbar__home" href="{% url 'home' %}">
+          Inicio
+        </a>
+        <a id="id_nav_mov_nuevo" class="btn btn-outline-light btn-sm"
+           href="{% url 'mov_nuevo' %}?next={{ request.get_full_path }}">
+          Nuevo movimiento
+        </a>
+        <a class="btn btn-link btn-sm text-white-50"
+           href="{% url 'ctas_inactivas' %}?next={{ request.get_full_path }}">
+          Cuentas inactivas
+        </a>
+      </div>
+    </div>
+  </nav>
+</header>
+{% endblock navbar %}
+
+<div class="app-shell container-xl">
+  {% block breadcrumbs %}
+    {% include "diario/snippets/breadcrumbs.html" %}
+  {% endblock breadcrumbs %}
+
+  <main id="contenido" class="app-main">
+    {% block contenido %}{% endblock contenido %}
+  </main>
 </div>
+
+<footer class="app-footer">
+  <div class="container-xl app-footer__inner">
+    <span>Finper</span>
+    <span>Finanzas personales</span>
+  </div>
+</footer>
+
 {% block extrajs %}{% endblock extrajs %}
 </body>
 </html>

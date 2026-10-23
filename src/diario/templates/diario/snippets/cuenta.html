@@ -1,8 +1,7 @@
-<tr id=id_row_cta_{{ cta.sk }} class="menu-row class_div_cuenta">
+<tr id="id_row_cta_{{ cta.sk }}" class="menu-row class_div_cuenta">
   <td class="menu-item class_td_cuenta
             {% if cta.es_acumulativa %} acumulativa{% endif %}
-            {% if cta.cta_madre is not None %} class_td_subcuenta{% endif %}"
-  >
+            {% if cta.cta_madre is not None %} class_td_subcuenta{% endif %}">
     <div class="menu-item-content class_nombre_cuenta">
       {% for ancestro in cta.ancestros %}
         &nbsp;
@@ -13,13 +12,23 @@
       </a>
     </div>
     <div class="menu-item-edit">
-      <a id="id_link_cta_mod_{{ cta.sk }}" href="{{ cta.get_edit_url }}?next={{ request.get_full_path }}">E</a>
+      <a id="id_link_cta_mod_{{ cta.sk }}"
+         href="{{ cta.get_edit_url }}?next={{ request.get_full_path }}"
+         title="Editar cuenta">
+        E
+      </a>
     </div>
     <div class="menu-item-edit">
-      <a id="id_link_cta_elim_{{ cta.sk }}" href="{{ cta.get_delete_url }}?next={{ request.get_full_path }}">B</a>
+      <a id="id_link_cta_elim_{{ cta.sk }}"
+         href="{{ cta.get_delete_url }}?next={{ request.get_full_path }}"
+         title="Eliminar cuenta">
+        B
+      </a>
     </div>
     <div class="menu-item-edit">
-      <a id="id_link_cta_desact_{{ cta.sk }}" href="{{ cta.get_toggle_url }}?next={{ request.get_full_path }}">
+      <a id="id_link_cta_desact_{{ cta.sk }}"
+         href="{{ cta.get_toggle_url }}?next={{ request.get_full_path }}"
+         title="{% if cta.activa %}Desactivar{% else %}Activar{% endif %} cuenta">
         {% if cta.activa %}D{% else %}A{% endif %}
       </a>
     </div>

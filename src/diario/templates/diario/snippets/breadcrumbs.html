@@ -1,0 +1,47 @@
+{% if request.path != "/" %}
+<nav aria-label="breadcrumb" class="app-breadcrumbs">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item">
+      <a href="{% url 'home' %}">Inicio</a>
+    </li>
+
+    {% if titular %}
+      <li class="breadcrumb-item">
+        <a href="{{ titular.get_absolute_url }}">{{ titular.nombre }}</a>
+      </li>
+    {% elif cta %}
+      <li class="breadcrumb-item">
+        <a href="{{ cta.get_absolute_url }}">{{ cta.nombre }}</a>
+      </li>
+    {% endif %}
+
+    {% if cuenta %}
+      <li class="breadcrumb-item">
+        <a href="{{ cuenta.get_absolute_url }}">{{ cuenta.nombre }}</a>
+      </li>
+    {% endif %}
+
+    {% if movimiento %}
+      <li class="breadcrumb-item active" aria-current="page">
+        Movimiento {{ movimiento.orden_dia }}
+      </li>
+    {% elif mov %}
+      <li class="breadcrumb-item active" aria-current="page">
+        Movimiento {{ mov.orden_dia }}
+      </li>
+    {% elif moneda %}
+      <li class="breadcrumb-item active" aria-current="page">
+        Moneda: {{ moneda }}
+      </li>
+    {% elif request.resolver_match.url_name == "ctas_inactivas" %}
+      <li class="breadcrumb-item active" aria-current="page">
+        Cuentas inactivas
+      </li>
+    {% elif request.resolver_match.url_name == "corregir_saldo" %}
+      <li class="breadcrumb-item active" aria-current="page">
+        Corrección de saldos
+      </li>
+    {% endif %}
+  </ol>
+</nav>
+{% endif %}

@@ -1,0 +1,155 @@
+.fp-form-page {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.fp-form-card__title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.app-form > div {
+  margin-bottom: 1rem;
+}
+
+.app-form label {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--fp-ink);
+  font-weight: 600;
+}
+
+.app-form input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+.app-form select,
+.app-form textarea {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  background: #fff;
+  color: var(--fp-ink);
+  font-size: 1rem;
+  line-height: 1.5;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.app-form textarea {
+  min-height: 94px;
+  height: auto;
+}
+
+.app-form input:focus,
+.app-form select:focus,
+.app-form textarea:focus {
+  border-color: var(--fp-primary);
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(15, 118, 110, 0.15);
+}
+
+.app-form input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  margin-right: 0.4rem;
+  vertical-align: middle;
+}
+
+.app-form input:disabled,
+.app-form select:disabled,
+.app-form textarea:disabled {
+  background: #f1f5f9;
+  color: var(--fp-muted);
+  cursor: not-allowed;
+}
+
+.app-form .helptext {
+  display: block;
+  margin-top: 0.3rem;
+  color: var(--fp-muted);
+  font-size: 0.8rem;
+}
+
+.app-form ul.errorlist {
+  margin: 0.35rem 0 0;
+  padding: 0;
+  color: var(--fp-danger);
+  font-size: 0.82rem;
+  list-style: none;
+}
+
+.app-form ul.errorlist li {
+  margin: 0;
+}
+
+.app-form .form-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--fp-line);
+}
+
+.fp-form-extra {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--fp-line);
+}
+
+.fp-confirm-page {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.fp-confirm-card__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background: #fef2f2;
+  color: var(--fp-danger);
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.fp-confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+
+.fp-auth {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+  padding: 2rem 0;
+}
+
+.fp-auth__card {
+  width: 100%;
+  max-width: 420px;
+}
+
+.fp-auth__brand {
+  margin-bottom: 1rem;
+  text-align: center;
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+
+.fp-auth__brand a {
+  color: var(--fp-primary);
+}
+
+.fp-auth__brand a:hover {
+  text-decoration: none;
+}

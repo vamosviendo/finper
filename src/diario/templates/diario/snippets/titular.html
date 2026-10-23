@@ -8,12 +8,16 @@
       </a>
     </div>
     <div class="menu-item-edit">
-      <a id="id_link_tit_mod_{{ tit.sk }}" href="{{ tit.get_edit_url }}?next={{ request.get_full_path }}">
+      <a id="id_link_tit_mod_{{ tit.sk }}"
+         href="{{ tit.get_edit_url }}?next={{ request.get_full_path }}"
+         title="Editar titular">
         E
       </a>
     </div>
     <div class="menu-item-edit">
-      <a id="id_link_tit_elim_{{ tit.sk }}" href="{{ tit.get_delete_url }}?next={{ request.get_full_path }}">
+      <a id="id_link_tit_elim_{{ tit.sk }}"
+         href="{{ tit.get_delete_url }}?next={{ request.get_full_path }}"
+         title="Eliminar titular">
         B
       </a>
     </div>

@@ -1,20 +1,27 @@
 {% load urltags %}
 
-<section id="id_section_movimientos" style="clear: both;">
-  {% include "diario/snippets/navigator.html" with pos="init" pag=dias elem="dias" %}
-
-  <div id="id_div_mov_nuevo" class="menu-item class_div_mov_nuevo">
-    <a href="{% url 'mov_nuevo' %}?next={{ request.get_full_path }}" id="id_link_mov_nuevo">
-      Movimiento nuevo
-    </a>
+<section id="id_section_movimientos" class="fp-section fp-section--movimientos fp-card">
+  <div class="fp-card__header">
+    <div>
+      <h2 class="fp-card__title">Movimientos</h2>
+      <p class="fp-card__subtitle">Últimos días con actividad</p>
+    </div>
+    <div class="fp-card__actions">
+      <a id="id_link_mov_nuevo"
+         class="btn btn-sm btn-primary"
+         href="{% url 'mov_nuevo' %}?next={{ request.get_full_path }}">
+        Nuevo movimiento
+      </a>
+    </div>
   </div>
 
-  <div>
+  <div class="fp-card__body">
+    {% include "diario/snippets/navigator.html" with pos="init" pag=dias elem="dias" %}
+
     {% for dia in dias %}
       {% include "diario/snippets/dia.html" %}
     {% endfor %}
+
+    {% include "diario/snippets/navigator.html" with pos="end" pag=dias elem="dias" %}
   </div>
-
-  {% include "diario/snippets/navigator.html" with pos="end" pag=dias elem="dias" %}
-
 </section>

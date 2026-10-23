@@ -1,6 +1,6 @@
 {% load saldos %}
 
-<div id="id_div_saldos_hermana">
+<div id="id_div_saldos_hermana" class="fp-hermanas">
   {% for hermana in hermanas %}
     <div class="class_div_saldo_hermana">
       Saldo de cuenta hermana {{ hermana.nombre }}: {% saldo cuenta=hermana moneda=hermana.moneda %}
