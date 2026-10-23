@@ -365,6 +365,20 @@ table.menu {
   vertical-align: middle;
 }
 
+.menu .class_td_menu {
+  width: 1%;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.fp-row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+  gap: 0.2rem;
+  white-space: nowrap;
+}
 .menu-item-edit a {
   display: inline-flex;
   align-items: center;
@@ -439,6 +453,52 @@ table.lista {
 
 table.lista thead th {
   background: #f8fafc;
+}
+
+.class_table_movimientos {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.class_table_movimientos .fp-col-orden {
+  width: 3rem;
+}
+
+.class_table_movimientos .fp-col-concepto {
+  width: 18%;
+}
+
+.class_table_movimientos .fp-col-detalle {
+  width: 18%;
+}
+
+.class_table_movimientos .fp-col-entrada {
+  width: 15%;
+}
+
+.class_table_movimientos .fp-col-salida {
+  width: 15%;
+}
+
+.class_table_movimientos .fp-col-importe {
+  width: 13%;
+}
+
+.class_table_movimientos .fp-col-menu {
+  width: 7.5rem;
+}
+
+.class_table_movimientos .class_td_menu {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.class_table_movimientos .cell_concepto,
+.class_table_movimientos .cell_detalle,
+.class_table_movimientos .cell_cuentas {
+  min-width: 0;
+  max-width: none;
+  white-space: nowrap;
 }
 
 .class_div_dia {

@@ -23,6 +23,7 @@
             <th>Moneda</th>
             <th class="text-right">Compra</th>
             <th class="text-right">Venta</th>
+            <th class="text-right">Menu</th>
           </tr>
         </thead>
         <tbody>
@@ -30,7 +31,7 @@
             {% include "diario/snippets/moneda.html" %}
           {% empty %}
             <tr>
-              <td colspan="3" class="fp-empty-state">No hay monedas.</td>
+              <td colspan="4" class="fp-empty-state">No hay monedas.</td>
             </tr>
           {% endfor %}
         </tbody>

@@ -11,29 +11,33 @@
         {{ cta.nombre }}
       </a>
     </div>
-    <div class="menu-item-edit">
-      <a id="id_link_cta_mod_{{ cta.sk }}"
-         href="{{ cta.get_edit_url }}?next={{ request.get_full_path }}"
-         title="Editar cuenta">
-        E
-      </a>
-    </div>
-    <div class="menu-item-edit">
-      <a id="id_link_cta_elim_{{ cta.sk }}"
-         href="{{ cta.get_delete_url }}?next={{ request.get_full_path }}"
-         title="Eliminar cuenta">
-        B
-      </a>
-    </div>
-    <div class="menu-item-edit">
-      <a id="id_link_cta_desact_{{ cta.sk }}"
-         href="{{ cta.get_toggle_url }}?next={{ request.get_full_path }}"
-         title="{% if cta.activa %}Desactivar{% else %}Activar{% endif %} cuenta">
-        {% if cta.activa %}D{% else %}A{% endif %}
-      </a>
-    </div>
   </td>
   {% for mon in monedas %}
     {% include "diario/snippets/saldo_en_moneda.html" %}
   {% endfor %}
+  <td class="class_td_menu">
+    <div class="fp-row-actions">
+      <div class="menu-item-edit">
+        <a id="id_link_cta_mod_{{ cta.sk }}"
+           href="{{ cta.get_edit_url }}?next={{ request.get_full_path }}"
+           title="Editar cuenta">
+          E
+        </a>
+      </div>
+      <div class="menu-item-edit">
+        <a id="id_link_cta_elim_{{ cta.sk }}"
+           href="{{ cta.get_delete_url }}?next={{ request.get_full_path }}"
+           title="Eliminar cuenta">
+          B
+        </a>
+      </div>
+      <div class="menu-item-edit">
+        <a id="id_link_cta_desact_{{ cta.sk }}"
+           href="{{ cta.get_toggle_url }}?next={{ request.get_full_path }}"
+           title="{% if cta.activa %}Desactivar{% else %}Activar{% endif %} cuenta">
+          {% if cta.activa %}D{% else %}A{% endif %}
+        </a>
+      </div>
+    </div>
+  </td>
 </tr>

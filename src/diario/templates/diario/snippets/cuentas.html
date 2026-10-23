@@ -32,6 +32,7 @@
             {% for mon in monedas %}
               <th class="text-right">{{ mon.nombre }}</th>
             {% endfor %}
+            <th class="text-right">Menu</th>
           </tr>
         </thead>
         <tbody>
@@ -39,7 +40,7 @@
             {% include "diario/snippets/cuenta.html" with subc=False %}
           {% empty %}
             <tr>
-              <td colspan="{{ monedas|length|add:1 }}" class="fp-empty-state">
+              <td colspan="{{ monedas|length|add:2 }}" class="fp-empty-state">
                 No hay cuentas para mostrar.
               </td>
             </tr>

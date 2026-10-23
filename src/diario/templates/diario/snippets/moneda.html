@@ -7,25 +7,29 @@
         {{ mon.nombre }}
       </a>
     </div>
-    <div class="menu-item-edit">
-      <a id="id_link_mon_mod_{{ mon.sk }}"
-         href="{{ mon.get_edit_url }}"
-         title="Editar moneda">
-        E
-      </a>
-    </div>
-    <div class="menu-item-edit">
-      <a id="id_link_mon_elim_{{ mon.sk }}"
-         href="{{ mon.get_delete_url }}"
-         title="Eliminar moneda">
-        B
-      </a>
-    </div>
   </td>
   <td id="id_cotizacion_c_{{ mon.sk }}" class="numero chico class_cotizacion_moneda">
     {% cotizacion moneda=mon compra=True %}
   </td>
   <td id="id_cotizacion_v_{{ mon.sk }}" class="numero chico class_cotizacion_moneda">
     {% cotizacion moneda=mon compra=False %}
+  </td>
+  <td class="class_td_menu">
+    <div class="fp-row-actions">
+      <div class="menu-item-edit">
+        <a id="id_link_mon_mod_{{ mon.sk }}"
+           href="{{ mon.get_edit_url }}"
+           title="Editar moneda">
+          E
+        </a>
+      </div>
+      <div class="menu-item-edit">
+        <a id="id_link_mon_elim_{{ mon.sk }}"
+           href="{{ mon.get_delete_url }}"
+           title="Eliminar moneda">
+          B
+        </a>
+      </div>
+    </div>
   </td>
 </tr>

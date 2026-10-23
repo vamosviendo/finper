@@ -37,7 +37,7 @@
 
   <td class="class_td_menu">
     {% if not mov.es_automatico %}
-      <div class="d-flex flex-wrap" style="gap: 0.25rem;">
+      <div class="fp-row-actions">
         <a href="{{ mov.get_delete_url }}?next={{ request.get_full_path }}"
            class="class_link_elim_mov btn btn-sm btn-outline-danger fp-table-action"
            title="Eliminar movimiento">

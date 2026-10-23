@@ -20,6 +20,7 @@
           <tr>
             <th>Titular</th>
             <th class="text-right">Capital</th>
+            <th class="text-right">Menu</th>
           </tr>
         </thead>
         <tbody>
@@ -27,7 +28,7 @@
             {% include "diario/snippets/titular.html" %}
           {% empty %}
             <tr>
-              <td colspan="2" class="fp-empty-state">No hay titulares.</td>
+              <td colspan="3" class="fp-empty-state">No hay titulares.</td>
             </tr>
           {% endfor %}
         </tbody>
