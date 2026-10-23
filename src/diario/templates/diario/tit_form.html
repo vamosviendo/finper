@@ -1,11 +1,19 @@
-{% extends 'diario/base.html' %}
-{% block contenido %}
-<h4>{{ tit.nombre|default:"Titular nuevo" }}</h4>
-<form id="id_form_titular" method="post">
-  <div class="form-group">
-    {{ form.as_div }}
-  </div>
-  <button type="submit" id="id_btn_submit" class="btn btn-primary">OK</button>
+{% extends 'diario/base_form.html' %}
+
+{% block title %}{{ tit.nombre|default:"Titular nuevo" }}{% endblock title %}
+
+{% block form_titulo %}{{ tit.nombre|default:"Titular nuevo" }}{% endblock form_titulo %}
+
+{% block form_subtitulo %}
+<p class="fp-card__subtitle">{% if tit %}Modificar titular{% else %}Alta de titular{% endif %}</p>
+{% endblock form_subtitulo %}
+
+{% block form_contenido %}
+<form id="id_form_titular" method="post" class="app-form">
+  {{ form.as_div }}
   {% csrf_token %}
+  <div class="form-actions">
+    <button type="submit" id="id_btn_submit" class="btn btn-primary">OK</button>
+  </div>
 </form>
-{% endblock contenido %}
+{% endblock form_contenido %}

@@ -1,29 +1,44 @@
+{% extends 'diario/base.html' %}
 {% load static %}
 
+{% block title %}Iniciar sesión{% endblock title %}
+
+{% block navbar %}{% endblock navbar %}
+{% block breadcrumbs %}{% endblock breadcrumbs %}
+
+{% block extra-css %}
+<link rel="stylesheet" href="{% static 'usuarios/login.css' %}">
+{% endblock extra-css %}
+
 {% block contenido %}
-{% block extracss %}
-<link rel="stylesheet" href="{% static 'sda/css/estilos.css' %}" />
-<style>
-  td {
-    padding: 5px 10px;
-  }
-</style>
-{% endblock extracss %}
-<div id="id_div_signin" class="inputbox">
-  <ul>
-  {% for message in messages %}
-    {{ message }}
-  {% endfor %}
-  </ul>
-  <form method="post">
-    <table>
-      {{ form }}
-      <tr><td>
+<div class="fp-auth">
+  <div id="id_div_signin" class="fp-card fp-auth__card inputbox">
+    <div class="fp-card__body">
+      <div class="fp-auth__brand">
+        <a href="{% url 'home' %}">Finper</a>
+      </div>
+
+      <h1 class="fp-form-card__title text-center mb-3">Iniciar sesión</h1>
+
+      {% if messages %}
+      <div class="alert alert-info" role="status">
+        <ul class="mb-0 pl-3">
+          {% for message in messages %}
+          <li>{{ message }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <form method="post" class="app-form">
+        {% csrf_token %}
+        {{ form.as_div }}
         <input type="hidden" name="next" value="{{ next }}">
-        <button type="submit" id="id_btn_login">Entrar</button>
-      </td></tr>
-      {% csrf_token %}
-    </table>
-  </form>
+        <div class="form-actions">
+          <button type="submit" id="id_btn_login" class="btn btn-primary btn-block">Entrar</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
 {% endblock contenido %}

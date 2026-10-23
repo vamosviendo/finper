@@ -1,13 +1,20 @@
-{% extends 'diario/base.html' %}
-{% block contenido %}
+{% extends 'diario/base_confirm.html' %}
+
+{% block title %}{% if object.activa %}Desactivar{% else %}Activar{% endif %} cuenta{% endblock title %}
+{% block confirm_titulo %}{% if object.activa %}Desactivar{% else %}Activar{% endif %} cuenta{% endblock confirm_titulo %}
+
+{% block confirm_contenido %}
 {% if error %}
   {% for e in error %}
-    <div id="id_div_errores">{{ e }}</div>
+  <div id="id_div_errores" class="alert alert-danger">{{ e }}</div>
   {% endfor %}
 {% else %}
-<form method="post">{% csrf_token %}
-    <p>{% if object.activa %}Desactivar{% else %}Activar{% endif %} cuenta "{{ object }}"?</p>
-    <input type="submit" value="Confirm" id="id_btn_confirm">
+<form method="post">
+  {% csrf_token %}
+  <p>{% if object.activa %}Desactivar{% else %}Activar{% endif %} cuenta "{{ object }}"?</p>
+  <div class="fp-confirm-actions">
+    <button type="submit" id="id_btn_confirm" class="btn btn-danger">Confirm</button>
+  </div>
 </form>
 {% endif %}
-{% endblock contenido %}
+{% endblock confirm_contenido %}

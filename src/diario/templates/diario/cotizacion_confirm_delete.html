@@ -1,11 +1,18 @@
-{% extends 'diario/base.html' %}
-{% block contenido %}
+{% extends 'diario/base_confirm.html' %}
+
+{% block title %}Eliminar cotización{% endblock title %}
+{% block confirm_titulo %}Eliminar cotización{% endblock confirm_titulo %}
+
+{% block confirm_contenido %}
 {% if error %}
-<div id="id_errores">{{ error }}</div>
+<div id="id_errores" class="alert alert-danger">{{ error }}</div>
 {% else %}
-<form method="post">{% csrf_token %}
-    <p>Eliminar cotización "{{ object }}"?</p>
-    <input type="submit" value="Confirm" id="id_btn_confirm">
+<form method="post">
+  {% csrf_token %}
+  <p>Eliminar cotización "{{ object }}"?</p>
+  <div class="fp-confirm-actions">
+    <button type="submit" id="id_btn_confirm" class="btn btn-danger">Confirm</button>
+  </div>
 </form>
 {% endif %}
-{% endblock contenido %}
+{% endblock confirm_contenido %}

@@ -1,22 +1,33 @@
-{% extends 'diario/base.html' %}
-{% block contenido %}
-<h4>{{ cta.nombre|default:"Cuenta nueva" }}</h4>
-<form id="id_form_cuenta" method="post">
-  <div class="form-group">
-    {{ form.as_div }}
-  </div>
-  <button type="submit" id="id_btn_submit" class="btn btn-primary">OK</button>
+{% extends 'diario/base_form.html' %}
+
+{% block title %}{{ cta.nombre|default:"Cuenta nueva" }}{% endblock title %}
+
+{% block form_titulo %}{{ cta.nombre|default:"Cuenta nueva" }}{% endblock form_titulo %}
+
+{% block form_subtitulo %}
+<p class="fp-card__subtitle">{% if cta %}Modificar cuenta{% else %}Alta de cuenta{% endif %}</p>
+{% endblock form_subtitulo %}
+
+{% block form_contenido %}
+<form id="id_form_cuenta" method="post" class="app-form">
+  {{ form.as_div }}
   {% csrf_token %}
+  <div class="form-actions">
+    <button type="submit" id="id_btn_submit" class="btn btn-primary">OK</button>
+  </div>
 </form>
+
 {% if cta.id %}
+<div class="fp-form-extra">
   {% if cta.es_interactiva %}
-<a href="{% url 'cta_div' cta.sk %}" class="btn btn-warning" id="id_btn_dividir">
-  Dividir en subcuentas
-</a>
+  <a href="{% url 'cta_div' cta.sk %}" class="btn btn-outline-primary" id="id_btn_dividir">
+    Dividir en subcuentas
+  </a>
   {% else %}
-<a href="{% url 'cta_agregar_subc' cta.sk %}" class="btn btn-warning" id="id_btn_agregar">
-  Agregar subcuenta
-</a>
+  <a href="{% url 'cta_agregar_subc' cta.sk %}" class="btn btn-outline-primary" id="id_btn_agregar">
+    Agregar subcuenta
+  </a>
   {% endif %}
+</div>
 {% endif %}
-{% endblock contenido %}
+{% endblock form_contenido %}

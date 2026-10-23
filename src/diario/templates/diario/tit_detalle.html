@@ -1,29 +1,18 @@
-{% extends 'diario/base_contenido.html' %}
-{% load static %}
+{% extends 'diario/base.html' %}
 
-{% block grid_titulares %}
-<!-- TODO: Unificar con block grid_titulares de base_contenido.html
-           (No sé si se puede porque en grid_titulares de base_contenido
-           hay un loop for y acá no -->
-<div class="card border-success class_div_titular">
-  <div class="card-header bg-success text-light class_div_nombre_titular">
-    <a href="{% url 'tit_detalle' titular.pk %}" class="text-light class_link_titular" >
-      {{ titular.nombre }}
-    </a>
+{% block title %}{{ titular.nombre }}{% endblock title %}
+
+{% block contenido %}
+<section class="fp-hero">
+  <div class="fp-hero__main">
+    <h1 class="fp-hero__title">
+      <a href="{{ titular.get_absolute_url }}" class="class_link_titular text-white">
+        {{ titular.nombre }}
+      </a>
+    </h1>
+    <div id="id_capital_{{ titular.sk }}" class="fp-hero__amount class_capital_titular">
+      {{ titular.capital|floatformat:2 }}
+    </div>
   </div>
-  <div id="id_capital_{{ titular.sk }}" class="card-body text-success numero class_capital_titular">
-    {{ titular.capital|floatformat:2 }}
-  </div>
-</div>
-{% endblock grid_titulares %}
-
-{% block titulo_pag %}{{ titular.nombre }}{% endblock titulo_pag %}
-{% block saldo_pag %}
-{% endblock saldo_pag %}
-
-{% block verificar_saldos %}
-{% endblock verificar_saldos %}
-
-{% block general %}
-  {{ titular.capital|floatformat:2 }}
-{% endblock general %}
+</section>
+{% endblock contenido %}

@@ -1,11 +1,101 @@
-{% extends 'diario/base.html' %}
-{% block contenido %}
-<h4>Dividir cuenta {{cta}} </h4>
-<form id="id_form_titular" method="post">
-  <div class="form-group">
-    {{ form.as_div }}
-  </div>
-  <button type="submit" id="id_btn_submit" class="btn btn-primary">OK</button>
+{% extends 'diario/base_form.html' %}
+{% load static %}
+
+{% block title %}Dividir cuenta {{ form.cuenta_madre }}{% endblock title %}
+
+{% block form_titulo %}Dividir cuenta{% endblock form_titulo %}
+
+{% block form_subtitulo %}
+<p class="fp-card__subtitle">Cuenta madre: {{ form.cuenta_madre }}</p>
+{% endblock form_subtitulo %}
+
+{% block form_contenido %}
+<form id="id_form_titular" method="post" class="app-form">
   {% csrf_token %}
+  {{ form.non_field_errors }}
+
+  <div class="mb-3">
+    <label for="{{ form.fecha.id_for_label }}">Fecha</label>
+    {{ form.fecha }}
+    {{ form.fecha.errors }}
+  </div>
+
+  <div class="row">
+    <div class="col-md-6">
+      <fieldset class="cta-form">
+        <legend class="h6">Subcuenta 1</legend>
+
+        <div class="mb-3">
+          <label for="{{ form.form_0_nombre.id_for_label }}">Nombre</label>
+          {{ form.form_0_nombre }}
+          {{ form.form_0_nombre.errors }}
+        </div>
+
+        <div class="mb-3">
+          <label for="{{ form.form_0_sk.id_for_label }}">SK</label>
+          {{ form.form_0_sk }}
+          {{ form.form_0_sk.errors }}
+        </div>
+
+        <div class="mb-3">
+          <label for="{{ form.form_0_saldo.id_for_label }}">Saldo (opcional)</label>
+          {{ form.form_0_saldo }}
+          {{ form.form_0_saldo.errors }}
+        </div>
+
+        <div class="mb-3">
+          <label for="{{ form.form_0_titular.id_for_label }}">Titular</label>
+          {{ form.form_0_titular }}
+          {{ form.form_0_titular.errors }}
+        </div>
+
+        <div class="form-check">
+          {{ form.form_0_esgratis }}
+          <label class="form-check-label" for="{{ form.form_0_esgratis.id_for_label }}">Gratis</label>
+          {{ form.form_0_esgratis.errors }}
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="col-md-6">
+      <fieldset class="cta-form">
+        <legend class="h6">Subcuenta 2</legend>
+
+        <div class="mb-3">
+          <label for="{{ form.form_1_nombre.id_for_label }}">Nombre</label>
+          {{ form.form_1_nombre }}
+          {{ form.form_1_nombre.errors }}
+        </div>
+
+        <div class="mb-3">
+          <label for="{{ form.form_1_sk.id_for_label }}">SK</label>
+          {{ form.form_1_sk }}
+          {{ form.form_1_sk.errors }}
+        </div>
+
+        <div class="mb-3">
+          <label for="{{ form.form_1_saldo.id_for_label }}">Saldo (opcional)</label>
+          {{ form.form_1_saldo }}
+          {{ form.form_1_saldo.errors }}
+        </div>
+
+        <div class="mb-3">
+          <label for="{{ form.form_1_titular.id_for_label }}">Titular</label>
+          {{ form.form_1_titular }}
+          {{ form.form_1_titular.errors }}
+        </div>
+
+        <div class="form-check">
+          {{ form.form_1_esgratis }}
+          <label class="form-check-label" for="{{ form.form_1_esgratis.id_for_label }}">Gratis</label>
+          {{ form.form_1_esgratis.errors }}
+        </div>
+      </fieldset>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" id="id_btn_submit" class="btn btn-primary">OK</button>
+  </div>
 </form>
-{% endblock contenido %}
+{% endblock form_contenido %}
