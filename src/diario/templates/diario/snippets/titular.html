@@ -1,6 +1,6 @@
 {% load saldos %}
 
-<tr class="menu-row class_div_titular">
+<tr class="menu-row class_div_titular{% if tit.nombre == titular.nombre %} selected{% endif %}">
   <td class="menu-item class_td_titular{% if tit.nombre == titular.nombre %} selected{% endif %}">
     <div class="menu-item-content class_div_nombre_titular">
       <a id="id_link_tit_{{ tit.sk }}" class="class_link_titular" href="{{ tit.get_absolute_url }}">

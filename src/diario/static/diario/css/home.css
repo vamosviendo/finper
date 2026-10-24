@@ -105,3 +105,198 @@ table.lista thead {
     grid-template-columns: 1fr;
   }
 }
+
+/* ===== PALETA DE ALTA CONTRASTE ===== */
+
+.fp-section {
+  border-width: 2px;
+}
+
+.fp-section--titulares {
+  background-color: var(--fp-titular-soft);
+  border-color: var(--fp-titular);
+}
+
+.fp-section--cuentas {
+  background-color: var(--fp-cuenta-soft);
+  border-color: var(--fp-cuenta);
+}
+
+.fp-section--monedas {
+  background-color: var(--fp-moneda-soft);
+  border-color: var(--fp-moneda);
+}
+
+.fp-section--movimientos {
+  background-color: var(--fp-mov-soft);
+  border-color: var(--fp-mov);
+}
+
+.fp-section--titulares .fp-card__header {
+  background: var(--fp-titular);
+  border-left: 8px solid #022c22;
+}
+
+.fp-section--cuentas .fp-card__header {
+  background: var(--fp-cuenta);
+  border-left: 8px solid #7c2d12;
+}
+
+.fp-section--monedas .fp-card__header {
+  background: var(--fp-moneda);
+  border-left: 8px solid #5c3a00;
+}
+
+.fp-section--movimientos .fp-card__header {
+  background: var(--fp-mov);
+  border-left: 8px solid #0f172a;
+}
+
+.fp-section .fp-card__title,
+.fp-section .fp-card__subtitle {
+  color: #ffffff;
+}
+
+.fp-section .fp-card__header .btn-outline-primary,
+.fp-section .fp-card__header .btn-outline-secondary {
+  color: #ffffff;
+  border-color: #ffffff;
+}
+
+.fp-section .fp-card__header .btn-outline-primary:hover,
+.fp-section .fp-card__header .btn-outline-primary:focus,
+.fp-section .fp-card__header .btn-outline-secondary:hover,
+.fp-section .fp-card__header .btn-outline-secondary:focus {
+  background-color: #ffffff;
+  color: #111827;
+}
+
+.fp-section .table th {
+  color: #111827;
+  font-weight: 700;
+}
+
+.fp-section .class_link_titular,
+.fp-section .class_link_cuenta,
+.fp-section .class_link_moneda,
+.fp-section .class_link_movimiento {
+  color: #111827;
+  font-weight: 400;
+}
+
+.fp-section .class_link_titular:hover,
+.fp-section .class_link_cuenta:hover,
+.fp-section .class_link_moneda:hover,
+.fp-section .class_link_movimiento:hover {
+  color: #000000;
+  text-decoration: underline;
+}
+
+/* Titular seleccionado: toda la fila en verde fuerte */
+.class_div_titular.selected > td {
+  background-color: var(--fp-titular-selected) !important;
+  color: #ffffff;
+}
+
+.class_td_titular.selected {
+  background-color: var(--fp-titular-selected) !important;
+  box-shadow: inset 8px 0 0 #022c22;
+}
+
+.class_div_titular.selected .class_link_titular,
+.class_div_titular.selected .class_capital_titular,
+.class_div_titular.selected .menu-item-edit a {
+  color: #ffffff;
+  font-weight: 800;
+}
+
+/* Cuentas: cuenta madre más fuerte, subcuentas más claras y sangradas */
+.class_div_cuenta.is-acumulativa > td {
+  background-color: var(--fp-cuenta-acumulativa);
+}
+
+.class_div_cuenta.is-subcuenta > td {
+  background-color: var(--fp-cuenta-subcuenta);
+}
+
+.class_td_cuenta.acumulativa {
+  background-color: var(--fp-cuenta-acumulativa);
+  border-left: 8px solid #7c2d12;
+}
+
+.class_td_cuenta.class_td_subcuenta {
+  background-color: var(--fp-cuenta-subcuenta);
+  border-left: 8px solid var(--fp-cuenta);
+}
+
+.class_div_cuenta.is-subcuenta .menu-item-content {
+  padding-left: 0.6rem;
+}
+
+.div-detalles-subcuenta {
+  background-color: transparent;
+}
+
+.class_saldo_cuenta.mon_cuenta {
+  background-color: #ffd166;
+  color: #4a2508;
+  font-weight: 800;
+}
+
+/* Monedas: celdas con contraste dentro del fondo amarillo */
+.class_td_moneda {
+  background-color: #ffd75e;
+}
+
+.class_cotizacion_moneda {
+  background-color: var(--fp-moneda-celda);
+}
+
+/* Movimiento seleccionado: amarillo intenso */
+tr.mov_selected {
+  background-color: var(--fp-mov-selected) !important;
+  box-shadow: inset 8px 0 0 #b45309;
+}
+
+tr.mov_selected > td {
+  background-color: var(--fp-mov-selected) !important;
+  color: #111827;
+  font-weight: 700;
+}
+
+tr.mov_selected .class_link_movimiento {
+  color: #111827;
+  font-weight: 800;
+}
+
+/* Días y tablas de movimientos */
+.class_div_dia {
+  background-color: var(--fp-day-bg);
+  border: 2px solid #94a3b8;
+}
+
+.class_titulo_dia {
+  background-color: var(--fp-mov-header);
+  border-bottom: 2px solid #64748b;
+}
+
+.fp-section--movimientos table.lista thead {
+  background-color: var(--fp-mov-header);
+}
+
+/* Hover por sección, para que no vuelva al gris claro anterior */
+.fp-section--titulares .table-hover tbody tr:hover > td {
+  background-color: #86d3a7;
+}
+
+.fp-section--cuentas .table-hover tbody tr:hover > td {
+  background-color: #ffab85;
+}
+
+.fp-section--monedas .table-hover tbody tr:hover > td {
+  background-color: #ffd75e;
+}
+
+.fp-section--movimientos .table-hover tbody tr:hover > td {
+  background-color: #b9cde2;
+}

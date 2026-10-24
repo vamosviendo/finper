@@ -1,4 +1,5 @@
-<tr id="id_row_cta_{{ cta.sk }}" class="menu-row class_div_cuenta">
+<tr id="id_row_cta_{{ cta.sk }}"
+    class="menu-row class_div_cuenta{% if cta.es_acumulativa %} is-acumulativa{% endif %}{% if cta.cta_madre is not None %} is-subcuenta{% endif %}">
   <td class="menu-item class_td_cuenta
             {% if cta.es_acumulativa %} acumulativa{% endif %}
             {% if cta.cta_madre is not None %} class_td_subcuenta{% endif %}">
