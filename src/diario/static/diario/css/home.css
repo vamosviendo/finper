@@ -97,7 +97,7 @@ table.lista {
 }
 
 table.lista thead {
-  background: var(--fp-mov-soft);
+  background: var(--fp-mov-header);
 }
 
 @media (max-width: 991.98px) {
@@ -149,7 +149,7 @@ table.lista thead {
 
 .fp-section--movimientos .fp-card__header {
   background: var(--fp-mov);
-  border-left: 8px solid #0f172a;
+  border-left: 8px solid #3d2500;
 }
 
 .fp-section .fp-card__title,
@@ -276,7 +276,7 @@ tr.mov_selected .class_link_movimiento {
 }
 
 .class_titulo_dia {
-  background-color: var(--fp-mov-header);
+  background-color: var(--fp-day-header);
   border-bottom: 2px solid #64748b;
 }
 

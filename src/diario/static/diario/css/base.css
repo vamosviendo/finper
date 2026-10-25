@@ -1,9 +1,9 @@
 :root {
-  --fp-bg: #e2e8f0;
+  --fp-bg: #ffffff;
   --fp-surface: #ffffff;
-  --fp-ink: #111827;
+  --fp-ink: #4a2e00;
   --fp-muted: #475569;
-  --fp-line: #b8c4d0;
+  --fp-line: #3B2C00;
   --fp-primary: #0f766e;
   --fp-primary-dark: #115e59;
   --fp-primary-soft: #d7f0eb;
@@ -17,11 +17,13 @@
   --fp-moneda: #8a5a00;
   --fp-moneda-soft: #ffe08a;
   --fp-moneda-celda: #fff0b3;
-  --fp-mov: #334155;
-  --fp-mov-soft: #d3e2f2;
-  --fp-mov-header: #c4d6e8;
+  --fp-mov: #785903;
+  --fp-mov-soft: #f8f7db;
+  --fp-mov-header: darkkhaki;
   --fp-mov-selected: #facc15;
   --fp-day-bg: #f7fbff;
+  --fp-day-header: #eee8ae;
+  --fp-day-table: #eee8ae;
   --fp-danger: #b91c1c;
   --fp-radius: 14px;
   --fp-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
@@ -465,13 +467,17 @@ table.lista {
   margin-bottom: 0;
 }
 
-table.lista thead th {
-  background: #f8fafc;
-}
+/*table.lista thead th {*/
+/*  background: #f8fafc;*/
+/*}*/
 
 .class_table_movimientos {
   table-layout: fixed;
   width: 100%;
+}
+
+.class_table_movimientos tbody {
+  background-color: var(--fp-day-table);
 }
 
 .class_table_movimientos td,
@@ -541,11 +547,11 @@ table.lista thead th {
 .class_titulo_dia {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 0.5rem;
   padding: 0.4rem 0.6rem;
-  background: var(--fp-mov-soft);
-  border-bottom: 1px solid var(--fp-line);
+  /*background-color: var(--fp-day-header);*/
+  border-bottom: 2px solid #64748b;
   font-size: 0.95rem;
 }
 
@@ -554,7 +560,8 @@ table.lista thead th {
 }
 
 .fp-day__balance {
-  color: var(--fp-muted);
+  color: var(--fp-ink);
+  font-weight: 700;
 }
 
 .fp-day__balance .class_span_saldo_dia {
