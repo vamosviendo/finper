@@ -26,9 +26,9 @@
   display: block;
   width: 100%;
   padding: 0.5rem 0.75rem;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--fp-line-soft);
   border-radius: 0.5rem;
-  background: #fff;
+  background: var(--fp-surface);
   color: var(--fp-ink);
   font-size: 1rem;
   line-height: 1.5;
@@ -45,7 +45,7 @@
 .app-form textarea:focus {
   border-color: var(--fp-primary);
   outline: 0;
-  box-shadow: 0 0 0 0.2rem rgba(15, 118, 110, 0.15);
+  box-shadow: 0 0 0 0.2rem var(--fp-focus-ring);
 }
 
 .app-form input[type="checkbox"] {
@@ -58,7 +58,7 @@
 .app-form input:disabled,
 .app-form select:disabled,
 .app-form textarea:disabled {
-  background: #f1f5f9;
+  background: var(--fp-surface-muted);
   color: var(--fp-muted);
   cursor: not-allowed;
 }
@@ -113,7 +113,7 @@
   width: 2.25rem;
   height: 2.25rem;
   border-radius: 50%;
-  background: #fef2f2;
+  background: var(--fp-danger-soft);
   color: var(--fp-danger);
   font-size: 1.1rem;
   font-weight: 800;

@@ -16,97 +16,7 @@
   margin-top: 0;
 }
 
-.fp-section--titulares .fp-card__header {
-  border-left: 4px solid var(--fp-titular);
-  background: var(--fp-titular-soft);
-}
-
-.fp-section--cuentas .fp-card__header {
-  border-left: 4px solid var(--fp-cuenta);
-  background: var(--fp-cuenta-soft);
-}
-
-.fp-section--monedas .fp-card__header {
-  border-left: 4px solid var(--fp-moneda);
-  background: var(--fp-moneda-soft);
-}
-
-.fp-section--movimientos .fp-card__header {
-  border-left: 4px solid var(--fp-mov);
-  background: var(--fp-mov-soft);
-}
-
-.div-titulares {
-  background-color: var(--fp-titular-soft) !important;
-}
-
-.div-cuentas {
-  background-color: var(--fp-cuenta-soft) !important;
-}
-
-.div-monedas {
-  background-color: var(--fp-moneda-soft) !important;
-}
-
-.div-menu,
-.div-lista {
-  padding: 0;
-}
-
-.class_td_titular {
-  border-left: 4px solid transparent;
-}
-
-.class_td_titular.selected {
-  border-left-color: var(--fp-titular);
-  background: var(--fp-titular-soft);
-}
-
-.class_td_cuenta.acumulativa {
-  background: var(--fp-cuenta-soft);
-}
-
-.class_td_cuenta.class_td_subcuenta {
-  background: #fff7f2;
-}
-
-.div-detalles-subcuenta {
-  background: #fffaf5;
-}
-
-.class_saldo_cuenta.mon_cuenta {
-  background: #ecfdf5;
-  color: var(--fp-titular);
-  font-weight: 700;
-}
-
-.class_cotizacion_moneda {
-  background: var(--fp-moneda-soft);
-}
-
-.class_div_cot_nueva {
-  margin-bottom: 0.75rem;
-}
-
-.class_div_mov_nuevo {
-  margin-bottom: 0.75rem;
-}
-
-table.lista {
-  text-align: left;
-}
-
-table.lista thead {
-  background: var(--fp-mov-header);
-}
-
-@media (max-width: 991.98px) {
-  .fp-home__menus {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ===== PALETA DE ALTA CONTRASTE ===== */
+/* ===== SECCIONES ===== */
 
 .fp-section {
   border-width: 2px;
@@ -134,45 +44,45 @@ table.lista thead {
 
 .fp-section--titulares .fp-card__header {
   background: var(--fp-titular);
-  border-left: 8px solid #022c22;
+  border-left: 8px solid var(--fp-titular-dark);
 }
 
 .fp-section--cuentas .fp-card__header {
   background: var(--fp-cuenta);
-  border-left: 8px solid #7c2d12;
+  border-left: 8px solid var(--fp-cuenta-dark);
 }
 
 .fp-section--monedas .fp-card__header {
   background: var(--fp-moneda);
-  border-left: 8px solid #5c3a00;
+  border-left: 8px solid var(--fp-moneda-dark);
 }
 
 .fp-section--movimientos .fp-card__header {
   background: var(--fp-mov);
-  border-left: 8px solid #3d2500;
+  border-left: 8px solid var(--fp-mov-dark);
 }
 
 .fp-section .fp-card__title,
 .fp-section .fp-card__subtitle {
-  color: #ffffff;
+  color: var(--fp-white);
 }
 
 .fp-section .fp-card__header .btn-outline-primary,
 .fp-section .fp-card__header .btn-outline-secondary {
-  color: #ffffff;
-  border-color: #ffffff;
+  color: var(--fp-white);
+  border-color: var(--fp-white);
 }
 
 .fp-section .fp-card__header .btn-outline-primary:hover,
 .fp-section .fp-card__header .btn-outline-primary:focus,
 .fp-section .fp-card__header .btn-outline-secondary:hover,
 .fp-section .fp-card__header .btn-outline-secondary:focus {
-  background-color: #ffffff;
-  color: #111827;
+  background-color: var(--fp-white);
+  color: var(--fp-contrast-ink);
 }
 
 .fp-section .table th {
-  color: #111827;
+  color: var(--fp-contrast-ink);
   font-weight: 700;
 }
 
@@ -180,7 +90,7 @@ table.lista thead {
 .fp-section .class_link_cuenta,
 .fp-section .class_link_moneda,
 .fp-section .class_link_movimiento {
-  color: #111827;
+  color: var(--fp-contrast-ink);
   font-weight: 400;
 }
 
@@ -188,29 +98,97 @@ table.lista thead {
 .fp-section .class_link_cuenta:hover,
 .fp-section .class_link_moneda:hover,
 .fp-section .class_link_movimiento:hover {
-  color: #000000;
+  color: var(--fp-black);
   text-decoration: underline;
 }
 
-/* Titular seleccionado: toda la fila en verde fuerte */
+/* ===== MENÚS ===== */
+
+table.menu {
+  margin-bottom: 0;
+  white-space: nowrap;
+}
+
+.menu th,
+.menu td {
+  padding: 0.22rem 0.45rem;
+  line-height: 1.3;
+}
+
+.menu-item-content {
+  min-width: 8rem;
+}
+
+.menu-item-edit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 0.35rem;
+  vertical-align: middle;
+}
+
+.menu .class_td_menu {
+  width: 1%;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.fp-row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+  gap: 0.1rem;
+  white-space: nowrap;
+}
+
+.menu-item-edit a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--fp-muted);
+  font-weight: 700;
+}
+
+.menu-item-edit a:hover {
+  background: var(--fp-hover);
+  color: var(--fp-ink);
+  text-decoration: none;
+}
+
+/* ===== TITULARES ===== */
+
+.class_td_titular {
+  border-left: 4px solid transparent;
+}
+
 .class_div_titular.selected > td {
   background-color: var(--fp-titular-selected) !important;
-  color: #ffffff;
+  color: var(--fp-white);
 }
 
 .class_td_titular.selected {
-  background-color: var(--fp-titular-selected) !important;
-  box-shadow: inset 8px 0 0 #022c22;
+  border-left-color: var(--fp-titular);
+  box-shadow: inset 8px 0 0 var(--fp-titular-dark);
 }
 
 .class_div_titular.selected .class_link_titular,
 .class_div_titular.selected .class_capital_titular,
 .class_div_titular.selected .menu-item-edit a {
-  color: #ffffff;
+  color: var(--fp-white);
   font-weight: 800;
 }
 
-/* Cuentas: cuenta madre más fuerte, subcuentas más claras y sangradas */
+/* ===== CUENTAS ===== */
+
+.class_td_cuenta {
+  border-left: 4px solid transparent;
+}
+
 .class_div_cuenta.is-acumulativa > td {
   background-color: var(--fp-cuenta-acumulativa);
 }
@@ -220,12 +198,10 @@ table.lista thead {
 }
 
 .class_td_cuenta.acumulativa {
-  background-color: var(--fp-cuenta-acumulativa);
-  border-left: 8px solid #7c2d12;
+  border-left: 8px solid var(--fp-cuenta-dark);
 }
 
 .class_td_cuenta.class_td_subcuenta {
-  background-color: var(--fp-cuenta-subcuenta);
   border-left: 8px solid var(--fp-cuenta);
 }
 
@@ -233,70 +209,183 @@ table.lista thead {
   padding-left: 0.6rem;
 }
 
-.div-detalles-subcuenta {
-  background-color: transparent;
-}
-
 .class_saldo_cuenta.mon_cuenta {
-  background-color: #ffd166;
-  color: #4a2508;
+  background-color: var(--fp-moneda-saldo);
+  color: var(--fp-moneda-saldo-ink);
   font-weight: 800;
 }
 
-/* Monedas: celdas con contraste dentro del fondo amarillo */
+/* ===== MONEDAS ===== */
+
 .class_td_moneda {
-  background-color: #ffd75e;
+  background-color: var(--fp-moneda-fuerte);
 }
 
 .class_cotizacion_moneda {
   background-color: var(--fp-moneda-celda);
 }
 
-/* Movimiento seleccionado: amarillo intenso */
+/* ===== MOVIMIENTOS ===== */
+
 tr.mov_selected {
   background-color: var(--fp-mov-selected) !important;
-  box-shadow: inset 8px 0 0 #b45309;
+  box-shadow: inset 8px 0 0 var(--fp-mov-accent);
 }
 
 tr.mov_selected > td {
   background-color: var(--fp-mov-selected) !important;
-  color: #111827;
+  color: var(--fp-contrast-ink);
   font-weight: 700;
 }
 
 tr.mov_selected .class_link_movimiento {
-  color: #111827;
+  color: var(--fp-contrast-ink);
   font-weight: 800;
 }
 
-/* Días y tablas de movimientos */
+.cell_concepto,
+.cell_detalle {
+  min-width: 12rem;
+  max-width: 18rem;
+}
+
+.cell_cuentas {
+  min-width: 9rem;
+  max-width: 12rem;
+}
+
+.class_table_movimientos {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.class_table_movimientos tbody {
+  background-color: var(--fp-day-table);
+}
+
+.class_table_movimientos td,
+.class_table_movimientos th {
+  padding: 0.16rem 0.3rem;
+  line-height: 1.3;
+}
+
+.class_table_movimientos th.fp-col-importe,
+.class_table_movimientos th.fp-col-menu {
+  text-align: right;
+}
+
+.class_table_movimientos .fp-col-orden {
+  width: 3rem;
+}
+
+.class_table_movimientos .fp-col-concepto {
+  width: 18%;
+}
+
+.class_table_movimientos .fp-col-detalle {
+  width: 18%;
+}
+
+.class_table_movimientos .fp-col-entrada {
+  width: 15%;
+}
+
+.class_table_movimientos .fp-col-salida {
+  width: 15%;
+}
+
+.class_table_movimientos .fp-col-importe {
+  width: 13%;
+}
+
+.class_table_movimientos .fp-col-menu {
+  width: 7.5rem;
+}
+
+.class_table_movimientos .class_td_menu {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.class_table_movimientos .cell_concepto,
+.class_table_movimientos .cell_detalle,
+.class_table_movimientos .cell_cuentas {
+  min-width: 0;
+  max-width: none;
+  white-space: nowrap;
+}
+
+.fp-table-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  padding: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+/* ===== DÍAS ===== */
+
 .class_div_dia {
+  overflow: hidden;
+  margin-bottom: 0;
   background-color: var(--fp-day-bg);
-  border: 2px solid #94a3b8;
+  border: 2px solid var(--fp-day-border);
+  border-radius: var(--fp-radius);
+}
+
+.class_div_dia + .class_div_dia {
+  margin-top: 1.5rem;
 }
 
 .class_titulo_dia {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
   background-color: var(--fp-day-header);
-  border-bottom: 2px solid #64748b;
+  border-bottom: 2px solid var(--fp-day-border);
+  font-size: 0.95rem;
 }
 
-.fp-section--movimientos table.lista thead {
-  background-color: var(--fp-mov-header);
+.fp-day__date {
+  font-weight: 700;
 }
 
-/* Hover por sección, para que no vuelva al gris claro anterior */
+.fp-day__balance {
+  color: var(--fp-ink);
+  font-weight: 700;
+}
+
+.fp-day__balance .class_span_saldo_dia {
+  color: var(--fp-ink);
+  font-family: var(--fp-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== HOVER POR SECCIÓN ===== */
+
 .fp-section--titulares .table-hover tbody tr:hover > td {
-  background-color: #86d3a7;
+  background-color: var(--fp-titular-hover);
 }
 
 .fp-section--cuentas .table-hover tbody tr:hover > td {
-  background-color: #ffab85;
+  background-color: var(--fp-cuenta-hover);
 }
 
 .fp-section--monedas .table-hover tbody tr:hover > td {
-  background-color: #ffd75e;
+  background-color: var(--fp-moneda-fuerte);
 }
 
 .fp-section--movimientos .table-hover tbody tr:hover > td {
-  background-color: #b9cde2;
+  background-color: var(--fp-mov-hover);
+}
+
+@media (max-width: 991.98px) {
+  .fp-home__menus {
+    grid-template-columns: 1fr;
+  }
 }
