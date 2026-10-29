@@ -79,20 +79,11 @@ def test_detalle_moneda_paginacion(browser, dolar, mas_de_20_cotizaciones_dolar)
     # que nos permite ver cotizaciones anteriores
     navigator = browser.encontrar_elemento("id_div_navigator_init")
 
-    # Al mostrar las últimas cotizaciones, el link correspondiente a "cotizaciones posteriores"
-    # está desactivado
-    link_posteriores = navigator.encontrar_elemento("id_link_anterior_init")
-    assert link_posteriores.get_attribute("aria-disabled") == "true"
+    nros_pagina = navigator.encontrar_elementos("class_li_pagina_nro")
+    assert [int(x.text) for x in nros_pagina] == [2, 3, 4]
 
-    # Si cliqueamos en el link que dice "Cotizaciones anteriores", podemos ver
-    # las cotizaciones inmediatamente anteriores a las últimas 20
-    navigator.encontrar_elemento("id_link_siguiente_init").click()
+    # Si cliqueamos en el número 2, vemos las cotizaciones inmediatamente anteriores
+    nros_pagina[0].click()
+    assert urlparse(browser.current_url).query == "page=2"
     fechas_cotizacion = [x.text for x in browser.encontrar_elementos("class_td_fecha")]
     assert mas_de_20_cotizaciones_dolar.first().fecha.strftime("%Y-%m-%d") in fechas_cotizacion
-
-    # Y vemos que el link correspondiente a "Cotizaciones posteriores" está activado
-    navigator = browser.encontrar_elemento("id_div_navigator_init")
-    link_posteriores = navigator.encontrar_elemento("id_link_anterior_init")
-    assert link_posteriores.get_attribute("aria-disabled") == "false"
-
-    # Por ahora eso nada más. Vamos a hacerla sencillita.

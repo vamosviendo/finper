@@ -16,12 +16,12 @@
   </div>
 
   <div class="fp-card__body">
-    {% include "diario/snippets/navigator.html" with pos="init" pag=dias elem="dias" %}
+    {% include "diario/snippets/navigator.html" with pos="init" pag=dias elem="dias" etiqueta="Días" %}
 
     {% for dia in dias %}
       {% include "diario/snippets/dia.html" %}
     {% endfor %}
 
-    {% include "diario/snippets/navigator.html" with pos="end" pag=dias elem="dias" %}
+    {% include "diario/snippets/navigator.html" with pos="end" pag=dias elem="dias" etiqueta="Días" %}
   </div>
 </section>

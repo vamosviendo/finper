@@ -4,10 +4,6 @@
 
 {% block title %}Moneda: {{ moneda }}{% endblock title %}
 
-{% block extra-css %}
-<link rel="stylesheet" href="{% static 'diario/css/home.css' %}">
-{% endblock extra-css %}
-
 {% block contenido %}
 <section id="id_section_encabezado" class="fp-card mb-3">
   <div class="fp-card__body">
@@ -38,7 +34,7 @@
   </div>
 
   <div class="fp-card__body">
-    {% include "diario/snippets/navigator.html" with pos="init" pag=cotizaciones elem="cotizaciones" %}
+    {% include "diario/snippets/navigator.html" with pos="init" pag=cotizaciones elem="cotizaciones" etiqueta="Cotizaciones" %}
     {% include "diario/snippets/cotizaciones.html" %}
   </div>
 </section>
