@@ -1,149 +1,488 @@
-.div-menu {
-    padding: 5px;
-    overflow-x: scroll;
+.fp-home {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-.div-lista {
-    padding: 5px;
-    overflow-x: scroll;
+.fp-home__layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
 }
 
-.div-titulares {
-    background-color: #488778 !important;
+.fp-home__menus {
+  display: flex;
+  flex: 0 0 32%;
+  flex-direction: column;
+  min-width: 0;
+  gap: 0.5rem;
 }
 
-.menu-item.class_td_titular:hover {
-    background-color: #6b8f86;
+.fp-home__layout > .fp-section--cuentas {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
-.menu-item.class_td_titular.selected {
-    background-color: #28c700;
+.fp-home > .fp-card + .fp-card,
+.fp-home__menus .fp-card + .fp-card {
+  margin-top: 0;
 }
 
-td.class_capital_titular {
-    padding-left: 10px;
-    padding-right: 10px;
+/* ===== SECCIONES ===== */
+
+.fp-section {
+  border-width: 2px;
 }
 
-
-
-.div-cuentas {
-    background-color: #EA5D34 !important;
+.fp-section--titulares {
+  background-color: var(--fp-titular-soft);
+  border-color: var(--fp-titular);
 }
 
-.class_td_subcuenta {
-    background-color: #e08366;
+.fp-section--cuentas {
+  background-color: var(--fp-cuenta-soft);
+  border-color: var(--fp-cuenta);
 }
 
-.acumulativa {
-    background-color: #b44929;
+.fp-section--monedas {
+  background-color: var(--fp-moneda-soft);
+  border-color: var(--fp-moneda);
 }
 
-.menu-item.class_td_cuenta:hover {
-    background-color: #f3a086;
+.fp-section--movimientos {
+  background-color: var(--fp-mov-soft);
+  border-color: var(--fp-mov);
 }
 
-.menu-item.class_td_subcuenta:hover {
-    background-color: #f3a086;
+.fp-section--titulares .fp-card__header {
+  background: var(--fp-titular);
+  border-left: 8px solid var(--fp-titular-dark);
 }
 
-.div-detalles-subcuenta {
-    background-color: #f0e6c7;
+.fp-section--cuentas .fp-card__header {
+  background: var(--fp-cuenta);
+  border-left: 8px solid var(--fp-cuenta-dark);
 }
 
-td.class_saldo_cuenta {
-    color: #888;
-    padding-left: 10px;
-    padding-right: 10px;
+.fp-section--monedas .fp-card__header {
+  background: var(--fp-moneda);
+  border-left: 8px solid var(--fp-moneda-dark);
 }
 
-.mon_cuenta {
-    color: #000 !important;
+.fp-section--movimientos .fp-card__header {
+  background: var(--fp-mov);
+  border-left: 8px solid var(--fp-mov-dark);
 }
 
-
-
-
-.div-monedas {
-    background-color: #e4c202;
+.fp-section .fp-card__title,
+.fp-section .fp-card__subtitle {
+  color: var(--fp-white);
 }
 
-td.class_cotizacion_moneda {
-    padding-left: 10px;
-    padding-right: 10px;
-    background-color: yellow;
+.fp-section .fp-card__header {
+  gap: 0.25rem;
+  padding: 0.3rem 0.5rem;
 }
 
-.menu-item.class_td_moneda:hover {
-    background-color: #d4c56b;
+.fp-section .fp-card__title {
+  font-size: 0.75rem;
+  line-height: 1.1;
+  letter-spacing: 0.04em;
 }
 
-.menu-item.class_td_titular.selected {
-    background-color: #e48a02;
+.fp-section .fp-card__subtitle {
+  margin-top: 0.05rem;
+  font-size: 0.7rem;
+  line-height: 1.1;
 }
 
-
-
-
-.class_div_dia {
-    margin-top: 10px;
-    margin-bottom: 20px;
-    background-color: rgb(238, 232, 174);
-    padding-top: 10px;
-    padding-bottom: 10px;
+.fp-section .fp-card__actions {
+  gap: 0.2rem;
 }
 
-.class_div_mov_nuevo {
-    background-color: greenyellow;
-    padding-top: 5px;
-    padding-bottom: 5px;
-    width: fit-content;
+.fp-section .fp-card__header .btn {
+  padding: 0.15rem 0.35rem;
+  font-size: 0.7rem;
+  line-height: 1.1;
 }
 
-.class_titulo_dia {
-    font-size: larger;
-    margin-left: 10px;
-    margin-bottom: 10px;
+.fp-section .fp-empty-state {
+  padding: 0.3rem;
+  font-size: 0.75rem;
 }
 
-
-table.lista {
-    text-align: left;
-    margin-left: 10px;
+.fp-section .chico {
+  font-size: 0.7rem !important;
 }
 
-table.lista thead {
-    background-color: darkkhaki;
+.fp-section .fp-card__header .btn-outline-primary,
+.fp-section .fp-card__header .btn-outline-secondary {
+  color: var(--fp-white);
+  border-color: var(--fp-white);
 }
 
-table.lista th {
-    padding-left: 5px;
-    padding-right: 5px;
-    padding-bottom: 5px;
+.fp-section .fp-card__header .btn-outline-primary:hover,
+.fp-section .fp-card__header .btn-outline-primary:focus,
+.fp-section .fp-card__header .btn-outline-secondary:hover,
+.fp-section .fp-card__header .btn-outline-secondary:focus {
+  background-color: var(--fp-white);
+  color: var(--fp-contrast-ink);
 }
 
-table.lista td {
-    padding-left: 5px;
-    padding-right: 5px;
+.fp-section .table th {
+  color: var(--fp-contrast-ink);
+  font-weight: 700;
 }
+
+.fp-section .class_link_titular,
+.fp-section .class_link_cuenta,
+.fp-section .class_link_moneda,
+.fp-section .class_link_movimiento {
+  color: var(--fp-contrast-ink);
+  font-weight: 400;
+}
+
+.fp-section .class_link_titular:hover,
+.fp-section .class_link_cuenta:hover,
+.fp-section .class_link_moneda:hover,
+.fp-section .class_link_movimiento:hover {
+  color: var(--fp-black);
+  text-decoration: underline;
+}
+
+/* ===== MENÚS ===== */
+
+table.menu {
+  margin-bottom: 0;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  line-height: 1.1;
+}
+
+.menu th,
+.menu td {
+  padding: 0.04rem 0.3rem;
+  line-height: 1.1;
+}
+
+.menu-item-content {
+  min-width: 8rem;
+}
+
+.menu-item-edit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.05rem;
+  height: 1.05rem;
+  border-radius: 0.35rem;
+  vertical-align: middle;
+}
+
+.menu .class_td_menu {
+  width: 1%;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.fp-row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+  gap: 0.05rem;
+  white-space: nowrap;
+}
+
+.menu-item-edit a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--fp-muted);
+  font-weight: 700;
+  font-size: 0.7rem;
+  line-height: 1;
+}
+
+.menu-item-edit a:hover {
+  background: var(--fp-hover);
+  color: var(--fp-ink);
+  text-decoration: none;
+}
+
+/* ===== TITULARES ===== */
+
+.class_td_titular {
+  border-left: 4px solid transparent;
+}
+
+.class_div_titular.selected > td {
+  background-color: var(--fp-titular-selected) !important;
+  color: var(--fp-white);
+}
+
+.class_td_titular.selected {
+  border-left-color: var(--fp-titular);
+  box-shadow: inset 8px 0 0 var(--fp-titular-dark);
+}
+
+.class_div_titular.selected .class_link_titular,
+.class_div_titular.selected .class_capital_titular,
+.class_div_titular.selected .menu-item-edit a {
+  color: var(--fp-white);
+  font-weight: 800;
+}
+
+/* ===== CUENTAS ===== */
+
+.class_td_cuenta {
+  border-left: 4px solid transparent;
+}
+
+/*.class_div_cuenta.is-acumulativa > td {*/
+#id_section_cuentas table.menu {
+  table-layout: fixed;
+  min-width: 42rem;
+}
+
+#id_section_cuentas .fp-col-cuenta {
+  width: auto;
+}
+
+#id_section_cuentas .fp-col-saldo {
+  width: 9rem;
+}
+
+#id_section_cuentas .fp-col-menu {
+  width: 4rem;
+}
+
+#id_section_cuentas .table thead th {
+  background-color: var(--fp-white);
+}
+
+#id_section_cuentas .table thead th:first-child {
+  background-color: var(--fp-cuenta-soft);
+}
+
+#id_section_cuentas .table tbody td {
+  background-color: var(--fp-white);
+}
+
+#id_section_cuentas .table tbody td.class_td_cuenta {
+  background-color: var(--fp-cuenta-soft);
+}
+
+#id_section_cuentas .class_div_cuenta.is-acumulativa > .class_td_cuenta {
+  background-color: var(--fp-cuenta-acumulativa);
+}
+
+#id_section_cuentas .class_div_cuenta.is-subcuenta > .class_td_cuenta {
+  background-color: var(--fp-cuenta-subcuenta);
+}
+
+.class_td_cuenta.acumulativa {
+  border-left: 8px solid var(--fp-cuenta-dark);
+}
+
+.class_td_cuenta.class_td_subcuenta {
+  border-left: 8px solid var(--fp-cuenta);
+}
+
+.class_div_cuenta.is-subcuenta .menu-item-content {
+  padding-left: 0.6rem;
+}
+
+.class_saldo_cuenta.mon_cuenta {
+  font-weight: 800;
+}
+
+/* ===== MONEDAS ===== */
+
+.class_td_moneda {
+  background-color: var(--fp-moneda-fuerte);
+}
+
+.class_cotizacion_moneda {
+  background-color: var(--fp-moneda-celda);
+}
+
+/* ===== MOVIMIENTOS ===== */
 
 tr.mov_selected {
-    background-color: #e4c202;
+  background-color: var(--fp-mov-selected) !important;
+  box-shadow: inset 8px 0 0 var(--fp-mov-accent);
 }
 
-.cell_concepto {
-    width: 250px;
+tr.mov_selected > td {
+  background-color: var(--fp-mov-selected) !important;
+  color: var(--fp-contrast-ink);
+  font-weight: 700;
 }
 
+tr.mov_selected .class_link_movimiento {
+  color: var(--fp-contrast-ink);
+  font-weight: 800;
+}
+
+.cell_concepto,
 .cell_detalle {
-    width: 250px;
+  min-width: 12rem;
+  max-width: 18rem;
 }
 
 .cell_cuentas {
-    width: 170px;
+  min-width: 9rem;
+  max-width: 12rem;
 }
 
-.scrollable {
-    white-space: nowrap;
-    overflow-x: scroll;
+.class_table_movimientos {
+  table-layout: auto;
+  width: 100%;
+  font-size: 0.75rem;
+  line-height: 1.1;
+}
+
+.class_table_movimientos tbody {
+  background-color: var(--fp-day-table);
+}
+
+.class_table_movimientos td,
+.class_table_movimientos th {
+  padding: 0.04rem 0.2rem;
+  line-height: 1.1;
+}
+
+.class_table_movimientos th.fp-col-importe,
+.class_table_movimientos th.fp-col-menu {
+  text-align: right;
+}
+
+.class_table_movimientos .fp-col-orden {
+  width: 1%;
+}
+
+.class_table_movimientos .fp-col-concepto {
+  width: 20%;
+}
+
+.class_table_movimientos .fp-col-detalle {
+  width: 20%;
+}
+
+.class_table_movimientos .fp-col-entrada {
+  width: 14%;
+}
+
+.class_table_movimientos .fp-col-salida {
+  width: 14%;
+}
+
+.class_table_movimientos .fp-col-importe {
+  width: 10%;
+}
+
+.class_table_movimientos .fp-col-menu {
+  width: 1%;
+}
+
+.class_table_movimientos .class_td_menu {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.class_table_movimientos .cell_concepto,
+.class_table_movimientos .cell_detalle,
+.class_table_movimientos .cell_cuentas {
+  min-width: 0;
+  max-width: none;
+  white-space: nowrap;
+}
+
+.fp-table-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.05rem;
+  height: 1.05rem;
+  padding: 0;
+  font-size: 0.7rem;
+  line-height: 1;
+  font-weight: 700;
+}
+
+/* ===== DÍAS ===== */
+
+.class_div_dia {
+  overflow: hidden;
+  margin-bottom: 0;
+  background-color: var(--fp-day-bg);
+  border: 2px solid var(--fp-day-border);
+  border-radius: var(--fp-radius);
+}
+
+.class_div_dia + .class_div_dia {
+  margin-top: 0.75rem;
+}
+
+.class_titulo_dia {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.25rem;
+  padding: 0.15rem 0.35rem;
+  background-color: var(--fp-day-header);
+  border-bottom: 2px solid var(--fp-day-border);
+  font-size: 0.75rem;
+  line-height: 1.1;
+}
+
+.fp-day__date {
+  font-weight: 700;
+}
+
+.fp-day__balance {
+  color: var(--fp-ink);
+  font-weight: 700;
+}
+
+.fp-day__balance .class_span_saldo_dia {
+  color: var(--fp-ink);
+  font-family: var(--fp-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== HOVER POR SECCIÓN ===== */
+
+.fp-section--titulares .table-hover tbody tr:hover > td {
+  background-color: var(--fp-titular-hover);
+}
+
+#id_section_cuentas .table-hover tbody tr:hover > td {
+  background-color: var(--fp-white);
+}
+
+#id_section_cuentas .table-hover tbody tr:hover > .class_td_cuenta {
+  background-color: var(--fp-cuenta-hover);
+}
+
+.fp-section--monedas .table-hover tbody tr:hover > td {
+  background-color: var(--fp-moneda-fuerte);
+}
+
+.fp-section--movimientos .table-hover tbody tr:hover > td {
+  background-color: var(--fp-mov-hover);
+}
+
+@media (max-width: 991.98px) {
+  .fp-home__layout {
+    flex-direction: column;
+  }
+
+  .fp-home__menus {
+    flex: 0 0 auto;
+    width: 100%;
+  }
 }

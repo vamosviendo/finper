@@ -1,32 +1,59 @@
 {% load urltags %}
 
-<section id="id_section_cuentas">
-  <div id="id_div_menu_cuentas">
-    <table class="menu">
-      <colgroup>
-        <col class="div-menu div-cuentas"/>
-        <col span="3" class="div-menu div-detalles-cuenta"/>
-      </colgroup>
-      <tbody>
-        {% for cta in cuentas %}
-          {% include "diario/snippets/cuenta.html" with subc=False %}
-        {% endfor %}
-        {% if request.path != "/diario/ctas_inactivas/" %}
-        <tr class="menu-row" id="id_tr_menu_cuentas">
-          <td class="menu-item class_td_cuenta">
-            <div class="menu-item-edit" id="id_div_cuenta_nueva">
-              <a href="{% url_cuenta_nueva %}?next={{ request.get_full_path }}" id="id_link_cuenta_nueva">+</a>
-            </div>
-            <div class="menu-item-edit" id="id_div_ctas_inactivas">
-              <a href="{% url 'ctas_inactivas' %}?next={{ request.get_full_path }}" id="id_link_ctas_inactivas" title="cuentas inactivas">I</a>
-            </div>
-          </td>
-          <td></td>
-          <td></td>
-          <td></td>
-        </tr>
-        {% endif %}
-      </tbody>
-    </table>
+<section id="id_section_cuentas" class="fp-section fp-section--cuentas fp-card">
+  <div class="fp-card__header">
+    <div>
+      <h2 class="fp-card__title">Cuentas</h2>
+      <p class="fp-card__subtitle">Saldos por moneda</p>
+    </div>
+
+    {% if request.resolver_match.url_name != "ctas_inactivas" %}
+      <div class="fp-card__actions">
+        <a id="id_link_cuenta_nueva"
+           class="btn btn-sm btn-outline-primary"
+           href="{% url_cuenta_nueva %}?next={{ request.get_full_path }}">
+          Nueva cuenta
+        </a>
+        <a id="id_link_ctas_inactivas"
+           class="btn btn-sm btn-outline-secondary"
+           href="{% url 'ctas_inactivas' %}?next={{ request.get_full_path }}">
+          Cuentas inactivas
+        </a>
+      </div>
+    {% endif %}
+  </div>
+
+  <div id="id_div_menu_cuentas" class="fp-card__body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover menu mb-0">
+        <colgroup>
+          <col class="fp-col-cuenta">
+          {% for mon in monedas %}
+            <col class="fp-col-saldo">
+          {% endfor %}
+          <col class="fp-col-menu">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Cuenta</th>
+            {% for mon in monedas %}
+              <th class="text-right">{{ mon.nombre }}</th>
+            {% endfor %}
+            <th class="text-right">Menu</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for cta in cuentas %}
+            {% include "diario/snippets/cuenta.html" with subc=False %}
+          {% empty %}
+            <tr>
+              <td colspan="{{ monedas|length|add:2 }}" class="fp-empty-state">
+                No hay cuentas para mostrar.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
 </section>

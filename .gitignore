@@ -25,3 +25,4 @@ requirements.old
 src/static
 tmp
 .opencode
+.syncinclude

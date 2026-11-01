@@ -142,7 +142,7 @@ def test_detalle_movimiento_en_paginas_anteriores(
 
     # Cuando pasamos a otra página, se pierde el movimiento seleccionado
     # y se selecciona el último movimiento de la nueva página
-    browser.pulsar("id_link_anterior_init")
+    browser.pulsar("id_link_primera_init")
 
     links_movimiento = browser.encontrar_elementos("class_link_movimiento")
     pk = pkfromlink(links_movimiento[0].get_attribute('href'))

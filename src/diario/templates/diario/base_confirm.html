@@ -1,0 +1,22 @@
+{% extends 'diario/base.html' %}
+
+{% block title %}Finper{% endblock title %}
+
+{% block contenido %}
+<div class="fp-confirm-page">
+  <section class="fp-card">
+    <header class="fp-card__header">
+      <div class="d-flex align-items-start">
+        <span class="fp-confirm-card__badge mr-2" aria-hidden="true">!</span>
+        <div>
+          <h1 class="fp-form-card__title">{% block confirm_titulo %}Confirmar acción{% endblock confirm_titulo %}</h1>
+          {% block confirm_subtitulo %}{% endblock confirm_subtitulo %}
+        </div>
+      </div>
+    </header>
+    <div class="fp-card__body">
+      {% block confirm_contenido %}{% endblock confirm_contenido %}
+    </div>
+  </section>
+</div>
+{% endblock contenido %}

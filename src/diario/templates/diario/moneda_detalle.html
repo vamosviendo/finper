@@ -2,36 +2,40 @@
 {% load static %}
 {% load cotizaciones %}
 
-{% block extra-css %}
-<link rel="stylesheet" href="{% static 'diario/css/home.css' %}">
-{% endblock extra-css %}
+{% block title %}Moneda: {{ moneda }}{% endblock title %}
 
 {% block contenido %}
-
-<section id="id_section_encabezado">
-  <div id="id_div_titulo" class="Titulo">
-    <h1>
-      <span id="id_nombre">Moneda: {{ moneda }}</span> -
-      <span id="id_cotizacion_fecha">Cotización al {{ moneda.cotizaciones.last.fecha|date:"Y-m-d" }}:&nbsp;</span>
-      <span id="id_cotizacion_compra">{% cotizacion moneda compra=True %}</span> /
-      <span id="id_cotizacion_venta">{% cotizacion moneda compra=False %}</span>
-    </h1>
+<section id="id_section_encabezado" class="fp-card mb-3">
+  <div class="fp-card__body">
+    <div id="id_div_titulo" class="Titulo">
+      <h1 class="fp-page-title">
+        <span id="id_nombre">Moneda: {{ moneda }}</span>
+        <span class="text-muted"> - </span>
+        <span id="id_cotizacion_fecha">Cotización al {{ moneda.cotizaciones.last.fecha|date:"Y-m-d" }}:&nbsp;</span>
+        <span id="id_cotizacion_compra">{% cotizacion moneda compra=True %}</span> /
+        <span id="id_cotizacion_venta">{% cotizacion moneda compra=False %}</span>
+      </h1>
+    </div>
   </div>
 </section>
 
-<section id="id_section_cotizaciones">
-
-  <div id="id_div_cot_nueva" class="menu-item class_div_cot_nueva">
-    <a href="{% url 'mon_cot_nueva' moneda.sk %}?next={{ request.get_full_path }}" id="id_link_cot_nueva">
-      Cotización nueva
-    </a>
+<section id="id_section_cotizaciones" class="fp-card">
+  <div class="fp-card__header">
+    <div>
+      <h2 class="fp-card__title">Cotizaciones</h2>
+      <p class="fp-card__subtitle">Historial de cotizaciones de {{ moneda }}</p>
+    </div>
+    <div id="id_div_cot_nueva" class="class_div_cot_nueva fp-card__actions">
+      <a href="{% url 'mon_cot_nueva' moneda.sk %}?next={{ request.get_full_path }}"
+         id="id_link_cot_nueva" class="btn btn-primary btn-sm">
+        Cotización nueva
+      </a>
+    </div>
   </div>
 
-  {% include "diario/snippets/navigator.html" with pos="init" pag=cotizaciones elem="cotizaciones" %}
-  {% include "diario/snippets/cotizaciones.html" %}
-
-  <div id="id_div_home">
-    <a id="id_link_home" href="{% url 'home' %}">Home</a>
+  <div class="fp-card__body">
+    {% include "diario/snippets/navigator.html" with pos="init" pag=cotizaciones elem="cotizaciones" etiqueta="Cotizaciones" %}
+    {% include "diario/snippets/cotizaciones.html" %}
   </div>
 </section>
 {% endblock contenido %}

@@ -1,11 +1,20 @@
-.alert-block {
-    background-color: Coral;
+.fp-auth {
+  min-height: calc(100vh - 220px);
 }
 
-.alert-block ul {
-    list-style-type: none;
-    padding: 0px;
-    margin: 0px;
-    text-align: center;
-    font-weight: bold;
+.fp-auth__card .fp-card__body {
+  padding: 1.5rem;
+}
+
+.fp-auth__brand {
+  margin-bottom: 0.5rem;
+}
+
+.fp-auth .alert ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.fp-auth .btn-block {
+  width: 100%;
 }

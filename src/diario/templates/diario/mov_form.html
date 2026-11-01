@@ -1,14 +1,22 @@
-{% extends 'diario/base.html' %}
-{% block contenido %}
-<h4>{{ mov.concepto|default:"Movimiento nuevo"}}</h4>
-<form id="id_form_movimiento" method="post">
-  <div class="form-group">
-    {{ form.as_div }}
-  </div>
-  {% if request.path == "/diario/mov_nuevo" %}
-  <button type="submit" id="id_btn_gya" name="gya" class="btn btn-primary">Guardar y agregar</button>
-  {% endif %}
-  <button type="submit" id="id_btn_submit" name="submit" class="btn btn-primary">Guardar</button>
+{% extends 'diario/base_form.html' %}
+
+{% block title %}{{ mov.concepto|default:"Movimiento nuevo" }}{% endblock title %}
+
+{% block form_titulo %}{{ mov.concepto|default:"Movimiento nuevo" }}{% endblock form_titulo %}
+
+{% block form_subtitulo %}
+<p class="fp-card__subtitle">{% if mov %}Modificar movimiento{% else %}Alta de movimiento{% endif %}</p>
+{% endblock form_subtitulo %}
+
+{% block form_contenido %}
+<form id="id_form_movimiento" method="post" class="app-form">
+  {{ form.as_div }}
   {% csrf_token %}
+  <div class="form-actions">
+    {% if request.path == "/diario/mov_nuevo" %}
+    <button type="submit" id="id_btn_gya" name="gya" class="btn btn-primary">Guardar y agregar</button>
+    {% endif %}
+    <button type="submit" id="id_btn_submit" name="submit" class="btn btn-primary">Guardar</button>
+  </div>
 </form>
-{% endblock contenido %}
+{% endblock form_contenido %}

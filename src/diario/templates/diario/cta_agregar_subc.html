@@ -1,13 +1,19 @@
-{% extends 'diario/base.html' %}
-{% load static %}
+{% extends 'diario/base_form.html' %}
 
-{% block contenido %}
-<h4>Agregar subcuenta</h4>
-<form id="id_form_agregar_subcuenta" method="post">
-  <div class="form-group">
-    {{ form.as_div }}
-  </div>
-  <button type="submit" id="id_btn_submit" class="btn btn-primary">OK</button>
+{% block title %}Agregar subcuenta{% endblock title %}
+
+{% block form_titulo %}Agregar subcuenta{% endblock form_titulo %}
+
+{% block form_subtitulo %}
+<p class="fp-card__subtitle">Cuenta madre: {{ form.cuenta }}</p>
+{% endblock form_subtitulo %}
+
+{% block form_contenido %}
+<form id="id_form_agregar_subcuenta" method="post" class="app-form">
+  {{ form.as_div }}
   {% csrf_token %}
+  <div class="form-actions">
+    <button type="submit" id="id_btn_submit" class="btn btn-primary">OK</button>
+  </div>
 </form>
-{% endblock contenido %}
+{% endblock form_contenido %}

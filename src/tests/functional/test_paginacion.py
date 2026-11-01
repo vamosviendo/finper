@@ -3,7 +3,9 @@ from urllib.parse import urlparse
 
 import pytest
 from django.urls import reverse
+from selenium.webdriver import Keys
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.wait import WebDriverWait
 
 from diario.models import Dia
 from diario.utils.utils_saldo import saldo_general_historico
@@ -14,79 +16,75 @@ from utils.tiempo import str2date
 def test_navegacion_paginas(browser, muchos_dias):
     browser.ir_a_pag(reverse("home"))
 
-    # Al comienzo y al final de la sección de movimientos hay una barra de navegación
-    # que nos permite ver días anteriores o posteriores.
-    # El link correspondiente a "Días posteriores" está desactivado
+    # La barra de navegación nos permite movernos entre páginas.
+    # La página actual se representa mediante el input.
     navigator = browser.encontrar_elemento("id_div_navigator_init")
     divs_dia = browser.encontrar_elementos("class_div_dia")
-    link_posteriores = navigator.encontrar_elemento("id_link_anterior_init")
-    assert link_posteriores.get_attribute("aria-disabled") == "true"
 
-    # Si cliqueamos en el link que dice "Días anteriores", podemos ver la página con los 7
-    # días anteriores.
+    # Si cliqueamos en el número 2, vemos la página con los 7 días anteriores.
     primer_dia_pag = divs_dia[-1].encontrar_elemento("class_span_fecha_dia", By.CLASS_NAME).text[-10:]
-    navigator.encontrar_elemento("id_link_siguiente_init").click()
+    nros_pagina = navigator.encontrar_elementos("class_li_pagina_nro")
+    assert [int(x.text) for x in nros_pagina] == [2, 3, 4]
+    nros_pagina[0].click()
+
     divs_dia = browser.encontrar_elementos("class_div_dia")
     assert len(divs_dia) == 7
     ultimo_dia_pag = divs_dia[0].encontrar_elemento("class_span_fecha_dia", By.CLASS_NAME).text[-10:]
     assert ultimo_dia_pag < primer_dia_pag
 
-    # Y vemos que en esta página el link correspondiente a "Días posteriores" está activado
-    navigator = browser.encontrar_elemento("id_div_navigator_init")
-    link_posteriores = navigator.encontrar_elemento("id_link_anterior_init")
-    assert link_posteriores.get_attribute("aria-disabled") == "false"
 
-    # Si cliqueamos en el link que dice "Primeros días", veremos solamente los días anteriores restantes,
-    # que pueden ser menos de 7, y el último día de la página será el primer día con movimientos.
+    # Si cliqueamos en "Última página", veremos los días anteriores restantes,
+    # que pueden ser menos de 7, y el último día será el primero con movimientos.
+    navigator = browser.encontrar_elemento("id_div_navigator_init")
     navigator.encontrar_elemento("id_link_ultima_init").click()
     divs_dia = browser.encontrar_elementos("class_div_dia")
     assert len(divs_dia) == Dia.con_movimientos().count() % 7
     primer_dia_pag = divs_dia[-1].encontrar_elemento("class_span_fecha_dia", By.CLASS_NAME).text[-10:]
     assert str2date(primer_dia_pag) == Dia.con_movimientos().first().fecha
 
-    # Y en esta página, el link correspondiente a "Días anteriores" está desactivado
-    navigator = browser.encontrar_elemento("id_div_navigator_init")
-    link_anteriores = navigator.encontrar_elemento("id_link_siguiente_init")
-    assert link_anteriores.get_attribute("aria-disabled") == "true"
-
-    # Si desde esta última página cliqueamos en el link que dice "Días posteriores",
-    # podemos ver la página con los 7 días posteriores.
-    ultimo_dia_pag = divs_dia[0].encontrar_elemento("class_span_fecha_dia", By.CLASS_NAME).text[-10:]
-    navigator.encontrar_elemento("id_link_anterior_init").click()
-    divs_dia = browser.encontrar_elementos("class_div_dia")
-    primer_dia_pag = divs_dia[-1].encontrar_elemento("class_span_fecha_dia", By.CLASS_NAME).text[-10:]
-    assert primer_dia_pag > ultimo_dia_pag
-    assert len(divs_dia) == 7
-
-    # Si cliqueamos en el link que dice "Últimos días", volveremos a la primera página, que muestra
-    # los últimos días con movimientos
+    # Si cliqueamos en "Primera página"", volveremos a los últimos días con movimientos
     navigator = browser.encontrar_elemento("id_div_navigator_init")
     navigator.encontrar_elemento("id_link_primera_init").click()
     divs_dia = browser.encontrar_elementos("class_div_dia")
     ultimo_dia_pag = divs_dia[0].encontrar_elemento("class_span_fecha_dia", By.CLASS_NAME).text[-10:]
     assert str2date(ultimo_dia_pag) == Dia.con_movimientos().last().fecha
 
-    # La barra de navegación incluye un número por cada página de 7 días.
+    # En la barra de navegación se ven hasta 3 números posteriores.
     navigator = browser.encontrar_elemento("id_div_navigator_init")
     nros_pagina = navigator.encontrar_elementos("class_li_pagina_nro")
-    assert len(nros_pagina) == (Dia.con_movimientos().count() // 7) + 1
+    assert [int(x.text) for x in nros_pagina] == [2, 3, 4]
 
-    # El número de página que coincide con la página activa se muestra destacado
-    # entre los otros números de página, y su link está desactivado.
-    pag_actual = nros_pagina[0]
-    assert "active" in pag_actual.get_attribute("class")
-    link_pag_actual = pag_actual.encontrar_elemento("class_link_pagina", By.CLASS_NAME)
-    assert link_pag_actual.get_attribute("aria-disabled") == "true"
-    for np in nros_pagina[1:]:
-        assert "active" not in np.get_attribute("class")
-        link_pag = np.encontrar_elemento("class_link_pagina", By.CLASS_NAME)
-        assert link_pag.get_attribute("aria-disabled") == "false"
+    input_pagina = navigator.encontrar_elemento("id_input_pagina_init")
+    num_paginas = (Dia.con_movimientos().count() + 6) // 7
+    assert input_pagina.get_attribute("value") == "1"
+    assert input_pagina.get_attribute("min") == "1"
+    assert input_pagina.get_attribute("max") == str(num_paginas)
 
-    # Si cliqueamos en un número de página, seremos dirigidos a la página con los
-    # 7 (o menos si es la última) días correspondientes.
-    nro_pag = nros_pagina[2].text
-    nros_pagina[2].click()
+    # Al cliquear en un número se navega a esa página.
+    nro_pag = nros_pagina[1].text
+    nros_pagina[1].click()
     assert urlparse(browser.current_url).query == f"page={nro_pag}"
+
+    # En página 3 se ven hasta 3 anteriores y 3 posteriores, sin incluir la actual.
+    navigator = browser.encontrar_elemento("id_div_navigator_init")
+    nros_pagina = navigator.encontrar_elementos("class_li_pagina_nro")
+    pagina_actual = 3
+    nros_esperados = [
+        n for n in range(1, num_paginas + 1)
+        if n != pagina_actual and pagina_actual - 3 <= n <= pagina_actual + 3
+    ]
+    assert [int(x.text) for x in nros_pagina] == nros_esperados
+
+    input_pagina = navigator.encontrar_elemento("id_input_pagina_init")
+    assert input_pagina.get_attribute("value") == "3"
+
+    # El campo de página navega al número ingresado al presionar Enter
+    input_pagina.clear()
+    input_pagina.send_keys("1")
+    input_pagina.send_keys(Keys.ENTER)
+    WebDriverWait(browser, 5).until(
+        lambda b: urlparse(b.current_url).query == "page=1"
+    )
 
 
 @pytest.mark.parametrize("origen, fixt_dias, fecha_en_la_misma_pag", [

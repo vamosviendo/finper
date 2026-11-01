@@ -1,3 +1,6 @@
+collect-static:
+	./vfinper/bin/python src/manage.py collectstatic --noinput --clear
+
 test-server:
 	./vfinper/bin/python src/manage.py runserver 8002
 

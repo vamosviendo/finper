@@ -1,7 +1,6 @@
 {% load urltags %}
 
 <tr id="id_row_mov_{{ mov.sk }}" class="class_row_mov{% if mov.sk == sk_mov %} mov_selected{% endif %}">
-
   <td class="class_td_orden_dia">{{ mov.orden_dia }}</td>
 
   <td class="class_td_concepto" title="{{ mov.detalle }}">
@@ -38,18 +37,23 @@
 
   <td class="class_td_menu">
     {% if not mov.es_automatico %}
-    <a href="{{ mov.get_delete_url }}?next={{ request.get_full_path }}"
-       class="class_link_elim_mov">
-      B
-    </a>
-    <a href="{{ mov.get_edit_url }}?next={{ request.get_full_path }}"
-       class="class_link_mod_mov">
-      E
-    </a>
-    <a href="{{ mov.get_duplicate_url }}?next={{ request.get_full_path }}"
-       class="class_link_dup_mov">
-      D
-    </a>
+      <div class="fp-row-actions">
+        <a href="{{ mov.get_delete_url }}?next={{ request.get_full_path }}"
+           class="class_link_elim_mov btn btn-sm btn-outline-danger fp-table-action"
+           title="Eliminar movimiento">
+          B
+        </a>
+        <a href="{{ mov.get_edit_url }}?next={{ request.get_full_path }}"
+           class="class_link_mod_mov btn btn-sm btn-outline-secondary fp-table-action"
+           title="Editar movimiento">
+          E
+        </a>
+        <a href="{{ mov.get_duplicate_url }}?next={{ request.get_full_path }}"
+           class="class_link_dup_mov btn btn-sm btn-outline-secondary fp-table-action"
+           title="Duplicar movimiento">
+          D
+        </a>
+      </div>
     {% endif %}
   </td>
 </tr>

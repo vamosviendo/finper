@@ -94,14 +94,14 @@ if TESTING:
     }
 else:
     # Django debug toolbar. Eliminar en production.
-    INSTALLED_APPS = [
-        *INSTALLED_APPS,
-        "debug_toolbar",
-    ]
-    MIDDLEWARE = [
-        "debug_toolbar.middleware.DebugToolbarMiddleware",
-        *MIDDLEWARE,
-    ]
+    # INSTALLED_APPS = [
+    #     *INSTALLED_APPS,
+    #     "debug_toolbar",
+    # ]
+    # MIDDLEWARE = [
+    #     "debug_toolbar.middleware.DebugToolbarMiddleware",
+    #     *MIDDLEWARE,
+    # ]
 
     DATABASES = {
         'default': {

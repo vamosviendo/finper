@@ -1,72 +1,88 @@
 {% load urltags %}
 
-<div id="id_div_navigator_{{pos}}" class="pagination-nav mb-4">
-  <nav id="id_nav_navigator_{{pos}}" aria-label="Page navigation">
-    <div class="d-flex flex-wrap justify-content-between align-items-center">
-      <!-- Botones de navegación -->
-      <ul class="pagination mb-0 d-flex flex-wrap">
+{% with etiqueta_nav=etiqueta|default:elem|capfirst %}
+<div id="id_div_navigator_{{ pos }}" class="pagination-nav fp-pagination mb-4">
+  <nav id="id_nav_navigator_{{ pos }}" aria-label="Paginación de {{ etiqueta_nav }}">
+    <div class="fp-pagination__bar">
+      <span class="fp-pagination__status">
+        Página {{ pag.number }} de {{ pag.paginator.num_pages }}
+      </span>
+
+      <ul class="pagination fp-pagination__pages mb-0">
         <li class="class_li_pagina page-item">
-          <a id="id_link_primera_{{pos}}" class="class_link_pagina page-link"
-             href = "{% pageurl 1 %}"
-             title="Primera página"
-          >
-            Primera página
-          </a>
-        <li class="class_li_pagina page-item {% if not dias.has_previous %}disabled{% endif %}">
-          <a id="id_link_anterior_{{pos}}" class="class_link_pagina page-link"
-             href="{% if pag.has_previous %}{% pageurl pag.previous_page_number %}{% else %}{% pageurl %}{% endif %}"
-             title="{{ elem }} posteriores"
-             tabindex="{% if pag.has_previous %}0{% else %}-1{% endif %}"
-             aria-disabled="{% if pag.has_previous %}false{% else %}true{% endif %}"
-          >
-            {{ elem }} posteriores
+          <a id="id_link_primera_{{ pos }}" class="class_link_pagina page-link"
+             href="{% pageurl 1 %}"
+             title="Primera página">
+            <span class="fp-pagination__label-long">Primera página</span>
+            <span class="fp-pagination__label-short">Primera</span>
           </a>
         </li>
 
-        <!-- Navegación por número de página -->
-        {% for nro_pag in pag.paginator.page_range %}
-        <li class="class_li_pagina_nro page-item {% if nro_pag == pag.number %}active{% endif %}">
-          <a class="class_link_pagina page-link"
-             href="{% pageurl nro_pag %}"
-             aria-disabled="{% if nro_pag == pag.number %}true{% else %}false{% endif %}"
-          >
-             {{ nro_pag }}
-          </a>
-        </li>
-        {% endfor %}
+        {% with desde=pag.number|add:"-3" hasta=pag.number|add:"3" %}
+          {% for nro_pag in pag.paginator.page_range %}
+            {% if nro_pag >= desde and nro_pag < pag.number %}
+              <li class="class_li_pagina_nro page-item">
+                <a class="class_link_pagina page-link"
+                   href="{% pageurl nro_pag %}"
+                   aria-label="Pagina {{ nro_pag }}">
+                  {{ nro_pag }}
+                </a>
+              </li>
+            {% endif %}
+          {% endfor %}
 
-        <li class="class_li_pagina page-item {% if not pag.has_next %}disabled{% endif %}">
-          <a id="id_link_siguiente_{{pos}}" class="class_link_pagina page-link"
-             href="{% if pag.has_next %}{% pageurl pag.next_page_number %}{% else %}{% pageurl %}{% endif %}"
-             title="{{ elem }} anteriores"
-             tabindex="{% if pag.has_next %}0{% else %}-1{% endif %}"
-             aria-disabled="{% if pag.has_next %}false{% else %}true{% endif %}"
-          >
-            {{ elem }} anteriores
-          </a>
-        </li>
+          <li class="page-item fp-pagination__page-input-item">
+            <form id="id_form_ir_pagina_{{ pos }}" class="fp-pagination__page-form"
+                  method="get"
+                  action="{% pageurl %}">
+              <input id="id_input_pagina_{{ pos }}" type="number" name="page"
+                     class="form-control form-control-sm fp-pagination__page-input"
+                     min="1"
+                     max="{{ pag.paginator.num_pages }}"
+                     value="{{ pag.number }}"
+                     inputmode="numeric"
+                     aria-label="Número de página">
+            </form>
+          </li>
+
+          {% for nro_pag in pag.paginator.page_range %}
+            {% if nro_pag > pag.number and nro_pag <= hasta %}
+              <li class="class_li_pagina_nro page-item">
+                <a class="class_link_pagina page-link"
+                   href="{% pageurl nro_pag %}"
+                   aria-label="Pagina {{ nro_pag }}">
+                  {{ nro_pag }}
+                </a>
+              </li>
+            {% endif %}
+          {% endfor %}
+        {% endwith %}
+
         <li class="class_li_pagina page-item">
-          <a id="id_link_ultima_{{pos}}" class="class_link_pagina page-link"
+          <a id="id_link_ultima_{{ pos }}" class="class_link_pagina page-link"
              href="{% pageurl pag.paginator.num_pages %}"
-             title="Última página"
-          >
-            Última página
+             title="Última página">
+            <span class="fp-pagination__label-long">Última página</span>
+            <span class="fp-pagination__label-short">Última</span>
           </a>
         </li>
       </ul>
 
       {% if elem == "dias" %}
-      <!-- Búsqueda por día -->
-      <form id="id_form_buscar_dia_{{pos}}" class="d-flex mb-0"
-            method="get"
-            action="{% finperurl %}#id_section_movimientos">
-        <div class="input-group">
-          <input id="id_input_dia_{{pos}}" type="date" name="fecha"
-                 class="form-control" placeholder="YYYY-MM-DD" aria-label="Buscar día">
-          <button id="id_btn_buscar_dia_{{pos}}" class="btn btn-outline-secondary" type="submit">Buscar</button>
-        </div>
-      </form>
+        <form id="id_form_buscar_dia_{{ pos }}" class="fp-pagination__date"
+              method="get"
+              action="{% finperurl %}#id_section_movimientos">
+          <label class="fp-pagination__date-label" for="id_input_dia_{{ pos }}">Ir a</label>
+          <div class="input-group input-group-sm">
+            <input id="id_input_dia_{{ pos }}" type="date" name="fecha"
+                   class="form-control" placeholder="YYYY-MM-DD" aria-label="Ir a fecha">
+            <button id="id_btn_buscar_dia_{{ pos }}" class="btn btn-outline-secondary" type="submit">
+              Buscar
+            </button>
+          </div>
+        </form>
       {% endif %}
     </div>
   </nav>
 </div>
+{% endwith %}

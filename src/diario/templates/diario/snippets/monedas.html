@@ -1,23 +1,41 @@
 {% load urltags %}
 
-<section id="id_section_monedas">
-  <div id="id_div_menu_monedas">
-    <table class="menu">
-      <colgroup>
-        <col class="div-menu div-monedas"/>
-      </colgroup>
-      <tbody>
-        {% for mon in monedas %}
-          {% include "diario/snippets/moneda.html" %}
-        {% endfor %}
-        <tr class="menu-row">
-          <td class="menu-item class_td_moneda">
-            <div id="id_div_moneda_nueva">
-              <a id="id_link_moneda_nueva" href="{% url 'mon_nueva' %}?next={{ request.get_full_path }}">+</a>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+<section id="id_section_monedas" class="fp-section fp-section--monedas fp-card">
+  <div class="fp-card__header">
+    <div>
+      <h2 class="fp-card__title">Monedas</h2>
+      <p class="fp-card__subtitle">Cotizaciones vigentes</p>
+    </div>
+    <div class="fp-card__actions">
+      <a id="id_link_moneda_nueva"
+         class="btn btn-sm btn-outline-primary"
+         href="{% url 'mon_nueva' %}?next={{ request.get_full_path }}">
+        Nueva moneda
+      </a>
+    </div>
+  </div>
+
+  <div id="id_div_menu_monedas" class="fp-card__body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover menu mb-0">
+        <thead>
+          <tr>
+            <th>Moneda</th>
+            <th class="text-right">Compra</th>
+            <th class="text-right">Venta</th>
+            <th class="text-right">Menu</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for mon in monedas %}
+            {% include "diario/snippets/moneda.html" %}
+          {% empty %}
+            <tr>
+              <td colspan="4" class="fp-empty-state">No hay monedas.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
 </section>

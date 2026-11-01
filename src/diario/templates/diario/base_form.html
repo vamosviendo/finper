@@ -1,0 +1,20 @@
+{% extends 'diario/base.html' %}
+
+{% block title %}Finper{% endblock title %}
+
+{% block contenido %}
+<div class="fp-form-page">
+  <section class="fp-card">
+    <header class="fp-card__header fp-page-header">
+      <div>
+        <h1 class="fp-form-card__title">{% block form_titulo %}Formulario{% endblock form_titulo %}</h1>
+        {% block form_subtitulo %}{% endblock form_subtitulo %}
+      </div>
+      {% block form_header_actions %}{% endblock form_header_actions %}
+    </header>
+    <div class="fp-card__body">
+      {% block form_contenido %}{% endblock form_contenido %}
+    </div>
+  </section>
+</div>
+{% endblock contenido %}
