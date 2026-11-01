@@ -9,14 +9,16 @@
 <div class="fp-home">
   {% include "diario/snippets/encabezado.html" %}
 
-  {% if request.resolver_match.url_name != "ctas_inactivas" %}
-    <div class="fp-home__menus">
-      {% include "diario/snippets/titulares.html" %}
-      {% include "diario/snippets/monedas.html" %}
-    </div>
-  {% endif %}
+  <div class="fp-home__layout">
+    {% if request.resolver_match.url_name != "ctas_inactivas" %}
+      <div class="fp-home__menus">
+        {% include "diario/snippets/titulares.html" %}
+        {% include "diario/snippets/monedas.html" %}
+      </div>
+    {% endif %}
 
   {% include "diario/snippets/cuentas.html" %}
+  </div>
 
   {% if request.resolver_match.url_name != "ctas_inactivas" %}
     {% include "diario/snippets/movimientos.html" %}

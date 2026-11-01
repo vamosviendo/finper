@@ -4,11 +4,23 @@
   gap: 0.5rem;
 }
 
-.fp-home__menus {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  align-items: start;
+.fp-home__layout {
+  display: flex;
+  align-items: flex-start;
   gap: 0.5rem;
+}
+
+.fp-home__menus {
+  display: flex;
+  flex: 0 0 32%;
+  flex-direction: column;
+  min-width: 0;
+  gap: 0.5rem;
+}
+
+.fp-home__layout > .fp-section--cuentas {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .fp-home > .fp-card + .fp-card,
@@ -229,11 +241,45 @@ table.menu {
   border-left: 4px solid transparent;
 }
 
-.class_div_cuenta.is-acumulativa > td {
+/*.class_div_cuenta.is-acumulativa > td {*/
+#id_section_cuentas table.menu {
+  table-layout: fixed;
+  min-width: 42rem;
+}
+
+#id_section_cuentas .fp-col-cuenta {
+  width: auto;
+}
+
+#id_section_cuentas .fp-col-saldo {
+  width: 9rem;
+}
+
+#id_section_cuentas .fp-col-menu {
+  width: 4rem;
+}
+
+#id_section_cuentas .table thead th {
+  background-color: var(--fp-white);
+}
+
+#id_section_cuentas .table thead th:first-child {
+  background-color: var(--fp-cuenta-soft);
+}
+
+#id_section_cuentas .table tbody td {
+  background-color: var(--fp-white);
+}
+
+#id_section_cuentas .table tbody td.class_td_cuenta {
+  background-color: var(--fp-cuenta-soft);
+}
+
+#id_section_cuentas .class_div_cuenta.is-acumulativa > .class_td_cuenta {
   background-color: var(--fp-cuenta-acumulativa);
 }
 
-.class_div_cuenta.is-subcuenta > td {
+#id_section_cuentas .class_div_cuenta.is-subcuenta > .class_td_cuenta {
   background-color: var(--fp-cuenta-subcuenta);
 }
 
@@ -250,8 +296,6 @@ table.menu {
 }
 
 .class_saldo_cuenta.mon_cuenta {
-  background-color: var(--fp-moneda-saldo);
-  color: var(--fp-moneda-saldo-ink);
   font-weight: 800;
 }
 
@@ -295,7 +339,7 @@ tr.mov_selected .class_link_movimiento {
 }
 
 .class_table_movimientos {
-  table-layout: fixed;
+  table-layout: auto;
   width: 100%;
   font-size: 0.75rem;
   line-height: 1.1;
@@ -317,31 +361,31 @@ tr.mov_selected .class_link_movimiento {
 }
 
 .class_table_movimientos .fp-col-orden {
-  width: 3rem;
+  width: 1%;
 }
 
 .class_table_movimientos .fp-col-concepto {
-  width: 18%;
+  width: 20%;
 }
 
 .class_table_movimientos .fp-col-detalle {
-  width: 18%;
+  width: 20%;
 }
 
 .class_table_movimientos .fp-col-entrada {
-  width: 15%;
+  width: 14%;
 }
 
 .class_table_movimientos .fp-col-salida {
-  width: 15%;
+  width: 14%;
 }
 
 .class_table_movimientos .fp-col-importe {
-  width: 13%;
+  width: 10%;
 }
 
 .class_table_movimientos .fp-col-menu {
-  width: 7.5rem;
+  width: 1%;
 }
 
 .class_table_movimientos .class_td_menu {
@@ -416,7 +460,11 @@ tr.mov_selected .class_link_movimiento {
   background-color: var(--fp-titular-hover);
 }
 
-.fp-section--cuentas .table-hover tbody tr:hover > td {
+#id_section_cuentas .table-hover tbody tr:hover > td {
+  background-color: var(--fp-white);
+}
+
+#id_section_cuentas .table-hover tbody tr:hover > .class_td_cuenta {
   background-color: var(--fp-cuenta-hover);
 }
 
@@ -429,7 +477,12 @@ tr.mov_selected .class_link_movimiento {
 }
 
 @media (max-width: 991.98px) {
+  .fp-home__layout {
+    flex-direction: column;
+  }
+
   .fp-home__menus {
-    grid-template-columns: 1fr;
+    flex: 0 0 auto;
+    width: 100%;
   }
 }

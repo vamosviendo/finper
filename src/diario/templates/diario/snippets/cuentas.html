@@ -26,6 +26,13 @@
   <div id="id_div_menu_cuentas" class="fp-card__body p-0">
     <div class="table-responsive">
       <table class="table table-hover menu mb-0">
+        <colgroup>
+          <col class="fp-col-cuenta">
+          {% for mon in monedas %}
+            <col class="fp-col-saldo">
+          {% endfor %}
+          <col class="fp-col-menu">
+        </colgroup>
         <thead>
           <tr>
             <th>Cuenta</th>
