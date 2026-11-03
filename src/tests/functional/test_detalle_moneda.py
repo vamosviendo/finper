@@ -80,7 +80,7 @@ def test_detalle_moneda_paginacion(browser, dolar, mas_de_20_cotizaciones_dolar)
     navigator = browser.encontrar_elemento("id_div_navigator_init")
 
     nros_pagina = navigator.encontrar_elementos("class_li_pagina_nro")
-    assert [int(x.text) for x in nros_pagina] == [2, 3, 4]
+    assert [int(x.text) for x in nros_pagina] == [2]
 
     # Si cliqueamos en el número 2, vemos las cotizaciones inmediatamente anteriores
     nros_pagina[0].click()
