@@ -3,6 +3,7 @@ from datetime import date
 import pytest
 from django.urls import reverse
 from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver import ActionChains, Keys
 from selenium.webdriver.common.by import By
 
 from diario.models import Movimiento
@@ -669,3 +670,13 @@ def test_eliminar_movimiento_desde_pagina_posterior_redirige_a_esa_pagina_con_el
     browser.pulsar("id_btn_confirm")
 
     browser.assert_url(url_destino + "?page=2")
+
+
+def test_se_llega_a_fecha_en_dos_tabs(browser, cuenta):
+    browser.ir_a_pag(reverse("mov_nuevo"))
+
+    ActionChains(browser).send_keys(Keys.TAB).perform()
+    assert browser.switch_to.active_element.get_attribute("id") == "id_link_home"
+
+    ActionChains(browser).send_keys(Keys.TAB).perform()
+    assert browser.switch_to.active_element.get_attribute("id") == "id_fecha"

@@ -2,6 +2,23 @@
 
 {% block title %}Finper{% endblock title %}
 
+{% block skip_link %}{% endblock skip_link %}
+
+{% block breadcrumbs %}{% endblock breadcrumbs %}
+
+{% block navbar %}
+<header class="app-header">
+  <nav class="navbar navbar-expand-md navbar-dark app-navbar" aria-label="Navegación del formulario">
+    <div class="container-xl app-navbar__inner">
+      <a id="id_link_home" class="navbar-brand app-brand" href="{% url 'home' %}">
+        <span class="app-brand__mark" aria-hidden="true">F</span>
+        <span>Finper</span>
+      </a>
+    </div>
+  </nav>
+</header>
+{% endblock navbar %}
+
 {% block contenido %}
 <div class="fp-form-page">
   <section class="fp-card">
