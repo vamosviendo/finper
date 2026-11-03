@@ -3,20 +3,38 @@
   margin: 0 auto;
 }
 
+.fp-form-page .fp-card__header {
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.fp-form-page .fp-card__subtitle {
+  margin-top: 0.05rem;
+  font-size: 0.7rem;
+  line-height: 1.1;
+}
+
+.fp-form-page .fp-card__body {
+  padding: 0.3rem 0.5rem;
+}
+
 .fp-form-card__title {
   margin: 0;
-  font-size: 1.2rem;
+  font-size: 0.95rem;
+  line-height: 1.1;
   font-weight: 700;
 }
 
-.app-form > div {
-  margin-bottom: 1rem;
+.app-form > div:not(.form-actions) {
+  margin-bottom: 0.35rem;
 }
 
 .app-form label {
   display: block;
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.15rem;
   color: var(--fp-ink);
+  font-size: 0.75rem;
+  line-height: 1.1;
   font-weight: 600;
 }
 
@@ -25,18 +43,18 @@
 .app-form textarea {
   display: block;
   width: 100%;
-  padding: 0.5rem 0.75rem;
+  padding: 0.2rem 0.45rem;
   border: 1px solid var(--fp-line-soft);
-  border-radius: 0.5rem;
+  border-radius: 0.35rem;
   background: var(--fp-surface);
   color: var(--fp-ink);
-  font-size: 1rem;
-  line-height: 1.5;
+  font-size: 0.85rem;
+  line-height: 1.2;
   transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
 .app-form textarea {
-  min-height: 94px;
+  min-height: 60px;
   height: auto;
 }
 
@@ -49,9 +67,9 @@
 }
 
 .app-form input[type="checkbox"] {
-  width: 1rem;
-  height: 1rem;
-  margin-right: 0.4rem;
+  width: 0.9rem;
+  height: 0.9rem;
+  margin-right: 0.3rem;
   vertical-align: middle;
 }
 
@@ -65,16 +83,17 @@
 
 .app-form .helptext {
   display: block;
-  margin-top: 0.3rem;
+  margin-top: 0.15rem;
   color: var(--fp-muted);
-  font-size: 0.8rem;
+  font-size: 0.7rem;
+  line-height: 1.1;
 }
 
 .app-form ul.errorlist {
-  margin: 0.35rem 0 0;
+  margin: 0.15rem 0 0;
   padding: 0;
   color: var(--fp-danger);
-  font-size: 0.82rem;
+  font-size: 0.72rem;
   list-style: none;
 }
 
@@ -86,18 +105,25 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 1.5rem;
-  padding-top: 1rem;
+  gap: 0.3rem;
+  margin-top: 0.5rem;
+  padding-top: 0.35rem;
   border-top: 1px solid var(--fp-line);
+}
+
+.app-form .form-actions .btn,
+.fp-form-extra .btn {
+  padding: 0.2rem 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1.1;
 }
 
 .fp-form-extra {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 1rem;
-  padding-top: 1rem;
+  gap: 0.3rem;
+  margin-top: 0.5rem;
+  padding-top: 0.35rem;
   border-top: 1px solid var(--fp-line);
 }
 
