@@ -45,7 +45,7 @@ def test_pasa_saldo_de_cuenta_como_saldo_general(
 
 def test_pasa_titulo_de_saldo_gral_con_cuenta(cuenta, client):
     response = client.get(cuenta.get_absolute_url())
-    assert response.context['titulo_saldo_gral'] == f"{cuenta.nombre} (fecha alta: {cuenta.fecha_creacion})"
+    assert response.context['titulo_saldo_gral'] == f"{cuenta.nombre}:"
 
 
 def test_si_recibe_id_de_movimiento_pasa_titulo_de_saldo_historico_con_cuenta_y_movimiento(
@@ -54,8 +54,8 @@ def test_si_recibe_id_de_movimiento_pasa_titulo_de_saldo_historico_con_cuenta_y_
     response = client.get(cuenta.get_url_with_mov(entrada))
     assert (
         response.context['titulo_saldo_gral'] ==
-        f'{cuenta.nombre} (fecha alta: {cuenta.fecha_creacion}) en movimiento {entrada.orden_dia} '
-        f'del {entrada.fecha} ({entrada.concepto})')
+        f'{cuenta.nombre} en movimiento {entrada.orden_dia} '
+        f'del {entrada.fecha.strftime("%d/%m/%Y")}:')
 
 
 def test_si_recibe_movimiento_pasa_saldos_de_subcuentas_en_monedas_al_momento_del_movimiento(

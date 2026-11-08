@@ -151,12 +151,18 @@ class FinperFirefox(MiFirefox):
             assert mov_web.texto_en_hijo("class_td_cta_salida") == (mov.cta_salida.nombre if mov.cta_salida else "")
 
     def comparar_titular(self, titular: Titular):
-        """ Dado un titular, comparar su nombre con el que encabeza la
-            página. """
-        nombre_titular = self.encontrar_elemento(
-            'id_titulo_saldo_gral'
-        ).text.strip()
-        assert nombre_titular == f"Capital de {titular.nombre}:"
+        """ Dado un titular, comparar su nombre con el título, encabezado
+            y breadcrumb de la página. """
+        assert self.title == f"Finper - {titular.nombre}", \
+            f"Título de página incorrecto: {self.title}"
+
+        titulo = self.encontrar_elemento('id_div_saldo_gral').text.strip()
+        assert titulo == f"Capital de {titular.nombre}: {float_format(titular.capital())}", \
+            f"Título incorrecto: {titulo}"
+
+        breadcrumb = self.encontrar_elemento("app-breadcrumbs", By.CLASS_NAME)
+        assert titular.nombre in breadcrumb.text, \
+            f"Breadcrumb no incluye {titular.nombre}"
 
     def comparar_titulares_de(
             self, cuenta: CuentaInteractiva | CuentaAcumulativa):
@@ -200,12 +206,14 @@ class FinperFirefox(MiFirefox):
         assert divs_cuenta == nombres_cuenta
 
     def comparar_cuenta(self, cuenta: Cuenta):
-        """ Dada una cuenta, comparar su nombre con el que encabeza la página.
+        """ Dada una cuenta, comparar su nombre con el título, encabezado
+            y breadcrumb de la página.
         """
+        assert self.title == f"Finper - {cuenta.nombre}", f"Título de página incorrecto: {self.title}"
         titulo = self.encontrar_elemento('id_div_saldo_gral').text.strip()
-        assert titulo == \
-               f"{cuenta.nombre} (fecha alta: {cuenta.fecha_creacion}): " \
-               f"{float_format(cuenta.saldo())}"
+        assert titulo == f"{cuenta.nombre}: {float_format(cuenta.saldo())}", f"Título incorrecto: {titulo}"
+        breadcrumb = self.encontrar_elemento("app-breadcrumbs", By.CLASS_NAME)
+        assert cuenta.nombre in breadcrumb.text, f"Breadcrumb no incluye {cuenta.nombre}"
 
     def comparar_subcuentas_de(self, cuenta: CuentaAcumulativa):
         """ Dada una cuenta acumulativa, comparar sus subcuentas con las que

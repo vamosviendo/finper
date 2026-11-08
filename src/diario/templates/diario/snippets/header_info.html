@@ -1,0 +1,11 @@
+{% load saldos %}
+{% if mostrar_saldo_header %}
+<div id="id_div_saldo_gral" class="app-navbar__status">
+  <span id="id_titulo_saldo_gral" class="app-navbar__status-title">
+    {{ titulo_saldo_gral }}:
+  </span>
+  <span id="id_importe_saldo_gral" class="app-navbar__status-amount">
+    {% saldo %}
+  </span>
+</div>
+{% endif %}

@@ -1,6 +1,13 @@
 {% extends 'diario/base_form.html' %}
 
-{% block title %}Cotización {{ moneda.nombre }}{% endblock title %}
+{% block title %}
+  Finper -
+  {% if cotizacion %}
+    {{ cotizacion.moneda.nombre }} - Cotización {{ cotizacion.fecha|date:"d/m/Y" }}
+  {% else %}
+    {{ moneda.nombre }} - Cotización nueva
+  {% endif %}
+{% endblock title %}
 
 {% block form_titulo %}Cotización {{ moneda.nombre }}{% endblock form_titulo %}
 

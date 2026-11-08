@@ -23,3 +23,7 @@ def test_pasa_saldos_cuentas_inactivas(cuenta_inactiva, entrada, peso, client):
     response = client.get(reverse("ctas_inactivas"))
     saldos = response.context["saldos_cuentas"]
     assert cuenta_inactiva.pk in saldos.keys()
+
+def test_pasa_mostrar_saldo_header_false(client):
+    response = client.get(reverse("ctas_inactivas"))
+    assert response.context.get("mostrar_saldo_header") is False

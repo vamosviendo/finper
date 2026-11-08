@@ -3,6 +3,7 @@ from urllib.parse import urlparse
 import pytest
 
 from django.urls import reverse
+from selenium.webdriver.common.by import By
 
 from diario.models import Cuenta, Titular, Movimiento
 from diario.utils.utils_saldo import saldo_general_historico
@@ -21,6 +22,12 @@ def test_detalle_movimiento(browser, entrada, salida, traspaso, cuenta_acumulati
     links_movimiento[1].click()
     movimientos = browser.encontrar_elementos("class_row_mov")
     assert "mov_selected" in movimientos[1].get_attribute("class")
+
+    # Y el título y el breadcrumb de la página muestran el movimiento seleccionado
+    fecha = salida.fecha.strftime("%d/%m/%Y")
+    assert browser.title == f"Finper - Mov {salida.orden_dia} del {fecha}"
+    breadcrumb = browser.encontrar_elemento("app-breadcrumbs", By.CLASS_NAME)
+    assert f"Movimiento {salida.orden_dia} de {fecha}" in breadcrumb.text
 
     # Y en el saldo de la página aparece el saldo histórico al momento del
     # movimiento seleccionado

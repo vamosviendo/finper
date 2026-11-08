@@ -1,6 +1,13 @@
 {% extends 'diario/base_form.html' %}
 
-{% block title %}{{ cta.nombre|default:"Cuenta nueva" }}{% endblock title %}
+{% block title %}
+  Finper -
+  {% if cta %}
+    Modificar cuenta {{ cta.nombre }}
+  {% else %}
+    Cuenta nueva
+  {% endif %}
+{% endblock title %}
 
 {% block form_titulo %}{{ cta.nombre|default:"Cuenta nueva" }}{% endblock form_titulo %}
 

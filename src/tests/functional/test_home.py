@@ -13,6 +13,14 @@ from .helpers import texto_en_hijos_respectivos
 from utils.numeros import float_format
 
 
+def test_saldo_general_esta_en_el_header_y_titulo_de_la_pagina(browser):
+    browser.ir_a_pag()
+    assert browser.title == "Finper - Inicio"
+    header = browser.encontrar_elemento("header.app-header", By.CSS_SELECTOR)
+    assert header.encontrar_elemento("id_titulo_saldo_gral").text.strip() == "Saldo general:"
+    assert browser.encontrar_elementos("id_section_saldos", fail=False) == []
+
+
 def test_home(
         browser, titular, otro_titular,
         cuenta, cuenta_2, cuenta_3, cuenta_acumulativa,

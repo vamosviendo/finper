@@ -188,9 +188,10 @@ def test_detalle_de_cuenta_interactiva(
     ).text.strip()
     movimiento = cuenta.movs().filter(dia=Dia.tomar(fecha=fecha_dia)).first()
 
-    assert nombre_cuenta == (f"{cuenta.nombre} (fecha alta: {cuenta.fecha_creacion}) "
-                              f"en movimiento {movimiento.orden_dia} "
-                              f"del {movimiento.fecha} ({movimiento.concepto}):")
+    assert nombre_cuenta == (
+        f"{cuenta.nombre} en movimiento {movimiento.orden_dia} "
+        f"del {movimiento.fecha.strftime('%d/%m/%Y')}:"
+    )
     browser.comparar_saldo_historico_de(cuenta, movimiento)
 
     # Y al lado del titular de la cuenta (que es el único que se ve) aparece

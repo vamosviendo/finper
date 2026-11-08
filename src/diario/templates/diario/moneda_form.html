@@ -1,6 +1,13 @@
 {% extends 'diario/base_form.html' %}
 
-{% block title %}{{ moneda.nombre|default:"Moneda nueva" }}{% endblock title %}
+{% block title %}
+  Finper -
+  {% if moneda %}
+    Modificar moneda {{ moneda.nombre }}
+  {% else %}
+    Moneda nueva
+  {% endif %}
+{% endblock title %}
 
 {% block form_titulo %}{{ moneda.nombre|default:"Moneda nueva" }}{% endblock form_titulo %}
 

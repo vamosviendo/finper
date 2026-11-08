@@ -34,6 +34,7 @@ def test_crear_movimiento(browser, cuenta, entrada, salida_posterior, dia_tardio
         otro movimiento. """
     saldo_gral = saldo = cuenta.saldo()
     browser.ir_a_pag(reverse("mov_nuevo"))
+    assert browser.title == "Finper - Movimiento nuevo"
 
     # Al entrar a la página veo un formulario de movimiento
     form_mov = browser.encontrar_elemento("id_form_movimiento")
@@ -480,6 +481,10 @@ def test_modificar_movimiento(browser, entrada, salida_posterior, cuenta_2):
     # Las modificaciones hechas mediante el formulario de movimiento se ven
     # reflejadas en el movimiento que se muestra en la página principal
     browser.ir_a_pag(entrada.get_edit_url())
+    assert \
+        browser.title == \
+        f"Finper - Modificar movimiento {entrada.orden_dia} " \
+        f"de {entrada.fecha.strftime('%d/%m/%Y')}"
 
     # En todos los campos del formulario aparece el valor del campo correspondiente del movimiento:
     browser.controlar_modelform(instance=entrada)
@@ -626,6 +631,9 @@ def test_eliminar_movimiento(browser, entrada, salida):
     # Cuando se elimina un movimiento desaparece de la página principal
     concepto = entrada.concepto
     browser.ir_a_pag(entrada.get_delete_url())
+    assert browser.title == \
+           f"Finper - Eliminar movimiento {entrada.orden_dia} " \
+           f"de {entrada.fecha.strftime('%d/%m/%Y')}"
     browser.pulsar('id_btn_confirm')
     browser.assert_url(reverse('home'))
     conceptos = [x.text.strip() for x in browser.encontrar_elementos('class_link_movimiento')]

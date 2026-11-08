@@ -1,6 +1,15 @@
 {% extends 'diario/base_confirm.html' %}
 
-{% block title %}{% if object.activa %}Desactivar{% else %}Activar{% endif %} cuenta{% endblock title %}
+{% block title %}
+  Finper -
+  {% if object.activa %}
+    Desactivar
+  {% else %}
+    Activar
+  {% endif %}
+    cuenta
+{% endblock title %}
+
 {% block confirm_titulo %}{% if object.activa %}Desactivar{% else %}Activar{% endif %} cuenta{% endblock confirm_titulo %}
 
 {% block confirm_contenido %}

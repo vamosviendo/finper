@@ -1,6 +1,13 @@
 {% extends 'diario/base_form.html' %}
 
-{% block title %}{{ tit.nombre|default:"Titular nuevo" }}{% endblock title %}
+{% block title %}
+  Finper -
+  {% if titular %}
+    Modificar titular {{ titular.nombre }}
+  {% else %}
+    Titular nuevo
+  {% endif %}
+{% endblock title %}
 
 {% block form_titulo %}{{ tit.nombre|default:"Titular nuevo" }}{% endblock form_titulo %}
 

@@ -14,6 +14,7 @@ def test_crear_cotizacion(browser, dolar, fecha, fecha_anterior):
     # Dada una moneda, cargamos una cotización nueva con fecha posterior a todas
     # las otras cotizaciones de la moneda.
     browser.encontrar_elemento("id_link_cot_nueva").click()
+    assert browser.title == f"Finper - {dolar.nombre} - Cotización nueva"
     browser.completar_form(
         fecha=fecha,
         importe_compra=1000000,
@@ -84,6 +85,12 @@ def test_crear_cotizacion(browser, dolar, fecha, fecha_anterior):
 
 
 class TestModificarCotizacion:
+    def test_muestra_datos_de_cotizacion_en_el_titulo_de_la_pagina(
+            self, browser, dolar, cotizacion_dolar):
+        browser.ir_a_pag(cotizacion_dolar.get_edit_url())
+        assert \
+            browser.title == \
+            f"Finper - {dolar.nombre} - Cotización {cotizacion_dolar.fecha.strftime('%d/%m/%Y')}"
 
     def test_si_cambian_importes_de_cotizacion_anterior_cambian_importes_en_lista_no_en_encabezado(
             self, browser, dolar, cotizacion_dolar):

@@ -1,6 +1,6 @@
 {% extends 'diario/base_confirm.html' %}
 
-{% block title %}Eliminar movimiento{% endblock title %}
+{% block title %}Finper - Eliminar movimiento {{ object.orden_dia }} de {{ object.fecha|date:'d/m/Y' }}{% endblock title %}
 {% block confirm_titulo %}Eliminar movimiento{% endblock confirm_titulo %}
 
 {% block confirm_contenido %}

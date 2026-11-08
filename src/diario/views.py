@@ -93,8 +93,7 @@ class BaseHomeView(TemplateView):
     @staticmethod
     def _get_context_comun(ente: Cuenta | Titular | None, movimiento: Movimiento) -> dict[str, Any]:
         movimiento_en_titulo = \
-            f" en movimiento {movimiento.orden_dia} " \
-            f"del {movimiento.fecha} ({movimiento.concepto})" \
+            f" en movimiento {movimiento.orden_dia} del {movimiento.fecha.strftime('%d/%m/%Y')}" \
             if movimiento else ""
 
         return {
@@ -104,6 +103,7 @@ class BaseHomeView(TemplateView):
             "titular": ente if isinstance(ente, Titular) else None,
             "filtro": ente,
             "movimiento_en_titulo": movimiento_en_titulo,
+            "mostrar_saldo_header": True,
         }
 
     def _cuentas_ordenadas(
@@ -221,7 +221,7 @@ class CuentaHomeView(BaseHomeView):
 
         return {
             "saldo_gral": ente.saldo(movimiento),
-            "titulo_saldo_gral": f"{ente.nombre} (fecha alta: {ente.fecha_creacion}){movimiento_en_titulo}",
+            "titulo_saldo_gral": f"{ente.nombre}{movimiento_en_titulo}",
             "ancestros": reversed(ente.ancestros()),
             "hermanas": ente.hermanas(),
             "titulares": ente.titulares if ente.es_acumulativa else [ente.titular],
@@ -286,6 +286,7 @@ class CuentasInactivasView(BaseHomeView):
 
         context["cuentas"] = cuentas
         context["saldos_cuentas"] = self._calcular_saldos_cuentas(cuentas, monedas, movimiento)
+        context["mostrar_saldo_header"] = False
         return context
 
     def get_cuentas_para_saldos(self):

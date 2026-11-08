@@ -140,9 +140,10 @@ def test_detalle_titular(
     ).text.strip()
     movimiento = titular.dias().reverse()[1].movimientos[0]
 
-    assert nombre_titular == (f"Capital de {titular.nombre} "
-                              f"en movimiento {movimiento.orden_dia} "
-                              f"del {movimiento.fecha} ({movimiento.concepto}):")
+    assert nombre_titular == (
+        f"Capital de {titular.nombre} en movimiento {movimiento.orden_dia} "
+        f"del {movimiento.fecha.strftime('%d/%m/%Y')}:"
+    )
     browser.comparar_capital_historico_de(titular, movimiento)
 
     # Y al lado de cada cuenta del titular aparece el saldo histórico al

@@ -61,7 +61,7 @@ def test_pasa_titulo_de_saldo_gral_con_movimiento(entrada, client):
     assert (
         response.context['titulo_saldo_gral'] ==
         f'Saldo general en movimiento {entrada.orden_dia} '
-        f'del {entrada.fecha} ({entrada.concepto})')
+        f'del {entrada.fecha.strftime("%d/%m/%Y")}')
 
 def test_pasa_saldos_cuentas_al_momento_del_movimiento(entrada, salida, client, peso):
     # salida ocurre después de entrada en el mismo día;

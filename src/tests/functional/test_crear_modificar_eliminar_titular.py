@@ -6,6 +6,8 @@ def test_crear_titular(browser, fecha):
     """ Cuando vamos a la página de titular nuevo y completamos el formulario,
         aparece un titular nuevo entre los titulares del sitio. """
     browser.ir_a_pag(reverse("tit_nuevo"))
+    assert browser.title == "Finper - Titular nuevo"
+
     browser.completar_form(
         nombre="titular nuevo",
         sk="tn",
@@ -23,6 +25,7 @@ def test_modificar_titular(browser, titular, fecha_anterior):
     """ Cuando vamos a la página de modificar titular y completamos el
         formulario, vemos el titular modificado en la página principal """
     browser.ir_a_pag(titular.get_edit_url())
+    assert browser.title == f"Finper - Modificar titular {titular.nombre}"
 
     # En todos los campos del formulario aparece el valor del campo correspondiente del titular:
     browser.controlar_modelform(instance=titular)
@@ -88,6 +91,7 @@ def test_eliminar_titular(browser, titular, otro_titular):
         el titular es eliminado"""
     nombre_titular = titular.nombre
     browser.ir_a_pag(titular.get_delete_url())
+    assert browser.title == f"Finper - Eliminar titular {nombre_titular}"
     browser.pulsar('id_btn_confirm')
     browser.assert_url(reverse('home'))
     nombres_titular = [x.text.strip() for x in browser.encontrar_elementos('class_link_titular')]

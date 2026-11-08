@@ -1,5 +1,7 @@
 from django.urls import reverse
 
+from diario.models import Cuenta
+
 
 def test_agregar_subcuenta(browser, cuenta_acumulativa, fecha_posterior):
     # Vamos a la página "Agregar subcuenta"
@@ -28,7 +30,8 @@ def test_agregar_subcuenta(browser, cuenta_acumulativa, fecha_posterior):
     # el formulario
     browser.ir_a_pag(reverse('cuenta', args=['sc3']))
     titulo_pag = browser.encontrar_elemento("id_titulo_saldo_gral").text.strip()
-    assert fecha_posterior.strftime("%Y-%m-%d") in titulo_pag
+    assert "subcuenta 3" in titulo_pag
+    assert Cuenta.tomar(sk="sc3").fecha_creacion == fecha_posterior
 
 
 def test_agregar_subcuenta_otro_titular(

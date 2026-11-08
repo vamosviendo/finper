@@ -23,7 +23,7 @@
 
     {% if movimiento %}
       <li class="breadcrumb-item active" aria-current="page">
-        Movimiento {{ movimiento.orden_dia }}
+        Movimiento {{ movimiento.orden_dia }} de {{ movimiento.fecha|date:"d/m/Y" }}
       </li>
     {% elif mov %}
       <li class="breadcrumb-item active" aria-current="page">

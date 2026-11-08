@@ -62,7 +62,7 @@ def test_si_recibe_movimiento_pasa_titulo_de_saldo_gral_con_titular_y_movimiento
     assert \
         response.context['titulo_saldo_gral'] == \
         f"Capital de {titular.nombre} en movimiento {entrada.orden_dia} " \
-        f"del {entrada.fecha} ({entrada.concepto})"
+        f"del {entrada.fecha.strftime('%d/%m/%Y')}"
 
 
 def test_si_recibe_movimiento_pasa_saldos_de_cuentas_del_titular_en_monedas_al_momento_del_movimiento(

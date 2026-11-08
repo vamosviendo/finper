@@ -9,6 +9,8 @@ def test_crear_cuenta(browser, titular, fecha):
     """ Cuando vamos a la página de cuenta nueva y completamos el formulario,
         aparece una cuenta nueva entre las cuentas del sitio. """
     browser.ir_a_pag(reverse("cta_nueva"))
+    assert browser.title == "Finper - Cuenta nueva"
+
     browser.completar_form(
         nombre="cuenta nueva",
         sk="cn",
@@ -98,6 +100,8 @@ def test_modificar_cuenta(browser, titular, cuenta_ajena, dolar, fecha_anterior)
     """ Cuando vamos a la página de modificar cuenta y completamos el
         formulario, la cuenta se modifica"""
     browser.ir_a_pag(cuenta_ajena.get_edit_url())
+    assert browser.title == f"Finper - Modificar cuenta {cuenta_ajena.nombre}"
+
     # En todos los campos del formulario aparece el valor del campo correspondiente de la cuenta:
     browser.controlar_modelform(instance=cuenta_ajena)
 
@@ -114,6 +118,8 @@ def test_eliminar_cuenta(browser, cuenta, cuenta_2):
     """ Cuando vamos a la página de eliminar cuenta y cliqueamos en confirmar,
         la cuenta es eliminada"""
     browser.ir_a_pag(cuenta.get_delete_url())
+    assert browser.title == f"Finper - Eliminar cuenta {cuenta.nombre}"
+
     browser.pulsar('id_btn_confirm')
     browser.assert_url(reverse('home'))
     assert not browser.cuenta_esta(cuenta)

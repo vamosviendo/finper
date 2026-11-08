@@ -13,7 +13,10 @@ def test_detalle_moneda(browser, dolar, cotizacion_dolar, cotizacion_posterior_d
     # Somos dirigidos a la página de detalle de la moneda cliqueada
     browser.assert_url(dolar.get_absolute_url())
 
-    # El nombre de la moneda encabeza la página
+    # El nombre de la moneda aparece en el título de la página
+    assert browser.title == f"Finper - Moneda: {dolar.nombre}"
+
+    # Y encabeza la página
     titulo = browser.encontrar_elemento("id_nombre")
     assert titulo.text == f"Moneda: {dolar.nombre}"
 

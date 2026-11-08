@@ -1,6 +1,28 @@
 {% extends 'diario/base.html' %}
 {% load static %}
 
+{% block title %}
+  Finper
+  {% if movimiento %}
+    -
+    {% if cuenta %}
+      {{ cuenta.nombre }} -
+    {% elif titular %}
+      {{ titular.nombre }} -
+    {% endif %}
+    Mov {{ movimiento.orden_dia }} del {{ movimiento.fecha|date:"d/m/Y" }}
+  {% elif cuenta %}
+    - {{ cuenta.nombre }}
+  {% elif titular %}
+    - {{ titular.nombre }}
+  {% elif request.resolver_match.url_name == "ctas_inactivas" %}
+    - Cuentas inactivas
+  {% else %}
+    - Inicio
+  {% endif %}
+{% endblock title %}
+
+
 {% block extra-css %}
 <link rel="stylesheet" href="{% static 'diario/css/home.css' %}">
 {% endblock extra-css %}

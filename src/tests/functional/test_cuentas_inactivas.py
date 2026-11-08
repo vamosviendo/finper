@@ -8,6 +8,9 @@ def test_permite_activar_cuentas_inactivas(browser, cuenta_inactiva, cuenta):
     # En la página de cuentas inactivas, al lado de cada cuenta hay una opción "A"
     # Si cliqueamos en esa opción y pulsamos el botón de confirmación, la cuenta se activa.
     browser.ir_a_pag(reverse("ctas_inactivas"))
+    assert browser.title == "Finper - Cuentas inactivas"
+    assert browser.encontrar_elementos("id_div_saldo_gral", fail=False) == []
+
     browser.encontrar_elemento("A", By.LINK_TEXT).click()
     browser.pulsar("id_btn_confirm")
     browser.assert_url(reverse("ctas_inactivas"))

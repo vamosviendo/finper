@@ -85,15 +85,15 @@
 }
 
 .fp-section .fp-card__title {
-  font-size: 0.75rem;
-  line-height: 1.1;
+  font-size: var(--fp-text-section-title);
+  line-height: var(--fp-leading-tight);
   letter-spacing: 0.04em;
 }
 
 .fp-section .fp-card__subtitle {
   margin-top: 0.05rem;
-  font-size: 0.7rem;
-  line-height: 1.1;
+  font-size: var(--fp-text-2xs);
+  line-height: var(--fp-leading-tight);
 }
 
 .fp-section .fp-card__actions {
@@ -102,17 +102,17 @@
 
 .fp-section .fp-card__header .btn {
   padding: 0.15rem 0.35rem;
-  font-size: 0.7rem;
-  line-height: 1.1;
+  font-size: var(--fp-text-2xs);
+  line-height: var(--fp-leading-tight);
 }
 
 .fp-section .fp-empty-state {
   padding: 0.3rem;
-  font-size: 0.75rem;
+  font-size: var(--fp-text-xs);
 }
 
 .fp-section .chico {
-  font-size: 0.7rem !important;
+  font-size: var(--fp-text-2xs) !important;
 }
 
 .fp-section .fp-card__header .btn-outline-primary,
@@ -155,14 +155,14 @@
 table.menu {
   margin-bottom: 0;
   white-space: nowrap;
-  font-size: 0.75rem;
-  line-height: 1.1;
+  font-size: var(--fp-text-xs);
+  line-height: var(--fp-leading-tight);
 }
 
 .menu th,
 .menu td {
   padding: 0.04rem 0.3rem;
-  line-height: 1.1;
+  line-height: var(--fp-leading-none);
 }
 
 .menu-item-content {
@@ -202,8 +202,8 @@ table.menu {
   height: 100%;
   color: var(--fp-muted);
   font-weight: 700;
-  font-size: 0.7rem;
-  line-height: 1;
+  font-size: var(--fp-text-2xs);
+  line-height: var(--fp-leading-none);
 }
 
 .menu-item-edit a:hover {
@@ -341,8 +341,8 @@ tr.mov_selected .class_link_movimiento {
 .class_table_movimientos {
   table-layout: auto;
   width: 100%;
-  font-size: 0.75rem;
-  line-height: 1.1;
+  font-size: var(--fp-text-xs);
+  line-height: var(--fp-leading-tight);
 }
 
 .class_table_movimientos tbody {
@@ -352,7 +352,7 @@ tr.mov_selected .class_link_movimiento {
 .class_table_movimientos td,
 .class_table_movimientos th {
   padding: 0.04rem 0.2rem;
-  line-height: 1.1;
+  line-height: var(--fp-leading-tight);
 }
 
 .class_table_movimientos th.fp-col-importe,
@@ -408,8 +408,8 @@ tr.mov_selected .class_link_movimiento {
   min-width: 1.05rem;
   height: 1.05rem;
   padding: 0;
-  font-size: 0.7rem;
-  line-height: 1;
+  font-size: var(--fp-text-2xs);
+  line-height: var(--fp-leading-none);
   font-weight: 700;
 }
 
@@ -435,8 +435,8 @@ tr.mov_selected .class_link_movimiento {
   padding: 0.15rem 0.35rem;
   background-color: var(--fp-day-header);
   border-bottom: 2px solid var(--fp-day-border);
-  font-size: 0.75rem;
-  line-height: 1.1;
+  font-size: var(--fp-text-day-title);
+  line-height: var(--fp-leading-tight);
 }
 
 .fp-day__date {

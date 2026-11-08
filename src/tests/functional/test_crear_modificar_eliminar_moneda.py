@@ -8,6 +8,8 @@ def test_crear_moneda(browser, cuenta_con_saldo, cuenta_con_saldo_negativo, cuen
         aparece una moneda nueva entre las monedas del sitio.
     """
     browser.ir_a_pag(reverse("mon_nueva"))
+    assert browser.title == "Finper - Moneda nueva"
+
     browser.completar_form(
         nombre="moneda nueva",
         plural="monedas nuevas",
@@ -30,6 +32,7 @@ def test_modificar_moneda(browser, dolar):
     # Vamos a la página de modificación de la moneda donde cambiamos algunos
     # campos
     browser.ir_a_pag(dolar.get_edit_url())
+    assert browser.title == f"Finper - Modificar moneda {dolar.nombre}"
 
     # En todos los campos del formulario aparece el valor del campo correspondiente de la moneda:
     browser.controlar_modelform(instance=dolar)
@@ -57,6 +60,8 @@ def test_eliminar_moneda(browser, dolar, euro):
 
     # Vamos a la página de eliminación de la moneda y confirmamos
     browser.ir_a_pag(dolar.get_delete_url())
+    assert browser.title == f"Finper - Eliminar moneda {nombre_moneda}"
+
     browser.pulsar("id_btn_confirm")
 
     # Somos dirigidos a la página principal donde verificamos que el nombre

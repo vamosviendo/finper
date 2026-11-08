@@ -202,6 +202,10 @@ class TestBaseHome:
         esperado = cuenta.saldo() + cuenta_2.tomar_del_sk().saldo()
         assert response.context['saldo_gral'] == esperado
 
+    def test_pasa_mostrar_saldo_header_true(self, client):
+        response = client.get(reverse('home'))
+        assert response.context['mostrar_saldo_header'] == True
+
 
 class TestGet:
 

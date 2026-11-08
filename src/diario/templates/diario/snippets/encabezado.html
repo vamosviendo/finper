@@ -1,27 +1,21 @@
 {% load saldos %}
 
-<section id="id_section_saldos" class="fp-hero">
-  {% if ancestros %}
-    {% include "diario/snippets/ancestros.html" %}
-  {% endif %}
+{% if ancestros or hermanas or request.resolver_match.url_name == "home" %}
+  <div class="fp-context-bar">
+    {% if ancestros %}
+      {% include "diario/snippets/ancestros.html" %}
+    {% endif %}
+    {% if hermanas %}
+      {% include "diario/snippets/hermanas.html" %}
+    {% endif %}
 
-  <div id="id_div_saldo_gral" class="Titulo fp-hero__main">
-    <h1 class="fp-hero__title">
-      <span id="id_titulo_saldo_gral">{{ titulo_saldo_gral }}:</span>
-      <span id="id_importe_saldo_gral" class="fp-hero__amount">{% saldo %}</span>
-    </h1>
+    {% if request.resolver_match.url_name == "home" %}
+      <div class="fp-hero__stats">
+        <span class="fp-stat"><strong>{{ titulares|length }}</strong> titulares</span>
+        <span class="fp-stat"><strong>{{ cuentas|length }}</strong> cuentas</span>
+        <span class="fp-stat"><strong>{{ monedas|length }}</strong> monedas</span>
+        <span class="fp-stat"><strong>{{ dias|length }}</strong> días</span>
+      </div>
+    {% endif %}
   </div>
-
-  {% if hermanas %}
-    {% include "diario/snippets/hermanas.html" %}
-  {% endif %}
-
-  {% if request.resolver_match.url_name == "home" %}
-    <div class="fp-hero__stats">
-      <span class="fp-stat"><strong>{{ titulares|length }}</strong> titulares</span>
-      <span class="fp-stat"><strong>{{ cuentas|length }}</strong> cuentas</span>
-      <span class="fp-stat"><strong>{{ monedas|length }}</strong> monedas</span>
-      <span class="fp-stat"><strong>{{ dias|length }}</strong> días</span>
-    </div>
-  {% endif %}
-</section>
+ {% endif %}
