@@ -18,3 +18,7 @@
 .fp-auth .btn-block {
   width: 100%;
 }
+
+.fp-auth .app-form--labels-left > div:not(.form-actions) {
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+}

@@ -9,7 +9,7 @@
 {% endblock form_subtitulo %}
 
 {% block form_contenido %}
-<form id="id_form_agregar_subcuenta" method="post" class="app-form">
+<form id="id_form_agregar_subcuenta" method="post" class="app-form app-form--labels-left">
   {{ form.as_div }}
   {% csrf_token %}
   <div class="form-actions">

@@ -1,41 +1,63 @@
 .fp-form-page {
-  max-width: 760px;
+  max-width: 720px;
   margin: 0 auto;
 }
 
 .fp-form-page .fp-card__header {
   gap: 0.25rem;
-  padding: 0.25rem 0.5rem;
+  padding: 0.25rem 0.6rem;
 }
 
 .fp-form-page .fp-card__subtitle {
   margin-top: 0.05rem;
-  font-size: 0.7rem;
-  line-height: 1.1;
+  font-size: var(--fp-text-xs);
+  line-height: var(--fp-leading-snug);
 }
 
 .fp-form-page .fp-card__body {
-  padding: 0.3rem 0.5rem;
+  padding: 0.4rem 0.6rem;
 }
 
 .fp-form-card__title {
   margin: 0;
-  font-size: 0.95rem;
-  line-height: 1.1;
+  font-size: var(--fp-text-2xl);
+  line-height: var(--fp-leading-tight);
   font-weight: 700;
 }
 
 .app-form > div:not(.form-actions) {
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.4rem;
+}
+
+.app-form--labels-left > div:not(.form-actions) {
+  display: grid;
+  grid-template-columns: minmax(6.5rem, 8rem) minmax(0, 1fr);
+  align-items: center;
+  column-gap: 0.75rem;
 }
 
 .app-form label {
   display: block;
   margin-bottom: 0.15rem;
   color: var(--fp-ink);
-  font-size: 0.75rem;
-  line-height: 1.1;
+  font-size: var(--fp-text-label);
+  line-height: var(--fp-leading-snug);
   font-weight: 600;
+}
+
+.app-form--labels-left > div:not(.form-actions) > label {
+  margin: 0;
+  text-align: right;
+}
+
+.app-form--labels-left > div:not(.form-actions) > .helptext,
+.app-form--labels-left > div:not(.form-actions) > ul.errorlist {
+  grid-column: 2;
+  margin-top: 0.15rem;
+}
+
+.app-form--labels-left > div:not(.form-actions) > input[type="checkbox"] {
+  justify-self: start;
 }
 
 .app-form input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
@@ -43,18 +65,24 @@
 .app-form textarea {
   display: block;
   width: 100%;
-  padding: 0.2rem 0.45rem;
+  padding: 0.25rem 0.5rem;
   border: 1px solid var(--fp-line-soft);
   border-radius: 0.35rem;
   background: var(--fp-surface);
   color: var(--fp-ink);
-  font-size: 0.85rem;
-  line-height: 1.2;
+  font-size: var(--fp-text-input);
+  line-height: var(--fp-leading-snug);
   transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
+.app-form--labels-left > div:not(.form-actions) > input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+.app-form--labels-left > div:not(.form-actions) > select,
+.app-form--labels-left > div:not(.form-actions) > textarea {
+  max-width: 26rem;
+}
+
 .app-form textarea {
-  min-height: 60px;
+  min-height: 70px;
   height: auto;
 }
 
@@ -85,15 +113,15 @@
   display: block;
   margin-top: 0.15rem;
   color: var(--fp-muted);
-  font-size: 0.7rem;
-  line-height: 1.1;
+  font-size: var(--fp-text-2xs);
+  line-height: var(--fp-leading-snug);
 }
 
 .app-form ul.errorlist {
   margin: 0.15rem 0 0;
   padding: 0;
   color: var(--fp-danger);
-  font-size: 0.72rem;
+  font-size: var(--fp-text-xs);
   list-style: none;
 }
 
@@ -114,7 +142,8 @@
 .app-form .form-actions .btn,
 .fp-form-extra .btn {
   padding: 0.2rem 0.5rem;
-  font-size: 0.75rem;
+  font-size: var(--fp-text-xs);
+  line-height: var(--fp-leading-tight);
   line-height: 1.1;
 }
 
@@ -141,7 +170,7 @@
   border-radius: 50%;
   background: var(--fp-danger-soft);
   color: var(--fp-danger);
-  font-size: 1.1rem;
+  font-size: var(--fp-text-3xl);
   font-weight: 800;
 }
 
@@ -168,7 +197,7 @@
 .fp-auth__brand {
   margin-bottom: 1rem;
   text-align: center;
-  font-size: 1.6rem;
+  font-size: var(--fp-text-7xl);
   font-weight: 800;
 }
 
@@ -178,4 +207,26 @@
 
 .fp-auth__brand a:hover {
   text-decoration: none;
+}
+
+@media (max-width: 575.98px) {
+  .app-form--labels-left > div:not(.form-actions) {
+    grid-template-columns: 1fr;
+    row-gap: 0.1rem;
+  }
+
+  .app-form--labels-left > div:not(.form-actions) > label {
+    text-align: left;
+  }
+
+  .app-form--labels-left > div:not(.form-actions) > .helptext,
+  .app-form--labels-left > div:not(.form-actions) > ul.errorlist {
+    grid-column: 1;
+  }
+
+  .app-form--labels-left > div:not(.form-actions) > input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+  .app-form--labels-left > div:not(.form-actions) > select,
+  .app-form--labels-left > div:not(.form-actions) > textarea {
+    max-width: none;
+  }
 }
