@@ -156,7 +156,7 @@ class FinperFirefox(MiFirefox):
         assert self.title == f"Finper - {titular.nombre}", \
             f"Título de página incorrecto: {self.title}"
 
-        titulo = self.encontrar_elemento('id_div_saldo_gral').text.strip()
+        titulo = " ".join(self.encontrar_elemento('id_div_saldo_gral').text.split()).strip()    
         assert titulo == f"Capital de {titular.nombre}: {float_format(titular.capital())}", \
             f"Título incorrecto: {titulo}"
 
@@ -210,7 +210,7 @@ class FinperFirefox(MiFirefox):
             y breadcrumb de la página.
         """
         assert self.title == f"Finper - {cuenta.nombre}", f"Título de página incorrecto: {self.title}"
-        titulo = self.encontrar_elemento('id_div_saldo_gral').text.strip()
+        titulo = " ".join(self.encontrar_elemento('id_div_saldo_gral').text.split()).strip()
         assert titulo == f"{cuenta.nombre}: {float_format(cuenta.saldo())}", f"Título incorrecto: {titulo}"
         breadcrumb = self.encontrar_elemento("app-breadcrumbs", By.CLASS_NAME)
         assert cuenta.nombre in breadcrumb.text, f"Breadcrumb no incluye {cuenta.nombre}"
