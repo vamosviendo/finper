@@ -1,6 +1,4 @@
-Django==6.0.1
+Django==6.1.3
 django-case-insensitive-field==1.0.7
-django-stubs==4.2.6
-django-stubs-ext==5.2.8
 gunicorn==25.1.0
-whitenoise==6.11.0
+whitenoise==6.12.0

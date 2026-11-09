@@ -14,7 +14,7 @@ from diario.models import (
 from utils.numeros import float_format
 from utils.tiempo import dia_de_la_semana
 from vvmodel.models import MiModel
-from vvsteps.driver import MiFirefox, MiWebElement
+from vvdriver.driver import MiFirefox, MiWebElement
 
 
 class FinperWebElement(MiWebElement):
@@ -156,7 +156,7 @@ class FinperFirefox(MiFirefox):
         assert self.title == f"Finper - {titular.nombre}", \
             f"Título de página incorrecto: {self.title}"
 
-        titulo = " ".join(self.encontrar_elemento('id_div_saldo_gral').text.split()).strip()    
+        titulo = " ".join(self.encontrar_elemento('id_div_saldo_gral').text.split()).strip()
         assert titulo == f"Capital de {titular.nombre}: {float_format(titular.capital())}", \
             f"Título incorrecto: {titulo}"
 
