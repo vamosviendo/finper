@@ -1,6 +1,8 @@
 [submodule "src/vvmodel"]
 	path = src/vvmodel
-	url = /home/nandoarch/dev/vvproject/src/vvmodel
+	url = git@github.com:vamosviendo/vvmodel.git
+	branch=main
 [submodule "src/vvdriver"]
 	path = src/vvdriver
-	url = /home/nandoarch/dev/vvproject/src/vvdriver
+	url = git@github.com:vamosviendo/vvdriver.git
+	branch = main
